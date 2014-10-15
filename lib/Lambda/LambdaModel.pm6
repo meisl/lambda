@@ -2,11 +2,14 @@ use v6;
 
 use Lambda::MethodFixedPoint;
 use Lambda::Tree;
+use Lambda::FreeVars;
 
-class VarT       { ... }
-class AlphaVarT  { ... }
-class LamT       { ... }
-class AppT       { ... }
+class ConstT    { ... }
+class VarT      { ... }
+class AlphaVarT { ... }
+class LamT      { ... }
+class AppT      { ... }
+role  Term      { ... }
 
 
 role Value {
@@ -18,20 +21,13 @@ role Applicable {
     method isEquivToIdentity    (           --> Bool:D)     { !!! }
 }
 
-role Term does Tree does MethodFixedPoint {
-
-    method isFree       (VarT:D $var --> Bool:D) { !!! }
-
-    method freeVars     () { @() }
-
-    method getFreeVar   (Str:D $name --> VarT:U) { !!! }
-
-    method isFreeUnderBinder(VarT:D $var, VarT:D :$binder --> Bool) {
-        !!!
-    }
+role Term
+    does Tree
+    does MethodFixedPoint
+    does FreeVars[Term, ConstT, VarT, AppT, LamT]
+{
 
     method alpha-needy-terms(@vars) { !!! }
-
 
     method subst(Term:D $newTerm, VarT:D :$for! -->Term) { !!! }
 
@@ -69,10 +65,6 @@ role LeafTerm does Term {
 
 class ConstT does LeafTerm does Value {
     has $.value;
-
-    method isFree (VarT:D $var --> Bool:D) { False }
-
-    method getFreeVar (Str:D $name --> VarT) { VarT }
 
     method subst(Term:D $newTerm, VarT:D :$for! -->Term) { self }
 
@@ -117,16 +109,6 @@ class VarT does LeafTerm {
         return $out;
     }
 
-    method isFree(VarT:D $var --> Bool:D) {
-        $!name eq $var.name;
-    }
-
-    method freeVars { @(self,) }
-
-    method getFreeVar (Str:D $name --> VarT) {
-        $!name eq $name ?? self !! VarT;
-    }
-
     method subst(Term:D $newTerm, VarT:D :$for! -->Term) {
         ($for.name ne $!name)
             ?? self
@@ -160,32 +142,10 @@ class AppT does Term {
     has Term $.func;
     has Term $.arg; 
 
-    submethod BUILD(:$!func, :$!arg) {
-    }
-
     method children { @($!func, $!arg) }
-
-    method isFree(VarT:D $var --> Bool:D) {
-        $!func.isFree($var) || $!arg.isFree($var);
-    }
-
-    method freeVars {
-        my @left = $!func.freeVars;
-        my $noneOfLeft = @left.map(*.name).none;
-        return @(@left, $!arg.freeVars.grep(*.name eq $noneOfLeft));
-    }
-
-    method isFreeUnderBinder(VarT:D $var, VarT:D :$binder --> Bool) {
-        $!func.isFreeUnderBinder($var, :$binder)
-        || $!arg.isFreeUnderBinder($var, :$binder)
-    }
 
     method alpha-needy-terms(@vars) {
         @($!func.alpha-needy-terms(@vars), $!arg.alpha-needy-terms(@vars))
-    }
-
-    method getFreeVar(Str:D $name --> VarT) {
-        $!func.getFreeVar($name) // $!arg.getFreeVar($name);
     }
 
     method isBetaRedex {
@@ -260,21 +220,6 @@ class LamT does Term does Applicable does Value {
 
     method children { @($!var, $!body) }
 
-    method isFree(VarT:D $var --> Bool:D) {
-        ($!var.name ne $var.name) && ($!body.isFree($var));
-    }
-
-    method freeVars {
-        $!body.freeVars.grep(*.name ne $!var.name);
-    }
-
-    method isFreeUnderBinder(VarT:D $var, VarT:D :$binder --> Bool) {
-        ($var.name ne $!var.name) # if we bind it then it's not free anywhere in our body
-        && ($binder.name eq $!var.name) # or else, if the binder is ours then...
-            ?? $!body.isFree($var)      # it's free if it's free in the body
-            !! $!body.isFreeUnderBinder($var, :$binder) # otherwise it depends on body
-    }
-
     method alpha-needy-terms(@vars-to-stay-free) {
         my @wantNot = ($!var.name eq any(@vars-to-stay-free))
             ?? @( self, $!body.alpha-needy-terms(@vars-to-stay-free.grep(*.name eq $!var.name)) )
@@ -288,12 +233,6 @@ class LamT does Term does Applicable does Value {
 
     method alpha-convert(VarT:D $newVar, VarT:D :$for --> Term) {
        !!!
-    }
-
-    method getFreeVar(Str:D $name --> VarT) {
-        $!var.name eq $name
-            ?? VarT
-            !! $!body.getFreeVar($name);
     }
 
     method isEtaRedex {
