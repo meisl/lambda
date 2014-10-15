@@ -1,0 +1,460 @@
+use v6;
+
+use Lambda::MethodFixedPoint;
+use Lambda::Tree;
+
+class VarT       { ... }
+class AlphaVarT  { ... }
+class LamT       { ... }
+class AppT       { ... }
+
+
+role Value {
+}
+
+role Applicable {
+    method apply                (Value $arg --> Value:D)    { !!! }
+    method isLiteralIdentity    (           --> Bool:D)     { !!! }
+    method isEquivToIdentity    (           --> Bool:D)     { !!! }
+}
+
+role Term does Tree does MethodFixedPoint {
+
+    method isFree       (VarT:D $var --> Bool:D) { !!! }
+
+    method freeVars     () { @() }
+
+    method getFreeVar   (Str:D $name --> VarT:U) { !!! }
+
+    method isFreeUnderBinder(VarT:D $var, VarT:D :$binder --> Bool) {
+        !!!
+    }
+
+    method alpha-needy-terms(@vars) { !!! }
+
+
+    method subst(Term:D $newTerm, VarT:D :$for! -->Term) { !!! }
+
+    method eval         ($env --> Value) { !!! }
+    method eval-s       ( --> Value:D)   { !!! }
+    method simplify     ( --> Term:D)  { !!! }
+
+    # eta reduction (LamT is the only candidate):
+    method isEtaRedex       (--> Bool) { False } # η-redex? - ie of form λx.(B x) where x not free in B
+    method isEtaReducible   (--> Bool) { False } # either self.isEtaRedex or body isEtaReducible
+    method eta-contract     (--> Term) { self  } # one-step η-simplification (either of self or body)
+    method eta-reduce       (--> Term) { self.mfp(*.eta-contract) }
+
+    # beta reduction (AppT is the only candidate):
+    method isBetaRedex      (--> Bool) { False } # β-redex? - ie of form ((λx.B) z)
+    method isBetaReducible  (--> Bool) { False } # either self.isBetaRedex or func is or arg is
+    method beta-contract    (--> Term) { self  } # one-step β-simplification (either of self or inv or arg)
+    method beta-reduce      (--> Term) { self.mfp(*.beta-contract) }
+
+}
+
+
+role LeafTerm does Term {
+
+    method children { @() }
+    
+    method isFreeUnderBinder(VarT:D $var, VarT:D :$binder --> Bool) {
+        False
+    }
+    
+    method alpha-needy-terms(@vars) { @() }
+}
+
+
+
+class ConstT does LeafTerm does Value {
+    has $.value;
+
+    method isFree (VarT:D $var --> Bool:D) { False }
+
+    method getFreeVar (Str:D $name --> VarT) { VarT }
+
+    method subst(Term:D $newTerm, VarT:D :$for! -->Term) { self }
+
+    method eval($env) {
+        $!value
+    }
+
+    method eval-s() {
+        say "evaluating " ~ self ~ ' (self-evaluating)';
+        $!value
+    }
+
+    method simplify( --> Term) {
+        return self;
+    }
+
+    method gist { ~$!value }
+}
+
+
+class VarT does LeafTerm {
+    has Str:D $.name;
+
+    my %namesToVarNodes = %();
+
+    my $nextAlphaNr = 1;
+
+    method fresh(VarT:T: VarT :$for --> VarT:D) {
+        my $n = $for.defined
+            ?? AlphaVarT.new(:name('α' ~ $nextAlphaNr), :$for)
+            !! VarT.get(:name('α' ~ $nextAlphaNr));
+        $nextAlphaNr++;
+        $n;
+    }
+
+    method get(VarT:T: Str:D :$name --> VarT) {
+        my $out = %namesToVarNodes{$name};
+        unless $out.defined {
+            $out = VarT.new(:$name);
+            %namesToVarNodes{$name} = $out;
+        }
+        return $out;
+    }
+
+    method isFree(VarT:D $var --> Bool:D) {
+        $!name eq $var.name;
+    }
+
+    method freeVars { @(self,) }
+
+    method getFreeVar (Str:D $name --> VarT) {
+        $!name eq $name ?? self !! VarT;
+    }
+
+    method subst(Term:D $newTerm, VarT:D :$for! -->Term) {
+        ($for.name ne $!name)
+            ?? self
+            !! $newTerm
+    }
+
+    method eval($env) { $env.lookup($!name) }
+
+    method eval-s() {
+        die "cannot eval unbound var $!name";
+    }
+
+    method simplify( --> Term) {
+        return self;
+    }
+
+    method gist { ~$!name }
+}
+
+class AlphaVarT is VarT {
+    has VarT:D $.for;
+
+    method gist {
+        my $out = callsame;
+        $out ~ '[/' ~ $!for.gist ~ ']'
+    }
+}
+
+
+class AppT does Term {
+    has Term $.func;
+    has Term $.arg; 
+
+    submethod BUILD(:$!func, :$!arg) {
+    }
+
+    method children { @($!func, $!arg) }
+
+    method isFree(VarT:D $var --> Bool:D) {
+        $!func.isFree($var) || $!arg.isFree($var);
+    }
+
+    method freeVars {
+        my @left = $!func.freeVars;
+        my $noneOfLeft = @left.map(*.name).none;
+        return @(@left, $!arg.freeVars.grep(*.name eq $noneOfLeft));
+    }
+
+    method isFreeUnderBinder(VarT:D $var, VarT:D :$binder --> Bool) {
+        $!func.isFreeUnderBinder($var, :$binder)
+        || $!arg.isFreeUnderBinder($var, :$binder)
+    }
+
+    method alpha-needy-terms(@vars) {
+        @($!func.alpha-needy-terms(@vars), $!arg.alpha-needy-terms(@vars))
+    }
+
+    method getFreeVar(Str:D $name --> VarT) {
+        $!func.getFreeVar($name) // $!arg.getFreeVar($name);
+    }
+
+    method isBetaRedex {
+        # (P Q) is a β-redex if P is of form (λx.B).
+        # If so, it β-contracts to [P/x] B, ie P substituted for x
+        # in the λ's body but beware: any free var in P
+        # must NOT be accidentally captured by a binding in B.
+        # If that would be the case, we need to α-convert before.
+        ($!func ~~ LamT)
+    }
+
+    method alpha-problematic {
+        return @() unless self.isBetaRedex;
+        $!arg.freeVars.grep({$!func.body.isFreeUnderBinder($!func.var, :binder($_))});
+    }
+
+    method isBetaReducible {
+        self.isBetaRedex
+        || $!func.isBetaReducible
+        || $!arg.isBetaReducible
+    }
+
+    method beta-contract {
+        return self unless self.isBetaReducible;
+
+        if (self.isBetaRedex) {
+            !!!
+        } elsif $!func.isBetaReducible {
+            return AppT.new(:func($!func.beta-contract), :$!arg);
+        } elsif $!arg.isBetaReducible {
+            return AppT.new(:$!func, :arg($!arg.beta-contract));
+        }
+    }
+
+    method subst(Term:D $newTerm, VarT:D :$for! -->Term) {
+        my $newInv = $!func.subst($newTerm, :$for);
+        my $newArg = $!arg.subst($newTerm, :$for);
+        (($newInv !=== $!func) || ($newArg !=== $!arg) )
+            ?? AppT.new(:func($newInv), :arg($newArg))
+            !! self
+    }
+
+    method eval($env) {
+        my $code = $!func.eval($env);
+        $code.apply($!arg.eval($env));
+    }
+
+    method eval-s() {
+        say "evaluating " ~ self;
+        my Applicable $f = $!func.eval-s;
+        my $result = $f.apply($!arg.eval-s);
+        say "        -> " ~ $result;
+        $result;
+    }
+
+    method simplify( --> Term) {
+        # TODO: AppT.simplify: memoize or do simplify in constructor
+        # TODO: AppT.simplify: return self if simplification of both, func and arg didn't change anything
+        my $simp-inv = $!func.simplify;
+        my $simp-arg = $!arg.simplify;
+        return ($simp-inv ~~ Applicable) && $simp-inv.isLiteralIdentity
+            ?? $simp-arg
+            !! AppT.new(:func($simp-inv), :arg($simp-arg));
+    }
+
+    method gist { '(' ~ $!func.gist ~ ' ' ~ $!arg ~ ')' }
+}
+
+class LamT does Term does Applicable does Value {
+    has VarT:D $.var;
+    has Term:D $.body;
+
+    method children { @($!var, $!body) }
+
+    method isFree(VarT:D $var --> Bool:D) {
+        ($!var.name ne $var.name) && ($!body.isFree($var));
+    }
+
+    method freeVars {
+        $!body.freeVars.grep(*.name ne $!var.name);
+    }
+
+    method isFreeUnderBinder(VarT:D $var, VarT:D :$binder --> Bool) {
+        ($var.name ne $!var.name) # if we bind it then it's not free anywhere in our body
+        && ($binder.name eq $!var.name) # or else, if the binder is ours then...
+            ?? $!body.isFree($var)      # it's free if it's free in the body
+            !! $!body.isFreeUnderBinder($var, :$binder) # otherwise it depends on body
+    }
+
+    method alpha-needy-terms(@vars-to-stay-free) {
+        my @wantNot = ($!var.name eq any(@vars-to-stay-free))
+            ?? @( self, $!body.alpha-needy-terms(@vars-to-stay-free.grep(*.name eq $!var.name)) )
+            !! $!body.alpha-needy-terms(@vars-to-stay-free);
+        my @all = ($!var.name eq any(@vars-to-stay-free))
+            ?? @( self, $!body.alpha-needy-terms(@vars-to-stay-free) )
+            !! $!body.alpha-needy-terms(@vars-to-stay-free);
+        my @want = @all.grep({$_ === @wantNot.any});
+        @all;
+    }
+
+    method alpha-convert(VarT:D $newVar, VarT:D :$for --> Term) {
+       !!!
+    }
+
+    method getFreeVar(Str:D $name --> VarT) {
+        $!var.name eq $name
+            ?? VarT
+            !! $!body.getFreeVar($name);
+    }
+
+    method isEtaRedex {
+        # λx.(B x) is an η-redex if x not free in B.
+        # If so, it η-contracts to just B.
+           ($!body ~~ AppT)
+        && !$!body.func.isFree($!var)
+        && ($!body.arg ~~ VarT) 
+        && ($!body.arg.name ~~ $!var.name)
+    }
+
+    method isEtaReducible {
+        self.isEtaRedex || $!body.isEtaReducible
+    }
+
+    method eta-contract {
+        return $!body.func
+            if self.isEtaRedex;
+
+        return $!body.isEtaReducible
+            ?? LamT.new(:$!var, :body($!body.eta-contract))
+            !! self;
+    }
+
+    method subst(Term:D $newTerm, VarT:D :$for! -->Term) {
+        if $for.name eq $!var.name {
+            self;
+        } else {
+            my $newBody = $!body.subst($newTerm, :$for);
+            ($newBody === $!body)
+                ?? self
+                !! LamT.new(:var($!var), :body($newBody));
+        }
+    }
+
+    method eval($env) {
+        return -> $arg {
+            my $newEnv = $env.newFrame($!var => $arg);
+            $!body.eval($newEnv);
+        };
+    }
+
+    method eval-s() {
+        say "evaluating " ~ self ~ ' (self-evaluating)';
+        return self;
+    }
+
+    method simplify( --> Term) {
+        self.simplify-curry;
+    }
+
+    # eta-reduction
+    method simplify-curry( --> Term) {
+        # TODO: LamT.simplify: memoize or simplify in ctor
+        my $simp-body = $!body.simplify;
+        return ($simp-body ~~ AppT)
+            && ($simp-body.arg ~~ VarT) 
+            && !$simp-body.func.isFree($!var)
+            && ($simp-body.arg.name ~~ $!var.name)
+            ?? $simp-body.func
+            # TODO: LamT.simplify: if simplified body doesn't change anything return self
+            !! LamT.new(:$!var, :body($simp-body))
+        ;
+    }
+
+    method isEquivToIdentity (--> Bool:D) {
+        !!! 
+        # self.BetaEtaReduce.isLiteralIdentity
+    }
+
+    method isLiteralIdentity (--> Bool:D) {
+        ($!body ~~ VarT) && ($!var.name eq $!body.name);
+    }
+
+
+    method apply(Value:D $arg --> Value) {
+        say "applying " ~ self ~ " to $arg";
+        my $result = $!body.subst($!var, $arg).eval-s;
+        say "      -> $result";
+        $result;
+    }
+
+    method gist {
+        "(λ$!var." ~ $!body.gist ~ ')';
+    }
+
+}
+
+class DefNode does Term {
+    has VarT:D $.symbol;
+    has Term:D $.term;
+
+    method children { @($!symbol, $!term) }
+
+    method isFree (VarT:D $var --> Bool:D) {
+        # TODO: DefNode.isFree: once DefNode allows for recursion, do like in LamT.isFree
+        $!term.isFree($var);
+    }
+
+    method getFreeVar(Str:D $name --> VarT) {
+        ...
+    }
+
+    method isFreeUnderBinder(VarT:D $var, VarT:D :$binder --> Bool) {
+        ...
+    }
+
+    method alpha-needy-terms(@vars) {
+        ...
+    }
+
+    method subst(Term:D $newTerm, VarT:D :$for! -->Term) {
+        ...
+    }
+
+    method eval(Any:D $env) {
+        # TODO: DefNode.eval: error on rebind
+        # TODO: DefNode.eval: implement recursion
+        $env.bind($!symbol, $!term.eval($env));
+    }
+
+    method eval-s() {
+        die "cannot eval DefNode";
+    }
+
+    method simplify( --> Term) {
+        # TODO: DefNode.simplify: return self if simplification of term doesn't change anything
+        DefNode.new(:$!symbol, :term($!term.simplify));
+    }
+
+    method gist {
+        "(δ $!symbol " ~ $!term.gist ~ ')';
+    }
+
+}
+
+say VarT.fresh;
+say VarT.fresh;
+my $a1 = VarT.fresh(:for(VarT.get(:name<z>)));
+my $a2 = VarT.fresh(:for(VarT.get(:name<z>)));
+my $a3 = VarT.fresh(:for($a2));
+say $a1;
+say $a2;
+say $a3;
+
+say $a1.name;
+say $a2.name;
+say $a3.name;
+
+say '';
+
+my $x = VarT.get(:name<x>);
+my $y = VarT.get(:name<y>);
+my $z = VarT.get(:name<z>);
+my $λ = LamT.new(
+    :var($x),
+    :body(AppT.new( :func($x), :arg($y) ))
+);
+
+say '$λ: ' ~ $λ;
+say '$λ.subst($y, :for($x)): ' ~ $λ.subst($y, :for($x));
+say '$λ.subst($z, :for($y)): ' ~ $λ.subst($z, :for($y));
+
+#say $λ.alpha-convert($z, :for($λ.var));

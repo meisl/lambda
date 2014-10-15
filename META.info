@@ -1,0 +1,7 @@
+{
+    "name" : "Lambda",
+    "version" : "*",
+    "description" : "A calculator for Lambda calculus",
+    "depends" : [],
+    "source-url" : "git://github.com/meisl/lambda.git"
+}
