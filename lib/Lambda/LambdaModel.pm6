@@ -66,6 +66,9 @@ role LeafTerm does Term {
 class ConstT does LeafTerm does Value {
     has $.value;
 
+    submethod BUILD(:$!value!) {
+    }
+
     method subst(Term:D $newTerm, VarT:D :$for! -->Term) { self }
 
     method eval($env) {
@@ -88,6 +91,9 @@ class ConstT does LeafTerm does Value {
 class VarT does LeafTerm {
     has Str:D $.name;
 
+    submethod BUILD(Str:D :$!name!) {
+    }
+    
     my %namesToVarNodes = %();
 
     my $nextAlphaNr = 1;
@@ -141,6 +147,9 @@ class AlphaVarT is VarT {
 class AppT does Term {
     has Term $.func;
     has Term $.arg; 
+
+    submethod BUILD(Term:D :$!func!, Term:D :$!arg!) {
+    }
 
     method children { @($!func, $!arg) }
 
@@ -218,6 +227,9 @@ class LamT does Term does Applicable does Value {
     has VarT:D $.var;
     has Term:D $.body;
 
+    submethod BUILD(VarT:D :$!var!, Term:D :$!body!) {
+    }
+
     method children { @($!var, $!body) }
 
     method alpha-needy-terms(@vars-to-stay-free) {
@@ -239,7 +251,7 @@ class LamT does Term does Applicable does Value {
         # λx.(B x) is an η-redex if x not free in B.
         # If so, it η-contracts to just B.
            ($!body ~~ AppT)
-        && !$!body.func.isFree($!var)
+        && !$!body.func.hasFreeVar($!var)
         && ($!body.arg ~~ VarT) 
         && ($!body.arg.name ~~ $!var.name)
     }
@@ -290,7 +302,7 @@ class LamT does Term does Applicable does Value {
         my $simp-body = $!body.simplify;
         return ($simp-body ~~ AppT)
             && ($simp-body.arg ~~ VarT) 
-            && !$simp-body.func.isFree($!var)
+            && !$simp-body.func.hasFreeVar($!var)
             && ($simp-body.arg.name ~~ $!var.name)
             ?? $simp-body.func
             # TODO: LamT.simplify: if simplified body doesn't change anything return self
@@ -327,9 +339,9 @@ class DefNode does Term {
 
     method children { @($!symbol, $!term) }
 
-    method isFree (VarT:D $var --> Bool:D) {
-        # TODO: DefNode.isFree: once DefNode allows for recursion, do like in LamT.isFree
-        $!term.isFree($var);
+    method hasFreeVar(VarT:D $var --> Bool:D) {
+        # TODO: DefNode.hasFreeVar: once DefNode allows for recursion, do like in LamT.hasFreeVar
+        $!term.hasFreeVar($var);
     }
 
     method getFreeVar(Str:D $name --> VarT) {
@@ -369,20 +381,6 @@ class DefNode does Term {
 
 }
 
-say VarT.fresh;
-say VarT.fresh;
-my $a1 = VarT.fresh(:for(VarT.get(:name<z>)));
-my $a2 = VarT.fresh(:for(VarT.get(:name<z>)));
-my $a3 = VarT.fresh(:for($a2));
-say $a1;
-say $a2;
-say $a3;
-
-say $a1.name;
-say $a2.name;
-say $a3.name;
-
-say '';
 
 my $x = VarT.get(:name<x>);
 my $y = VarT.get(:name<y>);

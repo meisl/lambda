@@ -15,12 +15,12 @@ role FreeVars[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
         }
     }
 
-    method isFree(VarT:D $var --> Bool:D) {
+    method hasFreeVar(VarT:D $var --> Bool:D) {
         given self {
             when ConstT { False }
             when VarT   { .name eq $var.name }
-            when AppT   { .func.isFree($var) || .arg.isFree($var) }
-            when LamT   { (.var.name ne $var.name) && .body.isFree($var) }
+            when AppT   { .func.hasFreeVar($var) || .arg.hasFreeVar($var) }
+            when LamT   { (.var.name ne $var.name) && .body.hasFreeVar($var) }
             default {
                 die "unknown type " ~ .WHAT.perl;
             }
@@ -38,7 +38,7 @@ role FreeVars[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
             when LamT {
                 ($var.name ne .var.name) # if we bind it then it's not free anywhere in our body
                 && ($binder.name eq .var.name) # or else, if the binder is ours then...
-                    ?? .body.isFree($var)      # it's free if it's free in the body
+                    ?? .body.hasFreeVar($var)  # it's free if it's free in the body
                     !! .body.isFreeUnderBinder($var, :$binder) # otherwise it depends on body
             }
             default {
