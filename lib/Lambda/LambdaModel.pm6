@@ -54,10 +54,6 @@ role LeafTerm does Term {
 
     method children { @() }
     
-    method isFreeUnderBinder(VarT:D $var, VarT:D :$binder --> Bool) {
-        False
-    }
-    
     method alpha-needy-terms(@vars) { @() }
 }
 
@@ -101,12 +97,12 @@ class VarT does LeafTerm {
     method fresh(VarT:T: VarT :$for --> VarT:D) {
         my $n = $for.defined
             ?? AlphaVarT.new(:name('α' ~ $nextAlphaNr), :$for)
-            !! VarT.get(:name('α' ~ $nextAlphaNr));
+            !! VarT.get('α' ~ $nextAlphaNr);
         $nextAlphaNr++;
         $n;
     }
 
-    method get(VarT:T: Str:D :$name --> VarT) {
+    method get(VarT:T: Str:D $name --> VarT) {
         my $out = %namesToVarNodes{$name};
         unless $out.defined {
             $out = VarT.new(:$name);
@@ -251,7 +247,7 @@ class LamT does Term does Applicable does Value {
         # λx.(B x) is an η-redex if x not free in B.
         # If so, it η-contracts to just B.
            ($!body ~~ AppT)
-        && !$!body.func.hasFreeVar($!var)
+        && $!var.isNotFree(:in($!body.func))
         && ($!body.arg ~~ VarT) 
         && ($!body.arg.name ~~ $!var.name)
     }
@@ -302,7 +298,7 @@ class LamT does Term does Applicable does Value {
         my $simp-body = $!body.simplify;
         return ($simp-body ~~ AppT)
             && ($simp-body.arg ~~ VarT) 
-            && !$simp-body.func.hasFreeVar($!var)
+            && $!var.isNotFree(!$simp-body.func)
             && ($simp-body.arg.name ~~ $!var.name)
             ?? $simp-body.func
             # TODO: LamT.simplify: if simplified body doesn't change anything return self
@@ -337,20 +333,10 @@ class DefNode does Term {
     has VarT:D $.symbol;
     has Term:D $.term;
 
+    submethod BUILD(:$!symbol!, :$!term!) {
+    }
+
     method children { @($!symbol, $!term) }
-
-    method hasFreeVar(VarT:D $var --> Bool:D) {
-        # TODO: DefNode.hasFreeVar: once DefNode allows for recursion, do like in LamT.hasFreeVar
-        $!term.hasFreeVar($var);
-    }
-
-    method getFreeVar(Str:D $name --> VarT) {
-        ...
-    }
-
-    method isFreeUnderBinder(VarT:D $var, VarT:D :$binder --> Bool) {
-        ...
-    }
 
     method alpha-needy-terms(@vars) {
         ...
@@ -382,9 +368,9 @@ class DefNode does Term {
 }
 
 
-my $x = VarT.get(:name<x>);
-my $y = VarT.get(:name<y>);
-my $z = VarT.get(:name<z>);
+my $x = VarT.get('x');
+my $y = VarT.get('y');
+my $z = VarT.get('z');
 my $λ = LamT.new(
     :var($x),
     :body(AppT.new( :func($x), :arg($y) ))

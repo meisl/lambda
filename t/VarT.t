@@ -5,7 +5,7 @@ use Lambda::LambdaModel;
 
 plan *;
 
-{
+{ # VarT.fresh
     my $x = VarT.new(:name<x>);
     my $fresh1 = VarT.fresh;
     my $fresh2 = VarT.fresh;
@@ -37,4 +37,17 @@ plan *;
     my $f3name = $fresh3.name;
     ok($fresh4.gist ~~ / $f3name /, ".fresh(:for).gist contains the given var's gist");
     nok($fresh4.name ~~ / $f3name /, ".fresh(:for).name does NOT contain the given var's name");
+}
+
+{ # VarT.get
+    my $x1 = VarT.new(:name<x>);
+    my $x2 = VarT.get('x');
+
+    is($x1, $x2, 'VarT.get(Str:) returns same var for same name');
+    
+    my $y1 = VarT.get('y');
+    isnt($y1, $x1, 'VarT.get(Str:) returns new instance if necessary');
+    is($y1.name, 'y', 'VarT.get(Str:) returns new instance if necessary');
+    my $y2 = VarT.get('y');
+    is($y1, $y2, 'VarT.get(Str:) returns same var for same name');
 }
