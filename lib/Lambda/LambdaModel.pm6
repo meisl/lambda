@@ -3,6 +3,7 @@ use v6;
 use Lambda::MethodFixedPoint;
 use Lambda::Tree;
 use Lambda::FreeVars;
+use Lambda::Substitution;
 
 class ConstT    { ... }
 class VarT      { ... }
@@ -24,12 +25,11 @@ role Applicable {
 role Term
     does Tree
     does MethodFixedPoint
+    does Substitution[Term, ConstT, VarT, AppT, LamT]
     does FreeVars[Term, ConstT, VarT, AppT, LamT]
 {
 
     method alpha-needy-terms(@vars) { !!! }
-
-    method subst(Term:D $newTerm, VarT:D :$for! -->Term) { !!! }
 
     method eval         ($env --> Value) { !!! }
     method eval-s       ( --> Value:D)   { !!! }
@@ -64,8 +64,6 @@ class ConstT does LeafTerm does Value {
 
     submethod BUILD(:$!value!) {
     }
-
-    method subst(Term:D $newTerm, VarT:D :$for! -->Term) { self }
 
     method eval($env) {
         $!value
@@ -109,12 +107,6 @@ class VarT does LeafTerm {
             %namesToVarNodes{$name} = $out;
         }
         return $out;
-    }
-
-    method subst(Term:D $newTerm, VarT:D :$for! -->Term) {
-        ($for.name ne $!name)
-            ?? self
-            !! $newTerm
     }
 
     method eval($env) { $env.lookup($!name) }
@@ -185,14 +177,6 @@ class AppT does Term {
         }
     }
 
-    method subst(Term:D $newTerm, VarT:D :$for! -->Term) {
-        my $newInv = $!func.subst($newTerm, :$for);
-        my $newArg = $!arg.subst($newTerm, :$for);
-        (($newInv !=== $!func) || ($newArg !=== $!arg) )
-            ?? AppT.new(:func($newInv), :arg($newArg))
-            !! self
-    }
-
     method eval($env) {
         my $code = $!func.eval($env);
         $code.apply($!arg.eval($env));
@@ -227,6 +211,10 @@ class LamT does Term does Applicable does Value {
     }
 
     method children { @($!var, $!body) }
+
+    method gist {
+        "(λ$!var." ~ $!body.gist ~ ')';
+    }
 
     method alpha-needy-terms(@vars-to-stay-free) {
         my @wantNot = ($!var.name eq any(@vars-to-stay-free))
@@ -263,17 +251,6 @@ class LamT does Term does Applicable does Value {
         return $!body.isEtaReducible
             ?? LamT.new(:$!var, :body($!body.eta-contract))
             !! self;
-    }
-
-    method subst(Term:D $newTerm, VarT:D :$for! -->Term) {
-        if $for.name eq $!var.name {
-            self;
-        } else {
-            my $newBody = $!body.subst($newTerm, :$for);
-            ($newBody === $!body)
-                ?? self
-                !! LamT.new(:var($!var), :body($newBody));
-        }
     }
 
     method eval($env) {
@@ -318,13 +295,9 @@ class LamT does Term does Applicable does Value {
 
     method apply(Value:D $arg --> Value) {
         say "applying " ~ self ~ " to $arg";
-        my $result = $!body.subst($!var, $arg).eval-s;
+        my $result = $!body.subst($!var, :for($arg)).eval-s;
         say "      -> $result";
         $result;
-    }
-
-    method gist {
-        "(λ$!var." ~ $!body.gist ~ ')';
     }
 
 }
@@ -339,10 +312,6 @@ class DefNode does Term {
     method children { @($!symbol, $!term) }
 
     method alpha-needy-terms(@vars) {
-        ...
-    }
-
-    method subst(Term:D $newTerm, VarT:D :$for! -->Term) {
         ...
     }
 
@@ -377,7 +346,7 @@ my $λ = LamT.new(
 );
 
 say '$λ: ' ~ $λ;
-say '$λ.subst($y, :for($x)): ' ~ $λ.subst($y, :for($x));
-say '$λ.subst($z, :for($y)): ' ~ $λ.subst($z, :for($y));
+#say '$λ.subst($y, :for($x)): ' ~ $λ.subst($y, :for($x));
+#say '$λ.subst($z, :for($y)): ' ~ $λ.subst($z, :for($y));
 
 #say $λ.alpha-convert($z, :for($λ.var));

@@ -3,18 +3,6 @@ use v6;
 
 role FreeVars[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
 
-    method _ {
-        given self {
-            when ConstT {  }
-            when VarT   {  }
-            when AppT   {  }
-            when LamT   {  }
-            default {
-                die "unknown type " ~ .WHAT.perl;
-            }
-        }
-    }
-
     # on VarT only
     method isFree(VarT:D: Term:D :in($t)! --> Bool:D) {
         given $t {
@@ -23,7 +11,7 @@ role FreeVars[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
             when AppT   { self.isFree(:in($t.func)) || self.isFree(:in($t.arg)) }
             when LamT   { ($t.var.name ne self.name) && self.isFree(:in($t.body)) }
             default {
-                die "unknown type " ~ .WHAT.perl;
+                die "unknown type " ~ $t.WHAT.perl;
             }
         }
     }
@@ -49,7 +37,7 @@ role FreeVars[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
                     !! self.isFreeUnder(:$binder, :in($t.body)) # otherwise it depends on the λ's body
             }
             default {
-                die "unknown type " ~ .WHAT.perl;
+                die "unknown type " ~ $t.WHAT.perl;
             }
         }
     }
@@ -60,18 +48,18 @@ role FreeVars[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
                 VarT;
             }
             when VarT {
-                .name eq $name ?? self !! VarT;
+                self.name eq $name ?? self !! VarT;
             }
             when AppT {
-                .func.getFreeVar($name) // .arg.getFreeVar($name);
+                self.func.getFreeVar($name) // .arg.getFreeVar($name);
             }
             when LamT {
-                .var.name eq $name
+                self.var.name eq $name
                     ?? VarT
-                    !! .body.getFreeVar($name);
+                    !! self.body.getFreeVar($name);
             }
             default {
-                die "unknown type " ~ .WHAT.perl;
+                die "unknown type " ~ self.WHAT.perl;
             }
         }
     }
@@ -85,15 +73,15 @@ role FreeVars[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
                  @(self,);
             }
             when AppT {
-                my @left = .func.freeVars;
+                my @left = self.func.freeVars;
                 my $noneOfLeft = @left.map(*.name).none;
-                return @(@left, .arg.freeVars.grep(*.name eq $noneOfLeft));
+                return @(@left, self.arg.freeVars.grep(*.name eq $noneOfLeft));
             }
             when LamT {
-                .body.freeVars.grep(*.name ne .var.name)
+                self.body.freeVars.grep(*.name ne self.var.name)
             }
             default {
-                die "unknown type " ~ .WHAT.perl;
+                die "unknown type " ~ self.WHAT.perl;
             }
         }
     }

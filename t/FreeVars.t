@@ -120,6 +120,10 @@ plan *;
     is($x.isFreeUnder(:binder($y), :in($a3)), False, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
     is($x.isFreeUnder(:binder($z), :in($a3)), False, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
 
+    is($y.isFreeUnder(:binder($x), :in($a4)), True);
+    is($y.isFreeUnder(:binder($y), :in($a4)), False);
+    is($y.isFreeUnder(:binder($z), :in($a4)), False);
+
     is($w.isFreeUnder(:binder($x), :in($a4)), False, $msgNeverIfNotOccurring ~ $msgLam2Lam);
     is($w.isFreeUnder(:binder($y), :in($a4)), False, $msgNeverIfNotOccurring ~ $msgLam2Lam);
     is($w.isFreeUnder(:binder($z), :in($a4)), False, $msgNeverIfNotOccurring ~ $msgLam2Lam);
