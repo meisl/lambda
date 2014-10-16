@@ -11,7 +11,7 @@ plan *;
 
     my $c = ConstT.new(:value('c'));
 
-    my $s = $c.subst($y, :for(Term));
+    my $s = $c.subst($y, :for($x));
     is($c, $s, 'substituting in a ConstT returns just the ConstT');
 
     #$x.substitute($c, :for($x));
