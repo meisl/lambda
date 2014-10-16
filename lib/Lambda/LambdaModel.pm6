@@ -29,11 +29,11 @@ role Term
     does FreeVars[Term, ConstT, VarT, AppT, LamT]
 {
 
-    method alpha-needy-terms(@vars) { !!! }
+    #method alpha-needy-terms(@vars) { !!! }
 
-    method eval         ($env --> Value) { !!! }
-    method eval-s       ( --> Value:D)   { !!! }
-    method simplify     ( --> Term:D)  { !!! }
+    #method eval         ($env --> Value) { !!! }
+    #method eval-s       ( --> Value:D)   { !!! }
+    #method simplify     ( --> Term:D)  { !!! }
 
     # eta reduction (LamT is the only candidate):
     method isEtaRedex       (--> Bool) { False } # η-redex? - ie of form λx.(B x) where x not free in B
@@ -156,7 +156,7 @@ class AppT does Term {
 
     method alpha-problematic {
         return @() unless self.isBetaRedex;
-        $!arg.freeVars.grep({$!func.body.isFreeUnderBinder($!func.var, :binder($_))});
+        $!arg.freeVars.grep({ $!func.var.isFreeUnder(:binder($_), :in($!func.body)) });
     }
 
     method isBetaReducible {
@@ -275,7 +275,7 @@ class LamT does Term does Applicable does Value {
         my $simp-body = $!body.simplify;
         return ($simp-body ~~ AppT)
             && ($simp-body.arg ~~ VarT) 
-            && $!var.isNotFree(!$simp-body.func)
+            && $!var.isNotFree(:in(!$simp-body.func))
             && ($simp-body.arg.name ~~ $!var.name)
             ?? $simp-body.func
             # TODO: LamT.simplify: if simplified body doesn't change anything return self
@@ -302,51 +302,17 @@ class LamT does Term does Applicable does Value {
 
 }
 
-class DefNode does Term {
-    has VarT:D $.symbol;
-    has Term:D $.term;
-
-    submethod BUILD(:$!symbol!, :$!term!) {
-    }
-
-    method children { @($!symbol, $!term) }
-
-    method alpha-needy-terms(@vars) {
-        ...
-    }
-
-    method eval(Any:D $env) {
-        # TODO: DefNode.eval: error on rebind
-        # TODO: DefNode.eval: implement recursion
-        $env.bind($!symbol, $!term.eval($env));
-    }
-
-    method eval-s() {
-        die "cannot eval DefNode";
-    }
-
-    method simplify( --> Term) {
-        # TODO: DefNode.simplify: return self if simplification of term doesn't change anything
-        DefNode.new(:$!symbol, :term($!term.simplify));
-    }
-
-    method gist {
-        "(δ $!symbol " ~ $!term.gist ~ ')';
-    }
-
-}
-
 
 my $x = VarT.get('x');
 my $y = VarT.get('y');
 my $z = VarT.get('z');
-my $λ = LamT.new(
+my $lam = LamT.new(
     :var($x),
     :body(AppT.new( :func($x), :arg($y) ))
 );
 
-say '$λ: ' ~ $λ;
-#say '$λ.subst($y, :for($x)): ' ~ $λ.subst($y, :for($x));
-#say '$λ.subst($z, :for($y)): ' ~ $λ.subst($z, :for($y));
+say '$lam: ' ~ $lam;
+say '$lam.subst($y, :for($x)): ' ~ $lam.subst($y, :for($x));
+say '$lam.subst($z, :for($y)): ' ~ $lam.subst($z, :for($y));
 
-#say $λ.alpha-convert($z, :for($λ.var));
+#say $lam.alpha-convert($z, :for($lam.var));
