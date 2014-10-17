@@ -4,38 +4,128 @@ use Test;
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
-plan 10;
+plan 15;
 
-{ # Term.isEtaRedex
+sub test(Term:D $t, Str:D $desc, &subtests) {
+    subtest {
+        plan *;
+        &subtests($desc, $t)
+    }, $desc;
+}
+
+{
     my $x = λ('x');
-
-    is($x.isEtaRedex, False, "a VarT is not an eta redex");
-
+    my $y = λ('y');
     my $c = ConstT.new(:value('c'));
-    is($c.isEtaRedex, False, "a ConstT is not an eta redex");
-    
-    my $app1 = AppT.new(:func($x), :arg($c));
-    # (x c)
-    is($app1.isEtaRedex, False, "an AppT is not an eta redex (arg ConstT)");
-    
-    my $y = VarT.new(:name<y>);
-    is(λ('(x y)').isEtaRedex, False, "an AppT is not an eta redex (func VarT, arg VarT)");
-    
-    is(λ('((λy.x y) y)').isEtaRedex, False, "an AppT is not an eta redex (func LamT, arg VarT)");
-    
-    my $lam1 = LamT.new(:var($x), :body($c));
+    my ($t, $desc);
+
+    test $x, "a VarT", {
+        is($^t.isEtaRedex,       False, "$^desc is not an eta redex");
+        is($^t.isEtaReducible,   False, "$^desc is not eta-reducible");
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+    };
+
+    test $c, "a ConstT", {
+        is($^t.isEtaRedex,       False, "$^desc is not an eta redex");
+        is($^t.isEtaReducible,   False, "$^desc is not eta-reducible");
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+    };
+
+
     # (λx.c)
-    is($lam1.isEtaRedex, False, "a LamT with body a ConstT is not an eta redex");
+    test LamT.new(:var($x), :body($c)), "a LamT with body a ConstT", {
+        is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
+        is($^t.isEtaReducible,  False, "$^desc is not eta-reducible");
+    };
+
+    test λ('(λx.x)'), "a LamT with body a VarT", {
+        is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
+        is($^t.isEtaReducible,  False, "$^desc is not eta-reducible");
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+    };
     
-    is(λ('(λx.x)').isEtaRedex, False, "a LamT with body a VarT is not an eta redex");
-    
-    my $lam3 = LamT.new(:var($x), :body(AppT.new(:func($x), :arg($c))));
     # (λx.x c)
-    is($lam3.isEtaRedex, False, "a LamT with body an AppT where arg is a ConstT is not an eta redex");
+    test LamT.new(:var($x), :body(AppT.new(:func($x), :arg($c)))), 
+        "a LamT with body an AppT where arg is a ConstT", {
+        is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
+        is($^t.isEtaReducible,  False, "$^desc is not eta-reducible");
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+    };
 
-    is(λ('(λx.x y)').isEtaRedex, False,
-        "a LamT with body an AppT where arg is a VarT other than the lambda's is not an eta redex");
+    test λ('(λx.x y)'), "a LamT with body an AppT where arg is a VarT other than the lambda's", {
+        is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
+        is($^t.isEtaReducible,  False, "$^desc is not eta-reducible");
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+    };
 
-    is(λ('(λx.y x)').isEtaRedex, True,
-        "a LamT with body an AppT where arg is a VarT equal to the lambda's IS an eta redex");
+    test λ('(λx.y x)'), "a LamT with body an AppT where arg is a VarT equal to the lambda's", {
+        is($^t.isEtaRedex,      True,  "$^desc IS an eta redex");
+        is($^t.isEtaReducible,  True,  "$^desc IS eta-reducible");
+        my $ecd = $^t.eta-contract;
+        cmp_ok($ecd, 'eq', λ('y'), "$^desc eta-contracts to the AppT's func");
+    };
+
+    test λ('(λx.x x)'), "a LamT with body an AppT where arg is a VarT equal to the lambda's but free the AppT's func", {
+        is($^t.isEtaRedex,      False,  "$^desc is NOT an eta redex");
+        is($^t.isEtaReducible,  False,  "$^desc is NOT eta-reducible");
+        my $ecd = $^t.eta-contract;
+        cmp_ok($ecd, '===', $^t, "$^desc eta-contracts to itself");
+    };
+
+    test λ('(λx.x λy.x y)'), "a LamT with body an AppT where arg is an eta-redex", {
+        is($^t.isEtaRedex,      False, "$^desc is not itself an eta redex");
+        is($^t.isEtaReducible,  True,  "$^desc is itself eta-reducible");
+        my $ecd = $^t.eta-contract;
+        cmp_ok($ecd, 'eq', λ('λx.x x'), "$^desc eta-contracts the AppT's arg");
+    };
+
+
+    # (x c)
+    test AppT.new(:func($x), :arg($c)), "an AppT (arg:ConstT)", {
+        is($^t.isEtaRedex,       False, "$^desc is not an eta redex");
+        is($^t.isEtaReducible,   False, "$^desc is not eta-reducible");
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+    };
+
+    test λ('(x y)'), "an AppT (func:VarT, arg:VarT)", {
+        is($^t.isEtaRedex,       False, "$^desc is not an eta redex");
+        is($^t.isEtaReducible,   False, "$^desc is not eta-reducible");
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+    };
+
+    test λ('((λy.x y) y)'), "an AppT with an eta-redex as func", {
+        is($^t.isEtaRedex,       False, "$^desc is not itself an eta redex");
+        is($^t.isEtaReducible,   True,  "$^desc IS eta-reducible");
+        my $ecd = $^t.eta-contract;
+        cmp_ok($ecd, 'eq', λ('x y'), "$^desc eta-contracts the func");
+    };
+    
+    test λ('y (λy.x y)'), "an AppT with an eta-redex as arg", {
+        is($^t.isEtaRedex,       False, "$^desc is not itself an eta redex");
+        is($^t.isEtaReducible,   True,  "$^desc IS eta-reducible");
+        my $ecd = $^t.eta-contract;
+        cmp_ok($ecd, 'eq', λ('y x'), "$^desc eta-contracts the arg");
+    };
+    
+    test λ('(λx.y x) (λy.x y)'), "an AppT with both, func and arg eta-redexes", {
+        is($^t.isEtaRedex,       False, "$^desc is not itself an eta redex");
+        is($^t.isEtaReducible,   True,  "$^desc IS eta-reducible");
+        my $ecd1 = $^t.eta-contract;
+        is($ecd1.isEtaReducible,   True,  "$^desc eta-contracts to a still eta-reducible term");
+        # Note: we don't restrict the order in which parts are being contracted
+        my $ecd2 = $ecd1.eta-contract;
+        cmp_ok($ecd2, 'eq', λ('y x'), "$^desc eta-contracts in two steps the func and the arg");
+    };
+    
+    test λ('(λx.(λy.z y) x) '), "a LamT with body an AppT where arg is the lambda's var and func is itself an eta-redex", {
+        is($^t.isEtaRedex,       True,  "$^desc is itself an eta redex");
+        is($^t.isEtaReducible,   True,  "$^desc is eta-reducible");
+        my $ecd1 = $^t.eta-contract;
+        is($ecd1.isEtaReducible,   True,  "$^desc eta-contracts to a still eta-reducible term");
+        # Note: here we do restrict the order to outer-to-inner
+        cmp_ok($ecd1, 'eq', λ('λy.z y'), "$^desc eta-contracts to the inner lambda");
+        my $ecd2 = $ecd1.eta-contract;
+        cmp_ok($ecd2, 'eq', λ('z'), "$^desc eta-contracts in two steps to the inner lambda's func");
+    };
+
 }

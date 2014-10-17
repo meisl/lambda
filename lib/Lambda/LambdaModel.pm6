@@ -25,7 +25,7 @@ role Applicable {
 
 role Term
     does Tree
-    does MethodFixedPoint
+    #does MethodFixedPoint
     does FreeVars[Term, ConstT, VarT, AppT, LamT]
     does Substitution[Term, ConstT, VarT, AppT, LamT]
     does EtaReduction[Term, ConstT, VarT, AppT, LamT]
@@ -37,10 +37,6 @@ role Term
     #method eval-s       ( --> Value:D)   { !!! }
     #method simplify     ( --> Term:D)  { !!! }
 
-    # eta reduction (LamT is the only candidate):
-    method isEtaReducible   (--> Bool) { False } # either self.isEtaRedex or body isEtaReducible
-    method eta-contract     (--> Term) { self  } # one-step η-simplification (either of self or body)
-    method eta-reduce       (--> Term) { self.mfp(*.eta-contract) }
 
     # beta reduction (AppT is the only candidate):
     method isBetaRedex      (--> Bool) { False } # β-redex? - ie of form ((λx.B) z)
@@ -229,19 +225,6 @@ class LamT does Term does Applicable does Value {
 
     method alpha-convert(VarT:D $newVar, VarT:D :$for --> Term) {
        !!!
-    }
-
-    method isEtaReducible {
-        self.isEtaRedex || $!body.isEtaReducible
-    }
-
-    method eta-contract {
-        return $!body.func
-            if self.isEtaRedex;
-
-        return $!body.isEtaReducible
-            ?? LamT.new(:$!var, :body($!body.eta-contract))
-            !! self;
     }
 
     method eval($env) {
