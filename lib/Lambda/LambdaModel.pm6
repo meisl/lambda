@@ -294,16 +294,19 @@ class LamT does Term does Applicable does Value {
 }
 
 
-my $x = VarT.get('x');
-my $y = VarT.get('y');
-my $z = VarT.get('z');
-my $lam = LamT.new(
-    :var($x),
-    :body(AppT.new( :func($x), :arg($y) ))
-);
+class DefNode does Term {
+    has VarT:D $.symbol;
+    has Term:D $.term;
 
-say '$lam: ' ~ $lam;
-say '$lam.subst($y, :for($x)): ' ~ $lam.subst($y, :for($x));
-say '$lam.subst($z, :for($y)): ' ~ $lam.subst($z, :for($y));
+    submethod BUILD(:$!symbol!, :$!term!) {
+    }
+
+    method children { @($!symbol, $!term) }
+
+    method gist {
+        "(δ $!symbol " ~ $!term.gist ~ ')';
+    }
+
+}
 
 #say $lam.alpha-convert($z, :for($lam.var));

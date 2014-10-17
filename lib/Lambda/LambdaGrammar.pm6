@@ -20,6 +20,8 @@ my %texts = %(              # chi: χ0
     10 => '(λa.λb.a) (λf.λx.x) (λf.f)',
 );
 
+
+
 grammar LambdaGrammar {
 
     sub makeLeftAssoc(@operands! where *.elems >= 1, @operators = 0..* --> Term) is export {
@@ -72,7 +74,7 @@ grammar LambdaGrammar {
 
     token variable {
         $<name> = <-[\\αβδλ.()\s]>+
-        { make VarT.get(:name($<name>.Str)) }
+        { make VarT.get($<name>.Str) }
     }
 
     token constant {
@@ -92,15 +94,28 @@ grammar LambdaGrammar {
     }
 }
 
-my sub λ(Str:D $s --> Term) {
-    #use Grammar::Tracer_01_h04;
-    my $out = LambdaGrammar.parse($s).ast;
-    say ConstT.ctorCalls ~ " constructor calls.\n";
-    say "AST:\n$out\n";
-    $out;
+class X::Lambda::SyntaxError is Exception {
+    has Str     $.message;
+    has Match   $.match;
+
+    submethod BUILD(Match:D :$!match) {
+        my $to = $!match.to < 0 ?? $!match.orig.chars + $!match.to !! $!match.to;
+        $to = max($to, 0);
+        $!message = "Syntax error: "
+            ~ ($to == 0 ?? 'HERE>>>' !! $!match.orig.substr(0, $to).perl ~ '<<<HERE>>>')
+            ~ $!match.orig.substr($to).perl;
+    }
 }
 
-{
+my sub λ(Str:D $s --> Term) is export {
+    #use Grammar::Tracer_01_h04;
+    my $match = LambdaGrammar.subparse($s);
+    #say ConstT.ctorCalls ~ " constructor calls.\n";
+    #say "AST:\n$out\n";
+    ($match.ast ~~ Term) && $match.ast || die X::Lambda::SyntaxError.new(:$match)
+}
+
+if False {
     #use Grammar::Tracer_01_h04;
     my grammar G is LambdaGrammar {}
     #my $match = G.doWork(7)[0];
@@ -141,9 +156,9 @@ my sub λ(Str:D $s --> Term) {
     say 'β-redex? '~ $func.isBetaRedex;
     say 'β-reducible? '~ $func.isBetaReducible;
     say 'FV: '~ $func.freeVars;
-    say 'isFreeUnderBinder(x, :binder(z)) ' ~ $func.body.isFreeUnderBinder($func.var, :binder(VarT.get(:name<z>)));
-    say 'isFreeUnderBinder(x, :binder(x)) ' ~ $func.body.isFreeUnderBinder($func.var, :binder(VarT.get(:name<x>)));
-    say 'isFreeUnderBinder(x, :binder(v)) ' ~ $func.body.isFreeUnderBinder($func.var, :binder(VarT.get(:name<v>)));
+    say 'x.isFreeUnder(:binder(z), :in(...)) ' ~ $func.var.isFreeUnder(:binder(VarT.get('z')), :in($func.body));
+    say 'x.isFreeUnder(:binder(x), :in(...)) ' ~ $func.var.isFreeUnder(:binder(VarT.get('x')), :in($func.body));
+    say 'x.isFreeUnder(:binder(v), :in(...)) ' ~ $func.var.isFreeUnder(:binder(VarT.get('v')), :in($func.body));
 
     say $arg;
     say 'β-redex? '~ $arg.isBetaRedex;
