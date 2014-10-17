@@ -19,8 +19,6 @@ role Value {
 
 role Applicable {
     method apply                (Value $arg --> Value:D)    { !!! }
-    method isLiteralIdentity    (           --> Bool:D)     { !!! }
-    method isEquivToIdentity    (           --> Bool:D)     { !!! }
 }
 
 role Term
@@ -35,8 +33,6 @@ role Term
 
     #method eval         ($env --> Value) { !!! }
     #method eval-s       ( --> Value:D)   { !!! }
-    #method simplify     ( --> Term:D)  { !!! }
-
 
     # beta reduction (AppT is the only candidate):
     method isBetaRedex      (--> Bool) { False } # β-redex? - ie of form ((λx.B) z)
@@ -70,10 +66,6 @@ class ConstT does LeafTerm does Value {
         $!value
     }
 
-    method simplify( --> Term) {
-        return self;
-    }
-
     method gist { ~$!value }
 }
 
@@ -105,17 +97,13 @@ class VarT does LeafTerm {
         return $out;
     }
 
+    method gist { ~$!name }
+
     method eval($env) { $env.lookup($!name) }
 
     method eval-s() {
         die "cannot eval unbound var $!name";
     }
-
-    method simplify( --> Term) {
-        return self;
-    }
-
-    method gist { ~$!name }
 }
 
 class AlphaVarT is VarT {
@@ -136,6 +124,8 @@ class AppT does Term {
     }
 
     method children { @($!func, $!arg) }
+
+    method gist { '(' ~ $!func.gist ~ ' ' ~ $!arg.gist ~ ')' }
 
     method alpha-needy-terms(@vars) {
         @($!func.alpha-needy-terms(@vars), $!arg.alpha-needy-terms(@vars))
@@ -185,18 +175,6 @@ class AppT does Term {
         say "        -> " ~ $result;
         $result;
     }
-
-    method simplify( --> Term) {
-        # TODO: AppT.simplify: memoize or do simplify in constructor
-        # TODO: AppT.simplify: return self if simplification of both, func and arg didn't change anything
-        my $simp-inv = $!func.simplify;
-        my $simp-arg = $!arg.simplify;
-        return ($simp-inv ~~ Applicable) && $simp-inv.isLiteralIdentity
-            ?? $simp-arg
-            !! AppT.new(:func($simp-inv), :arg($simp-arg));
-    }
-
-    method gist { '(' ~ $!func.gist ~ ' ' ~ $!arg ~ ')' }
 }
 
 class LamT does Term does Applicable does Value {
@@ -209,7 +187,7 @@ class LamT does Term does Applicable does Value {
     method children { @($!var, $!body) }
 
     method gist {
-        "(λ$!var." ~ $!body.gist ~ ')';
+        '(λ' ~ $!var.gist ~ '.' ~ $!body.gist ~ ')';
     }
 
     method alpha-needy-terms(@vars-to-stay-free) {
@@ -238,34 +216,6 @@ class LamT does Term does Applicable does Value {
         say "evaluating " ~ self ~ ' (self-evaluating)';
         return self;
     }
-
-    method simplify( --> Term) {
-        self.simplify-curry;
-    }
-
-    # eta-reduction
-    method simplify-curry( --> Term) {
-        # TODO: LamT.simplify: memoize or simplify in ctor
-        my $simp-body = $!body.simplify;
-        return ($simp-body ~~ AppT)
-            && ($simp-body.arg ~~ VarT) 
-            && $!var.isNotFree(:in(!$simp-body.func))
-            && ($simp-body.arg.name ~~ $!var.name)
-            ?? $simp-body.func
-            # TODO: LamT.simplify: if simplified body doesn't change anything return self
-            !! LamT.new(:$!var, :body($simp-body))
-        ;
-    }
-
-    method isEquivToIdentity (--> Bool:D) {
-        !!! 
-        # self.BetaEtaReduce.isLiteralIdentity
-    }
-
-    method isLiteralIdentity (--> Bool:D) {
-        ($!body ~~ VarT) && ($!var.name eq $!body.name);
-    }
-
 
     method apply(Value:D $arg --> Value) {
         say "applying " ~ self ~ " to $arg";
