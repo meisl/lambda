@@ -4,6 +4,7 @@ use Lambda::MethodFixedPoint;
 use Lambda::Tree;
 use Lambda::FreeVars;
 use Lambda::Substitution;
+use Lambda::EtaReduction;
 
 class ConstT    { ... }
 class VarT      { ... }
@@ -25,8 +26,9 @@ role Applicable {
 role Term
     does Tree
     does MethodFixedPoint
-    does Substitution[Term, ConstT, VarT, AppT, LamT]
     does FreeVars[Term, ConstT, VarT, AppT, LamT]
+    does Substitution[Term, ConstT, VarT, AppT, LamT]
+    does EtaReduction[Term, ConstT, VarT, AppT, LamT]
 {
 
     #method alpha-needy-terms(@vars) { !!! }
@@ -36,7 +38,6 @@ role Term
     #method simplify     ( --> Term:D)  { !!! }
 
     # eta reduction (LamT is the only candidate):
-    method isEtaRedex       (--> Bool) { False } # η-redex? - ie of form λx.(B x) where x not free in B
     method isEtaReducible   (--> Bool) { False } # either self.isEtaRedex or body isEtaReducible
     method eta-contract     (--> Term) { self  } # one-step η-simplification (either of self or body)
     method eta-reduce       (--> Term) { self.mfp(*.eta-contract) }
@@ -51,9 +52,8 @@ role Term
 
 
 role LeafTerm does Term {
-
     method children { @() }
-    
+
     method alpha-needy-terms(@vars) { @() }
 }
 
@@ -229,15 +229,6 @@ class LamT does Term does Applicable does Value {
 
     method alpha-convert(VarT:D $newVar, VarT:D :$for --> Term) {
        !!!
-    }
-
-    method isEtaRedex {
-        # λx.(B x) is an η-redex if x not free in B.
-        # If so, it η-contracts to just B.
-           ($!body ~~ AppT)
-        && $!var.isNotFree(:in($!body.func))
-        && ($!body.arg ~~ VarT) 
-        && ($!body.arg.name ~~ $!var.name)
     }
 
     method isEtaReducible {

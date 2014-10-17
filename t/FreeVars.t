@@ -3,7 +3,7 @@ use v6;
 use Test;
 use Lambda::LambdaModel;
 
-plan *;
+plan 65;
 
 { # VarT.isFree(:$in!)
     my $x = VarT.new(:name<x>);

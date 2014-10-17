@@ -3,7 +3,7 @@ use v6;
 use Test;
 use Lambda::LambdaModel;
 
-plan *;
+plan 26;
 
 {
     dies_ok({ VarT.new }, 

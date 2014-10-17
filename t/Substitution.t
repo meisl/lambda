@@ -3,7 +3,7 @@ use v6;
 use Test;
 use Lambda::LambdaModel;
 
-plan *;
+plan 4;
 
 { # Term.subst($what, :for)
     my $x = VarT.new(:name<x>);

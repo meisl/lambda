@@ -3,7 +3,7 @@ use v6;
 use Test;
 use Lambda::LambdaModel;
 
-plan *;
+plan 20;
 
 { # VarT.fresh
     my $x = VarT.new(:name<x>);
