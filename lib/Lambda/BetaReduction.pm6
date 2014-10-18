@@ -47,6 +47,7 @@ role BetaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT]
                 return self
                     unless self.isBetaReducible;
                 if (self.isBetaRedex) {
+                    my $out;
                     my $for = self.func.var;
                     my $in  = self.func.body;
                     my $what = self.arg;
@@ -55,8 +56,9 @@ role BetaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT]
                     if @alpha-problematic.elems > 0 {
                         die "Cannot alpha-convert for " ~ @alpha-problematic ~ " yet.";
                     } else {
-                        $in.subst($what, :$for);
+                        $out = $in.subst($what, :$for);
                     }
+                    return $out.Str eq self.Str ?? self !! $out;
                 } elsif self.func.isBetaReducible {
                     return AppT.new(:func(self.func.beta-contract), :arg(self.arg));
                 } elsif self.arg.isBetaReducible {

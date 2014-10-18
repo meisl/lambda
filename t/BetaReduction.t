@@ -4,7 +4,7 @@ use Test;
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
-plan 60;
+plan 65;
 
 sub test(Term:D $t, Str:D $desc, &tests) {
     #subtest {
@@ -161,8 +161,31 @@ sub test(Term:D $t, Str:D $desc, &tests) {
 
 }
 
+# [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
+{
+    my $omegaX = λ('λx.x x');
+    my $OmegaXX = AppT.new(:func($omegaX), :arg($omegaX));
+
+    my $OmegaXX-contracted-once = $OmegaXX.beta-contract;
+
+    cmp_ok($OmegaXX-contracted-once, '===', $OmegaXX,
+        "beta-contracting '$OmegaXX' should yield same instance after 1st step");
+
+    my $omegaY = λ('λy.y y');
+    my $OmegaYY = AppT.new(:func($omegaY), :arg($omegaY));
+    my $OmegaXY = AppT.new(:func($omegaX), :arg($omegaY));
+    my $OmegaXY-contracted-once = $OmegaXY.beta-contract;
+    my $OmegaXY-contracted-twice = $OmegaXY-contracted-once.beta-contract;
+
+    cmp_ok($OmegaXY-contracted-twice, '===', $OmegaXY-contracted-once,
+        "beta-contracting '$OmegaXY' should yield same instance after 2nd step");
+
+    is($OmegaXX.beta-reduce, $OmegaXX, "beta-reduce should terminate for $OmegaXX");
+    is($OmegaXY.beta-reduce, $OmegaYY, "beta-reduce should terminate for $OmegaXY");
+}
+
 # examples requiring alpha-conversion before substitution:
-todo {
+skip {
 
     test λ('(λx.x ((λy.λz.y x) (x y z)))'), "a LamT with body an AppT where arg is a beta-redex", {
         is($^t.isBetaRedex,      False, "$^desc is not itself a beta redex");
