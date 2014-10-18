@@ -80,13 +80,13 @@ Also note: the process of substitution as described here is over-simplified. Car
 #### Finally, the meaning of single variables like `x`:
 Quite interestingly, this part of the definition - which looks most simple and innocent - may well be the hardest to wrap your head around...
 
-OK, let's see what we have. We had assumed "a set `V` of symbols" - but did not say anything about what they would stand for.
+OK, let's see what we have. We had assumed "a set `V` of symbols" - but did not say anything about what those symbols would stand for.
 In other words: we left them *uninterpreted*. That (exactly) is what makes our calculus "pure".
 
 There are other versions where there's a set of *atoms* which is the union of a set of (uninterpreted) variables as before
 **plus** a set of "constants", which are *interpreted* symbols. We might want, for example, have `0` stand for the number zero, `1` for the number one, ... and maybe also `True` stand for truth, `False` for falsehood etc...
 Of course we would require that the set of variables (a set of symbols, remember) is *disjoint* from the set of constants (a set of symbols, too), in order to not get confused.
-In such a version of the calculus - which is then called an "applied λ calculus" - we would change the definition and allow an *atom* whereever we required a *variable* before.
+In such a version of the calculus - which is then called an "applied λ calculus" - we would change the definition and allow an *atom* whereever we had required a *variable* before.
 
 
 
