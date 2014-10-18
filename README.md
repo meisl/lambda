@@ -64,8 +64,9 @@ Anyways, please try now to evaluate, step by step, the expressions mentioned in 
 **To summarize "Application":**
 
 Given an application `(f x)` where `f` is an abstraction (a "λ", for short), we can evaluate/"simplify" it like so:
-Let's say the λ's variable is `y` (it may as well be `x`). Take the λ's body replace every occurence of `y` therein
-with whatever term is `x` (which may well be just `x`).
+Let's say the λ's variable is `y` (it may as well be `x`).
+Now take the λ's body and replace every occurence of `y` therein with whatever term is `x`
+(which may well be just `x`).
 The result of the evaluation/"simplification" is then just the body after that substitution.
 
 In case `f` is not an abstraction - well, then so be it. We then cannot "simplify" the given application any further and simply leave it as is.
@@ -74,7 +75,10 @@ In case `f` is not an abstraction - well, then so be it. We then cannot "simplif
 
 Note: "simplify" was put in quotes here because there exist cases where the result does not at all look "simpler" after the fact, as we'll see.
 
-Also note: the process of substitution as described here is over-simplified. Care must be taken for special cases, which will be covered in β-reduction/α-conversion.
+Also note: the process of substitution as described here is over-simplified. Care must be taken for special cases,
+and further conditions must be placed on "occurence of `y` therein".
+All these subtleties don't have any "magic" to them, they're just complicated.
+We'll cover them in β-reduction/α-conversion.
 
 
 #### Finally, the meaning of single variables like `x`:
