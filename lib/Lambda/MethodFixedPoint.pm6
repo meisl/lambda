@@ -15,9 +15,9 @@ role MethodFixedPoint {
         ($start, &method ... $endCondition).pop;
     }
 
-    method _mfp(&method, $start = self) {
-        my ($x, $y) = $start;
-        $x = $y until $x === ($y = &method($x));
-        $x;
-    }
+    #method _mfp(&method, $start = self) {
+    #    my ($x, $y) = $start;
+    #    $x = $y until $x === ($y = &method($x));
+    #    $x;
+    #}
 }

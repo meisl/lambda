@@ -4,7 +4,7 @@ use Lambda::MethodFixedPoint;
 
 
 role EtaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT]
-    does MethodFixedPoint
+    #does MethodFixedPoint
 {
 
     # η-redex? - ie of form λx.(B x) where x not free in B
@@ -32,7 +32,7 @@ role EtaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT]
         self.isEtaRedex || ?self.children.map(*.isEtaReducible).any;
     }
 
-    # one-step η-simplification (either of self or body)
+    # one-step η-simplification (either of self or any (one) child)
     method eta-contract() {
         given self {
             when ConstT { self }

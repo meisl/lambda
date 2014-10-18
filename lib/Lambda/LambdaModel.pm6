@@ -5,6 +5,7 @@ use Lambda::Tree;
 use Lambda::FreeVars;
 use Lambda::Substitution;
 use Lambda::EtaReduction;
+use Lambda::BetaReduction;
 
 class ConstT    { ... }
 class VarT      { ... }
@@ -23,22 +24,17 @@ role Applicable {
 
 role Term
     does Tree
-    #does MethodFixedPoint
+    does MethodFixedPoint
     does FreeVars[Term, ConstT, VarT, AppT, LamT]
     does Substitution[Term, ConstT, VarT, AppT, LamT]
     does EtaReduction[Term, ConstT, VarT, AppT, LamT]
+    does BetaReduction[Term, ConstT, VarT, AppT, LamT]
 {
 
     #method alpha-needy-terms(@vars) { !!! }
 
     #method eval         ($env --> Value) { !!! }
     #method eval-s       ( --> Value:D)   { !!! }
-
-    # beta reduction (AppT is the only candidate):
-    method isBetaRedex      (--> Bool) { False } # β-redex? - ie of form ((λx.B) z)
-    method isBetaReducible  (--> Bool) { False } # either self.isBetaRedex or func is or arg is
-    method beta-contract    (--> Term) { self  } # one-step β-simplification (either of self or inv or arg)
-    method beta-reduce      (--> Term) { self.mfp(*.beta-contract) }
 
 }
 
@@ -131,36 +127,9 @@ class AppT does Term {
         @($!func.alpha-needy-terms(@vars), $!arg.alpha-needy-terms(@vars))
     }
 
-    method isBetaRedex {
-        # (P Q) is a β-redex if P is of form (λx.B).
-        # If so, it β-contracts to [P/x] B, ie P substituted for x
-        # in the λ's body but beware: any free var in P
-        # must NOT be accidentally captured by a binding in B.
-        # If that would be the case, we need to α-convert before.
-        ($!func ~~ LamT)
-    }
-
     method alpha-problematic {
         return @() unless self.isBetaRedex;
         $!arg.freeVars.grep({ $!func.var.isFreeUnder(:binder($_), :in($!func.body)) });
-    }
-
-    method isBetaReducible {
-        self.isBetaRedex
-        || $!func.isBetaReducible
-        || $!arg.isBetaReducible
-    }
-
-    method beta-contract {
-        return self unless self.isBetaReducible;
-
-        if (self.isBetaRedex) {
-            !!!
-        } elsif $!func.isBetaReducible {
-            return AppT.new(:func($!func.beta-contract), :$!arg);
-        } elsif $!arg.isBetaReducible {
-            return AppT.new(:$!func, :arg($!arg.beta-contract));
-        }
     }
 
     method eval($env) {

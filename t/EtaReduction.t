@@ -146,7 +146,7 @@ sub test(Term:D $t, Str:D $desc, &tests) {
         cmp_ok($erd, 'eq', λ('y x'), "$^desc eta-reduces to the func's and arg's eta-reduction, resp.");
     };
     
-    test λ('(λx.(λy.z y) x) '), "a LamT with body an AppT where arg is the lambda's var and func is itself an eta-redex", {
+    test λ('(λx.(λy.z y) x) '), "a LamT with body an AppT where arg is the lambda's var and func an eta-redex", {
         is($^t.isEtaRedex,       True,  "$^desc is itself an eta redex");
         is($^t.isEtaReducible,   True,  "$^desc is eta-reducible");
         my $ecd1 = $^t.eta-contract;
