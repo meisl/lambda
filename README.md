@@ -29,7 +29,7 @@ But, as you will guess, we can attach meaning to it - in a quite straightforward
 
 #### Let's start bottom-up, with Abstraction, `(λx.t)`:
 This is intended to denote ***functions***.
-Eg `(λx.x)` would be the identity function: whatever you pass in - you'll get back.
+Eg `(λx.x)` would be the *identity* function: whatever you pass in - you'll get back.
 Different is `(λx.y)` which *always* gives you back `y`, no matter what's passed in.
 
 Another one is `(λx.(λy.x))`: this looks a bit more daunting but you can think of it
