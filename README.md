@@ -14,7 +14,7 @@ Well, that's all about it! ...at least for the syntax :)
 
 ---
 
-Note that `f`/`t` or `x`/`t`, respectively, as mentioned in the last two pts *need NOT be distinct*.
+Note that `f`/`t` or `x`/`t`, respectively, as mentioned in the last two pts, *need NOT be distinct*.
 
 Also note that we just (silently) assumed that none of the special characters `λ`, `.`, `(`, `)` and ` ` (whitespace)
 is &isin; `V`, ie. they're not valid symbols (and thus no valid λ-terms either) *in themselves*.
