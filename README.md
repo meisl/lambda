@@ -66,7 +66,9 @@ Anyways, please try now to evaluate, step by step, the expressions mentioned in 
 Given an application `(f x)` where `f` is an abstraction (a "λ", for short), we can evaluate/"simplify" it like so:
 Let's say the λ's variable is `y` (it may as well be `x`). Take the λ's body replace every occurence of `y` therein
 with whatever term is `x` (which may well be just `x`).
-The result of the evaluation/"simplification" is just the body after that substitution.
+The result of the evaluation/"simplification" is then just the body after that substitution.
+
+In case `f` is not an abstraction - well, then so be it. We then cannot "simplify" the given application any further and simply leave it as is.
 
 ---
 
