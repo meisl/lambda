@@ -40,7 +40,7 @@ figure out, step by step, what `(((λx.(λy.x)) u) v)` results in - and you will
 Similarly, `(λx.(λy.y))` selects the *second* of the two arguments you give it. Again, after
 the next paragraph, try to figure out the result of `(((λx.(λy.y)) u) v)`.
 
-**To summarize (and abstract!) "Abstraction":**
+**To summarize "Abstraction":**
 
 We use `λ` followed by a variable &isin; `V` followed by a `.` followed by some λ-term called the "body" 
 in order to define a function.
