@@ -76,7 +76,7 @@ In case `f` is not an abstraction - well, then so be it. We then cannot "simplif
 Note: "simplify" was put in quotes here because there exist cases where the result does not at all look "simpler" after the fact, as we'll see.
 
 Also note: the process of substitution as described here is over-simplified. Care must be taken for special cases,
-and further conditions must be placed on "occurence of `y` therein".
+and further conditions must be placed on "every occurence of `y` therein".
 All these subtleties don't have any "magic" to them, they're just complicated.
 We'll cover them in β-reduction/α-conversion.
 
