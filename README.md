@@ -73,7 +73,7 @@ In case `f` is not an abstraction - well, then so be it. We then cannot "simplif
 
 ---
 
-Note: "simplify" was put in quotes here because there exist cases where the result does not at all look "simpler" after the fact, as we'll see.
+Note: "simplify" appears in quotes here because there exist cases where the result does not at all look "simpler" after the fact, as we'll see. We'll have to rigorously define what is meant by "simpler". Particularly, it will not, in general, coincide with "shorter".
 
 Also note: the process of substitution as described here is over-simplified. Care must be taken for special cases,
 and further conditions must be placed on "every occurence of `y` therein".
