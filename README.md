@@ -49,7 +49,7 @@ What the function does (returns) is determined by where (and if at all) the vari
 
 #### Next comes the meaning of Application, `(f t)`:
 This is intended to capture the meaning of "***applying a function***", which simply is passing an *argument* to a function (represented by an abstraction, as above) - and retrieving what it returns.
-Recall that `f` is required to be a λ-term (that is, NOT restricted to variables only).
+Recall that `f` can be an arbitrary λ-term (that is, NOT restricted to variables only).
 
 It could, for example, be the identity function `(λx.x)`, as in `((λx.x) t)`.
 Of course, the result of applying the identity function to `t` - is just `t`.
