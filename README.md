@@ -29,7 +29,7 @@ But, as you will guess, we can attach meaning to it - in a quite straightforward
 
 #### Let's start bottom-up, with Abstraction, `(λx.t)`:
 This is intended to denote ***functions***.
-Eg `(λx.x)` would be the *identity* function: whatever you pass in - you'll get back.
+Eg `(λx.x)` would be the *identity* function: whatever you pass in - you'll get back the same.
 Different is `(λx.y)` which *always* gives you back `y`, no matter what's passed in.
 
 Another one is `(λx.(λy.x))`: this looks a bit more daunting but you can think of it
@@ -44,32 +44,34 @@ the next paragraph, try to figure out the result of `(((λx.(λy.y)) u) v)`.
 
 We use `λ` followed by a variable &isin; `V` followed by a `.` followed by some λ-term called the "body" 
 in order to define a function.
-What the function does (returns) is determined by where (and if at all) the variable occurs in the body.
+What the function does ("returns") is determined by where (and if at all) the variable occurs in the body.
 
 
 #### Next comes the meaning of Application, `(f t)`:
-This is intended to capture the meaning of "***applying a function***", which simply is passing an *argument* to a function (represented by an abstraction, as above) - and retrieving what it returns.
-Recall that `f` can be an arbitrary λ-term (that is, NOT restricted to variables only).
+This is intended to capture the meaning of "***applying a function***", which is simply passing an *argument* to a function (represented by an abstraction, as above) - and retrieving what it returns.
+Recall that `f` can be an arbitrary λ-term (that is, it's NOT restricted to just variables).
 
-It could, for example, be the identity function `(λx.x)`, as in `((λx.x) t)`.
+`f` could, for example, be the identity function `(λx.x)`, as in `((λx.x) t)`.
 Of course, the result of applying the identity function to `t` - is just `t`.
 
 What about `((λx.y) t)`? Well, as we said before, `(λx.y)` always gives you back `y`, no matter what's passed in.
 Hence, the result of this application is `y`, and `t` is "thrown away" (whatever `y` is we simply don't care).
 
 You know what? Congratulations!
-You are now equipped with all the essentials. The rest basically is "mechanics", in the sense that disciplined logical thinking will sooner or later lead you to it, no need for being a genius. Well, mostly...
+
+You are now equipped with all the essentials. The rest basically is "mechanics", in the sense that disciplined logical thinking will sooner or later lead you to it, no need for being a genius. Well, for the most part...
+
 Anyways, please try now to evaluate, step by step, the expressions mentioned in the previous paragraph, `(((λx.(λy.x)) u) v)` and `(((λx.(λy.y)) u) v)`.
 
 **To summarize "Application":**
 
 Given an application `(f x)` where `f` is an abstraction (a "λ", for short), we can evaluate/"simplify" it like so:
-Let's say the λ's variable is `y` (it may as well be `x`).
-Now take the λ's body and replace every occurence of `y` therein with whatever term is `x`
-(which may well be just `x`).
+Let's say the λ's variable is `y` (it may as well be `x` but let's use `y` instead in order to reduce confusion).
+Now take the λ's body and replace every occurence of `y` therein with `x`
+(ie: with whatever term is `x` - which may well be just `x` itself).
 The result of the evaluation/"simplification" is then just the body after that substitution.
 
-In case `f` is not an abstraction - well, then so be it. We then cannot "simplify" the given application any further and simply leave it as is.
+If `f` is not an abstraction - well, then so be it. In that case we cannot "simplify" any further and leave things as they are.
 
 ---
 
@@ -77,7 +79,7 @@ Note: "simplify" appears in quotes here because there exist cases where the resu
 
 Also note: the process of substitution as described here is over-simplified. Care must be taken for special cases,
 and further conditions must be placed on "every occurence of `y` therein".
-All these subtleties don't have any "magic" to them, they're just complicated.
+All these subtleties don't have any "magic" to them, they're just a bit complicated.
 We'll cover them in β-reduction/α-conversion.
 
 
@@ -92,12 +94,24 @@ There are other versions where there's a set of *atoms* which is the union of a 
 Of course we would require that the set of variables (a set of symbols, remember) is *disjoint* from the set of constants (a set of symbols, too), in order to not get confused.
 In such a version of the calculus - which is then called an "applied λ calculus" - we would change the definition and allow an *atom* whereever we had required a *variable* before.
 
+Anyways - crazy as it may appear at first sight - the very essence of being a "variable" really ***is*** to be left uninterpreted!
+Their chief use is as placeholders, most prominently directly after a `λ`, followed by a `.`.
+They serve to "get a grip" on something you don't know yet, and that grip you get simply by giving it a name.
+For now you should think of a variable as (a name for) something which has an arbitary (= currently unknown) *but fixed* value. That is, the only "variation" there is to a variable is due to *your* (current/local) lack of knowledge, 
+and in no way intrinsic to the term "variable" itself.
+
+**To summarize the meaning of "Variables":**
+
+Well, in fact we don't need any meaning for them, as it turns out.
+Their whole purpose is to stand for something we don't know (yet) so we can talk about (what to do with) that something we don't know (yet).
+Disturbing and viciously circular as all this may appear at the moment,
+we'll see how well everthing works out, even with this ultimately reduced "set of tools".
 
 
-### What to do with it?
+### Now, what can we do with all that (or: "so little")?
 
 The short answer is: **everything**!
-Well, at least as far as *computation* is concerned. But hey, isn't that already quite a bit? Moreover, there's overwhelming evidence that "this is it" - and all of it.
+Well, at least as far as *computation* is concerned. But hey, that's quite a bit, isn't it? Moreover, there's overwhelming evidence that "this is it" - and all of it.
 
 So here's the thing:
 
