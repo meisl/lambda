@@ -77,9 +77,9 @@ If `f` is not an abstraction - well, then so be it. In that case we cannot "simp
 
 Note: "simplify" appears in quotes here because there exist cases where the result does not at all look "simpler" after the fact, as we'll see. We'll have to rigorously define what is meant by "simpler". Particularly, it will not, in general, coincide with "shorter".
 
-Also note: the process of substitution as described here is over-simplified. Care must be taken for special cases,
+Also note: the process of substitution as described above is over-simplified. Care must be taken for special cases,
 and further conditions must be placed on "every occurence of `y` therein".
-All these subtleties don't have any "magic" to them, they're just a bit complicated.
+However, all these subtleties don't have any "magic" to them, they're just a bit complicated.
 We'll cover them in β-reduction/α-conversion.
 
 
