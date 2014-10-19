@@ -96,7 +96,7 @@ In such a version of the calculus - which is then called an "applied λ calculus
 
 Anyways - crazy as it may appear at first sight - the very essence of being a "variable" really ***is*** to be left uninterpreted!
 Their chief use is as placeholders, most prominently directly after a `λ`, followed by a `.`.
-They serve to "get a grip" on something you don't know yet, and that grip you get simply by giving it a name.
+They serve to "get a grip" on something which you don't know yet, and that grip you get simply by giving it a name.
 For now you should think of a variable as (a name for) something which has an arbitary (= currently unknown) *but fixed* value. That is, the only "variation" there is to a variable is due to *your* (current/local) lack of knowledge, 
 and in no way intrinsic to the term "variable" itself.
 
