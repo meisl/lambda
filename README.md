@@ -130,7 +130,7 @@ A power that has led to the construction of the highly complex information proce
 
 [OMG...maybe a little less pathetic?!]
 
-We'll talk about the "how-to" of ***all of computation*** (yes, really!) with nothing but the pure λ calculus next.
+We'll talk about the ***how-to of all of computation*** (yes, really!) with nothing but the pure λ calculus next.
 
 
 
