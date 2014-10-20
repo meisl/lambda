@@ -1,13 +1,19 @@
 use v6;
 
 use Test;
+use Test::Util;
 use Lambda::Base;
 
-plan 10;
+plan 14;
 
 {
-    dies_ok({ $id    = 0 }, '$id is immutable');
-    dies_ok({ $const = 0 }, '$const is immutable');
+    dies_ok { $id   = 0 },    '$id is immutable';
+    does_ok   $id,  lambda,   '$id';
+    does_ok   $id,  name,     '$id';
+
+    dies_ok { $const  = 0 },  '$const is immutable';
+    does_ok   $const, lambda, '$const';
+    does_ok   $const, name,   '$const';
 }
 
 {
@@ -17,11 +23,11 @@ plan 10;
 }
 
 {
-    is $const("x")(5), "x", 'const("x")(5)';
-    is $const(5)(23), 5, 'const(5)(23)';
-    is $const(42).Str, "λy.42", 'const(42).Str';
-    is $const($id)(23), $id, 'const(id)(23)';
-    is $const($id).Str, 'λy.' ~ $id.Str, 'const($id).Str';
+    is $const('x')(5),  'x',        'const("x")(5)';
+    is $const(5)(23),   5,          'const(5)(23)';
+    is $const(42).Str,  '(λy.42)',  'const(42).Str';
+    is $const($id)(23), $id,        'const(id)(23)';
+    is $const($id).Str, "(λy.$id)", 'const($id).Str';
 }
 
 {
