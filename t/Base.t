@@ -3,7 +3,7 @@ use v6;
 use Test;
 use Lambda::Base;
 
-plan 6;
+plan 8;
 
 {
     is $id("x"), "x", 'id("x")';
