@@ -3,7 +3,12 @@ use v6;
 use Test;
 use Lambda::Base;
 
-plan 8;
+plan 10;
+
+{
+    dies_ok({ $id    = 0 }, '$id is immutable');
+    dies_ok({ $const = 0 }, '$const is immutable');
+}
 
 {
     is $id("x"), "x", 'id("x")';

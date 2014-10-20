@@ -13,12 +13,12 @@ sub lambdaFn(Str $name, Str:D $lambdaExpr, &f) is export {
 }
 
 
-our $id is export = lambdaFn(
+constant $id is export = lambdaFn(
     'id', 'λx.x',
     -> $x { $x }
 );
 
-our $const is export = lambdaFn(
+constant $const is export = lambdaFn(
     'const', 'λx.λy.x',
     -> $b { lambdaFn(Str, "λy.$b", -> $y { $b }) }
 );
