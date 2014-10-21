@@ -61,7 +61,8 @@ constant $car is export = lambdaFn(
 );
 
 constant $cdr is export = lambdaFn(
-    'cdr', 'λxs.if (nil? xs) (error "cannot get cdr of nil") (xs sel3of3)',
+    #'cdr', 'λxs.if (nil? xs) (error "cannot get cdr of nil") (xs sel3of3)',
+    'cdr', 'λxs.((nil? xs) (λ_.error "cannot get cdr of nil") (λ_.xs sel3of3)) _',
     -> TList:D $xs {
             $_if($is-nil($xs),
             {die "cannot get cdr of nil"},
@@ -81,21 +82,39 @@ sub cadddr(TList:D $xs) is export { $car(cdddr($xs)) }
 
 # functions on TList
 
-# (δ foldl λf.λacc.λxs (if (nil? xs) acc (foldl f (f acc (car xs)) (cdr xs))))
-sub foldl(&f, $acc, TList:D $xs) is export {
-    $_if($is-nil($xs),
-        {$acc},
-        {foldl(&f, &f($car($xs), $acc), $cdr($xs))})
-}
+# we have to go through some extra hoops since this one's recursive
+# (and we cannot use recursive references with constant declarations)
+constant $yfoldl is export = -> {
+    my $_foldl = -> &f, $acc, TList:D $xs {
+        $_if( $is-nil($xs),
+            { $acc },
+            { $_foldl(&f, &f($car($xs), $acc), $cdr($xs)) })   # TODO: swap args to f
+    };
+    lambdaFn(
+        'foldl',          'λf.λacc.λxs (if (nil? xs) acc (foldl f (f acc (car xs)) (cdr xs)))',
+        #'foldl', 'Y λself.λf.λacc.λxs (if (nil? xs) acc (self f (f acc (car xs)) (cdr xs)))',
+        $_foldl
+    );
+}();
 
-# (δ reverse (foldl cons nil))
-sub reverse(TList:D $xs) is export {
-    foldl($cons, $nil, $xs);
-}
+# Or we could use the Y combinator:
+constant $foldl is export = lambdaFn(
+    'foldl', 'Y λself.λf.λacc.λxs (if (nil? xs) acc (self f (f acc (car xs)) (cdr xs)))',
+    $Y(-> $self {
+        -> $f, $acc, $xs {
+            $_if( $is-nil($xs),
+                { $acc },
+                { $self($f, $f($car($xs), $acc), $cdr($xs)) })    }    })   # TODO: swap args to f
+);
+
+constant $reverse is export = lambdaFn(
+    'reverse', '(foldl cons nil)',
+    -> $xs { $foldl($cons, $nil, $xs) }
+);
 
 # (δ foldr λf.λacc.λxs.foldl f acc (reverse xs))
 sub foldr(&f, $acc, TList:D $xs) is export {
-    foldl(&f, $acc, reverse($xs));
+    $foldl(&f, $acc, $reverse($xs));
 }
 
 # (δ foldr-rec λf.λacc.λxs.(if (nil? xs) acc (f (car xs) (foldr-rec f acc (cdr xs))))))
@@ -111,7 +130,7 @@ sub map-rev-iter($result, &f, TList:D $xs) {
 #    $is-nil($xs)
 #        ?? $result
 #        !! map-rev-iter(cons(&f($car($xs)), $result), &f, $cdr($xs));
-    foldl(-> $x, $acc { $cons(&f($x), $acc) }, $nil, $xs);
+    $foldl(-> $x, $acc { $cons(&f($x), $acc) }, $nil, $xs);
 }
 
 # (δ map-iter λf.foldr (λx.cons (f x)) nil)
@@ -127,19 +146,19 @@ sub map-rec(&f, TList:D $xs) {
 }
 
 sub map(&f, TList:D $xs) is export {
-    #reverse(map-rev-iter($nil, &f, $xs));
+    #$reverse(map-rev-iter($nil, &f, $xs));
     map-iter(&f, $xs);
     #map-rec(&f, $xs);
 }
 
 # (δ length λxs.foldl (λ_.λn.+ n 1) 0 xs)
 sub length(TList:D $xs) is export {
-    foldl(-> $_, $n { $n + 1 }, 0, $xs)
+    $foldl(-> $_, $n { $n + 1 }, 0, $xs)
 }
 
 # (δ filter λp.foldr (λx.λacc.($_if (p x) λ_.(cons x acc) λ_.acc)) nil)
 sub filter(&predicate, TList:D $xs) is export {
-    foldr-rec(
+    foldr(
         -> $x, $acc {
             $_if(&predicate($x),
                 {$cons($x, $acc)},

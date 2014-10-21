@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 58;
+plan 71;
 
 {
     dies_ok { $nil       = 0 },  '$nil is immutable';
@@ -33,6 +33,55 @@ plan 58;
     dies_ok { $cdr       = 0 },  '$cdr is immutable';
     does_ok   $cdr,      lambda, '$cdr';
     does_ok   $cdr,      name,   '$cdr';
+
+    dies_ok { $foldl     = 0 },  '$foldl is immutable';
+    does_ok   $foldl,    lambda, '$foldl';
+    does_ok   $foldl,    name,   '$foldl';
+
+    dies_ok { $reverse   = 0 },  '$reverse is immutable';
+    does_ok   $reverse,  lambda, '$reverse';
+    does_ok   $reverse,  name,   '$reverse';
+}
+
+{ # foldl
+    {
+        my $xs = $nil;
+        my @seen = @();
+        subtest({
+            my $result = $foldl(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 4711, $xs);
+            is @seen.elems, 0, "never calls f";
+            is $result, 4711, "returns initial value";
+        }, "foldl on empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
+    }
+
+    {
+        my $xs = $cons('A', $cons('B', $nil));
+        my @seen = @();
+        subtest({
+            my $result = $foldl(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 23, $xs);
+            is @seen.elems, 2, "calls f as many times as there are elements";
+            is $result, 4, "returns what f returned last";
+            is @seen[0][0], 'A', "passes current elem to f as 1st arg";
+            is @seen[0][1], 23, "passes initial value to f as 2nd arg in first call";
+            is @seen[1][0], 'B', "passes current elem to f as 1st arg";
+            is @seen[1][1], 2, "passes last result from f to f as 2nd arg in subsequent calls";
+        }, "foldl on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
+    }
+}
+
+{ # reverse
+    is $reverse($nil), $nil, 'reversing the empty list yields the empty list';
+    
+    my $xs = $cons(23, $nil);
+    is $reverse($xs), $xs, 'reversing a singleton list yields the same list';
+    
+    my $ys = $cons(42, $xs);
+    my $ys-reversed = $reverse($ys);
+    is $car($ys-reversed), 23, 'first of reversed two-elem list is last of original list';
+    is $car($cdr($ys-reversed)), 42, 'second of reversed two-elem list is first of original list';
+    
+    my $ys-reversed-twice = $reverse($ys-reversed);
+    is $ys-reversed-twice, $ys, 'reversing twice gives back original list';
 }
 
 {
