@@ -37,6 +37,20 @@ constant $const is export = lambdaFn(
     -> $b { lambdaFn(Str, "λy.$b", -> $y { $b }) }
 );
 
+constant $swap-args is export = lambdaFn(
+    'swap-args', 'λf.λx.λy.f y x',
+    -> $f {
+        lambdaFn(
+            "(swap-args $f)", "λx.λy.$f y x",   # TODO: alpha-convert if necessary
+            -> $x, $y { $f($y, $x) }
+        );
+    }
+);
+
+constant $C is export := $swap-args;
+
+
+
 # Turing's Y combinator:
 constant $U is export = lambdaFn(
     'U', 'λu.λx.x(u u x)',
@@ -47,6 +61,7 @@ constant $U is export = lambdaFn(
 
 constant $Y is export = lambdaFn(
     'Y', 'U U',
+    #'Y', '(λU.U U) λu.λx.x(u u x)',
     #'Y', 'let (U λu.λx.x(u u x)) (U U)',
     #'Y', 'let (U λu.λx.x(u u x)) (λx.x(U U x)',
     #'Y', '(λU.U U) λu.λx.x(u u x)',

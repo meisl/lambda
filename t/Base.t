@@ -4,7 +4,7 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 43;
+plan 51;
 
 {
     dies_ok { $id   = 0 },    '$id is immutable';
@@ -14,6 +14,16 @@ plan 43;
     dies_ok { $const  = 0 },  '$const is immutable';
     does_ok   $const, lambda, '$const';
     does_ok   $const, name,   '$const';
+
+    dies_ok { $swap-args  = 0 },  '$swap-args is immutable';
+    does_ok   $swap-args, lambda, '$swap-args';
+    does_ok   $swap-args, name,   '$swap-args';
+
+    ok $C === $swap-args, '$C is a synonym for swap-args';
+
+    dies_ok { $Y      = 0 },  '$Y is immutable';
+    does_ok   $Y,     lambda, '$Y';
+    does_ok   $Y,     name,   '$Y';
 }
 
 {
@@ -28,6 +38,29 @@ plan 43;
     is $const(42).Str,  '(λy.42)',  'const(42).Str';
     is $const($id)(23), $id,        'const(id)(23)';
     is $const($id).Str, "(λy.$id)", 'const($id).Str';
+}
+
+{ # swap-args, aka C
+    my @seen = @();
+    subtest({
+        my $f = -> $a, $b { @seen.push([$a, $b]) } does name('f');
+
+        my $g = $C($f);
+        does_ok $g, lambda, 'C f';
+        does_ok $g, name,   'C f';
+
+        $g('a', 'b');
+        is @seen[0][0], 'b', '((C f) a b): 2nd arg was passed first';
+        is @seen[0][1], 'a', '((C f) a b): 1st arg was passed second';
+        
+        my $h = $C($g);
+        does_ok $h, lambda, 'C (C f)';
+        does_ok $h, name,   'C (C f)';
+
+        $h(42, 23);
+        is @seen[1][0], 42, '(((C (C f)) 42 23): 1st arg was passed fist';
+        is @seen[1][1], 23, '(((C (C f)) 42 23): 2nd arg was passed second';
+    }, "swapargs aka C") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die; 
 }
 
 { # Y combinator for unary f
