@@ -31,24 +31,35 @@ constant $id is export = lambdaFn(
     'id', 'λx.x',
     -> $x { $x }
 );
+constant $I is export := $id;
 
 constant $const is export = lambdaFn(
     'const', 'λx.λy.x',
     -> $b { lambdaFn(Str, "λy.$b", -> $y { $b }) }
 );
+constant $K is export := $const;
 
-constant $swap-args is export = lambdaFn(
-    'swap-args', 'λf.λx.λy.f y x',
+constant $C is export = lambdaFn(
+    'C', 'λf.λx.λy.f y x',
     -> $f {
         lambdaFn(
-            "(swap-args $f)", "λx.λy.$f y x",   # TODO: alpha-convert if necessary
+            "(C $f)", "λx.λy.$f y x",   # TODO: alpha-convert if necessary
             -> $x, $y { $f($y, $x) }
         );
     }
 );
+constant $swap-args is export := $C;
 
-constant $C is export := $swap-args;
-
+constant $W is export = lambdaFn(
+    'W', 'λf.λu.f u u',
+    -> $f {
+        lambdaFn(
+            "(W $f)", "λu.$f u u",   # TODO: alpha-convert if necessary
+            -> $u { $f($u, $u) }
+        )
+    }
+);
+constant $double-arg is export := $W;
 
 
 # Turing's Y combinator:
@@ -61,6 +72,7 @@ constant $U is export = lambdaFn(
 
 constant $Y is export = lambdaFn(
     'Y', 'U U',
+    #'Y', 'W id λu.λx.x(u u x)',
     #'Y', '(λU.U U) λu.λx.x(u u x)',
     #'Y', 'let (U λu.λx.x(u u x)) (U U)',
     #'Y', 'let (U λu.λx.x(u u x)) (λx.x(U U x)',

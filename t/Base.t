@@ -4,22 +4,28 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 51;
+plan 58;
 
 {
     dies_ok { $id   = 0 },    '$id is immutable';
     does_ok   $id,  lambda,   '$id';
     does_ok   $id,  name,     '$id';
+    ok $I === $id, '$I is a synonym for $id';
 
     dies_ok { $const  = 0 },  '$const is immutable';
     does_ok   $const, lambda, '$const';
     does_ok   $const, name,   '$const';
+    ok $K === $const, '$K is a synonym for $const';
 
-    dies_ok { $swap-args  = 0 },  '$swap-args is immutable';
-    does_ok   $swap-args, lambda, '$swap-args';
-    does_ok   $swap-args, name,   '$swap-args';
+    dies_ok { $C  = 0 },  '$C is immutable';
+    does_ok   $C, lambda, '$C';
+    does_ok   $C, name,   '$C';
+    ok $swap-args === $C, '$swap-args is a synonym for $C';
 
-    ok $C === $swap-args, '$C is a synonym for swap-args';
+    dies_ok { $W  = 0 },  '$W is immutable';
+    does_ok   $W, lambda, '$W';
+    does_ok   $W, name,   '$W';
+    ok $double-arg === $W, '$double-arg is a synonym for W';
 
     dies_ok { $Y      = 0 },  '$Y is immutable';
     does_ok   $Y,     lambda, '$Y';
@@ -61,6 +67,24 @@ plan 51;
         is @seen[1][0], 42, '(((C (C f)) 42 23): 1st arg was passed fist';
         is @seen[1][1], 23, '(((C (C f)) 42 23): 2nd arg was passed second';
     }, "swapargs aka C") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die; 
+}
+
+{ # double-arg, aka W
+    my @seen = @();
+    subtest({
+        my $f = -> $a, $b { @seen.push([$a, $b]) } does name('f');
+
+        my $g = $W($f);
+        does_ok $g, lambda, 'W f';
+        does_ok $g, name,   'W f';
+
+        $g('a');
+        is @seen.elems,     1, '((W f) a): original f got called once';
+        is @seen[0].elems,  2, '((W f) a): original f got called with two arguments';
+        is @seen[0][0], 'a', '((W f) a): original arg was passed as 1st arg';
+        is @seen[0][1], 'a', '((W f) a): original arg was passed as 2nd arg';
+
+    }, "double-arg aka W") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die; 
 }
 
 { # Y combinator for unary f
