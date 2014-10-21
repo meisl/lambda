@@ -52,10 +52,10 @@ constant $swap-args is export := $C;
 
 constant $W is export = lambdaFn(
     'W', 'λf.λu.f u u',
-    -> $f {
+    -> &f {
         lambdaFn(
-            "(W $f)", "λu.$f u u",   # TODO: alpha-convert if necessary
-            -> $u { $f($u, $u) }
+            "(W &f)", "λu.&f u u",   # TODO: alpha-convert if necessary
+            -> $u { &f($u, $u) }
         )
     }
 );
@@ -64,22 +64,22 @@ constant $double-arg is export := $W;
 
 # Turing's Y combinator:
 constant $U is export = lambdaFn(
-    'U', 'λu.λx.x(u u x)',
-    #'U', 'λu.λx.λz.x (u u x) z',
-    #-> $u, $x { -> $z { $x( $u($u, $x) )($z) } }
-    -> $u, $x { -> |args { $x( $u($u, $x) )(|args) } }
+    'U', 'λu.λf.f(u u f)',
+    #'U', 'λu.λf.λa..z.f (u u f) a..z', # -> η-reduction...!
+    #-> $u { -> &f { -> |args { &f( $u($u)(&f) )(|args) } } }
+    -> $u, &f { -> |args { &f( $u($u, &f) )(|args) } }
 );
 
 constant $Y is export = lambdaFn(
     'Y', 'U U',
-    #'Y', 'W id λu.λx.x(u u x)',
-    #'Y', '(λU.U U) λu.λx.x(u u x)',
-    #'Y', 'let (U λu.λx.x(u u x)) (U U)',
-    #'Y', 'let (U λu.λx.x(u u x)) (λx.x(U U x)',
-    #'Y', '(λU.U U) λu.λx.x(u u x)',
-    #'Y', '(λu.λx.x(u u x)) (λu.λx.x(u u x))',
-    #'Y', 'λx.x((λu.λx.x(u u x)) (λu.λx.x(u u x)) x))',
+    #'Y', 'W id λu.λf.f(u u f)',
+    #'Y', '(λU.U U) λu.λf.f(u u f)',
+    #'Y', 'let (U λu.λf.f(u u f)) (U U)',
+    #'Y', 'let (U λu.λf.f(u u f)) (λf.f(U U f)',
+    #'Y', '(λU.U U) λu.λf.f(u u f)',
+    #'Y', '(λu.λf.f(u u f)) (λu.λf.f(u u f))',
+    #'Y', 'λf.f((λu.λf.f(u u f)) (λu.λf.f(u u f)) f))',
 
-    #-> $x { $x( $U($U)($x) ) }
-    -> $x { $x( $U($U, $x) ) }
+    #-> &f { &f( $U($U)(&f) ) }
+    -> &f { &f( $U($U, &f) ) }
 );
