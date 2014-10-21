@@ -54,7 +54,7 @@ constant $W is export = lambdaFn(
     'W', 'λf.λu.f u u',
     -> &f {
         lambdaFn(
-            "(W &f)", "λu.&f u u",   # TODO: alpha-convert if necessary
+            Str, '(W ' ~ (&f ~~ lambda ?? &f.Str !! &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
             -> $u { &f($u, $u) }
         )
     }
@@ -81,5 +81,9 @@ constant $Y is export = lambdaFn(
     #'Y', 'λf.f((λu.λf.f(u u f)) (λu.λf.f(u u f)) f))',
 
     #-> &f { &f( $U($U)(&f) ) }
-    -> &f { &f( $U($U, &f) ) }
+    -> &f { lambdaFn(
+        Str, '(Y ' ~ (&f ~~ lambda ?? &f.Str !! &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
+            &f( $U($U, &f) )
+        )
+    }
 );

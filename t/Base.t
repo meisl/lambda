@@ -4,7 +4,7 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 58;
+plan 60;
 
 {
     dies_ok { $id   = 0 },    '$id is immutable';
@@ -88,15 +88,20 @@ plan 58;
 }
 
 { # Y combinator for unary f
-    my $fact = lambdaFn(
-        'fact', 'Y λself.λn.if (zero? n) 1 (* n (self (- n 1)))',
-        $Y(-> $self {
+    my $fact-stub = lambdaFn(
+        Str, 'λself.λn.if (zero? n) 1 (* n (self (- n 1)))',
+        -> $self {
             -> Int $n {
                 $n == 0 ?? 1 !! $n * $self($n - 1)
             }
-        })
+        }
     );
+    my $fact = $Y($fact-stub);
+    does_ok $fact, lambda, '(Y f)';
+
     diag 'Y combinator for unary f; ex. factorial: ' ~ $fact.lambda;
+    does_ok $Y(-> $self { $self }), lambda, '(Y g) where g does not role "lambda"';
+    
 
     is $fact(0),   1, '0! =   1';
     is $fact(1),   1, '1! =   1';
