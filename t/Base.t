@@ -114,7 +114,7 @@ plan 60;
 
 { # Y combinator for binary f
     my $ackPeter = lambdaFn(
-        'ackPeter', 'Y λself.λa.λb.???',
+        'ackPeter', 'Y λself.λa.λb.?[TODO: Ackermann-Peter function λ]?',
         $Y(-> $self {
             -> Int $a, $b {
                 if $a == 0 {
