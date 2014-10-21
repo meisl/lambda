@@ -4,7 +4,7 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 14;
+plan 43;
 
 {
     dies_ok { $id   = 0 },    '$id is immutable';
@@ -28,6 +28,80 @@ plan 14;
     is $const(42).Str,  '(λy.42)',  'const(42).Str';
     is $const($id)(23), $id,        'const(id)(23)';
     is $const($id).Str, "(λy.$id)", 'const($id).Str';
+}
+
+{ # Y combinator for unary f
+    my $fact = lambdaFn(
+        'fact', 'Y λself.λn.if (zero? n) 1 (* n (self (- n 1)))',
+        $Y(-> $self {
+            -> Int $n {
+                $n == 0 ?? 1 !! $n * $self($n - 1)
+            }
+        })
+    );
+    diag 'Y combinator for unary f; ex. factorial: ' ~ $fact.lambda;
+
+    is $fact(0),   1, '0! =   1';
+    is $fact(1),   1, '1! =   1';
+    is $fact(2),   2, '2! =   2';
+    is $fact(3),   6, '3! =   6';
+    is $fact(4),  24, '4! =  24';
+    is $fact(5), 120, '5! = 120';
+    is $fact(6), 720, '5! = 720';
+}
+
+{ # Y combinator for binary f
+    my $ackPeter = lambdaFn(
+        'ackPeter', 'Y λself.λa.λb.???',
+        $Y(-> $self {
+            -> Int $a, $b {
+                if $a == 0 {
+                    $b + 1;
+                } elsif $b == 0 {
+                    $self($a - 1, 1);
+                } else {
+                    $self($a - 1, $self($a, $b - 1));
+                }
+            }
+        })
+    );
+    diag 'Y combinator for binary f; ex. Ackermann-Péter: ' ~ $ackPeter.lambda;
+
+    # base case:
+    is $ackPeter(0, 0),   1, 'ap(0, 0) =   1';
+    is $ackPeter(0, 1),   2, 'ap(0, 1) =   2';
+    is $ackPeter(0, 2),   3, 'ap(0, 2) =   3';
+    is $ackPeter(0, 3),   4, 'ap(0, 3) =   4';
+    is $ackPeter(0, 4),   5, 'ap(0, 4) =   5';
+
+    # recursive cases:
+    is $ackPeter(1, 0),   2, 'ap(1, 0) =   2';
+    is $ackPeter(1, 1),   3, 'ap(2, 1) =   3';
+    is $ackPeter(1, 2),   4, 'ap(3, 2) =   4';
+    is $ackPeter(1, 3),   5, 'ap(4, 3) =   5';
+    is $ackPeter(1, 4),   6, 'ap(5, 4) =   6';
+
+    is $ackPeter(2, 0),   3, 'ap(2, 0) =   3';
+    is $ackPeter(2, 1),   5, 'ap(2, 1) =   5';
+    is $ackPeter(2, 2),   7, 'ap(2, 2) =   7';
+    is $ackPeter(2, 3),   9, 'ap(2, 3) =   9';
+    is $ackPeter(2, 4),  11, 'ap(2, 4) =  11';
+
+    is $ackPeter(3, 0),   5, 'ap(3, 0) =   5';
+    is $ackPeter(3, 1),  13, 'ap(3, 1) =  13';
+    is $ackPeter(3, 2),  29, 'ap(3, 2) =  29';
+    is $ackPeter(3, 3),  61, 'ap(3, 3) =  61';
+    is $ackPeter(3, 4), 125, 'ap(3, 4) = 125';
+
+    # attention, becoming really slow soon:
+    skip {
+        is $ackPeter(3, 5), 8*2**5-3, 'ap(3, 5) = ' ~ (8*2**5-3);
+        is $ackPeter(3, 6), 8*2**6-3, 'ap(3, 6) = ' ~ (8*2**6-3);
+        is $ackPeter(3, 7), 8*2**7-3, 'ap(3, 7) = ' ~ (8*2**7-3);
+    }
+
+    is $ackPeter(4, 0),    13, 'ap(4, 0) =     13';
+    #is $ackPeter(4, 1), 65533, 'ap(4, 1) =  65533';
 }
 
 {

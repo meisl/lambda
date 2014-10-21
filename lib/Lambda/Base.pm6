@@ -36,3 +36,23 @@ constant $const is export = lambdaFn(
     'const', 'λx.λy.x',
     -> $b { lambdaFn(Str, "λy.$b", -> $y { $b }) }
 );
+
+# Turing's Y combinator:
+constant $U is export = lambdaFn(
+    'U', 'λu.λx.x(u u x)',
+    #'U', 'λu.λx.λz.x (u u x) z',
+    #-> $u, $x { -> $z { $x( $u($u, $x) )($z) } }
+    -> $u, $x { -> |args { $x( $u($u, $x) )(|args) } }
+);
+
+constant $Y is export = lambdaFn(
+    'Y', 'U U',
+    #'Y', 'let (U λu.λx.x(u u x)) (U U)',
+    #'Y', 'let (U λu.λx.x(u u x)) (λx.x(U U x)',
+    #'Y', '(λU.U U) λu.λx.x(u u x)',
+    #'Y', '(λu.λx.x(u u x)) (λu.λx.x(u u x))',
+    #'Y', 'λx.x((λu.λx.x(u u x)) (λu.λx.x(u u x)) x))',
+
+    #-> $x { $x( $U($U)($x) ) }
+    -> $x { $x( $U($U, $x) ) }
+);
