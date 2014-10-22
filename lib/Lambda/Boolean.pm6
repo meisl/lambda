@@ -45,12 +45,12 @@ constant $_if is export = lambdaFn(
 );
 
 constant $_and is export = lambdaFn(
-    '_and', 'λp.λq.(_if p (λ_.q) (λ_.#false)',
-    -> TBool:D $p, TBool:D $q { $_if($p, {$q}, {$false}) }
+    '_and', 'λp.λq.p q #false',
+    -> TBool:D $p, TBool:D $q { $p($q, $false) }
 );
 
 constant $_or is export = lambdaFn(
-    '_or', 'λp.λq.(_if p (λ_.#true) (λ_.q)',
-    -> TBool:D $p, TBool:D $q { $_if($p, {$true}, {$q}) }
+    '_or', 'λp.λq.p #true q',
+    -> TBool:D $p, TBool:D $q { $p($true, $q) }
 );
 
