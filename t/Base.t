@@ -90,9 +90,9 @@ plan 60;
 { # Y combinator for unary f
     my $fact-stub = lambdaFn(
         Str, 'λself.λn.if (zero? n) 1 (* n (self (- n 1)))',
-        -> $self {
+        -> &self {
             -> Int $n {
-                $n == 0 ?? 1 !! $n * $self($n - 1)
+                $n == 0 ?? 1 !! $n * &self($n - 1)
             }
         }
     );
@@ -100,7 +100,7 @@ plan 60;
     does_ok $fact, lambda, '(Y f)';
 
     diag 'Y combinator for unary f; ex. factorial: ' ~ $fact.lambda;
-    does_ok $Y(-> $self { $self }), lambda, '(Y g) where g does not role "lambda"';
+    does_ok $Y(-> &self { &self }), lambda, '(Y g) where g does not role "lambda"';
     
 
     is $fact(0),   1, '0! =   1';
@@ -115,14 +115,14 @@ plan 60;
 { # Y combinator for binary f
     my $ackPeter = lambdaFn(
         'ackPeter', 'Y λself.λa.λb.?[TODO: Ackermann-Peter function λ]?',
-        $Y(-> $self {
+        $Y(-> &self {
             -> Int $a, $b {
                 if $a == 0 {
                     $b + 1;
                 } elsif $b == 0 {
-                    $self($a - 1, 1);
+                    &self($a - 1, 1);
                 } else {
-                    $self($a - 1, $self($a, $b - 1));
+                    &self($a - 1, &self($a, $b - 1));
                 }
             }
         })
