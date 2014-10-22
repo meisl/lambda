@@ -13,10 +13,12 @@ To be done in the order given (within each branch):
 - [ ] #10 'add ADT Term for syntax tree / AST entities (Church-encoded by hand)'
 - [ ] #11 'implement β/η-red. and α-conv using ADT Term (simple but correct)'
 - [ ] #13 'refine β/η-red. and α-conv using ADT Term: clever & efficient & flexible!'
+- ...
 - [ ] #19 'make a functional parser (like the parser combinators in [Hutt07])'
 
 ##### branch 2 (make it do *something*)
 - [ ] #2 'add most simple symbol-lookup using "δ"'
+- [ ] #22 'add comments to syntax'
 - [ ] #3 'add hygienic macros using "µ"'
 - [ ] #4 'add "if" as a macro'
 - [ ] #14 'add "cond" (aka "switch") as a macro'
