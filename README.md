@@ -20,7 +20,7 @@ where Krishnamurthi gives a glance of how (principally) *anything* except pure Î
 I thought: "Well, sure; have heard all this before - but still, it's fascinating! Still and again. I *must* really try it out myself, sometime..."
 ]
 
-So well, I grabbed the good old "Dragon Book" [TODO: ref].
+So well, I grabbed the good old "Dragon Book", [AbSu1996] [TODO: link to bib, Amazon-link this here].
 And once again, while reading, I said to myself: "It's all not that hard, really. Why the hell haven't I written
 my own programming language yet?!".
 Which, of course, I've been saying to myself ever since I first read it...
