@@ -2,9 +2,9 @@
 
 Recently I came across Shriram Krishnamurthi's lectures on YouTube [TODO: ref].
 The course is called "Introduction to Programming Languages"
-and he's written a textbook for it, "Programming Languages: Application and Interpretation" which can be downloaded for free [TODO: ref].
+and he's written/writing(?) a textbook for it, "Programming Languages: Application and Interpretation" which can be downloaded for free [TODO: ref].
 
-While watching - and he's great teacher! - I said to myself: "Well, I should *really*
+While watching - he's great teacher! - I said to myself: "Well, I should *really*
 write my own programming language, eventually".
 
 [TODO: not a new thought ... always wanted to do that ... well, ok, not so special I guess...]
