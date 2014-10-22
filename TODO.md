@@ -15,6 +15,10 @@ To be done in the order given (within each branch):
 - [ ] #13 'refine β/η-red. and α-conv using ADT Term: clever & efficient & flexible!'
 - ...
 - [ ] #19 'make a functional parser (like the parser combinators in [Hutt07])'
+- ...
+- [ ] #23 'make an interpreter using stacked environments' (rather than stupid subst)
+- [ ] #24 'implement proper tail calls'
+- [ ] #25 'compile to Perl6'
 
 ##### branch 2 (make it do *something*)
 - [ ] #2 'add most simple symbol-lookup using "δ"'
