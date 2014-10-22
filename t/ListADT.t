@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 77;
+plan 80;
 
 {
     dies_ok { $nil       = 0 },  '$nil is immutable';
@@ -45,6 +45,10 @@ plan 77;
     dies_ok { $length   = 0 },  '$length is immutable';
     does_ok   $length,  lambda, '$length';
     does_ok   $length,  name,   '$length';
+
+    dies_ok { $exists   = 0 },  '$exists is immutable';
+    does_ok   $exists,  lambda, '$exists';
+    does_ok   $exists,  name,   '$exists';
 }
 
 { # foldl
@@ -175,17 +179,17 @@ plan 77;
     my &odd  = -> $x { if ($x % 2 == 1) { $true } else { $false } };
     my &negative = -> $x { if ($x < 0) { $true } else { $false } };
 
-    is exists(&even,     $nil), $false, "no even exists in empty list";
-    is exists(&odd,      $nil), $false, "no odd exists in empty list";
-    is exists(&negative, $nil), $false, "no negative exists in empty list";
+    is $exists(&even,     $nil), $false, "no even exists in empty list";
+    is $exists(&odd,      $nil), $false, "no odd exists in empty list";
+    is $exists(&negative, $nil), $false, "no negative exists in empty list";
 
     my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $cons(5, $nil)))));
-    is exists(&even,     $xs), $true,  "even exists in $xs";
-    is exists(&odd,      $xs), $true,  "odd exists in $xs";
-    is exists(&negative, $xs), $false, "no negative exists in $xs";
+    is $exists(&even,     $xs), $true,  "even exists in $xs";
+    is $exists(&odd,      $xs), $true,  "odd exists in $xs";
+    is $exists(&negative, $xs), $false, "no negative exists in $xs";
 
     my @seen = @();
     my &isTwo = -> $x { @seen.push($x); if $x == 2 { $true } else { $false } }
-    is exists(&isTwo, $xs), $true,   "isTwo exists in $xs";
+    is $exists(&isTwo, $xs), $true,   "isTwo exists in $xs";
     is @seen.elems, 2, "should have stopped after first match";
 }

@@ -100,11 +100,11 @@ constant $yfoldl is export = -> {
 # Or we could use the Y combinator:
 constant $foldl is export = lambdaFn(
     'foldl', 'Y λself.λf.λacc.λxs (if (nil? xs) acc (self f (f acc (car xs)) (cdr xs)))',
-    $Y(-> $self {
+    $Y(-> &self {
         -> $f, $acc, $xs {
             $_if( $is-nil($xs),
                 { $acc },
-                { $self($f, $f($car($xs), $acc), $cdr($xs)) })    }    })   # TODO: swap args to f
+                { &self($f, $f($car($xs), $acc), $cdr($xs)) })    }    })   # TODO: swap args to f
 );
 
 constant $reverse is export = lambdaFn(
@@ -170,12 +170,20 @@ sub filter(&predicate, TList:D $xs) is export {
         $xs);
 }
 
-sub exists(&predicate, TList:D $xs) is export {
-    #foldl(-> $x, $acc { $_if($acc, {$true}, {&predicate($x)}) }, $false, $xs)
-    $_if($is-nil($xs),
-        { $false },
-        { $_if(&predicate($car($xs)), {$true}, {exists(&predicate, $cdr($xs))}) })
-}
+constant $exists is export = lambdaFn(
+    'exists', 'Y λself.λp.λxs.if (nil? xs) #false',
+    $Y(-> &self{
+        -> &predicate, TList:D $xs { 
+            $_if( $is-nil($xs),
+                { $false },
+                { $_if( &predicate($car($xs)),
+                    { $true },
+                    { &self(&predicate, $cdr($xs)) })
+                })
+        }
+    })
+    # alternative (not as efficient): foldl(-> $x, $acc { $_if($acc, {$true}, {&predicate($x)}) }, $false, $xs)
+);
 
 
 
