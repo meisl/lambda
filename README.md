@@ -1,10 +1,10 @@
 ## (Yet another) λ calculator...
 
-Recently I came across Shriram Krishnamurti's lectures on YouTube [TODO: ref].
-The course is called "Programming Languages - ..." [TODO: exact title]
-and he's written a book of the same name that can be downloaded for free [TODO: ref].
+Recently I came across Shriram Krishnamurthi's lectures on YouTube [TODO: ref].
+The course is called "Introduction to Programming Languages"
+and he's written a textbook for it, ""Programming Languages: Application and Interpretation" which can be downloaded for free [TODO: ref].
 
-While watching - and he's great teacher! - I said to myself: "Well, I should really
+While watching - and he's great teacher! - I said to myself: "Well, I should *really*
 write my own programming language, eventually".
 
 [TODO: not a new thought ... always wanted to do that ... well, ok, not so special I guess...]
@@ -15,7 +15,7 @@ which is derived from LISP,
 which very closely resembles λ calculus]
 
 So I grabbed the good old "Dragon Book" [TODO: ref].
-And once again, while reading, I said to myself: "Why haven't I still not written
+And once again, while reading, I said to myself: "Why haven't I *still* not written
 my own programming language?".
 ...which, of course, I've been saying to myself ever since I first read it.
 
