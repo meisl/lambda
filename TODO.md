@@ -2,6 +2,8 @@ Unrelated (any order):
 - [ ] #8 'put all the missing refs into README'
 - [ ] #15 'make a REPL': unclear when exactly it makes sense - but the sooner the better (can always refine it)
 - [ ] #16 'add β-/η-reduction and α-conversion to Lamda-Intro.md'
+- [ ] #18 'continue docs explaining how to detect & avoid accidental capture during β-red.'
+- [ ] #20 'add bibliography'
 
 To be done in the order given (within each branch):
 ##### branch 1 (make it self-hosting)
@@ -10,6 +12,7 @@ To be done in the order given (within each branch):
 - [ ] #10 'add ADT Term for syntax tree / AST entities (Church-encoded by hand)'
 - [ ] #11 'implement β/η-red. and α-conv using ADT Term (simple but correct)'
 - [ ] #13 'refine β/η-red. and α-conv using ADT Term: clever & efficient & flexible!'
+- [ ] #19 'make a functional parser (like the parser combinators in [Hutt07])'
 
 ##### branch 2 (make it do *something*)
 - [ ] #2 'add most simple symbol-lookup using "δ"'
@@ -20,4 +23,4 @@ To be done in the order given (within each branch):
 - [ ] #6 'add "def"/"define" as a macro, to allow recursive definitions (and maybe local ones)'
 - [ ] #7 'add a data-type mechanism, desugaring to a Church-encoding'
 - ...
-- [ ] #17 'add Types' - oh...
+- [ ] #17 'add Types (eventually...)' - oh...
