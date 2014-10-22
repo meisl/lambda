@@ -14,10 +14,16 @@ which is derived from Scheme,
 which is derived from LISP,
 which very closely resembles λ calculus]
 
-So I grabbed the good old "Dragon Book" [TODO: ref].
-And once again, while reading, I said to myself: "Why haven't I *still* not written
-my own programming language?".
-...which, of course, I've been saying to myself ever since I first read it.
+[TODO: Then I watched the "Lambda lecture" in the series, 
+where Krishnamurthi gives a glance of how (principally) *anything* except pure λ calculus can be dispensed with.
+
+I thought: "Well, sure; have heard all this before - but still, it's fascinating! Still and again. I *must* really try it out myself, sometime..."
+]
+
+So well, I grabbed the good old "Dragon Book" [TODO: ref].
+And once again, while reading, I said to myself: "It's all not that hard, really. Why the hell haven't I written
+my own programming language yet?!".
+Which, of course, I've been saying to myself ever since I first read it...
 
 BTW: YouTube also has videos of the old 80's lectures of ... and ... on which the Dragon
 Book is based.
