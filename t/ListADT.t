@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 71;
+plan 77;
 
 {
     dies_ok { $nil       = 0 },  '$nil is immutable';
@@ -41,6 +41,10 @@ plan 71;
     dies_ok { $reverse   = 0 },  '$reverse is immutable';
     does_ok   $reverse,  lambda, '$reverse';
     does_ok   $reverse,  name,   '$reverse';
+
+    dies_ok { $length   = 0 },  '$length is immutable';
+    does_ok   $length,  lambda, '$length';
+    does_ok   $length,  name,   '$length';
 }
 
 { # foldl
@@ -84,11 +88,24 @@ plan 71;
     is $ys-reversed-twice, $ys, 'reversing twice gives back original list';
 }
 
+{ # length
+    my $xs = $nil;
+    is $length($xs), 0, "(length $xs) -> 0";
+
+    $xs = $cons(1, $xs);
+    is $length($xs), 1, "(length $xs) -> 1";
+
+    $xs = $cons(2, $xs);
+    is $length($xs), 2, "(length $xs) -> 2";
+
+    $xs = $cons($xs, $xs); # oh yeah, can put lists into lists!
+    is $length($xs), 3, "(length $xs) -> 3";
+}
+
 {
     is $is-nil($nil),   $true, '(nil? nil) -> #true';
     is $nil.Str,        'nil', '$nil.Str';
     is $list2str($nil), 'nil', '(list->str nil) -> "nil"';
-    is length($nil), 0, '(length nil) -> 0';
     
     my $xs;
     my $ys;
@@ -106,7 +123,7 @@ plan 71;
     is $car($xs), $nil, "(car $xs) -> $nil";
     is $cdr($xs), $nil, "(cdr $xs) -> $nil";
 
-    is length($xs), 1,  "(length $xs) -> 1";
+    is $length($xs), 1,  "(length $xs) -> 1";
 
 
     $xs = $cons(5, $nil);
@@ -118,7 +135,7 @@ plan 71;
     is $car($xs), 5,    "(car $xs) -> 5";
     is $cdr($xs), $nil, "(cdr $xs) -> nil";
 
-    is length($xs), 1,  "(length $xs) -> 1";
+    is $length($xs), 1,  "(length $xs) -> 1";
 
 
     $ys = $cons('foo', $xs);
@@ -128,14 +145,14 @@ plan 71;
     is $car($ys), "foo", "(car $ys) -> foo";
     is $cdr($ys), $xs,   "(cdr $ys) -> $xs";
 
-    is length($ys), 2,  "(length $ys) -> 2";
+    is $length($ys), 2,  "(length $ys) -> 2";
 }
 
 { # map
     my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $nil))));
     my &f = -> $x { 2*$x };
     my $ys = map(&f, $xs);
-    is length($ys), 4, "should have same length after map";
+    is $length($ys), 4, "should have same length after map";
     is $car($ys), 2, "has mapped 1st elem";
     is $car($cdr($ys)), 4, "has mapped 2nd elem";
     is $car($cdr($cdr($ys))), 6, "has mapped 3rd elem";
@@ -148,7 +165,7 @@ plan 71;
     my &p = -> $x { if ($x % 2 == 0) { $true } else { $false } };
 
     my $ys = filter(&p, $xs);
-    is length($ys), 2, "should haved filtered out half of them";
+    is $length($ys), 2, "should haved filtered out half of them";
     is $car($ys), 2, "found first even";
     is cadr($ys), 4, "found second even";
 }

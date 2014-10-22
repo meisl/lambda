@@ -151,10 +151,12 @@ sub map(&f, TList:D $xs) is export {
     #map-rec(&f, $xs);
 }
 
-# (δ length λxs.foldl (λ_.λn.+ n 1) 0 xs)
-sub length(TList:D $xs) is export {
-    $foldl(-> $_, $n { $n + 1 }, 0, $xs)
-}
+constant $length is export = lambdaFn(
+    'length', 'λxs.foldl (λ_.λn.+ n 1) 0 xs',
+    -> TList:D $xs {
+        $foldl(-> $_, $n { $n + 1 }, 0, $xs)
+    }
+);
 
 # (δ filter λp.foldr (λx.λacc.($_if (p x) λ_.(cons x acc) λ_.acc)) nil)
 sub filter(&predicate, TList:D $xs) is export {
