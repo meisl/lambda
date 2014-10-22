@@ -1,6 +1,7 @@
 Unrelated (any order):
 - [ ] #8 'put all the missing refs into README'
 - [ ] #15 'make a REPL': unclear when exactly it makes sense - but the sooner the better (can always refine it)
+- [ ] #26 'add suggestive REPL examples to README, probably involving Y and fact'
 - [ ] #16 'add β-/η-reduction and α-conversion to Lamda-Intro.md'
 - [ ] #18 'continue docs explaining how to detect & avoid accidental capture during β-red.'
 - [ ] #20 'add bibliography'
