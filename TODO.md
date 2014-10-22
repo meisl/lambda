@@ -4,7 +4,7 @@ Unrelated (any order):
 - [ ] #16 'add β-/η-reduction and α-conversion to Lamda-Intro.md'
 - [ ] #18 'continue docs explaining how to detect & avoid accidental capture during β-red.'
 - [ ] #20 'add bibliography'
-- [ ] #21 'mention Peirce's TAPL'
+- [ ] #21 'mention Pierce's TAPL'
 
 To be done in the order given (within each branch):
 ##### branch 1 (make it self-hosting)
