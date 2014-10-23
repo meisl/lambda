@@ -158,17 +158,18 @@ constant $length is export = lambdaFn(
     }
 );
 
-# (δ filter λp.foldr (λx.λacc.($_if (p x) λ_.(cons x acc) λ_.acc)) nil)
-sub filter(&predicate, TList:D $xs) is export {
-    foldr(
+constant $filter is export = lambdaFn(
+    'filter', 'λp.foldr (λx.λacc.((p x) λ_.(cons x acc) λ_.acc))_ nil',
+    -> &p, $xs {foldr(
         -> $x, $acc {
-            $_if(&predicate($x),
-                {$cons($x, $acc)},
-                {$acc})
-        }, 
+            $_if( &p($x),
+                { $cons($x, $acc) },
+                { $acc })
+        },
         $nil,
-        $xs);
-}
+        $xs
+    )}
+);
 
 constant $exists is export = lambdaFn(
     'exists', 'Y λself.λp.λxs.if (nil? xs) #false',

@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 80;
+plan 84;
 
 {
     dies_ok { $nil       = 0 },  '$nil is immutable';
@@ -45,6 +45,10 @@ plan 80;
     dies_ok { $length   = 0 },  '$length is immutable';
     does_ok   $length,  lambda, '$length';
     does_ok   $length,  name,   '$length';
+
+    dies_ok { $filter   = 0 },  '$filter is immutable';
+    does_ok   $filter,  lambda, '$filter';
+    does_ok   $filter,  name,   '$filter';
 
     dies_ok { $exists   = 0 },  '$exists is immutable';
     does_ok   $exists,  lambda, '$exists';
@@ -165,10 +169,12 @@ plan 80;
 }
 
 { # filter
-    my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $nil))));
-    my &p = -> $x { if ($x % 2 == 0) { $true } else { $false } };
+    my &isEven = -> $x { if ($x % 2 == 0) { $true } else { $false } };
+    is $filter(&isEven, $nil), $nil, 'filtering the empty list yields the empty list';
 
-    my $ys = filter(&p, $xs);
+    my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $nil))));
+
+    my $ys = $filter(&isEven, $xs);
     is $length($ys), 2, "should haved filtered out half of them";
     is $car($ys), 2, "found first even";
     is cadr($ys), 4, "found second even";
