@@ -133,9 +133,9 @@ constant $foldr-rec is export = lambdaFn(
 # the recursive call is in tail-position. Hence the resulting
 # *process* is iterative (&todo actually is a continuation).
 constant $foldr-iter is export = lambdaFn(
-    'foldr-iter', 'λh.λacc.λxs.Y λself.λtodo.λxs.(if (nil? xs) (todo acc) (self (λacc.h (car xs) acc) (cdr xs))',
+    'foldr-iter', 'λh.initial.λxs.Y λself.λtodo.λxs.(if (nil? xs) (todo initial) (self (λacc.h (car xs) acc) (cdr xs))',
     -> &h, $acc, TList:D $xs {
-        my $g = $Y(lambdaFn(
+        $Y(lambdaFn(
             Str, 'λself.λtodo.λxs.(if (nil? xs) (todo ' ~ $acc ~ ') (self (λacc.h (car xs) acc) (cdr xs))',
             -> &self {
                 -> &todo, $xs {
@@ -151,9 +151,7 @@ constant $foldr-iter is export = lambdaFn(
                     )
                 }
             }
-        ));
-        #say "constructed " ~ $g;
-        $g($id, $xs);
+        ))($id, $xs);
     }
 );
 constant $foldr is export = $foldr-rec;
@@ -215,7 +213,29 @@ constant $filter is export = lambdaFn(
     )}
 );
 
+constant $first is export = lambdaFn(
+    'first', 'Y λself.λp.λxs.(if (nil? xs) nil (if (p (car xs)) (cons (car xs) nil) (self p (cdr xs))))',
+    $Y(-> &self {
+        -> &p, TList:D $xs {
+            $_if( $is-nil($xs),
+                { $nil },
+                { $_if( &p($car($xs)),
+                    { $cons($car($xs), $nil) },
+                    { &self(&p, $cdr($xs)) })
+                })
+        }
+    })
+);
+
 constant $exists is export = lambdaFn(
+    'exists', 'λp.λxs.not (nil? (first p xs))',
+#   'exists', 'λp.(B not (B nil? (first p))',
+    -> &p, TList:D $xs {
+        $not($is-nil($first(&p, $xs)))
+    }
+);
+
+constant $___exists is export = lambdaFn(
     'exists', 'Y λself.λp.λxs.if (nil? xs) #false',
     $Y(-> &self{
         -> &predicate, TList:D $xs { 

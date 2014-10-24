@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 129;
+plan 140;
 
 {
     dies_ok { $nil       = 0 },  '$nil is immutable';
@@ -78,6 +78,10 @@ plan 129;
     does_ok   $filter,  lambda, '$filter';
     does_ok   $filter,  name,   '$filter';
 
+    dies_ok { $first   = 0 },  '$first is immutable';
+    does_ok   $first,  lambda, '$first';
+    does_ok   $first,  name,   '$first';
+
     dies_ok { $exists   = 0 },  '$exists is immutable';
     does_ok   $exists,  lambda, '$exists';
     does_ok   $exists,  name,   '$exists';
@@ -123,16 +127,18 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
     }
 
     {
-        my $xs = $cons('A', $cons('B', $nil));
+        my $xs = $cons('A', $cons('B', $cons('C', $nil)));
         my @seen = @();
         subtest({
             my $result = $foldr(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 23, $xs);
-            is @seen.elems, 2, "calls f as many times as there are elements";
-            is $result, 4, "returns what f returned last";
-            is @seen[0][0], 'B', "passes current elem to f as 1st arg";
+            is @seen.elems, 3, "calls f as many times as there are elements";
+            is $result, 6, "returns what f returned last";
+            is @seen[0][0], 'C', "passes current elem to f as 1st arg";
             is @seen[0][1], 23, "passes initial value to f as 2nd arg in first call";
-            is @seen[1][0], 'A', "passes current elem to f as 1st arg";
+            is @seen[1][0], 'B', "passes current elem to f as 1st arg";
             is @seen[1][1], 2, "passes last result from f to f as 2nd arg in subsequent calls";
+            is @seen[2][0], 'A', "passes current elem to f as 1st arg";
+            is @seen[2][1], 4, "passes last result from f to f as 2nd arg in subsequent calls";
         }, "foldr on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
     }
 }
@@ -237,6 +243,26 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
     is $length($ys), 2, "should haved filtered out half of them";
     is $car($ys), 2, "found first even";
     is cadr($ys), 4, "found second even";
+}
+
+{ # first
+    my &even = -> $x { if ($x % 2 == 0) { $true } else { $false } };
+    my &odd  = -> $x { if ($x % 2 == 1) { $true } else { $false } };
+    my &negative = -> $x { if ($x < 0) { $true } else { $false } };
+
+    is $first(&even,     $nil), $nil, "first(even) on empty list yields empty list";
+    is $first(&odd,      $nil), $nil, "first(odd) on empty list yields empty list";
+    is $first(&negative, $nil), $nil, "first(negative) on empty list yields empty list";
+
+    my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $cons(5, $nil)))));
+    is $first(&even,     $xs), $cons(2, $nil),  "first(even) yields [2] on $xs";
+    is $first(&odd,      $xs), $cons(1, $nil),  "first(odd) yields [1] on $xs";
+    is $first(&negative, $xs), $nil,    "first(negative) yields [] on $xs";
+
+    my @seen = @();
+    my &isTwo = -> $x { @seen.push($x); if $x == 2 { $true } else { $false } }
+    is $first(&isTwo, $xs), $cons(2, $nil),   "first(isTwo) yields [2] $xs";
+    is @seen.elems, 2, "should have stopped after first match";
 }
 
 { # exists
