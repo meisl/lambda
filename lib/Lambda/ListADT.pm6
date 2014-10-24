@@ -118,12 +118,45 @@ constant $foldr is export = lambdaFn(
     -> &f, $acc, TList:D $xs { $foldl(&f, $acc, $reverse($xs)) }
 );
 
-# (δ foldr-rec λf.λacc.λxs.(if (nil? xs) acc (f (car xs) (foldr-rec f acc (cdr xs))))))
-sub foldr-rec(&f, $acc, TList:D $xs) is export {
-    $_if($is-nil($xs),
-        {$acc},
-        {&f($car($xs), foldr-rec(&f, $acc, $cdr($xs)))})
-}
+constant $foldr-rec is export = lambdaFn(
+    'foldr-rec', '(Y λself.λf.λacc.λxs.(if (nil? xs) acc (f (car xs) (self f acc (cdr xs))))))',
+    $Y(-> &self {
+        -> &f, $acc, TList:D $xs {
+            $_if( $is-nil($xs),
+                { $acc },
+                { &f($car($xs), &self(&f, $acc, $cdr($xs))) })
+        }
+    })
+);
+
+# Even though the function is defined using recursion,
+# the recursive call is in tail-position. Hence the resulting
+# *process* is iterative (&todo actually is a continuation).
+constant $foldr-iter is export = lambdaFn(
+    'foldr-iter', 'λh.λacc.λxs.Y λself.λtodo.λxs.(if (nil? xs) (todo acc) (self (λacc.h (car xs) acc) (cdr xs))',
+    -> &h, $acc, TList:D $xs {
+        my $g = $Y(lambdaFn(
+            Str, 'λself.λtodo.λxs.(if (nil? xs) (todo ' ~ $acc ~ ') (self (λacc.h (car xs) acc) (cdr xs))',
+            -> &self {
+                -> &todo, $xs {
+                    $_if( $is-nil($xs),
+                        { &todo($acc) },
+                        { &self( 
+                            lambdaFn( Str, 'λacc.(' ~ &todo ~ ' (h ' ~ $car($xs) ~ ' acc))',
+                                -> $acc {
+                                    &todo(&h($car($xs), $acc));
+                                }
+                             ),
+                             $cdr($xs) ) }
+                    )
+                }
+            }
+        ));
+        #say "constructed " ~ $g;
+        $g($id, $xs);
+    }
+);
+
 
 # (δ map-rev-iter λr.λf.λxs.(if (nil? xs) r (map-iter (cons (f (car xs)) r) f (cdr xs))))
 # (δ map-rev-iter λr.λf.foldl (λx.cons (f x)) nil)

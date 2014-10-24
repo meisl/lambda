@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 89;
+plan 99;
 
 {
     dies_ok { $nil       = 0 },  '$nil is immutable';
@@ -45,6 +45,14 @@ plan 89;
     dies_ok { $foldr     = 0 },  '$foldr is immutable';
     does_ok   $foldr,    lambda, '$foldr';
     does_ok   $foldr,    name,   '$foldr';
+
+    dies_ok { $foldr-rec  = 0 },  '$foldr-rec is immutable';
+    does_ok   $foldr-rec, lambda, '$foldr-rec';
+    does_ok   $foldr-rec, name,   '$foldr-rec';
+
+    dies_ok { $foldr-iter  = 0 },  '$foldr-iter is immutable';
+    does_ok   $foldr-iter, lambda, '$foldr-iter';
+    does_ok   $foldr-iter, name,   '$foldr-iter';
 
     dies_ok { $length   = 0 },  '$length is immutable';
     does_ok   $length,  lambda, '$length';
@@ -85,12 +93,14 @@ plan 89;
     }
 }
 
-{ # foldr
+# foldr
+for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
+    diag "foldr implemented as {$foldr.lambda}";
     {
         my $xs = $nil;
         my @seen = @();
         subtest({
-            my $result = $foldr(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 4711, $xs);
+            my $result = $foldr(-> $a, $b { say "got $a and $b"; @seen.push([$a, $b].item); @seen.elems * 2 }, 4711, $xs);
             is @seen.elems, 0, "never calls f";
             is $result, 4711, "returns initial value";
         }, "foldr on empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
