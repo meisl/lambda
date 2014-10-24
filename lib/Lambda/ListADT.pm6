@@ -101,21 +101,22 @@ constant $yfoldl is export = -> {
 constant $foldl is export = lambdaFn(
     'foldl', 'Y λself.λf.λacc.λxs (if (nil? xs) acc (self f (f acc (car xs)) (cdr xs)))',
     $Y(-> &self {
-        -> $f, $acc, $xs {
+        -> &f, $acc, TList:D $xs {
             $_if( $is-nil($xs),
                 { $acc },
-                { &self($f, $f($car($xs), $acc), $cdr($xs)) })    }    })   # TODO: swap args to f
+                { &self(&f, &f($car($xs), $acc), $cdr($xs)) })    }    })   # TODO: swap args to f
 );
 
 constant $reverse is export = lambdaFn(
     'reverse', '(foldl cons nil)',
-    -> $xs { $foldl($cons, $nil, $xs) }
+    -> TList:D $xs { $foldl($cons, $nil, $xs) }
 );
 
-# (δ foldr λf.λacc.λxs.foldl f acc (reverse xs))
-sub foldr(&f, $acc, TList:D $xs) is export {
-    $foldl(&f, $acc, $reverse($xs));
-}
+# foldr in terms of foldl (and reverse)
+constant $foldr is export = lambdaFn(
+    'foldr', 'λf.λacc.λxs.foldl f acc (reverse xs)',
+    -> &f, $acc, TList:D $xs { $foldl(&f, $acc, $reverse($xs)) }
+);
 
 # (δ foldr-rec λf.λacc.λxs.(if (nil? xs) acc (f (car xs) (foldr-rec f acc (cdr xs))))))
 sub foldr-rec(&f, $acc, TList:D $xs) is export {
@@ -135,14 +136,14 @@ sub map-rev-iter($result, &f, TList:D $xs) {
 
 # (δ map-iter λf.foldr (λx.cons (f x)) nil)
 sub map-iter(&f, TList:D $xs) {
-    foldr(-> $x, $acc { $cons(&f($x), $acc) }, $nil, $xs);
+    $foldr(-> $x, $acc { $cons(&f($x), $acc) }, $nil, $xs);
 }
 
 # (δ map-rec λr.λf.λxs (if (nil? xs) xs (cons (f (car xs)) (map-rec f (cdr xs)))))
 sub map-rec(&f, TList:D $xs) {
-    $_if($is-nil($xs),
-        {$nil},
-        {$cons(&f($car($xs)), map-rec(&f, $cdr($xs)))})
+    $_if( $is-nil($xs),
+        { $nil },
+        { $cons(&f($car($xs)), map-rec(&f, $cdr($xs))) })
 }
 
 sub map(&f, TList:D $xs) is export {
@@ -160,7 +161,7 @@ constant $length is export = lambdaFn(
 
 constant $filter is export = lambdaFn(
     'filter', 'λp.foldr (λx.λacc.((p x) λ_.(cons x acc) λ_.acc))_ nil',
-    -> &p, $xs {foldr(
+    -> &p, $xs { $foldr(
         -> $x, $acc {
             $_if( &p($x),
                 { $cons($x, $acc) },
@@ -193,7 +194,7 @@ constant $exists is export = lambdaFn(
 constant $list2str is export = lambdaFn(
     'list->str', 'λxs.foldr (λx.λacc.(~ (~ "(cons " (->str x)) acc)) "nil" xs',   # TODO: η-reduce list->str
     -> TList:D $xs {
-        foldr(
+        $foldr(
             -> $x, $acc { "(cons $x $acc)" },
             'nil',
             $xs
@@ -201,7 +202,9 @@ constant $list2str is export = lambdaFn(
     }
 );
 
+# Need this sub for the Perl role TList, 
+# since we cannot predeclare constants (such as $list2str)
+# Note that it's private.
 my sub list2str(TList:D $xs) {
-    #foldr(-> $x, $acc { "(cons $x $acc)" }, 'nil', $xs);
     $list2str($xs)
 }

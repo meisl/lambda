@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 84;
+plan 89;
 
 {
     dies_ok { $nil       = 0 },  '$nil is immutable';
@@ -41,6 +41,10 @@ plan 84;
     dies_ok { $reverse   = 0 },  '$reverse is immutable';
     does_ok   $reverse,  lambda, '$reverse';
     does_ok   $reverse,  name,   '$reverse';
+
+    dies_ok { $foldr     = 0 },  '$foldr is immutable';
+    does_ok   $foldr,    lambda, '$foldr';
+    does_ok   $foldr,    name,   '$foldr';
 
     dies_ok { $length   = 0 },  '$length is immutable';
     does_ok   $length,  lambda, '$length';
@@ -78,6 +82,32 @@ plan 84;
             is @seen[1][0], 'B', "passes current elem to f as 1st arg";
             is @seen[1][1], 2, "passes last result from f to f as 2nd arg in subsequent calls";
         }, "foldl on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
+    }
+}
+
+{ # foldr
+    {
+        my $xs = $nil;
+        my @seen = @();
+        subtest({
+            my $result = $foldr(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 4711, $xs);
+            is @seen.elems, 0, "never calls f";
+            is $result, 4711, "returns initial value";
+        }, "foldr on empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
+    }
+
+    {
+        my $xs = $cons('A', $cons('B', $nil));
+        my @seen = @();
+        subtest({
+            my $result = $foldr(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 23, $xs);
+            is @seen.elems, 2, "calls f as many times as there are elements";
+            is $result, 4, "returns what f returned last";
+            is @seen[0][0], 'B', "passes current elem to f as 1st arg";
+            is @seen[0][1], 23, "passes initial value to f as 2nd arg in first call";
+            is @seen[1][0], 'A', "passes current elem to f as 1st arg";
+            is @seen[1][1], 2, "passes last result from f to f as 2nd arg in subsequent calls";
+        }, "foldr on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
     }
 }
 
