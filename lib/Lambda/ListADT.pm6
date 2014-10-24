@@ -113,8 +113,8 @@ constant $reverse is export = lambdaFn(
 );
 
 # foldr in terms of foldl (and reverse)
-constant $foldr is export = lambdaFn(
-    'foldr', 'λf.λacc.λxs.foldl f acc (reverse xs)',
+constant $foldr-left-reverse is export = lambdaFn(
+    'foldr-left-reverse', 'λf.λacc.λxs.foldl f acc (reverse xs)',
     -> &f, $acc, TList:D $xs { $foldl(&f, $acc, $reverse($xs)) }
 );
 
@@ -156,34 +156,44 @@ constant $foldr-iter is export = lambdaFn(
         $g($id, $xs);
     }
 );
+constant $foldr is export = $foldr-rec;
+
+constant $map-foldr is export = lambdaFn(
+    'map-foldr', 'λf.foldr (λx.cons (f x)) nil',
+    -> &f, TList:D $xs {
+        $foldr(-> $x, $acc { $cons(&f($x), $acc) }, $nil, $xs)
+    }
+);
+
+constant $map-rec is export = lambdaFn(
+    'map-rec', 'Y λself.λr.λf.λxs (if (nil? xs) xs (cons (f (car xs)) (self f (cdr xs))))',
+    $Y(-> &self {
+        -> &f, TList:D $xs {
+            $_if( $is-nil($xs),
+                { $nil },
+                { $cons(&f($car($xs)), &self(&f, $cdr($xs))) })
+        }
+    })
+);
+
+constant $map-iter is export = lambdaFn(
+    'map-iter', '((Y λself.λtodo.λxs.(if (nil? xs) (todo nil) (self (λresults.todo (cons (f (car xs)) results)) f (cdr xs)))) id)',
+    $Y(-> &self {
+        -> &todo {
+            -> &f, $xs {
+                $_if( $is-nil($xs),
+                    { &todo($nil) },
+                    { &self( -> $results { &todo($cons(&f($car($xs)), $results)) } )(&f, $cdr($xs)) } )
+            }
+        }
+    })($id)
+);
 
 
-# (δ map-rev-iter λr.λf.λxs.(if (nil? xs) r (map-iter (cons (f (car xs)) r) f (cdr xs))))
-# (δ map-rev-iter λr.λf.foldl (λx.cons (f x)) nil)
-sub map-rev-iter($result, &f, TList:D $xs) {
-#    $is-nil($xs)
-#        ?? $result
-#        !! map-rev-iter(cons(&f($car($xs)), $result), &f, $cdr($xs));
-    $foldl(-> $x, $acc { $cons(&f($x), $acc) }, $nil, $xs);
-}
-
-# (δ map-iter λf.foldr (λx.cons (f x)) nil)
-sub map-iter(&f, TList:D $xs) {
-    $foldr(-> $x, $acc { $cons(&f($x), $acc) }, $nil, $xs);
-}
-
-# (δ map-rec λr.λf.λxs (if (nil? xs) xs (cons (f (car xs)) (map-rec f (cdr xs)))))
-sub map-rec(&f, TList:D $xs) {
-    $_if( $is-nil($xs),
-        { $nil },
-        { $cons(&f($car($xs)), map-rec(&f, $cdr($xs))) })
-}
-
-sub map(&f, TList:D $xs) is export {
-    #$reverse(map-rev-iter($nil, &f, $xs));
-    map-iter(&f, $xs);
-    #map-rec(&f, $xs);
-}
+constant $map is export = lambdaFn(
+    'map', 'map-???',
+    -> &f, TList:D $xs { $map-foldr(&f, $xs) }  # make a new one so we don't shadow the original's roles "lambda" and "name"
+);
 
 constant $length is export = lambdaFn(
     'length', 'λxs.foldl (λ_.λn.+ n 1) 0 xs',

@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 99;
+plan 129;
 
 {
     dies_ok { $nil       = 0 },  '$nil is immutable';
@@ -57,6 +57,22 @@ plan 99;
     dies_ok { $length   = 0 },  '$length is immutable';
     does_ok   $length,  lambda, '$length';
     does_ok   $length,  name,   '$length';
+
+    dies_ok { $map       = 0 },  '$map is immutable';
+    does_ok   $map,      lambda, '$map';
+    does_ok   $map,      name,   '$map';
+
+    dies_ok { $map-foldr       = 0 },  '$map-foldr is immutable';
+    does_ok   $map-foldr,      lambda, '$map-foldr';
+    does_ok   $map-foldr,      name,   '$map-foldr';
+
+    dies_ok { $map-rec       = 0 },  '$map-rec is immutable';
+    does_ok   $map-rec,      lambda, '$map-rec';
+    does_ok   $map-rec,      name,   '$map-rec';
+
+    dies_ok { $map-iter       = 0 },  '$map-iter is immutable';
+    does_ok   $map-iter,      lambda, '$map-iter';
+    does_ok   $map-iter,      name,   '$map-iter';
 
     dies_ok { $filter   = 0 },  '$filter is immutable';
     does_ok   $filter,  lambda, '$filter';
@@ -199,13 +215,16 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 { # map
     my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $nil))));
     my &f = -> $x { 2*$x };
-    my $ys = map(&f, $xs);
-    is $length($ys), 4, "should have same length after map";
-    is $car($ys), 2, "has mapped 1st elem";
-    is $car($cdr($ys)), 4, "has mapped 2nd elem";
-    is $car($cdr($cdr($ys))), 6, "has mapped 3rd elem";
-    is $car($cdr($cdr($cdr($ys)))), 8, "has mapped 4th elem";
-    is cadddr($ys), 8, "has mapped 4th elem";
+    for ($map, $map-foldr, $map-rec, $map-iter) -> $map {
+        diag "map implemented as $map / {$map.lambda}";
+        my $ys = $map(&f, $xs);
+        is $length($ys), 4, "should have same length after map";
+        is $car($ys), 2, "has mapped 1st elem";
+        is $car($cdr($ys)), 4, "has mapped 2nd elem";
+        is $car($cdr($cdr($ys))), 6, "has mapped 3rd elem";
+        is $car($cdr($cdr($cdr($ys)))), 8, "has mapped 4th elem";
+        is cadddr($ys), 8, "has mapped 4th elem";
+    }
 }
 
 { # filter
