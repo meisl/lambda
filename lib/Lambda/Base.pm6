@@ -33,11 +33,34 @@ constant $id is export = lambdaFn(
 );
 constant $I is export := $id;
 
+
 constant $const is export = lambdaFn(
     'const', 'λx.λy.x',
     -> $b { lambdaFn(Str, "λy.$b", -> $y { $b }) }
 );
 constant $K is export := $const;
+
+
+constant $B is export = lambdaFn(
+    'B', 'λf.λg.λx.f (g x)',
+    -> &f, &g {
+        lambdaFn(
+            Str, 'λx.' ~ &f ~ ' (' ~ &g ~ ' x)',
+            -> $x { &f(&g($x)) }
+        )
+    }
+);
+constant $compose is export := $B;
+# B B
+# (λf.λg.λx.f (g x)) (λf.λg.λx.f (g x))
+# λf.λx.(λg.λh.λy.g (h y)) (f x)
+# λf.λx.λh.λy.f x (h y)
+#
+# B B f x h
+# (λx.λh.λy.f x (h y)) x h
+# (λh.λy.f x (h y)) h
+# λy.f x (h y)
+
 
 constant $C is export = lambdaFn(
     'C', 'λf.λx.λy.f y x',
@@ -49,6 +72,7 @@ constant $C is export = lambdaFn(
     }
 );
 constant $swap-args is export := $C;
+
 
 constant $W is export = lambdaFn(
     'W', 'λf.λu.f u u',

@@ -4,7 +4,7 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 60;
+plan 65;
 
 {
     dies_ok { $id   = 0 },    '$id is immutable';
@@ -16,6 +16,11 @@ plan 60;
     does_ok   $const, lambda, '$const';
     does_ok   $const, name,   '$const';
     ok $K === $const, '$K is a synonym for $const';
+
+    dies_ok { $B  = 0 },  '$B is immutable';
+    does_ok   $B, lambda, '$B';
+    does_ok   $B, name,   '$B';
+    ok $compose === $B, '$compose is a synonym for $B';
 
     dies_ok { $C  = 0 },  '$C is immutable';
     does_ok   $C, lambda, '$C';
@@ -44,6 +49,23 @@ plan 60;
     is $const(42).Str,  '(λy.42)',  'const(42).Str';
     is $const($id)(23), $id,        'const(id)(23)';
     is $const($id).Str, "(λy.$id)", 'const($id).Str';
+}
+
+{ # compose, aka B
+    my @seen = @();
+    subtest({
+        my $f = -> Int:D $i { @seen.push($i.perl); ($i * 2).Str.perl } does name('f');
+        my $g = -> Str:D $s { @seen.push($s.perl); $s.Int - 23       } does name('g');
+
+        my $h = $B($f, $g);
+        does_ok $h, lambda, 'B f g';
+        does_ok $h, name,   'B f g';
+
+        my $result = $h('42');
+        is @seen[0], '"42"', '((B f g) "42"): arg was passed to g first';
+        is @seen[1], 19,     '((B f g) "42"): result of g applied to arg was passed to f';
+        is $result, '"38"',  '((B f g) "42"): overall result is that of f';
+    }, "compose aka B") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die; 
 }
 
 { # swap-args, aka C
