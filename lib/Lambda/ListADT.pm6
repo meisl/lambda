@@ -15,11 +15,18 @@ sub sel2of3($a, $b, $c) is export { $b }
 # (δ sel3of3 λa.λb.λc.c)
 sub sel3of3($a, $b, $c) is export { $c }
 
-
 # data List = nil
 #           | cons car:_ cdr:List
 role TList is export {
-    method Str { list2str(self) }
+
+    my @closures = @();
+    has &.toStrClosure;
+    submethod BUILD(:&toStrClosure) {
+        &!toStrClosure = &toStrClosure;
+        @closures.push(&toStrClosure);
+        #note '>>>> TList.BUILD: ' ~ @closures.elems;
+    }
+    method Str { &!toStrClosure() }
 }
 
 
@@ -28,15 +35,16 @@ role TList is export {
 constant $nil is export = lambdaFn(
     'nil', 'λsel.sel #false _ _',
     -> &sel { &sel($false, Any, Any) }
-) does TList;
+) does TList({ 'nil' });
 
 constant $cons is export = lambdaFn(
     'cons', 'λx.λxs.λsel.sel #true x xs',
-    -> $x, TList:D $rest { 
-        lambdaFn(
-            Str, "λxs.λsel.sel #true $x xs",
-            -> &sel { &sel($true, $x, $rest) }
-        ) does TList
+    -> $x, TList:D $xs { 
+            (-> &sel { &sel($true, $x, $xs) }
+        ) does TList({   # must pass this closure to the role since closing over with just a 'but' or 'does' silently fails
+            my $xStr = $x.?name // $x.?lambda // $x.perl;
+            "(cons $xStr $xs)";
+        })
     }
 );
 
@@ -264,10 +272,3 @@ constant $list2str is export = lambdaFn(
         )
     }
 );
-
-# Need this sub for the Perl role TList, 
-# since we cannot predeclare constants (such as $list2str)
-# Note that it's private.
-my sub list2str(TList:D $xs) {
-    $list2str($xs)
-}

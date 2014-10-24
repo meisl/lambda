@@ -209,7 +209,7 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 
 
     $ys = $cons('foo', $xs);
-    is $ys.Str,     '(cons foo (cons 5 nil))', "$ys.Str";
+    is $ys.Str,     '(cons "foo" (cons 5 nil))', "$ys.Str";
     is $is-nil($xs), $false, "(nil? $ys) -> $false";
 
     is $car($ys), "foo", "(car $ys) -> foo";
