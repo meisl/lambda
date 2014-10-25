@@ -6,7 +6,7 @@ use Test::Util;
 use Lambda::Base;
 use Lambda::Boolean;
 
-plan 35;
+plan 37;
 
 {
     is_properLambdaFn($Bool2Str);
@@ -49,10 +49,12 @@ plan 35;
     $x = $not($true);
     is $x, $false, "($not $true) -> $false";
     does_ok $x, TBool, "$x";
+    is_validLambda $x;
 
     $x = $not($false);
     is $x, $true,  "($not $false) -> $true";
     does_ok $x, TBool, "$x";
+    is_validLambda $x;
 }
 
 {

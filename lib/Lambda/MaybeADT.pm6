@@ -16,7 +16,6 @@ sub sel2of2($a, $b) is export { $b }
 # data Maybe = None
 #            | Some value:_
 role TMaybe is export {
-    #method Str { maybe2str(self) }
 }
 
 
@@ -74,9 +73,7 @@ constant $Maybe2Str is export = lambdaFn(
     -> TMaybe:D $m {
         $_if( $is-None($m),
             { 'None' },
-            {   my $v = $Some2value($m);
-                "(Some $v)"
-            }
+            { '(Some ' ~ $Some2value($m) ~ ')' }
         )
     }
 );

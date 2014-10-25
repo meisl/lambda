@@ -19,26 +19,42 @@ sub doesnt_ok($actual, $expectedRole, Str $name?, Str :$msg) is export {
     ) || diag "  Expected NOT: {$expectedRole.^name}\n  Actual type: " ~ $actual.^name;
 }
 
+sub is_validLambda($f) is export {
+    my $fStr = $f.?name || $f.Str || $f.gist || $f.perl;
+    subtest {
+        my $failed = False;
+
+        does_ok($f, lambda, "$f")
+            or $failed = True;
+        
+        does_ok($f, Callable, "$f")
+            or $failed = True;
+        
+        my $err = Any;
+        lives_ok( { try λ($f.lambda); ($err = $!) and die $! }, "$fStr.lambda should be valid lambda-expression")
+            or diag('>>>>' ~ $err) and $failed = $err;
+        #$failed ?? fail($failed) !! True;
+        
+        !$failed;
+    }, "$fStr is valid lambda";
+}
+
 sub is_properLambdaFn($f is rw) is export {
     subtest {
         my $failed = False;
+
         does_ok($f, name, "$f")
-            or $failed = True;
-        does_ok($f, lambda, "$f")
-            or $failed = True;
-        does_ok($f, Callable, "$f")
             or $failed = True;
         
         my $orig = $f;
         dies_ok({ $f = 0 },  "$orig is immutable")
             or $f = $orig and $failed = True;  # reconstitute so that unrelated tests won't fail
         
-        my $err = Any;
-        lives_ok( { try λ($f.lambda); ($err = $!) and die $! }, "{$f.name}.lambda should be valid lambda-expression")
-            or diag('>>>>' ~ $err) and $failed = $err;
-        
+        is_validLambda($f)
+            or $failed = True;
+
         #$failed ?? fail($failed) !! True;
         !$failed;
-    }, ($f.Str || $f.gist || $f.perl) ~ ' is proper lambda fn';
+    }, ($f.Str || $f.gist || $f.perl) ~ ' is proper lambdaFn';
 }
 

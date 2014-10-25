@@ -7,7 +7,7 @@ use Lambda::Boolean;
 
 use Lambda::MaybeADT;
 
-plan 51;
+plan 55;
 
 {
     is_properLambdaFn($Maybe2Str);
@@ -44,11 +44,13 @@ plan 51;
     is $Maybe2Str($x), '(Some 42)',
         "($Maybe2Str (Some 42)) -> \"(Some 42)\"";
     does_ok $x, TMaybe, "$x";
+    is_validLambda $x;
 
     $x = $Some("foo");
     is $Maybe2Str($x), '(Some "foo")',
         "($Maybe2Str (Some \"foo\")) -> \"(Some \\\"foo\\\")\"";
     does_ok $x, TMaybe, "$x";
+    is_validLambda $x;
 
     # can "stack 'em":
 
@@ -56,11 +58,13 @@ plan 51;
     is $Maybe2Str($x), '(Some None)',
         "($Maybe2Str (Some None)) -> \"(Some None)\"";
     does_ok $x, TMaybe, "$x";
+    is_validLambda $x;
 
     $x = $Some($Some(23));
     is $Maybe2Str($x), '(Some (Some 23))',
         "($Maybe2Str (Some (Some 23))) -> \"(Some (Some 23))\"";
     does_ok $x, TMaybe, "$x";
+    is_validLambda $x;
 }
 
 { # predicate None?

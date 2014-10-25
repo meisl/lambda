@@ -18,15 +18,6 @@ sub sel3of3($a, $b, $c) is export { $c }
 # data List = nil
 #           | cons car:_ cdr:List
 role TList is export {
-
-    my @closures = @();
-    has &.toStrClosure;
-    submethod BUILD(:&toStrClosure) {
-        &!toStrClosure = &toStrClosure;
-        @closures.push(&toStrClosure);
-        #note '>>>> TList.BUILD: ' ~ @closures.elems;
-    }
-    method Str { &!toStrClosure() }
 }
 
 
@@ -35,16 +26,18 @@ role TList is export {
 constant $nil is export = lambdaFn(
     'nil', 'λsel.sel #false _ _',
     -> &sel { &sel($false, Any, Any) }
-) does TList({ 'nil' });
+) does TList;
 
 constant $cons is export = lambdaFn(
     'cons', 'λx.λxs.λsel.sel #true x xs',
-    -> $x, TList:D $xs { 
-            (-> &sel { &sel($true, $x, $xs) }
-        ) does TList({   # must pass this closure to the role since closing over with just a 'but' or 'does' silently fails
+    -> $x, TList:D $xs {
             my $xStr = $x.?name // $x.?lambda // $x.perl;
-            "(cons $xStr $xs)";
-        })
+            lambdaFn(
+                Str, "cons $xStr $xs",
+                -> &sel {
+                    &sel($true, $x, $xs)
+                }
+            ) does TList
     }
 );
 

@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 82;
+plan 88;
 
 {
     is_properLambdaFn($List2Str);
@@ -54,6 +54,20 @@ plan 82;
     is $cons.Str,           'cons', '$cons.Str -> "cons"';
     doesnt_ok $cons, TList, 'cons', :msg('cons is NOT a TList in itself');
     dies_ok { $List2Str($cons) }, "($List2Str $cons) yields error";
+
+    my $xs;
+
+    $xs = $cons(5, $nil);
+    is $List2Str($xs), '(cons 5 nil)',
+        "($List2Str (cons 5 nil)) -> \"(cons 5 nil)\"";
+    does_ok $xs, TList, "$xs";
+    is_validLambda($xs);
+
+    $xs = $cons("foo", $nil);
+    is $List2Str($xs), '(cons "foo" nil)',
+        "($List2Str (cons \"foo\" nil)) -> \"(cons \"foo\" nil)\"";
+    does_ok $xs, TList, "$xs";
+    is_validLambda($xs);
 }
 
 { # nil?, List2Str, .Str

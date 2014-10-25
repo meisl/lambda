@@ -5,18 +5,15 @@ use Lambda::Base;
 module Lambda::Boolean;
 
 
+# data Bool = #false
+#           | #true
 my role TBool is export {
-    method Str { Bool2Str(self) }
 }
 
 constant $Bool2Str is export = lambdaFn(
     'Bool->Str', 'λp.p "#true" "#false"',
     -> TBool:D $p { $p('#true', '#false') }
 );
-
-my sub Bool2Str(TBool:D $self) {
-    $Bool2Str($self);
-}
 
 # "constructors"
 
