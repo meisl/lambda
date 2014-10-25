@@ -119,7 +119,7 @@ plan 149;
 
 # foldr
 for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
-    diag "foldr implemented as {$foldr.lambda}";
+    diag "foldr implemented as {$foldr.name}: {$foldr.lambda}";
     {
         my $xs = $nil;
         my @seen = @();

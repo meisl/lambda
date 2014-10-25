@@ -95,6 +95,7 @@ plan 65;
     my @seen = @();
     subtest({
         my $f = -> $a, $b { @seen.push([$a, $b]) } does name('f');
+        $f does lambda('λa.λb.#true');
 
         my $g = $W($f);
         does_ok $g, lambda, 'W f';
@@ -135,9 +136,9 @@ plan 65;
 }
 
 { # Y combinator for binary f
-    my $ackPeter = lambdaFn(
-        'ackPeter', 'Y λself.λa.λb.?[TODO: Ackermann-Peter function λ]?',
-        $Y(-> &self {
+    my $ackPeter = $Y( lambdaFn(
+        'ackPeter', 'λself.λa.λb.(if (zero? a) (succ b) (if (zero? b) (self (pred a) 1) (self (pred a) (self a (pred b)))))',
+        -> &self {
             -> Int $a, $b {
                 if $a == 0 {
                     $b + 1;
@@ -147,8 +148,8 @@ plan 65;
                     &self($a - 1, &self($a, $b - 1));
                 }
             }
-        })
-    );
+        }
+    ));
     diag 'Y combinator for binary f; ex. Ackermann-Péter: ' ~ $ackPeter.lambda;
 
     # base case:

@@ -1,5 +1,7 @@
 use v6;
 
+use Lambda::LambdaGrammar;
+
 module Lambda::Base;
 
 role name is export {
@@ -10,7 +12,7 @@ role name is export {
 role lambda is export {
     has Str:D $.lambda;
     method Str {
-        self.?name // $!lambda;
+        self.?name || $!lambda;
     }
     method gist { $!lambda }
     #method perl { self.gist }
@@ -22,6 +24,10 @@ sub lambdaFn(Str $name, Str:D $lambdaExpr, &f) is export {
         die "cannot make lambda function with zero parameters"
     } else {
         my $lx = $lambdaExpr.substr(0, 1) eq '(' ?? $lambdaExpr !! "($lambdaExpr)";
+        #try my $t = λ($lx); # try to parse it
+        if $! {
+            note ">>>> $name: " ~ $!;
+        }
         return ((&f but name($name)) but lambda($lx));
     }
 }
@@ -105,8 +111,9 @@ constant $Y is export = lambdaFn(
     #'Y', 'λf.f((λu.λf.f(u u f)) (λu.λf.f(u u f)) f))',
 
     #-> &f { &f( $U($U)(&f) ) }
-    -> &f { lambdaFn(
-        Str, '(Y ' ~ (&f ~~ lambda ?? &f.Str !! &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
+    -> &f {
+        lambdaFn(
+            &f.?name, '(Y ' ~ (&f ~~ lambda ?? &f.lambda !! &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
             &f( $U($U, &f) )
         )
     }
