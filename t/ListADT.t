@@ -109,10 +109,10 @@ plan 149;
             my $result = $foldl(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 23, $xs);
             is @seen.elems, 2, "calls f as many times as there are elements";
             is $result, 4, "returns what f returned last";
-            is @seen[0][0], 'A', "passes current elem to f as 1st arg";
-            is @seen[0][1], 23, "passes initial value to f as 2nd arg in first call";
-            is @seen[1][0], 'B', "passes current elem to f as 1st arg";
-            is @seen[1][1], 2, "passes last result from f to f as 2nd arg in subsequent calls";
+            is @seen[0][0], 23, "passes initial value to f as 1st arg in first call";
+            is @seen[0][1], 'A', "passes current elem to f as 2nd arg";
+            is @seen[1][0], 2, "passes last result from f to f as 1st arg in subsequent calls";
+            is @seen[1][1], 'B', "passes current elem to f as 2nd arg";
         }, "foldl on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
     }
 }

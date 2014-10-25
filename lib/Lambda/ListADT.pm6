@@ -112,18 +112,18 @@ constant $foldl is export = lambdaFn(
         -> &f, $acc, TList:D $xs {
             $_if( $is-nil($xs),
                 { $acc },
-                { &self(&f, &f($car($xs), $acc), $cdr($xs)) })    }    })   # TODO: swap args to f
+                { &self(&f, &f($acc, $car($xs)), $cdr($xs)) })    }    })
 );
 
 constant $reverse is export = lambdaFn(
-    'reverse', '(foldl cons nil)',
-    -> TList:D $xs { $foldl($cons, $nil, $xs) }
+    'reverse', '(foldl (C cons) nil)',
+    -> TList:D $xs { $foldl( $swap-args($cons), $nil, $xs) }
 );
 
 # foldr in terms of foldl (and reverse)
 constant $foldr-left-reverse is export = lambdaFn(
-    'foldr-left-reverse', 'λf.λacc.λxs.foldl f acc (reverse xs)',
-    -> &f, $acc, TList:D $xs { $foldl(&f, $acc, $reverse($xs)) }
+    'foldr-left-reverse', 'λf.λacc.λxs.foldl (C f) acc (reverse xs)',
+    -> &f, $acc, TList:D $xs { $foldl( $swap-args(&f), $acc, $reverse($xs)) }
 );
 
 constant $foldr-rec is export = lambdaFn(
@@ -202,21 +202,21 @@ constant $map is export = lambdaFn(
 );
 
 constant $length is export = lambdaFn(
-    'length', 'λxs.foldl (λ_.λn.+ n 1) 0 xs',
+    'length', 'λxs.foldl (λn.λ_.+ n 1) 0 xs',   # equiv to (foldl (λn.λ_.+ n 1) 0)
     -> TList:D $xs {
-        $foldl(-> $_, $n { $n + 1 }, 0, $xs)
+        $foldl(-> $n, $_ { $n + 1 }, 0, $xs)
     }
 );
 
 constant $append is export = lambdaFn(
-    'append', 'λxs.λys.foldr cons ys xs',
+    'append', 'λxs.λys.foldr cons ys xs',   # equiv to (foldr cons)
     -> TList:D $xs,  TList:D $ys {
         $foldr($cons, $ys, $xs)
     }
 );
 
 constant $filter is export = lambdaFn(
-    'filter', 'λp.foldr (λx.λacc.((p x) λ_.(cons x acc) λ_.acc))_ nil',
+    'filter', 'λp.λxs.foldr (λx.λacc.((p x) (λ_.cons x acc) (λ_.acc)) _) nil xs',
     -> &p, $xs { $foldr(
         -> $x, $acc {
             $_if( &p($x),
@@ -262,7 +262,7 @@ constant $___exists is export = lambdaFn(
                 })
         }
     })
-    # alternative (not as efficient): foldl(-> $x, $acc { $_if($acc, {$true}, {&predicate($x)}) }, $false, $xs)
+    # alternative (not as efficient): foldl(-> $acc, $x { $_if($acc, {$true}, {&predicate($x)}) }, $false, $xs)
 );
 
 
