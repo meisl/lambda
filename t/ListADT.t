@@ -7,88 +7,32 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 149;
+plan 110;
 
 {
-    dies_ok { $nil       = 0 },  '$nil is immutable';
-    does_ok   $nil,      lambda, '$nil';
-    does_ok   $nil,      name,   '$nil';
+    is_properLambdaFn($nil);
+    is_properLambdaFn($cons);
+    is_properLambdaFn($is-nil);
+    is_properLambdaFn($list2str);
 
-    dies_ok { $cons      = 0 },  '$cons is immutable';
-    does_ok   $cons,     lambda, '$cons';
-    does_ok   $cons,     name,   '$cons';
+    is_properLambdaFn($foldl);
+    is_properLambdaFn($reverse);
 
-    dies_ok({ $is-nil    = 0 },  '$is-nil is immutable');
-    does_ok   $is-nil,   lambda, '$is-nil';
-    does_ok   $is-nil,   name,   '$is-nil';
+    is_properLambdaFn($foldr);
+    is_properLambdaFn($foldr-rec);
+    is_properLambdaFn($foldr-iter);
 
-    dies_ok({ $list2str  = 0 },  '$list2str is immutable');
-    does_ok   $list2str, lambda, '$list2str';
-    does_ok   $list2str, name,   '$list2str';
+    is_properLambdaFn($length);
+    is_properLambdaFn($append);
 
-    dies_ok { $car       = 0 },  '$car is immutable';
-    does_ok   $car,      lambda, '$car';
-    does_ok   $car,      name,   '$car';
+    is_properLambdaFn($map);
+    is_properLambdaFn($map-foldr);
+    is_properLambdaFn($map-rec);
+    is_properLambdaFn($map-iter);
 
-    dies_ok { $cdr       = 0 },  '$cdr is immutable';
-    does_ok   $cdr,      lambda, '$cdr';
-    does_ok   $cdr,      name,   '$cdr';
-
-    dies_ok { $foldl     = 0 },  '$foldl is immutable';
-    does_ok   $foldl,    lambda, '$foldl';
-    does_ok   $foldl,    name,   '$foldl';
-
-    dies_ok { $reverse   = 0 },  '$reverse is immutable';
-    does_ok   $reverse,  lambda, '$reverse';
-    does_ok   $reverse,  name,   '$reverse';
-
-    dies_ok { $foldr     = 0 },  '$foldr is immutable';
-    does_ok   $foldr,    lambda, '$foldr';
-    does_ok   $foldr,    name,   '$foldr';
-
-    dies_ok { $foldr-rec  = 0 },  '$foldr-rec is immutable';
-    does_ok   $foldr-rec, lambda, '$foldr-rec';
-    does_ok   $foldr-rec, name,   '$foldr-rec';
-
-    dies_ok { $foldr-iter  = 0 },  '$foldr-iter is immutable';
-    does_ok   $foldr-iter, lambda, '$foldr-iter';
-    does_ok   $foldr-iter, name,   '$foldr-iter';
-
-    dies_ok { $length   = 0 },  '$length is immutable';
-    does_ok   $length,  lambda, '$length';
-    does_ok   $length,  name,   '$length';
-
-    dies_ok { $append    = 0 },  '$append is immutable';
-    does_ok   $append,   lambda, '$append';
-    does_ok   $append,   name,   '$append';
-
-    dies_ok { $map       = 0 },  '$map is immutable';
-    does_ok   $map,      lambda, '$map';
-    does_ok   $map,      name,   '$map';
-
-    dies_ok { $map-foldr       = 0 },  '$map-foldr is immutable';
-    does_ok   $map-foldr,      lambda, '$map-foldr';
-    does_ok   $map-foldr,      name,   '$map-foldr';
-
-    dies_ok { $map-rec       = 0 },  '$map-rec is immutable';
-    does_ok   $map-rec,      lambda, '$map-rec';
-    does_ok   $map-rec,      name,   '$map-rec';
-
-    dies_ok { $map-iter       = 0 },  '$map-iter is immutable';
-    does_ok   $map-iter,      lambda, '$map-iter';
-    does_ok   $map-iter,      name,   '$map-iter';
-
-    dies_ok { $filter   = 0 },  '$filter is immutable';
-    does_ok   $filter,  lambda, '$filter';
-    does_ok   $filter,  name,   '$filter';
-
-    dies_ok { $first   = 0 },  '$first is immutable';
-    does_ok   $first,  lambda, '$first';
-    does_ok   $first,  name,   '$first';
-
-    dies_ok { $exists   = 0 },  '$exists is immutable';
-    does_ok   $exists,  lambda, '$exists';
-    does_ok   $exists,  name,   '$exists';
+    is_properLambdaFn($filter);
+    is_properLambdaFn($first);
+    is_properLambdaFn($exists);
 }
 
 { # foldl
@@ -119,32 +63,33 @@ plan 149;
 
 # foldr
 for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
-    diag "foldr implemented as {$foldr.name}: {$foldr.lambda}";
-    {
-        my $xs = $nil;
-        my @seen = @();
-        subtest({
-            my $result = $foldr(-> $a, $b { say "got $a and $b"; @seen.push([$a, $b].item); @seen.elems * 2 }, 4711, $xs);
-            is @seen.elems, 0, "never calls f";
-            is $result, 4711, "returns initial value";
-        }, "foldr on empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
-    }
+    subtest {
+        {
+            my $xs = $nil;
+            my @seen = @();
+            subtest({
+                my $result = $foldr(-> $a, $b { say "got $a and $b"; @seen.push([$a, $b].item); @seen.elems * 2 }, 4711, $xs);
+                is @seen.elems, 0, "never calls f";
+                is $result, 4711, "returns initial value";
+            }, "foldr on empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
+        }
 
-    {
-        my $xs = $cons('A', $cons('B', $cons('C', $nil)));
-        my @seen = @();
-        subtest({
-            my $result = $foldr(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 23, $xs);
-            is @seen.elems, 3, "calls f as many times as there are elements";
-            is $result, 6, "returns what f returned last";
-            is @seen[0][0], 'C', "passes current elem to f as 1st arg";
-            is @seen[0][1], 23, "passes initial value to f as 2nd arg in first call";
-            is @seen[1][0], 'B', "passes current elem to f as 1st arg";
-            is @seen[1][1], 2, "passes last result from f to f as 2nd arg in subsequent calls";
-            is @seen[2][0], 'A', "passes current elem to f as 1st arg";
-            is @seen[2][1], 4, "passes last result from f to f as 2nd arg in subsequent calls";
-        }, "foldr on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
-    }
+        {
+            my $xs = $cons('A', $cons('B', $cons('C', $nil)));
+            my @seen = @();
+            subtest({
+                my $result = $foldr(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 23, $xs);
+                is @seen.elems, 3, "calls f as many times as there are elements";
+                is $result, 6, "returns what f returned last";
+                is @seen[0][0], 'C', "passes current elem to f as 1st arg";
+                is @seen[0][1], 23, "passes initial value to f as 2nd arg in first call";
+                is @seen[1][0], 'B', "passes current elem to f as 1st arg";
+                is @seen[1][1], 2, "passes last result from f to f as 2nd arg in subsequent calls";
+                is @seen[2][0], 'A', "passes current elem to f as 1st arg";
+                is @seen[2][1], 4, "passes last result from f to f as 2nd arg in subsequent calls";
+            }, "foldr on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
+        }
+    }, "foldr implemented as {$foldr.name}: {$foldr.lambda}";
 }
 
 { # reverse
@@ -202,8 +147,8 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
     }, "appending two two-elem lists" or diag $zs and die;
 }
 
-{
-    is $is-nil($nil),   $true, '(nil? nil) -> #true';
+{ # nil?, list2str, .Str
+    is $is-nil($nil), $true, '(nil? nil) -> #true';
     is $nil.Str,        'nil', '$nil.Str';
     is $list2str($nil), 'nil', '(list->str nil) -> "nil"';
     
@@ -211,54 +156,34 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
     my $ys;
 
     $xs = $cons($nil, $nil);
+    is $is-nil($xs), $false, "(nil? $xs) -> $false";
     is $xs.Str,        '(cons nil nil)', '(cons nil nil).Str';
     is $list2str($xs), '(cons nil nil)', '(list->str (cons nil nil))';
 
-    is $is-nil($xs), $false, "(nil? $xs) -> $false";
-    
-    dies_ok( { $xs.car }, '.car should not be a method');
-    dies_ok( { $xs.cdr }, '.cdr should not be a method');
-
-    is $car($xs), $nil, "(car $xs) -> $nil";
-    is $cdr($xs), $nil, "(cdr $xs) -> $nil";
-
-    is $length($xs), 1,  "(length $xs) -> 1";
-
 
     $xs = $cons(5, $nil);
+    is $is-nil($xs), $false, "(nil? $xs) -> #false";
     is $xs.Str,        '(cons 5 nil)', '(cons 5 nil).Str';
     is $list2str($xs), '(cons 5 nil)', '(list->str (cons 5 nil))';
-    
-    is $is-nil($xs), $false, "(nil? $xs) -> #false";
-
-    is $car($xs), 5,    "(car $xs) -> 5";
-    is $cdr($xs), $nil, "(cdr $xs) -> nil";
-
-    is $length($xs), 1,  "(length $xs) -> 1";
-
 
     $ys = $cons('foo', $xs);
-    is $ys.Str,     '(cons "foo" (cons 5 nil))', "$ys.Str";
     is $is-nil($xs), $false, "(nil? $ys) -> $false";
-
-    is $car($ys), "foo", "(car $ys) -> foo";
-    is $cdr($ys), $xs,   "(cdr $ys) -> $xs";
-
-    is $length($ys), 2,  "(length $ys) -> 2";
+    is $ys.Str,         '(cons "foo" (cons 5 nil))', "$ys.Str";
+    is $list2str($ys),  '(cons "foo" (cons 5 nil))', "(list->str $ys)";
 }
 
 { # map
     my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $nil))));
     my &f = -> $x { 2*$x };
     for ($map, $map-foldr, $map-rec, $map-iter) -> $map {
-        diag "map implemented as $map / {$map.lambda}";
-        my $ys = $map(&f, $xs);
-        is $length($ys), 4, "should have same length after map";
-        is $car($ys), 2, "has mapped 1st elem";
-        is $car($cdr($ys)), 4, "has mapped 2nd elem";
-        is $car($cdr($cdr($ys))), 6, "has mapped 3rd elem";
-        is $car($cdr($cdr($cdr($ys)))), 8, "has mapped 4th elem";
-        is cadddr($ys), 8, "has mapped 4th elem";
+        subtest {
+            my $ys = $map(&f, $xs);
+            is $length($ys), 4, "should have same length after map";
+            is $car($ys), 2, "has mapped 1st elem";
+            is $cadr($ys), 4, "has mapped 2nd elem";
+            is $caddr($ys), 6, "has mapped 3rd elem";
+            is $car($cdddr($ys)), 8, "has mapped 4th elem";
+        }, "map implemented as $map / {$map.lambda}";
     }
 }
 
@@ -271,7 +196,7 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
     my $ys = $filter(&isEven, $xs);
     is $length($ys), 2, "should haved filtered out half of them";
     is $car($ys), 2, "found first even";
-    is cadr($ys), 4, "found second even";
+    is $cadr($ys), 4, "found second even";
 }
 
 { # first

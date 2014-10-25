@@ -4,37 +4,25 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 65;
+plan 38;
 
 {
-    dies_ok { $id   = 0 },    '$id is immutable';
-    does_ok   $id,  lambda,   '$id';
-    does_ok   $id,  name,     '$id';
+    is_properLambdaFn($id);
     ok $I === $id, '$I is a synonym for $id';
 
-    dies_ok { $const  = 0 },  '$const is immutable';
-    does_ok   $const, lambda, '$const';
-    does_ok   $const, name,   '$const';
+    is_properLambdaFn($const);
     ok $K === $const, '$K is a synonym for $const';
 
-    dies_ok { $B  = 0 },  '$B is immutable';
-    does_ok   $B, lambda, '$B';
-    does_ok   $B, name,   '$B';
+    is_properLambdaFn($B);
     ok $compose === $B, '$compose is a synonym for $B';
 
-    dies_ok { $C  = 0 },  '$C is immutable';
-    does_ok   $C, lambda, '$C';
-    does_ok   $C, name,   '$C';
+    is_properLambdaFn($C);
     ok $swap-args === $C, '$swap-args is a synonym for $C';
 
-    dies_ok { $W  = 0 },  '$W is immutable';
-    does_ok   $W, lambda, '$W';
-    does_ok   $W, name,   '$W';
+    is_properLambdaFn($W);
     ok $double-arg === $W, '$double-arg is a synonym for W';
 
-    dies_ok { $Y      = 0 },  '$Y is immutable';
-    does_ok   $Y,     lambda, '$Y';
-    does_ok   $Y,     name,   '$Y';
+    is_properLambdaFn($Y);
 }
 
 {
@@ -121,18 +109,18 @@ plan 65;
     );
     my $fact = $Y($fact-stub);
     does_ok $fact, lambda, '(Y f)';
-
-    diag 'Y combinator for unary f; ex. factorial: ' ~ $fact.lambda;
-    does_ok $Y(-> &self { &self }), lambda, '(Y g) where g does not role "lambda"';
+    does_ok $Y(-> &self { &self }), lambda, '(Y g) where g does not role "lambda" - itself';
     
-
-    is $fact(0),   1, '0! =   1';
-    is $fact(1),   1, '1! =   1';
-    is $fact(2),   2, '2! =   2';
-    is $fact(3),   6, '3! =   6';
-    is $fact(4),  24, '4! =  24';
-    is $fact(5), 120, '5! = 120';
-    is $fact(6), 720, '5! = 720';
+    subtest {
+        is $fact(0),   1, '0! =   1';
+        is $fact(1),   1, '1! =   1';
+        is $fact(2),   2, '2! =   2';
+        is $fact(3),   6, '3! =   6';
+        is $fact(4),  24, '4! =  24';
+        is $fact(5), 120, '5! = 120';
+        is $fact(6), 720, '5! = 720';
+        is $fact(7),5040, '5! =5040';
+    }, 'Y combinator for unary f; ex. factorial: ' ~ $fact.lambda;
 }
 
 { # Y combinator for binary f
@@ -150,43 +138,43 @@ plan 65;
             }
         }
     ));
-    diag 'Y combinator for binary f; ex. Ackermann-Péter: ' ~ $ackPeter.lambda;
 
-    # base case:
-    is $ackPeter(0, 0),   1, 'ap(0, 0) =   1';
-    is $ackPeter(0, 1),   2, 'ap(0, 1) =   2';
-    is $ackPeter(0, 2),   3, 'ap(0, 2) =   3';
-    is $ackPeter(0, 3),   4, 'ap(0, 3) =   4';
-    is $ackPeter(0, 4),   5, 'ap(0, 4) =   5';
+    subtest {
+        # base case:
+        is $ackPeter(0, 0),   1, 'ap(0, 0) =   1';
+        is $ackPeter(0, 1),   2, 'ap(0, 1) =   2';
+        is $ackPeter(0, 2),   3, 'ap(0, 2) =   3';
+        is $ackPeter(0, 3),   4, 'ap(0, 3) =   4';
+        is $ackPeter(0, 4),   5, 'ap(0, 4) =   5';
 
-    # recursive cases:
-    is $ackPeter(1, 0),   2, 'ap(1, 0) =   2';
-    is $ackPeter(1, 1),   3, 'ap(2, 1) =   3';
-    is $ackPeter(1, 2),   4, 'ap(3, 2) =   4';
-    is $ackPeter(1, 3),   5, 'ap(4, 3) =   5';
-    is $ackPeter(1, 4),   6, 'ap(5, 4) =   6';
+        # recursive cases:
+        is $ackPeter(1, 0),   2, 'ap(1, 0) =   2';
+        is $ackPeter(1, 1),   3, 'ap(2, 1) =   3';
+        is $ackPeter(1, 2),   4, 'ap(3, 2) =   4';
+        is $ackPeter(1, 3),   5, 'ap(4, 3) =   5';
+        is $ackPeter(1, 4),   6, 'ap(5, 4) =   6';
 
-    is $ackPeter(2, 0),   3, 'ap(2, 0) =   3';
-    is $ackPeter(2, 1),   5, 'ap(2, 1) =   5';
-    is $ackPeter(2, 2),   7, 'ap(2, 2) =   7';
-    is $ackPeter(2, 3),   9, 'ap(2, 3) =   9';
-    is $ackPeter(2, 4),  11, 'ap(2, 4) =  11';
+        is $ackPeter(2, 0),   3, 'ap(2, 0) =   3';
+        is $ackPeter(2, 1),   5, 'ap(2, 1) =   5';
+        is $ackPeter(2, 2),   7, 'ap(2, 2) =   7';
+        is $ackPeter(2, 3),   9, 'ap(2, 3) =   9';
+        is $ackPeter(2, 4),  11, 'ap(2, 4) =  11';
 
-    is $ackPeter(3, 0),   5, 'ap(3, 0) =   5';
-    is $ackPeter(3, 1),  13, 'ap(3, 1) =  13';
-    is $ackPeter(3, 2),  29, 'ap(3, 2) =  29';
-    is $ackPeter(3, 3),  61, 'ap(3, 3) =  61';
-    is $ackPeter(3, 4), 125, 'ap(3, 4) = 125';
+        is $ackPeter(3, 0),   5, 'ap(3, 0) =   5';
+        is $ackPeter(3, 1),  13, 'ap(3, 1) =  13';
+        is $ackPeter(3, 2),  29, 'ap(3, 2) =  29';
+        is $ackPeter(3, 3),  61, 'ap(3, 3) =  61';
+        is $ackPeter(3, 4), 125, 'ap(3, 4) = 125';
 
-    # attention, becoming really slow soon:
-    skip {
-        is $ackPeter(3, 5), 8*2**5-3, 'ap(3, 5) = ' ~ (8*2**5-3);
-        is $ackPeter(3, 6), 8*2**6-3, 'ap(3, 6) = ' ~ (8*2**6-3);
-        is $ackPeter(3, 7), 8*2**7-3, 'ap(3, 7) = ' ~ (8*2**7-3);
-    }
+        ## Attention: becoming really slow soon:
 
-    is $ackPeter(4, 0),    13, 'ap(4, 0) =     13';
-    #is $ackPeter(4, 1), 65533, 'ap(4, 1) =  65533';
+        #is $ackPeter(3, 5), 8*2**5-3, 'ap(3, 5) = ' ~ (8*2**5-3);
+        #is $ackPeter(3, 6), 8*2**6-3, 'ap(3, 6) = ' ~ (8*2**6-3);
+        #is $ackPeter(3, 7), 8*2**7-3, 'ap(3, 7) = ' ~ (8*2**7-3);
+
+        is $ackPeter(4, 0),    13, 'ap(4, 0) =     13';
+        #is $ackPeter(4, 1), 65533, 'ap(4, 1) =  65533';
+    }, 'Y combinator for binary f; ex. Ackermann-Péter: ' ~ $ackPeter.lambda;
 }
 
 {

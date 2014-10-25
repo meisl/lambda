@@ -78,14 +78,37 @@ constant $cdr is export = lambdaFn(
     }
 );
 
-# (δ caar λxs.car (car xs))
-sub caar(TList:D $xs) is export { $car($car($xs)) }
-sub cadr(TList:D $xs) is export { $car($cdr($xs)) }
-sub cdar(TList:D $xs) is export { $cdr($car($xs)) }
-sub cddr(TList:D $xs) is export { $cdr($cdr($xs)) }
-sub caddr(TList:D $xs) is export { $car(cddr($xs)) }
-sub cdddr(TList:D $xs) is export { $cdr(cddr($xs)) }
-sub cadddr(TList:D $xs) is export { $car(cdddr($xs)) }
+constant $caar is export = lambdaFn( 'caar', 'B car car', $B($car, $car) );
+constant $cadr is export = lambdaFn( 'cadr', 'B car cdr', $B($car, $cdr) );
+constant $cdar is export = lambdaFn( 'cdar', 'B cdr car', $B($cdr, $car) );
+constant $cddr is export = lambdaFn( 'cddr', 'B cdr cdr', $B($cdr, $cdr) );
+
+constant $caaar is export = lambdaFn( 'caaar', 'B car caar', $B($car, $caar) );
+constant $caadr is export = lambdaFn( 'caadr', 'B car cadr', $B($car, $cadr) );
+constant $cadar is export = lambdaFn( 'cadar', 'B car cdar', $B($car, $cdar) );
+constant $caddr is export = lambdaFn( 'caddr', 'B car cddr', $B($car, $cddr) );
+constant $cdaar is export = lambdaFn( 'cdaar', 'B cdr caar', $B($cdr, $caar) );
+constant $cdadr is export = lambdaFn( 'cdadr', 'B cdr cadr', $B($cdr, $cadr) );
+constant $cddar is export = lambdaFn( 'cddar', 'B cdr cdar', $B($cdr, $cdar) );
+constant $cdddr is export = lambdaFn( 'cdddr', 'B cdr cddr', $B($cdr, $cddr) );
+
+
+constant $caaaar is export = lambdaFn( 'caaaar', 'B car caaar', $B($car, $caaar) );
+constant $caaadr is export = lambdaFn( 'caaadr', 'B car caadr', $B($car, $caadr) );
+constant $caadar is export = lambdaFn( 'caadar', 'B car cadar', $B($car, $cadar) );
+constant $caaddr is export = lambdaFn( 'caaddr', 'B car caddr', $B($car, $caddr) );
+constant $cadaar is export = lambdaFn( 'cadaar', 'B car cdaar', $B($car, $cdaar) );
+constant $cadadr is export = lambdaFn( 'cadadr', 'B car cdadr', $B($car, $cdadr) );
+constant $caddar is export = lambdaFn( 'caddar', 'B car cddar', $B($car, $cddar) );
+constant $cadddr is export = lambdaFn( 'cadddr', 'B car cdddr', $B($car, $cdddr) );
+constant $cdaaar is export = lambdaFn( 'cdaaar', 'B cdr caaar', $B($cdr, $caaar) );
+constant $cdaadr is export = lambdaFn( 'cdaadr', 'B cdr caadr', $B($cdr, $caadr) );
+constant $cdadar is export = lambdaFn( 'cdadar', 'B cdr cadar', $B($cdr, $cadar) );
+constant $cdaddr is export = lambdaFn( 'cdaddr', 'B cdr caddr', $B($cdr, $caddr) );
+constant $cddaar is export = lambdaFn( 'cddaar', 'B cdr cdaar', $B($cdr, $cdaar) );
+constant $cddadr is export = lambdaFn( 'cddadr', 'B cdr cdadr', $B($cdr, $cdadr) );
+constant $cdddar is export = lambdaFn( 'cdddar', 'B cdr cddar', $B($cdr, $cddar) );
+constant $cddddr is export = lambdaFn( 'cddddr', 'B cdr cdddr', $B($cdr, $cdddr) );
 
 
 # functions on TList
@@ -274,7 +297,10 @@ constant $list2str is export = lambdaFn(
     'list->str', '(foldr (λx.λacc.(~ (~ (~ "(cons " (->str x)) acc) ")")) "nil")',   # TODO: η-reduce list->str
     -> TList:D $xs {
         $foldr(
-            -> $x, $acc { "(cons $x $acc)" },
+            -> $x, $acc {
+                my $xStr = $x.?name // $x.?lambda // $x.perl;
+                "(cons $xStr $acc)" 
+            },
             'nil',
             $xs
         )
