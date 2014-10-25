@@ -208,6 +208,13 @@ constant $length is export = lambdaFn(
     }
 );
 
+constant $append is export = lambdaFn(
+    'append', 'λxs.λys.foldr cons ys xs',
+    -> TList:D $xs,  TList:D $ys {
+        $foldr($cons, $ys, $xs)
+    }
+);
+
 constant $filter is export = lambdaFn(
     'filter', 'λp.foldr (λx.λacc.((p x) λ_.(cons x acc) λ_.acc))_ nil',
     -> &p, $xs { $foldr(

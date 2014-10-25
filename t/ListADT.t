@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 140;
+plan 149;
 
 {
     dies_ok { $nil       = 0 },  '$nil is immutable';
@@ -57,6 +57,10 @@ plan 140;
     dies_ok { $length   = 0 },  '$length is immutable';
     does_ok   $length,  lambda, '$length';
     does_ok   $length,  name,   '$length';
+
+    dies_ok { $append    = 0 },  '$append is immutable';
+    does_ok   $append,   lambda, '$append';
+    does_ok   $append,   name,   '$append';
 
     dies_ok { $map       = 0 },  '$map is immutable';
     does_ok   $map,      lambda, '$map';
@@ -172,6 +176,32 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
     is $length($xs), 3, "(length $xs) -> 3";
 }
 
+{ # append
+    my $xs = $nil;
+    my $ys = $append($xs, $xs);
+    is $is-nil($ys), $true, "appending nil to nil yields nil";
+
+    $xs = $cons(1, $xs);
+    $ys = $append($xs, $nil);
+    is $length($ys), 1, "appending nil to a 1-elem list yields a 1-elem list";
+    is $car($ys), 1, "...and gives the same list";
+
+    $ys = $append($nil, $xs);
+    is $length($ys), 1, "appending a 1-elem list to nil yields a 1-elem list";
+    is $car($ys), 1, "...and gives the same list";
+
+    $xs = $cons(2, $xs);    # [2, 1]
+    $ys = $cons(3, $cons(4, $nil)); # [3, 4]
+    my $zs = $append($xs, $ys);
+    subtest {
+        is $length($zs), 4, "appending a two-elem list to a two-elem list yields a 4-elem list";
+        is $car($zs), 2, "1st elem of result";
+        is $car($cdr($zs)), 1, "2nd elem of result";
+        is $car($cdr($cdr($zs))), 3, "3rd elem of result";
+        is $car($cdr($cdr($cdr($zs)))), 4, "4th elem of result";
+    }, "appending two two-elem lists" or diag $zs and die;
+}
+
 {
     is $is-nil($nil),   $true, '(nil? nil) -> #true';
     is $nil.Str,        'nil', '$nil.Str';
@@ -180,7 +210,6 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
     my $xs;
     my $ys;
 
-    
     $xs = $cons($nil, $nil);
     is $xs.Str,        '(cons nil nil)', '(cons nil nil).Str';
     is $list2str($xs), '(cons nil nil)', '(list->str (cons nil nil))';
