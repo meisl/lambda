@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 104;
+plan 111;
 
 {
     is_properLambdaFn($car);
@@ -90,4 +90,27 @@ plan 104;
     
     my $ys = $cons(5, $cons($xs, $nil));
     is $cadr($ys), $xs, 'cadr extracts 2nd elem (a list)';
+}
+
+{ # cdar
+    dies_ok({ $cdar($nil) }, 'cdar on nil yields error');
+
+    my $xs = $cons(23, $nil);
+    dies_ok({ $cdar($xs) }, 'cdar on 1-elem list yields error if 1st elem aint a list');
+
+    my $ys = $cons($cons("foo", $xs), $cons("bar", $nil));
+    is $cdar($ys), $xs, 'cadr extracts tail of 1st elem';
+}
+
+{ # cddr
+    dies_ok({ $cddr($nil) }, 'cddr on nil yields error');
+
+    my $xs = $cons(23, $nil);
+    dies_ok({ $cddr($xs) }, 'cddr on 1-elem list yields error');
+
+    $xs = $cons(42, $xs); # xs: (cons 42 (cons 23 nil))
+    is $cddr($xs), $nil, 'cddr on 2-elem list yields nil';
+
+    my $ys = $cons($cons("foo", $nil), $cons("bar", $xs));
+    is $cddr($ys), $xs, 'cddr extracts tail of tail';
 }
