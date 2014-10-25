@@ -9,8 +9,7 @@ Unrelated (any order):
 
 To be done in the order given (within each branch):
 ##### branch 1 (make it self-hosting)
-- [ ] #30 'add literal string constants to the grammar, using " (double-quotes) and \ (back-slash) for escape'
-- [ ] #28 'add ADT Maybe (Church-encoded by hand, everything in λ, too)'
+- [x] #28 'add ADT Maybe (Church-encoded by hand, everything in λ, too)'
 - [ ] #29 'add ADT Pair (Church-encoded by hand, everything in λ, too)'
 - [ ] #9 'finish ADT List (Church-encoding by hand, everything in λ, too)'
 - [ ] #12 'most simple impl of β-red. avoiding accidental capture (in Perl6 only, efficiency is of NO importance)'
@@ -28,6 +27,7 @@ To be done in the order given (within each branch):
 ##### branch 2 (make it do *something*)
 - [ ] #2 'add most simple symbol-lookup using "δ"'
 - [ ] #22 'add comments to syntax'
+- [ ] #30 'add literal string constants to the grammar, using " (double-quotes) and \ (back-slash) for escape'
 - [ ] #3 'add hygienic macros using "µ"'
 - [ ] #4 'add "if" as a macro'
 - [ ] #14 'add "cond" (aka "switch") as a macro'
