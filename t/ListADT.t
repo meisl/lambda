@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 128;
+plan 74;
 
 {
     is_properLambdaFn($nil);

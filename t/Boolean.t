@@ -6,7 +6,7 @@ use Test::Util;
 use Lambda::Base;
 use Lambda::Boolean;
 
-plan 43;
+plan 22;
 
 {
     is_properLambdaFn($true);

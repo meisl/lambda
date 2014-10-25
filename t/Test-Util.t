@@ -6,12 +6,12 @@ use Lambda::LambdaGrammar;
 
 use Test::Util;
 
-plan 4;
+plan 1;
 
 { # does_ok, is_properLambdaFn
     # use ::= to make it immutable
-    my $good ::= (42 but name("good")) but lambda('λx.x');
-    my $bad  ::= (23 but name("bad"))  but lambda('not.a.valid)lambda(term');
+    my $good ::= ( { 42 } but name("good")) but lambda('λx.x');
+    my $bad  ::= ( { 23 } but name("bad"))  but lambda('not.a.valid)lambda(term');
 
     is_properLambdaFn($good);
 

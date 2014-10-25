@@ -4,7 +4,7 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 48;
+plan 27;
 
 {
     is_properLambdaFn($id);
