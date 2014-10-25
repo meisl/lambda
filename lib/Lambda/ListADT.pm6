@@ -293,8 +293,8 @@ constant $___exists is export = $Y( lambdaFn(
 
 # ->str
 
-constant $list2str is export = lambdaFn(
-    'list->str', '(foldr (λx.λacc.(~ (~ (~ "(cons " (->str x)) acc) ")")) "nil")',   # TODO: η-reduce list->str
+constant $List2Str is export = lambdaFn(
+    'List->Str', 'λxs.foldr (λx.λacc.(~ (~ (~ "(cons " (->str x)) acc) ")")) "nil" xs',   # TODO: η-reduce list->str
     -> TList:D $xs {
         $foldr(
             -> $x, $acc {

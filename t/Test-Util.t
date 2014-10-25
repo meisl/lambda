@@ -2,7 +2,6 @@ use v6;
 
 use Test;
 use Lambda::Base;
-use Lambda::LambdaGrammar;
 
 use Test::Util;
 

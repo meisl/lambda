@@ -7,9 +7,16 @@ use Lambda::LambdaGrammar;
 module Test::Util;
 
 
-sub does_ok($actual, $expectedRole, Str $msg?) is export {
-    ok($actual ~~ $expectedRole, ($msg // 'it') ~ " does {$expectedRole.^name}")
-        || diag "  Expected role: {$expectedRole.^name}\n  Actual type: " ~ $actual.^name;
+sub does_ok($actual, $expectedRole, Str $name?, Str :$msg) is export {
+    ok($actual ~~ $expectedRole, 
+        ($name // 'it') ~ " should do {$expectedRole.^name}" ~ ($msg.defined ?? " - $msg" !! '')
+    ) || diag "  Expected role: {$expectedRole.^name}\n  Actual type: " ~ $actual.^name;
+}
+
+sub doesnt_ok($actual, $expectedRole, Str $name?, Str :$msg) is export {
+    ok($actual !~~ $expectedRole, 
+        ($name // 'it') ~ " should NOT do {$expectedRole.^name}" ~ ($msg.defined ?? " - $msg" !! '')
+    ) || diag "  Expected NOT: {$expectedRole.^name}\n  Actual type: " ~ $actual.^name;
 }
 
 sub is_properLambdaFn($f is rw) is export {

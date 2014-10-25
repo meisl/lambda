@@ -7,13 +7,15 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 74;
+plan 82;
 
 {
+    is_properLambdaFn($List2Str);
+
     is_properLambdaFn($nil);
     is_properLambdaFn($cons);
+
     is_properLambdaFn($is-nil);
-    is_properLambdaFn($list2str);
 
     is_properLambdaFn($foldl);
     is_properLambdaFn($reverse);
@@ -33,6 +35,48 @@ plan 74;
     is_properLambdaFn($filter);
     is_properLambdaFn($first);
     is_properLambdaFn($exists);
+}
+
+{ # List->Str
+    is $List2Str.name, 'List->Str', '$List.name -> "List->Str"';
+    is $List2Str.Str,  'List->Str', '$List.Str -> "List->Str"';
+}
+
+{ # ctor nil
+    is $nil.name,           'nil', '$nil.name -> "nil"';
+    is $nil.Str,            'nil', '$nil.Str -> "nil"';
+    does_ok $nil, TList,    'nil', :msg('nil is a TList in itself');
+    is $List2Str($nil),     'nil', "($List2Str $nil) -> \"nil\"";
+}
+
+{ # ctor cons
+    is $cons.name,          'cons', '$cons.name -> "cons"';
+    is $cons.Str,           'cons', '$cons.Str -> "cons"';
+    doesnt_ok $cons, TList, 'cons', :msg('cons is NOT a TList in itself');
+    dies_ok { $List2Str($cons) }, "($List2Str $cons) yields error";
+}
+
+{ # nil?, List2Str, .Str
+    is $is-nil($nil), $true, '(nil? nil) -> #true';
+    
+    my $xs;
+    my $ys;
+
+    $xs = $cons($nil, $nil);
+    is $is-nil($xs), $false, "(nil? $xs) -> $false";
+    is $xs.Str,        '(cons nil nil)', '(cons nil nil).Str -> "(cons nil nil)"';
+    is $List2Str($xs), '(cons nil nil)', "($List2Str (cons nil nil)) -> \"(cons nil nil)\"";
+
+
+    $xs = $cons(5, $nil);
+    is $is-nil($xs), $false, "(nil? $xs) -> #false";
+    is $xs.Str,        '(cons 5 nil)', '(cons 5 nil).Str';
+    is $List2Str($xs), '(cons 5 nil)', "($List2Str (cons 5 nil))";
+
+    $ys = $cons('foo', $xs);
+    is $is-nil($xs), $false, "(nil? $ys) -> $false";
+    is $ys.Str,         '(cons "foo" (cons 5 nil))', "$ys.Str";
+    is $List2Str($ys),  '(cons "foo" (cons 5 nil))', "($List2Str $ys)";
 }
 
 { # foldl
@@ -145,31 +189,6 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
         is $car($cdr($cdr($zs))), 3, "3rd elem of result";
         is $car($cdr($cdr($cdr($zs)))), 4, "4th elem of result";
     }, "appending two two-elem lists" or diag $zs and die;
-}
-
-{ # nil?, list2str, .Str
-    is $is-nil($nil), $true, '(nil? nil) -> #true';
-    is $nil.Str,        'nil', '$nil.Str';
-    is $list2str($nil), 'nil', '(list->str nil) -> "nil"';
-    
-    my $xs;
-    my $ys;
-
-    $xs = $cons($nil, $nil);
-    is $is-nil($xs), $false, "(nil? $xs) -> $false";
-    is $xs.Str,        '(cons nil nil)', '(cons nil nil).Str';
-    is $list2str($xs), '(cons nil nil)', '(list->str (cons nil nil))';
-
-
-    $xs = $cons(5, $nil);
-    is $is-nil($xs), $false, "(nil? $xs) -> #false";
-    is $xs.Str,        '(cons 5 nil)', '(cons 5 nil).Str';
-    is $list2str($xs), '(cons 5 nil)', '(list->str (cons 5 nil))';
-
-    $ys = $cons('foo', $xs);
-    is $is-nil($xs), $false, "(nil? $ys) -> $false";
-    is $ys.Str,         '(cons "foo" (cons 5 nil))', "$ys.Str";
-    is $list2str($ys),  '(cons "foo" (cons 5 nil))', "(list->str $ys)";
 }
 
 { # map
