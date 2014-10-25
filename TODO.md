@@ -9,6 +9,7 @@ Unrelated (any order):
 
 To be done in the order given (within each branch):
 ##### branch 1 (make it self-hosting)
+- [ ] #30 'add literal string constants to the grammar, using " (double-quotes) and \ (back-slash) for escape'
 - [ ] #28 'add ADT Maybe (Church-encoded by hand, everything in λ, too)'
 - [ ] #29 'add ADT Pair (Church-encoded by hand, everything in λ, too)'
 - [ ] #9 'finish ADT List (Church-encoding by hand, everything in λ, too)'
