@@ -9,9 +9,11 @@ Unrelated (any order):
 
 To be done in the order given (within each branch):
 ##### branch 1 (make it self-hosting)
+- [ ] #28 'add ADT Maybe (Church-encoded by hand, everything in λ, too)'
+- [ ] #29 'add ADT Pair (Church-encoded by hand, everything in λ, too)'
 - [ ] #9 'finish ADT List (Church-encoding by hand, everything in λ, too)'
 - [ ] #12 'most simple impl of β-red. avoiding accidental capture (in Perl6 only, efficiency is of NO importance)'
-- [ ] #27 *augment syntax tree nodes with src location info*
+- [ ] #27 'augment syntax tree nodes with src location info'
 - [ ] #10 'add ADT Term for syntax tree / AST entities (Church-encoded by hand)'
 - [ ] #11 'implement β/η-red. and α-conv using ADT Term (simple but correct)'
 - [ ] #13 'refine β/η-red. and α-conv using ADT Term: clever & efficient & flexible!'
