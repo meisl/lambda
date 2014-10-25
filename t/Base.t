@@ -4,7 +4,7 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 38;
+plan 48;
 
 {
     is_properLambdaFn($id);
@@ -23,6 +23,11 @@ plan 38;
     ok $double-arg === $W, '$double-arg is a synonym for W';
 
     is_properLambdaFn($Y);
+}
+
+{ # lambdaFn
+    my $omega ::= lambdaFn( 'ω', 'λx.x x', -> &x { &x(&x) } );
+   is_properLambdaFn($omega);
 }
 
 {

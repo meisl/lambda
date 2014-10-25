@@ -7,7 +7,7 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
-plan 111;
+plan 141;
 
 {
     is_properLambdaFn($car);
