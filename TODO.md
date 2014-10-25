@@ -1,4 +1,5 @@
-Unrelated (any order):
+### Unrelated (any order):
+##### branch 0
 - [ ] #8 'put all the missing refs into README'
 - [ ] #15 'make a REPL': unclear when exactly it makes sense - but the sooner the better (can always refine it)
 - [ ] #26 'add suggestive REPL examples to README, probably involving Y and fact'
@@ -7,7 +8,7 @@ Unrelated (any order):
 - [ ] #20 'add bibliography'
 - [ ] #21 'mention Pierce's TAPL'
 
-To be done in the order given (within each branch):
+### To be done in the order given (within each branch):
 ##### branch 1 (make it self-hosting)
 - [x] #28 'add ADT Maybe (Church-encoded by hand, everything in λ, too)'
 - [ ] #29 'add ADT Pair (Church-encoded by hand, everything in λ, too)'
