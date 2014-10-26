@@ -18,12 +18,12 @@ constant $None is export = lambdaFn(
 ) does TMaybe;
 
 constant $Some is export = lambdaFn(
-    'Some', 'λx.λsel.sel #true x',
-    -> $x {
-        my $xStr = $x.?name // $x.?lambda // $x.perl;
+    'Some', 'λv.λsel.sel #true v',
+    -> $v {
+        my $vStr = $v.?name // $v.?lambda // $v.perl;
         lambdaFn(
-            "(Some $xStr)", "λsel.sel #true $xStr",
-            -> &sel { &sel($true, $x) }
+            "(Some $vStr)", "λsel.sel #true $vStr",
+            -> &sel { &sel($true, $v) }
         ) does TMaybe
     }
 );
@@ -48,9 +48,7 @@ constant $Some2value is export = lambdaFn(
     'Some->value', 'λm.if (Some? m) (m π2->2) (error "cannot get value of None")',
     -> TMaybe:D $m {
         $_if( $is-Some($m),
-            {   my $v = $m($pi2o2);
-                $v ~~ lambda ?? $v !! $v.?name // $v.?lambda // $v.perl;
-            },
+            { $m($pi2o2) },
             { die "cannot get value of None" }
         )
     }
@@ -64,7 +62,11 @@ constant $Maybe2Str is export = lambdaFn(
     -> TMaybe:D $m {
         $_if( $is-None($m),
             { 'None' },
-            { '(Some ' ~ $Some2value($m) ~ ')' }
+            {
+                my $v = $Some2value($m);
+                my $vStr = $v.?name // $v.?lambda // $v.perl;
+                "(Some $vStr)";
+            }
         )
     }
 );

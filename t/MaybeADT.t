@@ -128,7 +128,7 @@ plan 55;
     is $Some2value($x),  5, "($Some2value $x) -> 5";
 
     $x = $Some("foo");
-    is $Some2value($x),  '"foo"', "($Some2value $x) -> \"foo\"";
+    is $Some2value($x),  'foo', "($Some2value $x) -> \"foo\"";
 
     $x = $Some($None);
     is $Some2value($x),  $None, "($Some2value $x) -> $None";
@@ -136,5 +136,5 @@ plan 55;
     $x = $Some($Some("foo"));
     is $Some2value($x),  $Some("foo"), "($Some2value $x) -> ($Some \"foo\")";
 
-    is $Some2value($Some2value($x)),  '"foo"', "($Some2value ($Some2value $x)) -> \"foo\"";
+    is $Some2value($Some2value($x)),  'foo', "($Some2value ($Some2value $x)) -> \"foo\"";
 }
