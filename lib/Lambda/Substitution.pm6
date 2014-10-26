@@ -1,7 +1,8 @@
 use v6;
 
+module SubstitutionM;
 
-role Substitution[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
+role Substitution[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] is export {
 
     method subst(Term:D: Term:D $what, VarT:D :$for!) {   # cannot declare return type (Term) - yields really weird error msg
         given self {

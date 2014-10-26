@@ -31,7 +31,7 @@ sub is_validLambda($f) is export {
             or $failed = True;
         
         my $err = Any;
-        lives_ok( { try λ($f.lambda); ($err = $!) and die $! }, "$fStr.lambda should be valid lambda-expression")
+        lives_ok( { try parseLambda($f.lambda); ($err = $!) and die $! }, "$fStr.lambda should be valid lambda-expression")
             or diag('>>>>' ~ $err) and $failed = $err;
         #$failed ?? fail($failed) !! True;
         

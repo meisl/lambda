@@ -7,9 +7,9 @@ use Lambda::LambdaModel;
 plan 7;
 
 { # Term.subst($what, :for)
-    my $x = λ('x');
-    my $y = λ('y');
-    my $z = λ('z');
+    my $x = parseLambda('x');
+    my $y = parseLambda('y');
+    my $z = parseLambda('z');
 
     my $c = ConstT.new(:value('c'));
     my $s;
@@ -27,7 +27,7 @@ plan 7;
     $s = $x.subst($y, :for($x));
     is($s, $y, 'substituting a VarT in another VarT for that VarT yields that VarT');
 
-    $t = λ('λx.x y');
+    $t = parseLambda('λx.x y');
     
     $s = $t.subst($y, :for($x));
     is($s, $t, 'substituting in a LamT for a bound VarT doesnt change anything');
@@ -36,5 +36,5 @@ plan 7;
     is($s, $t, 'substituting in a LamT for a VarT that doesnt occur doesnt change anything');
     
     $s = $t.subst($z, :for($y));
-    is($s, λ('λx.x z'), 'substituting in a LamT for an unbound VarT');
+    is($s, parseLambda('λx.x z'), 'substituting in a LamT for an unbound VarT');
 }

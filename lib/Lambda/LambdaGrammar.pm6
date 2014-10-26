@@ -68,9 +68,9 @@ grammar LambdaGrammar {
         { make $<t>.ast }
     }
 
-    token lambda { \\ | λ }
+    token lambda { \\ | 'λ' }
 
-    token delta { δ }
+    token delta { 'δ' }
 
     token variable {
         $<name> = <-[\\αβδλ.()\s]>+
@@ -107,7 +107,7 @@ class X::Lambda::SyntaxError is Exception {
     }
 }
 
-my sub λ(Str:D $s --> Term) is export {
+my sub parseLambda(Str:D $s --> Term) is export {
     #use Grammar::Tracer_01_h04;
     my $match = LambdaGrammar.subparse($s);
     #say ConstT.ctorCalls ~ " constructor calls.\n";
@@ -137,10 +137,10 @@ if False {
 
     my $n;
 
-    #say λ('(z x (y λx.λy.x y z))').freeVars;
+    #say parseLambda('(z x (y λx.λy.x y z))').freeVars;
     #exit;
 
-    $n = λ('(λx.λz.λv.z x (λx.x) λz.x z) ((z ((λx.λy.x y z) x)) v)');
+    $n = parseLambda('(λx.λz.λv.z x (λx.x) λz.x z) ((z ((λx.λy.x y z) x)) v)');
     my $func = $n.func;
     my $arg = $n.arg;
     say $n;
@@ -166,7 +166,7 @@ if False {
     say 'FV: '~ $arg.freeVars;
     exit;
 
-    #$n = λ('λf.(λx.λy.(f g h x y))');
+    #$n = parseLambda('λf.(λx.λy.(f g h x y))');
     my $n_smp = $n.eta-contract;
     say "eta-contract (only):\n$n_smp\n";
     say $n_smp.isEtaReducible;
