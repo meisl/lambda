@@ -2,12 +2,11 @@ use v6;
 
 use Test;
 use Test::Util;
-use Lambda::Base;
 use Lambda::Boolean;
 
 use Lambda::MaybeADT;
 
-plan 55;
+plan 56;
 
 {
     is_properLambdaFn($Maybe2Str);
@@ -18,6 +17,7 @@ plan 55;
     is_properLambdaFn($is-None);
     is_properLambdaFn($is-Some);
 
+    is_properLambdaFn($Some2value);
 }
 
 
