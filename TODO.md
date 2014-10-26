@@ -11,7 +11,7 @@
 ### To be done in the order given (within each branch):
 ##### branch 1 (make it self-hosting)
 - [x] #28 'add ADT Maybe (Church-encoded by hand, everything in λ, too)'
-- [ ] #29 'add ADT Pair (Church-encoded by hand, everything in λ, too)'
+- [x] #29 'add ADT Pair (Church-encoded by hand, everything in λ, too)'
 - [ ] #9 'finish ADT List (Church-encoding by hand, everything in λ, too)'
 - [ ] #12 'most simple impl of β-red. avoiding accidental capture (in Perl6 only, efficiency is of NO importance)'
 - [ ] #27 'augment syntax tree nodes with src location info'
