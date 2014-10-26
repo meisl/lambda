@@ -4,17 +4,6 @@ use Lambda::Base;
 use Lambda::Boolean;
 
 module Lambda::ListADT;
-
-
-# (δ sel1of3 λa.λb.λc.a)
-sub sel1of3($a, $b, $c) is export { $a }
-
-# (δ sel2of3 λa.λb.λc.b)
-sub sel2of3($a, $b, $c) is export { $b }
-
-# (δ sel3of3 λa.λb.λc.c)
-sub sel3of3($a, $b, $c) is export { $c }
-
 # data List = nil
 #           | cons car:_ cdr:List
 role TList is export {
@@ -45,29 +34,29 @@ constant $cons is export = lambdaFn(
 # predicates
 
 constant $is-nil is export = lambdaFn(
-    'nil?', 'λxs.not (xs sel1of3)',
-    -> TList:D $xs { $not($xs.(&sel1of3)) }
+    'nil?', 'λxs.not (xs π3->1)',
+    -> TList:D $xs { $not($xs($pi1o3)) }
 );
 
 
 # projections
 
 constant $car is export = lambdaFn(
-    'car', 'λxs.if (nil? xs) (error "cannot get car of nil") (xs sel2of3)',
+    'car', 'λxs.if (nil? xs) (error "cannot get car of nil") (xs π3->2)',
     -> TList:D $xs {
         $_if($is-nil($xs),
             {die "cannot get car of nil"},
-            {$xs.(&sel2of3)})
+            {$xs.($pi2o3)})
     }
 );
 
 constant $cdr is export = lambdaFn(
-    #'cdr', 'λxs.if (nil? xs) (error "cannot get cdr of nil") (xs sel3of3)',
-    'cdr', 'λxs.((nil? xs) (λ_.error "cannot get cdr of nil") (λ_.xs sel3of3)) _',
+    #'cdr', 'λxs.if (nil? xs) (error "cannot get cdr of nil") (xs π3->3)',
+    'cdr', 'λxs.((nil? xs) (λ_.error "cannot get cdr of nil") (λ_.xs π3->3)) _',
     -> TList:D $xs {
             $_if($is-nil($xs),
             {die "cannot get cdr of nil"},
-            {$xs(&sel3of3)})
+            {$xs($pi3o3)})
     }
 );
 
@@ -284,7 +273,7 @@ constant $___exists is export = $Y( lambdaFn(
 
 
 
-# ->str
+# ->Str
 
 constant $List2Str is export = lambdaFn(
     'List->Str', 'λxs.foldr (λx.λacc.(~ (~ (~ "(cons " (->str x)) acc) ")")) "nil" xs',   # TODO: η-reduce list->str

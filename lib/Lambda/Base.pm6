@@ -1,7 +1,5 @@
 use v6;
 
-use Lambda::LambdaGrammar;
-
 module Lambda::Base;
 
 role name is export {
@@ -24,11 +22,9 @@ sub lambdaFn(Str $name, Str:D $lambdaExpr, &f) is export {
         die "cannot make lambda function with zero parameters"
     } else {
         my $lx = $lambdaExpr.substr(0, 1) eq '(' ?? $lambdaExpr !! "($lambdaExpr)";
-        #try my $t = λ($lx); # try to parse it
-        if $! {
-            note ">>>> $name: " ~ $!;
-        }
-        return ((&f but name($name)) but lambda($lx));
+        &f does name($name);
+        &f does lambda($lx);
+        &f;
     }
 }
 
@@ -118,3 +114,21 @@ constant $Y is export = lambdaFn(
         )
     }
 );
+
+
+# projections ---------------------------------------------------------
+
+# of 2:
+constant $pi1o2 is export = lambdaFn('π2->1', 'λa.λb.a', -> $a, $b { $a });
+constant $pi2o2 is export = lambdaFn('π2->2', 'λa.λb.b', -> $a, $b { $b });
+
+# of 3:
+constant $pi1o3 is export = lambdaFn('π3->1', 'λa.λb.λc.a', -> $a, $b, $c { $a });
+constant $pi2o3 is export = lambdaFn('π3->2', 'λa.λb.λc.b', -> $a, $b, $c { $b });
+constant $pi3o3 is export = lambdaFn('π3->3', 'λa.λb.λc.c', -> $a, $b, $c { $c });
+
+# of 4:
+constant $pi1o4 is export = lambdaFn('π4->1', 'λa.λb.λc.λd.a', -> $a, $b, $c, $d { $a });
+constant $pi2o4 is export = lambdaFn('π4->2', 'λa.λb.λc.λd.b', -> $a, $b, $c, $d { $b });
+constant $pi3o4 is export = lambdaFn('π4->3', 'λa.λb.λc.λd.c', -> $a, $b, $c, $d { $c });
+constant $pi4o4 is export = lambdaFn('π4->4', 'λa.λb.λc.λd.d', -> $a, $b, $c, $d { $d });

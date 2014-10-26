@@ -4,25 +4,37 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 27;
+plan 36;
 
 {
-    is_properLambdaFn($id);
+    is_properLambdaFn $id;
     ok $I === $id, '$I is a synonym for $id';
 
-    is_properLambdaFn($const);
+    is_properLambdaFn $const;
     ok $K === $const, '$K is a synonym for $const';
 
-    is_properLambdaFn($B);
+    is_properLambdaFn $B;
     ok $compose === $B, '$compose is a synonym for $B';
 
-    is_properLambdaFn($C);
+    is_properLambdaFn $C;
     ok $swap-args === $C, '$swap-args is a synonym for $C';
 
-    is_properLambdaFn($W);
+    is_properLambdaFn $W;
     ok $double-arg === $W, '$double-arg is a synonym for W';
 
-    is_properLambdaFn($Y);
+    is_properLambdaFn $Y;
+
+    is_properLambdaFn $pi1o2;
+    is_properLambdaFn $pi2o2;
+
+    is_properLambdaFn $pi1o3;
+    is_properLambdaFn $pi2o3;
+    is_properLambdaFn $pi3o3;
+
+    is_properLambdaFn $pi1o4;
+    is_properLambdaFn $pi2o4;
+    is_properLambdaFn $pi3o4;
+    is_properLambdaFn $pi4o4;
 }
 
 { # lambdaFn
