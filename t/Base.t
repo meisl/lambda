@@ -4,7 +4,7 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 36;
+plan 45;
 
 {
     is_properLambdaFn $id;
@@ -42,18 +42,23 @@ plan 36;
    is_properLambdaFn($omega);
 }
 
-{
+{ # id, aka I
     is $id("x"), "x", 'id("x")';
     is $id(5), 5, 'id(5)';
     is $id($id), $id, 'id(id)';
 }
 
-{
+{ # const, aka K
     is $const('x')(5),  'x',        'const("x")(5)';
     is $const(5)(23),   5,          'const(5)(23)';
     is $const(42).Str,  '(λy.42)',  'const(42).Str';
     is $const($id)(23), $id,        'const(id)(23)';
     is $const($id).Str, "(λy.$id)", 'const($id).Str';
+
+    #is $const("x", 5), "x", 'const("x", 5)';
+    #is $const(5, 23), 5, 'const(5, 23)';
+    #is $const($id, 23), $id, 'const(id, 23)';
+
 }
 
 { # compose, aka B
@@ -194,8 +199,20 @@ plan 36;
     }, 'Y combinator for binary f; ex. Ackermann-Péter: ' ~ $ackPeter.lambda;
 }
 
-{
-    #is $const("x", 5), "x", 'const("x", 5)';
-    #is $const(5, 23), 5, 'const(5, 23)';
-    #is $const($id, 23), $id, 'const(id, 23)';
+{ # projections of 2
+    is $pi1o2(23, 42), 23, 'π2->1 returns 1st arg';
+    is $pi2o2(23, 42), 42, 'π2->2 returns 2nd arg';
+}
+
+{ # projections of 3
+    is $pi1o3(23, 42, 4711),   23, 'π3->1 returns 1st arg';
+    is $pi2o3(23, 42, 4711),   42, 'π3->2 returns 2nd arg';
+    is $pi3o3(23, 42, 4711), 4711, 'π3->3 returns 3rd arg';
+}
+
+{ # projections of 4
+    is $pi1o4(23, 42, 4711, "foo"),    23, 'π4->1 returns 1st arg';
+    is $pi2o4(23, 42, 4711, "foo"),    42, 'π4->2 returns 2nd arg';
+    is $pi3o4(23, 42, 4711, "foo"),  4711, 'π4->3 returns 3rd arg';
+    is $pi4o4(23, 42, 4711, "foo"), "foo", 'π4->4 returns 4th arg';
 }
