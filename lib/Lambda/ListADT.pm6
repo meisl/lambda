@@ -2,6 +2,7 @@ use v6;
 
 use Lambda::Base;
 use Lambda::Boolean;
+use Lambda::MaybeADT;
 
 module Lambda::ListADT;
 # data List = nil
@@ -235,13 +236,13 @@ constant $filter is export = lambdaFn(
 );
 
 constant $first is export = $Y( lambdaFn(
-    'first', 'λself.λp.λxs.(if (nil? xs) nil (if (p (car xs)) (cons (car xs) nil) (self p (cdr xs))))',
+    'first', 'λself.λp.λxs.(if (nil? xs) None (if (p (car xs)) (cons (car xs) nil) (self p (cdr xs))))',
     -> &self {
         -> &p, TList:D $xs {
             $_if( $is-nil($xs),
-                { $nil },
+                { $None },
                 { $_if( &p($car($xs)),
-                    { $cons($car($xs), $nil) },
+                    { $Some($car($xs)) },
                     { &self(&p, $cdr($xs)) })
                 })
         }
@@ -249,10 +250,10 @@ constant $first is export = $Y( lambdaFn(
 ));
 
 constant $exists is export = lambdaFn(
-    'exists', 'λp.λxs.not (nil? (first p xs))',
+    'exists', 'λp.λxs.Some? (first p xs)',
 #   'exists', 'λp.(B not (B nil? (first p))',
     -> &p, TList:D $xs {
-        $not($is-nil($first(&p, $xs)))
+        $is-Some($first(&p, $xs))
     }
 );
 

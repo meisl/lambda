@@ -5,6 +5,8 @@ use Test::Util;
 
 use Lambda::Base;
 use Lambda::Boolean;
+use Lambda::MaybeADT;
+
 use Lambda::ListADT;
 
 plan 70;
@@ -26,8 +28,9 @@ plan 70;
     is_properLambdaFn($map-iter);
 
     is_properLambdaFn($filter);
-    is_properLambdaFn($first);
     is_properLambdaFn($exists);
+
+    is_properLambdaFn($first);
 }
 
 { # foldl
@@ -186,26 +189,6 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
     is $cadr($ys), 4, "found second even";
 }
 
-{ # first
-    my &even = -> $x { if ($x % 2 == 0) { $true } else { $false } };
-    my &odd  = -> $x { if ($x % 2 == 1) { $true } else { $false } };
-    my &negative = -> $x { if ($x < 0) { $true } else { $false } };
-
-    is $first(&even,     $nil), $nil, "first(even) on empty list yields empty list";
-    is $first(&odd,      $nil), $nil, "first(odd) on empty list yields empty list";
-    is $first(&negative, $nil), $nil, "first(negative) on empty list yields empty list";
-
-    my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $cons(5, $nil)))));
-    is $first(&even,     $xs), $cons(2, $nil),  "first(even) yields [2] on $xs";
-    is $first(&odd,      $xs), $cons(1, $nil),  "first(odd) yields [1] on $xs";
-    is $first(&negative, $xs), $nil,    "first(negative) yields [] on $xs";
-
-    my @seen = @();
-    my &isTwo = -> $x { @seen.push($x); if $x == 2 { $true } else { $false } }
-    is $first(&isTwo, $xs), $cons(2, $nil),   "first(isTwo) yields [2] $xs";
-    is @seen.elems, 2, "should have stopped after first match";
-}
-
 { # exists
     my &even = -> $x { if ($x % 2 == 0) { $true } else { $false } };
     my &odd  = -> $x { if ($x % 2 == 1) { $true } else { $false } };
@@ -223,5 +206,25 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
     my @seen = @();
     my &isTwo = -> $x { @seen.push($x); if $x == 2 { $true } else { $false } }
     is $exists(&isTwo, $xs), $true,   "isTwo exists in $xs";
+    is @seen.elems, 2, "should have stopped after first match";
+}
+
+{ # first
+    my &even = -> $x { if ($x % 2 == 0) { $true } else { $false } };
+    my &odd  = -> $x { if ($x % 2 == 1) { $true } else { $false } };
+    my &negative = -> $x { if ($x < 0) { $true } else { $false } };
+
+    is $first(&even,     $nil), $None, "first(even) on empty list yields $None";
+    is $first(&odd,      $nil), $None, "first(odd) on empty list yields $None";
+    is $first(&negative, $nil), $None, "first(negative) on empty list yields $None";
+
+    my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $cons(5, $nil)))));
+    is $first(&even,     $xs), $Some(2),  "first(even) yields (Some 2) on $xs";
+    is $first(&odd,      $xs), $Some(1),  "first(odd) yields (Some 1) on $xs";
+    is $first(&negative, $xs), $None,     "first(negative) yields $None on $xs";
+
+    my @seen = @();
+    my &isTwo = -> $x { @seen.push($x); if $x == 2 { $true } else { $false } }
+    is $first(&isTwo, $xs), $Some(2),   "first(isTwo) yields (Some 2) one $xs";
     is @seen.elems, 2, "should have stopped after first match";
 }
