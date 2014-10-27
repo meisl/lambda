@@ -187,13 +187,13 @@ sub test(Term:D $t, Str:D $desc, &tests) {
 # examples requiring alpha-conversion before substitution:
 if False {
 
-    test parseLambda('(λx.x ((λy.λz.y x) (x y z)))'), "a LamT with body an AppT where arg is a beta-redex", {
+    test parseLambda('λx.x ((λy.λz.y x) (x y z))'), "a LamT with body an AppT where arg is a beta-redex", {
         is($^t.isBetaRedex,      False, "$^desc is not itself a beta redex");
         is($^t.isBetaReducible,  True,  "$^desc is itself beta-reducible");
-        my $ecd = $^t.beta-contract;
-        cmp_ok($ecd, 'eq', parseLambda('λx.x x'), "$^desc beta-contracts the AppT's arg");
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, 'eq', parseLambda('λx.x x'), "$^desc beta-reduces to the AppT's arg");
+        my $bcd = $^t.beta-contract;
+        cmp_ok($bcd, 'eq', parseLambda('λx.x x'), "$^desc beta-contracts the AppT's arg");
+        my $brd = $^t.beta-reduce;
+        cmp_ok($brd, 'eq', parseLambda('λx.x x'), "$^desc beta-reduces to the AppT's arg");
     };
 
 }
