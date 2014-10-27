@@ -12,34 +12,7 @@ module Substitution;
 role Substitution[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] is export {
 
     method subst(Term:D: Term:D $what, VarT:D :$for!) {   # cannot declare return type (Term) - yields really weird error msg
-        given self {
-            when ConstT { self }
-            when VarT {
-                ($for.name ne self.name)
-                    ?? self
-                    !! $what
-            }
-            when AppT {
-                my $newFnc = self.func.subst($what, :$for);
-                my $newArg = self.arg.subst($what, :$for);
-                (($newFnc === self.func) && ($newArg === self.arg) )
-                    ?? self
-                    !! AppT.new(:func($newFnc), :arg($newArg))
-            }
-            when LamT {
-                if $for.name eq self.var.name {
-                    self;
-                } else {
-                    my $newBody = self.body.subst($what, :$for);
-                    ($newBody === self.body)
-                        ?? self
-                        !! LamT.new(:var(self.var), :body($newBody));
-                }
-            }
-            default {
-                die "fell off type-dispatch with type " ~ $_.WHAT.perl;
-            }
-        }
+        self.subst-seq([[$for, $what]]);
     }
 
     method subst-seq(Term:D: $substitutions) {   # cannot declare return type (Term) - yields really weird error msg
@@ -93,51 +66,6 @@ role Substitution[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] is export {
     }
 }
 
-
-constant $subst is export = lambdaFn(
-    'subst',
-q:to/ENDOFLAMBDA/,
-    λwhere.λnew.λold.
-      (if (VarT? where)
-        (if (eq? (VarT->name where) (VarT->name old))
-          (Some new)
-          None)
-        (if (AppT? where)
-          (let ((f (AppT->func where))
-                (a (AppT->arg  where))
-                (f´ (subst f new old))
-                (a´ (subst a new old)))
-            (if (and (None? f') (None? a'))
-              None
-              (Some (AppT
-                 (if (Some? f´) (Some->value f´) f)
-                 (if (Some? a´) (Some->value a´) a)
-              ))
-            )
-          )
-          (if (LamT? where)
-            (if (eq? (LamT->var (VarT->name where)) (VarT->name old))
-              None  ; substitute only free occurances of ´old
-              (let ((b (LamT->body where))
-                    (b´ (subst b new old)))
-                (if (None? b´)
-                  None
-                  (Some (LamT
-                          (LamT->var where)
-                          (Some->value b´)
-                  ))
-                )
-              )
-            )
-            (error (~ "unknown Term ctor: " (Term->Str where)))
-          )
-        )
-      )
-ENDOFLAMBDA
-    -> $where, $what, $for {    # TODO: add types to signature
-        $where.subst($what, :$for);
-    }
-);
 
 constant $subst-seq is export = $Y(lambdaFn(
     'subst-seq',
@@ -200,3 +128,10 @@ ENDOFLAMBDA
         }
     }
 ));
+
+constant $subst is export = lambdaFn(
+    'subst', 'λt.λwhat.λfor.subst-seq t (cons (Pair for what) nil)',
+    -> $t, $what, $for {    # TODO: add types to signature
+        $t.$subst-seq([[$for, $what]]);
+    }
+);
