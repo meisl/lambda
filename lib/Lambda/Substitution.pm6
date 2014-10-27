@@ -3,6 +3,8 @@ use v6;
 use Lambda::Base;
 use Lambda::MaybeADT;
 use Lambda::TermADT;
+use Lambda::ListADT;
+use Lambda::PairADT;
 
 module Substitution;
 
@@ -103,25 +105,26 @@ q:to/ENDOFLAMBDA/,
         (if (AppT? where)
           (let ((f (AppT->func where))
                 (a (AppT->arg  where))
-                (f' (subst f new old))
-                (a' (subst a new old)))
+                (f´ (subst f new old))
+                (a´ (subst a new old)))
             (if (and (None? f') (None? a'))
               None
               (Some (AppT
-                 (if (Some? f') (Some->value f') f)
-                 (if (Some? a') (Some->value a') a)
+                 (if (Some? f´) (Some->value f´) f)
+                 (if (Some? a´) (Some->value a´) a)
               ))
             )
           )
           (if (LamT? where)
             (if (eq? (LamT->var (VarT->name where)) (VarT->name old))
               None  ; substitute only free occurances of ´old
-              (let (b (subst (LamT->body where) new old))
-                (if (None? b)
+              (let ((b (LamT->body where))
+                    (b´ (subst b new old)))
+                (if (None? b´)
                   None
                   (Some (LamT
                           (LamT->var where)
-                          (Some->value b)
+                          (Some->value b´)
                   ))
                 )
               )
@@ -135,3 +138,65 @@ ENDOFLAMBDA
         $where.subst($what, :$for);
     }
 );
+
+constant $subst-seq is export = $Y(lambdaFn(
+    'subst-seq',
+q:to/ENDOFLAMBDA/,
+    λself.λt.λss.
+      (if (VarT? t)
+          (if (nil? ss)
+              None
+              (let ((head (car ss))
+                    (next (if (eq? (VarT->name (fst head)) (VarT->name t))
+                              (Some (snd head))
+                              t)))
+                (self next (cdr ss))
+              )
+          )
+          (if (AppT? t)
+              (if (nil? ss)
+                  None
+                  (let ((f (AppT->func t))
+                        (a (AppT->arg  t))
+                        (f´ (self f ss))
+                        (a´ (self a ss))
+                       )
+                    (if (and (None? f') (None? a'))
+                      None
+                      (Some (AppT
+                         (if (Some? f´) (Some->value f´) f)
+                         (if (Some? a´) (Some->value a´) a)
+                      ))
+                    )
+                  )
+              )
+              (if (LamT? t)
+                  (let ((var (LamT->var t))
+                        (nm (VarT->name var))
+                        (ss´ (filter    ; kick out substs for our binder
+                               (λv.not (eq? (VarT->name v) nm))
+                               ss))
+                       )
+                    (if (nil? ss´)
+                        None
+                        (let ((b (VarT->body t))
+                              (b´ (self b ss´))
+                             )
+                          (if (None? b´)
+                              None
+                              (Some (LamT var b´))
+                          )
+                        )
+                    )
+                  )
+                  (error (~ "unknown Term ctor: " (Term->Str t)))
+              )
+          )
+      )
+ENDOFLAMBDA
+    -> &self {
+        -> $t, $ss {    # TODO: add types to signature
+            die "NYI";  #$t.subst-seq($ss);
+        }
+    }
+));

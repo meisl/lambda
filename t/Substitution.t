@@ -8,10 +8,11 @@ use Lambda::LambdaModel;
 use Lambda::Substitution;
 
 
-plan 10;
+plan 11;
 
 {
     is_properLambdaFn $subst;
+    is_properLambdaFn $subst-seq;
 }
 
 { # Term.subst($what, :for)
