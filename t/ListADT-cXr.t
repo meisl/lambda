@@ -8,7 +8,7 @@ use Lambda::Boolean;
 
 use Lambda::ListADT;
 
-plan 51;
+plan 55;
 
 {
     is_properLambdaFn($car);
@@ -48,6 +48,9 @@ plan 51;
 
 
 { # car
+    doesnt_ok $car, TList, 'car', :msg('car is NOT a TList in itself');
+    dies_ok {$List2Str($car) }, "($List2Str car) yields error";
+
     dies_ok({ $car($nil) }, 'car on nil yields error');
 
     my $xs = $cons(23, $nil);
@@ -58,6 +61,9 @@ plan 51;
 }
 
 { # cdr
+    doesnt_ok $cdr, TList, 'cdr', :msg('cdr is NOT a TList in itself');
+    dies_ok {$List2Str($cdr) }, "($List2Str cdr) yields error";
+
     dies_ok({ $cdr($nil) }, 'cdr on nil yields error');
 
     my $xs = $cons(23, $nil);

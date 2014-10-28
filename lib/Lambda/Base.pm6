@@ -98,15 +98,9 @@ constant $U is export = lambdaFn(
 
 constant $Y is export = lambdaFn(
     'Y', 'U U',
-    #'Y', 'W id λu.λf.f(u u f)',
-    #'Y', '(λU.U U) λu.λf.f(u u f)',
     #'Y', 'let (U λu.λf.f(u u f)) (U U)',
-    #'Y', 'let (U λu.λf.f(u u f)) (λf.f(U U f)',
+    #'Y', 'let (U λu.λf.f(u u f)) (λf.f(U U f))',
     #'Y', '(λU.U U) λu.λf.f(u u f)',
-    #'Y', '(λu.λf.f(u u f)) (λu.λf.f(u u f))',
-    #'Y', 'λf.f((λu.λf.f(u u f)) (λu.λf.f(u u f)) f))',
-
-    #-> &f { &f( $U($U)(&f) ) }
     -> &f {
         lambdaFn(
             &f.?name, '(Y ' ~ (&f ~~ lambda ?? &f.lambda !! &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
