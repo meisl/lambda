@@ -11,7 +11,9 @@ role TTerm is export {
 }
 
 
-# constructors
+# VarT ------------------------------------------------------------------------
+
+# VarT ctor & predicate
 
 constant $VarT is export = lambdaFn(
     'VarT', 'λname.λprj.prj #false #false name _',
@@ -24,20 +26,6 @@ constant $VarT is export = lambdaFn(
     }
 );
 
-constant $AppT is export = lambdaFn(
-    'AppT', 'λfunc.λarg.λprj.prj #false #true func arg',
-    -> TTerm:D $func, TTerm:D $arg {
-        lambdaFn(
-            "(AppT $func $arg)", "λprj.prj #false #true $func $arg",
-            -> &prj { &prj($false, $true, $func, $arg) }
-        ) does TTerm;
-    }
-);
-
-
-
-# predicates
-
 constant $is-VarT is export = lambdaFn(
     'VarT?', 'λt.t λtag1.λtag0.λ_.λ_._and (not tag1) (not tag0)',
     -> TTerm:D $t {
@@ -45,16 +33,7 @@ constant $is-VarT is export = lambdaFn(
     }
 );
 
-constant $is-AppT is export = lambdaFn(
-    'AppT?', 'λt.t λtag1.λtag0.λ_.λ_._and (not tag1) tag0',
-    -> TTerm:D $t {
-        $t(-> $tag1, $tag0, $x, $y { $_and($not($tag1), $tag0) })
-    }
-);
-
-
-
-# projections
+# VarT projections
 
 constant $VarT2name is export = lambdaFn(
     'VarT->name', 'λt.if (VarT? t) (t π4->3) (error (~ "cannot apply VarT->name to " (Term->Str t)))',
@@ -65,6 +44,30 @@ constant $VarT2name is export = lambdaFn(
         )
     }
 );
+
+
+# AppT ------------------------------------------------------------------------
+
+# AppT ctor & predicate
+
+constant $AppT is export = lambdaFn(
+    'AppT', 'λfunc.λarg.λprj.prj #false #true func arg',
+    -> TTerm:D $func, TTerm:D $arg {
+        lambdaFn(
+            "(AppT $func $arg)", "λprj.prj #false #true $func $arg",
+            -> &prj { &prj($false, $true, $func, $arg) }
+        ) does TTerm;
+    }
+);
+
+constant $is-AppT is export = lambdaFn(
+    'AppT?', 'λt.t λtag1.λtag0.λ_.λ_._and (not tag1) tag0',
+    -> TTerm:D $t {
+        $t(-> $tag1, $tag0, $x, $y { $_and($not($tag1), $tag0) })
+    }
+);
+
+# AppT projections
 
 constant $AppT2func is export = lambdaFn(
     'AppT->func', 'λt.if (AppT? t) (t π4->3) (error (~ "cannot apply AppT->func to " (Term->Str t)))',
@@ -87,7 +90,36 @@ constant $AppT2arg is export = lambdaFn(
 );
 
 
-# ->Str
+# LamT ------------------------------------------------------------------------
+
+# LamT ctor & predicate
+
+constant $LamT is export = lambdaFn(
+    'LamT', 'λvar.λbody.λprj.if (VarT? var) (prj #true #false var body) (error (~ "first arg to LamT ctor must be a VarT - got instead " (->Str var)))',
+    -> TTerm:D $var, TTerm:D $body {
+        $_if( $is-VarT($var),
+            { lambdaFn(
+                "(LamT $var $body)", "λprj.prj #true #false $var $body",
+                -> &prj { &prj($true, $false, $var, $body) }
+              ) does TTerm;
+            },
+            { die "first arg to LamT ctor must be a VarT - got instead $var" }
+        )
+    }
+);
+
+constant $is-LamT is export = lambdaFn(
+    'LamT?', 'λt.t λtag1.λtag0.λ_.λ_._and tag1 (not tag0)',
+    -> TTerm:D $t {
+        $t(-> $tag1, $tag0, $x, $y { $_and($tag1, $not($tag0)) })
+    }
+);
+
+# LamT projections
+
+
+
+# ->Str -----------------------------------------------------------------------
 
 constant $Term2Str is export = lambdaFn(
     'Term->Str', 'λt.(error "NYI")',
