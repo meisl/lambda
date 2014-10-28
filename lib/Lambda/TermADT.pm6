@@ -117,6 +117,25 @@ constant $is-LamT is export = lambdaFn(
 
 # LamT projections
 
+constant $LamT2var is export = lambdaFn(
+    'LamT->var', 'λt.if (LamT? t) (t π4->3) (error (~ "cannot apply LamT->var to " (Term->Str t)))',
+    -> TTerm:D $t {
+        $_if( $is-LamT($t),
+            { $t($pi3o4) },
+            { die "cannot apply LamT->var to $t" }
+        )
+    }
+);
+
+constant $LamT2body is export = lambdaFn(
+    'LamT->body', 'λt.if (LamT? t) (t π4->4) (error (~ "cannot apply LamT->body to " (Term->Str t)))',
+    -> TTerm:D $t {
+        $_if( $is-LamT($t),
+            { $t($pi4o4) },
+            { die "cannot apply LamT->body to $t" }
+        )
+    }
+);
 
 
 # ->Str -----------------------------------------------------------------------

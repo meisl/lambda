@@ -6,7 +6,7 @@ use Lambda::Boolean;
 
 use Lambda::TermADT;
 
-plan 76;
+plan 92;
 
 {
     is_properLambdaFn($Term2Str);
@@ -22,6 +22,8 @@ plan 76;
 
     is_properLambdaFn($LamT);
     is_properLambdaFn($is-LamT);
+    is_properLambdaFn($LamT2var);
+    is_properLambdaFn($LamT2body);
 }
 
 
@@ -114,11 +116,12 @@ plan 76;
     
     my $u = $VarT('u');
     my $v = $VarT('v');
+
+    is $is-AppT($u),  $false, "($is-AppT $u)";
+
     my $x;
     $x = $AppT($u, $v);
     is $is-AppT($x),  $true,  "($is-AppT $x)";
-
-    is $is-AppT($u),  $false, "($is-AppT $u)";
     
     $x = $LamT($u, $v);
     is $is-AppT($x),  $false, "($is-AppT $x)";
@@ -194,10 +197,47 @@ plan 76;
     my $x;
     $x = $LamT($u, $v);
     is $is-LamT($x),  $true,  "($is-LamT $x)";
-
-    is $is-LamT($u),  $false, "($is-LamT $u)";
     
     $x = $AppT($u, $v);
     is $is-LamT($x),  $false, "($is-LamT $x)";
+
+    is $is-LamT($u),  $false, "($is-LamT $u)";
 }
 
+{ # projection LamT->var
+    is $LamT2var.name,          'LamT->var', '$LamT2var.name';
+    is $LamT2var.Str,           'LamT->var', '$LamT2var.Str';
+    doesnt_ok $LamT2var, TTerm, 'LamT->var', :msg('LamT2var is NOT a TTerm in itself');
+    dies_ok {$Term2Str($LamT2var) }, "($Term2Str LamT->var) yields error";
+    
+    my $x;
+    $x = $VarT("foo");
+    dies_ok( { $LamT2var($x) }, "($LamT2var $x) yields error");
+
+    my $u = $VarT('u');
+    my $v = $VarT('v');
+    $x = $AppT($u, $v);
+    dies_ok( { $LamT2var($x) }, "($LamT2var $x) yields error");
+
+    $x = $LamT($u, $v);
+    is $LamT2var($x), $u, "($LamT2var $x)";
+}
+
+{ # projection LamT->body
+    is $LamT2body.name,          'LamT->body', '$LamT2body.name';
+    is $LamT2body.Str,           'LamT->body', '$LamT2body.Str';
+    doesnt_ok $LamT2body, TTerm, 'LamT->body', :msg('LamT2body is NOT a TTerm in itself');
+    dies_ok {$Term2Str($LamT2body) }, "($Term2Str LamT->body) yields error";
+    
+    my $x;
+    $x = $VarT("foo");
+    dies_ok( { $LamT2body($x) }, "($LamT2body $x) yields error");
+
+    my $u = $VarT('u');
+    my $v = $VarT('v');
+    $x = $AppT($u, $v);
+    dies_ok( { $LamT2body($x) }, "($LamT2body $x) yields error");
+
+    $x = $LamT($u, $v);
+    is $LamT2body($x), $v, "($LamT2body $x)";
+}
