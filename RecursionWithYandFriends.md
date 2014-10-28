@@ -18,8 +18,8 @@ But not only that, even won't need to memorize, or learn by heart, some weird, c
 This is because you will always be able to quickly derive it once again for yourself - provided 
 of course the tutorial works out for you as intended.
 
-The key thing in achieving this kind of ability is to not only
-understand the derivation as such, but rather to understand, to re-enact or actually *feel*
+The key thing in achieving this kind of ability is not only to understand the derivation as such, 
+but rather to understand, to re-enact or actually *feel*
 the *motivation* for each and every of the intellectual "moves" taken in the derivation.
 
 Hence it's vital that there's absolutely NO hand-waving or "magic", ever!
@@ -52,10 +52,30 @@ If we just say "the same again", well, then the above β-contracts to
                        (* n' (f (- n' 1))))
                 (- n 1))))
 ```
-...and we've just arrived at the *very same problem*, again.
-Before even being able to give it a name via δ (remember: δ is no more than that, 
-a most simple mechanism for making abbreviations) - we would have to go through an infinite series of β-contractions (in fact: expansions).
+...and we've just arrived at the *very same problem* again, having gained literally nothing and left with an even *larger* term.
 
+---
+*Here, for the first and only time in this tutorial, we'll explicitly indicate a point where the reader should ask
+herself if she really, and full-heartedly can agree with what was just said.
+And not only that. 
+You should even feel comfortable with being challenged to convince someone who's got doubts!*
+
+*To illustrate, let's play devil's advocate: "But haven't we just said what `f` is, by virtue of δ? 
+Hence there's no need at all to expand now, since we can always look up `f`'s expansion whenever we need to."*
+
+*The reader is* ***strongly encouraged*** *to try to come up with an undisputable rebuttal of this objection on her own,
+BEFORE reading the one given below.*
+
+---
+
+Well, it's simply expecting to much of δ. It is not a full-blown means of looking things up by name, at arbitrary times. 
+In particular, things are ready for being looked up only *after* both, the key (the name) AND the value (the definition's body) have been written out fully.
+However, in order to fully write out the definition's body in the case at hand requires to look up `f` - which we
+can't.
+In fact, such "premature" lookups are exactly - recursion!
+But that is what we're trying to implement ourselves, hence assuming δ to somehow magically do the job is illegitimate.
+
+So: before even being able to give it a name via δ, we would have to go through an infinite series of β-contractions (in fact: expansions).
 This, in a way, does reflect our intent to write a function that can work on arbitrary
 large `n` - but we **don't** want to write down the infinite expansion; 
 which, btw, would actually do the job - we simply cannot get hold of it in this manner.
@@ -93,7 +113,7 @@ then it - as we've just defined - expects exactly these two arguments, not just 
 
 However, that's not a problem at all; we simply have to give it what it expects.
 And that is actually already the final step towards our solution function `f`,
-and this step is so incredibly simple that might very well not have seen it alreay:
+and this step is so incredibly simple that you might very well not have seen it already:
 ```
   (δ f (f' f'))
 ```
