@@ -1,10 +1,41 @@
 ### Recursion with Y and Friends
+The famous [fixed-point combinator Y](http://en.wikipedia.org/wiki/Y_combinator).
+Lot's of tutorials on it out there...
+It is indispensible if we want to implement recursion *generically*, 
+ie without any cheating, 
+without relying on the host system to provide us with some "magic".
+All we need really is already in pure λ.
+
+Btw, in fact there's not only one such Y but infinitely many.
+However, we'll content ourselves here with the one discovered by Alan M. Turing
+in 1937, and some variations for (multi-way) mutual recursion.
+
+Now, **this tutorial pursues quite an ambitious goal**: 
+You will have fully grasped the "why" and "how" of Y, in the sense of a
+*persistent* understanding.
+Sic! That is, *not* like "yes, I remember to have kind of understood it - once...".
+But not only that, even won't need to memorize, or learn by heart, some weird, convoluted, artificial-looking λ-term.
+This is because you will always be able to quickly derive it once again for yourself - provided 
+of course the tutorial works out for you as intended.
+
+The key thing in achieving this kind of ability is to not only
+understand the derivation as such, but rather to understand, to re-enact or actually *feel*
+the *motivation* for each and every of the intellectual "moves" taken in the derivation.
+
+Hence it's vital that there's absolutely NO hand-waving or "magic", ever!
+This has two sides:
+* the author's side (obviously)
+* but also that of the reader: she must constantly ask herself whether there's any feeling of unease, of inappropriate "magic", at any point. If that's the case, then the "magic" point must be isolated and marked in mind with a BIG RED TODO - and revisited eventually.
+
+Of course there's a price to pay: 
+* the exposition will most probably look overly nitty-gritty and too detailed at first
+* it takes endurance, patience and, last but not least, *intellectual discipline and honesty* on the reader's side to get into it. However, if it works out, the period of "getting into it", when it feels like a burden, will be rather short. Thereafter it may very well feel like a game that you just cannot stop playing :)
 
 #### One-way (simple) recursion
 
 ##### The canonical example, done "by hand"
 Well, that of course is the factorial function.
-When we try to define like so:
+When we try to define it like so:
 ```
   (δ f λn.if (zero? n)
             1
