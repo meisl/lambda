@@ -15,13 +15,6 @@ class AppT      { ... }
 role  Term      { ... }
 
 
-role Value {
-}
-
-role Applicable {
-    method apply                (Value $arg --> Value:D)    { !!! }
-}
-
 role Term
     does Tree
     does MethodFixedPoint
@@ -30,12 +23,6 @@ role Term
     does EtaReduction[Term, ConstT, VarT, AppT, LamT]
     does BetaReduction[Term, ConstT, VarT, AppT, LamT]
 {
-
-    #method alpha-needy-terms(@vars) { !!! }
-
-    #method eval         ($env --> Value) { !!! }
-    #method eval-s       ( --> Value:D)   { !!! }
-
 }
 
 
@@ -47,19 +34,10 @@ role LeafTerm does Term {
 
 
 
-class ConstT does LeafTerm does Value {
+class ConstT does LeafTerm {
     has $.value;
 
     submethod BUILD(:$!value!) {
-    }
-
-    method eval($env) {
-        $!value
-    }
-
-    method eval-s() {
-        say "evaluating " ~ self ~ ' (self-evaluating)';
-        $!value
     }
 
     method gist { ~$!value }
@@ -94,12 +72,6 @@ class VarT does LeafTerm {
     }
 
     method gist { ~$!name }
-
-    method eval($env) { $env.lookup($!name) }
-
-    method eval-s() {
-        die "cannot eval unbound var $!name";
-    }
 }
 
 class AlphaVarT is VarT {
@@ -131,22 +103,9 @@ class AppT does Term {
         return @() unless self.isBetaRedex;
         $!arg.freeVars.grep({ $!func.var.isFreeUnder(:binder($_), :in($!func.body)) });
     }
-
-    method eval($env) {
-        my $code = $!func.eval($env);
-        $code.apply($!arg.eval($env));
-    }
-
-    method eval-s() {
-        say "evaluating " ~ self;
-        my Applicable $f = $!func.eval-s;
-        my $result = $f.apply($!arg.eval-s);
-        say "        -> " ~ $result;
-        $result;
-    }
 }
 
-class LamT does Term does Applicable does Value {
+class LamT does Term {
     has VarT:D $.var;
     has Term:D $.body;
 
@@ -173,26 +132,6 @@ class LamT does Term does Applicable does Value {
     method alpha-convert(VarT:D $newVar, VarT:D :$for --> Term) {
        !!!
     }
-
-    method eval($env) {
-        return -> $arg {
-            my $newEnv = $env.newFrame($!var => $arg);
-            $!body.eval($newEnv);
-        };
-    }
-
-    method eval-s() {
-        say "evaluating " ~ self ~ ' (self-evaluating)';
-        return self;
-    }
-
-    method apply(Value:D $arg --> Value) {
-        say "applying " ~ self ~ " to $arg";
-        my $result = $!body.subst($!var, :for($arg)).eval-s;
-        say "      -> $result";
-        $result;
-    }
-
 }
 
 
