@@ -21,26 +21,26 @@ plan 37;
 }
 
 { # Bool->Str
-    is $Bool2Str.name, 'Bool->Str', '$Bool2Str.name -> "Bool->Str"';
-    is $Bool2Str.Str,  'Bool->Str', '$Bool2Str.Str -> "Bool->Str"';
+    is $Bool2Str.symbol, 'Bool->Str', '$Bool2Str.symbol';
+    is $Bool2Str.Str,    'Bool->Str', '$Bool2Str.Str';
 }
 
 { # #true
-    is $true.name,          '#true', '$true.name';
+    is $true.symbol,        '#true', '$true.symbol';
     is $true.Str,           '#true', '$true.Str';
     does_ok $true, TBool,   '#true';
     is $Bool2Str($true),    '#true', "($Bool2Str $true) -> \"#true\"";
 }
 
 { # #false
-    is $false.name,         '#false', '$false.name';
+    is $false.symbol,       '#false', '$false.symbol';
     is $false.Str,          '#false', '$false.Str';
     does_ok $false, TBool,  '#false';
     is $Bool2Str($false),   '#false', "($Bool2Str $false) -> \"#false\"";
 }
 
 { # not
-    is $not.name,           'not', '$not.name';
+    is $not.symbol,         'not', '$not.symbol';
     is $not.Str,            'not', '$not.Str';
     doesnt_ok $not, TBool,  'not';
     dies_ok { $Bool2Str($not) }, "($Bool2Str $not) yields error";
