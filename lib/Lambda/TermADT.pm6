@@ -20,7 +20,7 @@ constant $VarT is export = lambdaFn(
     -> Str:D $name {
         my $nameStr = $name.perl;
         lambdaFn(
-            "(VarT $nameStr)", "λprj.prj #false #false $nameStr _",
+            Str, "(VarT $nameStr)",
             -> &prj { &prj($false, $false, $name, Mu) }
         ) does TTerm;
     }

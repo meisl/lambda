@@ -46,7 +46,7 @@ plan 92;
     my $x;
     $x = $VarT("foo");
     is $Term2Str($x), '(VarT "foo")',
-        "($Term2Str (VarT \"foo\")) -> \"(VarT \\\"foo\\\")\"";
+        "($Term2Str (VarT \"foo\"))";
     does_ok $x, TTerm, "$x";
     is_validLambda $x;
 }

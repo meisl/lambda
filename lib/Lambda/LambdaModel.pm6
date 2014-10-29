@@ -2,10 +2,14 @@ use v6;
 
 use Lambda::MethodFixedPoint;
 use Lambda::Tree;
-use Lambda::FreeVars;
-use Lambda::Substitution;
-use Lambda::EtaReduction;
-use Lambda::BetaReduction;
+use Lambda::_FreeVars;
+use Lambda::_Substitution;
+use Lambda::_EtaReduction;
+use Lambda::_BetaReduction;
+
+
+#use Lambda::Substitution;
+
 
 class ConstT    { ... }
 class VarT      { ... }

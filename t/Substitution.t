@@ -5,6 +5,7 @@ use Test::Util;
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
+use Lambda::_Substitution;
 use Lambda::Substitution;
 
 
