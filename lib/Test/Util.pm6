@@ -20,7 +20,7 @@ sub doesnt_ok($actual, $expectedRole, Str $name?, Str :$msg) is export {
 }
 
 sub is_validLambda($f) is export {
-    my $fStr = $f.?name || $f.Str || $f.gist || $f.perl;
+    my $fStr = $f.?symbol || $f.Str || $f.gist || $f.perl;
     subtest {
         my $failed = False;
 
@@ -43,7 +43,7 @@ sub is_properLambdaFn($f is rw) is export {
     subtest {
         my $failed = False;
 
-        does_ok($f, name, "$f")
+        does_ok($f, Definition, "$f")
             or $failed = True;
         
         my $orig = $f;

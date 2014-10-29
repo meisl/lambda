@@ -2,28 +2,34 @@ use v6;
 
 module Lambda::Base;
 
-role name is export {
-    has Str $.name;
-    method Str { $!name }
-}
-
 role lambda is export {
     has Str:D $.lambda;
     method Str {
-        self.?name || $!lambda;
+        self.?symbol || $!lambda;
     }
     method gist { $!lambda }
     #method perl { self.gist }
 }
 
-sub lambdaFn(Str $name, Str:D $lambdaExpr, &f) is export {
+role Definition is export {
+    has Str $.symbol;
+
+    submethod BUILD(Str:D :$symbol) {
+        $!symbol = $symbol;
+    }
+
+    method Str { $!symbol }
+}
+
+sub lambdaFn(Str $symbol, Str:D $lambdaExpr, &f) is export {
     my @p = &f.signature.params;
     if @p == 0 {
         die "cannot make lambda function with zero parameters"
     } else {
         my $lx = $lambdaExpr.substr(0, 1) eq '(' ?? $lambdaExpr !! "($lambdaExpr)";
-        &f does name($name);
         &f does lambda($lx);
+        &f does Definition(:$symbol)
+            if $symbol.defined;
         &f;
     }
 }
@@ -68,7 +74,7 @@ constant $C is export = lambdaFn(
     'C', 'λf.λx.λy.f y x',
     -> $f {
         lambdaFn(
-            "(C $f)", "λx.λy.$f y x",   # TODO: alpha-convert if necessary
+            Str, "(C $f)",
             -> $x, $y { $f($y, $x) }
         );
     }
@@ -118,3 +124,4 @@ constant $pi1o4 is export = lambdaFn('π4->1', 'λa.λb.λc.λd.a', -> $a, $b, $
 constant $pi2o4 is export = lambdaFn('π4->2', 'λa.λb.λc.λd.b', -> $a, $b, $c, $d { $b });
 constant $pi3o4 is export = lambdaFn('π4->3', 'λa.λb.λc.λd.c', -> $a, $b, $c, $d { $c });
 constant $pi4o4 is export = lambdaFn('π4->4', 'λa.λb.λc.λd.d', -> $a, $b, $c, $d { $d });
+

@@ -64,12 +64,12 @@ plan 45;
 { # compose, aka B
     my @seen = @();
     subtest({
-        my $f = -> Int:D $i { @seen.push($i.perl); ($i * 2).Str.perl } does name('f');
-        my $g = -> Str:D $s { @seen.push($s.perl); $s.Int - 23       } does name('g');
+        my $f = -> Int:D $i { @seen.push($i.perl); ($i * 2).Str.perl } does Definition(:symbol<f>);
+        my $g = -> Str:D $s { @seen.push($s.perl); $s.Int - 23       } does Definition(:symbol<g>);
 
         my $h = $B($f, $g);
-        does_ok $h, lambda, 'B f g';
-        does_ok $h, name,   'B f g';
+        does_ok     $h, lambda,     'B f g';
+        doesnt_ok   $h, Definition, 'B f g';
 
         my $result = $h('42');
         is @seen[0], '"42"', '((B f g) "42"): arg was passed to g first';
@@ -81,19 +81,19 @@ plan 45;
 { # swap-args, aka C
     my @seen = @();
     subtest({
-        my $f = -> $a, $b { @seen.push([$a, $b]) } does name('f');
+        my $f = -> $a, $b { @seen.push([$a, $b]) } does Definition(:symbol<f>);
 
         my $g = $C($f);
-        does_ok $g, lambda, 'C f';
-        does_ok $g, name,   'C f';
+        does_ok     $g, lambda,     'C f';
+        doesnt_ok   $g, Definition, 'C f';
 
         $g('a', 'b');
         is @seen[0][0], 'b', '((C f) a b): 2nd arg was passed first';
         is @seen[0][1], 'a', '((C f) a b): 1st arg was passed second';
         
         my $h = $C($g);
-        does_ok $h, lambda, 'C (C f)';
-        does_ok $h, name,   'C (C f)';
+        does_ok     $h, lambda,     'C (C f)';
+        doesnt_ok   $h, Definition, 'C (C f)';
 
         $h(42, 23);
         is @seen[1][0], 42, '(((C (C f)) 42 23): 1st arg was passed fist';
@@ -104,12 +104,12 @@ plan 45;
 { # double-arg, aka W
     my @seen = @();
     subtest({
-        my $f = -> $a, $b { @seen.push([$a, $b]) } does name('f');
+        my $f = -> $a, $b { @seen.push([$a, $b]) } does Definition(:symbol<f>);
         $f does lambda('λa.λb.#true');
 
         my $g = $W($f);
-        does_ok $g, lambda, 'W f';
-        does_ok $g, name,   'W f';
+        does_ok     $g, lambda,     'W f';
+        doesnt_ok   $g, Definition, 'W f';
 
         $g('a');
         is @seen.elems,     1, '((W f) a): original f got called once';
