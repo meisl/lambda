@@ -4,7 +4,7 @@ use Test;
 use Test::Util;
 use Lambda::Base;
 
-plan 45;
+plan 48;
 
 { # lambdaFn
     my $omega ::= lambdaFn( 'ω', 'λx.x x', -> &x { &x(&x) } );
@@ -110,7 +110,7 @@ plan 45;
 
 { # Y combinator for unary f
     my $fact-stub = lambdaFn(
-        Str, 'λself.λn.if (zero? n) 1 (* n (self (- n 1)))',
+        'fact', 'λself.λn.if (zero? n) 1 (* n (self (- n 1)))',
         -> &self {
             -> Int $n {
                 $n == 0 ?? 1 !! $n * &self($n - 1)
@@ -119,8 +119,13 @@ plan 45;
     );
     my $fact = $Y($fact-stub);
     does_ok $fact, lambda, '(Y f)';
+    does_ok $fact, Definition, '(Y f)';
+    is $fact.symbol, $fact-stub.symbol, "Y uses stub's .symbol (if any) as Definition symbol of result";
+
     does_ok $Y(-> &self { &self }), lambda, '(Y g) where g does not role "lambda" - itself';
-    
+    doesnt_ok $Y(lambdaFn(Str, 'λfoo."bar"', -> &self { -> $foo { 'bar' } } )), Definition,
+        "Y doesn't make its result a Definition if stub doesnt Definition";
+
     subtest {
         is $fact(0),   1, '0! =   1';
         is $fact(1),   1, '1! =   1';

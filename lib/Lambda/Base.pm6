@@ -101,7 +101,7 @@ constant $Y is export = -> $U { lambdaFn(
     #'Y', 'let (U λu.λf.f(u u f)) (λf.f(U U f))',
     -> &f {
         lambdaFn(
-            &f.?name, '(Y ' ~ (&f ~~ lambda ?? &f.lambda !! &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
+            &f.?symbol // Str, '(Y ' ~ (&f ~~ lambda ?? &f.lambda !! &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
             &f( $U($U, &f) )
         )
     }
