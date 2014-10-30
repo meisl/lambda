@@ -54,7 +54,7 @@ constant $AppT is export = lambdaFn(
     'AppT', 'λfunc.λarg.λprj.prj #false #true func arg',
     -> TTerm:D $func, TTerm:D $arg {
         lambdaFn(
-            "(AppT $func $arg)", "λprj.prj #false #true $func $arg",
+            Str, "(AppT $func $arg)",
             -> &prj { &prj($false, $true, $func, $arg) }
         ) does TTerm;
     }
@@ -99,7 +99,7 @@ constant $LamT is export = lambdaFn(
     -> TTerm:D $var, TTerm:D $body {
         $_if( $is-VarT($var),
             { lambdaFn(
-                "(LamT $var $body)", "λprj.prj #true #false $var $body",
+                Str, "(LamT $var $body)",
                 -> &prj { &prj($true, $false, $var, $body) }
               ) does TTerm;
             },
