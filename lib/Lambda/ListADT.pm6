@@ -21,7 +21,7 @@ constant $nil is export = lambdaFn(
 constant $cons is export = lambdaFn(
     'cons', 'λx.λxs.λsel.sel #true x xs',
     -> $x, TList:D $xs {
-            my $xStr = $x.?name // $x.?lambda // $x.perl;
+            my $xStr = $x.?symbol // $x.?lambda // $x.perl;
             lambdaFn(
                 Str, "cons $xStr $xs",
                 -> &sel {
@@ -281,7 +281,7 @@ constant $List2Str is export = lambdaFn(
     -> TList:D $xs {
         $foldr(
             -> $x, $acc {
-                my $xStr = $x.?name // $x.?lambda // $x.perl;
+                my $xStr = $x.?symbol // $x.?lambda // $x.perl;
                 "(cons $xStr $acc)" 
             },
             'nil',
