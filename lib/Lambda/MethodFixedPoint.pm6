@@ -2,9 +2,16 @@ use v6;
 
 role MethodFixedPoint {
 
-    method iteratedApp(&method, $endCondition = *, $start = self) {
-        $start, &method ... $endCondition;
+    # starting at $start, returns a lazy list of iterated applications
+    # of &method, ending with the first fixed-point (listed twice)
+    # or infinite if there is none.
+    method iteratedApp(&method, $endCondition = * === *, $start = self) {
+        gather {
+        my ($x, $y) = take $start;
+            $x = $y until $endCondition($x, take $y = &method($x));
+        }
     }
+
 
     # starting at $start, returns the first fixed-point of &method
     # wrt. to $endCondition,
@@ -12,15 +19,9 @@ role MethodFixedPoint {
     # where "===" is the default end condition.
     # ...or diverges if there is none...
     method mfp(&method, $endCondition = * === *, $start = self) {
-        # don't call $start, should it be Callable:
-        $start ~~ Callable 
-            ?? (-> { $start }, &method ... $endCondition).pop
-            !! (     $start,   &method ... $endCondition).pop;
+        self.iteratedApp(&method, $endCondition, $start).pop;
+        #my ($x, $y) = $start;
+        #$x = $y until $endCondition($x, $y = &method($x));
+        #$x;
     }
-
-    #method _mfp(&method, $start = self) {
-    #    my ($x, $y) = $start;
-    #    $x = $y until $x === ($y = &method($x));
-    #    $x;
-    #}
 }

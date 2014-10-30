@@ -7,14 +7,13 @@ use Lambda::_Substitution;
 use Lambda::_EtaReduction;
 use Lambda::_BetaReduction;
 
-use Lambda::Base;
-use Lambda::TermADT;
+
 #use Lambda::Substitution;
 
 
-role ConstT    { ... }
-role VarT      { ... }
-role AlphaVarT { ... }
+class ConstT    { ... }
+class VarT      { ... }
+class AlphaVarT { ... }
 class LamT      { ... }
 class AppT      { ... }
 role  Term      { ... }
@@ -39,47 +38,30 @@ role LeafTerm does Term {
 
 
 
-role ConstT does LeafTerm {
-    method new(:$value!) {
-        #note '>>>> ConstT.new, value=' ~ $value;
-        $VarT('foo') does ConstT;
+class ConstT does LeafTerm {
+    has $.value;
+
+    submethod BUILD(:$!value!) {
     }
 
-    #submethod BUILD {
-    #    note '>>>> ConstT.BUILD, self=' ~ self;
-    #}
-
-    method value { $VarT2name(self) }
-
-    method gist { ~self.value }
+    method gist { ~$!value }
 }
 
 
-role VarT does LeafTerm {
+class VarT does LeafTerm {
+    has Str:D $.name;
 
-    my %namesToVarNodes = %();
-    my $nextAlphaNr = 1;
+    submethod BUILD(Str:D :$!name!) {
+    }
     
-    method new(Str:D :$name) {
-        VarT.get($name);
-    }
+    my %namesToVarNodes = %();
 
-    method name { $VarT2name(self) }
-
-    method gist { ~self.name }
-
-
-    my role gist {
-        has Str $.gist;
-    }
+    my $nextAlphaNr = 1;
 
     method fresh(VarT:T: VarT :$for --> VarT:D) {
-        my $n = VarT.get('α' ~ $nextAlphaNr);
-        $n ~~ TTerm or die $n.perl;
-        if $for.defined {
-            #$n does gist($n.name ~ '[/' ~ $for.gist ~ ']');
-            $n does AlphaVarT(:$for);
-        }
+        my $n = $for.defined
+            ?? AlphaVarT.new(:name('α' ~ $nextAlphaNr), :$for)
+            !! VarT.get('α' ~ $nextAlphaNr);
         $nextAlphaNr++;
         $n;
     }
@@ -87,18 +69,21 @@ role VarT does LeafTerm {
     method get(VarT:T: Str:D $name --> VarT) {
         my $out = %namesToVarNodes{$name};
         unless $out.defined {
-            $out = $VarT($name) does VarT;;
+            $out = VarT.new(:$name);
             %namesToVarNodes{$name} = $out;
         }
         return $out;
     }
+
+    method gist { ~$!name }
 }
 
-role AlphaVarT {
+class AlphaVarT is VarT {
     has VarT:D $.for;
 
     method gist {
-        self.name ~ '[/' ~ $!for.gist ~ ']'
+        my $out = callsame;
+        $out ~ '[/' ~ $!for.gist ~ ']'
     }
 }
 

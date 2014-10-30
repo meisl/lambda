@@ -1,7 +1,6 @@
 use v6;
 
 use Test;
-use Test::Util;
 use Lambda::LambdaGrammar;
 
 plan 36;
@@ -10,7 +9,7 @@ plan 36;
     my $t;
     
     $t = parseLambda('x'); 
-    does_ok($t, VarT, 'single var');
+    isa_ok($t, VarT, 'single var');
     is($t.name, 'x', 'name of single var');
 
     throws_like({ parseLambda('') }, X::Lambda::SyntaxError,
@@ -34,33 +33,33 @@ plan 36;
     
     $t = parseLambda('x y');
     isa_ok($t, AppT, 'application of two vars');
-    does_ok($t.func, VarT);
-    does_ok($t.arg, VarT);
+    isa_ok($t.func, VarT);
+    isa_ok($t.arg, VarT);
 
     $t = parseLambda('x y');
     isa_ok($t, AppT, 'application of two vars with parens');
-    does_ok($t.func, VarT);
-    does_ok($t.arg, VarT);
+    isa_ok($t.func, VarT);
+    isa_ok($t.arg, VarT);
 
     $t = parseLambda('x y z');
     isa_ok($t, AppT, 'application of three vars with parens');
     isa_ok($t.func, AppT, 'application should be left-associative');
-    does_ok($t.arg, VarT);
-    does_ok($t.func.func, VarT);
-    does_ok($t.func.arg, VarT);
+    isa_ok($t.arg, VarT);
+    isa_ok($t.func.func, VarT);
+    isa_ok($t.func.arg, VarT);
 
     $t = parseLambda('((x y) z)');
     isa_ok($t, AppT, 'application of three vars with parens (left-assoc)');
     isa_ok($t.func, AppT);
-    does_ok($t.func.func, VarT);
-    does_ok($t.func.arg, VarT);
+    isa_ok($t.func.func, VarT);
+    isa_ok($t.func.arg, VarT);
 
     $t = parseLambda('(x (y z))');
     isa_ok($t, AppT, 'application of three vars with parens (right-assoc)');
-    does_ok($t.func, VarT);
+    isa_ok($t.func, VarT);
     isa_ok($t.arg, AppT);
-    does_ok($t.arg.func, VarT);
-    does_ok($t.arg.arg, VarT);
+    isa_ok($t.arg.func, VarT);
+    isa_ok($t.arg.arg, VarT);
 }
 
 { # abstraction
@@ -83,13 +82,13 @@ plan 36;
 
     $t = parseLambda('λx.y');
     isa_ok($t, LamT, 'simple lambda');
-    does_ok($t.var, VarT);
-    does_ok($t.body, VarT);
+    isa_ok($t.var, VarT);
+    isa_ok($t.body, VarT);
 
     $t = parseLambda('λx.λy.x');
     isa_ok($t, LamT, 'two-arg lambda');
-    does_ok($t.var, VarT);
+    isa_ok($t.var, VarT);
     isa_ok($t.body, LamT);
-    does_ok($t.body.var, VarT);
-    does_ok($t.body.body, VarT);
+    isa_ok($t.body.var, VarT);
+    isa_ok($t.body.body, VarT);
 }
