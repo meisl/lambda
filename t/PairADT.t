@@ -20,20 +20,20 @@ plan 32;
 
 
 { # Pair->Str
-    is $Pair2Str.name, 'Pair->Str', '$Pair2Str.name -> "Pair->Str"';
-    is $Pair2Str.Str,  'Pair->Str', '$Pair2Str.Str -> "Pair->Str"';
+    is $Pair2Str.symbol, 'Pair->Str', '$Pair2Str.symbol';
+    is $Pair2Str.Str,    'Pair->Str', '$Pair2Str.Str';
 }
 
 { # ctor Pair
-    is $Pair.name,              'Pair', '$Pair.name -> "Pair"';
-    is $Pair.Str,               'Pair', '$Pair.Str -> "Pair"';
+    is $Pair.symbol,            'Pair', '$Pair.symbol';
+    is $Pair.Str,               'Pair', '$Pair.Str';
     doesnt_ok $Pair, TPair,     'Pair', :msg('Pair is NOT a TPair in itself');
     dies_ok { $Pair2Str($Pair) }, "($Pair2Str $Pair) yields error";
     
     my $x;
     $x = $Pair(42, "foo");
     is $Pair2Str($x), '(Pair 42 "foo")',
-        "($Pair2Str (Pair 42 \"foo\")) -> \"(Pair 42 \\\"foo\\\")\"";
+        "($Pair2Str (Pair 42 \"foo\"))";
     does_ok $x, TPair, "$x";
     is_validLambda $x;
 
@@ -41,31 +41,31 @@ plan 32;
 
     $x = $Pair($Pair(1, 2), $Pair("foo", 4));
     is $Pair2Str($x), '(Pair (Pair 1 2) (Pair "foo" 4))',
-        "($Pair2Str (Pair (Pair 1 2) (Pair \"foo\" 4))) -> \"(Pair (Pair 1 2) (Pair \\\"foo\\\" 4))\"";
+        "($Pair2Str (Pair (Pair 1 2) (Pair \"foo\" 4)))";
     does_ok $x, TPair, "$x";
     is_validLambda $x;
 }
 
 { # projection fst / Pair->fst
-    is $Pair2fst.name,           'Pair->fst', '$Pair2fst.name -> "Pair->fst"';
-    is $Pair2fst.Str,            'Pair->fst', '$Pair2fst.Str -> "Pair->fst"';
+    is $Pair2fst.symbol,         'Pair->fst', '$Pair2fst.symbol';
+    is $Pair2fst.Str,            'Pair->fst', '$Pair2fst.Str';
     doesnt_ok $Pair2fst, TPair,  'Pair->fst', :msg('Pair->fst is NOT a TPair in itself');
     dies_ok {$Pair2Str($Pair2fst) }, "($Pair2Str $Pair2fst) yields error";
 
     my $x;
     $x = $Pair(5, 23);
-    is $Pair2fst($x),  5, "($Pair2fst $x) -> 5";
+    is $Pair2fst($x),  5, "($Pair2fst $x)";
 
     $x = $Pair("foo", 23);
-    is $Pair2fst($x),  'foo', "($Pair2fst $x) -> \"foo\"";
+    is $Pair2fst($x),  'foo', "($Pair2fst $x)";
 
     $x = $Pair("foo", "bar");
-    is $Pair2fst($x),  'foo', "($Pair2fst $x) -> \"foo\"";
+    is $Pair2fst($x),  'foo', "($Pair2fst $x)";
 }
 
 { # projection snd / Pair->snd
-    is $Pair2snd.name,           'Pair->snd', '$Pair2snd.name -> "Pair->snd"';
-    is $Pair2snd.Str,            'Pair->snd', '$Pair2snd.Str -> "Pair->snd"';
+    is $Pair2snd.symbol,         'Pair->snd', '$Pair2snd.symbol';
+    is $Pair2snd.Str,            'Pair->snd', '$Pair2snd.Str';
     doesnt_ok $Pair2snd, TPair,  'Pair->snd', :msg('Pair->snd is NOT a TPair in itself');
     dies_ok {$Pair2Str($Pair2snd) }, "($Pair2Str $Pair2snd) yields error";
 
