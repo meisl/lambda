@@ -1,9 +1,13 @@
 use v6;
 
+use Lambda::Substitution;
+
+
 role Substitution[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] is export {
 
     method subst(Term:D: Term:D $what, VarT:D :$for!) {   # cannot declare return type (Term) - yields really weird error msg
-        self.subst-seq([[$for, $what]]);
+        #self.subst-seq([[$for, $what]]);
+        $subst(self, $what, $for);
     }
 
     method subst-seq(Term:D: $substitutions) {   # cannot declare return type (Term) - yields really weird error msg

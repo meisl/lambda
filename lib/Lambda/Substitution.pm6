@@ -55,7 +55,7 @@ q:to/ENDOFLAMBDA/,
 ENDOFLAMBDA
     -> &self {
         -> $t, $ss {    # TODO: add types to signature
-            die "NYI";  #$t.subst-seq($ss);
+            $t.subst-seq($ss);
         }
     }
 ));
@@ -63,6 +63,6 @@ ENDOFLAMBDA
 constant $subst is export = lambdaFn(
     'subst', 'λt.λwhat.λfor.subst-seq t (cons (Pair for what) nil)',
     -> $t, $what, $for {    # TODO: add types to signature
-        $t.$subst-seq([[$for, $what]]);
+        $subst-seq($t, [[$for, $what]]);
     }
 );
