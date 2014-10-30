@@ -6,49 +6,24 @@ use Lambda::Base;
 
 plan 45;
 
-{
-    is_properLambdaFn $id;
-    ok $I === $id, '$I is a synonym for $id';
-
-    is_properLambdaFn $const;
-    ok $K === $const, '$K is a synonym for $const';
-
-    is_properLambdaFn $B;
-    ok $compose === $B, '$compose is a synonym for $B';
-
-    is_properLambdaFn $C;
-    ok $swap-args === $C, '$swap-args is a synonym for $C';
-
-    is_properLambdaFn $W;
-    ok $double-arg === $W, '$double-arg is a synonym for W';
-
-    is_properLambdaFn $Y;
-
-    is_properLambdaFn $pi1o2;
-    is_properLambdaFn $pi2o2;
-
-    is_properLambdaFn $pi1o3;
-    is_properLambdaFn $pi2o3;
-    is_properLambdaFn $pi3o3;
-
-    is_properLambdaFn $pi1o4;
-    is_properLambdaFn $pi2o4;
-    is_properLambdaFn $pi3o4;
-    is_properLambdaFn $pi4o4;
-}
-
 { # lambdaFn
     my $omega ::= lambdaFn( 'ω', 'λx.x x', -> &x { &x(&x) } );
    is_properLambdaFn($omega);
 }
 
 { # id, aka I
+    is_properLambdaFn $id;
+    ok $I === $id, '$I is a synonym for $id';
+
     is $id("x"), "x", 'id("x")';
     is $id(5), 5, 'id(5)';
     is $id($id), $id, 'id(id)';
 }
 
 { # const, aka K
+    is_properLambdaFn $const;
+    ok $K === $const, '$K is a synonym for $const';
+
     is $const('x')(5),  'x',        'const("x")(5)';
     is $const(5)(23),   5,          'const(5)(23)';
     is $const(42).Str,  '(λy.42)',  'const(42).Str';
@@ -62,6 +37,9 @@ plan 45;
 }
 
 { # compose, aka B
+    is_properLambdaFn $B;
+    ok $compose === $B, '$compose is a synonym for $B';
+
     my @seen = @();
     subtest({
         my $f = -> Int:D $i { @seen.push($i.perl); ($i * 2).Str.perl } does Definition(:symbol<f>);
@@ -79,6 +57,9 @@ plan 45;
 }
 
 { # swap-args, aka C
+    is_properLambdaFn $C;
+    ok $swap-args === $C, '$swap-args is a synonym for $C';
+
     my @seen = @();
     subtest({
         my $f = -> $a, $b { @seen.push([$a, $b]) } does Definition(:symbol<f>);
@@ -102,6 +83,9 @@ plan 45;
 }
 
 { # double-arg, aka W
+    is_properLambdaFn $W;
+    ok $double-arg === $W, '$double-arg is a synonym for W';
+
     my @seen = @();
     subtest({
         my $f = -> $a, $b { @seen.push([$a, $b]) } does Definition(:symbol<f>);
@@ -118,6 +102,10 @@ plan 45;
         is @seen[0][1], 'a', '((W f) a): original arg was passed as 2nd arg';
 
     }, "double-arg aka W") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die; 
+}
+
+{ # Y combinator
+    is_properLambdaFn $Y;
 }
 
 { # Y combinator for unary f
@@ -200,17 +188,29 @@ plan 45;
 }
 
 { # projections of 2
+    is_properLambdaFn $pi1o2;
+    is_properLambdaFn $pi2o2;
+
     is $pi1o2(23, 42), 23, 'π2->1 returns 1st arg';
     is $pi2o2(23, 42), 42, 'π2->2 returns 2nd arg';
 }
 
 { # projections of 3
+    is_properLambdaFn $pi1o3;
+    is_properLambdaFn $pi2o3;
+    is_properLambdaFn $pi3o3;
+
     is $pi1o3(23, 42, 4711),   23, 'π3->1 returns 1st arg';
     is $pi2o3(23, 42, 4711),   42, 'π3->2 returns 2nd arg';
     is $pi3o3(23, 42, 4711), 4711, 'π3->3 returns 3rd arg';
 }
 
 { # projections of 4
+    is_properLambdaFn $pi1o4;
+    is_properLambdaFn $pi2o4;
+    is_properLambdaFn $pi3o4;
+    is_properLambdaFn $pi4o4;
+
     is $pi1o4(23, 42, 4711, "foo"),    23, 'π4->1 returns 1st arg';
     is $pi2o4(23, 42, 4711, "foo"),    42, 'π4->2 returns 2nd arg';
     is $pi3o4(23, 42, 4711, "foo"),  4711, 'π4->3 returns 3rd arg';

@@ -8,32 +8,59 @@ use Lambda::MaybeADT;
 
 plan 56;
 
-{
-    is_properLambdaFn($Maybe2Str);
 
-    is_properLambdaFn($None);
-    is_properLambdaFn($Some);
-
-    is_properLambdaFn($is-None);
-    is_properLambdaFn($is-Some);
-
-    is_properLambdaFn($Some2value);
-}
-
+# ->Str -----------------------------------------------------------------------
 
 { # Maybe->Str
+    is_properLambdaFn($Maybe2Str);
+
     is $Maybe2Str.symbol,   'Maybe->Str', '$Maybe2Str.symbol';
     is $Maybe2Str.Str,      'Maybe->Str', '$Maybe2Str.Str';
 }
 
+
+# None ------------------------------------------------------------------------
+
 { # ctor None
+    is_properLambdaFn($None);
+
     is $None.symbol,        'None', '$None.symbol';
     is $None.Str,           'None', '$None.Str';
     does_ok $None, TMaybe,  'None', :msg('None is a TMaybe in itself');
     is $Maybe2Str($None),   'None', "($Maybe2Str None)";
 }
 
+{ # predicate None?
+    is_properLambdaFn($is-None);
+
+    is $is-None.symbol,         'None?', '$is-None.symbol';
+    is $is-None.Str,            'None?', '$is-None.Str';
+    doesnt_ok $is-None, TMaybe, 'None?', :msg('None? is NOT a TMaybe in itself');
+    dies_ok {$Maybe2Str($is-None) }, "($Maybe2Str None?) yields error";
+    
+    my $x;
+    $x = $None;
+    is $is-None($x), $true,  "($is-None $x)";
+
+    $x = $Some(5);
+    is $is-None($x),  $false, "($is-None $x)";
+
+    $x = $Some("foo");
+    is $is-None($x),  $false, "($is-None $x)";
+
+    $x = $Some($None);
+    is $is-None($x),  $false, "($is-None $x)";
+
+    $x = $Some($Some("foo"));
+    is $is-None($x),  $false, "($is-None $x)";
+}
+
+
+# Some ------------------------------------------------------------------------
+
 { # ctor Some
+    is_properLambdaFn($Some);
+
     is $Some.symbol,            'Some', '$Some.symbol';
     is $Some.Str,               'Some', '$Some.Str';
     doesnt_ok $Some, TMaybe,    'Some', :msg('Some is NOT a TMaybe in itself');
@@ -67,30 +94,10 @@ plan 56;
     is_validLambda $x;
 }
 
-{ # predicate None?
-    is $is-None.symbol,         'None?', '$is-None.symbol';
-    is $is-None.Str,            'None?', '$is-None.Str';
-    doesnt_ok $is-None, TMaybe, 'None?', :msg('None? is NOT a TMaybe in itself');
-    dies_ok {$Maybe2Str($is-None) }, "($Maybe2Str None?) yields error";
-    
-    my $x;
-    $x = $None;
-    is $is-None($x), $true,  "($is-None $x)";
-
-    $x = $Some(5);
-    is $is-None($x),  $false, "($is-None $x)";
-
-    $x = $Some("foo");
-    is $is-None($x),  $false, "($is-None $x)";
-
-    $x = $Some($None);
-    is $is-None($x),  $false, "($is-None $x)";
-
-    $x = $Some($Some("foo"));
-    is $is-None($x),  $false, "($is-None $x)";
-}
 
 { # predicate Some?
+    is_properLambdaFn($is-Some);
+
     is $is-Some.symbol,         'Some?', '$is-Some.symbol';
     is $is-Some.Str,            'Some?', '$is-Some.Str';
     doesnt_ok $is-Some, TMaybe, 'Some?', :msg('Some? is NOT a TMaybe in itself');
@@ -114,6 +121,8 @@ plan 56;
 }
 
 { # projection Some->value
+    is_properLambdaFn($Some2value);
+
     is $Some2value.symbol,         'Some->value', '$Some2value.symbol';
     is $Some2value.Str,            'Some->value', '$Some2value.Str';
     doesnt_ok $Some2value, TMaybe, 'Some->value', :msg('Some2value is NOT a TMaybe in itself');

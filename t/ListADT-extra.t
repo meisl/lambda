@@ -9,31 +9,13 @@ use Lambda::MaybeADT;
 
 use Lambda::ListADT;
 
-plan 70;
+plan 79;
 
-{
-    is_properLambdaFn($foldl);
-    is_properLambdaFn($reverse);
 
-    is_properLambdaFn($foldr);
-    is_properLambdaFn($foldr-rec);
-    is_properLambdaFn($foldr-iter);
-
-    is_properLambdaFn($length);
-    is_properLambdaFn($append);
-
-    is_properLambdaFn($map);
-    is_properLambdaFn($map-foldr);
-    is_properLambdaFn($map-rec);
-    is_properLambdaFn($map-iter);
-
-    is_properLambdaFn($filter);
-    is_properLambdaFn($exists);
-
-    is_properLambdaFn($first);
-}
+# functions on List -----------------------------------------------------------
 
 { # foldl
+    is_properLambdaFn($foldl);
     {
         my $xs = $nil;
         my @seen = @();
@@ -61,6 +43,10 @@ plan 70;
 
 # foldr
 for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
+    is_properLambdaFn($reverse);
+    is_properLambdaFn($foldr);
+    is_properLambdaFn($foldr-rec);
+    is_properLambdaFn($foldr-iter);
     subtest {
         {
             my $xs = $nil;
@@ -91,6 +77,8 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # reverse
+    is_properLambdaFn($reverse);
+
     is $reverse($nil), $nil, 'reversing the empty list yields the empty list';
     
     my $xs = $cons(23, $nil);
@@ -110,6 +98,8 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # length
+    is_properLambdaFn($length);
+
     my $xs = $nil;
     is $length($xs), 0, "(length $xs) -> 0";
 
@@ -124,6 +114,8 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # append
+    is_properLambdaFn($append);
+
     my $xs = $nil;
     my $ys = $append($xs, $xs);
     is $is-nil($ys), $true, "appending nil to nil yields nil";
@@ -156,6 +148,11 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # map
+    is_properLambdaFn($map);
+    is_properLambdaFn($map-foldr);
+    is_properLambdaFn($map-rec);
+    is_properLambdaFn($map-iter);
+
     my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $nil))));
     my &f = -> $x { 2*$x };
     for ($map, $map-foldr, $map-rec, $map-iter) -> $map {
@@ -171,6 +168,8 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # filter
+    is_properLambdaFn($filter);
+
     my &isEven = -> $x { if ($x % 2 == 0) { $true } else { $false } };
     my ($xs, $ys);
 
@@ -190,6 +189,8 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # exists
+    is_properLambdaFn($exists);
+
     my &even = -> $x { if ($x % 2 == 0) { $true } else { $false } };
     my &odd  = -> $x { if ($x % 2 == 1) { $true } else { $false } };
     my &negative = -> $x { if ($x < 0) { $true } else { $false } };
@@ -210,6 +211,8 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # first
+    is_properLambdaFn($first);
+
     my &even = -> $x { if ($x % 2 == 0) { $true } else { $false } };
     my &odd  = -> $x { if ($x % 2 == 1) { $true } else { $false } };
     my &negative = -> $x { if ($x < 0) { $true } else { $false } };

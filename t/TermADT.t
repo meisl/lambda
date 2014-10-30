@@ -9,28 +9,12 @@ use Lambda::TermADT;
 
 plan 95;
 
-{
-    is_properLambdaFn($Term2Str);
-
-    is_properLambdaFn($VarT);
-    is_properLambdaFn($is-VarT);
-    is_properLambdaFn($VarT2name);
-
-    is_properLambdaFn($AppT);
-    is_properLambdaFn($is-AppT);
-    is_properLambdaFn($AppT2func);
-    is_properLambdaFn($AppT2arg);
-
-    is_properLambdaFn($LamT);
-    is_properLambdaFn($is-LamT);
-    is_properLambdaFn($LamT2var);
-    is_properLambdaFn($LamT2body);
-}
-
 
 # ->Str -----------------------------------------------------------------------
 
 { # Term->Str
+    is_properLambdaFn($Term2Str);
+
     is $Term2Str.symbol, 'Term->Str', '$Term2Str.symbol';
     is $Term2Str.Str,    'Term->Str', '$Term2Str.Str';
 }
@@ -39,6 +23,8 @@ plan 95;
 # VarT ------------------------------------------------------------------------
 
 { # ctor VarT
+    is_properLambdaFn($VarT);
+
     is $VarT.symbol,        'VarT', '$VarT.symbol';
     is $VarT.Str,           'VarT', '$VarT.Str';
     doesnt_ok $VarT, TTerm, 'VarT', :msg('VarT is NOT a TTerm in itself');
@@ -54,6 +40,8 @@ plan 95;
 }
 
 { # predicate VarT?
+    is_properLambdaFn($is-VarT);
+
     is $is-VarT.symbol,        'VarT?', '$is-VarT.symbol';
     is $is-VarT.Str,           'VarT?', '$is-VarT.Str';
     doesnt_ok $is-VarT, TTerm, 'VarT?', :msg('VarT? is NOT a TTerm in itself');
@@ -73,6 +61,8 @@ plan 95;
 }
 
 { # projection VarT->name
+    is_properLambdaFn($VarT2name);
+
     is $VarT2name.symbol,        'VarT->name', '$VarT2name.symbol';
     is $VarT2name.Str,           'VarT->name', '$VarT2name.Str';
     doesnt_ok $VarT2name, TTerm, 'VarT->name', :msg('VarT2name is NOT a TTerm in itself');
@@ -95,6 +85,8 @@ plan 95;
 # AppT ------------------------------------------------------------------------
 
 { # ctor AppT
+    is_properLambdaFn($AppT);
+
     is $AppT.symbol,        'AppT', '$AppT.symbol';
     is $AppT.Str,           'AppT', '$AppT.Str';
     doesnt_ok $AppT, TTerm, 'AppT', :msg('AppT is NOT a TTerm in itself');
@@ -112,6 +104,8 @@ plan 95;
 }
 
 { # predicate AppT?
+    is_properLambdaFn($is-AppT);
+
     is $is-AppT.symbol,        'AppT?', '$is-AppT.symbol';
     is $is-AppT.Str,           'AppT?', '$is-AppT.Str';
     doesnt_ok $is-AppT, TTerm, 'AppT?', :msg('AppT? is NOT a TTerm in itself');
@@ -131,6 +125,8 @@ plan 95;
 }
 
 { # projection AppT->func
+    is_properLambdaFn($AppT2func);
+
     is $AppT2func.symbol,        'AppT->func', '$AppT2func.symbol';
     is $AppT2func.Str,           'AppT->func', '$AppT2func.Str';
     doesnt_ok $AppT2func, TTerm, 'AppT->func', :msg('AppT2func is NOT a TTerm in itself');
@@ -150,6 +146,8 @@ plan 95;
 }
 
 { # projection AppT->arg
+    is_properLambdaFn($AppT2arg);
+
     is $AppT2arg.symbol,        'AppT->arg', '$AppT2arg.symbol';
     is $AppT2arg.Str,           'AppT->arg', '$AppT2arg.Str';
     doesnt_ok $AppT2arg, TTerm, 'AppT->arg', :msg('AppT2arg is NOT a TTerm in itself');
@@ -172,6 +170,8 @@ plan 95;
 # LamT ------------------------------------------------------------------------
 
 { # ctor LamT
+    is_properLambdaFn($LamT);
+
     is $LamT.symbol,        'LamT', '$LamT.symbol';
     is $LamT.Str,           'LamT', '$LamT.Str';
     doesnt_ok $LamT, TTerm, 'LamT', :msg('LamT is NOT a TTerm in itself');
@@ -191,6 +191,8 @@ plan 95;
 }
 
 { # predicate LamT?
+    is_properLambdaFn($is-LamT);
+
     is $is-LamT.symbol,        'LamT?', '$is-LamT.symbol';
     is $is-LamT.Str,           'LamT?', '$is-LamT.Str';
     doesnt_ok $is-LamT, TTerm, 'LamT?', :msg('LamT? is NOT a TTerm in itself');
@@ -209,6 +211,8 @@ plan 95;
 }
 
 { # projection LamT->var
+    is_properLambdaFn($LamT2var);
+
     is $LamT2var.symbol,        'LamT->var', '$LamT2var.symbol';
     is $LamT2var.Str,           'LamT->var', '$LamT2var.Str';
     doesnt_ok $LamT2var, TTerm, 'LamT->var', :msg('LamT2var is NOT a TTerm in itself');
@@ -228,6 +232,8 @@ plan 95;
 }
 
 { # projection LamT->body
+    is_properLambdaFn($LamT2body);
+
     is $LamT2body.symbol,        'LamT->body', '$LamT2body.symbol';
     is $LamT2body.Str,           'LamT->body', '$LamT2body.Str';
     doesnt_ok $LamT2body, TTerm, 'LamT->body', :msg('LamT2body is NOT a TTerm in itself');
