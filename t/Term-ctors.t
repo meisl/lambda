@@ -1,6 +1,7 @@
 use v6;
 
 use Test;
+use Test::Util;
 use Lambda::LambdaModel;
 
 plan 26;
@@ -10,7 +11,7 @@ plan 26;
         "VarT.new cannot be called without arg");
     dies_ok({ VarT.new("x")},
         "VarT.new cannot be called with positional Str arg");
-    isa_ok(VarT.new(:name("x")), VarT,
+    does_ok(VarT.new(:name("x")), VarT,
         "VarT.new with Str arg named 'name' yields a VarT");
     dies_ok({ VarT.new(:value("x"))},
         "VarT.new MUST be called with a Str arg named 'name'");
@@ -21,7 +22,7 @@ plan 26;
         "ConstT.new cannot be called without arg");
     dies_ok({ ConstT.new("x")},
         "ConstT.new cannot be called with positional Str arg");
-    isa_ok(ConstT.new(:value("x")), ConstT,
+    does_ok(ConstT.new(:value("x")), ConstT,
         "ConstT.new with Str arg named 'value'");
     dies_ok({ ConstT.new(:name("x")) },
         "ConstT.new MUST be called with a Str arg named 'value'")

@@ -12,7 +12,10 @@ role MethodFixedPoint {
     # where "===" is the default end condition.
     # ...or diverges if there is none...
     method mfp(&method, $endCondition = * === *, $start = self) {
-        ($start, &method ... $endCondition).pop;
+        # don't call $start, should it be Callable:
+        $start ~~ Callable 
+            ?? (-> { $start }, &method ... $endCondition).pop
+            !! (     $start,   &method ... $endCondition).pop;
     }
 
     #method _mfp(&method, $start = self) {

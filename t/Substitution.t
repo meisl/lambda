@@ -17,11 +17,13 @@ plan 11;
 }
 
 { # Term.subst($what, :for)
+
     my $x = parseLambda('x');
     my $y = parseLambda('y');
     my $z = parseLambda('z');
 
     my $c = ConstT.new(:value('c'));
+
     my $s;
     my $t;
     
