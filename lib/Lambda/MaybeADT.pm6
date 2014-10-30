@@ -20,7 +20,7 @@ constant $None is export = lambdaFn(
 constant $Some is export = lambdaFn(
     'Some', 'λv.λsel.sel #true v',
     -> $v {
-        my $vStr = $v.?name // $v.?lambda // $v.perl;
+        my $vStr = $v.?symbol // $v.?lambda // $v.perl;
         lambdaFn(
             "(Some $vStr)", "λsel.sel #true $vStr",
             -> &sel { &sel($true, $v) }
@@ -64,7 +64,7 @@ constant $Maybe2Str is export = lambdaFn(
             { 'None' },
             {
                 my $v = $Some2value($m);
-                my $vStr = $v.?name // $v.?lambda // $v.perl;
+                my $vStr = $v.?symbol // $v.?lambda // $v.perl;
                 "(Some $vStr)";
             }
         )
