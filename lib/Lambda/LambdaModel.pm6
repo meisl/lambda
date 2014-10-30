@@ -7,17 +7,17 @@ use Lambda::_Substitution;
 use Lambda::_EtaReduction;
 use Lambda::_BetaReduction;
 
-
+use Lambda::Base;
+use Lambda::TermADT;
 #use Lambda::Substitution;
 
 
-class ConstT    { ... }
-class VarT      { ... }
-class AlphaVarT { ... }
-class LamT      { ... }
-class AppT      { ... }
-role  Term      { ... }
+role ConstT { ... }
+role VarT   { ... }
+role AppT   { ... }
+role LamT   { ... }
 
+role Term   { ... }; # Do NOT remove, otherwise we'll get "===SORRY!=== Cannot invoke null object" (?!)
 
 role Term
     does Tree
@@ -38,30 +38,49 @@ role LeafTerm does Term {
 
 
 
-class ConstT does LeafTerm {
-    has $.value;
-
-    submethod BUILD(:$!value!) {
+role ConstT does LeafTerm {
+    method new(:$value!) {
+        #note '>>>> ConstT.new, value=' ~ $value;
+        $VarT('foo') does ConstT;
     }
 
-    method gist { ~$!value }
+    #submethod BUILD {
+    #    note '>>>> ConstT.BUILD, self=' ~ self;
+    #}
+
+    method value { $VarT2name(self) }
+
+    method gist { ~self.value }
 }
 
 
-class VarT does LeafTerm {
-    has Str:D $.name;
-
-    submethod BUILD(Str:D :$!name!) {
-    }
+role VarT does LeafTerm {
+    method name { $VarT2name(self) }
     
-    my %namesToVarNodes = %();
+    method new(Str:D :$name) {
+        VarT.get($name);
+    }
 
+    method gist { ~self.name }
+
+
+    my %namesToVarNodes = %();
     my $nextAlphaNr = 1;
 
+    my role AlphaVarT {
+        has VarT:D $.for;
+
+        method gist {
+            self.name ~ '[/' ~ $!for.gist ~ ']'
+        }
+    }
+
     method fresh(VarT:T: VarT :$for --> VarT:D) {
-        my $n = $for.defined
-            ?? AlphaVarT.new(:name('α' ~ $nextAlphaNr), :$for)
-            !! VarT.get('α' ~ $nextAlphaNr);
+        my $n = VarT.get('α' ~ $nextAlphaNr);
+        $n ~~ TTerm or die $n.perl;
+        if $for.defined {
+            $n does AlphaVarT(:$for);
+        }
         $nextAlphaNr++;
         $n;
     }
@@ -69,73 +88,64 @@ class VarT does LeafTerm {
     method get(VarT:T: Str:D $name --> VarT) {
         my $out = %namesToVarNodes{$name};
         unless $out.defined {
-            $out = VarT.new(:$name);
+            $out = $VarT($name) does VarT;
             %namesToVarNodes{$name} = $out;
         }
         return $out;
     }
-
-    method gist { ~$!name }
-}
-
-class AlphaVarT is VarT {
-    has VarT:D $.for;
-
-    method gist {
-        my $out = callsame;
-        $out ~ '[/' ~ $!for.gist ~ ']'
-    }
 }
 
 
-class AppT does Term {
-    has Term $.func;
-    has Term $.arg; 
+role AppT does Term {
+    method func { $AppT2func(self) }
+    method arg  { $AppT2arg(self)  }
 
-    submethod BUILD(Term:D :$!func!, Term:D :$!arg!) {
+    method new(Term:D :$func!, Term:D :$arg!) {
+        $AppT($func, $arg) does AppT;
     }
 
-    method children { @($!func, $!arg) }
+    method children { @(self.func, self.arg) }
 
-    method gist { '(' ~ $!func.gist ~ ' ' ~ $!arg.gist ~ ')' }
+    method gist { '(' ~ self.func.gist ~ ' ' ~ self.arg.gist ~ ')' }
 
     method alpha-needy-terms(@vars) {
-        @($!func.alpha-needy-terms(@vars), $!arg.alpha-needy-terms(@vars))
+        @(self.func.alpha-needy-terms(@vars), self.arg.alpha-needy-terms(@vars))
     }
 
     method alpha-problematic {
         return @() unless self.isBetaRedex;
-        $!arg.freeVars.grep({ $!func.var.isFreeUnder(:binder($_), :in($!func.body)) });
+        self.arg.freeVars.grep({ self.func.var.isFreeUnder(:binder($_), :in(self.func.body)) });
     }
 }
 
-class LamT does Term {
-    has VarT:D $.var;
-    has Term:D $.body;
+role LamT does Term {
+    method var  { $LamT2var(self) }
+    method body { $LamT2body(self) }
 
-    submethod BUILD(VarT:D :$!var!, Term:D :$!body!) {
+    method new(VarT:D :$var!, Term:D :$body!) {
+        $LamT($var, $body) does LamT;
     }
 
-    method children { @($!var, $!body) }
+    method children { @(self.var, self.body) }
 
     method gist {
-        '(λ' ~ $!var.gist ~ '.' ~ $!body.gist ~ ')';
+        '(λ' ~ self.var.gist ~ '.' ~ self.body.gist ~ ')';
     }
 
     method alpha-needy-terms(@vars-to-stay-free) {
-        my @wantNot = ($!var.name eq any(@vars-to-stay-free))
-            ?? @( self, $!body.alpha-needy-terms(@vars-to-stay-free.grep(*.name eq $!var.name)) )
-            !! $!body.alpha-needy-terms(@vars-to-stay-free);
-        my @all = ($!var.name eq any(@vars-to-stay-free))
-            ?? @( self, $!body.alpha-needy-terms(@vars-to-stay-free) )
-            !! $!body.alpha-needy-terms(@vars-to-stay-free);
+        my @wantNot = (self.var.name eq any(@vars-to-stay-free))
+            ?? @( self, self.body.alpha-needy-terms(@vars-to-stay-free.grep(*.name eq self.var.name)) )
+            !! self.body.alpha-needy-terms(@vars-to-stay-free);
+        my @all = (self.var.name eq any(@vars-to-stay-free))
+            ?? @( self, self.body.alpha-needy-terms(@vars-to-stay-free) )
+            !! self.body.alpha-needy-terms(@vars-to-stay-free);
         my @want = @all.grep({$_ === @wantNot.any});
         @all;
     }
 
-    method alpha-convert(VarT:D $newVar, VarT:D :$for --> Term) {
-       !!!
-    }
+    #method alpha-convert(VarT:D $newVar, VarT:D :$for --> Term) {
+    #   !!!
+    #}
 }
 
 

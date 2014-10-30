@@ -1,6 +1,7 @@
 use v6;
 
 use Test;
+use Test::Util;
 use Lambda::LambdaModel;
 
 plan 26;
@@ -10,7 +11,7 @@ plan 26;
         "VarT.new cannot be called without arg");
     dies_ok({ VarT.new("x")},
         "VarT.new cannot be called with positional Str arg");
-    isa_ok(VarT.new(:name("x")), VarT,
+    does_ok(VarT.new(:name("x")), VarT,
         "VarT.new with Str arg named 'name' yields a VarT");
     dies_ok({ VarT.new(:value("x"))},
         "VarT.new MUST be called with a Str arg named 'name'");
@@ -21,7 +22,7 @@ plan 26;
         "ConstT.new cannot be called without arg");
     dies_ok({ ConstT.new("x")},
         "ConstT.new cannot be called with positional Str arg");
-    isa_ok(ConstT.new(:value("x")), ConstT,
+    does_ok(ConstT.new(:value("x")), ConstT,
         "ConstT.new with Str arg named 'value'");
     dies_ok({ ConstT.new(:name("x")) },
         "ConstT.new MUST be called with a Str arg named 'value'")
@@ -34,7 +35,7 @@ plan 26;
         "AppT.new cannot be called without arg");
     dies_ok({ AppT.new("x")},
         "AppT.new cannot be called with positional Str arg");
-    isa_ok(AppT.new(:func($x), :arg($y)), AppT,
+    does_ok(AppT.new(:func($x), :arg($y)), AppT,
         "AppT.new with Term args named 'func' and 'arg'");
     dies_ok({ AppT.new(:func($x)) },
         "AppT.new cannot be called without Term arg named 'arg'");
@@ -57,7 +58,7 @@ plan 26;
         "LamT.new cannot be called without arg");
     dies_ok({ LamT.new("x")},
         "LamT.new cannot be called with positional Str arg");
-    isa_ok(LamT.new(:var($x), :body($y)), LamT,
+    does_ok(LamT.new(:var($x), :body($y)), LamT,
         "LamT.new with VarT arg named 'var' and Term arg named 'body'");
     dies_ok({ LamT.new(:var($x)) },
         "LamT.new cannot be called without arg named 'body'");
