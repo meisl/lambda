@@ -4,7 +4,7 @@ use Test;
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
-plan 63;
+plan 54;
 
 sub test(Term:D $t, Str:D $desc, &tests) {
     #subtest {
@@ -36,14 +36,15 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     };
 
 
-    # (λx.c)
-    test LamT.new(:var($x), :body($c)), "a LamT with body a ConstT", {
-        is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
-        is($^t.isEtaReducible,  False, "$^desc is not eta-reducible");
-        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
-        my $erd = $^t.eta-reduce;
-        cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
-    };
+    skip { # (λx.c)
+        test LamT.new(:var($x), :body($c)), "a LamT with body a ConstT", {
+            is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
+            is($^t.isEtaReducible,  False, "$^desc is not eta-reducible");
+            cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+            my $erd = $^t.eta-reduce;
+            cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+        };
+    }
 
     test parseLambda('(λx.x)'), "a LamT with body a VarT", {
         is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
@@ -53,15 +54,16 @@ sub test(Term:D $t, Str:D $desc, &tests) {
         cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
     };
     
-    # (λx.x c)
-    test LamT.new(:var($x), :body(AppT.new(:func($x), :arg($c)))), 
-        "a LamT with body an AppT where arg is a ConstT", {
-        is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
-        is($^t.isEtaReducible,  False, "$^desc is not eta-reducible");
-        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
-        my $erd = $^t.eta-reduce;
-        cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
-    };
+    skip { # (λx.x c)
+        test LamT.new(:var($x), :body(AppT.new(:func($x), :arg($c)))), 
+            "a LamT with body an AppT where arg is a ConstT", {
+            is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
+            is($^t.isEtaReducible,  False, "$^desc is not eta-reducible");
+            cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+            my $erd = $^t.eta-reduce;
+            cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+        };
+    }
 
     test parseLambda('(λx.x y)'), "a LamT with body an AppT where arg is a VarT other than the lambda's", {
         is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
@@ -99,14 +101,15 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     };
 
 
-    # (x c)
-    test AppT.new(:func($x), :arg($c)), "an AppT (arg:ConstT)", {
-        is($^t.isEtaRedex,       False, "$^desc is not an eta redex");
-        is($^t.isEtaReducible,   False, "$^desc is not eta-reducible");
-        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
-        my $erd = $^t.eta-reduce;
-        cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
-    };
+    skip { # (x c)
+        test AppT.new(:func($x), :arg($c)), "an AppT (arg:ConstT)", {
+            is($^t.isEtaRedex,       False, "$^desc is not an eta redex");
+            is($^t.isEtaReducible,   False, "$^desc is not eta-reducible");
+            cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+            my $erd = $^t.eta-reduce;
+            cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+        };
+    }
 
     test parseLambda('(x y)'), "an AppT (func:VarT, arg:VarT)", {
         is($^t.isEtaRedex,       False, "$^desc is not an eta redex");

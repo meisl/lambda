@@ -37,17 +37,21 @@ constant $not is export = lambdaFn(
 constant $_if is export = lambdaFn(
     '_if', 'λi.λt.λe.(i t e) _',
     -> TBool:D $cond, &consequence, &alternative {
-        $cond.(&consequence, &alternative).()
+        $cond(&consequence, &alternative).()
     }
 );
 
 constant $_and is export = lambdaFn(
     '_and', 'λp.λq.p q #false',
-    -> TBool:D $p, TBool:D $q { $p($q, $false) }
+    -> TBool:D $p, TBool:D $q {
+        $p($q, $false)
+    }
 );
 
 constant $_or is export = lambdaFn(
     '_or', 'λp.λq.p #true q',
-    -> TBool:D $p, TBool:D $q { $p($true, $q) }
+    -> TBool:D $p, TBool:D $q {
+        $p($true, $q)
+    }
 );
 

@@ -8,6 +8,7 @@ use Lambda::_EtaReduction;
 use Lambda::_BetaReduction;
 
 use Lambda::Base;
+use Lambda::Boolean;
 use Lambda::TermADT;
 #use Lambda::Substitution;
 
@@ -27,6 +28,45 @@ role Term
     does EtaReduction[Term, ConstT, VarT, AppT, LamT]
     does BetaReduction[Term, ConstT, VarT, AppT, LamT]
 {
+
+    my sub convertToP6Bool(TBool:D $p) {
+        $_if( $p,
+            { True },
+            { False }
+        );
+    }
+
+    method convertToP6Bool(TBool:D $p) { convertToP6Bool($p) }
+
+    my sub convertToP6Term(TTerm:D $t) {
+        return $t
+            if $t ~~ Term;
+        if convertToP6Bool($is-VarT($t)) {
+            return $t does VarT;   # TODO: what about VarT.get in this case?
+        } elsif convertToP6Bool($is-AppT($t)) {
+            my $func = $AppT2func($t);
+            my $arg  = $AppT2arg($t);
+            if ($func ~~ Term) && ($arg ~~ Term) {
+                return $t does AppT;
+            }
+            my $newFunc = convertToP6Term($func);
+            my $newArg  = convertToP6Term($arg);
+            return AppT.new(:func($newFunc), :arg($newArg));
+        } elsif convertToP6Bool($is-LamT($t)) {
+            my $var  = $LamT2var($t);
+            my $body = $LamT2body($t);
+            if ($var ~~ Term) && ($body ~~ Term) {
+                return $t does LamT;
+            }
+            my $newVar  = convertToP6Term($var);
+            my $newBody = convertToP6Term($body);
+            return LamT.new(:var($newVar), :body($newBody));
+        } else {
+            die "cannot convert $t";
+        }
+    }
+
+    method convertToP6Term(TTerm:D $t) { convertToP6Term($t) }
 }
 
 
@@ -39,16 +79,18 @@ role LeafTerm does Term {
 
 
 role ConstT does LeafTerm {
-    method new(:$value!) {
-        #note '>>>> ConstT.new, value=' ~ $value;
-        $VarT('foo') does ConstT;
-    }
+    has $.value;
 
-    #submethod BUILD {
-    #    note '>>>> ConstT.BUILD, self=' ~ self;
+    #method value { $ConstT2value(self) }
+
+    #method new(:$value!) {
+    #    #note '>>>> ConstT.new, value=' ~ $value;
+    #    $ConstT($value) does ConstT;
     #}
 
-    method value { $VarT2name(self) }
+    submethod BUILD(:$value!) {
+        $!value = $value;
+    }
 
     method gist { ~self.value }
 }
