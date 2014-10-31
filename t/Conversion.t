@@ -4,7 +4,7 @@ use Test;
 use Test::Util;
 
 #use Lambda::Base;
-#use Lambda::Boolean;
+use Lambda::Boolean;
 use Lambda::PairADT;
 #use Lambda::MaybeADT;
 use Lambda::ListADT;
@@ -12,7 +12,12 @@ use Lambda::TermADT;
 
 use Lambda::LambdaModel;
 
-plan *;
+plan 16;
+
+{ # convertToP6Bool
+    cmp_ok(convertToP6Bool($false), '===', False, 'convertToP6Bool($false)');
+    cmp_ok(convertToP6Bool($true),  '===', True,  'convertToP6Bool($true)');
+}
 
 { # convertToListOfPairs
     my $a;
