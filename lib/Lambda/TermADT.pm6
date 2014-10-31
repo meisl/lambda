@@ -138,6 +138,41 @@ constant $LamT2body is export = lambdaFn(
 );
 
 
+# ConstT ----------------------------------------------------------------------
+
+# ConstT ctor & predicate
+
+constant $ConstT is export = lambdaFn(
+    'ConstT', 'value.λprj.prj #true #true value _',
+    -> $value {
+        my $valueStr = $value.perl;
+        lambdaFn(
+            Str, "(ConstT $valueStr)",
+            -> &prj { &prj($true, $true, $value, Mu) }
+        ) does TTerm;
+    }
+);
+
+constant $is-ConstT is export = lambdaFn(
+    'ConstT?', 'λt.t λtag1.λtag0.λ_.λ_.(_and tag1 tag0)',
+    -> TTerm:D $t {
+        $t(-> $tag1, $tag0, $x, $y { $_and($tag1, $tag0) })
+    }
+);
+
+# ConstT projections
+
+constant $ConstT2value is export = lambdaFn(
+    'ConstT->value', 'λt.if (ConstT? t) (t π4->3) (error (~ "cannot apply ConstT->value to " (Term->Str t)))',
+    -> TTerm:D $t {
+        $_if( $is-ConstT($t),
+            { $t($pi3o4) },
+            { die "cannot apply ConstT->value to $t" }
+        )
+    }
+);
+
+
 # ->Str -----------------------------------------------------------------------
 
 constant $Term2Str is export = lambdaFn(

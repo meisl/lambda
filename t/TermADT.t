@@ -7,7 +7,7 @@ use Lambda::Boolean;
 
 use Lambda::TermADT;
 
-plan 95;
+plan 125;
 
 
 # ->Str -----------------------------------------------------------------------
@@ -57,6 +57,9 @@ plan 95;
     is $is-VarT($x),  $false, "($is-VarT $x)";
     
     $x = $LamT($u, $v);
+    is $is-VarT($x),  $false, "($is-VarT $x)";
+
+    $x = $ConstT("foo");
     is $is-VarT($x),  $false, "($is-VarT $x)";
 }
 
@@ -121,6 +124,9 @@ plan 95;
     is $is-AppT($x),  $true,  "($is-AppT $x)";
     
     $x = $LamT($u, $v);
+    is $is-AppT($x),  $false, "($is-AppT $x)";
+
+    $x = $ConstT("foo");
     is $is-AppT($x),  $false, "($is-AppT $x)";
 }
 
@@ -208,6 +214,9 @@ plan 95;
     is $is-LamT($x),  $false, "($is-LamT $x)";
 
     is $is-LamT($u),  $false, "($is-LamT $u)";
+
+    $x = $ConstT("foo");
+    is $is-LamT($x),  $false, "($is-LamT $x)";
 }
 
 { # projection LamT->var
@@ -250,4 +259,71 @@ plan 95;
 
     $x = $LamT($u, $v);
     is $LamT2body($x), $v, "($LamT2body $x)";
+}
+
+
+# ConstT ----------------------------------------------------------------------
+
+{ # ctor ConstT
+    is_properLambdaFn($VarT);
+
+    is $ConstT.symbol,        'ConstT', '$ConstT.symbol';
+    is $ConstT.Str,           'ConstT', '$ConstT.Str';
+    doesnt_ok $ConstT, TTerm, 'ConstT', :msg('ConstT is NOT a TTerm in itself');
+    dies_ok { $Term2Str($ConstT) }, "($Term2Str $ConstT) yields error";
+    
+    my $x;
+    $x = $ConstT("foo");
+    is $Term2Str($x), '(ConstT "foo")',
+        "($Term2Str (ConstT \"foo\"))";
+    does_ok $x, TTerm, "$x";
+    is_validLambda $x;
+    doesnt_ok $x, Definition;
+}
+
+{ # predicate ConstT?
+    is_properLambdaFn($is-ConstT);
+
+    is $is-ConstT.symbol,        'ConstT?', '$is-ConstT.symbol';
+    is $is-ConstT.Str,           'ConstT?', '$is-ConstT.Str';
+    doesnt_ok $is-ConstT, TTerm, 'ConstT?', :msg('ConstT? is NOT a TTerm in itself');
+    dies_ok {$Term2Str($is-ConstT) }, "($Term2Str ConstT?) yields error";
+
+    my $x;
+    $x = $VarT("foo");
+    is $is-ConstT($x),  $false, "($is-ConstT $x)";
+    
+    my $u = $VarT('u');
+    my $v = $VarT('v');
+    $x = $AppT($u, $v);
+    is $is-ConstT($x),  $false, "($is-ConstT $x)";
+    
+    $x = $LamT($u, $v);
+    is $is-ConstT($x),  $false, "($is-ConstT $x)";
+
+    $x = $ConstT("foo");
+    is $is-ConstT($x),  $true, "($is-ConstT $x)";
+}
+
+{ # projection ConstT->value
+    is_properLambdaFn($ConstT2value);
+
+    is $ConstT2value.symbol,        'ConstT->value', '$ConstT2value.symbol';
+    is $ConstT2value.Str,           'ConstT->value', '$ConstT2value.Str';
+    doesnt_ok $ConstT2value, TTerm, 'ConstT->value', :msg('ConstT2value is NOT a TTerm in itself');
+    dies_ok {$Term2Str($ConstT2value) }, "($Term2Str ConstT->value) yields error";
+    
+    my $x;
+    $x = $ConstT("foo");
+    is $ConstT2value($x),  'foo', "($ConstT2value $x)";
+
+    my $u = $VarT('u');
+    dies_ok( { $ConstT2value($u) }, "($ConstT2value $u) yields error");
+
+    my $v = $VarT('v');
+    $x = $AppT($u, $v);
+    dies_ok( { $ConstT2value($x) }, "($ConstT2value $x) yields error");
+
+    $x = $LamT($u, $v);
+    dies_ok( { $ConstT2value($x) }, "($ConstT2value $x) yields error");
 }
