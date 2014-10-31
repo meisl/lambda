@@ -9,6 +9,9 @@ use Lambda::_BetaReduction;
 
 use Lambda::Base;
 use Lambda::Boolean;
+use Lambda::PairADT;
+use Lambda::MaybeADT;
+use Lambda::ListADT;
 use Lambda::TermADT;
 #use Lambda::Substitution;
 
@@ -20,6 +23,51 @@ role LamT   { ... }
 
 role Term   { ... }; # Do NOT remove, otherwise we'll get "===SORRY!=== Cannot invoke null object" (?!)
 
+sub convertToP6Bool(TBool:D $p) is export {
+    $_if( $p,
+        { True },
+        { False }
+    );
+}
+
+sub convertToP6Term(TTerm:D $t) is export {
+    return $t
+        if $t ~~ Term;
+    if convertToP6Bool($is-VarT($t)) {
+        return $t does VarT;   # TODO: what about VarT.get in this case?
+    } elsif convertToP6Bool($is-AppT($t)) {
+        my $func = $AppT2func($t);
+        my $arg  = $AppT2arg($t);
+        if ($func ~~ Term) && ($arg ~~ Term) {
+            return $t does AppT;
+        }
+        my $newFunc = convertToP6Term($func);
+        my $newArg  = convertToP6Term($arg);
+        return AppT.new(:func($newFunc), :arg($newArg));
+    } elsif convertToP6Bool($is-LamT($t)) {
+        my $var  = $LamT2var($t);
+        my $body = $LamT2body($t);
+        if ($var ~~ Term) && ($body ~~ Term) {
+            return $t does LamT;
+        }
+        my $newVar  = convertToP6Term($var);
+        my $newBody = convertToP6Term($body);
+        return LamT.new(:var($newVar), :body($newBody));
+    } else {
+        die "cannot convert $t";
+    }
+}
+
+sub convertToListOfPairs($arrayOfarrays) is export {
+    my $out = $nil;
+    for $arrayOfarrays.map({
+        die "expected two-elem array but found {$_.perl} instead"
+            unless $_.elems == 2;
+        $Pair($_[0], $_[1]);
+    }).reverse -> $pair { $out = $cons($pair, $out) }
+    $out;
+}
+
 role Term
     does Tree
     does MethodFixedPoint
@@ -29,44 +77,11 @@ role Term
     does BetaReduction[Term, ConstT, VarT, AppT, LamT]
 {
 
-    my sub convertToP6Bool(TBool:D $p) {
-        $_if( $p,
-            { True },
-            { False }
-        );
-    }
-
     method convertToP6Bool(TBool:D $p) { convertToP6Bool($p) }
 
-    my sub convertToP6Term(TTerm:D $t) {
-        return $t
-            if $t ~~ Term;
-        if convertToP6Bool($is-VarT($t)) {
-            return $t does VarT;   # TODO: what about VarT.get in this case?
-        } elsif convertToP6Bool($is-AppT($t)) {
-            my $func = $AppT2func($t);
-            my $arg  = $AppT2arg($t);
-            if ($func ~~ Term) && ($arg ~~ Term) {
-                return $t does AppT;
-            }
-            my $newFunc = convertToP6Term($func);
-            my $newArg  = convertToP6Term($arg);
-            return AppT.new(:func($newFunc), :arg($newArg));
-        } elsif convertToP6Bool($is-LamT($t)) {
-            my $var  = $LamT2var($t);
-            my $body = $LamT2body($t);
-            if ($var ~~ Term) && ($body ~~ Term) {
-                return $t does LamT;
-            }
-            my $newVar  = convertToP6Term($var);
-            my $newBody = convertToP6Term($body);
-            return LamT.new(:var($newVar), :body($newBody));
-        } else {
-            die "cannot convert $t";
-        }
-    }
-
     method convertToP6Term(TTerm:D $t) { convertToP6Term($t) }
+
+    method convertToListOfPairs(@arrayOfarrays) { convertToListOfPairs(@arrayOfarrays) }
 }
 
 
