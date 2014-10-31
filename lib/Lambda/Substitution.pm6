@@ -74,38 +74,41 @@ ENDOFLAMBDA
                           } else {
                               &self($t, $tail)
                           }
-                      } elsif $t.convertToP6Bool($is-AppT($t)) {
-                          my $oldFunc = $AppT2func($t);
-                          my $oldArg  = $AppT2arg($t);
-                          my $newFunc = &self($oldFunc, $ss);
-                          my $newArg  = &self($oldArg,  $ss);
-                          $_if( $_and($is-None($newFunc), $is-None($newArg)),
-                              { $None },
-                              {
-                                  $Some($AppT(
-                                      $_if( $is-Some($newFunc), { $Some2value($newFunc) }, { $oldFunc } ),
-                                      $_if( $is-Some($newArg),  { $Some2value($newArg)  }, { $oldArg  } )
-                                  ))
-                              }
-                          );
-                      } elsif $t.convertToP6Bool($is-LamT($t)) {
-                          my $body = &self(
-                              $t.body,
-                              $filter( # kick out substs for our binder since there
-                                       # won't be free occurrances of it in our body
-                                  -> $x { $t.convertFromP6Bool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
-                                  $ss
-                              )
-                          );
-                          $_if( $is-Some($body),
-                              { $Some($LamT($LamT2var($t), $Some2value($body))) },
-                              { $None }
-                          );
-                      } else {
-                          die "fell off type-dispatch with type " ~ $_.WHAT.perl;
-                      }
+                        } elsif $t.convertToP6Bool($is-AppT($t)) {
+                            my $oldFunc = $AppT2func($t);
+                            my $oldArg  = $AppT2arg($t);
+                            my $newFunc = &self($oldFunc, $ss);
+                            my $newArg  = &self($oldArg,  $ss);
+                            $_if( $_and($is-None($newFunc), $is-None($newArg)),
+                                { $None },
+                                {
+                                    $Some($AppT(
+                                        $_if( $is-Some($newFunc), { $Some2value($newFunc) }, { $oldFunc } ),
+                                        $_if( $is-Some($newArg),  { $Some2value($newArg)  }, { $oldArg  } )
+                                    ))
+                                }
+                            );
+                        } else {
+                            $_if( $is-LamT($t),
+                                { my $body = &self(
+                                      $t.body,
+                                      $filter( # kick out substs for our binder since there
+                                               # won't be free occurrances of it in our body
+                                        -> $x { $t.convertFromP6Bool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
+                                        $ss
+                                      )
+                                  );
+                                  $_if( $is-Some($body),
+                                      { $Some($LamT($LamT2var($t), $Some2value($body))) },
+                                      { $None }
+                                  )
+                                },
+                                { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+                            )
+                        }
                       })
-                })
+                }
+            )
         }
     }
 ));
