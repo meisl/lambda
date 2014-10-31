@@ -65,15 +65,15 @@ ENDOFLAMBDA
                           my $for  = $fst($head);
                           my $what = $snd($head);
                           my $tail = $cdr($ss);
-                          if ($VarT2name($for) eq $VarT2name($t)) {
-                              my $out = &self($what, $tail);
-                              $_if( $is-Some($out),
-                                  { $out },
-                                  { $Some($what) }
-                              );
-                          } else {
-                              &self($t, $tail)
-                          }
+                          $_if( $t.convertFromP6Bool($VarT2name($for) eq $VarT2name($t)),
+                              { my $out = &self($what, $tail);
+                                $_if( $is-Some($out),
+                                    { $out },
+                                    { $Some($what) }
+                                )
+                              },
+                              { &self($t, $tail) }
+                          )
                         } else {
                             $_if( $is-AppT($t),
                                 { my $oldFunc = $AppT2func($t);
