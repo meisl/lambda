@@ -55,48 +55,55 @@ q:to/ENDOFLAMBDA/,
       )
 ENDOFLAMBDA
     -> &self {
-        -> TTerm $t, $ss {    # TODO: add types to signature
-            if $ss.elems == 0 {
-                $None;
-            } else {
-                if $t.convertToP6Bool($is-ConstT($t)) {
-                    $None;
-                } elsif $t.convertToP6Bool($is-VarT($t)) {
-                    my $head = $ss[0];
-                    if ($head[0].name eq $t.name) {
-                        my $out = &self($head[1], $ss[1..^*]);
-                        $_if( $is-Some($out),
-                            { $out },
-                            { $Some($head[1]) }
-                        );
-                    } else {
-                        &self($t, $ss[1..^*])
-                    }
-                } elsif $t.convertToP6Bool($is-AppT($t)) {
-                    my $func = &self($t.func, $ss);
-                    my $arg  = &self($t.arg, $ss);
-                    $_if( $_and($is-None($func), $is-None($arg)),
-                        { $None },
-                        {
-                            $Some($AppT(
-                                $_if( $is-Some($func), { $Some2value($func) }, { $t.func } ),
-                                $_if( $is-Some($arg),  { $Some2value($arg)  }, { $t.arg  } )
-                            ))
-                        }
-                    );
-                } elsif $t.convertToP6Bool($is-LamT($t)) {
-                    my @ss = $ss.grep({ # kick out substs for our binder since there
-                        $_[0].name ne $t.var.name  # won't be free occurrances of it in our body
-                    });
-                    my $body = &self($t.body, @ss);
-                    $_if( $is-Some($body),
-                        { $Some($LamT($t.var, $Some2value($body))) },
-                        { $None }
-                    );
-                } else {
-                    die "fell off type-dispatch with type " ~ $_.WHAT.perl;
-                }
-            }
+        -> TTerm $t, TList $ss {    # TODO: add types to signature
+            $_if( $is-nil($ss),
+                { $None },
+                { $_if( $is-ConstT($t),
+                      { $None },
+                      { if $t.convertToP6Bool($is-VarT($t)) {
+                          my $head = $car($ss);
+                          my $for  = $fst($head);
+                          my $what = $snd($head);
+                          my $tail = $cdr($ss);
+                          if ($for.name eq $t.name) {
+                              my $out = &self($what, $tail);
+                              $_if( $is-Some($out),
+                                  { $out },
+                                  { $Some($what) }
+                              );
+                          } else {
+                              &self($t, $tail)
+                          }
+                      } elsif $t.convertToP6Bool($is-AppT($t)) {
+                          my $func = &self($t.func, $ss);
+                          my $arg  = &self($t.arg,  $ss);
+                          $_if( $_and($is-None($func), $is-None($arg)),
+                              { $None },
+                              {
+                                  $Some($AppT(
+                                      $_if( $is-Some($func), { $Some2value($func) }, { $t.func } ),
+                                      $_if( $is-Some($arg),  { $Some2value($arg)  }, { $t.arg  } )
+                                  ))
+                              }
+                          );
+                      } elsif $t.convertToP6Bool($is-LamT($t)) {
+                          my $body = &self(
+                              $t.body,
+                              $filter( # kick out substs for our binder since there
+                                       # won't be free occurrances of it in our body
+                                  -> $x { $t.convertFromP6Bool($fst($x).name ne $t.var.name) },
+                                  $ss
+                              )
+                          );
+                          $_if( $is-Some($body),
+                              { $Some($LamT($t.var, $Some2value($body))) },
+                              { $None }
+                          );
+                      } else {
+                          die "fell off type-dispatch with type " ~ $_.WHAT.perl;
+                      }
+                      })
+                })
         }
     }
 ));
@@ -104,6 +111,6 @@ ENDOFLAMBDA
 constant $subst is export = lambdaFn(
     'subst', 'λt.λwhat.λfor.subst-seq t (cons (Pair for what) nil)',
     -> TTerm $t, TTerm $what, TTerm $for {    # TODO: add types to signature
-        $subst-seq($t, [[$for, $what]]);
+        $subst-seq($t, $cons($Pair($for, $what), $nil));
     }
 );

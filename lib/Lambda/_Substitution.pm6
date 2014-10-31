@@ -1,8 +1,9 @@
 use v6;
 
 use Lambda::Boolean;
-use Lambda::MaybeADT;
 use Lambda::TermADT;
+use Lambda::MaybeADT;
+use Lambda::ListADT;
 use Lambda::Substitution;
 
 
@@ -17,8 +18,8 @@ role Substitution[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] is export {
         }
     }
 
-    method subst-seq(Term:D: $substitutions) {   # cannot declare return type (Term) - yields really weird error msg
-        my $result = $subst-seq(self, $substitutions);
+    method subst-seq(Term:D: @substitutions) {   # cannot declare return type (Term) - yields really weird error msg
+        my $result = $subst-seq(self, self.convertToListOfPairs(@substitutions));
         if self.convertToP6Bool($is-None($result)) {
             return self;
         } else {
