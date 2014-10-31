@@ -48,6 +48,7 @@ q:to/ENDOFLAMBDA/,
                             None
                         )
                       )
+                      # TODO: ConstT -> None
                       (error (~ "unknown Term ctor: " (Term->Str t)))
                   )
               )
@@ -55,60 +56,61 @@ q:to/ENDOFLAMBDA/,
       )
 ENDOFLAMBDA
     -> &self {
-        -> TTerm $t, TList $ss {    # TODO: add types to signature
+        -> TTerm $t, TList $ss {
             $_if( $is-nil($ss),
                 { $None },
                 { $_if( $is-ConstT($t),
                       { $None },
-                      { if $t.convertToP6Bool($is-VarT($t)) {
-                          my $head = $car($ss);
-                          my $for  = $fst($head);
-                          my $what = $snd($head);
-                          my $tail = $cdr($ss);
-                          $_if( $t.convertFromP6Bool($VarT2name($for) eq $VarT2name($t)),
-                              { my $out = &self($what, $tail);
-                                $_if( $is-Some($out),
-                                    { $out },
-                                    { $Some($what) }
-                                )
-                              },
-                              { &self($t, $tail) }
-                          )
-                        } else {
-                            $_if( $is-AppT($t),
-                                { my $oldFunc = $AppT2func($t);
-                                  my $oldArg  = $AppT2arg($t);
-                                  my $newFunc = &self($oldFunc, $ss);
-                                  my $newArg  = &self($oldArg,  $ss);
-                                  $_if( $_and($is-None($newFunc), $is-None($newArg)),
-                                      { $None },
-                                      {
-                                          $Some($AppT(
-                                              $_if( $is-Some($newFunc), { $Some2value($newFunc) }, { $oldFunc } ),
-                                              $_if( $is-Some($newArg),  { $Some2value($newArg)  }, { $oldArg  } )
-                                          ))
-                                      }
-                                  )
-                                },
-                                { $_if( $is-LamT($t),
-                                      { my $body = &self(
-                                            $t.body,
-                                            $filter( # kick out substs for our binder since there
-                                                     # won't be free occurrances of it in our body
-                                              -> $x { $t.convertFromP6Bool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
-                                              $ss
-                                            )
-                                        );
-                                        $_if( $is-Some($body),
-                                            { $Some($LamT($LamT2var($t), $Some2value($body))) },
-                                            { $None }
-                                        )
-                                      },
-                                      { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
-                                  )
-                                }
-                            )
-                        }
+                      { $_if( $is-VarT($t),
+                            { my $head = $car($ss);
+                              my $for  = $fst($head);
+                              my $what = $snd($head);
+                              my $tail = $cdr($ss);
+                              $_if( $t.convertFromP6Bool($VarT2name($for) eq $VarT2name($t)),
+                                  { my $out = &self($what, $tail);
+                                    $_if( $is-Some($out),
+                                        { $out },
+                                        { $Some($what) }
+                                    )
+                                  },
+                                 { &self($t, $tail) }
+                              )
+                            },
+                            { $_if( $is-AppT($t),
+                                  { my $oldFunc = $AppT2func($t);
+                                    my $oldArg  = $AppT2arg($t);
+                                    my $newFunc = &self($oldFunc, $ss);
+                                    my $newArg  = &self($oldArg,  $ss);
+                                    $_if( $_and($is-None($newFunc), $is-None($newArg)),
+                                        { $None },
+                                        {
+                                            $Some($AppT(
+                                                $_if( $is-Some($newFunc), { $Some2value($newFunc) }, { $oldFunc } ),
+                                                $_if( $is-Some($newArg),  { $Some2value($newArg)  }, { $oldArg  } )
+                                            ))
+                                        }
+                                    )
+                                  },
+                                  { $_if( $is-LamT($t),
+                                        { my $body = &self(
+                                              $t.body,
+                                              $filter( # kick out substs for our binder since there
+                                                       # won't be free occurrances of it in our body
+                                                -> $x { $t.convertFromP6Bool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
+                                                $ss
+                                              )
+                                          );
+                                          $_if( $is-Some($body),
+                                              { $Some($LamT($LamT2var($t), $Some2value($body))) },
+                                              { $None }
+                                          )
+                                        },
+                                        { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+                                    )
+                                  }
+                              )
+                            }
+                        )
                       }
                   )
                 }
