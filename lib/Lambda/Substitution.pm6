@@ -65,7 +65,7 @@ ENDOFLAMBDA
                           my $for  = $fst($head);
                           my $what = $snd($head);
                           my $tail = $cdr($ss);
-                          if ($for.name eq $t.name) {
+                          if ($VarT2name($for) eq $VarT2name($t)) {
                               my $out = &self($what, $tail);
                               $_if( $is-Some($out),
                                   { $out },
@@ -75,14 +75,16 @@ ENDOFLAMBDA
                               &self($t, $tail)
                           }
                       } elsif $t.convertToP6Bool($is-AppT($t)) {
-                          my $func = &self($t.func, $ss);
-                          my $arg  = &self($t.arg,  $ss);
-                          $_if( $_and($is-None($func), $is-None($arg)),
+                          my $oldFunc = $AppT2func($t);
+                          my $oldArg  = $AppT2arg($t);
+                          my $newFunc = &self($oldFunc, $ss);
+                          my $newArg  = &self($oldArg,  $ss);
+                          $_if( $_and($is-None($newFunc), $is-None($newArg)),
                               { $None },
                               {
                                   $Some($AppT(
-                                      $_if( $is-Some($func), { $Some2value($func) }, { $t.func } ),
-                                      $_if( $is-Some($arg),  { $Some2value($arg)  }, { $t.arg  } )
+                                      $_if( $is-Some($newFunc), { $Some2value($newFunc) }, { $oldFunc } ),
+                                      $_if( $is-Some($newArg),  { $Some2value($newArg)  }, { $oldArg  } )
                                   ))
                               }
                           );
@@ -91,12 +93,12 @@ ENDOFLAMBDA
                               $t.body,
                               $filter( # kick out substs for our binder since there
                                        # won't be free occurrances of it in our body
-                                  -> $x { $t.convertFromP6Bool($fst($x).name ne $t.var.name) },
+                                  -> $x { $t.convertFromP6Bool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
                                   $ss
                               )
                           );
                           $_if( $is-Some($body),
-                              { $Some($LamT($t.var, $Some2value($body))) },
+                              { $Some($LamT($LamT2var($t), $Some2value($body))) },
                               { $None }
                           );
                       } else {
