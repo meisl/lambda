@@ -30,6 +30,10 @@ sub convertToP6Bool(TBool:D $p) is export {
     );
 }
 
+sub convertFromP6Bool(Bool:D $p) is export {
+    $p ?? $true !! $false;
+}
+
 sub convertToP6Term(TTerm:D $t) is export {
     return $t
         if $t ~~ Term;
@@ -77,6 +81,7 @@ role Term
     does BetaReduction[Term, ConstT, VarT, AppT, LamT]
 {
 
+    method convertFromP6Bool(Bool:D $p) { convertFromP6Bool($p) }
     method convertToP6Bool(TBool:D $p) { convertToP6Bool($p) }
 
     method convertToP6Term(TTerm:D $t) { convertToP6Term($t) }

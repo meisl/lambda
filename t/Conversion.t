@@ -12,11 +12,16 @@ use Lambda::TermADT;
 
 use Lambda::LambdaModel;
 
-plan 16;
+plan 18;
 
 { # convertToP6Bool
     cmp_ok(convertToP6Bool($false), '===', False, 'convertToP6Bool($false)');
     cmp_ok(convertToP6Bool($true),  '===', True,  'convertToP6Bool($true)');
+}
+
+{ # convertFromP6Bool
+    cmp_ok(convertFromP6Bool(False), '===', $false, 'convertFromP6Bool(False)');
+    cmp_ok(convertFromP6Bool(True),  '===', $true,  'convertFromP6Bool(True)');
 }
 
 { # convertToListOfPairs
