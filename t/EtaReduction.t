@@ -4,7 +4,7 @@ use Test;
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
-plan 54;
+plan 63;
 
 sub test(Term:D $t, Str:D $desc, &tests) {
     #subtest {
@@ -36,7 +36,7 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     };
 
 
-    skip { # (λx.c)
+    { # (λx.c)
         test LamT.new(:var($x), :body($c)), "a LamT with body a ConstT", {
             is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
             is($^t.isEtaReducible,  False, "$^desc is not eta-reducible");
@@ -54,7 +54,7 @@ sub test(Term:D $t, Str:D $desc, &tests) {
         cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
     };
     
-    skip { # (λx.x c)
+    { # (λx.x c)
         test LamT.new(:var($x), :body(AppT.new(:func($x), :arg($c)))), 
             "a LamT with body an AppT where arg is a ConstT", {
             is($^t.isEtaRedex,      False, "$^desc is not an eta redex");
@@ -100,8 +100,7 @@ sub test(Term:D $t, Str:D $desc, &tests) {
         cmp_ok($erd, 'eq', parseLambda('λx.x x'), "$^desc eta-reduces to the AppT's arg");
     };
 
-
-    skip { # (x c)
+    { # (x c)
         test AppT.new(:func($x), :arg($c)), "an AppT (arg:ConstT)", {
             is($^t.isEtaRedex,       False, "$^desc is not an eta redex");
             is($^t.isEtaReducible,   False, "$^desc is not eta-reducible");

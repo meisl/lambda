@@ -4,7 +4,7 @@ use Test;
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
-plan 55;
+plan 64;
 
 sub test(Term:D $t, Str:D $desc, &tests) {
     #subtest {
@@ -37,7 +37,7 @@ sub test(Term:D $t, Str:D $desc, &tests) {
         };
     }
 
-     skip { # (λx.c)
+     { # (λx.c)
         test LamT.new(:var($x), :body($c)), "a LamT with body a ConstT", {
             is($^t.isBetaRedex,      False, "$^desc is not a beta redex");
             is($^t.isBetaReducible,  False, "$^desc is not beta-reducible");
@@ -55,7 +55,7 @@ sub test(Term:D $t, Str:D $desc, &tests) {
         cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
     };
     
-    skip { # (λx.x c)
+    { # (λx.x c)
         test LamT.new(:var($x), :body(AppT.new(:func($x), :arg($c)))), 
             "a LamT with body an AppT where arg is a ConstT", {
             is($^t.isBetaRedex,      False, "$^desc is not a beta redex");
@@ -99,8 +99,7 @@ sub test(Term:D $t, Str:D $desc, &tests) {
         cmp_ok($erd, 'eq', parseLambda('λx.x λz.x x'), "$^desc beta-reduces in two steps");
     };
 
-
-    skip { # (x c)
+    { # (x c)
         test AppT.new(:func($x), :arg($c)), "an AppT (arg:ConstT)", {
             is($^t.isBetaRedex,       False, "$^desc is not a beta redex");
             is($^t.isBetaReducible,   False, "$^desc is not beta-reducible");

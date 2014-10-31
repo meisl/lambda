@@ -4,9 +4,10 @@ use Lambda::Base;
 use Lambda::Boolean;
 
 module Lambda::TermADT;
-# data Term = VarT name:Str
-#           | AppT func:Term arg:Term
-#           | LamT var:VarT body:Term
+# data Term = VarT   name:Str
+#           | AppT   func:Term  arg:Term
+#           | LamT   var:VarT   body:Term
+#           | ConstT value:_
 role TTerm is export {
 }
 

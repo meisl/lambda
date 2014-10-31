@@ -9,7 +9,7 @@ use Lambda::_Substitution;
 use Lambda::Substitution;
 
 
-plan 8;
+plan 11;
 
 {
     is_properLambdaFn $subst;
@@ -27,14 +27,14 @@ plan 8;
     my $s;
     my $t;
     
-#    $s = $c.subst($y, :for($x));
-#    is($s, $c, 'substituting in a ConstT yields just the ConstT');
+    $s = $c.subst($y, :for($x));
+    is($s, $c, 'substituting in a ConstT yields just the ConstT');
 
-#    $s = $x.subst($c, :for($x));
-#    is($s, $c, 'substituting a ConstT in a VarT for that VarT yields the ConstT');
+    $s = $x.subst($c, :for($x));
+    is($s, $c, 'substituting a ConstT in a VarT for that VarT yields the ConstT');
 
-#    $s = $x.subst($c, :for($y));
-#    is($s, $x, 'substituting a ConstT in a VarT for another VarT yields the original VarT');
+    $s = $x.subst($c, :for($y));
+    is($s, $x, 'substituting a ConstT in a VarT for another VarT yields the original VarT');
 
     $s = $x.subst($y, :for($x));
     is($s, $y, 'substituting a VarT in another VarT for that VarT yields that VarT');
@@ -66,8 +66,8 @@ plan 8;
     my $ss;
     
     subtest({
-#        $s = $c.subst-seq([[$y, $x]]);
-#        is($s, $c, 'in a ConstT yields just the ConstT');
+        $s = $c.subst-seq([[$y, $x]]);
+        is($s, $c, 'in a ConstT yields just the ConstT');
 
         $s = $z.subst-seq([[$y, $x]]);
         is($s, $z, 'in a non-matching VarT yields just the VarT');

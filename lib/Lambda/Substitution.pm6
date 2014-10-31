@@ -55,11 +55,13 @@ q:to/ENDOFLAMBDA/,
       )
 ENDOFLAMBDA
     -> &self {
-        -> $t, $ss {    # TODO: add types to signature
+        -> TTerm $t, $ss {    # TODO: add types to signature
             if $ss.elems == 0 {
                 $None;
             } else {
-                if $t.convertToP6Bool($is-VarT($t)) {
+                if $t.convertToP6Bool($is-ConstT($t)) {
+                    $None;
+                } elsif $t.convertToP6Bool($is-VarT($t)) {
                     my $head = $ss[0];
                     if ($head[0].name eq $t.name) {
                         my $out = &self($head[1], $ss[1..^*]);
@@ -92,7 +94,6 @@ ENDOFLAMBDA
                         { $None }
                     );
                 } else {
-                    # TODO: $is-ConstT($t) -> $None;
                     die "fell off type-dispatch with type " ~ $_.WHAT.perl;
                 }
             }
@@ -102,7 +103,7 @@ ENDOFLAMBDA
 
 constant $subst is export = lambdaFn(
     'subst', 'λt.λwhat.λfor.subst-seq t (cons (Pair for what) nil)',
-    -> $t, $what, $for {    # TODO: add types to signature
+    -> TTerm $t, TTerm $what, TTerm $for {    # TODO: add types to signature
         $subst-seq($t, [[$for, $what]]);
     }
 );

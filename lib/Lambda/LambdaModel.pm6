@@ -79,17 +79,11 @@ role LeafTerm does Term {
 
 
 role ConstT does LeafTerm {
-    has $.value;
+    method value { $ConstT2value(self) }
 
-    #method value { $ConstT2value(self) }
-
-    #method new(:$value!) {
-    #    #note '>>>> ConstT.new, value=' ~ $value;
-    #    $ConstT($value) does ConstT;
-    #}
-
-    submethod BUILD(:$value!) {
-        $!value = $value;
+    method new(:$value!) {
+        #note '>>>> ConstT.new, value=' ~ $value;
+        $ConstT($value) does ConstT;
     }
 
     method gist { ~self.value }
