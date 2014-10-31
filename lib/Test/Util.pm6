@@ -10,13 +10,13 @@ module Test::Util;
 sub does_ok($actual, $expectedRole, Str $name?, Str :$msg) is export {
     ok($actual ~~ $expectedRole, 
         ($name // 'it') ~ " should do {$expectedRole.^name}" ~ ($msg.defined ?? " - $msg" !! '')
-    ) || diag "  Expected role: {$expectedRole.^name}\n  Actual type: " ~ $actual.^name;
+    ) or diag("  Expected role: {$expectedRole.^name}\n  Actual type: " ~ $actual.^name) and False;
 }
 
 sub doesnt_ok($actual, $expectedRole, Str $name?, Str :$msg) is export {
     ok($actual !~~ $expectedRole, 
         ($name // 'it') ~ " should NOT do {$expectedRole.^name}" ~ ($msg.defined ?? " - $msg" !! '')
-    ) || diag "  Expected NOT: {$expectedRole.^name}\n  Actual type: " ~ $actual.^name;
+    ) or diag("  Expected NOT: {$expectedRole.^name}\n  Actual type: " ~ $actual.^name) and False;
 }
 
 sub is_validLambda($f) is export {
