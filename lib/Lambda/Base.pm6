@@ -108,6 +108,29 @@ constant $Y is export = -> $U { lambdaFn(
 ) }( -> $u, &f { -> |args { &f( $u($u, &f) )(|args) } } );
 
 
+# fixed-point search ----------------------------------------------------------
+
+# starting at $start, returns the first fixed-point of &method
+# wrt. to $endCondition,
+# ie. the first $x st. $endCondition($x, &method($x)) == True
+# where "===" is the default end condition.
+# ...or diverges if there is none...
+constant $findFP is export = $Y(lambdaFn(
+    'findFP', 'λself.λp.λf.λstart.let ((next (f start)) (done (p start next))) (if done start (self f next p))',
+    -> &self {
+        -> &predicate, &f, $start {
+            my $next = &f($start);
+            my $done = &predicate($start, $next)(True, False);    # TODO: move findFP out of Base.pm6, st. dependency on Boolean.pm6 is made clear
+            if $done {
+                $start;
+            } else {
+                &self(&predicate, &f, $next);
+            }
+        }
+    }
+));
+
+
 # projections ---------------------------------------------------------
 
 # of 2:

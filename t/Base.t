@@ -3,8 +3,9 @@ use v6;
 use Test;
 use Test::Util;
 use Lambda::Base;
+use Lambda::Boolean;    # TODO: move findFP (tests) out of Base.pm6, st. dependency on Boolean.pm6 is made clear
 
-plan 48;
+plan 51;
 
 { # lambdaFn
     my $omega ::= lambdaFn( 'ω', 'λx.x x', -> &x { &x(&x) } );
@@ -191,6 +192,38 @@ plan 48;
         #is $ackPeter(4, 1), 65533, 'ap(4, 1) =  65533';
     }, 'Y combinator for binary f; ex. Ackermann-Péter: ' ~ $ackPeter.lambda;
 }
+
+# fixed-point search ----------------------------------------------------------
+
+
+{ # findFP
+   is_properLambdaFn($findFP);
+
+    my $predicate = -> $x, $y {
+        ($x === $y) ?? $true !! $false
+    };
+    my $function;
+    my $actual;
+
+    $function = $K(42);
+    $actual = $findFP($predicate, $function, 23); # just *some* start value different from any in @values
+    is($actual, 42, "findFP finds fixed-point of K");
+
+    my $values = @(1, 3, '3', 2, 5, 5, 7);
+    my @seen = @();
+    $function = -> $x {
+        my $out = $values[@seen.elems];
+        @seen.push($x);
+        diag '>>>> f, returning ' ~ $out.perl;
+        $out;
+    };
+
+    $actual = $findFP($predicate, $function, 23); # just *some* start value different from any in @values
+    is($actual, 5, "findFP finds fixed-point in \"enumerate\"($values)");
+}
+
+
+# projections -----------------------------------------------------------------
 
 { # projections of 2
     is_properLambdaFn $pi1o2;
