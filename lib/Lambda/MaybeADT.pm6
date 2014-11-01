@@ -70,3 +70,18 @@ constant $Maybe2Str is export = lambdaFn(
         )
     }
 );
+
+
+# functions on Maybe
+
+# Maybe->valueWithDefault
+
+constant $Maybe2valueWithDefault is export = lambdaFn(
+    'Maybe->valueWithDefault', 'λm.λdflt.if (None? m) dflt (Some->value m)',
+    -> TMaybe:D $m, $dflt {
+        $_if( $is-None($m),
+            { $dflt },
+            { $Some2value($m) }
+        )
+    }
+);
