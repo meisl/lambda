@@ -16,6 +16,7 @@ use Lambda::TermADT;
 #use Lambda::Substitution;
 
 use Lambda::Conversion::ListADT-conv;
+use Lambda::Conversion::Bool-conv;
 
 role ConstT { ... }
 role VarT   { ... }
@@ -24,23 +25,13 @@ role LamT   { ... }
 
 role Term   { ... }; # Do NOT remove, otherwise we'll get "===SORRY!=== Cannot invoke null object" (?!)
 
-sub convertToP6Bool(TBool:D $p) is export {
-    $_if( $p,
-        { True },
-        { False }
-    );
-}
-
-sub convertFromP6Bool(Bool:D $p) is export {
-    $p ?? $true !! $false;
-}
 
 sub convertToP6Term(TTerm:D $t) is export {
     return $t
         if $t ~~ Term;
-    if convertToP6Bool($is-VarT($t)) {
+    if convertTBool2P6Bool($is-VarT($t)) {
         return $t does VarT;   # TODO: what about VarT.get in this case?
-    } elsif convertToP6Bool($is-AppT($t)) {
+    } elsif convertTBool2P6Bool($is-AppT($t)) {
         my $func = $AppT2func($t);
         my $arg  = $AppT2arg($t);
         if ($func ~~ Term) && ($arg ~~ Term) {
@@ -49,7 +40,7 @@ sub convertToP6Term(TTerm:D $t) is export {
         my $newFunc = convertToP6Term($func);
         my $newArg  = convertToP6Term($arg);
         return AppT.new(:func($newFunc), :arg($newArg));
-    } elsif convertToP6Bool($is-LamT($t)) {
+    } elsif convertTBool2P6Bool($is-LamT($t)) {
         my $var  = $LamT2var($t);
         my $body = $LamT2body($t);
         if ($var ~~ Term) && ($body ~~ Term) {
@@ -71,9 +62,6 @@ role Term
     does EtaReduction[Term, ConstT, VarT, AppT, LamT]
     does BetaReduction[Term, ConstT, VarT, AppT, LamT]
 {
-
-    method convertFromP6Bool(Bool:D $p) { convertFromP6Bool($p) }
-    method convertToP6Bool(TBool:D $p) { convertToP6Bool($p) }
 
     method convertToP6Term(TTerm:D $t) { convertToP6Term($t) }
 }

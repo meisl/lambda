@@ -17,3 +17,9 @@ plan 1;
     # don't know how to test this:
     #is_properLambdaFn($bad);# - should fail with X::Lambda::SyntaxError;
 }
+
+todo 'does_ok';
+todo 'doesnt_ok';
+
+todo '$contains_ok';
+todo '$has_length';

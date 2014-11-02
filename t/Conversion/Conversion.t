@@ -11,18 +11,19 @@ use Lambda::ListADT;
 use Lambda::TermADT;
 
 use Lambda::Conversion::ListADT-conv;
+use Lambda::Conversion::Bool-conv;
 use Lambda::LambdaModel;
 
 plan 26;
 
-{ # convertToP6Bool
-    cmp_ok(convertToP6Bool($false), '===', False, 'convertToP6Bool($false)');
-    cmp_ok(convertToP6Bool($true),  '===', True,  'convertToP6Bool($true)');
+{ # convertTBool2P6Bool
+    cmp_ok(convertTBool2P6Bool($false), '===', False, 'convertTBool2P6Bool($false)');
+    cmp_ok(convertTBool2P6Bool($true),  '===', True,  'convertTBool2P6Bool($true)');
 }
 
-{ # convertFromP6Bool
-    cmp_ok(convertFromP6Bool(False), '===', $false, 'convertFromP6Bool(False)');
-    cmp_ok(convertFromP6Bool(True),  '===', $true,  'convertFromP6Bool(True)');
+{ # convertP6Bool2TBool
+    cmp_ok(convertP6Bool2TBool(False), '===', $false, 'convertP6Bool2TBool(False)');
+    cmp_ok(convertP6Bool2TBool(True),  '===', $true,  'convertP6Bool2TBool(True)');
 }
 
 { # convertP6ArrayToTListOfTPairs

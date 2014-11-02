@@ -7,6 +7,8 @@ use Lambda::TermADT;
 use Lambda::ListADT;
 use Lambda::PairADT;
 
+use Lambda::Conversion::Bool-conv;
+
 
 constant $subst-seq is export = $Y(lambdaFn(
     'subst-seq',
@@ -66,7 +68,7 @@ ENDOFLAMBDA
                               my $for  = $fst($head);
                               my $what = $snd($head);
                               my $tail = $cdr($ss);
-                              $_if( $t.convertFromP6Bool($VarT2name($for) eq $VarT2name($t)),
+                              $_if( convertP6Bool2TBool($VarT2name($for) eq $VarT2name($t)),
                                   { my $out = &self($what, $tail);
                                     $_if( $is-Some($out),
                                         { $out },
@@ -95,7 +97,7 @@ ENDOFLAMBDA
                                               $t.body,
                                               $filter( # kick out substs for our binder since there
                                                        # won't be free occurrances of it in our body
-                                                -> $x { $t.convertFromP6Bool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
+                                                -> $x { convertP6Bool2TBool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
                                                 $ss
                                               )
                                           );

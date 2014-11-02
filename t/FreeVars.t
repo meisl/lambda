@@ -6,11 +6,12 @@ use Lambda::LambdaModel;
 
 use Lambda::Boolean;
 use Lambda::MaybeADT;
+use Lambda::ListADT;
 use Lambda::TermADT;
 use Lambda::FreeVars;
 
 
-plan 124;
+plan 135;
 
 { # predicate free?
     is_properLambdaFn($is-free);
@@ -141,6 +142,37 @@ plan 124;
 
     is($free-var('x', $lam), $None,     "($free-var 'x' $lam)");
     is($free-var('y', $lam), $Some($y), "($free-var 'y' $lam)");
+}
+
+{ # free-vars
+    is_properLambdaFn($free-vars);
+    
+    my $x = $VarT('x');
+    my $y = $VarT('y');
+    my $c = $ConstT("x");   # Yes, use "x" as value!
+    my $app1 = $AppT($x, $y);    # '(x y)'
+    my $app2 = $AppT($x, $x);    # '(x x)'
+    my $lam1 = $LamT($x, $app1);  # 'λx.x y'
+
+    is($free-vars($c),   $nil,              "($free-vars $c)");
+    is($free-vars($x),   $cons($x, $nil),   "($free-vars $x)");
+
+    is($free-vars($y),   $cons($y, $nil),   "($free-vars $y)");
+
+    my $fvs;
+
+    $fvs = $free-vars($app1);
+    $has_length($fvs, 2, "($free-vars $app1)");
+    $contains_ok($x, $fvs, "(free-vars $app1)");
+    $contains_ok($y, $fvs, "(free-vars $app1)");
+
+    $fvs = $free-vars($app2);
+    $has_length($fvs, 1, "($free-vars $app2) should not contain duplicates");
+    $contains_ok($x, $fvs, "(free-vars $app2)");
+
+    $fvs = $free-vars($lam1);
+    $has_length($fvs, 1, "($free-vars $lam1)");
+    $contains_ok($y, $fvs, "(free-vars $lam1)");
 }
 
 # -----------------------------------------------------------------------------
