@@ -11,7 +11,7 @@ subtest({ # iteratedApp
         my $n = 0;
         my sub f($whatever) {
             my $out = $values[$n++];
-            diag '>>>> f, returning ' ~ $out.perl;
+            diag ">>>> f({$whatever.perl}), returning {$out.perl}";
             $out;
         }
         method go { 
@@ -44,7 +44,7 @@ subtest({ # mfp
         my $n = 0;
         my sub f($whatever) {
             my $out = $values[$n++];
-            diag '>>>> f, returning ' ~ $out.perl;
+            diag ">>>> f({$whatever.perl}), returning {$out.perl}";
             $out;
         }
         method go { 

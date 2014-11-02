@@ -214,12 +214,12 @@ plan 51;
     $function = -> $x {
         my $out = $values[@seen.elems];
         @seen.push($x);
-        diag '>>>> f, returning ' ~ $out.perl;
+        diag ">>>> f({$x.perl}), returning {$out.perl}";
         $out;
     };
 
     $actual = $findFP($predicate, $function, 23); # just *some* start value different from any in @values
-    is($actual, 5, "findFP finds fixed-point in \"enumerate\"($values)");
+    is($actual, 5, "findFP finds fixed-point in \"enumerate\"(1, 3, '3', 2, 5, 5, 7)");
 }
 
 
