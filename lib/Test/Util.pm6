@@ -67,3 +67,11 @@ constant $contains_ok is export = lambdaFn(
             or diag("searched: $y\n in list: $xs") and False;
     }
 );
+
+constant $has_length is export = lambdaFn(
+    'has_length', 'λxs.λn.λxsDesc.(eq? n (length xs))',
+    -> TList:D $xs, Int:D $n, Str:D $xsDesc {
+        is($length($xs), $n, "(eq? $n (length $xsDesc))")
+            or diag(" of list: $xs") and False;
+    }
+);
