@@ -9,7 +9,7 @@ use Lambda::TermADT;
 use Lambda::FreeVars;
 
 
-plan 73;
+plan 116;
 
 { # predicate free?
     is_properLambdaFn($is-free);
@@ -34,8 +34,96 @@ plan 73;
         "a var is not free in an abstraction if same as the abstraction's var");
     is($is-free($y, $lam), $true,
         "a var is free in an abstraction if different from the abstraction's var");
-
 }
+
+
+{ #predicate free-under?
+    is_properLambdaFn($is-free-under);
+
+    my $w = $VarT('w');
+    my $x = $VarT('x');
+    my $y = $VarT('y');
+    my $z = $VarT('z');
+    my $c = $ConstT("x");   # Yes, use "x" as value!
+    my $a1 = $AppT($x, $y); # '(x y)'
+    my $l = $LamT($x, $a1); # 'λx.x y'
+    my $a2 = $AppT($l, $z); # '((λx.x y) z)'
+    my $a3 = $AppT($z, $l); # '(z (λx.x y))'
+    my $a4 = $AppT($l, $l); # '((λx.x y) (λx.x y))'
+
+    my $msgNeverFree = 'free-under?: never under any binder ';
+    is($is-free-under($x, $x, $c), $false, $msgNeverFree ~ 'in a ConstT');
+    is($is-free-under($x, $y, $c), $false, $msgNeverFree ~ 'in a ConstT');
+    is($is-free-under($x, $z, $c), $false, $msgNeverFree ~ 'in a ConstT');
+                      
+    is($is-free-under($x, $x, $x), $false, $msgNeverFree ~ 'in a VarT');
+    is($is-free-under($x, $y, $x), $false, $msgNeverFree ~ 'in a VarT');
+    is($is-free-under($x, $z, $x), $false, $msgNeverFree ~ 'in a VarT');
+
+    # a1: (x y)
+    is($is-free-under($x, $x, $a1), $false);
+    is($is-free-under($x, $y, $a1), $false);
+    is($is-free-under($x, $z, $a1), $false);
+                        
+    is($is-free-under($y, $x, $a1), $false);
+    is($is-free-under($y, $y, $a1), $false);
+    is($is-free-under($y, $z, $a1), $false);
+
+    my $msgNeverIfNotOccurring = $msgNeverFree ~ 'if it doesn\'t occur at all';
+
+    # a1: (x y)
+    is($is-free-under($w, $x, $a1), $false, $msgNeverIfNotOccurring ~ ' in app of var to var');
+    is($is-free-under($w, $y, $a1), $false, $msgNeverIfNotOccurring ~ ' in app of var to var');
+    is($is-free-under($w, $z, $a1), $false, $msgNeverIfNotOccurring ~ ' in app of var to var');
+
+
+    # a2: ((λx.x y) z)
+    is($is-free-under($x, $x, $a2), $false);
+    is($is-free-under($x, $y, $a2), $false);
+    is($is-free-under($x, $z, $a2), $false);
+                          
+    is($is-free-under($y, $x, $a2), $true);
+    is($is-free-under($y, $y, $a2), $false);
+    is($is-free-under($y, $z, $a2), $false);
+                          
+    is($is-free-under($w, $x, $a2), $false, $msgNeverIfNotOccurring ~ ' in app of lambda to var');
+    is($is-free-under($w, $y, $a2), $false, $msgNeverIfNotOccurring ~ ' in app of lambda to var');
+    is($is-free-under($w, $z, $a2), $false, $msgNeverIfNotOccurring ~ ' in app of lambda to var');
+
+
+    # a3: (z (λx.x y))
+    is($is-free-under($x, $x, $a3), $false);
+    is($is-free-under($x, $y, $a3), $false);
+    is($is-free-under($x, $z, $a3), $false);
+                          
+    is($is-free-under($y, $x, $a3), $true);
+    is($is-free-under($y, $y, $a3), $false);
+    is($is-free-under($y, $z, $a3), $false);
+                          
+    is($is-free-under($w, $x, $a3), $false, $msgNeverIfNotOccurring ~ ' in app of var to lambda');
+    is($is-free-under($w, $y, $a3), $false, $msgNeverIfNotOccurring ~ ' in app of var to lambda');
+    is($is-free-under($w, $z, $a3), $false, $msgNeverIfNotOccurring ~ ' in app of var to lambda');
+
+
+    # a4: ((λx.x y) (λx.x y))
+    my $msgNotFreeIfBoundByBoth = $msgNeverFree ~ 'if bound by both, :func and :arg';
+    my $msgLam2Lam = ' in app of lambda to lambda';
+    is($is-free-under($x, $x, $a3), $false, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
+    is($is-free-under($x, $y, $a3), $false, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
+    is($is-free-under($x, $z, $a3), $false, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
+                          
+    is($is-free-under($y, $x, $a4), $true);
+    is($is-free-under($y, $y, $a4), $false);
+    is($is-free-under($y, $z, $a4), $false);
+                          
+    is($is-free-under($w, $x, $a4), $false, $msgNeverIfNotOccurring ~ $msgLam2Lam);
+    is($is-free-under($w, $y, $a4), $false, $msgNeverIfNotOccurring ~ $msgLam2Lam);
+    is($is-free-under($w, $z, $a4), $false, $msgNeverIfNotOccurring ~ $msgLam2Lam);
+}
+
+
+# -----------------------------------------------------------------------------
+
 
 { # VarT.isFree(:$in!)
     my $x = VarT.new(:name<x>);
@@ -109,8 +197,8 @@ plan 73;
     is($y.isFreeUnder(:binder($y), :in($a1)), False);
     is($y.isFreeUnder(:binder($z), :in($a1)), False);
 
-    my $msgNeverIfNotOccurring = $msgNeverFree ~ 'if it doesn\'t occur at all';
 
+    my $msgNeverIfNotOccurring = $msgNeverFree ~ 'if it doesn\'t occur at all';
 
     # a1: (x y)
     is($w.isFreeUnder(:binder($x), :in($a1)), False, $msgNeverIfNotOccurring ~ ' in app of var to var');
