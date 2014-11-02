@@ -1,5 +1,6 @@
 use v6;
 
+use Lambda::MaybeADT;
 use Lambda::FreeVars;
 
 role FreeVars[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
@@ -15,25 +16,7 @@ role FreeVars[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
     }
 
     method getFreeVar(Str:D $name --> VarT) {
-        given self {
-            when ConstT {
-                VarT;
-            }
-            when VarT {
-                self.name eq $name ?? self !! VarT;
-            }
-            when AppT {
-                self.func.getFreeVar($name) // .arg.getFreeVar($name);
-            }
-            when LamT {
-                self.var.name eq $name
-                    ?? VarT
-                    !! self.body.getFreeVar($name);
-            }
-            default {
-                die "unknown type " ~ self.WHAT.perl;
-            }
-        }
+        $Maybe2valueWithDefault($free-var($name, self), VarT);
     }
 
     method freeVars {

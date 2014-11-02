@@ -5,11 +5,12 @@ use Test::Util;
 use Lambda::LambdaModel;
 
 use Lambda::Boolean;
+use Lambda::MaybeADT;
 use Lambda::TermADT;
 use Lambda::FreeVars;
 
 
-plan 116;
+plan 124;
 
 { # predicate free?
     is_properLambdaFn($is-free);
@@ -121,6 +122,26 @@ plan 116;
     is($is-free-under($w, $z, $a4), $false, $msgNeverIfNotOccurring ~ $msgLam2Lam);
 }
 
+{ # free-var
+    is_properLambdaFn($free-var);
+    
+    my $x = $VarT('x');
+    my $y = $VarT('y');
+    my $c = $ConstT("x");   # Yes, use "x" as value!
+    my $app = $AppT($x, $y);    # '(x y)'
+    my $lam = $LamT($x, $app);  # 'λx.x y'
+
+    is($free-var('x', $c),   $None,     "($free-var 'x' $c)");
+    is($free-var('x', $x),   $Some($x), "($free-var 'x' $x)");
+
+    is($free-var('x', $y),   $None,     "($free-var 'x' $y)");
+
+    is($free-var('x', $app), $Some($x), "($free-var 'x' $app)");
+    is($free-var('y', $app), $Some($y), "($free-var 'y' $app)");
+
+    is($free-var('x', $lam), $None,     "($free-var 'x' $lam)");
+    is($free-var('y', $lam), $Some($y), "($free-var 'y' $lam)");
+}
 
 # -----------------------------------------------------------------------------
 

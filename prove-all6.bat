@@ -1,5 +1,5 @@
 @echo off
-C:\Perl\bin\prove --state=failed,fresh --color --failures --recurse --exec "perl6-m -I lib" ./t
+C:\Perl\bin\prove --state=failed,save --color --timer --failures --exec "perl6-m -Ilib" %*
 
 rem parrot-prove doesn't know --recurse - and...
 rem ...it simply hangs... :(

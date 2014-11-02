@@ -2,6 +2,7 @@ use v6;
 
 use Lambda::Base;
 use Lambda::Boolean;
+use Lambda::MaybeADT;
 use Lambda::TermADT;
 
 
@@ -87,6 +88,64 @@ ENDOFLAMBDA
                         { &self($var, $binder, $LamT2body($t)) }    # otherwise it depends on the λ's body
                     )
                 );
+            } else {
+                die "fell off type-dispatch with type " ~ $t.WHAT.perl
+            }
+        }
+    }
+));
+
+
+constant $free-var is export = $Y(lambdaFn(
+    'free-var', 
+ q:to/ENDOFLAMBDA/,
+    λself.λname.λt.
+        (case t
+            (((ConstT val)    None)
+             ((VarT tName)    (_if (eq? name tName)
+                                (λ_.Some t)
+                                (λ_.None)
+                              )
+             )
+             ((AppT func arg) (let ((fromFunc (self name func))
+                                    (inFunc?  (Some? fromFunc))
+                                   )
+                                (_if inFunc?
+                                  fromFunc
+                                  (self name arg)
+                                )
+                              )
+             
+             )
+             ((LamT v body)   (_if (eq? name (VarT->name v))
+                                (λ_.None)
+                                (λ_.self name body)
+                              )
+            )
+            (error (~ "unknown TTerm" (Term->Str t)))
+           )
+        )
+ENDOFLAMBDA
+    -> &self {
+        -> Str:D $name, TTerm $t {
+            if $is-ConstT($t) === $true {
+                $None
+            } elsif $is-VarT($t) === $true {
+                $_if( $VarT2name($t) eq $name ?? $true !! $false,
+                    { $Some($t) },
+                    { $None }
+                )
+            } elsif $is-AppT($t) === $true {
+                my $fromFunc = &self($name, $AppT2func($t));
+                $_if( $is-Some($fromFunc),
+                    { $fromFunc },
+                    { &self($name, $AppT2arg($t)) }
+                )
+            } elsif $is-LamT($t) === $true {
+                $_if( $VarT2name($LamT2var($t)) eq $name ?? $true !! $false,
+                    { $None },
+                    { &self($name, $LamT2body($t)) }
+                )
             } else {
                 die "fell off type-dispatch with type " ~ $t.WHAT.perl
             }
