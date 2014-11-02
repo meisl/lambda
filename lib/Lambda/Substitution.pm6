@@ -30,8 +30,8 @@ q:to/ENDOFLAMBDA/,
                     (if (and (None? f') (None? a'))
                       None
                       (Some (AppT
-                         (if (Some? f´) (Some->value f´) f)
-                         (if (Some? a´) (Some->value a´) a)
+                              (if (Some? f´) (Some->value f´) f)
+                              (if (Some? a´) (Some->value a´) a)
                       ))
                     )
                   )
@@ -83,11 +83,10 @@ ENDOFLAMBDA
                                     my $newArg  = &self($oldArg,  $ss);
                                     $_if( $_and($is-None($newFunc), $is-None($newArg)),
                                         { $None },
-                                        {
-                                            $Some($AppT(
-                                                $_if( $is-Some($newFunc), { $Some2value($newFunc) }, { $oldFunc } ),
-                                                $_if( $is-Some($newArg),  { $Some2value($newArg)  }, { $oldArg  } )
-                                            ))
+                                        { $Some( $AppT(
+                                                   $_if( $is-Some($newFunc), { $Some2value($newFunc) }, { $oldFunc } ),
+                                                   $_if( $is-Some($newArg),  { $Some2value($newArg)  }, { $oldArg  } )
+                                          ))
                                         }
                                     )
                                   },

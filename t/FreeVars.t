@@ -1,14 +1,46 @@
 use v6;
 
 use Test;
+use Test::Util;
 use Lambda::LambdaModel;
 
-plan 65;
+use Lambda::Boolean;
+use Lambda::TermADT;
+use Lambda::FreeVars;
+
+
+plan 73;
+
+{ # predicate free?
+    is_properLambdaFn($is-free);
+    
+    my $x = $VarT('x');
+    my $y = $VarT('y');
+    my $c = $ConstT("x");   # Yes, use "x" as value!
+    my $app = $AppT($x, $y);    # '(x y)'
+    my $lam = $LamT($x, $app);  # 'λx.x y'
+
+    is($is-free($x, $c), $false, "a var is never free in a ConstT");
+    is($is-free($x, $x), $true, "a var is free in itself");
+
+    is($is-free($x, $y), $false, "a var is not free in another one");
+    
+    is($is-free($x, $app), $true,
+        "a var is free if it occurs in the function position of an application");
+    is($is-free($y, $app), $true,
+        "a var is free if it occurs in the argument position of an application");
+
+    is($is-free($x, $lam), $false,
+        "a var is not free in an abstraction if same as the abstraction's var");
+    is($is-free($y, $lam), $true,
+        "a var is free in an abstraction if different from the abstraction's var");
+
+}
 
 { # VarT.isFree(:$in!)
     my $x = VarT.new(:name<x>);
     my $y = VarT.new(:name<y>);
-    my $c = ConstT.new(:value("x"));
+    my $c = ConstT.new(:value("x"));   # Yes, use "x" as value!
     my $app = AppT.new(:func($x), :arg($y));    # '(x y)'
     my $lam = LamT.new(:var($x), :body($app));  # 'λx.x y'
 
@@ -20,6 +52,7 @@ plan 65;
 
     is($x.isFree(:in($c)), False, "a var is never free in a ConstT");
     is($x.isFree(:in($x)), True, "a var is free in itself");
+
     is($x.isFree(:in($y)), False, "a var is not free in another one");
     
     is($x.isFree(:in($app)), True,

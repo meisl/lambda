@@ -1,9 +1,6 @@
 use v6;
 
-use Lambda::Boolean;
-use Lambda::TermADT;
 use Lambda::MaybeADT;
-use Lambda::ListADT;
 use Lambda::Substitution;
 
 

@@ -1,19 +1,13 @@
 use v6;
 
+use Lambda::FreeVars;
 
 role FreeVars[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
 
     # on VarT only
     method isFree(VarT:D: Term:D :in($t)! --> Bool:D) {
-        given $t {
-            when ConstT { False }
-            when VarT   { self.name eq $t.name }
-            when AppT   { self.isFree(:in($t.func)) || self.isFree(:in($t.arg)) }
-            when LamT   { ($t.var.name ne self.name) && self.isFree(:in($t.body)) }
-            default {
-                die "unknown type " ~ $t.WHAT.perl;
-            }
-        }
+        my $result = $is-free(self, $t);
+        $t.convertToP6Bool($result);
     }
 
     # on VarT only

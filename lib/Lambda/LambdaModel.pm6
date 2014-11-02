@@ -106,7 +106,7 @@ role ConstT does LeafTerm {
         $ConstT($value) does ConstT;
     }
 
-    method gist { ~self.value }
+    method gist { self.value.perl }
 }
 
 
