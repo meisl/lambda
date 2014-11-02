@@ -35,10 +35,10 @@ plan 55;
     dies_ok({ $cdr($nil) }, 'cdr on nil yields error');
 
     my $xs = $cons(23, $nil);
-    is $cdr($xs), $nil, 'car on 1-elem list yields nil';
+    is $cdr($xs), $nil, 'cdr on 1-elem list yields nil';
 
     my $ys = $cons(42, $xs);
-    is $cdr($ys), $xs, 'car on 2-elem list extracts tail list';
+    is $cdr($ys), $xs, 'cdr on 2-elem list extracts tail list';
 }
 
 { # caar
