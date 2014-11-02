@@ -3,6 +3,8 @@ use v6;
 use Lambda::MaybeADT;
 use Lambda::Substitution;
 
+use Lambda::Conversion::ListADT-conv;
+
 
 role Substitution[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] is export {
 
@@ -12,7 +14,7 @@ role Substitution[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] is export {
     }
 
     method subst-seq(Term:D: @substitutions) {   # cannot declare return type (Term) - yields really weird error msg
-        my $result = $subst-seq(self, self.convertToListOfPairs(@substitutions));
+        my $result = $subst-seq(self, convertP6ArrayToTListOfTPairs(@substitutions));
         self.convertToP6Term( $Maybe2valueWithDefault($result, self) );
     }
 }

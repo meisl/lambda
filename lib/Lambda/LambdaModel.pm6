@@ -15,6 +15,7 @@ use Lambda::ListADT;
 use Lambda::TermADT;
 #use Lambda::Substitution;
 
+use Lambda::Conversion::ListADT-conv;
 
 role ConstT { ... }
 role VarT   { ... }
@@ -62,16 +63,6 @@ sub convertToP6Term(TTerm:D $t) is export {
     }
 }
 
-sub convertToListOfPairs($arrayOfarrays) is export {
-    my $out = $nil;
-    for $arrayOfarrays.map({
-        die "expected two-elem array but found {$_.perl} instead"
-            unless $_.elems == 2;
-        $Pair($_[0], $_[1]);
-    }).reverse -> $pair { $out = $cons($pair, $out) }
-    $out;
-}
-
 role Term
     does Tree
     does MethodFixedPoint
@@ -85,8 +76,6 @@ role Term
     method convertToP6Bool(TBool:D $p) { convertToP6Bool($p) }
 
     method convertToP6Term(TTerm:D $t) { convertToP6Term($t) }
-
-    method convertToListOfPairs(@arrayOfarrays) { convertToListOfPairs(@arrayOfarrays) }
 }
 
 

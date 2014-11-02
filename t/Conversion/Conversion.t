@@ -1,0 +1,101 @@
+use v6;
+
+use Test;
+use Test::Util;
+
+#use Lambda::Base;
+use Lambda::Boolean;
+use Lambda::PairADT;
+#use Lambda::MaybeADT;
+use Lambda::ListADT;
+use Lambda::TermADT;
+
+use Lambda::Conversion::ListADT-conv;
+use Lambda::LambdaModel;
+
+plan 26;
+
+{ # convertToP6Bool
+    cmp_ok(convertToP6Bool($false), '===', False, 'convertToP6Bool($false)');
+    cmp_ok(convertToP6Bool($true),  '===', True,  'convertToP6Bool($true)');
+}
+
+{ # convertFromP6Bool
+    cmp_ok(convertFromP6Bool(False), '===', $false, 'convertFromP6Bool(False)');
+    cmp_ok(convertFromP6Bool(True),  '===', $true,  'convertFromP6Bool(True)');
+}
+
+{ # convertP6ArrayToTListOfTPairs
+    my $a;
+
+    $a = [];
+    is convertP6ArrayToTListOfTPairs($a), $nil, 'empty array is mapped to $nil';
+    
+    $a = [5, [7, "seven"]];
+    dies_ok( { convertP6ArrayToTListOfTPairs($a) }, 'non-array elem in array yields error (1st)');
+    
+    $a = [[5, "five"], "7"];
+    dies_ok( { convertP6ArrayToTListOfTPairs($a) }, 'non-array elem in array yields error (2nd)');
+    
+    $a = [[5, "five"], []];
+    dies_ok( { convertP6ArrayToTListOfTPairs($a) }, 'elem in array which is array of 0 yields error');
+    
+    $a = [[5, "five"], [1]];
+    dies_ok( { convertP6ArrayToTListOfTPairs($a) }, 'elem in array which is array of 1 yields error');
+    
+    $a = [[5, "five"], [1, 2, 3]];
+    dies_ok( { convertP6ArrayToTListOfTPairs($a) }, 'elem in array which is array of 3 yields error');
+    
+    $a = [[5, "five"], [1, 2]];
+    my $list;
+    $list = convertP6ArrayToTListOfTPairs($a);
+
+    does_ok($list, TList, "convertP6ArrayToTListOfTPairs({$a.perl})")
+        or diag "output: $list / {$list.perl}";
+    is($length($list), $a.elems, "output has as many elems as input")
+        or diag "input: {$a.perl} \noutput: $list / {$list.perl}";
+
+    my $elem;
+    
+    $elem = $car($list);
+    does_ok($elem, TPair, "(car $list)")
+        or diag "1st elem: {$elem.perl}";
+    cmp_ok($fst($elem), '===', $a[0][0], "1st elem's [0] is fst in 1st pair")
+        or  diag "1st elem: {$elem.perl}";
+    cmp_ok($snd($elem), '===', $a[0][1], "1st elem's [1] is snd in 1st pair")
+        or  diag "1st elem: {$elem.perl}";
+    
+    $elem = $cadr($list);
+    does_ok($elem, TPair, "(cadr $list)")
+        or diag "2nd elem: : {$elem.perl}";
+    cmp_ok($fst($elem), '===', $a[1][0], "2nd elem's [0] is fst in 2nd pair")
+        or  diag "2nd elem: {$elem.perl}";
+    cmp_ok($snd($elem), '===', $a[1][1], "2nd elem's [1] is snd in 2nd pair")
+        or  diag "2nd elem: {$elem.perl}";
+}
+
+{ # convertTList2P6Array
+    my ($xs, $a);
+
+    $xs = $nil;
+    $a = convertTList2P6Array($xs);
+    does_ok($a, Array, "convertTList2P6Array($xs)");
+    is($a.elems, 0, "convertTList2P6Array($xs).elems")
+        or diag(" in: $xs\nout: {$a.perl}");
+
+    $xs = $cons(5, $nil);
+    $a = convertTList2P6Array($xs);
+    does_ok($a, Array, "convertTList2P6Array($xs)");
+    is($a.elems, 1, "convertTList2P6Array($xs).elems")
+        or diag(" in: $xs\nout: {$a.perl}");
+
+    $xs = $cons("foo", $cons(5, $nil));
+    $a = convertTList2P6Array($xs);
+    does_ok($a, Array, "convertTList2P6Array($xs)");
+    is($a.elems, 2, "convertTList2P6Array($xs).elems")
+        or diag(" in: $xs\nout: {$a.perl}");
+    is($a[0], 'foo', "convertTList2P6Array($xs).[0]")
+        or diag(" in: $xs\nout: {$a.perl}");
+    is($a[1], 5, "convertTList2P6Array($xs).[1]")
+        or diag(" in: $xs\nout: {$a.perl}");
+}
