@@ -2,6 +2,8 @@ use v6;
 
 use Test;
 use Lambda::Base;
+use Lambda::Boolean;
+use Lambda::ListADT;
 use Lambda::LambdaGrammar;
 
 module Test::Util;
@@ -58,3 +60,10 @@ sub is_properLambdaFn($f is rw) is export {
     }, ($f.Str || $f.gist || $f.perl) ~ ' is proper lambdaFn';
 }
 
+constant $contains_ok is export = lambdaFn(
+    'contains_ok', 'λy.λxs.λxsDesc.exists (λe.y === e) xs',
+    -> $y, TList:D $xs, Str:D $xsDesc {
+        is($exists( -> $e { $e === $y ?? $true !! $false }, $xs), $true, "(contains_ok $y $xsDesc)")
+            or diag("searched: $y\n in list: $xs") and False;
+    }
+);
