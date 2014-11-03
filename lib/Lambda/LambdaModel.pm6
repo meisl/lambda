@@ -31,6 +31,8 @@ sub convertToP6Term(TTerm:D $t) is export {
         if $t ~~ Term;
     if convertTBool2P6Bool($is-VarT($t)) {
         return $t does VarT;   # TODO: what about VarT.get in this case?
+    } elsif convertTBool2P6Bool($is-ConstT($t)) {
+        return $t does ConstT;
     } elsif convertTBool2P6Bool($is-AppT($t)) {
         my $func = $AppT2func($t);
         my $arg  = $AppT2arg($t);

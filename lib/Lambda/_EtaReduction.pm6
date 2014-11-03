@@ -2,6 +2,7 @@ use v6;
 
 use Lambda::Boolean;
 use Lambda::FreeVars;
+use Lambda::EtaReduction;
 
 use Lambda::Conversion::Bool-conv;
 use Lambda::MethodFixedPoint;
@@ -13,22 +14,7 @@ role EtaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT]
 
     # η-redex? - ie of form λx.(B x) where x not free in B
     method isEtaRedex(Term:D: -->Bool) {
-        given self {
-            when ConstT { False }
-            when VarT   { False }
-            when AppT   { False }
-            when LamT {
-                # λx.(B x) is an η-redex if x not free in B.
-                # If so, it η-contracts to just B.
-                   (self.body ~~ AppT)
-                && convertTBool2P6Bool($not($is-free(self.var, self.body.func)))
-                && (self.body.arg ~~ VarT) 
-                && (self.body.arg.name ~~ self.var.name)
-            }
-            default {
-                die "fell off type-dispatch with type " ~ $_.WHAT.perl;
-            }
-        }
+        convertTBool2P6Bool($is-etaRedex(self));
     }
  
     # either self.isEtaRedex or any child isEtaReducible

@@ -74,7 +74,7 @@ ENDOFLAMBDA
             if convertTBool2P6Bool($is-ConstT($t)) {
                 $false
             } elsif convertTBool2P6Bool($is-VarT($t)) {
-                $$false
+                $false
             } elsif convertTBool2P6Bool($is-AppT($t)) {
                 $_or(
                     &self($var, $binder, $AppT2func($t)),
