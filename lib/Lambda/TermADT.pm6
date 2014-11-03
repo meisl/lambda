@@ -180,3 +180,59 @@ constant $Term2Str is export = lambdaFn(
     'Term->Str', 'λt.(error "NYI")',
     -> TTerm:D $t { $t.Str }
 );
+
+
+# ->source --------------------------------------------------------------------
+
+constant $Term2source is export = $Y(lambdaFn(
+    'Term->source', 
+q:to/ENDOFLAMBDA/,
+    λself.λt.case t ; TODO: case -> cascaded if
+          (((ConstT val)    (->Str val))
+           ((VarT name)     name)
+           ((AppT func arg)
+               (let ((fSrc (self func))
+                     (aSrc (self arg))
+                    )
+                  (~ "(" (~ fSrc (~ aSrc ")")))
+               )
+           )
+           ((LamT v body)
+               (let ((vSrc (self v))
+                     (bSrc (self body))
+                    )
+                  (~ "(LAMBDA" (~ vSrc (~ DOT (~ bSrc ")"))))    ; TODO: put literal lambda and dot here
+               )
+           )
+          )
+          (error (~ "unknown TTerm" (Term->Str t)))
+ENDOFLAMBDA
+    -> &self {
+        -> TTerm:D $t {
+            $_if( $is-VarT($t),
+                { $VarT2name($t) },
+                { $_if( $is-ConstT($t),
+                      { $ConstT2value($t).perl },
+                      { $_if( $is-AppT($t),
+                            { my $fSrc = &self($AppT2func($t));
+                              my $aSrc = &self($AppT2arg($t));
+                              "($fSrc $aSrc)";
+                            },
+                            { $_if( $is-LamT($t),
+                                  { my $vSrc = &self($LamT2var($t));
+                                    my $bSrc = &self($LamT2body($t));
+                                    "(λ$vSrc.$bSrc)",
+                                  },
+                                  { die "fell off type-dispatch with type " ~ $t.WHAT.perl },
+                              )
+                            }
+                        )
+                      }
+                  )
+                }
+            )
+        }
+    }
+));
+
+

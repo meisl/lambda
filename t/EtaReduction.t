@@ -27,11 +27,11 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     my sub is_etaRedex(*@tests) {
         for @tests -> $test {
             my $term       = $test.key;
-            my $termStr    = $Term2Str($term).perl;
+            my $termStr    = $Term2source($term);
             my $expected   = $test.value;
             my $expectedP6 = convertTBool2P6Bool($expected);
             my $desc       = $expectedP6
-                                ?? "$termStr is an eta redex" 
+                                ?? "$termStr IS an eta redex" 
                                 !! "$termStr is not an eta redex";
             
             cmp_ok($is-etaRedex($term), '===', $expected, $desc);
@@ -49,14 +49,14 @@ sub test(Term:D $t, Str:D $desc, &tests) {
 
     is_etaRedex(
         $x                                                          => $false,  # x
-        $c                                                          => $false,  # c
-        $AppT($x, $c)                                               => $false,  # (x c)
+        $c                                                          => $false,  # "c"
+        $AppT($x, $c)                                               => $false,  # (x "c")
         $AppT($x, $x)                                               => $false,  # (x x)
         $AppT($x, $y)                                               => $false,  # (x y)
-        $LamT($x, $c)                                               => $false,  # (λx.c)
+        $LamT($x, $c)                                               => $false,  # (λx."c")
         $LamT($x, $x)                                               => $false,  # (λx.x)
         $LamT($x, $AppT($x, $x))                                    => $false,  # (λx.x x)
-        $LamT($x, $AppT($x, $c))                                    => $false,  # (λx.x c)
+        $LamT($x, $AppT($x, $c))                                    => $false,  # (λx.x "c")
         $LamT($x, $AppT($x, $y))                                    => $false,  # (λx.x y)
         $LamT($x, $AppT($y, $x))                                    => $true,   # (λx.y x)
         $LamT($x, $AppT($x, $LamT($y, $AppT($x, $y))))              => $false,  # (λx.x λy.x y)

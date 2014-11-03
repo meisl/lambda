@@ -11,7 +11,7 @@ use Lambda::Conversion::Bool-conv;
 # η-redex? - ie of form λx.(B x) where x not free in B
 constant $is-etaRedex is export = lambdaFn(
     'etaRedex?', 
- q:to/ENDOFLAMBDA/,
+q:to/ENDOFLAMBDA/,
     λt.case t ; TODO: case -> cascaded if
           (((ConstT val)    #false)
            ((VarT name)     #false)
