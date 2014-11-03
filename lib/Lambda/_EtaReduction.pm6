@@ -5,21 +5,16 @@ use Lambda::FreeVars;
 use Lambda::EtaReduction;
 
 use Lambda::Conversion::Bool-conv;
-use Lambda::MethodFixedPoint;
 
 
-role EtaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT]
-    #does MethodFixedPoint
-{
+role EtaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
 
-    # η-redex? - ie of form λx.(B x) where x not free in B
     method isEtaRedex(Term:D: -->Bool) {
         convertTBool2P6Bool($is-etaRedex(self));
     }
- 
-    # either self.isEtaRedex or any child isEtaReducible
+
     method isEtaReducible(Term:D: --> Bool) {
-        self.isEtaRedex || ?self.children.map(*.isEtaReducible).any;
+        convertTBool2P6Bool($is-etaReducible(self));
     }
 
     # one-step η-simplification (either of self or any (one) child)

@@ -2,8 +2,9 @@ use v6;
 
 use Lambda::Base;
 use Lambda::Boolean;
-use Lambda::FreeVars;
+use Lambda::ListADT;
 use Lambda::TermADT;
+use Lambda::FreeVars;
 
 use Lambda::Conversion::Bool-conv;
 
@@ -67,4 +68,23 @@ ENDOFLAMBDA
         }
     }
 );
- 
+
+
+# either t is an η-redex or any child is etaReducible?
+constant $is-etaReducible is export = $Y(lambdaFn(
+    'etaReducible?',
+q:to/ENDOFLAMBDA/,
+    λself.λt._if (etaRedex? t)
+                 (K #true)
+                 (λ_.exists self (Term->children t))
+ENDOFLAMBDA
+    -> &self {
+        -> TTerm $t {
+            $_if( $is-etaRedex($t),
+                { $true },
+                { $exists(&self, $Term2children($t)) }
+            )
+            # self.isEtaRedex || ?self.children.map(*.isEtaReducible).any;
+        }
+    }
+));
