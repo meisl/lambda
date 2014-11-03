@@ -2,6 +2,7 @@ use v6;
 
 use Lambda::Base;
 use Lambda::Boolean;
+use Lambda::ListADT;
 
 module Lambda::TermADT;
 # data Term = VarT   name:Str
@@ -182,30 +183,30 @@ constant $Term2Str is export = lambdaFn(
 );
 
 
-# ->source --------------------------------------------------------------------
+# functions on Term -----------------------------------------------------------
 
 constant $Term2source is export = $Y(lambdaFn(
     'Term->source', 
 q:to/ENDOFLAMBDA/,
     λself.λt.case t ; TODO: case -> cascaded if
-          (((ConstT val)    (->Str val))
-           ((VarT name)     name)
-           ((AppT func arg)
-               (let ((fSrc (self func))
-                     (aSrc (self arg))
-                    )
-                  (~ "(" (~ fSrc (~ aSrc ")")))
-               )
-           )
-           ((LamT v body)
-               (let ((vSrc (self v))
-                     (bSrc (self body))
-                    )
-                  (~ "(LAMBDA" (~ vSrc (~ DOT (~ bSrc ")"))))    ; TODO: put literal lambda and dot here
-               )
-           )
-          )
-          (error (~ "unknown TTerm" (Term->Str t)))
+        (((ConstT val)    (->Str val))
+         ((VarT name)     name)
+         ((AppT func arg)
+             (let ((fSrc (self func))
+                   (aSrc (self arg))
+                  )
+                (~ "(" (~ fSrc (~ aSrc ")")))
+             )
+         )
+         ((LamT v body)
+             (let ((vSrc (self v))
+                   (bSrc (self body))
+                  )
+                (~ "(LAMBDA" (~ vSrc (~ DOT (~ bSrc ")"))))    ; TODO: put literal lambda and dot here
+            )
+         )
+        )
+       (error (~ "unknown TTerm" (Term->Str t)))
 ENDOFLAMBDA
     -> &self {
         -> TTerm:D $t {
@@ -223,7 +224,7 @@ ENDOFLAMBDA
                                     my $bSrc = &self($LamT2body($t));
                                     "(λ$vSrc.$bSrc)",
                                   },
-                                  { die "fell off type-dispatch with type " ~ $t.WHAT.perl },
+                                  { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
                               )
                             }
                         )
@@ -236,3 +237,29 @@ ENDOFLAMBDA
 ));
 
 
+constant $Term2children is export = lambdaFn(
+    'Term->children', 
+q:to/ENDOFLAMBDA/,
+    λt.case t ; TODO: case -> cascaded if
+        (((ConstT val)    nil)
+         ((VarT name)     nil)
+         ((AppT f a)      (cons f (cons a nil)))
+         ((LamT v b)      (cons v (cons b nil)))
+        )
+        (error (~ "unknown TTerm" (Term->Str t)))
+ENDOFLAMBDA
+    -> TTerm:D $t {
+        $_if( $_or($is-VarT($t), $is-ConstT($t)),
+            { $nil },
+            { $_if( $is-AppT($t),
+                  { $cons($AppT2func($t), $cons($AppT2arg($t), $nil)) },
+                  { $_if( $is-LamT($t),
+                        { $cons($LamT2var($t), $cons($LamT2body($t), $nil)) },
+                        { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+                    )
+                  }
+              )
+            }
+        )
+    }
+);

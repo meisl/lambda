@@ -7,7 +7,7 @@ use Lambda::Boolean;
 
 use Lambda::TermADT;
 
-plan 21;
+plan 35;
 
 
 { # Term->source
@@ -53,4 +53,39 @@ plan 21;
         $LamT($x, $AppT($LamT($y, $AppT($x, $y)), $x))              => '(λx.((λy.(x y)) x))',
         $LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x))              => '(λx.((λx.(x y)) x))',
     );
+}
+
+
+{ # Term->children
+    is_properLambdaFn($Term2children);
+
+    is $Term2children.symbol, 'Term->children', '$Term2children.symbol';
+    is $Term2children.Str,    'Term->children', '$Term2children.Str';
+
+    my $x = $VarT('x');
+    my $y = $VarT('y');
+    my $c = $ConstT('c');
+
+    $has_length($Term2children($x), 0, "(Term->children $x)");
+    $has_length($Term2children($c), 0, "(Term->children $c)");
+
+    my $cs;
+    
+    my $t1 = $AppT($x, $y);
+    $cs = $Term2children($t1);
+    $has_length($cs, 2, "(Term->children $t1)");
+    $contains_ok($x, $cs, "(Term->children $t1)");
+    $contains_ok($y, $cs, "(Term->children $t1)");
+    
+    my $t2 = $AppT($t1, $c);
+    $cs = $Term2children($t2);
+    $has_length($cs, 2, "(Term->children $t2)");
+    $contains_ok($t1, $cs, "(Term->children $t2)");
+    $contains_ok($c,  $cs, "(Term->children $t2)");
+    
+    my $t3 = $LamT($x, $t2);
+    $cs = $Term2children($t3);
+    $has_length($cs, 2, "(Term->children $t3)");
+    $contains_ok($x,  $cs, "(Term->children $t3)");
+    $contains_ok($t2, $cs, "(Term->children $t3)");
 }
