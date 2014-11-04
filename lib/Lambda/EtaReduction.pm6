@@ -90,6 +90,9 @@ ENDOFLAMBDA
     }
 ));
 
+
+# etaContract: one-step η-simplification, either of η-redex itself or any (one) child
+
 # Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
 # is that we don't need to compare terms for equality then.
 constant $etaContract is export = $Y(lambdaFn(
@@ -154,3 +157,34 @@ ENDOFLAMBDA
         }
     }
 ));
+
+
+# etaReduce: η-contract until fixed-point
+
+# Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
+# is that we don't need to compare terms for equality then.
+constant $etaReduce is export = lambdaFn(
+    'etaReduce',
+q:to/ENDOFLAMBDA/,
+    λt.(findFP
+         (λx.λy.None? y)
+         (λm._if (None? m)     ; TODO: replace _if (None? m) etc by Maybe-and (or so)
+                 None
+                 (λ_.etaContract (Some->value m))
+         )
+         (etaContract t)
+       )
+ENDOFLAMBDA
+    -> TTerm $t {
+        $findFP(
+            -> $x, TMaybe:D $y { $is-None($y) },
+            -> TMaybe:D $m {
+                $_if( $is-None($m),     # TODO: replace `$_if( $is-None($m)...` by $Maybe-and (or so)
+                    { $None },
+                    { $etaContract($Some2value($m)) }
+                )
+            },
+            $etaContract($t)
+        );
+    }
+);

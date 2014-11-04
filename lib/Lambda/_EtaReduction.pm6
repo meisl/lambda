@@ -22,7 +22,7 @@ role EtaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
     }
     
     method eta-reduce() {
-        self.mfp(*.eta-contract);
+        self.convertToP6Term( $Maybe2valueWithDefault($etaReduce(self), self) );
     }
 
 }
