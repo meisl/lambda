@@ -2,6 +2,7 @@ use v6;
 
 use Lambda::Base;
 use Lambda::Boolean;
+use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
 use Lambda::FreeVars;
@@ -85,6 +86,71 @@ ENDOFLAMBDA
                 { $exists(&self, $Term2children($t)) }
             )
             # self.isEtaRedex || ?self.children.map(*.isEtaReducible).any;
+        }
+    }
+));
+
+# Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
+# is that we don't need to compare terms for equality then.
+constant $etaContract is export = $Y(lambdaFn(
+    'etaContract',
+q:to/ENDOFLAMBDA/,
+    λself.λt.
+        case t ; TODO: case -> cascaded if
+            (((ConstT val)    None)
+             ((VarT name)     None)
+             ((AppT func arg)
+                (_if (etaReducible? func)
+                     (λ_.Some (AppT (Some->value (self func)) arg))
+                     (_if (etaReducible? arg)
+                          (λ_.Some (AppT func (Some->value (self arg))))
+                          (K None)
+                     )
+                )
+             )
+             ((LamT var body)
+                (_if (etaRedex? t)
+                     (λ_.Some (AppT->func body))
+                     (_if (etaReducible? body)
+                          (λ_.Some (LamT var (Some->value (self body))))
+                          (K None)
+                     )
+                )
+             )
+            )
+            (error (~ "unknown TTerm" (Term->Str t)))
+ENDOFLAMBDA
+    -> &self {
+        -> TTerm $t {
+            if convertTBool2P6Bool($is-ConstT($t)) {
+                $None
+            } elsif convertTBool2P6Bool($is-VarT($t)) {
+                $None
+            } elsif convertTBool2P6Bool($is-AppT($t)) {
+                my $func = $AppT2func($t);
+                my $arg  = $AppT2arg($t);
+                $_if( $is-etaReducible($func),
+                    { $Some($AppT($Some2value(&self($func)), $arg)) },
+                    { $_if( $is-etaReducible($arg),
+                          { $Some($AppT($func, $Some2value(&self($arg)))) },
+                          { $None }
+                      )
+                    }
+                )
+            } elsif convertTBool2P6Bool($is-LamT($t)) {
+                my $var  = $LamT2var($t);
+                my $body = $LamT2body($t);
+                $_if( $is-etaRedex($t),
+                    { $Some($AppT2func($body)) },
+                    { $_if( $is-etaReducible($body),
+                          { $Some($LamT($var, $Some2value(&self($body)))) },
+                          { $None }
+                      )
+                    }
+                )
+            } else {
+                die "fell off type-dispatch with type " ~ $t.WHAT.perl
+            }
         }
     }
 ));

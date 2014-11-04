@@ -4,6 +4,7 @@ use Test;
 use Test::Util;
 
 use Lambda::Boolean;
+use Lambda::MaybeADT;
 use Lambda::TermADT;
 use Lambda::EtaReduction;
 
@@ -11,7 +12,7 @@ use Lambda::Conversion::Bool-conv;
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
-plan 107;
+plan 140;
 
 sub test(Term:D $t, Str:D $desc, &tests) {
     #subtest {
@@ -48,7 +49,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     my $y = $VarT('y');
     my $z = $VarT('z');
     my $c = $ConstT('c');
-    my $t;
 
     is_etaRedex(
         $x                                                          => $false,  # x
@@ -88,8 +88,7 @@ sub test(Term:D $t, Str:D $desc, &tests) {
                                 ?? "$termStr IS eta-reducible" 
                                 !! "$termStr is not eta-redubible";
             
-            cmp_ok($is-etaReducible($term), '===', $expected, $desc)
-                or die;
+            cmp_ok($is-etaReducible($term), '===', $expected, $desc);
             
             my $termP6 = convertToP6Term($term);
             cmp_ok($termP6.isEtaReducible, '===', $expectedP6, $desc);
@@ -100,7 +99,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     my $y = $VarT('y');
     my $z = $VarT('z');
     my $c = $ConstT('c');
-    my $t;
 
     is_etaReducible(
         $x                                                          => $false,  # x
@@ -113,16 +111,72 @@ sub test(Term:D $t, Str:D $desc, &tests) {
         $LamT($x, $AppT($x, $x))                                    => $false,  # (λx.x x)
         $LamT($x, $AppT($x, $c))                                    => $false,  # (λx.x "c")
         $LamT($x, $AppT($x, $y))                                    => $false,  # (λx.x y)
-        $LamT($x, $AppT($y, $x))                                    => $true,   # (λx.y x)
+        $LamT($x, $AppT($y, $x))                                    => $true,   # (λx.y x)              # a redex
         $LamT($x, $AppT($x, $LamT($y, $AppT($x, $y))))              => $true,   # (λx.x λy.x y)         # not a redex but reducible
         $AppT($LamT($y, $AppT($x, $y)), $y)                         => $true,   # ((λy.x y) y)          # not a redex but reducible
         $AppT($LamT($x, $AppT($y, $x)), $LamT($y, $AppT($x, $y)))   => $true,   # ((λx.y x) (λy.x y))   # not a redex but reducible
-        $LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x))              => $true,   # (λx.(λy.z y) x)
+        $LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x))              => $true,   # (λx.(λy.z y) x)       # a redex (with inner redex)
         $LamT($x, $AppT($LamT($y, $AppT($x, $y)), $x))              => $true,   # (λx.(λy.x y) x)       # not a redex but reducible
-        $LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x))              => $true,   # (λx.(λx.x y) x)
+        $LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x))              => $true,   # (λx.(λx.x y) x)       # a redex
     );
 }
 
+
+{ # function etaContract
+    is_properLambdaFn($etaContract);
+
+    is $etaContract.symbol, 'etaContract', '$etaContract.symbol';
+    is $etaContract.Str,    'etaContract', '$etaContract.Str';
+
+    my sub etaContractsTo(TTerm:D $term, $expected) {
+        my $termStr = $Term2source($term);
+        my $toItself = $expected === $None;
+        my $expStr  = $toItself
+            ?? "itself"
+            !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
+        my $desc = "$termStr eta-contracts to $expStr";
+
+        is($etaContract($term), $expected, $desc)
+            or die;
+        
+        my $termP6 = convertToP6Term($term);
+
+        my $expectedP6 = $toItself
+            ?? $termP6
+            !! convertToP6Term($Some2value($expected));
+
+        is($termP6.eta-contract, $expectedP6, $desc);
+    }
+
+    my $x = $VarT('x');
+    my $y = $VarT('y');
+    my $z = $VarT('z');
+    my $c = $ConstT('c');
+
+    etaContractsTo($x,                                                         $None);    # x
+    etaContractsTo($c,                                                         $None);    # "c"
+    etaContractsTo($AppT($x, $c),                                              $None);    # (x "c")
+    etaContractsTo($AppT($x, $x),                                              $None);    # (x x)
+    etaContractsTo($AppT($x, $y),                                              $None);    # (x y)
+    etaContractsTo($LamT($x, $c),                                              $None);    # (λx."c")
+    etaContractsTo($LamT($x, $x),                                              $None);    # (λx.x)
+    etaContractsTo($LamT($x, $AppT($x, $x)),                                   $None);    # (λx.x x)
+    etaContractsTo($LamT($x, $AppT($x, $c)),                                   $None);    # (λx.x "c")
+    etaContractsTo($LamT($x, $AppT($x, $y)),                                   $None);    # (λx.x y)
+
+    etaContractsTo($LamT($x, $AppT($y, $x)),                                   $Some($y)                       );    # (λx.y x)      # a redex
+    etaContractsTo($LamT($x, $AppT($x, $LamT($y, $AppT($x, $y)))),             $Some($LamT($x, $AppT($x, $x))) );   # (λx.x λy.x y)         # not a redex but reducible
+    etaContractsTo($AppT($LamT($y, $AppT($x, $y)), $y),                        $Some($AppT($x, $y))            );   # ((λy.x y) y)          # not a redex but reducible
+    
+    # can contract twice; DON'T prescribe the order!
+    #etaContractsTo($AppT($LamT($x, $AppT($y, $x)), $LamT($y, $AppT($x, $y))),   );   # ((λx.y x) (λy.x y))   # not a redex but reducible (twice)
+
+    # can contract twice; DON'T prescribe the order!
+    #etaContractsTo($LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x)),              );   # (λx.(λy.z y) x)       # a redex (with inner redex)
+
+    etaContractsTo($LamT($x, $AppT($LamT($y, $AppT($x, $y)), $x)),             $Some($LamT($x, $AppT($x, $x))) );   # (λx.(λy.x y) x)       # not a redex but reducible
+    etaContractsTo($LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x)),             $Some($LamT($x, $AppT($x, $y))) );   # (λx.(λx.x y) x)       # a redex
+}
 
 {
     my $x = VarT.new(:name<x>);
