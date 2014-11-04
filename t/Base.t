@@ -5,7 +5,7 @@ use Test::Util;
 use Lambda::Base;
 use Lambda::Boolean;    # TODO: move findFP (tests) out of Base.pm6, st. dependency on Boolean.pm6 is made clear
 
-plan 51;
+plan 52;
 
 { # lambdaFn
     my $omega ::= lambdaFn( 'ω', 'λx.x x', -> &x { &x(&x) } );
@@ -199,18 +199,22 @@ plan 51;
 { # findFP
    is_properLambdaFn($findFP);
 
-    my $predicate = -> $x, $y {
-        ($x === $y) ?? $true !! $false
-    };
+    my $predicate;
     my $function;
     my $actual;
+    my @seen;
+    my $values;
+
+    $predicate = -> $x, $y {
+        ($x === $y) ?? $true !! $false
+    };
 
     $function = $K(42);
     $actual = $findFP($predicate, $function, 23); # just *some* start value different from any in @values
-    is($actual, 42, "findFP finds fixed-point of K");
+    is($actual, 42, "findFP with === finds fixed-point of K");
 
-    my $values = @(1, 3, '3', 2, 5, 5, 7);
-    my @seen = @();
+    $values = @(1, 3, '3', 2, 5, 5, 7);
+    @seen = @();
     $function = -> $x {
         my $out = $values[@seen.elems];
         @seen.push($x);
@@ -219,7 +223,17 @@ plan 51;
     };
 
     $actual = $findFP($predicate, $function, 23); # just *some* start value different from any in @values
-    is($actual, 5, "findFP finds fixed-point in \"enumerate\"(1, 3, '3', 2, 5, 5, 7)");
+    is($actual, 5, "findFP with === finds fixed-point in \"enumerate\"(1, 3, '3', 2, 5, 5, 7)");
+
+
+    $predicate = -> $x, $y {
+        ($y === 7) ?? $true !! $false
+    };
+
+    @seen = @();
+    $actual = $findFP($predicate, $function, 23); # just *some* start value different from any in @values
+    is($actual, 5, "findFP with (y === 7) on \"enumerate\"(1, 3, '3', 2, 5, 5, 7) returns 1st arg to predicate rather than 2nd")
+        or diag("seen: {@seen.perl}") and die;
 }
 
 

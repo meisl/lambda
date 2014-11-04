@@ -12,7 +12,7 @@ use Lambda::Conversion::Bool-conv;
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
-plan 62;
+plan 140;
 
 sub test(Term:D $t, Str:D $desc, &tests) {
     #subtest {
@@ -37,12 +37,11 @@ sub test(Term:D $t, Str:D $desc, &tests) {
             my $desc       = $expectedP6
                                 ?? "$termStr IS an eta redex" 
                                 !! "$termStr is not an eta redex";
-            subtest({
-                cmp_ok($is-etaRedex($term), '===', $expected, $desc);
-                
-                my $termP6 = convertToP6Term($term);
-                cmp_ok($termP6.isEtaRedex, '===', $expectedP6, $desc);
-            }, $desc);
+            
+            cmp_ok($is-etaRedex($term), '===', $expected, $desc);
+            
+            my $termP6 = convertToP6Term($term);
+            cmp_ok($termP6.isEtaRedex, '===', $expectedP6, $desc);
         }
     }
 
@@ -88,12 +87,11 @@ sub test(Term:D $t, Str:D $desc, &tests) {
             my $desc       = $expectedP6
                                 ?? "$termStr IS eta-reducible" 
                                 !! "$termStr is not eta-redubible";
-            subtest({
-                cmp_ok($is-etaReducible($term), '===', $expected, $desc);
-                
-                my $termP6 = convertToP6Term($term);
-                cmp_ok($termP6.isEtaReducible, '===', $expectedP6, $desc);
-            }, $desc);
+            
+            cmp_ok($is-etaReducible($term), '===', $expected, $desc);
+            
+            my $termP6 = convertToP6Term($term);
+            cmp_ok($termP6.isEtaReducible, '===', $expectedP6, $desc);
         }
     }
 
@@ -141,19 +139,17 @@ sub test(Term:D $t, Str:D $desc, &tests) {
                 !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "$termStr eta-contracts to $expStr";
 
-            subtest({
-                my $actual = $etaContract($term);
-                is($actual, $expected, $desc)
-                    or diag($actual.perl) and die;
-                
-                my $termP6 = convertToP6Term($term);
+            my $actual = $etaContract($term);
+            is($actual, $expected, $desc)
+                or diag($actual.perl) and die;
+            
+            my $termP6 = convertToP6Term($term);
 
-                my $expectedP6 = $toItself
-                    ?? $termP6
-                    !! convertToP6Term($Some2value($expected));
+            my $expectedP6 = $toItself
+                ?? $termP6
+                !! convertToP6Term($Some2value($expected));
 
-                is($termP6.eta-contract, $expectedP6, $desc);
-            }, "$termStr should eta-contract to $expStr");
+            is($termP6.eta-contract, $expectedP6, $desc);
         }
     }
 
@@ -182,58 +178,127 @@ sub test(Term:D $t, Str:D $desc, &tests) {
         $LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x))  => $Some($LamT($x, $AppT($x, $y))),    # (λx.(λx.x y) x)       # a redex
     );
 
+    # can contract twice; DON'T prescribe the order!
+    #etaContractsTo($AppT($LamT($x, $AppT($y, $x)), $LamT($y, $AppT($x, $y))),   );   # ((λx.y x) (λy.x y))   # not a redex but reducible (twice)
 
-    my ($t, $ecd1, $ecd2, $expectedErd);
-
-    # ((λx.y x) (λy.x y)) can contract twice; NO prescribed order!
-    $t = $AppT($LamT($x, $AppT($y, $x)), $LamT($y, $AppT($x, $y)));  # not a redex but reducible (twice)
-    subtest({
-        $ecd1 = $etaContract($t);
-        is($is-Some($ecd1), $true, "{$Term2source($t)} should eta-contract (at least) once") or die;
-        $ecd1 = $Some2value($ecd1);
-        # Note: we don't restrict the order in which parts are being contracted
-        is($is-etaReducible($ecd1), $true, "(Some->value (etaContract {$Term2source($t)})) should still be eta-reducible") or die;
-        $ecd2 = $etaContract($ecd1);
-        is($is-Some($ecd2), $true, "{$Term2source($ecd1)} should eta-contract once more") or die;
-        $ecd2 = $Some2value($ecd2);
-        is($is-etaReducible($ecd2), $false,
-            "(Some->value (etaContract {$Term2source($ecd1)})) should not be eta-reducible any further") or die;
-        $expectedErd = $AppT($y, $x);   #  ((λx.y x) (λy.x y)) =_η (y x)
-        is($ecd2, $expectedErd, 
-            "(Some->value (etaContract {$Term2source($ecd1)})) should be {$Term2source($expectedErd)}") or die;
-    }, "{$Term2source($t)} can contract twice; NO prescribed order!");
-
-    # (λx.(λy.z y) x) can contract twice; prescribe order to outer-then-inner!
-    $t = $LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x));  # a redex (with inner redex)
-    subtest({
-        $ecd1 = $etaContract($t);
-        is($is-Some($ecd1), $true, "{$Term2source($t)} should eta-contract (at least) once") or die;
-        $ecd1 = $Some2value($ecd1);
-        is($is-etaReducible($ecd1), $true, "(Some->value (etaContract {$Term2source($t)})) should still be eta-reducible") or die;
-        
-        # Note: we DO restrict the order here: from outer to inner:
-        my $expectedEcd1 = $LamT($y, $AppT($z, $y));    # (λx.(λy.z y) x) |>_η (λy.z y)
-        is($ecd1, $expectedEcd1, "{$Term2source($t)} should eta-contract in one step to {$Term2source($expectedEcd1)}") or die;
-        
-        $ecd2 = $etaContract($ecd1);
-        is($is-Some($ecd2), $true, "{$Term2source($ecd1)} should eta-contract once more") or die;
-        $ecd2 = $Some2value($ecd2);
-        is($is-etaReducible($ecd2), $false,
-            "(Some->value (etaContract {$Term2source($ecd1)})) should not be eta-reducible any further") or die;
-        $expectedErd = $z;    # (λy.z y) |>_η z
-        is($ecd2, $expectedErd, 
-            "{$Term2source($ecd1)} should eta-contract to {$Term2source($expectedErd)}") or die;
-    }, "{$Term2source($t)} can contract twice; prescribe order to outer-then-inner!");
+    # can contract twice; DON'T prescribe the order!
+    #etaContractsTo($LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x)),              );   # (λx.(λy.z y) x)       # a redex (with inner redex)
 }
 
 {
+    my $x = VarT.new(:name<x>);
+    my $y = VarT.new(:name<y>);
+    my $c = ConstT.new(:value('c'));
+    my ($t, $desc);
 
+    test $x, "a VarT", {
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+        my $erd = $^t.eta-reduce;
+        cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+    };
+
+    test $c, "a ConstT", {
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+        my $erd = $^t.eta-reduce;
+        cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+    };
+
+
+    { # (λx.c)
+        test LamT.new(:var($x), :body($c)), "a LamT with body a ConstT", {
+            cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+            my $erd = $^t.eta-reduce;
+            cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+        };
+    }
+
+    test parseLambda('(λx.x)'), "a LamT with body a VarT", {
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+        my $erd = $^t.eta-reduce;
+        cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+    };
+    
+    { # (λx.x c)
+        test LamT.new(:var($x), :body(AppT.new(:func($x), :arg($c)))), 
+            "a LamT with body an AppT where arg is a ConstT", {
+            cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+            my $erd = $^t.eta-reduce;
+            cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+        };
+    }
+
+    test parseLambda('(λx.x y)'), "a LamT with body an AppT where arg is a VarT other than the lambda's", {
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+        my $erd = $^t.eta-reduce;
+        cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+    };
+
+    test parseLambda('(λx.y x)'), "a LamT with body an AppT where arg is a VarT equal to the lambda's", {
+        my $ecd = $^t.eta-contract;
+        cmp_ok($ecd, 'eq', parseLambda('y'), "$^desc eta-contracts to the AppT's func");
+        my $erd = $^t.eta-reduce;
+        cmp_ok($erd, '===', parseLambda('y'), "$^desc eta-reduces to the AppT's func");
+    };
+
+    test parseLambda('(λx.x x)'), "a LamT with body an AppT where arg is a VarT equal to the lambda's but free the AppT's func", {
+        my $ecd = $^t.eta-contract;
+        cmp_ok($ecd, '===', $^t, "$^desc eta-contracts to itself");
+        my $erd = $^t.eta-reduce;
+        cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+    };
+
+    test parseLambda('(λx.x λy.x y)'), "a LamT with body an AppT where arg is an eta-redex", {
+        my $ecd = $^t.eta-contract;
+        cmp_ok($ecd, 'eq', parseLambda('λx.x x'), "$^desc eta-contracts the AppT's arg");
+        my $erd = $^t.eta-reduce;
+        cmp_ok($erd, 'eq', parseLambda('λx.x x'), "$^desc eta-reduces to the AppT's arg");
+    };
+
+    { # (x c)
+        test AppT.new(:func($x), :arg($c)), "an AppT (arg:ConstT)", {
+            cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+            my $erd = $^t.eta-reduce;
+            cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+        };
+    }
+
+    test parseLambda('(x y)'), "an AppT (func:VarT, arg:VarT)", {
+        cmp_ok($^t.eta-contract, '===', $^t, "$^desc eta-contracts to itself");
+        my $erd = $^t.eta-reduce;
+        cmp_ok($erd, '===', $^t, "$^desc eta-reduces to itself");
+    };
+
+    test parseLambda('((λy.x y) y)'), "an AppT with an eta-redex as func", {
+        my $ecd = $^t.eta-contract;
+        cmp_ok($ecd, 'eq', parseLambda('x y'), "$^desc eta-contracts the func");
+        my $erd = $^t.eta-reduce;
+        cmp_ok($erd, 'eq', parseLambda('x y'), "$^desc eta-reduces to the func's eta-reduction");
+    };
+    
+    test parseLambda('y (λy.x y)'), "an AppT with an eta-redex as arg", {
+        my $ecd = $^t.eta-contract;
+        cmp_ok($ecd, 'eq', parseLambda('y x'), "$^desc eta-contracts the arg");
+        my $erd = $^t.eta-reduce;
+        cmp_ok($erd, 'eq', parseLambda('y x'), "$^desc eta-reduces to the arg's eta-reduction");
+    };
+    
     test parseLambda('(λx.y x) (λy.x y)'), "an AppT with both, func and arg eta-redexes", {
+        my $ecd1 = $^t.eta-contract;
+        is($ecd1.isEtaReducible,   True,  "$^desc eta-contracts to a still eta-reducible term");
+        # Note: we don't restrict the order in which parts are being contracted
+        my $ecd2 = $ecd1.eta-contract;
+        cmp_ok($ecd2, 'eq', parseLambda('y x'), "$^desc eta-contracts in two steps the func and the arg");
         my $erd = $^t.eta-reduce;
         cmp_ok($erd, 'eq', parseLambda('y x'), "$^desc eta-reduces to the func's and arg's eta-reduction, resp.");
     };
     
     test parseLambda('(λx.(λy.z y) x) '), "a LamT with body an AppT where arg is the lambda's var and func an eta-redex", {
+        my $ecd1 = $^t.eta-contract;
+        is($ecd1.isEtaReducible,   True,  "$^desc eta-contracts to a still eta-reducible term");
+        # Note: here we do restrict the order to outer-to-inner
+        cmp_ok($ecd1, 'eq', parseLambda('λy.z y'), "$^desc eta-contracts to the inner lambda");
+        my $ecd2 = $ecd1.eta-contract;
+        cmp_ok($ecd2, 'eq', parseLambda('z'), "$^desc eta-contracts in two steps to the inner lambda's func");
         my $erd = $^t.eta-reduce;
         cmp_ok($erd, 'eq', parseLambda('z'), "$^desc eta-reduces to the inner lambda's func");
     };
