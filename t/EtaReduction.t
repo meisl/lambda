@@ -9,17 +9,9 @@ use Lambda::TermADT;
 use Lambda::EtaReduction;
 
 use Lambda::Conversion::Bool-conv;
-use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
-plan 82;
-
-sub test(Term:D $t, Str:D $desc, &tests) {
-    #subtest {
-     #   plan *;
-        &tests($desc, $t)
-    #}, $desc;
-}
+plan 80;
 
 
 { # predicate etaRedex?
@@ -224,20 +216,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
         is($ecd2, $expectedErd, 
             "{$Term2source($ecd1)} should eta-contract to {$Term2source($expectedErd)}") or die;
     }, "{$Term2source($t)} can contract twice; prescribe order to outer-then-inner!");
-}
-
-{
-
-    test parseLambda('(λx.y x) (λy.x y)'), "an AppT with both, func and arg eta-redexes", {
-        my $erd = $^t.eta-reduce;
-        cmp_ok($erd, 'eq', parseLambda('y x'), "$^desc eta-reduces to the func's and arg's eta-reduction, resp.");
-    };
-    
-    test parseLambda('(λx.(λy.z y) x) '), "a LamT with body an AppT where arg is the lambda's var and func an eta-redex", {
-        my $erd = $^t.eta-reduce;
-        cmp_ok($erd, 'eq', parseLambda('z'), "$^desc eta-reduces to the inner lambda's func");
-    };
-
 }
 
 
