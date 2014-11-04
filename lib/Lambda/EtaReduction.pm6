@@ -90,6 +90,9 @@ ENDOFLAMBDA
     }
 ));
 
+
+# etaContract: one-step η-simplification, either of η-redex itself or any (one) child
+
 # Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
 # is that we don't need to compare terms for equality then.
 constant $etaContract is export = $Y(lambdaFn(

@@ -10,6 +10,9 @@ use Lambda::PairADT;
 use Lambda::Conversion::Bool-conv;
 
 
+
+# Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
+# is that we don't need to compare terms for equality then.
 constant $subst-seq is export = $Y(lambdaFn(
     'subst-seq',
 q:to/ENDOFLAMBDA/,
@@ -120,6 +123,10 @@ ENDOFLAMBDA
     }
 ));
 
+
+
+# Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
+# is that we don't need to compare terms for equality then.
 constant $subst is export = lambdaFn(
     'subst', 'λt.λwhat.λfor.subst-seq t (cons (Pair for what) nil)',
     -> TTerm $t, TTerm $what, TTerm $for {    # TODO: add types to signature
