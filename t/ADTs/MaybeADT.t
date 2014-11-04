@@ -2,11 +2,14 @@ use v6;
 
 use Test;
 use Test::Util;
+
+use Lambda::Base;
 use Lambda::Boolean;
 
 use Lambda::MaybeADT;
 
-plan 56;
+
+plan 60;
 
 
 # ->Str -----------------------------------------------------------------------
@@ -71,12 +74,14 @@ plan 56;
     is $Maybe2Str($x), '(Some 42)',
         "($Maybe2Str (Some 42))";
     does_ok $x, TMaybe, "$x";
+    doesnt_ok $x, Definition, "$x";
     is_validLambda $x;
 
     $x = $Some("foo");
     is $Maybe2Str($x), '(Some "foo")',
         "($Maybe2Str (Some \"foo\"))";
     does_ok $x, TMaybe, "$x";
+    doesnt_ok $x, Definition, "$x";
     is_validLambda $x;
 
     # can "stack 'em":
@@ -85,12 +90,14 @@ plan 56;
     is $Maybe2Str($x), '(Some None)',
         "($Maybe2Str (Some None))";
     does_ok $x, TMaybe, "$x";
+    doesnt_ok $x, Definition, "$x";
     is_validLambda $x;
 
     $x = $Some($Some(23));
     is $Maybe2Str($x), '(Some (Some 23))',
         "($Maybe2Str (Some (Some 23)))";
     does_ok $x, TMaybe, "$x";
+    doesnt_ok $x, Definition, "$x";
     is_validLambda $x;
 }
 

@@ -30,14 +30,14 @@ sub convertToP6Term(TTerm:D $t) is export {
     return $t
         if $t ~~ Term;
     if convertTBool2P6Bool($is-VarT($t)) {
-        return $t does VarT;   # TODO: what about VarT.get in this case?
+        return $t but VarT;   # TODO: what about VarT.get in this case?
     } elsif convertTBool2P6Bool($is-ConstT($t)) {
-        return $t does ConstT;
+        return $t but ConstT;
     } elsif convertTBool2P6Bool($is-AppT($t)) {
         my $func = $AppT2func($t);
         my $arg  = $AppT2arg($t);
         if ($func ~~ Term) && ($arg ~~ Term) {
-            return $t does AppT;
+            return $t but AppT;
         }
         my $newFunc = convertToP6Term($func);
         my $newArg  = convertToP6Term($arg);
@@ -46,7 +46,7 @@ sub convertToP6Term(TTerm:D $t) is export {
         my $var  = $LamT2var($t);
         my $body = $LamT2body($t);
         if ($var ~~ Term) && ($body ~~ Term) {
-            return $t does LamT;
+            return $t but LamT;
         }
         my $newVar  = convertToP6Term($var);
         my $newBody = convertToP6Term($body);

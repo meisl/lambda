@@ -128,24 +128,29 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     is $etaContract.symbol, 'etaContract', '$etaContract.symbol';
     is $etaContract.Str,    'etaContract', '$etaContract.Str';
 
-    my sub etaContractsTo(TTerm:D $term, $expected) {
-        my $termStr = $Term2source($term);
-        my $toItself = $expected === $None;
-        my $expStr  = $toItself
-            ?? "itself"
-            !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
-        my $desc = "$termStr eta-contracts to $expStr";
+    my sub etaContractsTo(*@tests) {
+        for @tests -> $test {
+            my $term       = $test.key;
+            my $termStr    = $Term2source($term);
+            my $expected   = $test.value;
+            my $toItself = $expected === $None;
+            my $expStr  = $toItself
+                ?? "itself"
+                !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
+            my $desc = "$termStr eta-contracts to $expStr";
 
-        is($etaContract($term), $expected, $desc)
-            or die;
-        
-        my $termP6 = convertToP6Term($term);
+            my $actual = $etaContract($term);
+            is($actual, $expected, $desc)
+                or diag($actual.perl) and die;
+            
+            my $termP6 = convertToP6Term($term);
 
-        my $expectedP6 = $toItself
-            ?? $termP6
-            !! convertToP6Term($Some2value($expected));
+            my $expectedP6 = $toItself
+                ?? $termP6
+                !! convertToP6Term($Some2value($expected));
 
-        is($termP6.eta-contract, $expectedP6, $desc);
+            is($termP6.eta-contract, $expectedP6, $desc);
+        }
     }
 
     my $x = $VarT('x');
@@ -153,29 +158,31 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     my $z = $VarT('z');
     my $c = $ConstT('c');
 
-    etaContractsTo($x,                                                         $None);    # x
-    etaContractsTo($c,                                                         $None);    # "c"
-    etaContractsTo($AppT($x, $c),                                              $None);    # (x "c")
-    etaContractsTo($AppT($x, $x),                                              $None);    # (x x)
-    etaContractsTo($AppT($x, $y),                                              $None);    # (x y)
-    etaContractsTo($LamT($x, $c),                                              $None);    # (λx."c")
-    etaContractsTo($LamT($x, $x),                                              $None);    # (λx.x)
-    etaContractsTo($LamT($x, $AppT($x, $x)),                                   $None);    # (λx.x x)
-    etaContractsTo($LamT($x, $AppT($x, $c)),                                   $None);    # (λx.x "c")
-    etaContractsTo($LamT($x, $AppT($x, $y)),                                   $None);    # (λx.x y)
+    etaContractsTo(
+        $x                                              => $None,    # x
+        $c                                              => $None,    # "c"
+        $AppT($x, $c)                                   => $None,    # (x "c")
+        $AppT($x, $x)                                   => $None,    # (x x)
+        $AppT($x, $y)                                   => $None,    # (x y)
+        $LamT($x, $c)                                   => $None,    # (λx."c")
+        $LamT($x, $x)                                   => $None,    # (λx.x)
+        $LamT($x, $AppT($x, $x))                        => $None,    # (λx.x x)
+        $LamT($x, $AppT($x, $c))                        => $None,    # (λx.x "c")
+        $LamT($x, $AppT($x, $y))                        => $None,    # (λx.x y)
 
-    etaContractsTo($LamT($x, $AppT($y, $x)),                                   $Some($y)                       );    # (λx.y x)      # a redex
-    etaContractsTo($LamT($x, $AppT($x, $LamT($y, $AppT($x, $y)))),             $Some($LamT($x, $AppT($x, $x))) );   # (λx.x λy.x y)         # not a redex but reducible
-    etaContractsTo($AppT($LamT($y, $AppT($x, $y)), $y),                        $Some($AppT($x, $y))            );   # ((λy.x y) y)          # not a redex but reducible
-    
+        $LamT($x, $AppT($y, $x))                        => $Some($y),                          # (λx.y x)      # a redex
+        $LamT($x, $AppT($x, $LamT($y, $AppT($x, $y))))  => $Some($LamT($x, $AppT($x, $x))),    # (λx.x λy.x y)         # not a redex but reducible
+        $AppT($LamT($y, $AppT($x, $y)), $y)             => $Some($AppT($x, $y)),               # ((λy.x y) y)          # not a redex but reducible
+
+        $LamT($x, $AppT($LamT($y, $AppT($x, $y)), $x))  => $Some($LamT($x, $AppT($x, $x))),    # (λx.(λy.x y) x)       # not a redex but reducible
+        $LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x))  => $Some($LamT($x, $AppT($x, $y))),    # (λx.(λx.x y) x)       # a redex
+    );
+
     # can contract twice; DON'T prescribe the order!
     #etaContractsTo($AppT($LamT($x, $AppT($y, $x)), $LamT($y, $AppT($x, $y))),   );   # ((λx.y x) (λy.x y))   # not a redex but reducible (twice)
 
     # can contract twice; DON'T prescribe the order!
     #etaContractsTo($LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x)),              );   # (λx.(λy.z y) x)       # a redex (with inner redex)
-
-    etaContractsTo($LamT($x, $AppT($LamT($y, $AppT($x, $y)), $x)),             $Some($LamT($x, $AppT($x, $x))) );   # (λx.(λy.x y) x)       # not a redex but reducible
-    etaContractsTo($LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x)),             $Some($LamT($x, $AppT($x, $y))) );   # (λx.(λx.x y) x)       # a redex
 }
 
 {

@@ -22,7 +22,7 @@ constant $Some is export = lambdaFn(
     -> $v {
         my $vStr = $v.?symbol // $v.?lambda // $v.perl;
         lambdaFn(
-            "(Some $vStr)", "λsel.sel #true $vStr",
+            Str, "Some $vStr",
             -> &sel { &sel($true, $v) }
         ) does TMaybe
     }
@@ -62,10 +62,9 @@ constant $Maybe2Str is export = lambdaFn(
     -> TMaybe:D $m {
         $_if( $is-None($m),
             { 'None' },
-            {
-                my $v = $Some2value($m);
-                my $vStr = $v.?symbol // $v.?lambda // $v.perl;
-                "(Some $vStr)";
+            { my $v = $Some2value($m);
+              my $vStr = $v.?symbol // $v.?lambda // $v.perl;
+              "(Some $vStr)";
             }
         )
     }
