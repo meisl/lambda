@@ -46,11 +46,11 @@ q:to/ENDOFLAMBDA/,
                             (ss´ (filter    ; kick out substs for our binder
                                    (λv.not (eq? (VarT->name v) nm))
                                    ss))
-                            (b´  (self (VarT->body t) ss´))
+                            (b´  (self (LamT->body t) ss´))
                            )
-                        (if (Some? b´)
-                            (Some (LamT var (Some->value b´)))
+                        (if (None? b´)
                             None
+                            (Some (LamT var (Some->value b´)))
                         )
                       )
                       # TODO: ConstT -> None
@@ -97,16 +97,16 @@ ENDOFLAMBDA
                                   },
                                   { $_if( $is-LamT($t),
                                         { my $body = &self(
-                                              $t.body,
+                                              $LamT2body($t),
                                               $filter( # kick out substs for our binder since there
                                                        # won't be free occurrances of it in our body
                                                 -> $x { convertP6Bool2TBool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
                                                 $ss
                                               )
                                           );
-                                          $_if( $is-Some($body),
-                                              { $Some($LamT($LamT2var($t), $Some2value($body))) },
-                                              { $None }
+                                          $_if( $is-None($body),
+                                              { $None },
+                                              { $Some($LamT($LamT2var($t), $Some2value($body))) }
                                           )
                                         },
                                         { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
