@@ -43,3 +43,23 @@ ENDOFLAMBDA
         }
     }
 );
+
+
+# either t is a β-redex or any child is betaReducible?
+constant $is-betaReducible is export = $Y(lambdaFn(
+    'betaReducible?',
+q:to/ENDOFLAMBDA/,
+    λself.λt._if (betaRedex? t)
+                 (K #true)
+                 (λ_.exists self (Term->children t))
+ENDOFLAMBDA
+    -> &self {
+        -> TTerm $t {
+            $_if( $is-betaRedex($t),
+                { $true },
+                { $exists(&self, $Term2children($t)) }
+            )
+            # self.isBetaRedex || ?self.children.map(*.isBetaReducible).any;
+        }
+    }
+));

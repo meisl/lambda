@@ -14,10 +14,8 @@ role BetaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
         convertTBool2P6Bool($is-betaRedex(self));
     }
 
-    # either self.isBetaRedex or any child isBetaReducible
     method isBetaReducible {
-        self.isBetaRedex
-        || ?self.children.map(*.isBetaReducible).any;
+        convertTBool2P6Bool($is-betaReducible(self));
     }
 
     # one-step β-simplification (either of self or any (one) child)
