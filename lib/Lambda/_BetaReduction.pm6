@@ -1,30 +1,17 @@
 use v6;
 
+use Lambda::Boolean;
+use Lambda::BetaReduction;
+
+use Lambda::Conversion::Bool-conv;
+
 use Lambda::MethodFixedPoint;
 
 
-role BetaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT]
-    #does MethodFixedPoint
-{
+role BetaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
 
-     # β-redex? - ie of form ((λx.B) z)
     method isBetaRedex {
-        given self {
-            when ConstT { False }
-            when VarT   { False }
-            when LamT   { False }
-            when AppT {
-                # (P Q) is a β-redex if P is of form (λx.B).
-                # If so, it β-contracts to [P/x] B, ie P substituted for x
-                # in the λ's body but beware: any free var in P
-                # must NOT be accidentally captured by a binding in B.
-                # If that would be the case, we need to α-convert before.
-                (self.func ~~ LamT)
-            }
-            default {
-                die "fell off type-dispatch with type " ~ $_.WHAT.perl;
-            }
-        }
+        convertTBool2P6Bool($is-betaRedex(self));
     }
 
     # either self.isBetaRedex or any child isBetaReducible

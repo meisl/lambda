@@ -1,10 +1,19 @@
 use v6;
 
 use Test;
+use Test::Util;
+
+use Lambda::Boolean;
+use Lambda::MaybeADT;
+use Lambda::TermADT;
+use Lambda::BetaReduction;
+
+use Lambda::Conversion::Bool-conv;
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
-plan 64;
+
+plan 71;
 
 sub test(Term:D $t, Str:D $desc, &tests) {
     #subtest {
@@ -13,14 +22,67 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     #}, $desc;
 }
 
+
+my $x = VarT.new(:name('x'));
+my $y = VarT.new(:name('y'));
+my $z = VarT.new(:name('z'));
+my $c = ConstT.new(:value('c'));
+
+# [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
+my $omegaX = convertToP6Term( $LamT($x, $AppT($x, $x)) );  # (λx.x x)
+my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );  # ((λx.x x) (λx.x x))
+
+{ # predicate betaRedex?
+    is_properLambdaFn($is-betaRedex);
+
+    is $is-betaRedex.symbol, 'betaRedex?', '$is-betaRedex.symbol';
+    is $is-betaRedex.Str,    'betaRedex?', '$is-betaRedex.Str';
+
+    my sub is_betaRedex(*@tests) {
+        for @tests -> $test {
+            my $term       = $test.key;
+            my $termStr    = $Term2source($term);
+            my $expected   = $test.value;
+            my $expectedP6 = convertTBool2P6Bool($expected);
+            my $desc       = $expectedP6
+                                ?? "$termStr IS a beta redex" 
+                                !! "$termStr is not a beta redex";
+            subtest({
+                cmp_ok($is-betaRedex($term), '===', $expected, $desc);
+                
+                my $termP6 = convertToP6Term($term);
+                cmp_ok($termP6.isBetaRedex, '===', $expectedP6, $desc);
+            }, $desc);
+        }
+    }
+
+    is_betaRedex(
+        $x                                                          => $false,  # x
+        $c                                                          => $false,  # "c"
+        $LamT($x, $c)                                               => $false,  # λx."c"
+        $LamT($x, $x)                                               => $false,  # λx.x
+        $LamT($x, $AppT($x, $c))                                    => $false,  # λx.x "c"
+        $LamT($x, $AppT($x, $y))                                    => $false,  # λx.x y
+        $LamT($x, $AppT($y, $x))                                    => $false,  # λx.y x
+        $LamT($x, $AppT($x, $x))                                    => $false,  # λx.x x
+        $LamT($x, $AppT($x, $AppT($LamT($y, $LamT($z, $AppT($y, $x))), $LamT($y, $AppT($x, $y)))))  => $false,  # λx.x ((λy.λz.y x) (λy.x y)) # not a redex but reducible
+        $AppT($x, $c)                                               => $false,  # (x c)
+        $AppT($x, $x)                                               => $false,  # (x x)
+        $AppT($x, $y)                                               => $false,  # (x y)
+        $AppT($AppT($LamT($y, $AppT($x, $y)), $y), $z)              => $false,  # (((λy.x y) y) z)  # not a redex but reducible
+        $AppT($y, $AppT($LamT($y, $AppT($x, $y)), $z))              => $false,  # (y ((λy.x y) z))  # not a redex but reducible
+        $AppT($LamT($y, $AppT($x, $y)), $z)                         => $true,   # ((λy.x y) z)      # a redex
+        $AppT($AppT($LamT($x, $y), $x), $AppT($LamT($y, $x), $y))   => $false,  # (((λx.y) x) ((λy.x) y))   # not a redex but reducible
+        $LamT($x, $AppT($AppT($LamT($y, $AppT($z, $y)), $x), $x))   => $false,  # (λx.(λy.z y) x x)         # not a redex but reducible
+        $omegaX                                                     => $false,  # (λx.x x)
+        $OmegaXX                                                    => $true,   # ((λx.x x) (λx.x x))
+    );
+}
+
 {
-    my $x = parseLambda('x');
-    my $y = parseLambda('y');
-    my $c = ConstT.new(:value('c'));
     my ($t, $desc);
 
     test $x, "a VarT", {
-        is($^t.isBetaRedex,       False, "$^desc is not a beta redex");
         is($^t.isBetaReducible,   False, "$^desc is not beta-reducible");
         cmp_ok($^t.beta-contract, '===', $^t, "$^desc beta-contracts to itself");
         my $erd = $^t.beta-reduce;
@@ -29,7 +91,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
 
      { # c
         test $c, "a ConstT", {
-            is($^t.isBetaRedex,       False, "$^desc is not a beta redex");
             is($^t.isBetaReducible,   False, "$^desc is not beta-reducible");
             cmp_ok($^t.beta-contract, '===', $^t, "$^desc beta-contracts to itself");
             my $erd = $^t.beta-reduce;
@@ -39,7 +100,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
 
      { # (λx.c)
         test LamT.new(:var($x), :body($c)), "a LamT with body a ConstT", {
-            is($^t.isBetaRedex,      False, "$^desc is not a beta redex");
             is($^t.isBetaReducible,  False, "$^desc is not beta-reducible");
             cmp_ok($^t.beta-contract, '===', $^t, "$^desc beta-contracts to itself");
             my $erd = $^t.beta-reduce;
@@ -48,7 +108,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     }
 
     test parseLambda('(λx.x)'), "a LamT with body a VarT", {
-        is($^t.isBetaRedex,      False, "$^desc is not a beta redex");
         is($^t.isBetaReducible,  False, "$^desc is not beta-reducible");
         cmp_ok($^t.beta-contract, '===', $^t, "$^desc beta-contracts to itself");
         my $erd = $^t.beta-reduce;
@@ -58,7 +117,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     { # (λx.x c)
         test LamT.new(:var($x), :body(AppT.new(:func($x), :arg($c)))), 
             "a LamT with body an AppT where arg is a ConstT", {
-            is($^t.isBetaRedex,      False, "$^desc is not a beta redex");
             is($^t.isBetaReducible,  False, "$^desc is not beta-reducible");
             cmp_ok($^t.beta-contract, '===', $^t, "$^desc beta-contracts to itself");
             my $erd = $^t.beta-reduce;
@@ -67,7 +125,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     }
 
     test parseLambda('(λx.x y)'), "a LamT with body an AppT where arg is a VarT other than the lambda's", {
-        is($^t.isBetaRedex,      False, "$^desc is not a beta redex");
         is($^t.isBetaReducible,  False, "$^desc is not beta-reducible");
         cmp_ok($^t.beta-contract, '===', $^t, "$^desc beta-contracts to itself");
         my $erd = $^t.beta-reduce;
@@ -75,14 +132,12 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     };
 
     test parseLambda('(λx.y x)'), "a LamT with body an AppT where arg is a VarT equal to the lambda's", {
-        is($^t.isBetaRedex,      False, "$^desc is not a beta redex");
         is($^t.isBetaReducible,  False, "$^desc is not beta-reducible");
         my $ecd = $^t.beta-contract;
         cmp_ok($ecd, '===', $^t, "$^desc beta-contracts to itself");
     };
 
     test parseLambda('(λx.x x)'), "a LamT with body an AppT where arg is a VarT equal to the lambda's but free the AppT's func", {
-        is($^t.isBetaRedex,      False,  "$^desc is NOT a beta redex");
         is($^t.isBetaReducible,  False,  "$^desc is NOT beta-reducible");
         my $ecd = $^t.beta-contract;
         cmp_ok($ecd, '===', $^t, "$^desc beta-contracts to itself");
@@ -91,7 +146,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     };
 
     test parseLambda('(λx.x ((λy.λz.y x) (λy.x y)))'), "a LamT with body an AppT where func is a VarT and arg is a beta-redex", {
-        is($^t.isBetaRedex,      False, "$^desc is not itself a beta redex");
         is($^t.isBetaReducible,  True,  "$^desc is itself beta-reducible");
         my $ecd = $^t.beta-contract;
         cmp_ok($ecd, 'eq', parseLambda('λx.x (λz.(λy.x y) x)'), "$^desc beta-contracts the AppT's arg");
@@ -101,7 +155,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
 
     { # (x c)
         test AppT.new(:func($x), :arg($c)), "an AppT (arg:ConstT)", {
-            is($^t.isBetaRedex,       False, "$^desc is not a beta redex");
             is($^t.isBetaReducible,   False, "$^desc is not beta-reducible");
             cmp_ok($^t.beta-contract, '===', $^t, "$^desc beta-contracts to itself");
             my $erd = $^t.beta-reduce;
@@ -111,7 +164,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
 
     # (x y) [40...]
     test parseLambda('(x y)'), "an AppT (func:VarT, arg:VarT)", {
-        is($^t.isBetaRedex,       False, "$^desc is not a beta redex");
         is($^t.isBetaReducible,   False, "$^desc is not beta-reducible");
         cmp_ok($^t.beta-contract, '===', $^t, "$^desc beta-contracts to itself");
         my $erd = $^t.beta-reduce;
@@ -120,7 +172,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
 
     # ((λy.x y) y) z [44...]
     test parseLambda('((λy.x y) y) z'), "an AppT with a beta-redex as func", {
-        is($^t.isBetaRedex,       False, "$^desc is not itself a beta redex");
         is($^t.isBetaReducible,   True,  "$^desc IS beta-reducible");
         my $ecd = $^t.beta-contract;
         cmp_ok($ecd, 'eq', parseLambda('(x y) z'), "$^desc beta-contracts the func");
@@ -130,7 +181,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     
     # y ((λy.x y) z) [48...]
     test parseLambda('y ((λy.x y) z)'), "an AppT with a beta-redex as arg", {
-        is($^t.isBetaRedex,       False, "$^desc is not necessarily itself a beta redex");
         is($^t.isBetaReducible,   True,  "$^desc IS beta-reducible");
         my $ecd = $^t.beta-contract;
         cmp_ok($ecd, 'eq', parseLambda('y (x z)'), "$^desc beta-contracts the arg");
@@ -140,7 +190,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     
     # ((λx.y) x) ((λy.x) y) [52...]
     test parseLambda('((λx.y) x) ((λy.x) y)'), "an AppT with both, func and arg beta-redexes", {
-        is($^t.isBetaRedex,       False, "$^desc is not itself a beta redex");
         is($^t.isBetaReducible,   True,  "$^desc IS beta-reducible");
         my $ecd1 = $^t.beta-contract;
         is($ecd1.isBetaReducible,   True,  "$^desc beta-contracts to a still beta-reducible term");
@@ -153,7 +202,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
     
     # (λx.((λy.z y) x) x) [57...]
     test parseLambda('(λx.((λy.z y) x) x)'), "a LamT with body an AppT where func is a beta-redex and arg a VarT", {
-        is($^t.isBetaRedex,       False, "$^desc is not itself a beta redex");
         is($^t.isBetaReducible,   True,  "$^desc IS beta-reducible");
         my $bcd = $^t.beta-contract;
         is($bcd.isBetaReducible,  False, "$^desc beta-contracts to a non-beta-reducible term");
@@ -166,9 +214,6 @@ sub test(Term:D $t, Str:D $desc, &tests) {
 
 # [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
 {
-    my $omegaX = parseLambda('λx.x x');
-    my $OmegaXX = AppT.new(:func($omegaX), :arg($omegaX));
-
     my $OmegaXX-contracted-once = $OmegaXX.beta-contract;
 
     cmp_ok($OmegaXX-contracted-once, '===', $OmegaXX,
