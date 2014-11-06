@@ -277,17 +277,46 @@ q:to/ENDOFLAMBDA/,
                 )
              (_if (_and (VarT f) (VarT a))
                   (λ_.eq? (VarT->name f) (VarT->name a))
-                  (K false)
+                  (K #false)
              )
            )
-           (K false)
+           (K #false)
 ENDOFLAMBDA
     -> TTerm:D $t {
         $_if( $is-AppT($t),
             { my $f = $AppT2func($t);
               my $a = $AppT2arg($t);
               $_if( $_and($is-VarT($f), $is-VarT($a)),
-                  { convertP6Bool2TBool($VarT2name($f) eq $VarT2name($a)) },
+                  { convertP6Bool2TBool($VarT2name($f) eq $VarT2name($a)) },    # TODO: dispense with convertP6Bool2TBool
+                  { $false }
+              )
+            },
+            { $false }
+        )
+    }
+);
+
+
+constant $is-omega is export = lambdaFn(
+    'ω?',
+q:to/ENDOFLAMBDA/,
+    λt._if (LamT? t)
+           (let ((v (LamT->var  t))
+                 (b (LamT->body t))
+                )
+             (_if (selfApp? b)
+                  (λ_.eq? (VarT->name (AppT->func b)) (VarT->name v))
+                  (K #false)
+             )
+           )
+           (K #false)
+ENDOFLAMBDA
+    -> TTerm:D $t {
+        $_if( $is-LamT($t),
+            { my $v = $LamT2var($t);
+              my $b = $LamT2body($t);
+              $_if( $is-selfApp($b),
+                  { convertP6Bool2TBool($VarT2name($AppT2func($b)) eq $VarT2name($v)) },    # TODO: dispense with convertP6Bool2TBool
                   { $false }
               )
             },
