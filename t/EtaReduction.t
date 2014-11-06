@@ -185,11 +185,13 @@ plan 80;
         $ecd1 = $Some2value($ecd1);
         # Note: we don't restrict the order in which parts are being contracted
         is($is-etaReducible($ecd1), $true, "(Some->value (etaContract {$Term2source($t)})) should still be eta-reducible") or die;
+
         $ecd2 = $etaContract($ecd1);
         is($is-Some($ecd2), $true, "{$Term2source($ecd1)} should eta-contract once more") or die;
         $ecd2 = $Some2value($ecd2);
         is($is-etaReducible($ecd2), $false,
             "(Some->value (etaContract {$Term2source($ecd1)})) should not be eta-reducible any further") or die;
+
         $expectedErd = $AppT($y, $x);   #  ((λx.y x) (λy.x y)) =_η (y x)
         is($ecd2, $expectedErd, 
             "(Some->value (etaContract {$Term2source($ecd1)})) should be {$Term2source($expectedErd)}") or die;
