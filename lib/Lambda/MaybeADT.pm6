@@ -74,9 +74,8 @@ constant $Maybe2Str is export = lambdaFn(
 # functions on Maybe
 
 # Maybe->valueWithDefault
-
 constant $Maybe2valueWithDefault is export = lambdaFn(
-    'Maybe->valueWithDefault', 'λm.λdflt.if (None? m) dflt (Some->value m)',
+    'Maybe->valueWithDefault', 'λm.λdflt.if (None? m) (K dflt) (λ_.Some->value m)',
     -> TMaybe:D $m, $dflt {
         $_if( $is-None($m),
             { $dflt },
@@ -84,3 +83,18 @@ constant $Maybe2valueWithDefault is export = lambdaFn(
         )
     }
 );
+
+# Maybe-lift-in
+constant $Maybe-lift-in is export = lambdaFn(
+    'Maybe-lift-in', 'λf.λm.if (None? m) (K None) (λ_.f (Some->value m))',
+    -> &f { lambdaFn(
+        Str, 'Maybe-lift-in ' ~ (&f.Str // &f.perl),
+        -> TMaybe:D $m {
+            $_if( $is-None($m),
+                { $None },
+                { &f($Some2value($m)) }
+            )
+        } )
+    }
+);
+
