@@ -1,6 +1,5 @@
 use v6;
 
-use Lambda::MethodFixedPoint;
 use Lambda::Tree;
 use Lambda::_FreeVars;
 use Lambda::_Substitution;
@@ -58,7 +57,6 @@ sub convertToP6Term(TTerm:D $t) is export {
 
 role Term
     does Tree
-    does MethodFixedPoint
     does FreeVars[Term, ConstT, VarT, AppT, LamT]
     does Substitution[Term, ConstT, VarT, AppT, LamT]
     does EtaReduction[Term, ConstT, VarT, AppT, LamT]

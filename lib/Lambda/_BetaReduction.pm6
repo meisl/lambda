@@ -6,8 +6,6 @@ use Lambda::BetaReduction;
 
 use Lambda::Conversion::Bool-conv;
 
-use Lambda::MethodFixedPoint;
-
 
 role BetaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
 

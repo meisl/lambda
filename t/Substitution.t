@@ -12,8 +12,6 @@ use Lambda::Substitution;
 
 use Lambda::Conversion::Bool-conv;
 use Lambda::Conversion::ListADT-conv;
-use Lambda::_Substitution;
-use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
 
