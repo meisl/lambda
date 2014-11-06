@@ -7,8 +7,13 @@ use Lambda::Boolean;
 
 use Lambda::TermADT;
 
-plan 35;
+plan 53;
 
+
+my $x ::= $VarT('x');
+my $y ::= $VarT('y');
+my $z ::= $VarT('z');
+my $c ::= $ConstT('c');
 
 { # Term->source
     is_properLambdaFn($Term2source);
@@ -16,7 +21,7 @@ plan 35;
     is $Term2source.symbol, 'Term->source', '$Term2source.symbol';
     is $Term2source.Str,    'Term->source', '$Term2source.Str';
 
-    my sub test(*@tests) {
+    my sub has_source(*@tests) {
         for @tests -> $test {
             my $term       = $test.key;
             my $termStr    = $Term2Str($term);
@@ -27,13 +32,7 @@ plan 35;
         }
     }
 
-    my $x = $VarT('x');
-    my $y = $VarT('y');
-    my $z = $VarT('z');
-    my $c = $ConstT('c');
-    my $t;
-
-    test(
+    has_source(
         $x                                                          => 'x',
         $c                                                          => '"c"',
         $ConstT(5)                                                  => '5',
@@ -88,4 +87,41 @@ plan 35;
     $has_length($cs, 2, "(Term->children $t3)");
     $contains_ok($x,  $cs, "(Term->children $t3)");
     $contains_ok($t2, $cs, "(Term->children $t3)");
+}
+
+{ # predicate selfApp?
+    is_properLambdaFn($is-selfApp);
+
+    is $is-selfApp.symbol, 'selfApp?', '$is-selfApp.symbol';
+    is $is-selfApp.Str,    'selfApp?', '$is-selfApp.Str';
+
+
+    my sub is_selfApp(*@tests) {
+        for @tests -> $test {
+            my $term       = $test.key;
+            my $termSrc    = $Term2source($term);
+            my $expected   = $test.value;
+            my $desc       = "(selfApp? '$termSrc) -> $expected";
+            
+            is($is-selfApp($term), $expected, $desc);
+        }
+    }
+
+    is_selfApp(
+        $x                                                          => $false,  # x
+        $c                                                          => $false,  # "c"
+        $ConstT(5)                                                  => $false,  # 5
+        $AppT($x, $c)                                               => $false,  # (x "c")
+        $AppT($x, $x)                                               => $true,   # (x x)
+        $AppT($y, $y)                                               => $true,   # (y y)
+        $AppT($x, $y)                                               => $false,  # (x y)
+        $LamT($x, $c)                                               => $false,  # λx."c"
+        $LamT($x, $x)                                               => $false,  # λx.x
+        $LamT($x, $AppT($x, $x))                                    => $false,  # λx.x x    # omega
+        $LamT($x, $AppT($x, $c))                                    => $false,  # λx.x "c"
+        $LamT($x, $AppT($x, $y))                                    => $false,  # λx.x y
+        $LamT($x, $AppT($y, $x))                                    => $false,  # λx.y x
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($x, $AppT($x, $x)))   => $false,  # ((λx.x x) (λx.x x))    # Omega = (omega omega)
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($y, $AppT($y, $y)))   => $false,  # ((λx.x x) (λy.y y))    # Omega = (omega omega)
+    );
 }

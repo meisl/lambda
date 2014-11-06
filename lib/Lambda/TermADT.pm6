@@ -4,6 +4,9 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
+use Lambda::Conversion::Bool-conv;
+
+
 module Lambda::TermADT;
 # data Term = VarT   name:Str
 #           | AppT   func:Term  arg:Term
@@ -260,6 +263,35 @@ ENDOFLAMBDA
                   }
               )
             }
+        )
+    }
+);
+
+
+constant $is-selfApp is export = lambdaFn(
+    'selfApp?',
+q:to/ENDOFLAMBDA/,
+    λt._if (AppT? t)
+           (let ((f (AppT->func t))
+                 (a (AppT->arg t))
+                )
+             (_if (_and (VarT f) (VarT a))
+                  (λ_.eq? (VarT->name f) (VarT->name a))
+                  (K false)
+             )
+           )
+           (K false)
+ENDOFLAMBDA
+    -> TTerm:D $t {
+        $_if( $is-AppT($t),
+            { my $f = $AppT2func($t);
+              my $a = $AppT2arg($t);
+              $_if( $_and($is-VarT($f), $is-VarT($a)),
+                  { convertP6Bool2TBool($VarT2name($f) eq $VarT2name($a)) },
+                  { $false }
+              )
+            },
+            { $false }
         )
     }
 );
