@@ -2,7 +2,6 @@ use v6;
 
 use Test;
 use Test::Util;
-use Lambda::LambdaModel;
 
 use Lambda::Boolean;
 use Lambda::MaybeADT;
@@ -10,6 +9,7 @@ use Lambda::ListADT;
 use Lambda::TermADT;
 use Lambda::FreeVars;
 
+use Lambda::LambdaModel;
 
 plan 135;
 
@@ -301,5 +301,4 @@ plan 135;
     is($w.isFreeUnder(:binder($x), :in($a4)), False, $msgNeverIfNotOccurring ~ $msgLam2Lam);
     is($w.isFreeUnder(:binder($y), :in($a4)), False, $msgNeverIfNotOccurring ~ $msgLam2Lam);
     is($w.isFreeUnder(:binder($z), :in($a4)), False, $msgNeverIfNotOccurring ~ $msgLam2Lam);
-
 }

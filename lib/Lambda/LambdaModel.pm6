@@ -1,7 +1,6 @@
 use v6;
 
 use Lambda::Tree;
-use Lambda::_FreeVars;
 use Lambda::_EtaReduction;
 use Lambda::_BetaReduction;
 
@@ -11,10 +10,13 @@ use Lambda::PairADT;
 use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
+
 use Lambda::Substitution;
+use Lambda::FreeVars;
 
 use Lambda::Conversion::ListADT-conv;
 use Lambda::Conversion::Bool-conv;
+
 
 role ConstT { ... }
 role VarT   { ... }
@@ -56,7 +58,6 @@ sub convertToP6Term(TTerm:D $t) is export {
 
 role Term
     does Tree
-    does FreeVars[Term, ConstT, VarT, AppT, LamT]
     does EtaReduction[Term, ConstT, VarT, AppT, LamT]
     does BetaReduction[Term, ConstT, VarT, AppT, LamT]
 {
@@ -73,6 +74,26 @@ role Term
     method subst-seq(Term:D: @substitutions) {   # cannot declare return type (Term) - yields really weird error msg
         my $result = $subst-seq(self, convertP6ArrayToTListOfTPairs(@substitutions));
         self.convertToP6Term( $Maybe2valueWithDefault($result, self) );
+    }
+
+    # FreeVars ----------------------------------------------------------------
+
+    # on VarT only
+    method isFree(VarT:D: Term:D :in($t)! --> Bool:D) {
+        convertTBool2P6Bool( $is-free(self, $t) );
+    }
+
+    # on VarT only
+    method isFreeUnder(VarT:D: VarT:D :$binder!, Term:D :in($t)! --> Bool) {
+        convertTBool2P6Bool( $is-free-under(self, $binder, $t) );
+    }
+
+    method getFreeVar(Str:D $name --> VarT) {
+        $Maybe2valueWithDefault($free-var($name, self), VarT);
+    }
+
+    method freeVars {
+        convertTList2P6Array($free-vars(self));
     }
 
 }
