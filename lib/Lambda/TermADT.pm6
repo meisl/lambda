@@ -324,3 +324,19 @@ ENDOFLAMBDA
         )
     }
 );
+
+
+constant $is-Omega is export = lambdaFn(
+    'Ω?',
+q:to/ENDOFLAMBDA/,
+    λt._if (AppT? t)
+           (_and (ω? (AppT->func t)) (ω? (AppT->arg t)))
+           (K #false)
+ENDOFLAMBDA
+    -> TTerm:D $t {
+        $_if( $is-AppT($t),
+            { $_and($is-omega($AppT2func($t)), $is-omega($AppT2arg($t))) },
+            { $false }
+        )
+    }
+);

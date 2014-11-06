@@ -7,7 +7,7 @@ use Lambda::Boolean;
 
 use Lambda::TermADT;
 
-plan 73;
+plan 92;
 
 
 my $x ::= $VarT('x');
@@ -15,24 +15,29 @@ my $y ::= $VarT('y');
 my $z ::= $VarT('z');
 my $c ::= $ConstT('c');
 
+
+my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
+    for @tests -> $test {
+        my $arg         = $test.key;
+        my $argStr      = $argToStr($arg);
+        my $expected    = $test.value;
+        my $expectedStr = $expToStr.defined
+                            ?? ' -> ' ~ $expToStr($expected)
+                            !! '';
+        my $desc        = "($f $argStr)$expectedStr";
+        
+        is($f($arg), $expected, $desc);
+    }
+}
+
+
 { # Term->source
     is_properLambdaFn($Term2source);
 
     is $Term2source.symbol, 'Term->source', '$Term2source.symbol';
     is $Term2source.Str,    'Term->source', '$Term2source.Str';
 
-    my sub has_source(*@tests) {
-        for @tests -> $test {
-            my $term       = $test.key;
-            my $termStr    = $Term2Str($term);
-            my $expected   = $test.value;
-            my $desc       = "(Term->source $termStr)";
-            
-            is($Term2source($term), $expected, $desc);
-        }
-    }
-
-    has_source(
+    test( $Term2source, :argToStr($Term2Str),
         $x                                                          => 'x',
         $c                                                          => '"c"',
         $ConstT(5)                                                  => '5',
@@ -96,18 +101,7 @@ my $c ::= $ConstT('c');
     is $is-selfApp.symbol, 'selfApp?', '$is-selfApp.symbol';
     is $is-selfApp.Str,    'selfApp?', '$is-selfApp.Str';
 
-    my sub is_selfApp(*@tests) {
-        for @tests -> $test {
-            my $term       = $test.key;
-            my $termSrc    = $Term2source($term);
-            my $expected   = $test.value;
-            my $desc       = "(selfApp? '$termSrc) -> $expected";
-            
-            is($is-selfApp($term), $expected, $desc);
-        }
-    }
-
-    is_selfApp(
+    test( $is-selfApp, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         $x                                                          => $false,  # x
         $c                                                          => $false,  # "c"
         $ConstT(5)                                                  => $false,  # 5
@@ -134,18 +128,7 @@ my $c ::= $ConstT('c');
     is $is-omega.symbol, 'ω?', '$is-omega.symbol';
     is $is-omega.Str,    'ω?', '$is-omega.Str';
 
-    my sub is_omega(*@tests) {
-        for @tests -> $test {
-            my $term       = $test.key;
-            my $termSrc    = $Term2source($term);
-            my $expected   = $test.value;
-            my $desc       = "(ω? '$termSrc) -> $expected";
-            
-            is($is-omega($term), $expected, $desc);
-        }
-    }
-
-    is_omega(
+    test( $is-omega, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         $x                                                          => $false,  # x
         $c                                                          => $false,  # "c"
         $ConstT(5)                                                  => $false,  # 5
@@ -163,4 +146,32 @@ my $c ::= $ConstT('c');
         $AppT($LamT($x, $AppT($x, $x)), $LamT($x, $AppT($x, $x)))   => $false,  # ((λx.x x) (λx.x x))    # Omega = (omega omega)
         $AppT($LamT($x, $AppT($x, $x)), $LamT($y, $AppT($y, $y)))   => $false,  # ((λx.x x) (λy.y y))    # Omega = (omega omega)
     );
+}
+
+
+{ # predicate Omega?
+    is_properLambdaFn($is-Omega);
+
+    is $is-Omega.symbol, 'Ω?', '$is-Omega.symbol';
+    is $is-Omega.Str,    'Ω?', '$is-Omega.Str';
+
+    test( $is-Omega, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+        $x                                                          => $false,  # x
+        $c                                                          => $false,  # "c"
+        $ConstT(5)                                                  => $false,  # 5
+        $AppT($x, $c)                                               => $false,  # (x "c")
+        $AppT($x, $x)                                               => $false,  # (x x)
+        $AppT($y, $y)                                               => $false,  # (y y)
+        $AppT($x, $y)                                               => $false,  # (x y)
+        $LamT($x, $c)                                               => $false,  # λx."c"
+        $LamT($x, $x)                                               => $false,  # λx.x
+        $LamT($x, $AppT($x, $x))                                    => $false,  # λx.x x    # omega
+        $LamT($y, $AppT($y, $y))                                    => $false,  # λy.y y    # omega
+        $LamT($x, $AppT($x, $c))                                    => $false,  # λx.x "c"
+        $LamT($x, $AppT($x, $y))                                    => $false,  # λx.x y
+        $LamT($x, $AppT($y, $x))                                    => $false,  # λx.y x
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($x, $AppT($x, $x)))   => $true,   # ((λx.x x) (λx.x x))    # Omega = (omega omega)
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($y, $AppT($y, $y)))   => $true,   # ((λx.x x) (λy.y y))    # Omega = (omega omega)
+    );
+
 }
