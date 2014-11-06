@@ -218,7 +218,7 @@ plan 52;
     $function = -> $x {
         my $out = $values[@seen.elems];
         @seen.push($x);
-        diag ">>>> f({$x.perl}), returning {$out.perl}";
+        #diag ">>>> f({$x.perl}), returning {$out.perl}";
         $out;
     };
 
