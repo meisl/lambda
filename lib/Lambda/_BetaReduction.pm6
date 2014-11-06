@@ -24,7 +24,7 @@ role BetaReduction[::Term, ::ConstT, ::VarT, ::AppT, ::LamT] {
     }
 
     method beta-reduce() {
-        self.mfp(*.beta-contract);
+        self.convertToP6Term( $Maybe2valueWithDefault($betaReduce(self), self) );
     }
 
 }

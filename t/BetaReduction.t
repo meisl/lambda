@@ -13,7 +13,7 @@ use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
 
-plan 84;
+plan 106;
 
 sub test(Term:D $t, Str:D $desc, &tests) {
     #subtest {
@@ -29,8 +29,11 @@ my $z = VarT.new(:name('z'));
 my $c = ConstT.new(:value('c'));
 
 # [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
-my $omegaX = convertToP6Term( $LamT($x, $AppT($x, $x)) );  # (λx.x x)
-my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );  # ((λx.x x) (λx.x x))
+my $omegaX  = convertToP6Term( $LamT($x, $AppT($x, $x)) );  # (λx.x x)
+my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );   # ((λx.x x) (λx.x x))
+my $omegaY  = convertToP6Term( $LamT($y, $AppT($y, $y)) );  # (λy.y y)
+my $OmegaYY = convertToP6Term( $AppT($omegaY, $omegaY) );   # ((λy.y y) (λy.y y))
+my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y y))
 
 
 { # predicate betaRedex?
@@ -65,8 +68,8 @@ my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );  # ((λx.x x) (λx.x x
         $LamT($x, $AppT($x, $c))                                    => $false,  # λx.x "c"
         $LamT($x, $AppT($x, $y))                                    => $false,  # λx.x y
         $LamT($x, $AppT($y, $x))                                    => $false,  # λx.y x
-        $LamT($x, $AppT($x, $AppT($LamT($y, $LamT($z, $AppT($y, $x))), $LamT($y, $AppT($x, $y)))))  
-            => $false,  # λx.x ((λy.λz.y x) (λy.x y)) # not a redex but reducible
+        $LamT($x, $AppT($x, $AppT($LamT($y, $LamT($z, $AppT($y, $x))), $LamT($y, $AppT($x, $y)))))          # not a redex but contractible (twice)
+            => $false,  # λx.x ((λy.λz.y x) (λy.x y))
         $AppT($x, $c)                                               => $false,  # (x c)
         $AppT($x, $x)                                               => $false,  # (x x)
         $AppT($x, $y)                                               => $false,  # (x y)
@@ -79,6 +82,9 @@ my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );  # ((λx.x x) (λx.x x
         $LamT($x, $AppT($AppT($LamT($y, $AppT($z, $y)), $x), $x))   => $false,  # (λx.(λy.z y) x x)         # not a redex but reducible
         $omegaX                                                     => $false,  # (λx.x x)
         $OmegaXX                                                    => $true,   # ((λx.x x) (λx.x x))       # a redex, contracting to itself
+        $omegaY                                                     => $false,  # (λy.y y)
+        $OmegaYY                                                    => $true,   # ((λy.y y) (λy.y y))       # a redex, contracting to itself
+        $OmegaXY                                                    => $true,   # ((λx.x x) (λy.y y))       # a redex, contracting to itself (module alpha-conv)
     );
 }
 
@@ -114,8 +120,8 @@ my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );  # ((λx.x x) (λx.x x
         $LamT($x, $AppT($x, $c))                                    => $false,  # λx.x "c"
         $LamT($x, $AppT($x, $y))                                    => $false,  # λx.x y
         $LamT($x, $AppT($y, $x))                                    => $false,  # λx.y x
-        $LamT($x, $AppT($x, $AppT($LamT($y, $LamT($z, $AppT($y, $x))), $LamT($y, $AppT($x, $y)))))  
-            => $true,  # λx.x ((λy.λz.y x) (λy.x y)) # not a redex but reducible
+        $LamT($x, $AppT($x, $AppT($LamT($y, $LamT($z, $AppT($y, $x))), $LamT($y, $AppT($x, $y)))))          # not a redex but contractible (twice)
+            => $true,  # λx.x ((λy.λz.y x) (λy.x y))
         $AppT($x, $c)                                               => $false,  # (x c)
         $AppT($x, $x)                                               => $false,  # (x x)
         $AppT($x, $y)                                               => $false,  # (x y)
@@ -128,6 +134,9 @@ my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );  # ((λx.x x) (λx.x x
         $LamT($x, $AppT($AppT($LamT($y, $AppT($z, $y)), $x), $x))   => $true,   # (λx.(λy.z y) x x)         # not a redex but reducible
         $omegaX                                                     => $false,  # (λx.x x)
         $OmegaXX                                                    => $true,   # ((λx.x x) (λx.x x))       # a redex, contracting to itself
+        $omegaY                                                     => $false,  # (λy.y y)
+        $OmegaYY                                                    => $true,   # ((λy.y y) (λy.y y))       # a redex, contracting to itself
+        $OmegaXY                                                    => $true,   # ((λx.x x) (λy.y y))       # a redex, contracting to itself (module alpha-conv)
     );
 
 }
@@ -141,9 +150,9 @@ my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );  # ((λx.x x) (λx.x x
 
     my sub betaContractsTo(*@tests) {
         for @tests -> $test {
-            my $term       = $test.key;
-            my $termStr    = $Term2source($term);
-            my $expected   = $test.value;
+            my $term     = $test.key;
+            my $termStr  = $Term2source($term);
+            my $expected = $test.value;
             my $toItself = $expected === $None;
             my $expStr  = $toItself
                 ?? "itself"
@@ -174,7 +183,7 @@ my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );  # ((λx.x x) (λx.x x
         $LamT($x, $AppT($x, $c))                                    => $None,  # λx.x "c"
         $LamT($x, $AppT($x, $y))                                    => $None,  # λx.x y
         $LamT($x, $AppT($y, $x))                                    => $None,  # λx.y x
-        $LamT($x, $AppT($x, $AppT($LamT($y, $LamT($z, $AppT($y, $x))), $LamT($y, $AppT($x, $y)))))   # not a redex but reducible
+        $LamT($x, $AppT($x, $AppT($LamT($y, $LamT($z, $AppT($y, $x))), $LamT($y, $AppT($x, $y)))))   # not a redex but contractible (twice)
             => $Some($LamT($x, $AppT($x, $LamT($z, $AppT($LamT($y, $AppT($x, $y)), $x))))),  # λx.x ((λy.λz.y x) (λy.x y)) -> λx.x (λz.(λy.x y) x)
         $AppT($x, $c)                                               => $None,  # (x c)
         $AppT($x, $x)                                               => $None,  # (x x)
@@ -190,11 +199,13 @@ my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );  # ((λx.x x) (λx.x x
         
         # see below for (((λx.y) x) ((λy.x) y))   # not a redex but contractible (twice)
 
-        $LamT($x, $AppT($AppT($LamT($y, $AppT($z, $y)), $x), $x))   => $Some($LamT($x, $AppT($AppT($z, $x), $x))),   # not a redex but reducible
-            # (λx.(λy.z y) x x) .-> (λx.z x x)
-        $omegaX                                                     => $None,   # (λx.x x)
-       # $OmegaXX                                                    => $None,   # ((λx.x x) (λx.x x)) # a redex, contracting to itself
-       # TODO: return None for beta-contraction of Omega
+        $LamT($x, $AppT($AppT($LamT($y, $AppT($z, $y)), $x), $x))   => $Some($LamT($x, $AppT($AppT($z, $x), $x))),  # not a redex but reducible
+            # (λx.(λy.z y) x x) -> (λx.z x x)
+        $omegaX                                                     => $None,               # (λx.x x)
+        $OmegaXX                                                    => $None,               # ((λx.x x) (λx.x x))   # a redex, contracting to itself
+        $omegaY                                                     => $None,               # (λy.y y)
+        $OmegaYY                                                    => $None,               # ((λy.y y) (λy.y y))   # a redex, contracting to itself
+        $OmegaXY                                                    => $Some($OmegaYY),     # ((λx.x x) (λy.y y))   # a redex, contracting to itself (module alpha-conv)
     );
 
     my ($t, $bcd1, $bcd2, $expectedBrd);
@@ -221,114 +232,81 @@ my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );  # ((λx.x x) (λx.x x
 }
 
 
-{
-    my ($t, $desc);
+{ # function betaReduce
+    is_properLambdaFn($betaReduce);
 
-    test $x, "a VarT", {
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
-    };
+    is $betaReduce.symbol, 'betaReduce', '$betaReduce.symbol';
+    is $betaReduce.Str,    'betaReduce', '$betaReduce.Str';
 
-     { # c
-        test $c, "a ConstT", {
-            my $erd = $^t.beta-reduce;
-            cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
-        };
+    my sub betaReducesTo(*@tests) {
+        for @tests -> $test {
+            my $term     = $test.key;
+            my $termStr  = $Term2source($term);
+            my $expected = $test.value;
+            my $toItself = $expected === $None;
+            my $expStr = $toItself
+                ?? "itself"
+                !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
+            my $desc = "$termStr beta-reduces to $expStr";
+
+            subtest({
+                my $actual = $betaReduce($term);
+                is($actual, $expected, $desc)
+                    or diag($actual.perl) and die;
+                
+                my $termP6 = convertToP6Term($term);
+
+                my $expectedP6 = $toItself
+                    ?? $termP6
+                    !! convertToP6Term($Some2value($expected));
+
+                is($termP6.beta-reduce, $expectedP6, $desc);
+            }, $desc);
+        }
     }
 
-     { # (λx.c)
-        test LamT.new(:var($x), :body($c)), "a LamT with body a ConstT", {
-            my $erd = $^t.beta-reduce;
-            cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
-        };
-    }
+    betaReducesTo(
+        $x                                                          => $None,  # x
+        $c                                                          => $None,  # "c"
+        $LamT($x, $c)                                               => $None,  # λx."c"
+        $LamT($x, $x)                                               => $None,  # λx.x
+        $LamT($x, $AppT($x, $c))                                    => $None,  # λx.x "c"
+        $LamT($x, $AppT($x, $y))                                    => $None,  # λx.x y
+        $LamT($x, $AppT($y, $x))                                    => $None,  # λx.y x
+        $LamT($x, $AppT($x, $AppT($LamT($y, $LamT($z, $AppT($y, $x))), $LamT($y, $AppT($x, $y)))))   # not a redex but contractible (twice)
+            => $Some($LamT($x, $AppT($x, $LamT($z, $AppT($x, $x))))),  # λx.x ((λy.λz.y x) (λy.x y)) -> λx.x (λz.x x)
+        $AppT($x, $c)                                               => $None,  # (x c)
+        $AppT($x, $x)                                               => $None,  # (x x)
+        $AppT($x, $y)                                               => $None,  # (x y)
+        $AppT($LamT($x, $y), $x)                                    => $Some($y),                       # a redex
+            # ((λx.y) x) -> y
+        $AppT($LamT($x, $AppT($AppT($z, $x), $y)), $c)              => $Some($AppT($AppT($z, $c), $y)), # a redex
+            # ((λx.z x y) "c") -> (z "c" y)
+        $AppT($AppT($LamT($y, $AppT($x, $y)), $y), $z)              => $Some($AppT($AppT($x, $y), $z)), # not a redex but reducible
+            # (((λy.x y) y) z) -> (x y z)
+        $AppT($y, $AppT($LamT($y, $AppT($x, $y)), $z))              => $Some($AppT($y, $AppT($x, $z))), # not a redex but reducible
+            # (y ((λy.x y) z)) -> (y (x z))
+        $AppT($AppT($LamT($x, $y), $x), $AppT($LamT($y, $x), $y))   => $Some($AppT($y, $x)),            # not a redex but contractible (twice)
+            # (((λx.y) x) ((λy.x) y))  ->  (y x)
+        $LamT($x, $AppT($AppT($LamT($y, $AppT($z, $y)), $x), $x))   => $Some($LamT($x, $AppT($AppT($z, $x), $x))),  # not a redex but reducible
+            # (λx.(λy.z y) x x) -> (λx.z x x)        # TODO: use as example for beta-eta reduction
 
-    test parseLambda('(λx.x)'), "a LamT with body a VarT", {
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
-    };
-    
-    { # (λx.x c)
-        test LamT.new(:var($x), :body(AppT.new(:func($x), :arg($c)))), 
-            "a LamT with body an AppT where arg is a ConstT", {
-            my $erd = $^t.beta-reduce;
-            cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
-        };
-    }
-
-    test parseLambda('(λx.x y)'), "a LamT with body an AppT where arg is a VarT other than the lambda's", {
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
-    };
-
-    test parseLambda('(λx.y x)'), "a LamT with body an AppT where arg is a VarT equal to the lambda's", {
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
-    };
-
-    test parseLambda('(λx.x x)'), "a LamT with body an AppT where arg is a VarT equal to the lambda's but free the AppT's func", {
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
-    };
-
-    test parseLambda('(λx.x ((λy.λz.y x) (λy.x y)))'), "a LamT with body an AppT where func is a VarT and arg is a beta-redex", {
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, 'eq', parseLambda('λx.x λz.x x'), "$^desc beta-reduces in two steps");
-    };
-
-    { # (x c)
-        test AppT.new(:func($x), :arg($c)), "an AppT (arg:ConstT)", {
-            my $erd = $^t.beta-reduce;
-            cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
-        };
-    }
-
-    # (x y) [40...]
-    test parseLambda('(x y)'), "an AppT (func:VarT, arg:VarT)", {
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, '===', $^t, "$^desc beta-reduces to itself");
-    };
-
-    # ((λy.x y) y) z [44...]
-    test parseLambda('((λy.x y) y) z'), "an AppT with a beta-redex as func", {
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, 'eq', parseLambda('(x y) z'), "$^desc beta-reduces to the func's beta-reduction");
-    };
-    
-    # y ((λy.x y) z) [48...]
-    test parseLambda('y ((λy.x y) z)'), "an AppT with a beta-redex as arg", {
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, 'eq', parseLambda('y (x z)'), "$^desc beta-reduces to the arg's beta-reduction");
-    };
-
-    
-    # (λx.((λy.z y) x) x) [57...]
-    test parseLambda('(λx.((λy.z y) x) x)'), "a LamT with body an AppT where func is a beta-redex and arg a VarT", {
-        my $bcd = $^t.beta-contract;
-        is($bcd.isBetaReducible,  False, "$^desc beta-contracts to a non-beta-reducible term");
-
-        cmp_ok($bcd, 'eq', parseLambda('λx.(z x) x'), "$^desc beta-contracts the inner lambda");
-        # TODO: use as example for beta-eta reduction
-    };
-
-    # ((λx.y) x) ((λy.x) y) [52...]
-    test parseLambda('((λx.y) x) ((λy.x) y)'), "an AppT with both, func and arg beta-redexes", {
-        my $erd = $^t.beta-reduce;
-        cmp_ok($erd, 'eq', parseLambda('y x'), "$^desc beta-reduces to the func's and arg's beta-reduction, resp.");
-    };
-
+        $omegaX                                                     => $None,               # (λx.x x)
+        $OmegaXX                                                    => $None,               # ((λx.x x) (λx.x x))   # a redex, contracting to itself
+        $omegaY                                                     => $None,               # (λy.y y)
+        $OmegaYY                                                    => $None,               # ((λy.y y) (λy.y y))   # a redex, contracting to itself
+        $OmegaXY                                                    => $Some($OmegaYY),     # ((λx.x x) (λy.y y))   # a redex, contracting to itself (module alpha-conv)
+    );
 }
 
+
 # [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
-skip {
+{
     my $OmegaXX-contracted-once = $OmegaXX.beta-contract;
 
     cmp_ok($OmegaXX-contracted-once, '===', $OmegaXX,
         "beta-contracting '$OmegaXX' should yield same instance after 1st step");
 
-    my $omegaY = parseLambda('λy.y y');
-    my $OmegaYY = AppT.new(:func($omegaY), :arg($omegaY));
-    my $OmegaXY = AppT.new(:func($omegaX), :arg($omegaY));
     my $OmegaXY-contracted-once = $OmegaXY.beta-contract;
     my $OmegaXY-contracted-twice = $OmegaXY-contracted-once.beta-contract;
 
