@@ -11,15 +11,19 @@ use Lambda::TermADT;
 use Lambda::Substitution;
 
 use Lambda::Conversion::Bool-conv;
+use Lambda::Conversion::ListADT-conv;
 use Lambda::_Substitution;
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
 
-plan 15;
+plan 25;
 
 
 my $a = VarT.new(:name('a'));
+my $u = VarT.new(:name('u'));
+my $v = VarT.new(:name('v'));
+my $w = VarT.new(:name('w'));
 my $x = VarT.new(:name('x'));
 my $y = VarT.new(:name('y'));
 my $z = VarT.new(:name('z'));
@@ -84,56 +88,67 @@ my $c = ConstT.new(:value('c'));
     is $subst-seq.symbol, 'subst-seq', '$subst-seq.symbol';
     is $subst-seq.Str,    'subst-seq', '$subst-seq.Str';
 
-}
+    my sub is_subst-seq(*@tests) {
+        for @tests -> $test {
+            my $inTerm      = $test.key[0];
+            my $inTermStr   = $Term2source($inTerm);
 
-{ # Term.subst-seq(@substitutions)
-    my $l1 = parseLambda('λa.λb.z a');
-    my $l2 = parseLambda('λc.λd.d z');
+            my $substs      = $test.key[1];
+            my $substsStr   = '[' ~ $substs.map(
+                -> $pair {
+                    '[' ~ $Term2source($pair[1]) ~ '/' ~ $VarT2name($pair[0]) ~ ']'
+                }
+            ).join(', ') ~ ']';
+            my $substsListOfPairs = convertP6ArrayToTListOfTPairs($substs);
 
-    my $s;
-    my $t;
-    my $ss;
-    
-    subtest({
-        $s = $c.subst-seq([[$y, $x]]);
-        is($s, $c, 'in a ConstT yields just the ConstT');
+            my $expected   = $test.value;
+            my $itself     = $expected === $None;
+            my $expStr     = $itself
+                                 ?? "the original term"
+                                 !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
+            my $desc = "applying substitutions $substsStr in $inTermStr yields $expStr";
 
-        $s = $z.subst-seq([[$y, $x]]);
-        is($s, $z, 'in a non-matching VarT yields just the VarT');
+            subtest({
+                my $actual = $subst-seq($inTerm, $substsListOfPairs);
+                is($actual, $expected, $desc)
+                    or diag($actual.Str ~ ' / ' ~ $actual.perl) and die;
+                
+                my $inTermP6    = convertToP6Term($inTerm);
 
-        $s = $y.subst-seq([[$y, $x]]);
-        is($s, $x, 'in a matching VarT yields the replacement term (VarT)');
+                my $expectedP6 = $itself
+                    ?? $inTermP6
+                    !! convertToP6Term($Some2value($expected));
 
-        $s = $y.subst-seq([[$y, $l1]]);
-        is($s, $l1, 'in a matching VarT yields the replacement term (LamT)');
+                is($inTermP6.subst-seq($substs), $expectedP6, $desc);
+            }, $desc);
+        }
+    }
 
-        $s = $l1.subst-seq([[$y, $x]]);
-        is($s, $l1, 'in a LamT without any occurrance of the for-VarT yields just the LamT');
+    my $l1 = $LamT($u, $LamT($v, $AppT($z, $u)));   # λu.λv.z u
+    my $l2 = $LamT($w, $LamT($x, $AppT($x, $z)));   # λw.λx.x z
+    my $l3 = $LamT($u, $LamT($v, $AppT($x, $u)));   # λu.λv.x u
+    my $l4 = $LamT($u, $LamT($v, $AppT($u, $u)));   # λu.λv.u u
+    my $l5 = $LamT($w, $LamT($x, $AppT($x, $l2)));   # λw.λx.x λw.λx.x z
+    my $l6 = $LamT($u, $LamT($v, $AppT($y, $u)));   # λu.λv.y u
+    my $l7 = $LamT($u, $LamT($v, $AppT($LamT($w, $LamT($x, $AppT($x, $y))), $u)));   # λu.λv.(λw.λx.x y) u
 
-        $s = $l1.subst-seq([[$a, $x]]);
-        is($s, $l1, 'in a LamT with only a bound occurrance of the for-VarT yields just the LamT');
-
-        $s = $l1.subst-seq([[$z, $x]]);
-        is($s, parseLambda('λa.λb.x a'), 'in a LamT with free occurrance of the for-VarT yields changed LamT');
-
-        $s = $l1.subst-seq([[$z, $a]]);
-        is($s, parseLambda('λa.λb.a a'), 'in a LamT with free occurrance of the for-VarT yields changed LamT (accidental capture)');
-    }, 'subst-seq single subst ');
-    
-    subtest({
-        $s = $z.subst-seq([[$z, $l2], [$z, $y], [$y, $l2]]);
-        is($s, parseLambda('λc.λd.d λc.λd.d z'), 
-            'in a matching VarT yields rest of substs applied to replacement Term (transitive/Term)');
-
-        $s = $l1.subst-seq([[$z, $x], [$x, $y]]);
-        is($s, parseLambda('λa.λb.y a'), 'in a LamT with free occurrance of the for-VarT yields changed LamT (transitive/VarT)');
-
-        $s = $l1.subst-seq([[$z, $x], [$y, $z], [$x, $y]]);
-        is($s, parseLambda('λa.λb.y a'), 
-            'in a LamT with free occurrance of the for-VarT yields changed LamT (transitive, ignoring inapplicable)');
-
-        $s = $l1.subst-seq([[$z, $l2], [$z, $y]]);
-        is($s, parseLambda('λa.λb.(λc.λd.d y) a'), 'in a LamT with free occurrance of the for-VarT yields changed LamT (transitive/Term)');
-
-    }, 'subst-seq two substs ');
+    is_subst-seq(
+        [$c,  [[$y, $x]]]   => $None,       # [x/y]"c"          -> "c"
+        [$z,  [[$y, $x]]]   => $None,       # [x/y]z            -> z
+        [$y,  [[$y, $x]]]   => $Some($x),   # [x/y]y            -> x
+        [$y,  [[$y, $l1]]]  => $Some($l1),  # [λu.λv.z u/y]y    -> λu.λv.z u
+        [$l1, [[$y, $x]]]   => $None,       # [x/y]λu.λv.z u    -> λu.λv.z u    # because y doesn't occur in l1
+        [$l1, [[$u, $x]]]   => $None,       # [x/u]λu.λv.z u    -> λu.λv.z u    # because u is bound
+        [$l1, [[$z, $x]]]   => $Some($l3),  # [x/z]λu.λv.z u    -> λu.λv.x u    # since z is free in l1
+        [$l1, [[$z, $u]]]   => $Some($l4),  # [u/z]λu.λv.z u    -> λu.λv.u u    # since z is free in l1 (accidental capture)
+        
+        [$z,  [[$z, $l2], [$z, $y], [$y, $l2]]]     => $Some($l5),  
+            # [λw.λx.x z/y]([y/z]([λw.λx.x z/z]z))  -> λw.λx.x λw.λx.x z
+        [$l1, [[$z, $x], [$x, $y]]]                 => $Some($l6),
+            # [y/x]([x/z]λu.λv.z u)                 -> λu.λv.y u
+        [$l1, [[$z, $x], [$y, $z], [$x, $y]]]       => $Some($l6),
+            # [y/x]([z/y]([x/z]λu.λv.z u))          -> λu.λv.y u        # 2nd subst doesn't change anything
+        [$l1, [[$z, $l2], [$z, $y]]]                => $Some($l7),
+            # [y/z]([λw.λx.x z/z]λu.λv.z u)         -> λu.λv.(λw.λx.x y) u
+    );
 }
