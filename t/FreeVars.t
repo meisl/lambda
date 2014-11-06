@@ -13,6 +13,7 @@ use Lambda::LambdaModel;
 
 plan 135;
 
+
 { # predicate free?
     is_properLambdaFn($is-free);
     
@@ -110,9 +111,9 @@ plan 135;
     # a4: ((λx.x y) (λx.x y))
     my $msgNotFreeIfBoundByBoth = $msgNeverFree ~ 'if bound by both, :func and :arg';
     my $msgLam2Lam = ' in app of lambda to lambda';
-    is($is-free-under($x, $x, $a3), $false, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
-    is($is-free-under($x, $y, $a3), $false, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
-    is($is-free-under($x, $z, $a3), $false, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
+    is($is-free-under($x, $x, $a4), $false, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
+    is($is-free-under($x, $y, $a4), $false, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
+    is($is-free-under($x, $z, $a4), $false, $msgNotFreeIfBoundByBoth ~ $msgLam2Lam);
                           
     is($is-free-under($y, $x, $a4), $true);
     is($is-free-under($y, $y, $a4), $false);
