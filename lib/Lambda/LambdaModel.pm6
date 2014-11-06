@@ -2,7 +2,6 @@ use v6;
 
 use Lambda::Tree;
 use Lambda::_FreeVars;
-use Lambda::_Substitution;
 use Lambda::_EtaReduction;
 use Lambda::_BetaReduction;
 
@@ -12,7 +11,7 @@ use Lambda::PairADT;
 use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
-#use Lambda::Substitution;
+use Lambda::Substitution;
 
 use Lambda::Conversion::ListADT-conv;
 use Lambda::Conversion::Bool-conv;
@@ -58,12 +57,24 @@ sub convertToP6Term(TTerm:D $t) is export {
 role Term
     does Tree
     does FreeVars[Term, ConstT, VarT, AppT, LamT]
-    does Substitution[Term, ConstT, VarT, AppT, LamT]
     does EtaReduction[Term, ConstT, VarT, AppT, LamT]
     does BetaReduction[Term, ConstT, VarT, AppT, LamT]
 {
-
     method convertToP6Term(TTerm:D $t) { convertToP6Term($t) }
+
+
+    # Substitution ------------------------------------------------------------
+
+    method subst(Term:D: Term:D $what, VarT:D :$for!) {   # cannot declare return type (Term) - yields really weird error msg
+        my $result = $subst(self, $what, $for);
+        self.convertToP6Term( $Maybe2valueWithDefault($result, self) );
+    }
+
+    method subst-seq(Term:D: @substitutions) {   # cannot declare return type (Term) - yields really weird error msg
+        my $result = $subst-seq(self, convertP6ArrayToTListOfTPairs(@substitutions));
+        self.convertToP6Term( $Maybe2valueWithDefault($result, self) );
+    }
+
 }
 
 
