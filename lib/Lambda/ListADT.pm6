@@ -39,26 +39,51 @@ constant $is-nil is export = lambdaFn(
     -> TList:D $xs { $not($xs($pi1o3)) }
 );
 
+# helper function if-nil, to reduce nr of calls to xs by half
+constant $if-nil is export = lambdaFn(
+    'if-nil', 'λxs.λwhenNil.λotherwise.xs λnotNil.λhead.λtail._if notNil (λ_.otherwise head tail) whenNil',
+    -> TList:D $xs, &whenNil, &otherwise {
+        $xs(-> $notNil, $head, $tail {
+                $_if( $notNil,
+                    { &otherwise($head, $tail) },
+                    &whenNil
+                )
+        })
+    }
+);
 
 # projections
 
 constant $car is export = lambdaFn(
-    'car', 'λxs.if (nil? xs) (error "cannot get car of nil") (xs π3->2)',
+    'car', 'λxs.if-nil xs (λ_.error "cannot get car of nil") π2->1',
     -> TList:D $xs {
-        $_if($is-nil($xs),
-            {die "cannot get car of nil"},
-            {$xs.($pi2o3)})
+        $if-nil( $xs,
+            { die "cannot get car of nil" },
+            $pi1o2
+        )
+#    'car', 'λxs.if (nil? xs) (error "cannot get car of nil") (xs π3->2)',
+#        $_if( $is-nil($xs),
+#            { die "cannot get car of nil" },
+#            { $xs.($pi2o3) }
+#        )
     }
 );
 
 constant $cdr is export = lambdaFn(
-    #'cdr', 'λxs.if (nil? xs) (error "cannot get cdr of nil") (xs π3->3)',
-    'cdr', 'λxs.((nil? xs) (λ_.error "cannot get cdr of nil") (λ_.xs π3->3)) _',
+    'cdr', 'λxs.if-nil xs (λ_.error "cannot get cdr of nil") π2->2',
     -> TList:D $xs {
-            $_if($is-nil($xs),
-            {die "cannot get cdr of nil"},
-            {$xs($pi3o3)})
+            $if-nil( $xs,
+                { die "cannot get cdr of nil" },
+                $pi2o2
+            )
     }
+#    'cdr', 'λxs.if (nil? xs) (error "cannot get cdr of nil") (xs π3->3)',
+#    -> TList:D $xs {
+#            $_if( $is-nil($xs),
+#                { die "cannot get cdr of nil" },
+#                { $xs($pi3o3) }
+#            )
+#    }
 );
 
 constant $caar is export = lambdaFn( 'caar', 'B car car', $B($car, $car) );
