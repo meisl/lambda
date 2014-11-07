@@ -1,7 +1,6 @@
 use v6;
 
 use Lambda::Tree;
-use Lambda::_BetaReduction;
 
 use Lambda::Base;
 use Lambda::Boolean;
@@ -13,6 +12,7 @@ use Lambda::TermADT;
 use Lambda::Substitution;
 use Lambda::FreeVars;
 use Lambda::EtaReduction;
+use Lambda::BetaReduction;
 
 use Lambda::Conversion::ListADT-conv;
 use Lambda::Conversion::Bool-conv;
@@ -58,7 +58,6 @@ sub convertToP6Term(TTerm:D $t) is export {
 
 role Term
     does Tree
-    does BetaReduction[Term, ConstT, VarT, AppT, LamT]
 {
     method convertToP6Term(TTerm:D $t) { convertToP6Term($t) }
 
@@ -111,6 +110,24 @@ role Term
     
     method eta-reduce() {
         self.convertToP6Term( $Maybe2valueWithDefault($etaReduce(self), self) );
+    }
+
+    # BetaReduction -----------------------------------------------------------
+
+    method isBetaRedex {
+        convertTBool2P6Bool($is-betaRedex(self));
+    }
+
+    method isBetaReducible {
+        convertTBool2P6Bool($is-betaReducible(self));
+    }
+
+    method beta-contract {
+        self.convertToP6Term( $Maybe2valueWithDefault($betaContract(self), self) );
+    }
+
+    method beta-reduce() {
+        self.convertToP6Term( $Maybe2valueWithDefault($betaReduce(self), self) );
     }
 
 }
