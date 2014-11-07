@@ -45,9 +45,10 @@ constant $is-nil is export = lambdaFn(
 constant $car is export = lambdaFn(
     'car', 'λxs.if (nil? xs) (error "cannot get car of nil") (xs π3->2)',
     -> TList:D $xs {
-        $_if($is-nil($xs),
-            {die "cannot get car of nil"},
-            {$xs.($pi2o3)})
+        $_if( $is-nil($xs),
+            { die "cannot get car of nil" },
+            { $xs.($pi2o3) }
+        )
     }
 );
 
@@ -55,9 +56,10 @@ constant $cdr is export = lambdaFn(
     #'cdr', 'λxs.if (nil? xs) (error "cannot get cdr of nil") (xs π3->3)',
     'cdr', 'λxs.((nil? xs) (λ_.error "cannot get cdr of nil") (λ_.xs π3->3)) _',
     -> TList:D $xs {
-            $_if($is-nil($xs),
-            {die "cannot get cdr of nil"},
-            {$xs($pi3o3)})
+            $_if( $is-nil($xs),
+                { die "cannot get cdr of nil" },
+                { $xs($pi3o3) }
+            )
     }
 );
 
