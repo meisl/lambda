@@ -349,3 +349,13 @@ ENDOFLAMBDA
         )
     }
 );
+
+
+constant $Term2size is export = $Y(lambdaFn(
+    'Term->size', 'λself.λt.(foldl (λacc.λchild.(+ acc (self child))) 1 (Term->children t))',
+    -> &self {
+        -> TTerm:D $t {
+            $foldl(-> $acc, $child { $acc + &self($child) }, 1, $Term2children($t));
+        }
+    }
+));

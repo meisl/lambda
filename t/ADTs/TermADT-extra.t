@@ -7,7 +7,8 @@ use Lambda::Boolean;
 
 use Lambda::TermADT;
 
-plan 92;
+
+plan 106;
 
 
 my $x ::= $VarT('x');
@@ -65,10 +66,6 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 
     is $Term2children.symbol, 'Term->children', '$Term2children.symbol';
     is $Term2children.Str,    'Term->children', '$Term2children.Str';
-
-    my $x = $VarT('x');
-    my $y = $VarT('y');
-    my $c = $ConstT('c');
 
     $has_length($Term2children($x), 0, "(Term->children $x)");
     $has_length($Term2children($c), 0, "(Term->children $c)");
@@ -174,4 +171,25 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
         $AppT($LamT($x, $AppT($x, $x)), $LamT($y, $AppT($y, $y)))   => $true,   # ((λx.x x) (λy.y y))    # Omega = (omega omega)
     );
 
+}
+
+{ # Term->size
+    is_properLambdaFn($Term2size);
+
+    is $Term2size.symbol, 'Term->size', '$Term2size.symbol';
+    is $Term2size.Str,    'Term->size', '$Term2size.Str';
+
+    test( $Term2size, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+        $x                                                          =>  1,  # x
+        $c                                                          =>  1,  # "c"
+        $ConstT(5)                                                  =>  1,  # 5
+        $AppT($x, $c)                                               =>  3,  # (x "c")
+        $AppT($x, $AppT($x, $y))                                    =>  5,  # (x (x y))
+        $LamT($z, $AppT($x, $AppT($x, $y)))                         =>  7,  # λz.(x (x y))
+        $LamT($x, $AppT($x, $LamT($y, $AppT($x, $y))))              =>  9,  # (λx.(x (λy.(x y)))),
+        $AppT($LamT($y, $AppT($x, $y)), $y)                         =>  7,  # ((λy.(x y)) y),
+        $AppT($LamT($x, $AppT($y, $x)), $LamT($y, $AppT($x, $y)))   => 11,  # ((λx.(y x)) (λy.(x y))),
+        $LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x))              =>  9,  # (λx.((λy.(z y)) x)),
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($x, $AppT($x, $x)))   => 11,  # ((λx.x x) (λx.x x))    # Omega = (omega omega)
+    );
 }
