@@ -104,7 +104,7 @@ q:to/ENDOFLAMBDA/,
                                                      )
                                                    (_if (nil? alpha-problematic)
                                                         (λ_.let ((substituted-func (subst inTerm arg forVar))
-                                                                 (isSame           (None? substituted-func))   ; TODO: check for Omega (may yield alpha-equiv term instead of None)
+                                                                 (isSame           (None? substituted-func))
                                                                 )
                                                               (_if isSame            ; TODO: use Maybe-or or something like that
                                                                    (λ_.Some inTerm)
