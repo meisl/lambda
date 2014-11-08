@@ -137,8 +137,6 @@ role ConstT does Term {
         #note '>>>> ConstT.new, value=' ~ $value;
         $ConstT($value) does ConstT;
     }
-
-    method gist { self.value.perl }
 }
 
 
@@ -148,9 +146,6 @@ role VarT does Term {
     method new(Str:D :$name) {
         $VarT($name);
     }
-
-    method gist { ~self.name }
-
 
     my $nextAlphaNr = 1;
 
@@ -186,8 +181,6 @@ role AppT does Term {
         $AppT($func, $arg) does AppT;
     }
 
-    method gist { '(' ~ self.func.gist ~ ' ' ~ self.arg.gist ~ ')' }
-
     method alpha-needy-terms(@vars) {
         @(self.func.alpha-needy-terms(@vars), self.arg.alpha-needy-terms(@vars))
     }
@@ -204,10 +197,6 @@ role LamT does Term {
 
     method new(VarT:D :$var!, Term:D :$body!) {
         $LamT($var, $body) does LamT;
-    }
-
-    method gist {
-        '(λ' ~ self.var.gist ~ '.' ~ self.body.gist ~ ')';
     }
 
     method alpha-needy-terms(@vars-to-stay-free) {
