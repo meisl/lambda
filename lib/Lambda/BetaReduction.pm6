@@ -76,14 +76,12 @@ q:to/ENDOFLAMBDA/,
              ((AppT func arg)
                 (_if (betaRedex? t)
                      (λ_.let ((var   (LamT->var  func))
-                              (vName (VarT->name var))
                               (body  (LamT->body func))
                              )
                            (filter
-                               (λv._if (eq? (VarT->name v) vName)
-                                       (K #false)
-                                       (λ_.free-under? var v body)
-                               )
+                                ; no need to filter out var itself separately
+                                ; since it cannot be free under itself in the body
+                               (λv.free-under? var v body)
                                (free-vars arg)
                            )
                      )
@@ -102,14 +100,12 @@ ENDOFLAMBDA
                     my $arg  = $AppT2arg($t);
                     $_if( $is-betaRedex($t),
                         { my $var   = $LamT2var($func);
-                          my $vName = $VarT2name($var);
                           my $body  = $LamT2body($func);
                           $filter(
                               -> $v {
-                                $_if( convertP6Bool2TBool($VarT2name($v) eq $vName),
-                                    { $false },
-                                    { $is-free-under($var, $v, $body) }
-                                )
+                                # no need to filter out $var itself separately
+                                # since it cannot be free under itself in the body
+                                $is-free-under($var, $v, $body)
                               },
                               $free-vars($arg)
                           );
@@ -141,31 +137,28 @@ q:to/ENDOFLAMBDA/,
              ((AppT func arg)
                   (_if (betaReducible? t)
                        (λ_._if (betaRedex t)
-                               (λ_.let ((forVar  (LamT->var func))
-                                        (forName (VarT->name forVar))
+                               (λ_.let ((funcVar     (LamT->var func))
+                                        (funcVarName (VarT->name funcVar))
                                         (_if (Ω? t)
-                                             (λ_._if (eq? (VarT->name (LamT->var arg)) forName)
+                                             (λ_._if (eq? (VarT->name (LamT->var arg)) funcVarName)
                                                      (K None) ; func and arg are both literally the same ω
                                                      (λ_.Some (AppT arg arg)) ; otherwise one more step to make them so
                                              )
-                                             (λ_.let ((inTerm  (LamT->body func))
-                                                      (fvs     (filter
-                                                                   (λv.not (eq? (VarT->name v) forName))
-                                                                   (free-vars arg)
-                                                               )
-                                                      )
+                                             (λ_.let ((funcBody          (LamT->body func))
                                                       (alpha-problematic (filter
-                                                                             (λv.free-under? forVar v inTerm)
-                                                                             fvs
+                                                                             ; no need to filter out var itself separately
+                                                                             ; since it cannot be free under itself in the body
+                                                                             (λv.free-under? funcVar v funcBody)
+                                                                             (free-vars arg)
                                                                          )
                                                       )
                                                      )
                                                    (_if (nil? alpha-problematic)
-                                                        (λ_.let ((substituted-func (subst inTerm arg forVar))
+                                                        (λ_.let ((substituted-func (subst funcBody arg funcVar))
                                                                  (isSame           (None? substituted-func))
                                                                 )
                                                               (_if isSame            ; TODO: use Maybe-or or something like that
-                                                                   (λ_.Some inTerm)
+                                                                   (λ_.Some funcBody)
                                                                    (K substituted-func)
                                                               )
                                                         )
@@ -204,28 +197,26 @@ ENDOFLAMBDA
                 my $arg  = $AppT2arg($t);
                 $_if( $is-betaReducible($t),
                     { $_if( $is-betaRedex($t),
-                          { my $forVar  = $LamT2var($func);
-                            my $forName = $VarT2name($forVar);
+                          { my $funcVar  = $LamT2var($func);
+                            my $funcVarName = $VarT2name($funcVar);
                             $_if( $is-Omega($t),
-                                { $_if( convertP6Bool2TBool($VarT2name($LamT2var($arg)) eq $forName),
+                                { $_if( convertP6Bool2TBool($VarT2name($LamT2var($arg)) eq $funcVarName),
                                       { $None }, # func and arg are both the (literally) same omega
                                       { $Some($AppT($arg, $arg)) }  # otherwise one more step to make them so
                                   )
                                 },
-                                { my $inTerm  = $LamT2body($func);
-                                  my $fvs = $filter(
-                                      -> $v { convertP6Bool2TBool($VarT2name($v) ne $forName) },
+                                { my $funcBody  = $LamT2body($func);
+                                  my $alpha-problematic = $filter(
+                                      # no need to filter out $var itself separately
+                                      # since it cannot be free under itself in the body
+                                      -> $v { $is-free-under($funcVar, $v, $funcBody) },
                                       $free-vars($arg)
                                   );
-                                  my $alpha-problematic = $filter(
-                                      -> $v { $is-free-under($forVar, $v, $inTerm) },
-                                      $fvs
-                                  );
                                   $_if( $is-nil($alpha-problematic),
-                                      { my $substituted-func = $subst($inTerm, $arg, $forVar);
+                                      { my $substituted-func = $subst($funcBody, $arg, $funcVar);
                                         my $isSame = $is-None($substituted-func);
                                         $_if( $isSame,   # TODO: use Maybe-or or something like that
-                                            { $Some($inTerm) },
+                                            { $Some($funcBody) },
                                             { $substituted-func }
                                         )
                                       },
