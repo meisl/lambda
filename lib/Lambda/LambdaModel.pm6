@@ -192,11 +192,6 @@ role AppT does Term {
     method alpha-needy-terms(@vars) {
         @(self.func.alpha-needy-terms(@vars), self.arg.alpha-needy-terms(@vars))
     }
-
-    method alpha-problematic {
-        return @() unless self.isBetaRedex;
-        self.arg.freeVars.grep({ self.func.var.isFreeUnder(:binder($_), :in(self.func.body)) });
-    }
 }
 
 role LamT does Term {

@@ -14,6 +14,7 @@ use Lambda::BetaReduction;
 
 use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
+use Lambda::Conversion::ListADT-conv;
 
 plan 4;
 
@@ -37,7 +38,7 @@ plan 4;
 }
 
 {
-    my $n;
+    my ($n, $apvs, $apvsP6);
 
     $n = convertToP6Term(parseLambda('(λx.λz.λv.z x (λx.x) (λz.x z) (λy.x x)) ((z ((λx.λy.x y z) x)) v)'));
     my $func = $AppT2func($n);
@@ -48,9 +49,11 @@ plan 4;
     say 'β-redex? '~ $is-betaRedex($n);
     say 'β-reducible? '~ $is-betaReducible($n);
     say 'FV: '~ $free-vars($n);
-    say 'α-problematic: ' ~ $n.alpha-problematic;
-    say "n.α-needy-terms:\n  " ~ $n.alpha-needy-terms($n.alpha-problematic).map($Term2source).join("\n  ");
-    say "func.α-needy-terms:\n  " ~ $func.alpha-needy-terms($n.alpha-problematic).map($Term2source).join("\n  ");
+    $apvs   = $alpha-problematic-vars($n);
+    $apvsP6 = convertTList2P6Array($apvs);
+    say '(alpha-problematic-vars ...) = ' ~ $apvsP6.map($Term2source).join(", ");
+    say "n.α-needy-terms:\n  " ~ $n.alpha-needy-terms($apvsP6).map($Term2source).join("\n  ");
+    say "func.α-needy-terms:\n  " ~ $func.alpha-needy-terms($apvsP6).map($Term2source).join("\n  ");
 
     say '';
     say $Term2source($func);
