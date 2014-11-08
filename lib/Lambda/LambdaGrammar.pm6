@@ -5,26 +5,10 @@ use Lambda::Boolean;
 use Lambda::ListADT;
 use Lambda::TermADT;
 
-use Lambda::LambdaModel;
-
-
-my %texts = %(              # chi: χ0
-    1 => '(λx.(x (λa.(λb.a))))',
-    2 => 'λx.x λa.λb.a',
-    7 => 'λx.x',
-    3 => '(f _)',
-    8 => '(δ id λx.x)',
-
-    # Church numerals
-    9 => '(δ χ0 λf.λx.x)  (δ χ1 λf.λx.f x)  (δ χ2 λf.λx.f (f x))  (δ χ3 λf.λx.f (f (f x)))'
-        #'(δ χ0 λf.id)    (δ χ1 id)'
-         ~'  (δ succ λn.λf.λx.n f (f x))',
-         #'  (δ succ λn.λf.λx.f (n f x))',
-    4 => '(δ id λx.x)  (δ fst λa.λb.a)  (δ snd λa.λb.b)  (δ reverse-apply λa.λf.f a)  (δ car (reverse-apply fst))',
-    5 => '(δ id λx.x)  (δ fst λa.λb.a)  (δ snd λa.λb.b)',
-    6 => '(δ let λvar.λterm.λbody.(λvar.body) term)',
-    10 => '(λa.λb.a) (λf.λx.x) (λf.f)',
-);
+use Lambda::MaybeADT;
+use Lambda::FreeVars;
+use Lambda::EtaReduction;
+use Lambda::BetaReduction;
 
 
 
@@ -95,7 +79,8 @@ grammar LambdaGrammar {
     rule definition {
         '(' <.delta> $<symbol> = <.variable> <term> ')'
         {
-            make DefNode.new(:symbol($<symbol>.ast), :term($<term>.ast))
+            die "DefNode NYI";
+            #make DefNode.new(:symbol($<symbol>.ast), :term($<term>.ast))
         }
     }
 }
@@ -119,82 +104,4 @@ my sub parseLambda(Str:D $s --> TTerm) is export {
     #say ConstT.ctorCalls ~ " constructor calls.\n";
     #say "AST:\n$out\n";
     ($match.ast ~~ TTerm) && $match.ast || die X::Lambda::SyntaxError.new(:$match)
-}
-
-if False {
-    #use Grammar::Tracer_01_h04;
-    my grammar G is LambdaGrammar {}
-    #my $match = G.doWork(7)[0];
-    #my $n = $match.ast;
-    #say $match;
-    #say '';
-    #say 'AST:';
-    #say $n;
-    my $succ-of-zero_a = '(λn.λf.λx.n f (f x)) (λf.λx.x)';
-    my $succ-of-zero_b = '(λn.λf.λx.f (n f x)) (λf.λx.x)';
-
-    my $test-simplify_curry = 'λf.λx.f x';
-    my $test-simplify_ident = '(λx.x) (λx.x)';
-    my $test-simplify_ident_a = '(λf.(λx.((λx.x) (f x))))';
-    my $test-simplify_ident_b = '(λf.(λx.(f ((λx.x) x))))';
-    
-    my $omega = '(δ ω λx.x x) (δ Ω (ω ω))';
-    my $growing = '(λx.x x y)(λx.x x y)';
-
-    my $n;
-
-    $n = parseLambda('(λx.λz.λv.z x (λx.x) λz.x z) ((z ((λx.λy.x y z) x)) v)');
-    my $func = $n.func;
-    my $arg = $n.arg;
-    say $n;
-    say 'β-redex? '~ $n.isBetaRedex;
-    say 'β-reducible? '~ $n.isBetaReducible;
-    say 'FV: '~ $n.freeVars;
-    say 'α-problematic: ' ~ $n.alpha-problematic;
-    say "n.α-needy-terms:\n  " ~ $n.alpha-needy-terms($n.alpha-problematic).join("\n  ");
-    say "apt.α-needy-terms:\n  " ~ $func.alpha-needy-terms($n.alpha-problematic).join("\n  ");
-
-    say '';
-    say $func;
-    say 'β-redex? '~ $func.isBetaRedex;
-    say 'β-reducible? '~ $func.isBetaReducible;
-    say 'FV: '~ $func.freeVars;
-    say 'x.isFreeUnder(:binder(z), :in(...)) ' ~ $func.var.isFreeUnder(:binder(VarT.get('z')), :in($func.body));
-    say 'x.isFreeUnder(:binder(x), :in(...)) ' ~ $func.var.isFreeUnder(:binder(VarT.get('x')), :in($func.body));
-    say 'x.isFreeUnder(:binder(v), :in(...)) ' ~ $func.var.isFreeUnder(:binder(VarT.get('v')), :in($func.body));
-
-    say $arg;
-    say 'β-redex? '~ $arg.isBetaRedex;
-    say 'β-reducible? '~ $arg.isBetaReducible;
-    say 'FV: '~ $arg.freeVars;
-    exit;
-
-    #$n = parseLambda('λf.(λx.λy.(f g h x y))');
-    my $n_smp = $n.eta-contract;
-    say "eta-contract (only):\n$n_smp\n";
-    say $n_smp.isEtaReducible;
-    say $n_smp.eta-contract;
-    say $n.eta-reduce;
-
-    my $n_evd = $n.eval-s;
-    say "eval-s:\n$n_evd\n";
-    say $n_evd;
-    
-    my $n_evd_smp = $n_evd.simplify;
-    say "eval-s + simplify:\n$n_evd_smp\n";
-    say $n_evd_smp;
-
-    say ConstT.ctorCalls ~ " constructor calls.\n";
-
-    #$succ-of-zero_a:
-    #a: (λf.(λx.(((λg.(λx.x)) f) (f x))))
-    #   (λf.(λx.(     (λx.x)     (f x))))   # App.simplify-ident
-    #   (λf.(λx.                 (f x)))    # Abs.simplify-curry
-    #   (λf.                      f)
- 
-    #b: (λf.(λx.(f (((λg.(λx.x)) f) x))))
-    #   (λf.(λx.(f (     (λx.x)     x))))   # App.simplify-ident
-    #   (λf.(λx.(f                  x)))    # Abs.simplify-curry
-    #   (λf.     f)
-
 }

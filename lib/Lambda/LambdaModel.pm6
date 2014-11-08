@@ -137,6 +137,10 @@ role ConstT does Term {
         #note '>>>> ConstT.new, value=' ~ $value;
         $ConstT($value) does ConstT;
     }
+
+    method alpha-needy-terms(@vars-to-stay-free) {
+        @();
+    }
 }
 
 
@@ -144,7 +148,11 @@ role VarT does Term {
     method name { $VarT2name(self) }
     
     method new(Str:D :$name) {
-        $VarT($name);
+        $VarT($name) does VarT;
+    }
+
+    method alpha-needy-terms(@vars-to-stay-free) {
+        @();
     }
 
     my $nextAlphaNr = 1;
@@ -200,10 +208,11 @@ role LamT does Term {
     }
 
     method alpha-needy-terms(@vars-to-stay-free) {
+
         my @wantNot = (self.var.name eq any(@vars-to-stay-free))
             ?? @( self, self.body.alpha-needy-terms(@vars-to-stay-free.grep(*.name eq self.var.name)) )
             !! self.body.alpha-needy-terms(@vars-to-stay-free);
-        my @all = (self.var.name eq any(@vars-to-stay-free))
+        my @all = (self.var.name eq any(@vars-to-stay-free.map($VarT2name)))
             ?? @( self, self.body.alpha-needy-terms(@vars-to-stay-free) )
             !! self.body.alpha-needy-terms(@vars-to-stay-free);
         my @want = @all.grep({$_ === @wantNot.any});
