@@ -1,7 +1,5 @@
 use v6;
 
-use Lambda::Tree;
-
 use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::PairADT;
@@ -56,11 +54,9 @@ sub convertToP6Term(TTerm:D $t) is export {
     }
 }
 
-role Term
-    does Tree
-{
-    method convertToP6Term(TTerm:D $t) { convertToP6Term($t) }
+role Term {
 
+    method convertToP6Term(TTerm:D $t) { convertToP6Term($t) }
 
     # Substitution ------------------------------------------------------------
 
@@ -133,15 +129,8 @@ role Term
 }
 
 
-role LeafTerm does Term {
-    method children { @() }
 
-    method alpha-needy-terms(@vars) { @() }
-}
-
-
-
-role ConstT does LeafTerm {
+role ConstT does Term {
     method value { $ConstT2value(self) }
 
     method new(:$value!) {
@@ -153,44 +142,38 @@ role ConstT does LeafTerm {
 }
 
 
-role VarT does LeafTerm {
+role VarT does Term {
     method name { $VarT2name(self) }
     
     method new(Str:D :$name) {
-        VarT.get($name);
+        $VarT($name);
     }
 
     method gist { ~self.name }
 
 
-    my %namesToVarNodes = %();
     my $nextAlphaNr = 1;
 
     my role AlphaVarT {
-        has VarT:D $.for;
+        has TTerm:D $.for;
 
         method gist {
-            self.name ~ '[/' ~ $!for.gist ~ ']'
+            my $forStr = ($!for ~~ AlphaVarT)
+                ?? $!for.gist
+                !! $VarT2name($!for);
+            self.name ~ "[/$forStr]";
         }
     }
 
-    method fresh(VarT:T: VarT :$for --> VarT:D) {
-        my $n = VarT.get('α' ~ $nextAlphaNr);
-        $n ~~ TTerm or die $n.perl;
+    method fresh(VarT:T: TTerm :$for --> VarT:D) {
+        my $v = $VarT('α' ~ $nextAlphaNr) does VarT;
+        $v ~~ TTerm or die $v.perl;
         if $for.defined {
-            $n does AlphaVarT(:$for);
+            $is-VarT($for) or die "can make fresh var for another var but not for $for";
+            $v does AlphaVarT(:$for);
         }
         $nextAlphaNr++;
-        $n;
-    }
-
-    method get(VarT:T: Str:D $name --> VarT) {
-        my $out = %namesToVarNodes{$name};
-        unless $out.defined {
-            $out = $VarT($name) does VarT;
-            %namesToVarNodes{$name} = $out;
-        }
-        return $out;
+        $v;
     }
 }
 
@@ -202,8 +185,6 @@ role AppT does Term {
     method new(Term:D :$func!, Term:D :$arg!) {
         $AppT($func, $arg) does AppT;
     }
-
-    method children { @(self.func, self.arg) }
 
     method gist { '(' ~ self.func.gist ~ ' ' ~ self.arg.gist ~ ')' }
 
@@ -224,8 +205,6 @@ role LamT does Term {
     method new(VarT:D :$var!, Term:D :$body!) {
         $LamT($var, $body) does LamT;
     }
-
-    method children { @(self.var, self.body) }
 
     method gist {
         '(λ' ~ self.var.gist ~ '.' ~ self.body.gist ~ ')';
@@ -254,8 +233,6 @@ class DefNode does Term {
 
     submethod BUILD(:$!symbol!, :$!term!) {
     }
-
-    method children { @($!symbol, $!term) }
 
     method gist {
         "(δ $!symbol " ~ $!term.gist ~ ')';

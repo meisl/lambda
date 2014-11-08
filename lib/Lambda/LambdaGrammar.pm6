@@ -1,4 +1,10 @@
 use v6;
+
+use Lambda::Base;
+use Lambda::Boolean;
+use Lambda::ListADT;
+use Lambda::TermADT;
+
 use Lambda::LambdaModel;
 
 
@@ -24,14 +30,14 @@ my %texts = %(              # chi: χ0
 
 grammar LambdaGrammar {
 
-    sub makeLeftAssoc(@operands! where *.elems >= 1, @operators = 0..* --> Term) is export {
+    sub makeLeftAssoc(@operands! where *.elems >= 1, @operators = 0..* --> TTerm) is export {
         for @operands -> $n {
-            die "expected Term but got " ~ $n.perl
-                unless ($n ~~ Term) && $n.defined;
+            die "expected TTerm but got " ~ $n.perl
+                unless ($n ~~ TTerm) && $n.defined;
         }
         my $term = @operands[0];
         for @operators Z @operands[1..*] -> $op, $right {
-            $term = AppT.new(:func($term), :arg($right));
+            $term = $AppT($term, $right);
         }
         $term;
     }
@@ -74,7 +80,7 @@ grammar LambdaGrammar {
 
     token variable {
         $<name> = <-[\\αβδλ.()\s]>+
-        { make VarT.get($<name>.Str) }
+        { make $VarT($<name>.Str) }
     }
 
     token constant {
@@ -83,7 +89,7 @@ grammar LambdaGrammar {
 
     token abstraction {
         \s* <.lambda> \s* <variable> \s* '.'  <body=.termlist1orMore> \s*
-        { make LamT.new(:var($<variable>.ast), :body($<body>.ast)) }
+        { make $LamT($<variable>.ast, $<body>.ast) }
     }
 
     rule definition {
@@ -107,12 +113,12 @@ class X::Lambda::SyntaxError is Exception {
     }
 }
 
-my sub parseLambda(Str:D $s --> Term) is export {
+my sub parseLambda(Str:D $s --> TTerm) is export {
     #use Grammar::Tracer_01_h04;
     my $match = LambdaGrammar.subparse($s);
     #say ConstT.ctorCalls ~ " constructor calls.\n";
     #say "AST:\n$out\n";
-    ($match.ast ~~ Term) && $match.ast || die X::Lambda::SyntaxError.new(:$match)
+    ($match.ast ~~ TTerm) && $match.ast || die X::Lambda::SyntaxError.new(:$match)
 }
 
 if False {

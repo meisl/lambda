@@ -2,16 +2,26 @@ use v6;
 
 use Test;
 use Test::Util;
+
+use Lambda::Boolean;
+use Lambda::TermADT;
+
 use Lambda::LambdaGrammar;
 
-plan 36;
+plan 37;
+
+
+my sub is_TermType(TTerm $term, $predicate, $msg) {
+    is($predicate($term), $true, $msg);
+}
+
 
 { # single variable
     my $t;
     
     $t = parseLambda('x'); 
-    does_ok($t, VarT, 'single var');
-    is($t.name, 'x', 'name of single var');
+    is_TermType($t, $is-VarT, 'single var');
+    is($VarT2name($t), 'x', 'name of single var');
 
     throws_like({ parseLambda('') }, X::Lambda::SyntaxError,
         :message('Syntax error: HERE>>>""'),
@@ -30,41 +40,47 @@ plan 36;
 }
 
 { # application
-    my $t;
+    my ($t, $msg);
     
     $t = parseLambda('x y');
-    does_ok($t, AppT, 'application of two vars');
-    does_ok($t.func, VarT);
-    does_ok($t.arg, VarT);
-
-    $t = parseLambda('x y');
-    does_ok($t, AppT, 'application of two vars with parens');
-    does_ok($t.func, VarT);
-    does_ok($t.arg, VarT);
+    $msg = 'application of two vars';
+    is_TermType($t, $is-AppT, $msg);
+    is_TermType($AppT2func($t), $is-VarT, "func of $msg");
+    is_TermType($AppT2arg($t),  $is-VarT, "arg of $msg");
+    
+    $t = parseLambda('(x y)');
+    $msg = 'application of two vars with parens';
+    is_TermType($t, $is-AppT, $msg);
+    is_TermType($AppT2func($t), $is-VarT, "func of $msg");
+    is_TermType($AppT2arg($t),  $is-VarT, "arg of $msg");
 
     $t = parseLambda('x y z');
-    does_ok($t, AppT, 'application of three vars with parens');
-    does_ok($t.func, AppT, 'application should be left-associative');
-    does_ok($t.arg, VarT);
-    does_ok($t.func.func, VarT);
-    does_ok($t.func.arg, VarT);
+    $msg = 'application of three vars';
+    is_TermType($t, $is-AppT, $msg);
+    is_TermType($AppT2func($t), $is-AppT, "func of $msg");
+    is_TermType($AppT2arg($t),  $is-VarT, "arg of $msg");
+    is_TermType($AppT2func($AppT2func($t)),  $is-VarT, "func of func of $msg");
+    is_TermType($AppT2arg($AppT2func($t)),   $is-VarT, "arg of func of $msg");
 
     $t = parseLambda('((x y) z)');
-    does_ok($t, AppT, 'application of three vars with parens (left-assoc)');
-    does_ok($t.func, AppT);
-    does_ok($t.func.func, VarT);
-    does_ok($t.func.arg, VarT);
+    $msg = 'application of three vars with parens (left-assoc)';
+    is_TermType($t, $is-AppT, $msg);
+    is_TermType($AppT2func($t), $is-AppT, "func of $msg");
+    is_TermType($AppT2arg($t),  $is-VarT, "arg of $msg");
+    is_TermType($AppT2func($AppT2func($t)),  $is-VarT, "func of func of $msg");
+    is_TermType($AppT2arg($AppT2func($t)),   $is-VarT, "arg of func of $msg");
 
     $t = parseLambda('(x (y z))');
-    does_ok($t, AppT, 'application of three vars with parens (right-assoc)');
-    does_ok($t.func, VarT);
-    does_ok($t.arg, AppT);
-    does_ok($t.arg.func, VarT);
-    does_ok($t.arg.arg, VarT);
+    $msg = 'application of three vars with parens (right-assoc)';
+    is_TermType($t, $is-AppT, $msg);
+    is_TermType($AppT2func($t), $is-VarT, "func of $msg");
+    is_TermType($AppT2arg($t),  $is-AppT, "arg of $msg");
+    is_TermType($AppT2func($AppT2arg($t)),  $is-VarT, "func of arg of $msg");
+    is_TermType($AppT2arg($AppT2arg($t)),   $is-VarT, "arg of arg of $msg");
 }
 
 { # abstraction
-    my $t;
+    my ($t, $msg);
 
     throws_like({ parseLambda('λ') }, X::Lambda::SyntaxError,
         :message('Syntax error: HERE>>>"λ"'),
@@ -82,14 +98,16 @@ plan 36;
     );
 
     $t = parseLambda('λx.y');
-    does_ok($t, LamT, 'simple lambda');
-    does_ok($t.var, VarT);
-    does_ok($t.body, VarT);
+    $msg = 'simple lambda';
+    is_TermType($t, $is-LamT, $msg);
+    is_TermType($LamT2var($t),  $is-VarT, "var of $msg");
+    is_TermType($LamT2body($t), $is-VarT, "body of $msg");
 
     $t = parseLambda('λx.λy.x');
-    does_ok($t, LamT, 'two-arg lambda');
-    does_ok($t.var, VarT);
-    does_ok($t.body, LamT);
-    does_ok($t.body.var, VarT);
-    does_ok($t.body.body, VarT);
+    $msg = 'two-arg lambda';
+    is_TermType($t, $is-LamT, $msg);
+    is_TermType($LamT2var($t),  $is-VarT, "var of $msg");
+    is_TermType($LamT2body($t), $is-LamT, "body of $msg");
+    is_TermType($LamT2var($LamT2body($t)),  $is-VarT, "var of body of $msg");
+    is_TermType($LamT2body($LamT2body($t)), $is-VarT, "body of body of $msg");
 }

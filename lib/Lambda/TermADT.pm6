@@ -15,6 +15,9 @@ module Lambda::TermADT;
 role TTerm is export {
 }
 
+# must make the hash a constant (it's still mutable though)
+# in order to have it real global
+my constant %names2vars = %();
 
 # VarT ------------------------------------------------------------------------
 
@@ -23,11 +26,17 @@ role TTerm is export {
 constant $VarT is export = lambdaFn(
     'VarT', 'λname.λprj.prj #false #false name _',
     -> Str:D $name {
-        my $nameStr = $name.perl;
-        lambdaFn(
-            Str, "(VarT $nameStr)",
-            -> &prj { &prj($false, $false, $name, Mu) }
-        ) does TTerm;
+        my $out = %names2vars{$name};
+        unless $out.defined {
+            my $nameStr = $name.perl;
+            $out = lambdaFn(
+                Str, "(VarT $nameStr)",
+                -> &prj { &prj($false, $false, $name, Mu) }
+            ) does TTerm;
+            %names2vars{$name} = $out;
+#            note '>>>> ' ~ %names2vars.elems ~ ' vars now: ' ~ %names2vars;
+        }
+        $out;
     }
 );
 
