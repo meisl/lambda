@@ -143,9 +143,6 @@ if False {
 
     my $n;
 
-    #say parseLambda('(z x (y λx.λy.x y z))').freeVars;
-    #exit;
-
     $n = parseLambda('(λx.λz.λv.z x (λx.x) λz.x z) ((z ((λx.λy.x y z) x)) v)');
     my $func = $n.func;
     my $arg = $n.arg;

@@ -11,7 +11,7 @@ use Lambda::FreeVars;
 
 use Lambda::LambdaModel;
 
-plan 79;
+plan 82;
 
 
 my $w = $VarT('w');
@@ -170,9 +170,10 @@ my sub test-pred($f, *@tests) {
 { # free-vars
     is_properLambdaFn($free-vars);
 
-    my $app1 = $AppT($x, $y);    # '(x y)'
-    my $app2 = $AppT($x, $x);    # '(x x)'
-    my $lam1 = $LamT($x, $app1);  # 'λx.x y'
+    my $app1 = $AppT($x, $y);       # (x y)
+    my $app2 = $AppT($x, $x);       # (x x)
+    my $lam1 = $LamT($x, $app1);    # λx.x y
+    my $app3 = $AppT($x, $lam1);    # (x λx.x y)
 
     is($free-vars($c),   $nil,              "($free-vars $c)");
     is($free-vars($x),   $cons($x, $nil),   "($free-vars $x)");
@@ -193,4 +194,9 @@ my sub test-pred($f, *@tests) {
     $fvs = $free-vars($lam1);
     $has_length($fvs, 1, "($free-vars $lam1)");
     $contains_ok($y, $fvs, "(free-vars $lam1)");
+
+    $fvs = $free-vars($app3);
+    $has_length($fvs, 2, "($free-vars $app3)");
+    $contains_ok($x, $fvs, "(free-vars $app3)");
+    $contains_ok($y, $fvs, "(free-vars $app3)");
 }
