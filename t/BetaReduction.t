@@ -13,7 +13,7 @@ use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
 
-plan 106;
+plan 116;
 
 sub test(Term:D $t, Str:D $desc, &tests) {
     #subtest {
@@ -23,6 +23,8 @@ sub test(Term:D $t, Str:D $desc, &tests) {
 }
 
 
+my $u = VarT.new(:name('u'));
+my $v = VarT.new(:name('v'));
 my $x = VarT.new(:name('x'));
 my $y = VarT.new(:name('y'));
 my $z = VarT.new(:name('z'));
@@ -315,6 +317,46 @@ my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y 
 
     is($OmegaXX.beta-reduce, $OmegaXX, "beta-reduce should terminate for $OmegaXX");
     is($OmegaXY.beta-reduce, $OmegaYY, "beta-reduce should terminate for $OmegaXY");
+}
+
+
+{ #alpha-problematic-vars
+    is_properLambdaFn($alpha-problematic-vars);
+
+    is $alpha-problematic-vars.symbol, 'alpha-problematic-vars', '$alpha-problematic-vars.symbol';
+    is $alpha-problematic-vars.Str,    'alpha-problematic-vars', '$alpha-problematic-vars.Str';
+
+    my $arg  = $AppT($AppT($AppT($x, $y), $z), $AppT($u, $v));              # (x y z (u v))
+    my $func = $LamT($y, $LamT($z, $LamT($x, $AppT($AppT($z, $y), $x))));   # λy.λz.λx.z y x
+    my $app  = $AppT($func, $arg);                                          # ((λy.λz.λx.z y x) (x y z (u v)))
+    my $lam  = $LamT($x, $app);                                             # λx.x ((λy.λz.λx.z y x) (x y z (u v)))
+
+    my ($t, $apvs);
+
+    $t = $x;
+    $apvs = $alpha-problematic-vars($t);
+    $has_length($apvs, 0, "(alpha-problematic-vars '{$Term2source($t)})");
+
+    $t = $c;
+    $apvs = $alpha-problematic-vars($t);
+    $has_length($apvs, 0, "(alpha-problematic-vars '{$Term2source($t)})");
+
+    $t = $arg;  # an AppT but not beta-reducible
+    $apvs = $alpha-problematic-vars($t);
+    $has_length($apvs, 0, "(alpha-problematic-vars '{$Term2source($t)})");
+
+    $t = $lam;
+    $apvs = $alpha-problematic-vars($t);
+    $has_length($apvs, 0, "(alpha-problematic-vars '{$Term2source($t)})");
+
+    $t = $app;
+    $apvs = $alpha-problematic-vars($t);
+    # only x and z because 
+    #   a) y is the substitution var (hence not free under a binder y) 
+    #   b) there are no binders u and v (in the body of func)
+    $has_length($apvs, 2,    "(alpha-problematic-vars '{$Term2source($t)})");
+    $contains_ok($x, $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
+    $contains_ok($z, $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
 }
 
 # examples requiring alpha-conversion before substitution:

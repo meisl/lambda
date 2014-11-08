@@ -66,6 +66,64 @@ ENDOFLAMBDA
 ));
 
 
+constant $alpha-problematic-vars is export = lambdaFn(
+    'alpha-problematic-vars',
+q:to/ENDOFLAMBDA/,
+    λt.case t ; TODO: case -> cascaded if
+            (((ConstT val)    nil)
+             ((VarT name)     nil)
+             ((LamT var body) nil)
+             ((AppT func arg)
+                (_if (betaRedex? t)
+                     (λ_.let ((var   (LamT->var  func))
+                              (vName (VarT->name var))
+                              (body  (LamT->body func))
+                             )
+                           (filter
+                               (λv._if (eq? (VarT->name v) vName)
+                                       (K #false)
+                                       (λ_.free-under? var v body)
+                               )
+                               (free-vars arg)
+                           )
+                     )
+                     (K nil)
+                )
+             )
+            )
+            (error (~ "unknown TTerm" (Term->Str t)))
+
+ENDOFLAMBDA
+    -> TTerm $t {
+        $_if( $_or($is-ConstT($t), $_or($is-VarT($t), $is-LamT($t))),
+            { $nil },
+            { $_if( $is-AppT($t),
+                  { my $func = $AppT2func($t);
+                    my $arg  = $AppT2arg($t);
+                    $_if( $is-betaRedex($t),
+                        { my $var   = $LamT2var($func);
+                          my $vName = $VarT2name($var);
+                          my $body  = $LamT2body($func);
+                          $filter(
+                              -> $v {
+                                $_if( convertP6Bool2TBool($VarT2name($v) eq $vName),
+                                    { $false },
+                                    { $is-free-under($var, $v, $body) }
+                                )
+                              },
+                              $free-vars($arg)
+                          );
+                        },
+                        { $nil },
+                    )
+                  },
+                  { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+              )
+            }
+        )
+    }
+);
+
 # one-step β-simplification (either of $t or any (one) child)
 constant $betaContract is export = $Y(lambdaFn(
     'betaContract',
@@ -104,7 +162,7 @@ q:to/ENDOFLAMBDA/,
                                                      )
                                                    (_if (nil? alpha-problematic)
                                                         (λ_.let ((substituted-func (subst inTerm arg forVar))
-                                                                 (isSame           (None? substituted-func))   ; TODO: check for Omega (may yield alpha-equiv term instead of None)
+                                                                 (isSame           (None? substituted-func))
                                                                 )
                                                               (_if isSame            ; TODO: use Maybe-or or something like that
                                                                    (λ_.Some inTerm)
