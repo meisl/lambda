@@ -137,10 +137,6 @@ role ConstT does Term {
         #note '>>>> ConstT.new, value=' ~ $value;
         $ConstT($value) does ConstT;
     }
-
-    method alpha-needy-terms(@vars-to-stay-free) {
-        @();
-    }
 }
 
 
@@ -149,10 +145,6 @@ role VarT does Term {
     
     method new(Str:D :$name) {
         $VarT($name) does VarT;
-    }
-
-    method alpha-needy-terms(@vars-to-stay-free) {
-        @();
     }
 
     my $nextAlphaNr = 1;
@@ -188,10 +180,6 @@ role AppT does Term {
     method new(Term:D :$func!, Term:D :$arg!) {
         $AppT($func, $arg) does AppT;
     }
-
-    method alpha-needy-terms(@vars) {
-        @(self.func.alpha-needy-terms(@vars), self.arg.alpha-needy-terms(@vars))
-    }
 }
 
 role LamT does Term {
@@ -201,22 +189,6 @@ role LamT does Term {
     method new(VarT:D :$var!, Term:D :$body!) {
         $LamT($var, $body) does LamT;
     }
-
-    method alpha-needy-terms(@vars-to-stay-free) {
-
-        my @wantNot = (self.var.name eq any(@vars-to-stay-free))
-            ?? @( self, self.body.alpha-needy-terms(@vars-to-stay-free.grep(*.name eq self.var.name)) )
-            !! self.body.alpha-needy-terms(@vars-to-stay-free);
-        my @all = (self.var.name eq any(@vars-to-stay-free.map($VarT2name)))
-            ?? @( self, self.body.alpha-needy-terms(@vars-to-stay-free) )
-            !! self.body.alpha-needy-terms(@vars-to-stay-free);
-        my @want = @all.grep({$_ === @wantNot.any});
-        @all;
-    }
-
-    #method alpha-convert(VarT:D $newVar, VarT:D :$for --> Term) {
-    #   !!!
-    #}
 }
 
 
@@ -230,7 +202,4 @@ class DefNode does Term {
     method gist {
         "(δ $!symbol " ~ $!term.gist ~ ')';
     }
-
 }
-
-#say $lam.alpha-convert($z, :for($lam.var));

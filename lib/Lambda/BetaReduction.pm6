@@ -120,6 +120,48 @@ ENDOFLAMBDA
     }
 );
 
+
+constant $alpha-needy-terms is export = $Y(lambdaFn(
+    'alpha-needy-terms',
+q:to/ENDOFLAMBDA/,
+    λself.λt.λkeepfreevars.
+        case t ; TODO: case -> cascaded if
+             (((ConstT val)    nil)
+              ((VarT name)     nil)
+              ((AppT func arg) 
+                (append (self func keepfreevars) (self arg keepfreevars))
+              )
+              ((LamT var body) nil)
+             )
+             (error (~ "unknown TTerm" (Term->Str t)))
+ENDOFLAMBDA
+    -> &self {
+        -> TTerm $t, TList $keepfreevars {
+            if convertTBool2P6Bool($is-ConstT($t)) {
+                $nil;
+            } elsif convertTBool2P6Bool($is-VarT($t)) {
+                $nil;
+            } elsif convertTBool2P6Bool($is-AppT($t)) {
+                my $func = $AppT2func($t);
+                my $arg  = $AppT2arg($t);
+                $append(&self($func, $keepfreevars), &self($arg, $keepfreevars));
+            } elsif convertTBool2P6Bool($is-LamT($t)) {
+                my $var   = $LamT2var($t);
+                my $vName = $VarT2name($var);
+                my $body  = $LamT2body($t);
+                my $fromBody = &self($body, $keepfreevars);
+                $_if( $exists( -> $v { convertP6Bool2TBool($VarT2name($v) eq $vName) }, $keepfreevars),
+                    { $cons($t, $fromBody) },
+                    { $fromBody },
+                );
+            } else {
+                die "fell off type-dispatch with type " ~ $t.WHAT.perl
+            }
+        }
+    }
+));
+
+
 # one-step β-simplification (either of $t or any (one) child)
 constant $betaContract is export = $Y(lambdaFn(
     'betaContract',

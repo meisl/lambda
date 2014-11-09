@@ -52,8 +52,11 @@ plan 4;
     $apvs   = $alpha-problematic-vars($n);
     $apvsP6 = convertTList2P6Array($apvs);
     say '(alpha-problematic-vars ...) = ' ~ $apvsP6.map($Term2source).join(", ");
-    say "n.α-needy-terms:\n  " ~ $n.alpha-needy-terms($apvsP6).map($Term2source).join("\n  ");
-    say "func.α-needy-terms:\n  " ~ $func.alpha-needy-terms($apvsP6).map($Term2source).join("\n  ");
+    my ($ants, $antsP6);
+    $ants = $alpha-needy-terms($n, $apvs);
+    say "n.α-needy-terms:\n  " ~ convertTList2P6Array($ants).map($Term2source).join("\n  ");
+    $ants = $alpha-needy-terms($func, $apvs);
+    say "func.α-needy-terms:\n  " ~ convertTList2P6Array($ants).map($Term2source).join("\n  ");
 
     say '';
     say $Term2source($func);

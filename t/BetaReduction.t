@@ -5,6 +5,7 @@ use Test::Util;
 
 use Lambda::Boolean;
 use Lambda::MaybeADT;
+use Lambda::ListADT;
 use Lambda::TermADT;
 use Lambda::BetaReduction;
 
@@ -13,7 +14,7 @@ use Lambda::LambdaGrammar;
 use Lambda::LambdaModel;
 
 
-plan 116;
+plan 132;
 
 sub test(Term:D $t, Str:D $desc, &tests) {
     #subtest {
@@ -326,18 +327,20 @@ my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y 
     is $alpha-problematic-vars.symbol, 'alpha-problematic-vars', '$alpha-problematic-vars.symbol';
     is $alpha-problematic-vars.Str,    'alpha-problematic-vars', '$alpha-problematic-vars.Str';
 
-    my $arg  = $AppT($AppT($AppT($x, $y), $z), $AppT($u, $v));              # (x y z (u v))
-    my $func = $LamT($y, $LamT($z, $LamT($x, $AppT($AppT($z, $y), $x))));   # λy.λz.λx.z y x
-    my $app  = $AppT($func, $arg);                                          # ((λy.λz.λx.z y x) (x y z (u v)))
-    my $lam  = $LamT($x, $app);                                             # λx.x ((λy.λz.λx.z y x) (x y z (u v)))
+    my $arg  = $AppT($AppT($AppT($x, $y), $z), $AppT($u, $v));  # (x y z (u v))
+    my $lamX = $LamT($x, $AppT($AppT($z, $y), $x));             # λx.z y x
+    my $lamZ = $LamT($z, $lamX);                                # λz.λx.z y x
+    my $func = $LamT($y, $lamZ);                                # λy.λz.λx.z y x
+    my $app  = $AppT($func, $arg);                              # ((λy.λz.λx.z y x) (x y z (u v)))
+    my $lam  = $LamT($x, $app);                                 # λx.x ((λy.λz.λx.z y x) (x y z (u v)))
 
     my ($t, $apvs);
 
-    $t = $x;
+    $t = $x;    # not a beta-redex
     $apvs = $alpha-problematic-vars($t);
     $has_length($apvs, 0, "(alpha-problematic-vars '{$Term2source($t)})");
 
-    $t = $c;
+    $t = $c;    # not a beta-redex
     $apvs = $alpha-problematic-vars($t);
     $has_length($apvs, 0, "(alpha-problematic-vars '{$Term2source($t)})");
 
@@ -346,7 +349,7 @@ my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y 
     $has_length($apvs, 0, "(alpha-problematic-vars '{$Term2source($t)})");
 
     $t = $lam;
-    $apvs = $alpha-problematic-vars($t);
+    $apvs = $alpha-problematic-vars($t);    # not a beta-redex
     $has_length($apvs, 0, "(alpha-problematic-vars '{$Term2source($t)})");
 
     $t = $app;
@@ -358,6 +361,57 @@ my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y 
     $contains_ok($x, $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
     $contains_ok($z, $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
 }
+
+
+{ #alpha-needy-terms
+    is_properLambdaFn($alpha-needy-terms);
+
+    is $alpha-needy-terms.symbol, 'alpha-needy-terms', '$alpha-needy-terms.symbol';
+    is $alpha-needy-terms.Str,    'alpha-needy-terms', '$alpha-needy-terms.Str';
+
+    my $arg  = $AppT($AppT($AppT($x, $y), $z), $AppT($u, $v));  # (x y z (u v))
+    my $lamX = $LamT($x, $AppT($AppT($z, $y), $x));             # λx.z y x
+    my $lamZ = $LamT($z, $lamX);                                # λz.λx.z y x
+    my $func = $LamT($y, $lamZ);                                # λy.λz.λx.z y x
+    my $app  = $AppT($func, $arg);                              # ((λy.λz.λx.z y x) (x y z (u v)))
+    my $lam  = $LamT($x, $app);                                 # λx.x ((λy.λz.λx.z y x) (x y z (u v)))
+
+    my $apvs = $alpha-problematic-vars($app);
+    my $apvsStr = $foldl(-> $acc, $v { $acc ~ ' ' ~ $Term2source($v) }, '[', $apvs) ~ ' ]';
+    my ($t, $ants);
+
+    $t = $x;
+    $ants = $alpha-needy-terms($t, $apvs);
+    $has_length($ants, 0, "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+
+    $t = $c;
+    $ants = $alpha-needy-terms($t, $apvs);
+    $has_length($ants, 0, "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+
+    $t = $arg;
+    $ants = $alpha-needy-terms($t, $apvs);
+    $has_length($ants, 0, "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+
+    $t = $func;
+    $ants = $alpha-needy-terms($t, $apvs);
+    $has_length($ants,  2,      "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+    $contains_ok($lamX, $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+    $contains_ok($lamZ, $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+
+    $t = $app;
+    $ants = $alpha-needy-terms($t, $apvs);
+    $has_length($ants,  2,      "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+    $contains_ok($lamX, $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+    $contains_ok($lamZ, $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+
+    $t = $lam;
+    $ants = $alpha-needy-terms($t, $apvs);
+    $has_length($ants,  3,      "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+    $contains_ok($lamX, $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+    $contains_ok($lamZ, $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+    $contains_ok($lam , $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
+}
+
 
 # examples requiring alpha-conversion before substitution:
 if False {
