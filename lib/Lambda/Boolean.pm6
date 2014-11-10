@@ -37,7 +37,7 @@ constant $not is export = lambdaFn(
 constant $_if is export = lambdaFn(
     '_if', 'λi.λt.λe.(i t e) _',
     -> TBool:D $cond, &consequence, &alternative {
-        $cond(&consequence, &alternative).()
+        $cond(&consequence, &alternative).(Mu)
     }
 );
 

@@ -6,7 +6,7 @@ use Test::Util;
 use Lambda::Base;
 use Lambda::Boolean;
 
-plan 37;
+plan 41;
 
 
 # ->Str -----------------------------------------------------------------------
@@ -70,6 +70,17 @@ plan 37;
 
     is $_if($true, {"x"}, {die "alternative should not be called"}), "x", '$_if($true, {"x"}, {die})';
     is $_if($false, {die "consequence should not be called"}, {"y"}), "y", '$_if($false, {die}, {"x"})';
+
+    my @seenThen = @();
+    my @seenElse = @();
+    my $then = -> $x { @seenThen.push($x); 'then called' }
+    my $else = -> $x { @seenElse.push($x); 'else called' }
+
+    is $_if($true, $then, $else), 'then called', '(_if #true ... ...) calls then-branch';
+    is @seenElse.elems, 0, '(_if #true ... ...) calls then-branch (only)';
+
+    is $_if($false, $then, $else), 'else called', '(_if #false ... ...) calls else-branch';
+    is @seenThen.elems, 1, '(_if #false ... ...) calls else-branch (only)';
 }
 
 { # _and
