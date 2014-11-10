@@ -13,7 +13,6 @@ use Lambda::EtaReduction;
 use Lambda::BetaReduction;
 
 use Lambda::LambdaGrammar;
-use Lambda::LambdaModel;
 use Lambda::Conversion::ListADT-conv;
 
 plan 4;
@@ -40,7 +39,7 @@ plan 4;
 {
     my ($n, $apvs, $apvsP6);
 
-    $n = convertToP6Term(parseLambda('(λx.λz.λv.z x (λx.x) (λz.x z) (λy.x x)) ((z ((λx.λy.x y z) x)) v)'));
+    $n = parseLambda('(λx.λz.λv.z x (λx.x) (λz.x z) (λy.x x)) ((z ((λx.λy.x y z) x)) v)');
     my $func = $AppT2func($n);
     my $arg  = $AppT2arg($n);
     my $var  = $LamT2var($func);
@@ -77,7 +76,7 @@ plan 4;
 {
     my $n;
 
-    $n = convertToP6Term(parseLambda('λf.(λx.λy.(f g h x y))'));
+    $n = parseLambda('λf.(λx.λy.(f g h x y))');
     say $Term2source($n);
     my $n_smp = $Some2value($etaContract($n));
     say "eta-contract (only):\n{$Term2source($n_smp)}";
@@ -92,19 +91,6 @@ plan 4;
 #    my $n_evd_smp = $n_evd.simplify;
 #    say "eval-s + simplify:\n$n_evd_smp\n";
 #    say $n_evd_smp;
-}
-
-{
-    #$succ-of-zero_a:
-    #a: (λf.(λx.(((λg.(λx.x)) f) (f x))))
-    #   (λf.(λx.(     (λx.x)     (f x))))   # App.simplify-ident
-    #   (λf.(λx.                 (f x)))    # Abs.simplify-curry
-    #   (λf.                      f)
- 
-    #b: (λf.(λx.(f (((λg.(λx.x)) f) x))))
-    #   (λf.(λx.(f (     (λx.x)     x))))   # App.simplify-ident
-    #   (λf.(λx.(f                  x)))    # Abs.simplify-curry
-    #   (λf.     f)
 }
 
 {
@@ -125,6 +111,19 @@ plan 4;
         6 => '(δ let λvar.λterm.λbody.(λvar.body) term)',
         10 => '(λa.λb.a) (λf.λx.x) (λf.f)',
     );
+}
+
+{
+    #$succ-of-zero_a:
+    #a: (λf.(λx.(((λg.(λx.x)) f) (f x))))
+    #   (λf.(λx.(     (λx.x)     (f x))))   # App.simplify-ident
+    #   (λf.(λx.                 (f x)))    # Abs.simplify-curry
+    #   (λf.                      f)
+ 
+    #b: (λf.(λx.(f (((λg.(λx.x)) f) x))))
+    #   (λf.(λx.(f (     (λx.x)     x))))   # App.simplify-ident
+    #   (λf.(λx.(f                  x)))    # Abs.simplify-curry
+    #   (λf.     f)
 }
 
 {

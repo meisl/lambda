@@ -9,8 +9,6 @@ use Lambda::ListADT;
 use Lambda::TermADT;
 use Lambda::FreeVars;
 
-use Lambda::LambdaModel;
-
 plan 82;
 
 

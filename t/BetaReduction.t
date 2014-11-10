@@ -11,32 +11,24 @@ use Lambda::BetaReduction;
 
 use Lambda::Conversion::Bool-conv;
 use Lambda::LambdaGrammar;
-use Lambda::LambdaModel;
 
 
-plan 132;
-
-sub test(Term:D $t, Str:D $desc, &tests) {
-    #subtest {
-     #   plan *;
-        &tests("$t: $desc", $t)
-    #}, $desc;
-}
+plan 128;
 
 
-my $u = VarT.new(:name('u'));
-my $v = VarT.new(:name('v'));
-my $x = VarT.new(:name('x'));
-my $y = VarT.new(:name('y'));
-my $z = VarT.new(:name('z'));
-my $c = ConstT.new(:value('c'));
+my $u = $VarT('u');
+my $v = $VarT('v');
+my $x = $VarT('x');
+my $y = $VarT('y');
+my $z = $VarT('z');
+my $c = $ConstT('c');
 
 # [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
-my $omegaX  = convertToP6Term( $LamT($x, $AppT($x, $x)) );  # (λx.x x)
-my $OmegaXX = convertToP6Term( $AppT($omegaX, $omegaX) );   # ((λx.x x) (λx.x x))
-my $omegaY  = convertToP6Term( $LamT($y, $AppT($y, $y)) );  # (λy.y y)
-my $OmegaYY = convertToP6Term( $AppT($omegaY, $omegaY) );   # ((λy.y y) (λy.y y))
-my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y y))
+my $omegaX  = $LamT($x, $AppT($x, $x));  # (λx.x x)
+my $OmegaXX = $AppT($omegaX, $omegaX);   # ((λx.x x) (λx.x x))
+my $omegaY  = $LamT($y, $AppT($y, $y));  # (λy.y y)
+my $OmegaYY = $AppT($omegaY, $omegaY);   # ((λy.y y) (λy.y y))
+my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
 
 
 { # predicate betaRedex?
@@ -54,12 +46,7 @@ my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y 
             my $desc       = $expectedP6
                                 ?? "$termStr IS a beta redex" 
                                 !! "$termStr is not a beta redex";
-            subtest({
-                cmp_ok($is-betaRedex($term), '===', $expected, $desc);
-                
-                my $termP6 = convertToP6Term($term);
-                cmp_ok($termP6.isBetaRedex, '===', $expectedP6, $desc);
-            }, $desc);
+            cmp_ok($is-betaRedex($term), '===', $expected, $desc);
         }
     }
 
@@ -106,12 +93,7 @@ my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y 
             my $desc       = $expectedP6
                                 ?? "$termStr IS beta-reducible"
                                 !! "$termStr is not beta-reducible";
-            subtest({
-                cmp_ok($is-betaReducible($term), '===', $expected, $desc);
-                
-                my $termP6 = convertToP6Term($term);
-                cmp_ok($termP6.isBetaReducible, '===', $expectedP6, $desc);
-            }, $desc);
+            cmp_ok($is-betaReducible($term), '===', $expected, $desc);
         }
     }
 
@@ -162,19 +144,9 @@ my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y 
                 !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "$termStr beta-contracts to $expStr";
 
-            subtest({
-                my $actual = $betaContract($term);
-                is($actual, $expected, $desc)
-                    or diag($actual.perl) and die;
-                
-                my $termP6 = convertToP6Term($term);
-
-                my $expectedP6 = $toItself
-                    ?? $termP6
-                    !! convertToP6Term($Some2value($expected));
-
-                is($termP6.beta-contract, $expectedP6, $desc);
-            }, $desc);
+            my $actual = $betaContract($term);
+            is($actual, $expected, $desc)
+                or diag($actual.perl) and die;
         }
     }
 
@@ -252,19 +224,9 @@ my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y 
                 !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "$termStr beta-reduces to $expStr";
 
-            subtest({
-                my $actual = $betaReduce($term);
-                is($actual, $expected, $desc)
-                    or diag($actual.perl) and die;
-                
-                my $termP6 = convertToP6Term($term);
-
-                my $expectedP6 = $toItself
-                    ?? $termP6
-                    !! convertToP6Term($Some2value($expected));
-
-                is($termP6.beta-reduce, $expectedP6, $desc);
-            }, $desc);
+            my $actual = $betaReduce($term);
+            is($actual, $expected, $desc)
+                or diag($actual.perl) and die;
         }
     }
 
@@ -300,24 +262,6 @@ my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y 
         $OmegaYY                                                    => $None,               # ((λy.y y) (λy.y y))   # a redex, contracting to itself
         $OmegaXY                                                    => $Some($OmegaYY),     # ((λx.x x) (λy.y y))   # a redex, contracting to itself (module alpha-conv)
     );
-}
-
-
-# [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
-{
-    my $OmegaXX-contracted-once = $OmegaXX.beta-contract;
-
-    cmp_ok($OmegaXX-contracted-once, '===', $OmegaXX,
-        "beta-contracting '$OmegaXX' should yield same instance after 1st step");
-
-    my $OmegaXY-contracted-once = $OmegaXY.beta-contract;
-    my $OmegaXY-contracted-twice = $OmegaXY-contracted-once.beta-contract;
-
-    cmp_ok($OmegaXY-contracted-twice, '===', $OmegaXY-contracted-once,
-        "beta-contracting '$OmegaXY' should yield same instance after 2nd step");
-
-    is($OmegaXX.beta-reduce, $OmegaXX, "beta-reduce should terminate for $OmegaXX");
-    is($OmegaXY.beta-reduce, $OmegaYY, "beta-reduce should terminate for $OmegaXY");
 }
 
 
@@ -410,19 +354,4 @@ my $OmegaXY = convertToP6Term( $AppT($omegaX, $omegaY) );   # ((λx.x x) (λy.y 
     $contains_ok($lamX, $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
     $contains_ok($lamZ, $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
     $contains_ok($lam , $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
-}
-
-
-# examples requiring alpha-conversion before substitution:
-if False {
-
-    test parseLambda('λx.x ((λy.λz.y x) (x y z))'), "a LamT with body an AppT where arg is a beta-redex", {
-        is($^t.isBetaRedex,      False, "$^desc is not itself a beta redex");
-        is($^t.isBetaReducible,  True,  "$^desc is itself beta-reducible");
-        my $bcd = $^t.beta-contract;
-        cmp_ok($bcd, 'eq', parseLambda('λx.x x'), "$^desc beta-contracts the AppT's arg");
-        my $brd = $^t.beta-reduce;
-        cmp_ok($brd, 'eq', parseLambda('λx.x x'), "$^desc beta-reduces to the AppT's arg");
-    };
-
 }

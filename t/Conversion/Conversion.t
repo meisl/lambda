@@ -3,18 +3,15 @@ use v6;
 use Test;
 use Test::Util;
 
-#use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::PairADT;
-#use Lambda::MaybeADT;
 use Lambda::ListADT;
-use Lambda::TermADT;
 
 use Lambda::Conversion::ListADT-conv;
 use Lambda::Conversion::Bool-conv;
-use Lambda::LambdaModel;
 
 plan 26;
+
 
 { # convertTBool2P6Bool
     cmp_ok(convertTBool2P6Bool($false), '===', False, 'convertTBool2P6Bool($false)');

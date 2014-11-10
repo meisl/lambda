@@ -9,7 +9,6 @@ use Lambda::TermADT;
 use Lambda::EtaReduction;
 
 use Lambda::Conversion::Bool-conv;
-use Lambda::LambdaModel;
 
 plan 80;
 
@@ -29,12 +28,7 @@ plan 80;
             my $desc       = $expectedP6
                                 ?? "$termStr IS an eta redex" 
                                 !! "$termStr is not an eta redex";
-            subtest({
-                cmp_ok($is-etaRedex($term), '===', $expected, $desc);
-                
-                my $termP6 = convertToP6Term($term);
-                cmp_ok($termP6.isEtaRedex, '===', $expectedP6, $desc);
-            }, $desc);
+            cmp_ok($is-etaRedex($term), '===', $expected, $desc);
         }
     }
 
@@ -80,12 +74,7 @@ plan 80;
             my $desc       = $expectedP6
                                 ?? "$termStr IS eta-reducible" 
                                 !! "$termStr is not eta-redubible";
-            subtest({
-                cmp_ok($is-etaReducible($term), '===', $expected, $desc);
-                
-                my $termP6 = convertToP6Term($term);
-                cmp_ok($termP6.isEtaReducible, '===', $expectedP6, $desc);
-            }, $desc);
+            cmp_ok($is-etaReducible($term), '===', $expected, $desc);
         }
     }
 
@@ -133,19 +122,9 @@ plan 80;
                 !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "$termStr eta-contracts to $expStr";
 
-            subtest({
-                my $actual = $etaContract($term);
-                is($actual, $expected, $desc)
-                    or diag($actual.perl) and die;
-                
-                my $termP6 = convertToP6Term($term);
-
-                my $expectedP6 = $toItself
-                    ?? $termP6
-                    !! convertToP6Term($Some2value($expected));
-
-                is($termP6.eta-contract, $expectedP6, $desc);
-            }, $desc);
+            my $actual = $etaContract($term);
+            is($actual, $expected, $desc)
+                or diag($actual.perl) and die;
         }
     }
 
@@ -238,19 +217,9 @@ plan 80;
                 !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "$termStr eta-reduces to $expStr";
 
-            subtest({
-                my $actual = $etaReduce($term);
-                is($actual, $expected, $desc)
-                    or diag($actual.perl) and die;
-                
-                my $termP6 = convertToP6Term($term);
-
-                my $expectedP6 = $toItself
-                    ?? $termP6
-                    !! convertToP6Term($Some2value($expected));
-
-                is($termP6.eta-reduce, $expectedP6, $desc);
-            }, $desc);
+            my $actual = $etaReduce($term);
+            is($actual, $expected, $desc)
+                or diag($actual.perl) and die;
         }
     }
 

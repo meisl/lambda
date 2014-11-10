@@ -12,20 +12,18 @@ use Lambda::Substitution;
 
 use Lambda::Conversion::Bool-conv;
 use Lambda::Conversion::ListADT-conv;
-use Lambda::LambdaModel;
-
 
 plan 25;
 
 
-my $a = VarT.new(:name('a'));
-my $u = VarT.new(:name('u'));
-my $v = VarT.new(:name('v'));
-my $w = VarT.new(:name('w'));
-my $x = VarT.new(:name('x'));
-my $y = VarT.new(:name('y'));
-my $z = VarT.new(:name('z'));
-my $c = ConstT.new(:value('c'));
+my $a = $VarT('a');
+my $u = $VarT('u');
+my $v = $VarT('v');
+my $w = $VarT('w');
+my $x = $VarT('x');
+my $y = $VarT('y');
+my $z = $VarT('z');
+my $c = $ConstT('c');
 
 
 { # function (subst inTerm whatTerm forVar)
@@ -51,21 +49,9 @@ my $c = ConstT.new(:value('c'));
                                  !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "substituting $whatTermStr for $forVarStr in $inTermStr yields $expStr";
 
-            subtest({
-                my $actual = $subst($inTerm, $whatTerm, $forVar);
-                is($actual, $expected, $desc)
-                    or diag($actual.perl) and die;
-                
-                my $inTermP6    = convertToP6Term($inTerm);
-                my $whatTermP6  = convertToP6Term($whatTerm);
-                my $forVarP6    = convertToP6Term($forVar);
-
-                my $expectedP6 = $itself
-                    ?? $inTermP6
-                    !! convertToP6Term($Some2value($expected));
-
-                is($inTermP6.subst($whatTermP6, :for($forVarP6)), $expectedP6, $desc);
-            }, $desc);
+            my $actual = $subst($inTerm, $whatTerm, $forVar);
+            is($actual, $expected, $desc)
+                or diag($actual.perl) and die;
         }
     }
 
@@ -106,19 +92,9 @@ my $c = ConstT.new(:value('c'));
                                  !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "applying substitutions $substsStr in $inTermStr yields $expStr";
 
-            subtest({
-                my $actual = $subst-seq($inTerm, $substsListOfPairs);
-                is($actual, $expected, $desc)
-                    or diag($actual.Str ~ ' / ' ~ $actual.perl) and die;
-                
-                my $inTermP6    = convertToP6Term($inTerm);
-
-                my $expectedP6 = $itself
-                    ?? $inTermP6
-                    !! convertToP6Term($Some2value($expected));
-
-                is($inTermP6.subst-seq($substs), $expectedP6, $desc);
-            }, $desc);
+            my $actual = $subst-seq($inTerm, $substsListOfPairs);
+            is($actual, $expected, $desc)
+                or diag($actual.Str ~ ' / ' ~ $actual.perl) and die;
         }
     }
 
