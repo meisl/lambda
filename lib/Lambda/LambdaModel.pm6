@@ -146,30 +146,6 @@ role VarT does Term {
     method new(Str:D :$name) {
         $VarT($name) does VarT;
     }
-
-    my $nextAlphaNr = 1;
-
-    my role AlphaVarT {
-        has TTerm:D $.for;
-
-        method gist {
-            my $forStr = ($!for ~~ AlphaVarT)
-                ?? $!for.gist
-                !! $VarT2name($!for);
-            self.name ~ "[/$forStr]";
-        }
-    }
-
-    method fresh(VarT:T: TTerm :$for --> VarT:D) {
-        my $v = $VarT('α' ~ $nextAlphaNr) does VarT;
-        $v ~~ TTerm or die $v.perl;
-        if $for.defined {
-            $is-VarT($for) or die "can make fresh var for another var but not for $for";
-            $v does AlphaVarT(:$for);
-        }
-        $nextAlphaNr++;
-        $v;
-    }
 }
 
 

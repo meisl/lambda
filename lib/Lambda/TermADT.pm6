@@ -359,3 +359,34 @@ constant $Term2size is export = $Y(lambdaFn(
         }
     }
 ));
+
+
+
+constant $fresh-var-for is export = {
+    my $nextAlphaNr = 1;
+
+    my role AlphaVarT {
+        has TTerm:D $.for;
+
+        method gist {
+            my $forStr = ($!for ~~ AlphaVarT)
+                ?? $!for.gist
+                !! $VarT2name($!for);
+            $VarT2name(self) ~ "[/$forStr]";
+        }
+    }
+    lambdaFn(
+        'fresh-var-for', 'λfor.error "NYI"',
+        -> TTerm:D $for {
+            say $nextAlphaNr;
+            my $v = $VarT('α' ~ $nextAlphaNr);
+            $v ~~ TTerm or die $v.perl;
+            if $for.defined {
+                $is-VarT($for) or die "can make fresh var for another var but not for $for";
+                $v does AlphaVarT(:$for);
+            }
+            $nextAlphaNr++;
+            $v;
+        }
+    );
+}();

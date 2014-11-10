@@ -4,9 +4,9 @@ use Test;
 use Test::Util;
 
 use Lambda::TermADT;
-use Lambda::LambdaModel;
 
-plan 22;
+plan 25;
+
 
 { # (VarT Str) [fka VarT.get]
     my $x1 = $VarT('x');
@@ -21,17 +21,22 @@ plan 22;
     cmp_ok($y1, '===', $y2, '(VarT Str) returns same var for same name');
 }
 
-{ # VarT.fresh
+{ # fresh-var-for
+    is_properLambdaFn($fresh-var-for);
+
+    is $fresh-var-for.symbol, 'fresh-var-for', '$fresh-var-for.symbol';
+    is $fresh-var-for.Str,    'fresh-var-for', '$fresh-var-for.Str';
+
     my $x = $VarT('x');
-    my $fresh1 = VarT.fresh;
-    my $fresh2 = VarT.fresh;
+    my $fresh1 = $fresh-var-for($x);
+    my $fresh2 = $fresh-var-for($x);
     my $y = $VarT('y');
 
     isnt($VarT2name($fresh1), $VarT2name($x), "fresh var has name different from any other");
     isnt($VarT2name($fresh1), $VarT2name($y), "fresh var has name different from any other");
     isnt($VarT2name($fresh1), $VarT2name($fresh2), "fresh var has name different from any other");
 
-    my $fresh3 = VarT.fresh(:for($x));
+    my $fresh3 = $fresh-var-for($x);
 
     isnt($VarT2name($fresh3), $VarT2name($x), "fresh var has name different from any other");
     isnt($VarT2name($fresh3), $VarT2name($y), "fresh var has name different from any other");
@@ -44,7 +49,7 @@ plan 22;
     nok($VarT2name($fresh3) ~~ / $xname /, ".fresh(:for).name does NOT contain the given var's name");
     cmp_ok $fresh3, '===', $VarT($VarT2name($fresh3)), "can get back same instance of fresh var via VarT.get";
 
-    my $fresh4 = VarT.fresh(:for($fresh3));
+    my $fresh4 = $fresh-var-for($fresh3);
 
     isnt($VarT2name($fresh4), $VarT2name($x), "fresh var has name different from any other");
     isnt($VarT2name($fresh4), $VarT2name($y), "fresh var has name different from any other");
