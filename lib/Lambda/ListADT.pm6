@@ -58,8 +58,8 @@ constant $car is export = lambdaFn(
     'car', 'λxs.if-nil xs (λ_.error "cannot get car of nil") π2->1',
     -> TList:D $xs {
         $if-nil( $xs,
-            { die "cannot get car of nil" },
-            $pi1o2
+               { die "cannot get car of nil" },
+                 $pi1o2
         )
 #    'car', 'λxs.if (nil? xs) (error "cannot get car of nil") (xs π3->2)',
 #        $_if( $is-nil($xs),
@@ -73,8 +73,8 @@ constant $cdr is export = lambdaFn(
     'cdr', 'λxs.if-nil xs (λ_.error "cannot get cdr of nil") π2->2',
     -> TList:D $xs {
             $if-nil( $xs,
-                { die "cannot get cdr of nil" },
-                $pi2o2
+                   { die "cannot get cdr of nil" },
+                     $pi2o2
             )
     }
 #    'cdr', 'λxs.if (nil? xs) (error "cannot get cdr of nil") (xs π3->3)',
@@ -125,24 +125,27 @@ constant $cddddr is export = lambdaFn( 'cddddr', 'B cdr cdddr', $B($cdr, $cdddr)
 # (and we cannot use recursive references with constant declarations)
 constant $yfoldl is export = -> {
     my $_foldl = -> &f, $acc, TList:D $xs {
-        $_if( $is-nil($xs),
-            { $acc },
-            { $_foldl(&f, &f($car($xs), $acc), $cdr($xs)) })   # TODO: swap args to f
+        $if-nil( $xs,
+                 $K($acc),
+                 -> $head, TList:D $tail { $_foldl(&f, &f($acc, $head), $tail) })
     };
     lambdaFn(
-        'foldl', 'λf.λacc.λxs.(if (nil? xs) acc (foldl f (f acc (car xs)) (cdr xs)))',
+        'foldl', 'λf.λacc.λxs.(if-nil xs (K acc) (λhead.λtail.foldl f (f acc head) tail))',
         $_foldl
     );
 }();
 
 # Or we could use the Y combinator:
-constant $foldl is export = $Y( lambdaFn(
-    'foldl', 'λself.λf.λacc.λxs.(if (nil? xs) acc (self f (f acc (car xs)) (cdr xs)))',
+constant $foldl is export = $Y(lambdaFn(
+    'foldl', 'λself.λf.λacc.λxs.(if-nil xs λ_.acc λhead.λtail.self f (f acc head) tail)',
     -> &self {
         -> &f, $acc, TList:D $xs {
-            $_if( $is-nil($xs),
-                { $acc },
-                { &self(&f, &f($acc, $car($xs)), $cdr($xs)) })    }    }
+            $if-nil( $xs,
+                     $K($acc),
+                     -> $head, TList:D $tail { &self(&f, &f($acc, $head), $tail) }
+            )
+        }
+    }
 ));
 
 constant $reverse is export = lambdaFn(
@@ -157,12 +160,13 @@ constant $foldr-left-reverse is export = lambdaFn(
 );
 
 constant $foldr-rec is export = $Y( lambdaFn(
-    'foldr-rec', 'λself.λf.λacc.λxs.(if (nil? xs) acc (f (car xs) (self f acc (cdr xs))))',
+    'foldr-rec', 'λself.λf.λacc.λxs.(if-nil xs λ_.acc λhead.λtail.f head (self f acc tail))',
     -> &self {
         -> &f, $acc, TList:D $xs {
-            $_if( $is-nil($xs),
-                { $acc },
-                { &f($car($xs), &self(&f, $acc, $cdr($xs))) })
+            $if-nil( $xs,
+                     $K($acc),
+                     -> $head, TList:D $tail { &f($head, &self(&f, $acc, $tail)) }
+            )
         }
     }
 ));
@@ -202,12 +206,13 @@ constant $map-foldr is export = lambdaFn(
 );
 
 constant $map-rec is export = $Y( lambdaFn(
-    'map-rec', 'λself.λf.λxs.(if (nil? xs) xs (cons (f (car xs)) (self f (cdr xs))))',
+    'map-rec', 'λself.λf.λxs.(if-nil xs λ_.nil λhead.λtail.(cons (f head) (self f tail)))',
     -> &self {
         -> &f, TList:D $xs {
-            $_if( $is-nil($xs),
-                { $nil },
-                { $cons(&f($car($xs)), &self(&f, $cdr($xs))) })
+            $if-nil( $xs,
+                     $K($nil),
+                   -> $head, TList:D $tail { $cons(&f($head), &self(&f, $tail)) }
+            )
         }
     }
 ));
@@ -219,9 +224,12 @@ constant $map-iter is export = lambdaFn(
         -> &self {
             -> &todo {
                 -> &f, $xs {
-                    $_if( $is-nil($xs),
-                        { &todo($nil) },
-                        { &self( -> $results { &todo($cons(&f($car($xs)), $results)) } )(&f, $cdr($xs)) } )
+                    $if-nil( $xs,
+                             { &todo($nil) },
+                             -> $head, TList:D $tail {
+                                 &self( -> $results { &todo($cons(&f($head), $results)) } )(&f, $tail) 
+                             }
+                    )
                 }
             }
         })).($id)
@@ -229,8 +237,8 @@ constant $map-iter is export = lambdaFn(
 
 
 constant $map is export = lambdaFn(
-    'map', 'λf.λxs.map-foldr f xs',
-    -> &f, TList:D $xs { $map-foldr(&f, $xs) }  # make a new one so we don't shadow the original's roles "lambda" and "name"
+    'map', 'λf.λxs.map-rec f xs',
+    -> &f, TList:D $xs { $map-rec(&f, $xs) }  # make a new one so we don't shadow the original's roles "lambda" and "name"
 );
 
 constant $length is export = lambdaFn(
@@ -264,12 +272,15 @@ constant $first is export = $Y( lambdaFn(
     'first', 'λself.λp.λxs.(if (nil? xs) None (if (p (car xs)) (cons (car xs) nil) (self p (cdr xs))))',
     -> &self {
         -> &p, TList:D $xs {
-            $_if( $is-nil($xs),
-                { $None },
-                { $_if( &p($car($xs)),
-                    { $Some($car($xs)) },
-                    { &self(&p, $cdr($xs)) })
-                })
+            $if-nil( $xs,
+                     $K($None),
+                     -> $head, TList:D $tail {
+                         $_if( &p($head),
+                             { $Some($head) },
+                             { &self(&p, $tail) }
+                         )
+                     }
+            )
         }
     }
 ));
