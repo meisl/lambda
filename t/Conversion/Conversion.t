@@ -10,7 +10,7 @@ use Lambda::ListADT;
 use Lambda::Conversion::ListADT-conv;
 use Lambda::Conversion::Bool-conv;
 
-plan 26;
+plan 36;
 
 
 { # convertTBool2P6Bool
@@ -86,6 +86,8 @@ plan 26;
     does_ok($a, Array, "convertTList2P6Array($xs)");
     is($a.elems, 1, "convertTList2P6Array($xs).elems")
         or diag(" in: $xs\nout: {$a.perl}");
+    is($a[0], 5, "convertTList2P6Array($xs).[0]")
+        or diag(" in: $xs\nout: {$a.perl}");
 
     $xs = $cons("foo", $cons(5, $nil));
     $a = convertTList2P6Array($xs);
@@ -96,4 +98,32 @@ plan 26;
         or diag(" in: $xs\nout: {$a.perl}");
     is($a[1], 5, "convertTList2P6Array($xs).[1]")
         or diag(" in: $xs\nout: {$a.perl}");
+}
+
+{ # convertP6Array2TList
+    my ($a, $xs);
+
+    $a = [];
+    $xs = convertP6Array2TList($a);
+    does_ok($xs, TList, "convertP6Array2TList($a)");
+    $has_length($xs, 0, "convertP6Array2TList($a)")
+        or diag(" in: {$a.perl}\nout: $xs");
+
+    $a = ["foo"];
+    $xs = convertP6Array2TList($a);
+    does_ok($xs, TList, "convertP6Array2TList($a)");
+    $has_length($xs, 1, "convertP6Array2TList($a)")
+        or diag(" in: {$a.perl}\nout: $xs");
+    $contains_ok("foo", $xs, "convertP6Array2TList($a)")
+        or diag(" in: {$a.perl}\nout: $xs");
+
+    $a = ["foo", 5];
+    $xs = convertP6Array2TList($a);
+    does_ok($xs, TList, "convertP6Array2TList($a)");
+    $has_length($xs, 2, "convertP6Array2TList($a)")
+        or diag(" in: {$a.perl}\nout: $xs");
+    $contains_ok("foo", $xs, "convertP6Array2TList($a)")
+        or diag(" in: {$a.perl}\nout: $xs");
+    $contains_ok(5, $xs, "convertP6Array2TList($a)")
+        or diag(" in: {$a.perl}\nout: $xs");
 }
