@@ -19,7 +19,7 @@ q:to/ENDOFLAMBDA/,
     λself.λt.λss.
       (if (nil? ss)
           None
-          (if (VarT? t)
+          (if (VarT? t) ; TODO: case ConstT
               (let ((head (car ss))
                     (next (if (eq? (VarT->name (fst head)) (VarT->name t))  ; FIXME!
                               (snd head)
@@ -32,7 +32,7 @@ q:to/ENDOFLAMBDA/,
                         (f´ (self f ss))
                         (a´ (self a ss))
                        )
-                    (if (and (None? f') (None? a'))
+                    (if (and (None? f´) (None? a´))
                       None
                       (Some (AppT
                               (if (Some? f´) (Some->value f´) f)
@@ -78,7 +78,7 @@ ENDOFLAMBDA
                                         { $Some($what) }
                                     )
                                   },
-                                 { &self($t, $tail) }
+                                  { &self($t, $tail) }
                               )
                             },
                             { $_if( $is-AppT($t),
@@ -133,3 +133,49 @@ constant $subst is export = lambdaFn(
         $subst-seq($t, $cons($Pair($for, $what), $nil));
     }
 );
+
+constant $subst-with-alpha is export = $Y(lambdaFn(
+    'subst-with-alpha',
+q:to/ENDOFLAMBDA/,
+    λself.λforVar.λwhatTerm.λkeepfree.λalpha-convs.λt.error "NYI"
+ENDOFLAMBDA
+    -> &self {
+        -> TTerm $forVar, TTerm $whatTerm, TList $keepfree, TList $alpha-convs, TTerm $t {
+            if convertTBool2P6Bool($is-ConstT($t)) {
+                $None
+            } elsif convertTBool2P6Bool($is-VarT($t)) {
+                $_if( convertP6Bool2TBool($VarT2name($t) eq $VarT2name($forVar)),
+                    { $Some($whatTerm) },
+                    { $subst-seq($t, $alpha-convs) }
+                );
+            } elsif convertTBool2P6Bool($is-AppT($t)) {
+                my $func = $AppT2func($t);
+                my $arg  = $AppT2arg($t);
+                my $f = &self($forVar, $whatTerm, $keepfree, $alpha-convs, $func);
+                my $a = &self($forVar, $whatTerm, $keepfree, $alpha-convs, $arg);
+                $_if( $is-None($f),
+                    { $_if( $is-None($a),
+                          { $None },
+                          { $Some($AppT($func, $Some2value($a))) }
+                      )
+                    },
+                    { $_if( $is-None($a),
+                          { $Some($AppT($Some2value($f), $arg)) },
+                          { $Some($AppT($Some2value($f), $Some2value($a))) }
+                      )
+                    },
+                )
+            } elsif convertTBool2P6Bool($is-LamT($t)) {
+                my $var  = $LamT2var($t);
+                my $body = $LamT2body($t);
+                my $b = &self($forVar, $whatTerm, $keepfree, $alpha-convs, $body);
+                $_if( $is-None($b),
+                    { $None },
+                    { $Some($LamT($var, $Some2value($b))) }
+                )
+            } else {
+                die "fell off type-dispatch with type " ~ $t.WHAT.perl
+            }
+        }
+    }
+));

@@ -13,7 +13,7 @@ use Lambda::Substitution;
 use Lambda::Conversion::Bool-conv;
 use Lambda::Conversion::ListADT-conv;
 
-plan 25;
+plan 43;
 
 
 my $a = $VarT('a');
@@ -46,7 +46,7 @@ my $c = $ConstT('c');
             my $itself     = $expected === $None;
             my $expStr     = $itself
                                  ?? "the original term"
-                                 !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
+                                 !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "substituting $whatTermStr for $forVarStr in $inTermStr yields $expStr";
 
             my $actual = $subst($inTerm, $whatTerm, $forVar);
@@ -89,7 +89,7 @@ my $c = $ConstT('c');
             my $itself     = $expected === $None;
             my $expStr     = $itself
                                  ?? "the original term"
-                                 !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
+                                 !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "applying substitutions $substsStr in $inTermStr yields $expStr";
 
             my $actual = $subst-seq($inTerm, $substsListOfPairs);
@@ -124,5 +124,73 @@ my $c = $ConstT('c');
             # [y/x]([z/y]([x/z]λu.λv.z u))          -> λu.λv.y u        # 2nd subst doesn't change anything
         [$l1, [[$z, $l2], [$z, $y]]]                => $Some($l7),
             # [y/z]([λw.λx.x z/z]λu.λv.z u)         -> λu.λv.(λw.λx.x y) u
+    );
+}
+
+{ # function (subst-with-alpha forVar whatTerm keepfree alpha-convs inTerm)
+    is_properLambdaFn $subst-with-alpha;
+
+    is $subst-with-alpha.symbol, 'subst-with-alpha', '$subst-with-alpha.symbol';
+    is $subst-with-alpha.Str,    'subst-with-alpha', '$subst-with-alpha.Str';
+
+    my sub is_subst-with-alpha(*@tests) {
+        for @tests -> $test {
+            my $forVar      = $test.key[0];
+            my $forVarStr   = $Term2source($forVar);
+
+            my $whatTerm    = $test.key[1];
+            my $whatTermStr = $Term2source($whatTerm);
+
+            my $keepfree    = $test.key[2];
+            my $keepfreeStr = '[' ~ $keepfree.map($VarT2name).join(', ') ~ ']';
+            my $keepfreeTList = convertP6Array2TList($keepfree);
+
+            my $alpha-convs    = $test.key[3];
+            my $alpha-convsStr = '[' ~ $alpha-convs.map(
+                -> $pair {
+                    '[' ~ $Term2source($pair[1]) ~ '/' ~ $VarT2name($pair[0]) ~ ']'
+                }
+            ).join(', ') ~ ']';
+            my $alpha-convsListOfPairs = convertP6ArrayToTListOfTPairs($alpha-convs);
+
+            my $inTerm      = $test.key[4];
+            my $inTermStr   = $Term2source($inTerm);
+
+            my $expected   = $test.value;
+            my $itself     = $expected === $None;
+            my $expStr     = $itself
+                                 ?? "the original term"
+                                 !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
+            my $desc = "(subst-with-alpha $forVarStr $whatTermStr $keepfreeStr $alpha-convsStr $inTermStr) yields $expStr";
+
+            my $actual = $subst-with-alpha($forVar, $whatTerm, $keepfreeTList, $alpha-convsListOfPairs, $inTerm);
+            is($actual, $expected, $desc)
+                or diag($actual.Str ~ ' / ' ~ $actual.perl) and die;
+        }
+    }
+
+    my $app_xy = $AppT($x, $y);         # (x y)
+    my $lam0   = $LamT($x, $y);         # λx.y
+    my $lam1   = $LamT($x, $app_xy);    # λx.x y
+
+    is_subst-with-alpha(
+        [$x, $y, [], [],                    $c          ] => $None,
+
+        [$x, $y, [], [],                    $y          ] => $None,
+        [$x, $y, [], [],                    $x          ] => $Some($y),
+        [$x, $y, [], [[$z,$u]],             $z          ] => $Some($u),
+        [$z, $y, [], [[$z,$x]],             $z          ] => $Some($y),   # don't do alpha-convs if main subst applies!
+        [$x, $y, [], [[$z,$x]],             $z          ] => $Some($x),   # don't do main subst after alpha-convs!
+
+        [$z, $y, [], [],                    $app_xy     ] => $None,
+        [$x, $y, [], [],                    $app_xy     ] => $Some($AppT($y, $y)),
+        [$y, $x, [], [],                    $app_xy     ] => $Some($AppT($x, $x)),
+        [$x, $y, [], [[$z,$u]],             $app_xy     ] => $Some($AppT($y, $y)),
+        [$x, $y, [], [[$y,$v]],             $app_xy     ] => $Some($AppT($y, $v)),
+        [$x, $y, [], [[$x,$u], [$y,$v]],    $app_xy     ] => $Some($AppT($y, $v)),
+
+        [$z, $y, [], [],                    $lam0       ] => $None,
+        [$y, $z, [], [],                    $lam0       ] => $Some($LamT($x, $z)),
+        [$v, $z, [], [[$y, $v]],            $lam0       ] => $Some($LamT($x, $v)),   # don't do main subst after alpha-convs!
     );
 }
