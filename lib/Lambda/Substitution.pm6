@@ -166,13 +166,44 @@ ENDOFLAMBDA
                     },
                 )
             } elsif convertTBool2P6Bool($is-LamT($t)) {
-                my $var  = $LamT2var($t);
-                my $body = $LamT2body($t);
-                my $b = &self($forVar, $whatTerm, $keepfree, $alpha-convs, $body);
-                $_if( $is-None($b),
-                    { $None },
-                    { $Some($LamT($var, $Some2value($b))) }
-                )
+                my $var       = $LamT2var($t);
+                my $body      = $LamT2body($t);
+                my $myVarName = $VarT2name($var);
+                my $newConvs  = $filter(
+                    -> $conv { convertP6Bool2TBool($VarT2name($fst($conv)) ne $myVarName) }, # (not (B (B (eq? myVarName) VarT->name) fst))
+                    $alpha-convs
+                );
+                $_if( convertP6Bool2TBool($VarT2name($forVar) eq $myVarName),
+                    { my $newBody = $subst-seq($body, $newConvs); # if we bind it then it's not free -> apply only alpha-convs
+                      $_if( $is-None($newBody),
+                          { $None },
+                          { $Some($LamT($var, $Some2value($newBody))) }
+                      )
+                    },
+                    { my $needFreshVar = $exists(   # TODO: ... AND only if forVar occurs (free) in body
+                        -> TTerm $v {
+                            convertP6Bool2TBool($VarT2name($v) eq $myVarName)
+                        },
+                        $keepfree
+                      );
+                      $_if($needFreshVar,
+                          { my $freshVar = $fresh-var-for($var);
+                            my $myConvs  = $cons($Pair($var, $freshVar), $newConvs);
+                            my $newBody  = &self($forVar, $whatTerm, $keepfree, $myConvs, $body);
+                            $_if( $is-None($newBody), # neither forVar nor var free in body, and no external alpha-convs applicable
+                                { $None },
+                                { $Some($LamT($freshVar, $Some2value($newBody))) }
+                            )
+                          },
+                          { my $newBody = &self($forVar, $whatTerm, $keepfree, $newConvs, $body);
+                            $_if( $is-None($newBody),
+                                { $None },
+                                { $Some($LamT($var, $Some2value($newBody))) }
+                            )
+                          }
+                      );
+                    }
+                );
             } else {
                 die "fell off type-dispatch with type " ~ $t.WHAT.perl
             }

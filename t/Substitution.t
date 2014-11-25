@@ -6,6 +6,7 @@ use Test::Util;
 use Lambda::Boolean;
 use Lambda::MaybeADT;
 use Lambda::ListADT;
+use Lambda::PairADT;
 use Lambda::TermADT;
 
 use Lambda::Substitution;
@@ -13,7 +14,7 @@ use Lambda::Substitution;
 use Lambda::Conversion::Bool-conv;
 use Lambda::Conversion::ListADT-conv;
 
-plan 43;
+plan 50;
 
 
 my $a = $VarT('a');
@@ -164,33 +165,69 @@ my $c = $ConstT('c');
             my $desc = "(subst-with-alpha $forVarStr $whatTermStr $keepfreeStr $alpha-convsStr $inTermStr) yields $expStr";
 
             my $actual = $subst-with-alpha($forVar, $whatTerm, $keepfreeTList, $alpha-convsListOfPairs, $inTerm);
+            my $actualStr = convertTBool2P6Bool($is-Some($actual))
+                ?? '(Some `' ~ $Term2source($Some2value($actual)) ~ ')'
+                !! 'None';
             is($actual, $expected, $desc)
-                or diag($actual.Str ~ ' / ' ~ $actual.perl) and die;
+                or diag("     got: $actualStr  /  {$actual.perl})") and die;
         }
     }
 
-    my $app_xy = $AppT($x, $y);         # (x y)
-    my $lam0   = $LamT($x, $y);         # λx.y
-    my $lam1   = $LamT($x, $app_xy);    # λx.x y
+    my $app_xy  = $AppT($x, $y);        # (x y)
+    my $app_xyz = $AppT($app_xy, $z);   # ((x y) z)
+    my $lam0    = $LamT($x, $y);        # λx.y
+    my $lam1    = $LamT($x, $app_xy);   # λx.x y
+    my $lam2    = $LamT($x, $app_xyz);  # λx.x y z
+    my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
 
     is_subst-with-alpha(
-        [$x, $y, [], [],                    $c          ] => $None,
+        [$x, $y,        [],         [],                     $c      ] => $None,
 
-        [$x, $y, [], [],                    $y          ] => $None,
-        [$x, $y, [], [],                    $x          ] => $Some($y),
-        [$x, $y, [], [[$z,$u]],             $z          ] => $Some($u),
-        [$z, $y, [], [[$z,$x]],             $z          ] => $Some($y),   # don't do alpha-convs if main subst applies!
-        [$x, $y, [], [[$z,$x]],             $z          ] => $Some($x),   # don't do main subst after alpha-convs!
+        [$x, $y,        [],         [],                     $y      ] => $None,
+        [$x, $y,        [],         [],                     $x      ] => $Some($y),
+        [$x, $y,        [],         [[$z,$u]],              $z      ] => $Some($u),
+        [$z, $y,        [],         [[$z,$x]],              $z      ] => $Some($y),   # don't do alpha-convs if main subst applies!
+        [$x, $y,        [],         [[$z,$x]],              $z      ] => $Some($x),   # don't do main subst after alpha-convs!
 
-        [$z, $y, [], [],                    $app_xy     ] => $None,
-        [$x, $y, [], [],                    $app_xy     ] => $Some($AppT($y, $y)),
-        [$y, $x, [], [],                    $app_xy     ] => $Some($AppT($x, $x)),
-        [$x, $y, [], [[$z,$u]],             $app_xy     ] => $Some($AppT($y, $y)),
-        [$x, $y, [], [[$y,$v]],             $app_xy     ] => $Some($AppT($y, $v)),
-        [$x, $y, [], [[$x,$u], [$y,$v]],    $app_xy     ] => $Some($AppT($y, $v)),
+        [$z, $y,        [],         [],                     $app_xy ] => $None,
+        [$x, $y,        [],         [],                     $app_xy ] => $Some($AppT($y, $y)),
+        [$y, $x,        [],         [],                     $app_xy ] => $Some($AppT($x, $x)),
+        [$x, $y,        [],         [[$z,$u]],              $app_xy ] => $Some($AppT($y, $y)),
+        [$x, $y,        [],         [[$y,$v]],              $app_xy ] => $Some($AppT($y, $v)),
+        [$x, $y,        [],         [[$x,$u], [$y,$v]],     $app_xy ] => $Some($AppT($y, $v)),
 
-        [$z, $y, [], [],                    $lam0       ] => $None,
-        [$y, $z, [], [],                    $lam0       ] => $Some($LamT($x, $z)),
-        [$v, $z, [], [[$y, $v]],            $lam0       ] => $Some($LamT($x, $v)),   # don't do main subst after alpha-convs!
+        [$z, $y,        [],         [],                     $lam0   ] => $None,     # λx.y
+        [$y, $z,        [],         [[$y, $u]],             $lam0   ] => $Some($LamT($x, $z)),  # don't do alpha-convs if main subst applies!
+        [$y, $z,        [],         [[$z, $u]],             $lam0   ] => $Some($LamT($x, $z)),  # don't do alpha-convs after main subst!
+        [$u, $z,        [],         [[$y, $u]],             $lam0   ] => $Some($LamT($x, $u)),  # don't do main subst after alpha-convs!
+
+        # main subst var x NOT free in body:     # λx.x y
+        [$x, $z,        [],         [],                     $lam1   ] => $None,
+        [$x, $z,        [],         [[$y, $v]],             $lam1   ] => $Some($LamT($x, $AppT($x,$v))),  # ...but external alpha-convs still applied
+        [$x, $z,        [],         [[$y, $v],[$x, $u]],    $lam1   ] => $Some($LamT($x, $AppT($x,$v))),  # ...*except* for the lambda's binder!
+        
+        # main subst var y IS free in body:     # λx.x y
+        [$y, $z,        [],         [[$y, $v],[$x, $u]],    $lam1   ] => $Some($LamT($x, $AppT($x,$z))),  # ...*except* for the lambda's binder!
+
+        # neither forVar nor var free in body, and no external alpha-convs applicable
+        [$v, $app_xy,   [$x, $y],   [[$u,$z],[$w,$v]],      $lam3   ] => $None,
     );
+
+    subtest({ # [(x y)/y][u/x][v/z](λx.x y z)  =  (λα1.α1 (x y) v)
+        my ($out, $newVar, $newBody, $keepfree, $alpha-convs, $inTerm);
+        $keepfree = $cons($x, $cons($y, $nil));
+        $alpha-convs = $cons($Pair($z, $v), $cons($Pair($x, $u), $nil));
+        $inTerm = $lam2;
+        
+        $out = $Some2value($subst-with-alpha($y, $app_xy, $keepfree, $alpha-convs, $lam2));
+        $newVar  = $LamT2var($out);
+        $newBody = $LamT2body($out);
+
+        isnt($VarT2name($newVar), 'x', "fresh var $newVar is different from var x");
+        isnt($VarT2name($newVar), 'y', "fresh var $newVar is different from var y");
+        isnt($VarT2name($newVar), 'z', "fresh var $newVar is different from var z");
+        isnt($VarT2name($newVar), 'v', "fresh var $newVar is different from var v");
+        is($newBody, $AppT($AppT($newVar, $app_xy), $v))
+            or diag("     got: " ~ $Term2source($out));
+    }, 'plus additional alpha-conversion (fresh var for x)');
 }
