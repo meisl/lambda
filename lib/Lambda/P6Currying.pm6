@@ -3,21 +3,25 @@ use v6;
 # Partial0
 
 role Partial0[::T0] {
+    method arity { 1 }
     multi method _(T0:D $a0) {                                  self.apply($a0)                }
 }
 
 role Partial0[::T0, ::T1] {
+    method arity { 2 }
     multi method _(T0:D $a0) {                                  self.apply($a0)                }
     multi method _(T0:D $a0, T1:D $a1) {                        self.apply($a0, $a1)           }
 }
 
 role Partial0[::T0, ::T1, ::T2] {
+    method arity { 3 }
     multi method _(T0:D $a0) {                                  self.apply($a0)                }
     multi method _(T0:D $a0, T1:D $a1) {                        self.apply($a0, $a1)           }
     multi method _(T0:D $a0, T1:D $a1, T2:D $a2) {              self.apply($a0, $a1, $a2)      }
 }
 
 role Partial0[::T0, ::T1, ::T2, ::T3] {
+    method arity { 4 }
     multi method _(T0:D $a0) {                                  self.apply($a0)                }
     multi method _(T0:D $a0, T1:D $a1) {                        self.apply($a0, $a1)           }
     multi method _(T0:D $a0, T1:D $a1, T2:D $a2) {              self.apply($a0, $a1, $a2)      }
@@ -28,15 +32,18 @@ role Partial0[::T0, ::T1, ::T2, ::T3] {
 # Partial1
 
 role Partial1[$a0, ::T1] {
+    method arity { 1 }
     multi method _(T1:D $a1) {                                  self.apply($a0, $a1)           }
 }
 
 role Partial1[$a0, ::T1, ::T2] {
+    method arity { 2 }
     multi method _(T1:D $a1) {                                  self.apply($a0, $a1)           }
     multi method _(T1:D $a1, T2:D $a2) {                        self.apply($a0, $a1, $a2)      }
 }
 
 role Partial1[$a0, ::T1, ::T2, ::T3] {
+    method arity { 3 }
     multi method _(T1:D $a1) {                                  self.apply($a0, $a1)           }
     multi method _(T1:D $a1, T2:D $a2) {                        self.apply($a0, $a1, $a2)      }
     multi method _(T1:D $a1, T2:D $a2, T3:D $a3) {              self.apply($a0, $a1, $a2, $a3) }
@@ -46,10 +53,12 @@ role Partial1[$a0, ::T1, ::T2, ::T3] {
 # Partial2
 
 role Partial2[$a0, $a1, ::T2] {
+    method arity { 1 }
     multi method _(T2:D $a2) {                                  self.apply($a0, $a1, $a2)      }
 }
 
 role Partial2[$a0, $a1, ::T2, ::T3] {
+    method arity { 2 }
     multi method _(T2:D $a2) {                                  self.apply($a0, $a1, $a2)      }
     multi method _(T2:D $a2, T3:D $a3) {                        self.apply($a0, $a1, $a2, $a3) }
 }
@@ -58,6 +67,7 @@ role Partial2[$a0, $a1, ::T2, ::T3] {
 # Partial3
 
 role Partial3[$a0, $a1, $a2, ::T3] {
+    method arity { 1 }
     multi method _(T3:D $a3) {                                  self.APPLY($a0, $a1, $a2, $a3) }
 }
 
@@ -109,7 +119,7 @@ my class Fn does Callable {
     }
 
     method signature { &!f.signature }
-    method arity     { &!f.signature.arity }
+    #method arity     { &!f.signature.arity }
 
     method ty {
         my $s = &!f.signature;
@@ -129,8 +139,16 @@ my class Fn does Callable {
 
     # NOT to be used from outside - use normal postcircumfix<( )> instead!
     method apply(*@as) {
-        @as == self.arity ?? &!f.(|@as) !! Fn.new(&!f, |@as);
+        my $out;
+        if @as == &!f.signature.arity {
+            $out = &!f.(|@as);
+        } else {
+            $out = Fn.new(&!f, |@as);
+            &!f.?onPartialApp($out, |@as);
+        }
+        return $out;
     }
+
 }
 
 sub curry(&f) is export {

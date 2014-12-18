@@ -11,14 +11,21 @@ plan 13;
 
 { # binary fn
     constant $g is export = curry(-> Int $x, Str $s -->Str{ $s x $x });
+    $g.f does role {
+        method onPartialApp($self, *@as) {
+            #exit;
+        }
+    }
 
     does_ok($g, Callable, 'curry(...)');
-    is $g.arity, 2, "supports method arity";
+    is $g.arity, 2, "unapplied bin fn has arity 2";
     does_ok($g.signature, Signature, 'curry(...).signature');
 
     is $g(3, 'x'), 'xxx', "can call it with expected nr of args";
     my $g3 = $g(3);
     does_ok($g3, Callable, "applying binary fn to one arg yields another Callable");
+    is $g3.arity, 1, "bin fn applied to 1 arg yields fn of arity 1";
+
     is $g3('y'), 'yyy', "can call partially applied binary fn with rest args";
 
     dies_ok({$g('x', 5)}, "passing two args of wrong type to bin fn throws (immediately)");
