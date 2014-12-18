@@ -8,7 +8,7 @@ role lambda is export {
     method Str {
         self.?symbol || $!lambda;
     }
-    method gist { $!lambda }
+    method gist { self.Str }
     #method perl { self.gist }
 }
 
@@ -22,9 +22,28 @@ role Definition is export {
     method Str { $!symbol }
 }
 
+
+
+        #T.perl ~ ' -> ' ~ @!restParams.map(*.perl ~ ' ->') ~ ' ' ~ R.perl;
+
+role Curried {
+    method lambdaStr(*@args) {
+            '(' ~ self  ~ @args.map( -> $a {' ' ~ ($a.?symbol // $a.?lambda // $a.perl) }) ~ ')'
+    }
+
+    method partial(&f, *@args) {
+        lambdaFn(Str, self.lambdaStr(@args), &f);
+    }
+}
+
+sub lambdaStr($self, *@args) {
+        '(' ~ $self ~ @args.map( -> $a {' ' ~ ($a.?symbol // $a.?lambda // $a.perl) }) ~ ')'
+}
+
 sub lambdaFn(Str $symbol, Str:D $lambdaExpr, &f) is export {
-    my @p = &f.signature.params;
-    if @p == 0 {
+    my @ps = &f.signature.params;
+    my $r  = &f.signature.returns;
+    if @ps == 0 {
         die "cannot make lambda function with zero parameters"
     } else {
         my $lx = $lambdaExpr.substr(0, 1) eq '(' ?? $lambdaExpr !! "($lambdaExpr)";
@@ -35,7 +54,6 @@ sub lambdaFn(Str $symbol, Str:D $lambdaExpr, &f) is export {
     }
 }
 
-
 constant $id is export = lambdaFn(
     'id', 'λx.x',
     -> $x { $x }
@@ -45,7 +63,7 @@ constant $I is export := $id;
 
 constant $const is export = lambdaFn(
     'const', 'λx.λy.x',
-    -> $b { lambdaFn(Str, "λy.$b", -> $y { $b }) }
+    -> $b { lambdaFn(Str, 'λy.' ~ ($b.?symbol // $b.?lambda // $b.perl), -> $y { $b }) }
 );
 constant $K is export := $const;
 
@@ -54,7 +72,7 @@ constant $B is export = lambdaFn(
     'B', 'λf.λg.λx.f (g x)',
     -> &f, &g {
         lambdaFn(
-            Str, 'λx.' ~ &f ~ ' (' ~ &g ~ ' x)',
+            Str, 'λx.' ~ &f.Str ~ ' (' ~ &g.Str ~ ' x)',
             -> $x { &f(&g($x)) }
         )
     }
@@ -87,7 +105,7 @@ constant $W is export = lambdaFn(
     'W', 'λf.λu.f u u',
     -> &f {
         lambdaFn(
-            Str, '(W ' ~ (&f ~~ lambda ?? &f.Str !! &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
+            Str, '(W ' ~ (&f.?lambda // &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
             -> $u { &f($u, $u) }
         )
     }
@@ -147,5 +165,4 @@ constant $pi3o3 is export = lambdaFn('π3->3', 'λa.λb.λc.c', -> $a, $b, $c { 
 constant $pi1o4 is export = lambdaFn('π4->1', 'λa.λb.λc.λd.a', -> $a, $b, $c, $d { $a });
 constant $pi2o4 is export = lambdaFn('π4->2', 'λa.λb.λc.λd.b', -> $a, $b, $c, $d { $b });
 constant $pi3o4 is export = lambdaFn('π4->3', 'λa.λb.λc.λd.c', -> $a, $b, $c, $d { $c });
-constant $pi4o4 is export = lambdaFn('π4->4', 'λa.λb.λc.λd.d', -> $a, $b, $c, $d { $d });
-
+constant $pi4o4 is export ::= lambdaFn('π4->4', 'λa.λb.λc.λd.d', -> $a, $b, $c, $d { $d });

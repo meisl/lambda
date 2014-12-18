@@ -199,7 +199,7 @@ constant $foldr-iter is export = lambdaFn(
 constant $foldr is export = $foldr-rec;
 
 constant $map-foldr is export = lambdaFn(
-    'map-foldr', 'λf.foldr (λx.cons (f x)) nil',
+    'map-foldr', 'λf.foldr (B cons f) nil',
     -> &f, TList:D $xs {
         $foldr(-> $x, $acc { $cons(&f($x), $acc) }, $nil, $xs)
     }

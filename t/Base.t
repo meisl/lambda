@@ -7,6 +7,7 @@ use Lambda::Boolean;    # TODO: move findFP (tests) out of Base.pm6, st. depende
 
 plan 52;
 
+
 { # lambdaFn
     my $omega ::= lambdaFn( 'ω', 'λx.x x', -> &x { &x(&x) } );
    is_properLambdaFn($omega);

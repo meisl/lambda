@@ -134,79 +134,161 @@ constant $subst is export = lambdaFn(
     }
 );
 
-constant $subst-with-alpha is export = $Y(lambdaFn(
-    'subst-with-alpha',
+constant $subst-first_VarT = lambdaFn(
+    'subst-first_VarT',
 q:to/ENDOFLAMBDA/,
-    λself.λforVar.λwhatTerm.λkeepfree.λalpha-convs.λt.error "NYI"
+    λname.λalpha-convs.error "NYI"
+ENDOFLAMBDA
+    -> Str $name, TList $alpha-convs {
+        $Maybe-lift-in($B($Some, $snd))(
+            $first(
+                -> TPair $s { convertP6Bool2TBool($name eq $fst($s)) },
+                $alpha-convs
+            )
+        )
+    }
+);
+
+constant $subst-first = $Y(lambdaFn(
+    'subst-first',
+q:to/ENDOFLAMBDA/,
+    λself.λt.λalpha-convs.error "NYI"
 ENDOFLAMBDA
     -> &self {
-        -> TTerm $forVar, TTerm $whatTerm, TList $keepfree, TList $alpha-convs, TTerm $t {
+        -> TTerm $t, TList $alpha-convs {
             if convertTBool2P6Bool($is-ConstT($t)) {
                 $None
             } elsif convertTBool2P6Bool($is-VarT($t)) {
-                $_if( convertP6Bool2TBool($VarT2name($t) eq $VarT2name($forVar)),
-                    { $Some($whatTerm) },
-                    { $subst-seq($t, $alpha-convs) }
-                );
+                $subst-first_VarT($VarT2name($t), $alpha-convs)
             } elsif convertTBool2P6Bool($is-AppT($t)) {
                 my $func = $AppT2func($t);
                 my $arg  = $AppT2arg($t);
-                my $f = &self($forVar, $whatTerm, $keepfree, $alpha-convs, $func);
-                my $a = &self($forVar, $whatTerm, $keepfree, $alpha-convs, $arg);
+                my $f = &self($func, $alpha-convs);
+                my $a = &self($arg,  $alpha-convs);
                 $_if( $is-None($f),
-                    { $_if( $is-None($a),
-                          { $None },
-                          { $Some($AppT($func, $Some2value($a))) }
+                    { $Maybe-lift-in(-> TTerm $newArg { $Some($AppT($func, $newArg)) })(  # (B Some (B (AppT func)))
+                        $a
                       )
+                      #$_if( $is-None($a),
+                      #    { $None },
+                      #    { $Some($AppT($func, $Some2value($a))) }
+                      #)
                     },
-                    { $_if( $is-None($a),
-                          { $Some($AppT($Some2value($f), $arg)) },
-                          { $Some($AppT($Some2value($f), $Some2value($a))) }
-                      )
+                    { $Some($AppT(
+                        $Some2value($f),
+                        $Maybe2valueWithDefault($a, $arg)
+                      ))
+                      #$_if( $is-None($a),
+                      #    { $Some($AppT($Some2value($f), $arg)) },
+                      #    { $Some($AppT($Some2value($f), $Some2value($a))) }
+                      #)
                     },
                 )
             } elsif convertTBool2P6Bool($is-LamT($t)) {
-                my $var       = $LamT2var($t);
-                my $body      = $LamT2body($t);
-                my $myVarName = $VarT2name($var);
-                my $newConvs  = $filter(
-                    -> $conv { convertP6Bool2TBool($VarT2name($fst($conv)) ne $myVarName) }, # (not (B (B (eq? myVarName) VarT->name) fst))
-                    $alpha-convs
-                );
-                $_if( convertP6Bool2TBool($VarT2name($forVar) eq $myVarName),
-                    { my $newBody = $subst-seq($body, $newConvs); # if we bind it then it's not free -> apply only alpha-convs
-                      $_if( $is-None($newBody),
-                          { $None },
-                          { $Some($LamT($var, $Some2value($newBody))) }
-                      )
-                    },
-                    { my $needFreshVar = $exists(   # TODO: ... AND only if forVar occurs (free) in body
-                        -> TTerm $v {
-                            convertP6Bool2TBool($VarT2name($v) eq $myVarName)
-                        },
-                        $keepfree
-                      );
-                      $_if($needFreshVar,
-                          { my $freshVar = $fresh-var-for($var);
-                            my $myConvs  = $cons($Pair($var, $freshVar), $newConvs);
-                            my $newBody  = &self($forVar, $whatTerm, $keepfree, $myConvs, $body);
-                            $_if( $is-None($newBody), # neither forVar nor var free in body, and no external alpha-convs applicable
-                                { $None },
-                                { $Some($LamT($freshVar, $Some2value($newBody))) }
-                            )
-                          },
-                          { my $newBody = &self($forVar, $whatTerm, $keepfree, $newConvs, $body);
-                            $_if( $is-None($newBody),
-                                { $None },
-                                { $Some($LamT($var, $Some2value($newBody))) }
-                            )
-                          }
-                      );
-                    }
-                );
+                my $var   = $LamT2var($t);
+                my $body  = $LamT2body($t);
+                my $vName = $VarT2name($var);
+                $Maybe-lift-in(-> $newBody { $LamT($var, $newBody) })(
+                    &self($filter(-> TPair $s { $fst($s) ne $vName }, $alpha-convs), $body)
+                )
             } else {
                 die "fell off type-dispatch with type " ~ $t.WHAT.perl
             }
         }
     }
 ));
+
+constant $subst-with-alpha is export = lambdaFn(
+    'subst-with-alpha',
+q:to/ENDOFLAMBDA/,
+    λforVar.λwhatTerm.λkeepfree.λinTerm.error "NYI"
+ENDOFLAMBDA
+    -> TTerm $forVar, TTerm $whatTerm, TList $keepfree, TTerm $inTerm {
+        my $forVarName    = $VarT2name($forVar);
+        my $keepfreeNames = $map($VarT2name, $keepfree);
+        my $mainSubst     = $Pair($forVarName, $whatTerm);
+        $Y(lambdaFn(
+            Str, 'λself.λalpha-convs.λt.error "NYI"',
+            -> &self {
+                -> TList $alpha-convs, TTerm $t {
+                    if convertTBool2P6Bool($is-ConstT($t)) {
+                        $None
+                    } elsif convertTBool2P6Bool($is-VarT($t)) {
+                        #$subst-first_VarT($VarT2name($t), $cons($mainSubst, $alpha-convs))
+                        $_if( convertP6Bool2TBool($VarT2name($t) eq $forVarName),
+                            { $Some($whatTerm) },
+                            { $subst-seq($t, $alpha-convs) }
+                        );
+                    } elsif convertTBool2P6Bool($is-AppT($t)) {
+                        my $func = $AppT2func($t);
+                        my $arg  = $AppT2arg($t);
+                        my $f = &self($alpha-convs, $func);
+                        my $a = &self($alpha-convs, $arg);
+                        $_if( $is-None($f),
+                            { $_if( $is-None($a),
+                                  { $None },
+                                  { $Some($AppT($func, $Some2value($a))) }
+                              )
+                            },
+                            { $_if( $is-None($a),
+                                  { $Some($AppT($Some2value($f), $arg)) },
+                                  { $Some($AppT($Some2value($f), $Some2value($a))) }
+                              )
+                            },
+                        )
+                    } elsif convertTBool2P6Bool($is-LamT($t)) {
+                        my $myVar     = $LamT2var($t);
+                        my $body      = $LamT2body($t);
+                        my $myVarName = $VarT2name($myVar);
+                        my $newConvs  = $filter(
+                            -> $s { convertP6Bool2TBool($fst($s) ne $myVarName) }, # (not (B (eq? myVarName) fst))
+                            $alpha-convs
+                        );
+                        $_if( convertP6Bool2TBool($forVarName eq $myVarName),
+                            # bound by the lambda, hence not free, so we only apply alpha-convs
+                            { $Maybe-lift-in(-> $newBody { $Some($LamT($myVar, $newBody)) })(
+                                  $subst-first($body, $newConvs)
+                              )
+
+                              #$liftMaybe($LamT._($myVar))($subst-first($body, $newConvs))
+                              ## (liftMaybe (LamT myVar) (subst-first body newConvs))
+
+                              #my $newBody = $subst-seq($body, $newConvs);
+                              #$_if( $is-None($newBody),
+                              #    { $None },
+                              #    { $Some($LamT($myVar, $Some2value($newBody))) }
+                              #)
+                            },
+                            { my $needFreshVar = $exists(   # TODO: ... AND only if forVar occurs (free) in body
+                                -> Str $vName {
+                                    convertP6Bool2TBool($vName eq $myVarName)
+                                },
+                                $keepfreeNames
+                              );
+                              $_if($needFreshVar,
+                                  { my $freshVar = $fresh-var-for($myVar);
+                                    my $myConvs  = $cons($Pair($myVar, $freshVar), $newConvs);
+                                    my $newBody  = &self($myConvs, $body);
+                                    # if (is-None newBody) then neither forVar nor myVar free in body, and no external alpha-convs applicable
+                                    $_if( $is-None($newBody),
+                                        { $None },
+                                        { $Some($LamT($freshVar, $Some2value($newBody))) }
+                                    )
+                                  },
+                                  { my $newBody = &self($newConvs, $body);
+                                    $_if( $is-None($newBody),
+                                        { $None },
+                                        { $Some($LamT($myVar, $Some2value($newBody))) }
+                                    )
+                                  }
+                              );
+                            }
+                        );
+                    } else {
+                        die "fell off type-dispatch with type " ~ $t.WHAT.perl
+                    }
+                }
+            }
+        ))($nil, $inTerm);
+    }
+);

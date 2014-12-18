@@ -73,6 +73,40 @@ constant $Maybe2Str is export = lambdaFn(
 
 # functions on Maybe
 
+# monadic functions
+constant $returnMaybe is export := $Some;
+
+constant $bindMaybe is export = lambdaFn(
+    'bindMaybe', 'λm.λf.if (None? m) (K None) (λ_.f (Some->value m))',
+    -> TMaybe:D $m, $f {
+        $_if( $is-None($m),
+            { $None },
+            { $f($Some2value($m)) }
+        )
+    }
+);
+
+constant $liftMaybe is export = lambdaFn(
+    'liftMaybe', 'λf.λm.bindMaybe m (B returnMaybe f)',
+    -> &f { lambdaFn(
+        Str, 'liftMaybe ' ~ (&f.Str // &f.perl),
+        -> TMaybe:D $m {
+            $bindMaybe($m, -> $x { $returnMaybe(&f($x)) })
+        } )
+    }
+);
+
+constant $lift2Maybe is export = lambdaFn(
+    'lift2Maybe', 'λf.λma.λmb.ma `bindMaybe` λa.mb `bindMaybe` λb.returnMaybe (f a b)',
+    -> &f { lambdaFn(
+        Str, 'lift2Maybe ' ~ (&f.Str // &f.perl),
+        -> TMaybe:D $ma, TMaybe:D $mb {
+            $bindMaybe($ma, -> $x { $bindMaybe($mb, -> $y { $returnMaybe(&f($x, $y)) } ) })
+        } )
+    }
+);
+
+
 # Maybe->valueWithDefault
 constant $Maybe2valueWithDefault is export = lambdaFn(
     'Maybe->valueWithDefault', 'λm.λdflt.if (None? m) (K dflt) (λ_.Some->value m)',
@@ -88,7 +122,7 @@ constant $Maybe2valueWithDefault is export = lambdaFn(
 constant $Maybe-lift-in is export = lambdaFn(
     'Maybe-lift-in', 'λf.λm.if (None? m) (K None) (λ_.f (Some->value m))',
     -> &f { lambdaFn(
-        Str, 'Maybe-lift-in ' ~ (&f.Str // &f.perl),
+        Str, 'Maybe-lift-in ' ~ &f.gist,
         -> TMaybe:D $m {
             $_if( $is-None($m),
                 { $None },
