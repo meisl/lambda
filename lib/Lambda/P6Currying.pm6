@@ -111,8 +111,6 @@ my class Fn does Callable {
 
     method arity { &!f.signature.arity - @!partialArgs.elems }
 
-    method signature { &!f.signature }
-
     method ty {
         my $s = &!f.signature;
         @($s.params.map(*.type), $s.returns).map(*.perl).join(' -> ');

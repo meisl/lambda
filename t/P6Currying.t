@@ -6,7 +6,7 @@ use Test::Util;
 use Lambda::P6Currying;
 
 
-plan 18;
+plan 17;
 
 
 { # binary fn
@@ -19,7 +19,6 @@ plan 18;
 
     does_ok($g, Callable, 'curry(...)');
     is $g.arity, 2, "unapplied bin fn has arity 2";
-    does_ok($g.signature, Signature, 'curry(...).signature');
 
     is $g(3, 'x'), 'xxx', "can call it with expected nr of args";
     my $g3 = $g(3);
@@ -40,8 +39,6 @@ plan 18;
 
     say $g;
     say $g.WHICH;
-    say $g.signature.perl;
-    say $g.f.signature.perl;
 }
 
 
