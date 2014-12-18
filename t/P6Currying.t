@@ -6,11 +6,11 @@ use Test::Util;
 use Lambda::P6Currying;
 
 
-plan 13;
+plan 18;
 
 
 { # binary fn
-    constant $g is export = curry(-> Int $x, Str $s -->Str{ $s x $x });
+    my $g ::= curry(-> Int $x, Str $s -->Str{ $s x $x });
     $g.f does role {
         method onPartialApp($self, *@as) {
             #exit;
@@ -42,6 +42,24 @@ plan 13;
     say $g.WHICH;
     say $g.signature.perl;
     say $g.f.signature.perl;
-
 }
 
+
+{ # ternary fn
+    my @seen = @();
+
+    my $g ::= curry(-> Int $a0, Str $a1, Int $a2 -->Str{ @seen.push(($a0, $a1, $a2).tree); "@ call {@seen.elems}: (" ~ @seen[*-1].map(*.perl).join(', ') ~ ")" });
+    is $g.arity, 3, "unapplied ternary fn has arity 3";
+    #say $g(1, "two", 3);
+    #say $g(2, "three", 4);
+
+    my $g1 = $g(1);
+    is $g1.arity, 2, "ternary fn applied to 1 arg yields fn of arity 2";
+
+    my $g1_two = $g1("two");
+    is $g1_two.arity, 1, "ternary fn applied to 1 arg and then another arg yields fn of arity 1";
+
+    my $g1two = $g(1, "two");
+    is $g1two.arity, 1, "ternary fn applied to 2 args yields fn of arity 1";
+
+}
