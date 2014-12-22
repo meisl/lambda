@@ -1,5 +1,8 @@
 use v6;
 
+use Lambda::P6Currying;
+
+
 module Lambda::Base;
 
 
@@ -41,16 +44,16 @@ sub lambdaStr($self, *@args) {
 }
 
 sub lambdaFn(Str $symbol, Str:D $lambdaExpr, &f) is export {
-    my @ps = &f.signature.params;
-    my $r  = &f.signature.returns;
-    if @ps == 0 {
-        die "cannot make lambda function with zero parameters"
+    my $arity = &f.?arity // &f.signature.params.elems;
+    if $arity == 0 {
+        die "cannot make lambda function with zero parameters: symbol=$symbol, lambdaExpr=$lambdaExpr, &f.signature=" ~ &f.signature.perl ~ ', &f=' ~ &f.perl;
     } else {
+        my $out = curry(&f);
         my $lx = $lambdaExpr.substr(0, 1) eq '(' ?? $lambdaExpr !! "($lambdaExpr)";
-        &f does lambda($lx);
-        &f does Definition(:$symbol)
+        $out does lambda($lx);
+        $out does Definition(:$symbol)
             if $symbol.defined;
-        &f;
+        $out;
     }
 }
 
@@ -119,25 +122,28 @@ constant $Y is export = -> $U { lambdaFn(
     #'Y', 'let (U λu.λf.f(u u f)) (U U)',
     #'Y', 'let (U λu.λf.f(u u f)) (λf.f(U U f))',
     -> &f {
+        #say '(Y ' ~ &f.Str ~ ')';
         lambdaFn(
-            &f.?symbol // Str, '(Y ' ~ (&f ~~ lambda ?? &f.lambda !! &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
+            &f.?symbol // Str, '(Y ' ~ (&f.?lambda // &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
             &f( $U($U, &f) )
         )
     }
 ) }( -> $u, &f { -> |args { &f( $u($u, &f) )(|args) } } );
+#) }( -> $u, &f { say "u"; &f( $u($u, &f) ) } );
 
 
 # fixed-point search ----------------------------------------------------------
 
 # starting at $start, returns the first fixed-point of &method
-# wrt. to end-condition `done`,
-# ie. the first x st. (done x (&method x)) == True
+# wrt. to end-condition `predicate`,
+# ie. the first x st. (predicate x (&method x)) == True
 # where "===" is the default end-condition.
 # ...or diverges if there is none...
 constant $findFP is export = $Y(lambdaFn(
     'findFP', 'λself.λp.λf.λstart.let ((next (f start)) (done (p start next))) (if done start (self f next p))',
     -> &self {
         -> &predicate, &f, $start {
+            say "inside findFP";
             my $next = &f($start);
             my $done = &predicate($start, $next);    # TODO: move findFP out of Base.pm6, st. dependency on Boolean.pm6 is made clear
             if $done(True, False) { # TODO: once findFP is moved out of Base.pm6: implement using $_if

@@ -86,37 +86,38 @@ constant $cdr is export = lambdaFn(
 #    }
 );
 
-constant $caar is export = lambdaFn( 'caar', 'B car car', $B($car, $car) );
-constant $cadr is export = lambdaFn( 'cadr', 'B car cdr', $B($car, $cdr) );
-constant $cdar is export = lambdaFn( 'cdar', 'B cdr car', $B($cdr, $car) );
-constant $cddr is export = lambdaFn( 'cddr', 'B cdr cdr', $B($cdr, $cdr) );
+constant $caar2 is export = lambdaFn('caar', 'B car car', $B($car, $car) );
 
-constant $caaar is export = lambdaFn( 'caaar', 'B car caar', $B($car, $caar) );
-constant $caadr is export = lambdaFn( 'caadr', 'B car cadr', $B($car, $cadr) );
-constant $cadar is export = lambdaFn( 'cadar', 'B car cdar', $B($car, $cdar) );
-constant $caddr is export = lambdaFn( 'caddr', 'B car cddr', $B($car, $cddr) );
-constant $cdaar is export = lambdaFn( 'cdaar', 'B cdr caar', $B($cdr, $caar) );
-constant $cdadr is export = lambdaFn( 'cdadr', 'B cdr cadr', $B($cdr, $cadr) );
-constant $cddar is export = lambdaFn( 'cddar', 'B cdr cdar', $B($cdr, $cdar) );
-constant $cdddr is export = lambdaFn( 'cdddr', 'B cdr cddr', $B($cdr, $cddr) );
+constant $caar is export = $B($car, $car) does Definition(:symbol<caar>);
+constant $cadr is export = $B($car, $cdr) does Definition(:symbol<cadr>);
+constant $cdar is export = $B($cdr, $car) does Definition(:symbol<cdar>);
+constant $cddr is export = $B($cdr, $cdr) does Definition(:symbol<cddr>);
 
+constant $caaar is export = $B($car, $caar) does Definition(:symbol<caaar>);
+constant $caadr is export = $B($car, $cadr) does Definition(:symbol<caadr>);
+constant $cadar is export = $B($car, $cdar) does Definition(:symbol<cadar>);
+constant $caddr is export = $B($car, $cddr) does Definition(:symbol<caddr>);
+constant $cdaar is export = $B($cdr, $caar) does Definition(:symbol<cdaar>);
+constant $cdadr is export = $B($cdr, $cadr) does Definition(:symbol<cdadr>);
+constant $cddar is export = $B($cdr, $cdar) does Definition(:symbol<cddar>);
+constant $cdddr is export = $B($cdr, $cddr) does Definition(:symbol<cdddr>);
 
-constant $caaaar is export = lambdaFn( 'caaaar', 'B car caaar', $B($car, $caaar) );
-constant $caaadr is export = lambdaFn( 'caaadr', 'B car caadr', $B($car, $caadr) );
-constant $caadar is export = lambdaFn( 'caadar', 'B car cadar', $B($car, $cadar) );
-constant $caaddr is export = lambdaFn( 'caaddr', 'B car caddr', $B($car, $caddr) );
-constant $cadaar is export = lambdaFn( 'cadaar', 'B car cdaar', $B($car, $cdaar) );
-constant $cadadr is export = lambdaFn( 'cadadr', 'B car cdadr', $B($car, $cdadr) );
-constant $caddar is export = lambdaFn( 'caddar', 'B car cddar', $B($car, $cddar) );
-constant $cadddr is export = lambdaFn( 'cadddr', 'B car cdddr', $B($car, $cdddr) );
-constant $cdaaar is export = lambdaFn( 'cdaaar', 'B cdr caaar', $B($cdr, $caaar) );
-constant $cdaadr is export = lambdaFn( 'cdaadr', 'B cdr caadr', $B($cdr, $caadr) );
-constant $cdadar is export = lambdaFn( 'cdadar', 'B cdr cadar', $B($cdr, $cadar) );
-constant $cdaddr is export = lambdaFn( 'cdaddr', 'B cdr caddr', $B($cdr, $caddr) );
-constant $cddaar is export = lambdaFn( 'cddaar', 'B cdr cdaar', $B($cdr, $cdaar) );
-constant $cddadr is export = lambdaFn( 'cddadr', 'B cdr cdadr', $B($cdr, $cdadr) );
-constant $cdddar is export = lambdaFn( 'cdddar', 'B cdr cddar', $B($cdr, $cddar) );
-constant $cddddr is export = lambdaFn( 'cddddr', 'B cdr cdddr', $B($cdr, $cdddr) );
+constant $caaaar is export = $B($car, $caaar) does Definition(:symbol<caaaar>);
+constant $caaadr is export = $B($car, $caadr) does Definition(:symbol<caaadr>);
+constant $caadar is export = $B($car, $cadar) does Definition(:symbol<caadar>);
+constant $caaddr is export = $B($car, $caddr) does Definition(:symbol<caaddr>);
+constant $cadaar is export = $B($car, $cdaar) does Definition(:symbol<cadaar>);
+constant $cadadr is export = $B($car, $cdadr) does Definition(:symbol<cadadr>);
+constant $caddar is export = $B($car, $cddar) does Definition(:symbol<caddar>);
+constant $cadddr is export = $B($car, $cdddr) does Definition(:symbol<cadddr>);
+constant $cdaaar is export = $B($cdr, $caaar) does Definition(:symbol<cdaaar>);
+constant $cdaadr is export = $B($cdr, $caadr) does Definition(:symbol<cdaadr>);
+constant $cdadar is export = $B($cdr, $cadar) does Definition(:symbol<cdadar>);
+constant $cdaddr is export = $B($cdr, $caddr) does Definition(:symbol<cdaddr>);
+constant $cddaar is export = $B($cdr, $cdaar) does Definition(:symbol<cddaar>);
+constant $cddadr is export = $B($cdr, $cdadr) does Definition(:symbol<cddadr>);
+constant $cdddar is export = $B($cdr, $cddar) does Definition(:symbol<cdddar>);
+constant $cddddr is export = $B($cdr, $cdddr) does Definition(:symbol<cddddr>);
 
 
 # functions on TList

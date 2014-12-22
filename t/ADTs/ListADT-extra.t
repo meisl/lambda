@@ -73,7 +73,7 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
                 is @seen[2][1], 4, "passes last result from f to f as 2nd arg in subsequent calls";
             }, "foldr on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
         }
-    }, "foldr implemented as {$foldr.name}: {$foldr.lambda}";
+    }, "foldr implemented as {$foldr.symbol}: {$foldr.lambda}";
 }
 
 { # reverse

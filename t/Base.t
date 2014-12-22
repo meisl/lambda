@@ -124,7 +124,7 @@ plan 52;
     does_ok $fact, Definition, '(Y f)';
     is $fact.symbol, $fact-stub.symbol, "Y uses stub's .symbol (if any) as Definition symbol of result";
 
-    does_ok $Y(-> &self { &self }), lambda, '(Y g) where g does not role "lambda" - itself';
+    does_ok $Y(-> &self { $id }), lambda, '(Y g) where g does not do role "lambda" itself';
     doesnt_ok $Y(lambdaFn(Str, 'λfoo."bar"', -> &self { -> $foo { 'bar' } } )), Definition,
         "Y doesn't make its result a Definition if stub doesnt Definition";
 
