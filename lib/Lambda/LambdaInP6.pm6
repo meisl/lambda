@@ -55,7 +55,7 @@ class TermStub is export {
     }
 }
 
-multi sub app(@xs) returns TermStub {
+multi sub app(@xs) is export returns TermStub {
     return TermStub.new(-> Env:D $env {
         #say "app $depth: {@xs.perl}";
         my @ts = @xs.tree.map(-> $x {
@@ -84,20 +84,11 @@ multi sub app(@xs) returns TermStub {
     });
 }
 
-multi sub app(Str:D $x) returns TermStub {
+multi sub app(Str:D $x) is export returns TermStub {
     app([$x]);
 }
 
-
-my $env = Env.empty.extend(:x($VarT('foo')));
-say $Term2source( app(<x>).in($env) );
-say $Term2source( app(<x x>).in($env) );
-say $Term2source( app(<x y>).in($env.extend(:y($VarT('bar')))) );
-say $Term2source( app((<x>, <y z>)).in($env.extend(:y($VarT('bar')), :z($VarT('baz')))) );
-say '';
-
-
-my multi sub lam(@vs, @body) returns TermStub {
+multi sub lam(@vs, @body) is export returns TermStub {
     die "need at least 1 var for lam"
         unless @vs > 0;
     my @vNms = @vs.map({
@@ -123,20 +114,23 @@ my multi sub lam(@vs, @body) returns TermStub {
     });
 }
 
-my multi sub lam(@vs, $body) returns TermStub {
+multi sub lam(@vs, $body) is export returns TermStub {
     lam(@vs, [$body]);
 }
 
-my multi sub lam($vs, $body) returns TermStub {
+multi sub lam($vs, $body) is export returns TermStub {
     lam([$vs], [$body]);
 }
 
+
+my $env;
 $env = Env.empty.extend(:x($VarT('foo')), :y($VarT('bar')));
 
 say $Term2source( lam(<x>, <x>).in($env) );
 say $Term2source( lam(<x>, <x x>).in($env) );
 say $Term2source( lam(<x y>, <x>).in($env) );
-say $Term2source( lam(<x y>, <x y>).in($env) );
+say $Term2source( lam(<x y>, <y x>).in($env) );
+
 say $Term2source( lam(<x y u>, <x y>).in($env) );
 say $Term2source( lam(<x>, <x y>).in($env) );
 say $Term2source( lam(<x y z>, <x y z>).in($env) );
@@ -148,15 +142,13 @@ say $Term2source( lam(<x>, <id>).in($env) );
 say '';
 
 
-multi sub let(%decls, $body) returns TermStub {
+multi sub let(%decls, $body) is export returns TermStub {
     my @names = %decls.keys.reverse;
-    #my $lam = lam(@names, $body);
-    #my $out = app([$lam, %decls.values.reverse]);
-
-    my $out = ($body, @names).reduce(-> $t, $name {
+    die 'need at least one binding in let'
+        unless @names > 1;
+    return ($body, @names).reduce(-> $t, $name {
         app([lam($name, $t), %decls{$name}])
     });
-    $out;
 }
 
 say $Term2source( let(

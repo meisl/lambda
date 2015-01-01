@@ -4,11 +4,12 @@ use Test;
 use Test::Util;
 
 use Lambda::TermADT;
+use Lambda::Boolean;
 
 use Lambda::LambdaInP6;
 
 
-plan *;
+plan 54;
 
 # TermStub (basic)
 {
@@ -85,4 +86,63 @@ plan *;
     cmp_ok($s1.in($e), '===', $t, 'calling .in on TermStub.new(&f) yields what &f returns');
     is @seen.elems, 1, '.in called &f once';
     cmp_ok(@seen[0], '===', $e, '.in passed the Env to &f');
+}
+
+
+# app
+{
+    my $x = $VarT('x');
+    my $y = $VarT('y');
+    my $z = $VarT('z');
+    my $e1 = Env.empty.extend(:x($x));
+    my $e2 = $e1.extend(:y($y));
+    my $e3 = $e2.extend(:z($z));
+    my $t;
+    
+    $t = app(<x>).in($e1);
+    cmp_ok($t, '===', $x, 'app(<x>).in(..) yields VarT');
+    
+    $t = app(<x x>).in($e1);
+    cmp_ok($AppT2func($t), '===', $x, 'app(<x x>).in(..) yields AppT with func = var x');
+    cmp_ok($AppT2arg($t), '===', $x, 'app(<x x>).in(..) yields AppT with arg = var x');
+    
+    $t = app(<x y>).in($e2);
+    cmp_ok($AppT2func($t), '===', $x, 'app(<x y>).in(..) yields AppT with func = var x');
+    cmp_ok($AppT2arg($t), '===', $y, 'app(<x y>).in(..) yields AppT with arg = var y');
+    
+    $t = app((<x>, <y z>)).in($e3);
+    cmp_ok($AppT2func($t), '===', $x, 'app((<x> <y z>)).in(..) yields AppT with func = var x');
+    cmp_ok($AppT2func($AppT2arg($t)), '===', $y, 'app((<x> <y z>)).in(..) yields AppT with arg = (AppT y z)');
+    cmp_ok($AppT2arg($AppT2arg($t)), '===', $z, 'app((<x> <y z>)).in(..) yields AppT with arg = (AppT y z)');
+}
+
+
+# lam
+{
+    my $x = $VarT('x');
+    my $y = $VarT('y');
+    my $z = $VarT('z');
+    my $env0 = Env.empty;
+    my $env1 = $env0.extend(:x($x), :y($y));
+    my $t;
+
+    $t = lam(<x>, <x>).in($env0);
+    cmp_ok($LamT2var($t), '===', $x, 'lam(<x>, <x>) yields LamT with var = var x');
+    cmp_ok($LamT2body($t), '===', $x, 'lam(<x>, <x>) yields LamT with body = var x');
+
+    $t = lam(<x>, <x x>).in($env0);
+    cmp_ok($LamT2var($t), '===', $x, 'lam(<x>, <x x>) yields LamT with var = var x');
+    cmp_ok($AppT2func($LamT2body($t)), '===', $x, 'lam(<x>, <x x>) yields LamT with body = (AppT x x)');
+    cmp_ok($AppT2arg($LamT2body($t)), '===', $x, 'lam(<x>, <x x>) yields LamT with body = (AppT x x)');
+
+    $t = lam(<x y>, <x>).in($env0);
+    cmp_ok($LamT2var($t), '===', $x, 'lam(<x y>, <x>) yields LamT with var = var x');
+    cmp_ok($LamT2var($LamT2body($t)), '===', $y, 'lam(<x y>, <x>) yields LamT with body = (LamT y x)');
+    cmp_ok($LamT2body($LamT2body($t)), '===', $x, 'lam(<x y>, <x>) yields LamT with body = (LamT y x)');
+
+    $t = lam(<x y>, <y x>).in($env0);
+    cmp_ok($LamT2var($t), '===', $x, 'lam(<x y>, <x>) yields LamT with var = var x');
+    cmp_ok($LamT2var($LamT2body($t)), '===', $y, 'lam(<x y>, <y x>) yields LamT with body = (LamT y (AppT y x))');
+    cmp_ok($AppT2func($LamT2body($LamT2body($t))), '===', $y, 'lam(<x y>, <y x>) yields LamT with body = (LamT y (AppT y x))');
+    cmp_ok($AppT2arg($LamT2body($LamT2body($t))), '===', $x, 'lam(<x y>, <y x>) yields LamT with body = (LamT y (AppT y x))');
 }
