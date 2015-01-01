@@ -116,6 +116,14 @@ constant $W is export = lambdaFn(
 constant $double-arg is export := $W;
 
 
+my sub recFnSymbol(&f) {
+    &f.?symbol // Str
+}
+
+my sub recFnLambda(&f) {
+    '(Y ' ~ (&f.?lambda // &f.gist) ~ ')' # TODO: "λu.&f u u", but then alpha-convert if necessary
+}
+
 # Turing's Y combinator:
 constant $Y is export = -> $U { lambdaFn(
     'Y', '((λU.U U) λu.λf.f(u u f))',
@@ -124,7 +132,7 @@ constant $Y is export = -> $U { lambdaFn(
     -> &f {
         #say '(Y ' ~ &f.Str ~ ')';
         lambdaFn(
-            &f.?symbol // Str, '(Y ' ~ (&f.?lambda // &f.gist) ~ ')', # TODO: "λu.&f u u", but then alpha-convert if necessary
+            recFnSymbol(&f), recFnLambda(&f),
             &f( $U($U, &f) )
         )
     }

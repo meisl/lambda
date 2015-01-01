@@ -23,6 +23,7 @@ my constant %names2vars = %();
 
 # VarT ctor & predicate
 
+# VarT: Str -> (TBool -> TBool -> Str -> () -> a) -> a
 constant $VarT is export = lambdaFn(
     'VarT', 'λname.λprj.prj #false #false name _',
     -> Str:D $name {
@@ -40,6 +41,7 @@ constant $VarT is export = lambdaFn(
     }
 );
 
+# VarT?: TTerm -> TBool
 constant $is-VarT is export = lambdaFn(
     'VarT?', 'λt.t λtag1.λtag0.λ_.λ_._and (not tag1) (not tag0)',
     -> TTerm:D $t {
