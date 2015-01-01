@@ -49,6 +49,69 @@ role Partial3[$a0, $a1, $a2, ::T3] {
 }
 
 
+
+my sub captureToStr($capture) {
+    "\\({$capture.list.map(*.perl).join(', ')}"
+        ~ ($capture.hash > 0 
+            ?? ', ' ~ $capture.hash.pairs.map(-> $p { $p.key ~ ' => ' ~ $p.value.perl }).join(', ')
+            !! '')
+        ~ ')'
+}
+
+class X::Typing is X::TypeCheck is export {
+    has Str $.operation = 'curried fn application';
+}
+
+class X::Typing::UnsupportedNamedArgs is X::Typing is export {
+    has Str $.message;
+    has     $.whatsInFuncPos;
+    has     $!args;
+    method  args        { captureToStr($!args)    }
+
+    has Str $.expected  = 'positional args only';
+    method  got         { self.args }
+
+    submethod BUILD(:$!whatsInFuncPos, :$!args) {
+        $!message = "named args not supported for curried fn {$!whatsInFuncPos.WHICH}; got {self.args}";
+    }
+}
+
+class X::Typing::ArgBinding is X::Typing is export {
+    has Str $.message;
+    has     $.whatsInFuncPos;
+    has     $!args;
+    method  args        { captureToStr($!args)    }
+
+    method  expected    { $!whatsInFuncPos.ty }
+    method  got         { self.args }
+
+    submethod BUILD(:$!whatsInFuncPos, :$!args) {
+        $!message = "cannot apply {self.expected} to {self.got}";
+    }
+}
+
+class X::Typing::Unapplicable is X::Typing is export {
+    has Str $.message;
+    has     $.whatsInFuncPos;
+    has     $!args;
+    method  args        { captureToStr($!args)    }
+
+    has Str $.expected  = 'a function to apply';
+    method  got         { ~$!whatsInFuncPos.WHICH }
+    
+    submethod BUILD(:$!whatsInFuncPos, :$!args) {
+        $!message = "cannot apply non-function {self.got} to {self.args}";
+    }
+}
+
+my role Unapplicable {
+    method postcircumfix:<( )>($as) {
+        die X::Typing::Unapplicable.new(:whatsInFuncPos(self), :args($as));
+    }
+}
+
+
+
 class Fn does Callable {
     has &.f;
     has @!partialArgs;
@@ -107,34 +170,67 @@ class Fn does Callable {
     method arity { &!f.signature.params.elems - @!partialArgs.elems }
     method count { self.arity }
 
-    method ty {
+    method sig {
         my $s = &!f.signature;
-        @($s.params.map(*.type), $s.returns).map(*.perl).join(' -> ');
+        @($s.params[@!partialArgs.elems..*].map(*.type), $s.returns);
     }
 
-    # dispatch to one of the _ methods from role PartialX 
-    # (doesn't work with postcircumfix:<( )> overrides there, for some reason...?)
-    multi method postcircumfix:<( )>($as) {
+    method ty {
+        self.sig.map(*.perl).join(' -> ');
+    }
+
+    # Dispatch to one of the _ methods from role PartialX 
+    # NOTE: doesn't work with postcircumfix:<( )> overrides there, for some reason...?!
+    method postcircumfix:<( )>($as) {
+        die X::Typing::UnsupportedNamedArgs.new(:whatsInFuncPos(self), :args($as))
+            unless $as.hash.elems == 0;
         self._(|$as);
     }
 
-    # fallback, if none of _ methods from role PartialX matches
-    multi method _(|as) is hidden_from_backtrace {
-        die "cannot apply {self.ty} to (" ~ as.list.map(*.WHICH).join(', ') ~ ')'
+    # Fallback, if none of _ methods from role PartialX matches.
+    # Here, *additional* args arrive (to be appended to @!partialArgs).
+    # NOT to be used from outside - use normal postcircumfix<( )> instead!
+    multi method _(|as) {
+        my $n = self.arity; # orig fn's arity - # of @!partialArgs
+        if as.list.elems > $n {
+            #say "n=$n, partialArgs={@!partialArgs.perl}, as={as.perl}";
+            my $myResult = self._(|as.list[0..$n-1]);
+            #say '################# ' ~ $myResult.WHICH;
+            my $finalResult = $myResult(|as.list[$n..*]);
+            return $finalResult;
+        } else {
+            die X::Typing::ArgBinding.new(:whatsInFuncPos(self), :args(as));
+        }
     }
 
+    # This one expects to receive *all of or less than* the args which the orig fn $!f expects.
     # NOT to be used from outside - use normal postcircumfix<( )> instead!
     method apply(*@as) {
         my $out;
-        if @as == &!f.signature.arity {
+        my $n = &!f.signature.arity;
+        if @as == $n {
             $out = &!f.(|@as);
-        } else {
+        } else { # got *LESS* params (if it were more then we'd ended up in the fallback method _ above)
             $out = Fn.new(&!f, |@as);
             &!f.?onPartialApp($out, |@as);
+        }
+        if $out ~~ Callable or $out.^can('postcircumfix:<( )>') {
+            $out = curry($out);
+        } else {
+            $out does Unapplicable;
         }
         return $out;
     }
 
+}
+
+role Func[::T, ::R] {
+
+    method fnType {
+        my $t = T.?fnType // T.WHICH;
+        $t = "($t)" if T ~~ Func;
+        $t ~ ' -> ' ~ (R.?fnType // R.WHICH)
+    }
 }
 
 sub curry(&f) is export {

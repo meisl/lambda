@@ -6,40 +6,93 @@ use Test::Util;
 use Lambda::P6Currying;
 
 
-plan 43;
+plan 17;
 
 { # invalid signature
-    # nullary fn
-    dies_ok({curry(-> { 'foo' })}, "cannot curry lambda expr with no args");
     my sub foo { 'bar' };
-    dies_ok({curry(foo)}, "cannot curry sub with no args");
 
-    # optional params
-    dies_ok({curry(-> $y, $x? {'bar'})}, "cannot curry lambda expr with optional (positional) params");
-    dies_ok({curry(-> $y, :$x {'bar'})}, "cannot curry lambda expr with optional (named) params");
+    subtest {
+        # nullary fn
+        dies_ok({curry(foo)}, "sub with no args");
+        dies_ok({curry(-> { 'foo' })}, "lambda expr with no args");
 
-    # named params
-    dies_ok({curry(-> :$x! {'bar'})}, "cannot curry lambda expr with (mandatory) named params");
-    dies_ok({curry(-> $y, :$x! {'bar'})}, "cannot curry lambda expr with (mandatory) named params");
-    
-    # slurpy params
-    dies_ok({curry(-> $y, *@x {'bar'})}, "cannot curry lambda expr with slurpy (positional) params");
-    
-    # capture param
-    dies_ok({curry(-> $y, |x {'bar'})}, "cannot curry lambda expr with capture param");
-    
-    # parcel param
-    dies_ok({curry(-> \x {'bar'})}, "cannot curry lambda expr with parcel param");
+        # optional params
+        dies_ok({curry(-> $y, $x? {'bar'})}, "lambda expr with optional (positional) params");
+        dies_ok({curry(-> $y, :$x {'bar'})}, "lambda expr with optional (named) params");
+
+        # named params
+        dies_ok({curry(-> :$x! {'bar'})}, "lambda expr with (mandatory) named params");
+        dies_ok({curry(-> $y, :$x! {'bar'})}, "lambda expr with (mandatory) named params");
+        
+        # slurpy params
+        dies_ok({curry(-> $y, *@x {'bar'})}, "lambda expr with slurpy (positional) params");
+        
+        # capture param
+        dies_ok({curry(-> $y, |x {'bar'})}, "lambda expr with capture param");
+        
+        # parcel param
+        dies_ok({curry(-> \x {'bar'})}, "lambda expr with parcel param");
+    }, 'cannot curry...';
 }
 
-{ # unary fn
-    my $g = curry(-> $x { $x });
-    does_ok($g, Callable, 'curry(...)');
-    is $g.arity, 1, "unapplied unary fn has arity 1";
-    is $g.count, 1, "unapplied unary fn supports .count (==arity)";
-    cmp_ok curry($g), '===', $g, 'currying an already curried (unary) fn returns the same thing unchanged';
-    is $g('foo'), 'foo', "applying unary fn yields result";
+
+{ # unary fn Str -> Str
+    my $g = curry(-> Str $x -->Str{ $x });
+    
+    subtest {
+        does_ok $g, Callable;
+
+        is $g.arity, 1, "arity";
+        is $g.count, 1, ".count (==arity)";
+        is $g.sig.elems, 2, "nr of elems in sig";
+        isa_ok $g.sig[0], Str, "type of 1st param";
+        isa_ok $g.sig[1], Str, "type of result";
+        is $g.ty, 'Str -> Str', "ty(pe) string";
+        
+        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
+        
+        is $g('foo'), 'foo', "can call it with expected nr of args";
+    }, "curried unary fn {$g.ty}; unapplied";
 }
+
+
+{ # unary fn Str -> (Int -> Str)
+    my $g = curry(-> Str $x { -> Int $n -->Str{ $x x $n } });
+    
+    subtest {
+        does_ok $g, Callable;
+
+        is $g.arity, 1, "arity";
+        is $g.count, 1, ".count (==arity)";
+        is $g.sig.elems, 2, "nr of elems in sig";
+        isa_ok $g.sig[0], Str, "type of 1st param";
+        isa_ok $g.sig[1], Mu, "type of result";
+        is $g.ty, 'Str -> Mu', "ty(pe) string";
+        
+        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
+        
+        is $g('a', 5), 'aaaaa', 'can apply it to all the args at once';
+    }, "curried unary fn {$g.ty} which returns another unary fn; unapplied";
+
+    my $h = $g('foo');
+    
+    subtest {
+        does_ok $h, Callable;
+
+        is $h.arity, 1, "arity";
+        is $h.count, 1, ".count (==arity)";
+        is $h.sig.elems, 2, "nr of elems in sig";
+        isa_ok $h.sig[0], Int, "type of 1st param";
+        isa_ok $h.sig[1], Str, "type of result";
+        is $h.ty, 'Int -> Str', "ty(pe) string";
+        
+        cmp_ok curry($h), '===', $h, 'currying it again returns the same thing unchanged';
+        
+        is $h(3), 'foofoofoo', 'can apply it to expected args';
+    }, "unary fn {$h.ty} returned from curried unary fn {$g.ty}; (the former) unapplied";
+
+}
+
 
 { # binary fn
     my $g ::= curry(-> Int $x, Str $s -->Str{ $s x $x });
@@ -49,29 +102,53 @@ plan 43;
         }
     }
 
-    does_ok($g, Callable, 'curry(...)');
-    is $g.arity, 2, "unapplied bin fn has arity 2";
-    is $g.count, 2, "unapplied binary fn supports .count (==arity)";
-    cmp_ok curry($g), '===', $g, 'currying an already curried (binary) fn returns the same thing unchanged';
+    subtest {
+        does_ok $g, Callable;
 
-    is $g(3, 'x'), 'xxx', "can call it with expected nr of args";
+        is $g.arity, 2, "arity";
+        is $g.count, 2, ".count (==arity)";
+        is $g.sig.elems, 3, "nr of elems in sig";
+        isa_ok $g.sig[0], Int, "type of 1st param";
+        isa_ok $g.sig[1], Str, "type of 2nd param";
+        isa_ok $g.sig[2], Str, "type of result";
+        is $g.ty, 'Int -> Str -> Str', "ty(pe) string";
+        
+        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
+
+        is $g(3, 'x'), 'xxx', "can call it with expected nr of args";
+    }, "curried binary fn {$g.ty}; unapplied";
 
     my $g3 = $g(3);
-    does_ok($g3, Callable, "applying binary fn to one arg yields another Callable");
-    is $g3.arity, 1, "bin fn applied to 1 arg yields fn of arity 1";
-    is $g3.count, 1, "partially applied bin fn supports .count (==arity)";
-    cmp_ok curry($g3), '===', $g3, 'currying a partially applied (binary) fn returns the same thing unchanged';
+    subtest {
+        does_ok $g3, Callable;
 
-    is $g3('y'), 'yyy', "can call partially applied binary fn with rest args";
+        is $g3.arity, 1, "arity";
+        is $g3.count, 1, ".count (==arity)";
+        is $g3.sig.elems, 2, "nr of elems in sig";
+        isa_ok $g3.sig[0], Str, "type of 1st param";
+        isa_ok $g3.sig[1], Str, "type of result";
+        is $g3.ty, 'Str -> Str', "ty(pe) string";
+        
+        cmp_ok curry($g3), '===', $g3, 'currying it again returns the same thing unchanged';
+
+        is $g3('y'), 'yyy', "can call it with expected nr of args";
+    }, "curried binary fn {$g.ty}; partially applied to \(3)";
+
 
     dies_ok({$g('x', 5)}, "passing two args of wrong type to bin fn throws (immediately)");
     dies_ok({$g('x')}, "passing one arg of wrong type to bin fn throws (immediately)");
     dies_ok({$g3(5)}, "passing one more arg of wrong type to partially applied bin fn throws (immediately)");
 
-    dies_ok({$g(5, 'a', 7)}, "passing three args to bin fn throws (immediately)");
-    dies_ok({$g('x', 5, 7)}, "passing three args (of wrong type) to bin fn throws (immediately)");
-    dies_ok({$g3('b', 7)}, "passing two args to partially applied bin fn throws (immediately)");
-    dies_ok({$g3(9, 7)}, "passing two args (of wrong type) to partially applied bin fn throws (immediately)");
+    throws_like({$g(5, 'a', 7)}, X::Typing::Unapplicable, 
+        "passing 3rd positional arg: throws X::Unapplicable if bin fn doesn't return another fn");
+    throws_like({$g(5, 'a', :foo(7))},  X::Typing::UnsupportedNamedArgs, 
+        "passing 3rd named arg: throws 'named args not supported'");
+
+    throws_like({$g3('b', 7)}, X::Typing::Unapplicable, 
+        "passing two args to partially applied bin fn: throws X::Unapplicable if bin fn doesn't return another fn");
+    
+    throws_like({$g3(9, 6)}, X::Typing::ArgBinding, 
+        "passing two args (1st of wrong type) to partially applied bin fn throws X::ArgBinding");
 }
 
 
@@ -79,26 +156,60 @@ plan 43;
     my @seen = @();
 
     my $g ::= curry(-> Int $a0, Str $a1, Int $a2 -->Str{ @seen.push(($a0, $a1, $a2).tree); "@ call {@seen.elems}: (" ~ @seen[*-1].map(*.perl).join(', ') ~ ")" });
-    is $g.arity, 3, "unapplied ternary fn has arity 3";
-    is $g.count, 3, "unapplied binary fn supports .count (==arity)";
-    cmp_ok curry($g), '===', $g, 'currying an already curried (ternary) fn returns the same thing unchanged';
+    
+    subtest {
+        does_ok $g, Callable;
+
+        is $g.arity, 3, "arity";
+        is $g.count, 3, ".count (==arity)";
+        is $g.sig.elems, 4, "nr of elems in sig";
+        isa_ok $g.sig[0], Int, "type of 1st param";
+        isa_ok $g.sig[1], Str, "type of 2nd param";
+        isa_ok $g.sig[2], Int, "type of 3rd param";
+        isa_ok $g.sig[3], Str, "type of result";
+        is $g.ty, 'Int -> Str -> Int -> Str', "ty(pe) string";
+        
+        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
+    }, "curried ternary fn; unapplied";
 
     #say $g(1, "two", 3);
     #say $g(2, "three", 4);
 
     my $g1 = $g(1);
-    is $g1.arity, 2, "ternary fn applied to 1 arg yields fn of arity 2";
-    is $g1.count, 2, "partially applied ternary fn supports .count (==arity)";
-    cmp_ok curry($g1), '===', $g1, 'currying a partially applied (ternary) fn returns the same thing unchanged';
+    subtest {
+        is $g1.arity, 2, "arity";
+        is $g1.count, 2, ".count (==arity)";
+        is $g1.sig.elems, 3, "nr of elems in sig";
+        isa_ok $g1.sig[0], Str, "type of 1st param";
+        isa_ok $g1.sig[1], Int, "type of 2nd param";
+        isa_ok $g1.sig[2], Str, "type of result";
+        is $g1.ty, 'Str -> Int -> Str', "ty(pe) string";
+        
+        cmp_ok curry($g1), '===', $g1, 'currying it again returns the same thing unchanged';
+    }, 'ternary fn; partially applied to \(1)';
 
     my $g1_two = $g1("two");
-    is $g1_two.arity, 1, "ternary fn applied to 1 arg and then another arg yields fn of arity 1";
-    is $g1_two.count, 1, "partially applied ternary fn supports .count (==arity)";
-    cmp_ok curry($g1_two), '===', $g1_two, 'currying a partially applied (ternary) fn returns the same thing unchanged';
+    subtest {
+        is $g1_two.arity, 1, "arity";
+        is $g1_two.count, 1, ".count (==arity)";
+        is $g1_two.sig.elems, 2, "nr of elems in sig";
+        isa_ok $g1_two.sig[0], Int, "type of 1st param";
+        isa_ok $g1_two.sig[1], Str, "type of result";
+        is $g1_two.ty, 'Int -> Str', "ty(pe) string";
+        
+        cmp_ok curry($g1_two), '===', $g1_two, 'currying it again returns the same thing unchanged';
+    }, 'ternary fn; partially applied to \(1), then to \("two")';
 
     my $g1two = $g(1, "two");
-    is $g1two.arity, 1, "ternary fn applied to 2 args yields fn of arity 1";
-    is $g1two.count, 1, "partially applied ternary fn supports .count (==arity)";
-    cmp_ok curry($g1two), '===', $g1two, 'currying a partially applied (ternary) fn returns the same thing unchanged';
+    subtest {
+        is $g1two.arity, 1, "arity";
+        is $g1two.count, 1, ".count (==arity)";
+        is $g1two.sig.elems, 2, "nr of elems in sig";
+        isa_ok $g1two.sig[0], Int, "type of 1st param";
+        isa_ok $g1two.sig[1], Str, "type of result";
+        is $g1two.ty, 'Int -> Str', "ty(pe) string";
+        
+        cmp_ok curry($g1two), '===', $g1two, 'currying it again returns the same thing unchanged';
+    }, 'ternary fn; partially applied to \(1, "two")';
 
 }
