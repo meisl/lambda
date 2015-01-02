@@ -87,8 +87,8 @@ ENDOFLAMBDA
                 $_and(
                     convertP6Bool2TBool($tVarName ne $vName),     # if the λ binds the var then it's not free anywhere in the λ's body
                     $_if( convertP6Bool2TBool($bName eq $tVarName),     # or else, if the binder is the λ's var then...
-                        { $is-free($var, $LamT2body($t)) },             # $var is free under $binder if $var is free in the λ's body
-                        { &self($var, $binder, $LamT2body($t)) }        # otherwise it depends on the λ's body
+                        -> $_ { $is-free($var, $LamT2body($t)) },       # $var is free under $binder if $var is free in the λ's body
+                        -> $_ { &self($var, $binder, $LamT2body($t)) }  # otherwise it depends on the λ's body
                     )
                 );
             } else {
@@ -135,19 +135,19 @@ ENDOFLAMBDA
                 $None
             } elsif convertTBool2P6Bool($is-VarT($t)) {
                 $_if( convertP6Bool2TBool($VarT2name($t) eq $name),
-                    { $Some($t) },
-                    { $None }
+                    -> $_ { $Some($t) },
+                    -> $_ { $None }
                 )
             } elsif convertTBool2P6Bool($is-AppT($t)) {
                 my $fromFunc = &self($name, $AppT2func($t));
                 $_if( $is-Some($fromFunc),
-                    { $fromFunc },
-                    { &self($name, $AppT2arg($t)) }
+                    -> $_ { $fromFunc },
+                    -> $_ { &self($name, $AppT2arg($t)) }
                 )
             } elsif convertTBool2P6Bool($is-LamT($t)) {
                 $_if( convertP6Bool2TBool($VarT2name($LamT2var($t)) eq $name),
-                    { $None },
-                    { &self($name, $LamT2body($t)) }
+                    -> $_ { $None },
+                    -> $_ { &self($name, $LamT2body($t)) }
                 )
             } else {
                 die "fell off type-dispatch with type " ~ $t.WHAT.perl

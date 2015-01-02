@@ -6,15 +6,42 @@ use Test::Util;
 use Lambda::P6Currying;
 
 
-plan 17;
+plan 19;
 
 { # invalid signature
-    my sub foo { 'bar' };
+    my sub nullarySub { 'bar' };                    # NOT OK    signature: :()
+    my $nullaryBlock = { 'baz' };                   # NOT OK    signature: :($_? is parcel)
+    my $unaryBlock1 = { ~$_ };                      # NOT OK    signature: :($_? is parcel)
+    my $unaryBlock2 = { ~$^a };                     # OK        signature: :($a)                <<< TODO
+    my $binaryBlock = { $^a ~ $^b };                # OK        signature: :($a, $b)            <<< TODO
+    my $unaryLambdaUnderscore = -> $_ { 'foo' };    # OK        signature: :($_)
+
+
+    subtest {
+        my $g = curry($unaryLambdaUnderscore);
+        does_ok $g, Callable;
+
+        is $g.arity, 1, "arity";
+        is $g.count, 1, ".count (==arity)";
+        is $g.sig.elems, 2, "nr of elems in sig";
+        isa_ok $g.sig[0], Mu, "type of 1st param";
+        isa_ok $g.sig[1], Mu, "type of result";
+        is $g.ty, 'Mu -> Mu', "ty(pe) string";
+        
+        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
+        
+        is $g(Mu), 'foo', "can call it with expected nr of args";
+    }, 'currying unary lambda where param is named "$_"';
+
+    subtest {
+        dies_ok({curry($nullaryBlock)}, 'nullary block');
+        dies_ok({curry($unaryBlock1)}, 'block using $_');
+    }, 'nullary block or block using $_: cannot curry...';
 
     subtest {
         # nullary fn
-        dies_ok({curry(foo)}, "sub with no args");
-        dies_ok({curry(-> { 'foo' })}, "lambda expr with no args");
+        dies_ok({curry(&nullarySub)}, 'nullary sub');
+        dies_ok({curry(-> { 'foo' })}, 'nullary lambda expr (aka "pointy block")');
 
         # optional params
         dies_ok({curry(-> $y, $x? {'bar'})}, "lambda expr with optional (positional) params");
@@ -32,7 +59,7 @@ plan 17;
         
         # parcel param
         dies_ok({curry(-> \x {'bar'})}, "lambda expr with parcel param");
-    }, 'cannot curry...';
+    }, 'sub and lambda: cannot curry...';
 }
 
 

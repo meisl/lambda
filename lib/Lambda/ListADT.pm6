@@ -45,7 +45,7 @@ constant $if-nil is export = lambdaFn(
     -> TList:D $xs, &whenNil, &otherwise {
         $xs(-> $notNil, $head, $tail {
                 $_if( $notNil,
-                    { &otherwise($head, $tail) },
+                    -> $_ { &otherwise($head, $tail) },
                     &whenNil
                 )
         })
@@ -61,11 +61,6 @@ constant $car is export = lambdaFn(
                { die "cannot get car of nil" },
                  $pi1o2
         )
-#    'car', 'λxs.if (nil? xs) (error "cannot get car of nil") (xs π3->2)',
-#        $_if( $is-nil($xs),
-#            { die "cannot get car of nil" },
-#            { $xs.($pi2o3) }
-#        )
     }
 );
 
@@ -77,13 +72,6 @@ constant $cdr is export = lambdaFn(
                      $pi2o2
             )
     }
-#    'cdr', 'λxs.if (nil? xs) (error "cannot get cdr of nil") (xs π3->3)',
-#    -> TList:D $xs {
-#            $_if( $is-nil($xs),
-#                { die "cannot get cdr of nil" },
-#                { $xs($pi3o3) }
-#            )
-#    }
 );
 
 constant $caar2 is export = lambdaFn('caar', 'B car car', $B($car, $car) );
@@ -182,15 +170,15 @@ constant $foldr-iter is export = lambdaFn(
             'foldr-iter-stub', 'λself.λtodo.λxs.(if (nil? xs) (todo ' ~ $initial ~ ') (self (λacc.h (car xs) acc) (cdr xs)))',
             -> &self {
                 -> &todo, $xs {
-                    $_if( $is-nil($xs),
-                        { &todo($initial) },
-                        { &self( 
-                            lambdaFn( Str, 'λacc.(' ~ &todo ~ ' (h ' ~ $car($xs) ~ ' acc))',
+                    $if-nil( $xs,
+                        -> $_ { &todo($initial) },
+                        -> $hd, TList $tl { &self( 
+                            lambdaFn( Str, 'λacc.(' ~ &todo ~ ' (h ' ~ $hd ~ ' acc))',
                                 -> $acc {
-                                    &todo(&h($car($xs), $acc));
+                                    &todo(&h($hd, $acc));
                                 }
                              ),
-                             $cdr($xs) ) }
+                             $tl ) }
                     )
                 }
             }
@@ -226,7 +214,7 @@ constant $map-iter is export = lambdaFn(
             -> &todo {
                 -> &f, $xs {
                     $if-nil( $xs,
-                             { &todo($nil) },
+                             -> $_ { &todo($nil) },
                              -> $head, TList:D $tail {
                                  &self( -> $results { &todo($cons(&f($head), $results)) } )(&f, $tail) 
                              }
@@ -258,11 +246,12 @@ constant $append is export = lambdaFn(
 
 constant $filter is export = lambdaFn(
     'filter', 'λp.λxs.foldr (λx.λacc.((p x) (λ_.cons x acc) (λ_.acc)) _) nil xs',
-    -> &p, $xs { $foldr(
-        -> $x, $acc {
+    -> &p, TList $xs -->TList{ $foldr(
+        -> $x, TList $acc -->TList{
             $_if( &p($x),
-                { $cons($x, $acc) },
-                { $acc })
+                -> $_ { $cons($x, $acc) },
+                -> $_ { $acc }
+            )
         },
         $nil,
         $xs
@@ -277,8 +266,8 @@ constant $first is export = $Y( lambdaFn(
                      $K($None),
                      -> $head, TList:D $tail {
                          $_if( &p($head),
-                             { $Some($head) },
-                             { &self(&p, $tail) }
+                             -> $_ { $Some($head) },
+                             -> $_ { &self(&p, $tail) }
                          )
                      }
             )
@@ -297,16 +286,18 @@ constant $exists is export = lambdaFn(
 constant $___exists is export = $Y( lambdaFn(
     'exists', 'λself.λp.λxs.if (nil? xs) #false',
     -> &self {
-        -> &predicate, TList:D $xs { 
-            $_if( $is-nil($xs),
-                { $false },
-                { $_if( &predicate($car($xs)),
-                    { $true },
-                    { &self(&predicate, $cdr($xs)) })
-                })
+        -> &predicate, TList:D $xs -->TBool{ 
+            $if-nil($xs,
+                    -> $_ { $false },
+                    -> $hd, TList $tl -->TBool{
+                        $_if( &predicate($hd),
+                            -> $_ { $true },
+                            -> $_ { &self(&predicate, $tl) }
+                        )
+                    })
         }
     }
-    # alternative (not as efficient): foldl(-> $acc, $x { $_if($acc, {$true}, {&predicate($x)}) }, $false, $xs)
+    # alternative (not as efficient): foldl(-> $acc, $x { $_if($acc, -> $_ {$true}, -> $_ {&predicate($x)}) }, $false, $xs)
 ));
 
 

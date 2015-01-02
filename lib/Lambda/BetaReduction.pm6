@@ -57,8 +57,8 @@ ENDOFLAMBDA
     -> &self {
         -> TTerm $t {
             $_if( $is-betaRedex($t),
-                { $true },
-                { $exists(&self, $Term2children($t)) }
+                -> $_ { $true },
+                -> $_ { $exists(&self, $Term2children($t)) }
             )
             # self.isBetaRedex || ?self.children.map(*.isBetaReducible).any;
         }
@@ -94,27 +94,27 @@ q:to/ENDOFLAMBDA/,
 ENDOFLAMBDA
     -> TTerm $t {
         $_if( $_or($is-ConstT($t), $_or($is-VarT($t), $is-LamT($t))),
-            { $nil },
-            { $_if( $is-AppT($t),
-                  { my $func = $AppT2func($t);
-                    my $arg  = $AppT2arg($t);
-                    $_if( $is-betaRedex($t),
-                        { my $var   = $LamT2var($func);
-                          my $body  = $LamT2body($func);
-                          $filter(
-                              -> $v {
-                                # no need to filter out $var itself separately
-                                # since it cannot be free under itself in the body
-                                $is-free-under($var, $v, $body)
-                              },
-                              $free-vars($arg)
-                          );
+            -> $_ { $nil },
+            -> $_ { $_if( $is-AppT($t),
+                        -> $_ { my $func = $AppT2func($t);
+                                my $arg  = $AppT2arg($t);
+                                $_if( $is-betaRedex($t),
+                                    -> $_ { my $var   = $LamT2var($func);
+                                        my $body  = $LamT2body($func);
+                                        $filter(
+                                            -> $v {
+                                              # no need to filter out $var itself separately
+                                              # since it cannot be free under itself in the body
+                                              $is-free-under($var, $v, $body)
+                                            },
+                                            $free-vars($arg)
+                                        );
+                                    },
+                                    -> $_ { $nil },
+                                )
                         },
-                        { $nil },
-                    )
-                  },
-                  { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
-              )
+                        -> $_ { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+                      )
             }
         )
     }
@@ -151,8 +151,8 @@ ENDOFLAMBDA
                 my $body  = $LamT2body($t);
                 my $fromBody = &self($body, $keepfreevars);
                 $_if( $exists( -> $v { convertP6Bool2TBool($VarT2name($v) eq $vName) }, $keepfreevars),
-                    { $cons($t, $fromBody) },
-                    { $fromBody },
+                    -> $_ { $cons($t, $fromBody) },
+                    -> $_ { $fromBody },
                 );
             } else {
                 die "fell off type-dispatch with type " ~ $t.WHAT.perl
@@ -231,50 +231,50 @@ ENDOFLAMBDA
                 my $var  = $LamT2var($t);
                 my $body = $LamT2body($t);
                 $_if( $is-betaReducible($body),
-                    { $Some($LamT($var, $Some2value(&self($body)))) },
-                    { $None }
+                    -> $_ { $Some($LamT($var, $Some2value(&self($body)))) },
+                    -> $_ { $None }
                 )
             } elsif convertTBool2P6Bool($is-AppT($t)) {
                 my $func = $AppT2func($t);
                 my $arg  = $AppT2arg($t);
                 $_if( $is-betaReducible($t),
-                    { $_if( $is-betaRedex($t),
-                          { my $funcVar  = $LamT2var($func);
-                            my $funcVarName = $VarT2name($funcVar);
-                            $_if( $is-Omega($t),
-                                { $_if( convertP6Bool2TBool($VarT2name($LamT2var($arg)) eq $funcVarName),
-                                      { $None }, # func and arg are both the (literally) same omega
-                                      { $Some($AppT($arg, $arg)) }  # otherwise one more step to make them so
-                                  )
+                    -> $_ { $_if( $is-betaRedex($t),
+                                -> $_ { my $funcVar  = $LamT2var($func);
+                                    my $funcVarName = $VarT2name($funcVar);
+                                    $_if( $is-Omega($t),
+                                        -> $_ { $_if( convertP6Bool2TBool($VarT2name($LamT2var($arg)) eq $funcVarName),
+                                                    -> $_ { $None }, # func and arg are both the (literally) same omega
+                                                    -> $_ { $Some($AppT($arg, $arg)) }  # otherwise one more step to make them so
+                                                )
+                                        },
+                                        -> $_ { my $funcBody  = $LamT2body($func);
+                                                my $alpha-problematic = $filter(
+                                                    # no need to filter out $var itself separately
+                                                    # since it cannot be free under itself in the body
+                                                    -> $v { $is-free-under($funcVar, $v, $funcBody) },
+                                                    $free-vars($arg)
+                                                );
+                                                $_if( $is-nil($alpha-problematic),
+                                                    -> $_ { my $substituted-func = $subst($funcBody, $arg, $funcVar);
+                                                        my $isSame = $is-None($substituted-func);
+                                                        $_if( $isSame,   # TODO: use Maybe-or or something like that
+                                                            -> $_ { $Some($funcBody) },
+                                                            -> $_ { $substituted-func }
+                                                        )
+                                                    },
+                                                    -> $_ { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
+                                                )
+                                        }
+                                    );
                                 },
-                                { my $funcBody  = $LamT2body($func);
-                                  my $alpha-problematic = $filter(
-                                      # no need to filter out $var itself separately
-                                      # since it cannot be free under itself in the body
-                                      -> $v { $is-free-under($funcVar, $v, $funcBody) },
-                                      $free-vars($arg)
-                                  );
-                                  $_if( $is-nil($alpha-problematic),
-                                      { my $substituted-func = $subst($funcBody, $arg, $funcVar);
-                                        my $isSame = $is-None($substituted-func);
-                                        $_if( $isSame,   # TODO: use Maybe-or or something like that
-                                            { $Some($funcBody) },
-                                            { $substituted-func }
+                                -> $_ { $_if( $is-betaReducible($func),
+                                            -> $_ { $Some($AppT($Some2value(&self($func)), $arg)) },
+                                            -> $_ { $Some($AppT($func, $Some2value(&self($arg)))) }
                                         )
-                                      },
-                                      { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
-                                  )
                                 }
-                            );
-                          },
-                          { $_if( $is-betaReducible($func),
-                                { $Some($AppT($Some2value(&self($func)), $arg)) },
-                                { $Some($AppT($func, $Some2value(&self($arg)))) }
                             )
-                          }
-                      )
                     },
-                    { $None }
+                    -> $_ { $None }
                 )
             } else {
                 die "fell off type-dispatch with type " ~ $t.WHAT.perl

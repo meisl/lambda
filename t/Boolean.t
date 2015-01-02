@@ -87,8 +87,8 @@ plan 41;
 { # _if
     is_properLambdaFn($_if);
 
-    is $_if($true, {"x"}, {die "alternative should not be called"}), "x", '$_if($true, {"x"}, {die})';
-    is $_if($false, {die "consequence should not be called"}, {"y"}), "y", '$_if($false, {die}, {"x"})';
+    is $_if($true, -> $_ {"x"}, -> $_ {die "alternative should not be called"}), "x", '$_if($true, -> $_ {"x"}, -> $_ {die})';
+    is $_if($false, -> $_ {die "consequence should not be called"}, -> $_ {"y"}), "y", '$_if($false, -> $_ {die}, -> $_ {"x"})';
 
     my @seenThen = @();
     my @seenElse = @();

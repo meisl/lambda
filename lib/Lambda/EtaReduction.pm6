@@ -51,18 +51,18 @@ ENDOFLAMBDA
             my $var  = $LamT2var($t);
             my $body = $LamT2body($t);
             $_if( $is-AppT($body),
-                { my $func = $AppT2func($body);
+                -> $_ { my $func = $AppT2func($body);
                   my $arg  = $AppT2arg($body);
                   $_if( $is-VarT($arg),
-                    { $_if( convertP6Bool2TBool($VarT2name($arg) eq $VarT2name($var)),
-                          { $not($is-free($var, $func)) },
-                          { $false }
-                      )
-                    },
-                    { $false }
+                      -> $_ { $_if( convertP6Bool2TBool($VarT2name($arg) eq $VarT2name($var)),
+                                  -> $_ { $not($is-free($var, $func)) },
+                                  -> $_ { $false }
+                        )
+                      },
+                      -> $_ { $false }
                   )
                 },
-                { $false }
+                -> $_ { $false }
             );
         } else {
             die "fell off type-dispatch with type " ~ $t.WHAT.perl
@@ -82,8 +82,8 @@ ENDOFLAMBDA
     -> &self {
         -> TTerm $t {
             $_if( $is-etaRedex($t),
-                { $true },
-                { $exists(&self, $Term2children($t)) }
+                -> $_ { $true },
+                -> $_ { $exists(&self, $Term2children($t)) }
             )
             # self.isEtaRedex || ?self.children.map(*.isEtaReducible).any;
         }
@@ -133,10 +133,10 @@ ENDOFLAMBDA
                 my $func = $AppT2func($t);
                 my $arg  = $AppT2arg($t);
                 $_if( $is-etaReducible($func),
-                    { $Some($AppT($Some2value(&self($func)), $arg)) },
-                    { $_if( $is-etaReducible($arg),
-                          { $Some($AppT($func, $Some2value(&self($arg)))) },
-                          { $None }
+                    -> $_ { $Some($AppT($Some2value(&self($func)), $arg)) },
+                    -> $_ { $_if( $is-etaReducible($arg),
+                                -> $_ { $Some($AppT($func, $Some2value(&self($arg)))) },
+                                -> $_ { $None }
                       )
                     }
                 )
@@ -144,10 +144,10 @@ ENDOFLAMBDA
                 my $var  = $LamT2var($t);
                 my $body = $LamT2body($t);
                 $_if( $is-etaRedex($t),
-                    { $Some($AppT2func($body)) },
-                    { $_if( $is-etaReducible($body),
-                          { $Some($LamT($var, $Some2value(&self($body)))) },
-                          { $None }
+                    -> $_ { $Some($AppT2func($body)) },
+                    -> $_ { $_if( $is-etaReducible($body),
+                                -> $_ { $Some($LamT($var, $Some2value(&self($body)))) },
+                                -> $_ { $None }
                       )
                     }
                 )

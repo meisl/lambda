@@ -12,13 +12,19 @@ constant $iterate is export = $Y(lambdaFn(
     'iterate', 'λself.λf.λx.λprj.prj #true x (self f (f x))',
     -> &self {
         -> &f, $x {
-            ( -> $prj {
-                $prj(
-                    $true,
-                    $x,
-                    (-> $p { &self(&f, &f($x))($p) }) does TList
-                )
-            } ) does TList
+            lambdaFn(   # must call lambdaFn so the result is curried
+                Str, 'λprj.prj #true x (λp.self f (f x) p)',
+                -> $prj {
+                    $prj(
+                        $true,
+                        $x,
+                        lambdaFn(   # must call lambdaFn so the result is curried
+                            Str, 'λp.self f (f x) p',
+                            -> $p { &self(&f, &f($x))($p) }
+                        ) does TList
+                    )
+                }
+            ) does TList
         }
     }
 ));

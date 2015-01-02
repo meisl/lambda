@@ -48,8 +48,8 @@ constant $Some2value is export = lambdaFn(
     'Some->value', 'λm.if (Some? m) (m π2->2) (error "cannot get value of None")',
     -> TMaybe:D $m {
         $_if( $is-Some($m),
-            { $m($pi2o2) },
-            { die "cannot get value of None" }
+            -> $_ { $m($pi2o2) },
+            -> $_ { die "cannot get value of None" }
         )
     }
 );
@@ -61,8 +61,8 @@ constant $Maybe2Str is export = lambdaFn(
     'Maybe->Str', 'λm.(if (None? m) "None" (~ (~ "(Some " (->str (Some->value m))) ")"))',
     -> TMaybe:D $m {
         $_if( $is-None($m),
-            { 'None' },
-            { my $v = $Some2value($m);
+            -> $_ { 'None' },
+            -> $_ { my $v = $Some2value($m);
               my $vStr = $v.?symbol // $v.?lambda // $v.perl;
               "(Some $vStr)";
             }
@@ -80,8 +80,8 @@ constant $bindMaybe is export = lambdaFn(
     'bindMaybe', 'λm.λf.if (None? m) (K None) (λ_.f (Some->value m))',
     -> TMaybe:D $m, $f {
         $_if( $is-None($m),
-            { $None },
-            { $f($Some2value($m)) }
+            -> $_ { $None },
+            -> $_ { $f($Some2value($m)) }
         )
     }
 );
@@ -112,8 +112,8 @@ constant $Maybe2valueWithDefault is export = lambdaFn(
     'Maybe->valueWithDefault', 'λm.λdflt.if (None? m) (K dflt) (λ_.Some->value m)',
     -> TMaybe:D $m, $dflt {
         $_if( $is-None($m),
-            { $dflt },
-            { $Some2value($m) }
+            -> $_ { $dflt },
+            -> $_ { $Some2value($m) }
         )
     }
 );
@@ -125,8 +125,8 @@ constant $Maybe-lift-in is export = lambdaFn(
         Str, 'Maybe-lift-in ' ~ &f.gist,
         -> TMaybe:D $m {
             $_if( $is-None($m),
-                { $None },
-                { &f($Some2value($m)) }
+                -> $_ { $None },
+                -> $_ { &f($Some2value($m)) }
             )
         } )
     }

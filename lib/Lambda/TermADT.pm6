@@ -55,8 +55,8 @@ constant $VarT2name is export = lambdaFn(
     'VarT->name', 'λt.if (VarT? t) (t π4->3) (error (~ "cannot apply VarT->name to " (Term->Str t)))',
     -> TTerm:D $t {
         $_if( $is-VarT($t),
-            { $t($pi3o4) },
-            { die "cannot apply VarT->name to $t" }
+            -> $_ { $t($pi3o4) },
+            -> $_ { die "cannot apply VarT->name to $t" }
         )
     }
 );
@@ -89,8 +89,8 @@ constant $AppT2func is export = lambdaFn(
     'AppT->func', 'λt.if (AppT? t) (t π4->3) (error (~ "cannot apply AppT->func to " (Term->Str t)))',
     -> TTerm:D $t {
         $_if( $is-AppT($t),
-            { $t($pi3o4) },
-            { die "cannot apply AppT->func to $t" }
+            -> $_ { $t($pi3o4) },
+            -> $_ { die "cannot apply AppT->func to $t" }
         )
     }
 );
@@ -99,8 +99,8 @@ constant $AppT2arg is export = lambdaFn(
     'AppT->arg', 'λt.if (AppT? t) (t π4->4) (error (~ "cannot apply AppT->arg to " (Term->Str t)))',
     -> TTerm:D $t {
         $_if( $is-AppT($t),
-            { $t($pi4o4) },
-            { die "cannot apply AppT->arg to $t" }
+            -> $_ { $t($pi4o4) },
+            -> $_ { die "cannot apply AppT->arg to $t" }
         )
     }
 );
@@ -114,12 +114,12 @@ constant $LamT is export = lambdaFn(
     'LamT', 'λvar.λbody.λprj.if (VarT? var) (prj #true #false var body) (error (~ "first arg to LamT ctor must be a VarT - got instead " (->Str var)))',
     -> TTerm:D $var, TTerm:D $body {
         $_if( $is-VarT($var),
-            { lambdaFn(
-                Str, "(LamT $var $body)",
-                -> &prj { &prj($true, $false, $var, $body) }
-              ) does TTerm;
+            -> $_ { lambdaFn(
+                        Str, "(LamT $var $body)",
+                        -> &prj { &prj($true, $false, $var, $body) }
+                    ) does TTerm;
             },
-            { die "first arg to LamT ctor must be a VarT - got instead $var" }
+            -> $_ { die "first arg to LamT ctor must be a VarT - got instead $var" }
         )
     }
 );
@@ -137,8 +137,8 @@ constant $LamT2var is export = lambdaFn(
     'LamT->var', 'λt.if (LamT? t) (t π4->3) (error (~ "cannot apply LamT->var to " (Term->Str t)))',
     -> TTerm:D $t {
         $_if( $is-LamT($t),
-            { $t($pi3o4) },
-            { die "cannot apply LamT->var to $t" }
+            -> $_ { $t($pi3o4) },
+            -> $_ { die "cannot apply LamT->var to $t" }
         )
     }
 );
@@ -147,8 +147,8 @@ constant $LamT2body is export = lambdaFn(
     'LamT->body', 'λt.if (LamT? t) (t π4->4) (error (~ "cannot apply LamT->body to " (Term->Str t)))',
     -> TTerm:D $t {
         $_if( $is-LamT($t),
-            { $t($pi4o4) },
-            { die "cannot apply LamT->body to $t" }
+            -> $_ { $t($pi4o4) },
+            -> $_ { die "cannot apply LamT->body to $t" }
         )
     }
 );
@@ -182,8 +182,8 @@ constant $ConstT2value is export = lambdaFn(
     'ConstT->value', 'λt.if (ConstT? t) (t π4->3) (error (~ "cannot apply ConstT->value to " (Term->Str t)))',
     -> TTerm:D $t {
         $_if( $is-ConstT($t),
-            { $t($pi3o4) },
-            { die "cannot apply ConstT->value to $t" }
+            -> $_ { $t($pi3o4) },
+            -> $_ { die "cannot apply ConstT->value to $t" }
         )
     }
 );
@@ -225,25 +225,25 @@ ENDOFLAMBDA
     -> &self {
         -> TTerm:D $t {
             $_if( $is-VarT($t),
-                { $VarT2name($t) },
-                { $_if( $is-ConstT($t),
-                      { $ConstT2value($t).perl },
-                      { $_if( $is-AppT($t),
-                            { my $fSrc = &self($AppT2func($t));
-                              my $aSrc = &self($AppT2arg($t));
-                              "($fSrc $aSrc)";
-                            },
-                            { $_if( $is-LamT($t),
-                                  { my $vSrc = &self($LamT2var($t));
-                                    my $bSrc = &self($LamT2body($t));
-                                    "(λ$vSrc.$bSrc)",
-                                  },
-                                  { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
-                              )
+                -> $_ { $VarT2name($t) },
+                -> $_ { $_if( $is-ConstT($t),
+                            -> $_ { $ConstT2value($t).perl },
+                            -> $_ { $_if( $is-AppT($t),
+                                        -> $_ { my $fSrc = &self($AppT2func($t));
+                                                my $aSrc = &self($AppT2arg($t));
+                                                "($fSrc $aSrc)";
+                                        },
+                                        -> $_ { $_if( $is-LamT($t),
+                                                    -> $_ { my $vSrc = &self($LamT2var($t));
+                                                            my $bSrc = &self($LamT2body($t));
+                                                            "(λ$vSrc.$bSrc)",
+                                                    },
+                                                    -> $_ { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+                                                )
+                                        }
+                                    )
                             }
                         )
-                      }
-                  )
                 }
             )
         }
@@ -264,15 +264,15 @@ q:to/ENDOFLAMBDA/,
 ENDOFLAMBDA
     -> TTerm:D $t {
         $_if( $_or($is-VarT($t), $is-ConstT($t)),
-            { $nil },
-            { $_if( $is-AppT($t),
-                  { $cons($AppT2func($t), $cons($AppT2arg($t), $nil)) },
-                  { $_if( $is-LamT($t),
-                        { $cons($LamT2var($t), $cons($LamT2body($t), $nil)) },
-                        { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+            -> $_ { $nil },
+            -> $_ { $_if( $is-AppT($t),
+                        -> $_ { $cons($AppT2func($t), $cons($AppT2arg($t), $nil)) },
+                        -> $_ { $_if( $is-LamT($t),
+                                    -> $_ { $cons($LamT2var($t), $cons($LamT2body($t), $nil)) },
+                                    -> $_ { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+                                )
+                        }
                     )
-                  }
-              )
             }
         )
     }
@@ -295,14 +295,14 @@ q:to/ENDOFLAMBDA/,
 ENDOFLAMBDA
     -> TTerm:D $t {
         $_if( $is-AppT($t),
-            { my $f = $AppT2func($t);
-              my $a = $AppT2arg($t);
-              $_if( $_and($is-VarT($f), $is-VarT($a)),
-                  { convertP6Bool2TBool($VarT2name($f) eq $VarT2name($a)) },    # TODO: dispense with convertP6Bool2TBool
-                  { $false }
-              )
+            -> $_ { my $f = $AppT2func($t);
+                    my $a = $AppT2arg($t);
+                    $_if( $_and($is-VarT($f), $is-VarT($a)),
+                        -> $_ { convertP6Bool2TBool($VarT2name($f) eq $VarT2name($a)) },    # TODO: dispense with convertP6Bool2TBool
+                        -> $_ { $false }
+                    )
             },
-            { $false }
+            -> $_ { $false }
         )
     }
 );
@@ -324,14 +324,14 @@ q:to/ENDOFLAMBDA/,
 ENDOFLAMBDA
     -> TTerm:D $t {
         $_if( $is-LamT($t),
-            { my $v = $LamT2var($t);
-              my $b = $LamT2body($t);
-              $_if( $is-selfApp($b),
-                  { convertP6Bool2TBool($VarT2name($AppT2func($b)) eq $VarT2name($v)) },    # TODO: dispense with convertP6Bool2TBool
-                  { $false }
-              )
+            -> $_ { my $v = $LamT2var($t);
+                    my $b = $LamT2body($t);
+                    $_if( $is-selfApp($b),
+                        -> $_ { convertP6Bool2TBool($VarT2name($AppT2func($b)) eq $VarT2name($v)) },    # TODO: dispense with convertP6Bool2TBool
+                        -> $_ { $false }
+                    )
             },
-            { $false }
+            -> $_ { $false }
         )
     }
 );
@@ -346,8 +346,8 @@ q:to/ENDOFLAMBDA/,
 ENDOFLAMBDA
     -> TTerm:D $t {
         $_if( $is-AppT($t),
-            { $_and($is-omega($AppT2func($t)), $is-omega($AppT2arg($t))) },
-            { $false }
+            -> $_ { $_and($is-omega($AppT2func($t)), $is-omega($AppT2arg($t))) },
+            -> $_ { $false }
         )
     }
 );

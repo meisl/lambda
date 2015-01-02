@@ -86,7 +86,7 @@ class X::Typing::ArgBinding is X::Typing is export {
     method  got         { self.args }
 
     submethod BUILD(:$!whatsInFuncPos, :$!args) {
-        $!message = "cannot apply {self.expected} to {self.got}";
+        $!message = "cannot apply {$!whatsInFuncPos}: {self.expected} to {self.got}";
     }
 }
 
@@ -127,11 +127,11 @@ class Fn does Callable {
     submethod BUILD(:&!f, :@!partialArgs) {
         my @ps = &!f.signature.params;
         my $arity = @ps.elems;
-        die "cannot curry nullary fn" 
+        die "cannot curry nullary fn - signature: {&!f.signature.perl}; fn: {&!f.gist}" 
             if $arity == 0;
-        die "cannot curry fn with optional parameters"
+        die "cannot curry fn with optional/slurpy/named/capture or parcel parameters - signature: {&!f.signature.perl}; fn: {&!f.gist}"
             if @ps.map({$_.optional || $_.slurpy || $_.named || $_.capture || $_.parcel}).any;
-        die "NYI: Fn with arity > $arity"
+        die "NYI: Fn with arity > $arity - signature: {&!f.signature.perl}; fn: {&!f.gist}"
             if $arity > 4;
 
         my @ts = @ps.map(*.type);
@@ -214,10 +214,11 @@ class Fn does Callable {
             $out = Fn.new(&!f, |@as);
             &!f.?onPartialApp($out, |@as);
         }
-        if $out ~~ Callable or $out.^can('postcircumfix:<( )>') {
+        if ($out ~~ Callable) && ($out !~~ Unapplicable) { #or $out.^can('postcircumfix:<( )>') {
             $out = curry($out);
         } else {
-            $out does Unapplicable;
+            $out does Unapplicable
+                unless $out ~~ Unapplicable;
         }
         return $out;
     }
