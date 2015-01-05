@@ -240,7 +240,7 @@ constant $Term2source is export = $Y(lambdaFn(
     'Term->source', 
 q:to/ENDOFLAMBDA/,
     λself.λt.given-Term t
-        (when-ConstT (λval.λ_.->Str val)    ; (B ->Str π2->1)
+        (when-ConstT (λval.λ_.->Str val)    ; (B ->Str π2->1) = ->Str ° π2->1 = ->Str • π2->1 = ->Str·π2->1
         (when-VarT   (λname.λ_.name)        ; π2->1
         (when-AppT   (λfunc.λarg.
             (let ((fSrc (self func))
@@ -256,13 +256,13 @@ q:to/ENDOFLAMBDA/,
                (~ "(LAMBDA" (~ vSrc (~ DOT (~ bSrc ")"))))    ; TODO: put literal lambda and dot here
             )
         )
-        (error (~ "unknown TTerm" (Term->Str t)))
+        (λ_.λ_.λ_.λ_.error (~ "unknown TTerm" (Term->Str t)))
         ))))
 ENDOFLAMBDA
     -> &self {
         -> TTerm:D $t {
             $given-Term($t,
-                $when-ConstT(-> $val, Mu { $val.perl},    #   $B($pi1o2, *.perl),     #   
+                $when-ConstT(-> $val, Mu { $val.perl},    #   $B($pi1o2, *.perl),
                 $when-VarT($pi1o2,
                 $when-AppT(-> $func, $arg {
                     my $fSrc = &self($func);
@@ -275,7 +275,7 @@ ENDOFLAMBDA
                     "(λ$vSrc.$bSrc)"
 
                 },
-                -> $t { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+                -> $tag1, $tag0, $field0, $field1 { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
             )))))
         }
     }
@@ -285,29 +285,34 @@ ENDOFLAMBDA
 constant $Term2children is export = lambdaFn(
     'Term->children', 
 q:to/ENDOFLAMBDA/,
-    λt.case t ; TODO: case -> cascaded if
-        (((ConstT val)    nil)
-         ((VarT name)     nil)
-         ((AppT f a)      (cons f (cons a nil)))
-         ((LamT v b)      (cons v (cons b nil)))
-        )
-        (error (~ "unknown TTerm" (Term->Str t)))
+    λt.given t
+        (when-ConstT (λ_.λ_.nil)                    ; (K (K nil))
+        (when-VarT   (λ_.λ_.nil)                    ; (K (K nil))
+        (when-AppT   (λf.λa.cons f (cons a nil))    ; (B (C cons) (C cons nil))
+        (when-LamT   (λv.λb.cons v (cons b nil))    ; (B (C cons) (C cons nil))
+        (λ_.λ_.λ_.λ_.error (~ "unknown TTerm" (Term->Str t)))
+        ))))
 ENDOFLAMBDA
     -> TTerm:D $t {
-        $_if( $_or($is-VarT($t), $is-ConstT($t)),
-            -> $_ { $nil },
-            -> $_ { $_if( $is-AppT($t),
-                        -> $_ { $cons($AppT2func($t), $cons($AppT2arg($t), $nil)) },
-                        -> $_ { $_if( $is-LamT($t),
-                                    -> $_ { $cons($LamT2var($t), $cons($LamT2body($t), $nil)) },
-                                    -> $_ { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
-                                )
-                        }
-                    )
-            }
-        )
+        $given-Term($t,
+            $when-ConstT(-> $n, Mu { $nil },
+            $when-VarT(  -> $n, Mu { $nil },
+            $when-AppT(  -> $f, $a { $cons($f, $cons($a, $nil)) },
+            $when-LamT(  -> $v, $b { $cons($v, $cons($b, $nil)) },
+            -> $tag1, $tag0, $field0, $field1 { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+        )))))
     }
 );
+
+
+constant $Term2size is export = $Y(lambdaFn(
+    'Term->size', 'λself.λt.(foldl (λacc.λchild.(+ acc (self child))) 1 (Term->children t))',
+    -> &self {
+        -> TTerm:D $t {
+            $foldl(-> $acc, $child { $acc + &self($child) }, 1, $Term2children($t));
+        }
+    }
+));
 
 
 constant $is-selfApp is export = lambdaFn(
@@ -382,16 +387,6 @@ ENDOFLAMBDA
         )
     }
 );
-
-
-constant $Term2size is export = $Y(lambdaFn(
-    'Term->size', 'λself.λt.(foldl (λacc.λchild.(+ acc (self child))) 1 (Term->children t))',
-    -> &self {
-        -> TTerm:D $t {
-            $foldl(-> $acc, $child { $acc + &self($child) }, 1, $Term2children($t));
-        }
-    }
-));
 
 
 

@@ -75,7 +75,7 @@ constant $B is export = lambdaFn(
     'B', 'λf.λg.λx.f (g x)',
     -> &f, &g {
         lambdaFn(
-            Str, 'λx.' ~ &f.Str ~ ' (' ~ &g.Str ~ ' x)',
+            Str, 'λx.' ~ &f.gist ~ ' (' ~ &g.gist ~ ' x)',   # TODO: make sure x doesn't get captured
             -> $x { &f(&g($x)) }
         )
     }
