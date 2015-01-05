@@ -228,9 +228,11 @@ ENDOFLAMBDA
     }
 );
 
-constant $when-VarT is export = $make-when_2_2('VarT', $false, $false);
-constant $when-AppT is export = $make-when_2_2('AppT', $false, $true );
-constant $when-LamT is export = $make-when_2_2('LamT', $true,  $false);
+constant $when-VarT     is export = $make-when_2_2('VarT',      $false,     $false);
+constant $when-AppT     is export = $make-when_2_2('AppT',      $false,     $true );
+constant $when-LamT     is export = $make-when_2_2('LamT',      $true,      $false);
+constant $when-ConstT   is export = $make-when_2_2('ConstT',    $true,      $true );
+
 
 # functions on Term -----------------------------------------------------------
 
