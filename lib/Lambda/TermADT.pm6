@@ -4,6 +4,8 @@ use Lambda::Base;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
+use Lambda::P6Currying;
+
 use Lambda::Conversion::Bool-conv;
 
 
@@ -256,11 +258,11 @@ q:to/ENDOFLAMBDA/,
                (~ "(LAMBDA" (~ vSrc (~ DOT (~ bSrc ")"))))    ; TODO: put literal lambda and dot here
             )
         )
-        (λ_.λ_.λ_.λ_.error (~ "unknown TTerm" (Term->Str t)))
+        λ_.λ_.λ_.λ_.error (~ "unknown TTerm" (Term->Str t))
         ))))
 ENDOFLAMBDA
     -> &self {
-        -> TTerm:D $t {
+        -> TTerm:D $t -->Str{
             $given-Term($t,
                 $when-ConstT(-> $val, Mu { $val.perl},    #   $B($pi1o2, *.perl),
                 $when-VarT($pi1o2,
@@ -275,7 +277,7 @@ ENDOFLAMBDA
                     "(λ$vSrc.$bSrc)"
 
                 },
-                -> $tag1, $tag0, $field0, $field1 { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+                curry(-> $tag1, $tag0, $field0, $field1 { die "fell off type-dispatch with type " ~ $t.WHAT.perl })
             )))))
         }
     }
@@ -285,21 +287,21 @@ ENDOFLAMBDA
 constant $Term2children is export = lambdaFn(
     'Term->children', 
 q:to/ENDOFLAMBDA/,
-    λt.given t
+    λt.given-Term t
         (when-ConstT (λ_.λ_.nil)                    ; (K (K nil))
         (when-VarT   (λ_.λ_.nil)                    ; (K (K nil))
         (when-AppT   (λf.λa.cons f (cons a nil))    ; (B (C cons) (C cons nil))
         (when-LamT   (λv.λb.cons v (cons b nil))    ; (B (C cons) (C cons nil))
-        (λ_.λ_.λ_.λ_.error (~ "unknown TTerm" (Term->Str t)))
+        λ_.λ_.λ_.λ_.error (~ "unknown TTerm" (Term->Str t))
         ))))
 ENDOFLAMBDA
-    -> TTerm:D $t {
+    -> TTerm:D $t -->TList{
         $given-Term($t,
             $when-ConstT(-> $n, Mu { $nil },
             $when-VarT(  -> $n, Mu { $nil },
             $when-AppT(  -> $f, $a { $cons($f, $cons($a, $nil)) },
             $when-LamT(  -> $v, $b { $cons($v, $cons($b, $nil)) },
-            -> $tag1, $tag0, $field0, $field1 { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+            curry(-> $tag1, $tag0, $field0, $field1 { die "fell off type-dispatch with type " ~ $t.WHAT.perl })
         )))))
     }
 );
@@ -308,7 +310,7 @@ ENDOFLAMBDA
 constant $Term2size is export = $Y(lambdaFn(
     'Term->size', 'λself.λt.(foldl (λacc.λchild.(+ acc (self child))) 1 (Term->children t))',
     -> &self {
-        -> TTerm:D $t {
+        -> TTerm:D $t -->Int{
             $foldl(-> $acc, $child { $acc + &self($child) }, 1, $Term2children($t));
         }
     }
@@ -318,27 +320,46 @@ constant $Term2size is export = $Y(lambdaFn(
 constant $is-selfApp is export = lambdaFn(
     'selfApp?',
 q:to/ENDOFLAMBDA/,
-    λt._if (AppT? t)
-           (let ((f (AppT->func t))
-                 (a (AppT->arg t))
-                )
-             (_if (_and (VarT f) (VarT a))
-                  (λ_.eq? (VarT->name f) (VarT->name a))
-                  (K #false)
-             )
-           )
-           (K #false)
-ENDOFLAMBDA
-    -> TTerm:D $t {
-        $_if( $is-AppT($t),
-            -> $_ { my $f = $AppT2func($t);
-                    my $a = $AppT2arg($t);
-                    $_if( $_and($is-VarT($f), $is-VarT($a)),
-                        -> $_ { convertP6Bool2TBool($VarT2name($f) eq $VarT2name($a)) },    # TODO: dispense with convertP6Bool2TBool
-                        -> $_ { $false }
+#    λt.given t
+#        (when (AppT (VarT fName) (VarT aName)) (eq? fName aName)
+#        (λ_.λ_.λ_.λ_.false)
+#    )
+    λt.given-Term t
+        (when-AppT (λf.λa.
+            given-Term f
+                (when-VarT (λfName.λ_.
+                    given-Term a
+                        (when-VarT (λaName.λ_.
+                            eq? fName aName
+                        )
+                        λ_.λ_.λ_.λ_.#false
                     )
+                )
+                λ_.λ_.λ_.λ_.#false
+            )
+        )
+        λ_.λ_.λ_.λ_.#false
+        )
+ENDOFLAMBDA
+    -> TTerm:D $t -->TBool{
+        $given-Term($t,
+            $when-AppT(-> $f, $a {
+                $given-Term($f,
+                    $when-VarT(-> $fName, Mu {
+                        $given-Term($a,
+                            $when-VarT(-> $aName, Mu {
+                                convertP6Bool2TBool($fName eq $aName)    # TODO: dispense with convertP6Bool2TBool
+                            },
+                            curry(-> $tag1, $tag0, $field0, $field1 { $false })
+                            )
+                        )
+                    },
+                    curry(-> $tag1, $tag0, $field0, $field1 { $false })
+                    )
+                )
             },
-            -> $_ { $false }
+            curry(-> $tag1, $tag0, $field0, $field1 { $false })
+            )
         )
     }
 );
@@ -358,7 +379,7 @@ q:to/ENDOFLAMBDA/,
            )
            (K #false)
 ENDOFLAMBDA
-    -> TTerm:D $t {
+    -> TTerm:D $t -->TBool{
         $_if( $is-LamT($t),
             -> $_ { my $v = $LamT2var($t);
                     my $b = $LamT2body($t);
@@ -380,7 +401,7 @@ q:to/ENDOFLAMBDA/,
            (_and (ω? (AppT->func t)) (ω? (AppT->arg t)))
            (K #false)
 ENDOFLAMBDA
-    -> TTerm:D $t {
+    -> TTerm:D $t -->TBool{
         $_if( $is-AppT($t),
             -> $_ { $_and($is-omega($AppT2func($t)), $is-omega($AppT2arg($t))) },
             -> $_ { $false }
@@ -405,7 +426,7 @@ constant $fresh-var-for is export = {
     }
     lambdaFn(
         'fresh-var-for', 'λfor.error "NYI"',
-        -> TTerm:D $for {
+        -> TTerm:D $for -->TTerm{
             say $nextAlphaNr;
             my $v = $VarT('α' ~ $nextAlphaNr);
             $v ~~ TTerm or die $v.perl;
