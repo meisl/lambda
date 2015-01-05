@@ -179,12 +179,12 @@ plan 52;
 
         is $ackPeter(3, 0),   5, 'ap(3, 0) =   5';
         is $ackPeter(3, 1),  13, 'ap(3, 1) =  13';
-        is $ackPeter(3, 2),  29, 'ap(3, 2) =  29';
-        is $ackPeter(3, 3),  61, 'ap(3, 3) =  61';
-        is $ackPeter(3, 4), 125, 'ap(3, 4) = 125';
 
         ## Attention: becoming really slow soon:
 
+        #is $ackPeter(3, 2),  29, 'ap(3, 2) =  29';
+        #is $ackPeter(3, 3),  61, 'ap(3, 3) =  61';
+        #is $ackPeter(3, 4), 125, 'ap(3, 4) = 125';
         #is $ackPeter(3, 5), 8*2**5-3, 'ap(3, 5) = ' ~ (8*2**5-3);
         #is $ackPeter(3, 6), 8*2**6-3, 'ap(3, 6) = ' ~ (8*2**6-3);
         #is $ackPeter(3, 7), 8*2**7-3, 'ap(3, 7) = ' ~ (8*2**7-3);

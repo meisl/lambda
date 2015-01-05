@@ -197,6 +197,43 @@ constant $Term2Str is export = lambdaFn(
 );
 
 
+# pattern-matching ------------------------------------------------------------
+
+constant $given-Term is export = lambdaFn(
+    'given-Term', 'λterm.λcases.term cases',
+    -> TTerm:D $t, &cases { $t(&cases) }
+);
+
+constant $when-VarT is export = lambdaFn(
+    'when-VarT', 'λtag1.λtag0.λthenFn.λotherwise.if (and (not tag1) (not tag0)) thenFn (otherwise tag1 tag0)',
+    -> &thenFn, &otherwise, TBool:D $tag1, TBool:D $tag0 {
+        $_if( $_and($not($tag1), $not($tag0)),
+            -> $_ { &thenFn },
+            -> $_ { &otherwise($tag1, $tag0) }
+        )
+    }
+);
+
+constant $when-AppT is export = lambdaFn(
+    'when-AppT', 'λtag1.λtag0.λthenFn.λotherwise.if (and (not tag1) tag0) thenFn (otherwise tag1 tag0)',
+    -> &thenFn, &otherwise, TBool:D $tag1, TBool:D $tag0 {
+        $_if( $_and($not($tag1), $tag0),
+            -> $_ { &thenFn },
+            -> $_ { &otherwise($tag1, $tag0) }
+        )
+    }
+);
+
+constant $when-LamT is export = lambdaFn(
+    'when-LamT', 'λtag1.λtag0.λthenFn.λotherwise.if (and (not tag1) tag0) thenFn (otherwise tag1 tag0)',
+    -> &thenFn, &otherwise, TBool:D $tag1, TBool:D $tag0 {
+        $_if( $_and($tag1, $not($tag0)),
+            -> $_ { &thenFn },
+            -> $_ { &otherwise($tag1, $tag0) }
+        )
+    }
+);
+
 # functions on Term -----------------------------------------------------------
 
 constant $Term2source is export = $Y(lambdaFn(
