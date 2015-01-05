@@ -59,9 +59,9 @@ plan 146;
         &onLamT   = &thenFn('onLamT');
         &onConstT = &thenFn('onConstT');
     }
-    my &otherwise = curry(-> $tag1, $tag0, $field0, $field1 {
+    my &otherwise = -> $tag1, $tag0, $field0, $field1 {
         "&otherwise called: $tag1, $tag0, " ~ ($field0.?lambda // $field0.perl) ~ ', ' ~ ($field1.?lambda // $field1.perl);
-    });
+    };
     
     my $x = $VarT('x');
     my $y = $VarT('y');

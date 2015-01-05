@@ -223,7 +223,7 @@ ENDOFLAMBDA
             -> &thenFn, &otherwise, TBool:D $actTag1, TBool:D $actTag0 {
                 $_if( $_and($_eqv($expTag1, $actTag1), $_eqv($expTag0, $actTag0)),
                     -> $_ { &thenFn },
-                    -> $_ { &otherwise($actTag1, $actTag0) }
+                    -> $_ { curry(&otherwise)($actTag1, $actTag0) }
                 )
             }
         )
@@ -277,7 +277,7 @@ ENDOFLAMBDA
                     "(λ$vSrc.$bSrc)"
 
                 },
-                curry(-> $tag1, $tag0, $field0, $field1 { die "fell off type-dispatch with type " ~ $t.WHAT.perl })
+                -> $tag1, $tag0, $field0, $field1 { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
             )))))
         }
     }
@@ -301,7 +301,7 @@ ENDOFLAMBDA
             $when-VarT(  -> $n, Mu { $nil },
             $when-AppT(  -> $f, $a { $cons($f, $cons($a, $nil)) },
             $when-LamT(  -> $v, $b { $cons($v, $cons($b, $nil)) },
-            curry(-> $tag1, $tag0, $field0, $field1 { die "fell off type-dispatch with type " ~ $t.WHAT.perl })
+            -> $tag1, $tag0, $field0, $field1 { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
         )))))
     }
 );
@@ -350,15 +350,15 @@ ENDOFLAMBDA
                             $when-VarT(-> $aName, Mu {
                                 convertP6Bool2TBool($fName eq $aName)    # TODO: dispense with convertP6Bool2TBool
                             },
-                            curry(-> $tag1, $tag0, $field0, $field1 { $false })
+                            -> $tag1, $tag0, $field0, $field1 { $false }
                             )
                         )
                     },
-                    curry(-> $tag1, $tag0, $field0, $field1 { $false })
+                    -> $tag1, $tag0, $field0, $field1 { $false }
                     )
                 )
             },
-            curry(-> $tag1, $tag0, $field0, $field1 { $false })
+            -> $tag1, $tag0, $field0, $field1 { $false }
             )
         )
     }
