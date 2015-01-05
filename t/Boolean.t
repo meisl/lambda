@@ -7,7 +7,7 @@ use Lambda::P6Currying;
 use Lambda::Base;
 use Lambda::Boolean;
 
-plan 41;
+plan 67;
 
 
 # ->Str -----------------------------------------------------------------------
@@ -69,6 +69,11 @@ plan 41;
 { # _and
     is_properLambdaFn($_and);
 
+    is $_and.symbol,         '_and', '$_and.symbol';
+    is $_and.Str,            '_and', '$_and.Str';
+    doesnt_ok $_and, TBool,  '_and';
+    dies_ok { $Bool2Str($_and) }, "($Bool2Str $_and) yields error";
+
     is $_and($true,  $true ), $true,  '$_and($true,  $true )';
     is $_and($true,  $false), $false, '$_and($true,  $false)';
     is $_and($false, $false), $false, '$_and($false, $false)';
@@ -78,10 +83,43 @@ plan 41;
 { # _or
     is_properLambdaFn($_or);
 
+    is $_or.symbol,         '_or', '$_or.symbol';
+    is $_or.Str,            '_or', '$_or.Str';
+    doesnt_ok $_or, TBool,  '_or';
+    dies_ok { $Bool2Str($_or) }, "($Bool2Str $_or) yields error";
+
     is $_or($true,  $true ), $true,  '$_or($true,  $true )';
     is $_or($true,  $false), $true,  '$_or($true,  $false)';
     is $_or($false, $false), $false, '$_or($false, $false)';
     is $_or($false, $true ), $true,  '$_or($false, $true )';
+}
+
+{ # _eqv
+    is_properLambdaFn($_eqv);
+
+    is $_eqv.symbol,         '_eqv', '$_eqv.symbol';
+    is $_eqv.Str,            '_eqv', '$_eqv.Str';
+    doesnt_ok $_eqv, TBool,  '_eqv';
+    dies_ok { $Bool2Str($_eqv) }, "($Bool2Str $_eqv) yields error";
+
+    is $_eqv($true,  $true ), $true,  '$_eqv($true,  $true )';
+    is $_eqv($true,  $false), $false, '$_eqv($true,  $false)';
+    is $_eqv($false, $false), $true,  '$_eqv($false, $false)';
+    is $_eqv($false, $true ), $false, '$_eqv($false, $true )';
+}
+
+{ # _xor
+    is_properLambdaFn($_xor);
+
+    is $_xor.symbol,         '_xor', '$_xor.symbol';
+    is $_xor.Str,            '_xor', '$_xor.Str';
+    doesnt_ok $_xor, TBool,  '_xor';
+    dies_ok { $Bool2Str($_xor) }, "($Bool2Str $_xor) yields error";
+
+    is $_xor($true,  $true ), $false, '$_xor($true,  $true )';
+    is $_xor($true,  $false), $true,  '$_xor($true,  $false)';
+    is $_xor($false, $false), $false, '$_xor($false, $false)';
+    is $_xor($false, $true ), $true,  '$_xor($false, $true )';
 }
 
 { # _if

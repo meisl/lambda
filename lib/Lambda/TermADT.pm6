@@ -204,35 +204,33 @@ constant $given-Term is export = lambdaFn(
     -> TTerm:D $t, &cases { $t(&cases) }
 );
 
-constant $when-VarT is export = lambdaFn(
-    'when-VarT', 'λtag1.λtag0.λthenFn.λotherwise.if (and (not tag1) (not tag0)) thenFn (otherwise tag1 tag0)',
-    -> &thenFn, &otherwise, TBool:D $tag1, TBool:D $tag0 {
-        $_if( $_and($not($tag1), $not($tag0)),
-            -> $_ { &thenFn },
-            -> $_ { &otherwise($tag1, $tag0) }
+constant $make-when_2_2 = lambdaFn(
+    'make-when-2-2', 
+q:to/ENDOFLAMBDA/,
+    λexpTag1.λexpTag0.λactTag1.λactTag0.λthenFn.λotherwise.
+        if (_and (_eqv expTag1 actTag1) (_eqv expTag0 actTag0))
+            thenFn
+            (otherwise actTag1 actTag0)
+ENDOFLAMBDA
+    -> Str:D $ctorName, TBool:D $expTag1, TBool:D $expTag0 {
+        my $nameStr   = 'when-' ~ $ctorName;
+        my $condStr   = "(_and (_eqv $expTag1 actTag1) (_eqv $expTag0 actTag0))";
+        my $lambdaStr = "λtag1.λtag0.λthenFn.λotherwise.if $condStr thenFn (otherwise tag1 tag0)";
+        lambdaFn(
+            $nameStr, $lambdaStr,
+            -> &thenFn, &otherwise, TBool:D $actTag1, TBool:D $actTag0 {
+                $_if( $_and($_eqv($expTag1, $actTag1), $_eqv($expTag0, $actTag0)),
+                    -> $_ { &thenFn },
+                    -> $_ { &otherwise($actTag1, $actTag0) }
+                )
+            }
         )
     }
 );
 
-constant $when-AppT is export = lambdaFn(
-    'when-AppT', 'λtag1.λtag0.λthenFn.λotherwise.if (and (not tag1) tag0) thenFn (otherwise tag1 tag0)',
-    -> &thenFn, &otherwise, TBool:D $tag1, TBool:D $tag0 {
-        $_if( $_and($not($tag1), $tag0),
-            -> $_ { &thenFn },
-            -> $_ { &otherwise($tag1, $tag0) }
-        )
-    }
-);
-
-constant $when-LamT is export = lambdaFn(
-    'when-LamT', 'λtag1.λtag0.λthenFn.λotherwise.if (and (not tag1) tag0) thenFn (otherwise tag1 tag0)',
-    -> &thenFn, &otherwise, TBool:D $tag1, TBool:D $tag0 {
-        $_if( $_and($tag1, $not($tag0)),
-            -> $_ { &thenFn },
-            -> $_ { &otherwise($tag1, $tag0) }
-        )
-    }
-);
+constant $when-VarT is export = $make-when_2_2('VarT', $false, $false);
+constant $when-AppT is export = $make-when_2_2('AppT', $false, $true );
+constant $when-LamT is export = $make-when_2_2('LamT', $true,  $false);
 
 # functions on Term -----------------------------------------------------------
 

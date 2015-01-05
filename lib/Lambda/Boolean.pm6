@@ -55,3 +55,17 @@ constant $_or is export = lambdaFn(
     }
 );
 
+constant $_eqv is export = lambdaFn(
+    '_eqv', 'λp.λq.p q (not q)',
+    -> TBool:D $p, TBool:D $q {
+        $p($q, $not($q))
+    }
+);
+
+constant $_xor is export = lambdaFn(
+    '_xor', 'λp.λq.p (not q) q',
+    -> TBool:D $p, TBool:D $q {
+        $p($not($q), $q)
+    }
+);
+
