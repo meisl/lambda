@@ -239,50 +239,44 @@ constant $when-ConstT   is export = $make-when_2_2('ConstT',    $true,      $tru
 constant $Term2source is export = $Y(lambdaFn(
     'Term->source', 
 q:to/ENDOFLAMBDA/,
-    λself.λt.case t ; TODO: case -> cascaded if
-        (((ConstT val)    (->Str val))
-         ((VarT name)     name)
-         ((AppT func arg)
-             (let ((fSrc (self func))
-                   (aSrc (self arg))
-                  )
-                (~ "(" (~ fSrc (~ aSrc ")")))
-             )
-         )
-         ((LamT v body)
-             (let ((vSrc (self v))
-                   (bSrc (self body))
-                  )
-                (~ "(LAMBDA" (~ vSrc (~ DOT (~ bSrc ")"))))    ; TODO: put literal lambda and dot here
+    λself.λt.given-Term t
+        (when-ConstT (λval.λ_.->Str val)    ; (B ->Str π2->1)
+        (when-VarT   (λname.λ_.name)        ; π2->1
+        (when-AppT   (λfunc.λarg.
+            (let ((fSrc (self func))
+                  (aSrc (self arg))
+                 )
+               (~ "(" (~ fSrc (~ aSrc ")")))
             )
-         )
         )
-       (error (~ "unknown TTerm" (Term->Str t)))
+        (when-LamT (λv.λbody.
+            (let ((vSrc (self v))
+                  (bSrc (self body))
+                 )
+               (~ "(LAMBDA" (~ vSrc (~ DOT (~ bSrc ")"))))    ; TODO: put literal lambda and dot here
+            )
+        )
+        (error (~ "unknown TTerm" (Term->Str t)))
+        ))))
 ENDOFLAMBDA
     -> &self {
         -> TTerm:D $t {
-            $_if( $is-VarT($t),
-                -> $_ { $VarT2name($t) },
-                -> $_ { $_if( $is-ConstT($t),
-                            -> $_ { $ConstT2value($t).perl },
-                            -> $_ { $_if( $is-AppT($t),
-                                        -> $_ { my $fSrc = &self($AppT2func($t));
-                                                my $aSrc = &self($AppT2arg($t));
-                                                "($fSrc $aSrc)";
-                                        },
-                                        -> $_ { $_if( $is-LamT($t),
-                                                    -> $_ { my $vSrc = &self($LamT2var($t));
-                                                            my $bSrc = &self($LamT2body($t));
-                                                            "(λ$vSrc.$bSrc)",
-                                                    },
-                                                    -> $_ { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
-                                                )
-                                        }
-                                    )
-                            }
-                        )
-                }
-            )
+            $given-Term($t,
+                $when-ConstT(-> $val, Mu { $val.perl},    #   $B($pi1o2, *.perl),     #   
+                $when-VarT($pi1o2,
+                $when-AppT(-> $func, $arg {
+                    my $fSrc = &self($func);
+                    my $aSrc = &self($arg);
+                    "($fSrc $aSrc)"
+                },
+                $when-LamT(-> $var, $body {
+                    my $vSrc = &self($var);
+                    my $bSrc = &self($body);
+                    "(λ$vSrc.$bSrc)"
+
+                },
+                -> $t { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+            )))))
         }
     }
 ));
