@@ -397,14 +397,20 @@ ENDOFLAMBDA
 constant $is-Omega is export = lambdaFn(
     'Ω?',
 q:to/ENDOFLAMBDA/,
-    λt._if (AppT? t)
-           (_and (ω? (AppT->func t)) (ω? (AppT->arg t)))
-           (K #false)
+    λt.given-Term t
+        (when-AppT (λf.λa.
+           (_and (ω? f) (ω? a))
+        )
+        λ_.λ_.λ_.λ_.#false
+        )
 ENDOFLAMBDA
     -> TTerm:D $t -->TBool{
-        $_if( $is-AppT($t),
-            -> $_ { $_and($is-omega($AppT2func($t)), $is-omega($AppT2arg($t))) },
-            -> $_ { $false }
+        $given-Term($t,
+            $when-AppT(-> TTerm $f, TTerm $a {
+                $_and($is-omega($f), $is-omega($a))
+            },
+            -> $tag1, $tag0, $field0, $field1 { $false }
+            )
         )
     }
 );
