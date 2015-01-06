@@ -368,27 +368,27 @@ ENDOFLAMBDA
 constant $is-omega is export = lambdaFn(
     'ω?',
 q:to/ENDOFLAMBDA/,
-    λt._if (LamT? t)
-           (let ((v (LamT->var  t))
-                 (b (LamT->body t))
-                )
-             (_if (selfApp? b)
-                  (λ_.eq? (VarT->name (AppT->func b)) (VarT->name v))
-                  (K #false)
-             )
-           )
-           (K #false)
+    λt.given-Term t
+        (when-LamT (λv.λb.
+            _if (selfApp? b)
+                (λ_.eq? (VarT->name (AppT->func b)) (VarT->name v))
+                (K #false)
+            
+        )
+        λ_.λ_.λ_.λ_.#false
+        )
 ENDOFLAMBDA
     -> TTerm:D $t -->TBool{
-        $_if( $is-LamT($t),
-            -> $_ { my $v = $LamT2var($t);
-                    my $b = $LamT2body($t);
-                    $_if( $is-selfApp($b),
-                        -> $_ { convertP6Bool2TBool($VarT2name($AppT2func($b)) eq $VarT2name($v)) },    # TODO: dispense with convertP6Bool2TBool
-                        -> $_ { $false }
-                    )
+        $given-Term($t,
+            $when-LamT(-> TTerm $v, TTerm $b {
+                $_if( $is-selfApp($b),
+                    -> $_ { convertP6Bool2TBool($VarT2name($AppT2func($b)) eq $VarT2name($v)) },    # TODO: dispense with convertP6Bool2TBool
+                    -> $_ { $false }
+                )
+        
             },
-            -> $_ { $false }
+            -> $tag1, $tag0, $field0, $field1 { $false }
+            )
         )
     }
 );
