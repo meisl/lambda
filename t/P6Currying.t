@@ -1,12 +1,13 @@
 use v6;
-
 use Test;
 use Test::Util;
 
+
+# module under test:
 use Lambda::P6Currying;
 
-
 plan 19;
+
 
 { # invalid signature
     my sub nullarySub { 'bar' };                    # NOT OK    signature: :()

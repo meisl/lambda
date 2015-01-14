@@ -1,10 +1,12 @@
 use v6;
-
 use Test;
 use Test::Util;
-use Lambda::Base;
-use Lambda::Boolean;    # TODO: move findFP (tests) out of Base.pm6, st. dependency on Boolean.pm6 is made clear
 
+use Lambda::Boolean;    # TODO: move findFP (tests) out of Base.pm6, st. dependency on Boolean.pm6 is made clear
+use Lambda::BaseP6;
+
+# module under test:
+use Lambda::Base;
 plan 52;
 
 
@@ -47,11 +49,11 @@ plan 52;
         my $f = -> Int:D $i { @seen.push($i.perl); ($i * 2).Str.perl } does Definition(:symbol<f>);
         my $g = -> Str:D $s { @seen.push($s.perl); $s.Int - 23       } does Definition(:symbol<g>);
 
-        my $h = $B($f, $g);
-        does_ok     $h, lambda,     'B f g';
-        doesnt_ok   $h, Definition, 'B f g';
+        my $composed2 = $B($f, $g);
+        does_ok     $composed2, lambda,     'B f g';
+        doesnt_ok   $composed2, Definition, 'B f g';
 
-        my $result = $h('42');
+        my $result = $composed2('42');
         is @seen[0], '"42"', '((B f g) "42"): arg was passed to g first';
         is @seen[1], 19,     '((B f g) "42"): result of g applied to arg was passed to f';
         is $result, '"38"',  '((B f g) "42"): overall result is that of f';

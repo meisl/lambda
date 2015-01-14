@@ -1,15 +1,6 @@
 use v6;
 
-use Lambda::Base;
-use Lambda::Boolean;
-use Lambda::ListADT;
 use Lambda::TermADT;
-
-use Lambda::MaybeADT;
-use Lambda::FreeVars;
-use Lambda::EtaReduction;
-use Lambda::BetaReduction;
-
 
 
 grammar LambdaGrammar {

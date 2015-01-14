@@ -1,8 +1,9 @@
 use v6;
-
 use Test;
 use Test::Util;
 
+
+# module under test (the VarT part only):
 use Lambda::TermADT;
 
 plan 25;

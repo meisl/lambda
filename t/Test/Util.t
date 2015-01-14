@@ -1,11 +1,14 @@
 use v6;
-
 use Test;
-use Lambda::Base;
 
+use Lambda::BaseP6;
+
+
+# module under test:
 use Test::Util;
 
 plan 1;
+
 
 { # does_ok, is_properLambdaFn
     # use ::= to make it immutable

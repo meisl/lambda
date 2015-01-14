@@ -1,5 +1,4 @@
 use v6;
-
 use Test;
 use Test::Util;
 
@@ -9,10 +8,12 @@ use Lambda::ListADT;
 use Lambda::PairADT;
 use Lambda::TermADT;
 
-use Lambda::Substitution;
-
 use Lambda::Conversion::Bool-conv;
 use Lambda::Conversion::ListADT-conv;
+
+
+# module under test:
+use Lambda::Substitution;
 
 plan 41;
 

@@ -1,11 +1,11 @@
 use v6;
-
 use Test;
 use Test::Util;
 
-use Lambda::Base;
 use Lambda::Boolean;
 
+
+# module under test:
 use Lambda::ListADT;
 
 plan 39;

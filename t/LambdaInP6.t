@@ -1,15 +1,16 @@
 use v6;
-
 use Test;
 use Test::Util;
 
 use Lambda::TermADT;
 use Lambda::Boolean;
 
+
+# module under test:
 use Lambda::LambdaInP6;
 
-
 plan 54;
+
 
 # TermStub (basic)
 {

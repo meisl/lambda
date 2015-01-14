@@ -1,61 +1,8 @@
 use v6;
-
-use Lambda::P6Currying;
-
+use Lambda::BaseP6;
 
 module Lambda::Base;
 
-
-role lambda is export {
-    has Str:D $.lambda;
-    method Str {
-        self.?symbol || $!lambda;
-    }
-    method gist { self.Str }
-    #method perl { self.gist }
-}
-
-role Definition is export {
-    has Str $.symbol;
-
-    submethod BUILD(Str:D :$symbol) {
-        $!symbol = $symbol;
-    }
-
-    method Str { $!symbol }
-}
-
-
-
-        #T.perl ~ ' -> ' ~ @!restParams.map(*.perl ~ ' ->') ~ ' ' ~ R.perl;
-
-role Curried {
-    method lambdaStr(*@args) {
-            '(' ~ self  ~ @args.map( -> $a {' ' ~ ($a.?symbol // $a.?lambda // $a.perl) }) ~ ')'
-    }
-
-    method partial(&f, *@args) {
-        lambdaFn(Str, self.lambdaStr(@args), &f);
-    }
-}
-
-sub lambdaStr($self, *@args) {
-        '(' ~ $self ~ @args.map( -> $a {' ' ~ ($a.?symbol // $a.?lambda // $a.perl) }) ~ ')'
-}
-
-sub lambdaFn(Str $symbol, Str:D $lambdaExpr, &f) is export {
-    my $arity = &f.?arity // &f.signature.params.elems;
-    if $arity == 0 {
-        die "cannot make lambda function with zero parameters: symbol=$symbol, lambdaExpr=$lambdaExpr, &f.signature=" ~ &f.signature.perl ~ ', &f=' ~ &f.perl;
-    } else {
-        my $out = curry(&f);
-        my $lx = $lambdaExpr.substr(0, 1) eq '(' ?? $lambdaExpr !! "($lambdaExpr)";
-        $out does lambda($lx);
-        $out does Definition(:$symbol)
-            if $symbol.defined;
-        $out;
-    }
-}
 
 constant $id is export = lambdaFn(
     'id', 'λx.x',
@@ -151,7 +98,7 @@ constant $findFP is export = $Y(lambdaFn(
     'findFP', 'λself.λp.λf.λstart.let ((next (f start)) (done (p start next))) (if done start (self f next p))',
     -> &self {
         -> &predicate, &f, $start {
-            say "inside findFP";
+            #say "inside findFP: "  ~ $start;
             my $next = &f($start);
             my $done = &predicate($start, $next);    # TODO: move findFP out of Base.pm6, st. dependency on Boolean.pm6 is made clear
             if $done(True, False) { # TODO: once findFP is moved out of Base.pm6: implement using $_if
@@ -167,16 +114,48 @@ constant $findFP is export = $Y(lambdaFn(
 # projections ---------------------------------------------------------
 
 # of 2:
-constant $pi1o2 is export = lambdaFn('π2->1', 'λa.λb.a', -> $a, $b { $a });
-constant $pi2o2 is export = lambdaFn('π2->2', 'λa.λb.b', -> $a, $b { $b });
+constant $pi1o2 is export = lambdaFn('π2->1', 'λx.λ_.x', -> $x, Mu { $x }); # K     = L I = B K I = λx.K (I x) = λx.K x = λx.λ_.x
+constant $pi2o2 is export = lambdaFn('π2->2', 'λ_.λx.x', -> Mu, $x { $x }); # K I
 
 # of 3:
-constant $pi1o3 is export = lambdaFn('π3->1', 'λa.λb.λc.a', -> $a, $b, $c { $a });
-constant $pi2o3 is export = lambdaFn('π3->2', 'λa.λb.λc.b', -> $a, $b, $c { $b });
-constant $pi3o3 is export = lambdaFn('π3->3', 'λa.λb.λc.c', -> $a, $b, $c { $c });
+constant $pi1o3 is export = lambdaFn('π3->1', 'λx.λ_.λ_.x', -> $x, Mu, Mu { $x });  # L π2->1  =  B K π2->1  =  λx.K (π2->1 x)  =  λx.(K (K x)) = λx.(K (λ_.x)) = λx.λ_.λ_.x
+constant $pi2o3 is export = lambdaFn('π3->2', 'λ_.λx.λ_.x', -> Mu, $x, Mu { $x });  # K π2->1  =  K K
+constant $pi3o3 is export = lambdaFn('π3->3', 'λ_.λ_.λx.x', -> Mu, Mu, $x { $x });  # K π2->2  =  K (K I)
 
 # of 4:
-constant $pi1o4 is export = lambdaFn('π4->1', 'λa.λb.λc.λd.a', -> $a, $b, $c, $d { $a });
-constant $pi2o4 is export = lambdaFn('π4->2', 'λa.λb.λc.λd.b', -> $a, $b, $c, $d { $b });
-constant $pi3o4 is export = lambdaFn('π4->3', 'λa.λb.λc.λd.c', -> $a, $b, $c, $d { $c });
-constant $pi4o4 is export ::= lambdaFn('π4->4', 'λa.λb.λc.λd.d', -> $a, $b, $c, $d { $d });
+constant $pi1o4 is export = lambdaFn('π4->1', 'λx.λ_.λ_.λ_.x', -> $x, Mu, Mu, Mu { $x });   # L π3->1   =  L (L (L I))
+constant $pi2o4 is export = lambdaFn('π4->2', 'λ_.λx.λ_.λ_.x', -> Mu, $x, Mu, Mu { $x });   # K π3->1   =  K (L (L I))
+constant $pi3o4 is export = lambdaFn('π4->3', 'λ_.λ_.λx.λ_.x', -> Mu, Mu, $x, Mu { $x });   # K π3->2   =  K (K (L I))
+constant $pi4o4 is export = lambdaFn('π4->4', 'λ_.λ_.λ_.λx.x', -> Mu, Mu, Mu, $x { $x });   # K π3->3   =  K (K (K I))
+
+
+
+constant $apply-χ-more = lambdaFn(
+    'apply-χ-more', 'λf.λa.λn.n (λg.g a) f',
+    -> $f, $a, $n {
+        my $apply-to-const = lambdaFn('apply-to-const', 'λc.λg.g c', -> $c, $g { $g($c) });
+        $n($apply-to-const($a), $f)
+    }
+);
+
+
+constant $eq-pi2 = lambdaFn(
+    'eq-π2?', 'λp.λq.p q (q p #true)',
+    -> $p, $q {
+        my $true  = $K;
+        $p($q, $q($p, $true));
+    }
+);
+
+constant $eq-pi3 = lambdaFn(
+    'eq-π3?', 'asdf',
+    -> $p, $q {
+        my $true  = $K;
+        my $false = $K($I);
+
+        my $p-first = $q($true, $false, $false);
+        my $q-other = $eq-pi2($p($_), $q($_));
+        my $p-other = $q($false, $q-other, $q-other);
+        $p($p-first, $p-other, $p-other);
+    }
+)

@@ -1,12 +1,13 @@
 use v6;
-
 use Test;
 use Test::Util;
 
-use Lambda::Base;
+use Lambda::BaseP6;
 use Lambda::Boolean;
 use Lambda::P6Currying;
 
+
+# module under test:
 use Lambda::TermADT;
 
 plan 146;

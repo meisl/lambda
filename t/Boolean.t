@@ -1,10 +1,11 @@
 use v6;
-
 use Test;
 use Test::Util;
 
 use Lambda::P6Currying;
-use Lambda::Base;
+
+
+# module under test:
 use Lambda::Boolean;
 
 plan 67;

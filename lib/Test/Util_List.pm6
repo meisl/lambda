@@ -1,7 +1,7 @@
 use v6;
 
 use Test;
-use Lambda::Base;
+use Lambda::BaseP6;
 use Lambda::Boolean;
 use Lambda::ListADT;
 

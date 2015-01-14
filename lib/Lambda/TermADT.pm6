@@ -1,6 +1,7 @@
 use v6;
 
 use Lambda::Base;
+use Lambda::BaseP6;
 use Lambda::Boolean;
 use Lambda::ListADT;
 
@@ -288,7 +289,7 @@ constant $Term2children is export = lambdaFn(
     'Term->children', 
 q:to/ENDOFLAMBDA/,
     λt.given-Term t
-        (when-ConstT (λ_.λ_.nil)                    ; (K (K nil))
+        (when-ConstT (λ_.λ_.nil)                    ; (K (K nil))  χ2 K nil
         (when-VarT   (λ_.λ_.nil)                    ; (K (K nil))
         (when-AppT   (λf.λa.cons f (cons a nil))    ; (B (C cons) (C cons nil))
         (when-LamT   (λv.λb.cons v (cons b nil))    ; (B (C cons) (C cons nil))
@@ -342,23 +343,29 @@ q:to/ENDOFLAMBDA/,
         )
 ENDOFLAMBDA
     -> TTerm:D $t -->TBool{
+        #say "inside is-selfApp";
+        my $otherwise = -> $tag1, $tag0, $field0, $field1 {
+            #say "done is-selfApp";
+            $false
+        }
         $given-Term($t,
             $when-AppT(-> $f, $a {
                 $given-Term($f,
                     $when-VarT(-> $fName, Mu {
                         $given-Term($a,
                             $when-VarT(-> $aName, Mu {
+                                #say "done is-selfApp";
                                 convertP6Bool2TBool($fName eq $aName)    # TODO: dispense with convertP6Bool2TBool
                             },
-                            -> $tag1, $tag0, $field0, $field1 { $false }
+                            $otherwise
                             )
                         )
                     },
-                    -> $tag1, $tag0, $field0, $field1 { $false }
+                    $otherwise
                     )
                 )
             },
-            -> $tag1, $tag0, $field0, $field1 { $false }
+            $otherwise
             )
         )
     }

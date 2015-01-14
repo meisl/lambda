@@ -1,11 +1,12 @@
 use v6;
-
 use Test;
 use Test::Util;
 
-use Lambda::Base;
+use Lambda::BaseP6;
 use Lambda::Boolean;
 
+
+# module under test:
 use Lambda::MaybeADT;
 
 

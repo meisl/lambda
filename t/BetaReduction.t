@@ -1,5 +1,4 @@
 use v6;
-
 use Test;
 use Test::Util;
 use Test::Util_List;
@@ -8,11 +7,13 @@ use Lambda::Boolean;
 use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
-use Lambda::BetaReduction;
 
 use Lambda::Conversion::Bool-conv;
 use Lambda::LambdaGrammar;
 
+
+# module under test:
+use Lambda::BetaReduction;
 
 plan 128;
 
@@ -23,6 +24,7 @@ my $x = $VarT('x');
 my $y = $VarT('y');
 my $z = $VarT('z');
 my $c = $ConstT('c');
+
 
 # [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
 my $omegaX  = $LamT($x, $AppT($x, $x));  # (λx.x x)
@@ -227,7 +229,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
 
             my $actual = $betaReduce($term);
             is($actual, $expected, $desc)
-                or diag($actual.perl) and die;
+                or diag($actual.perl) ;
         }
     }
 

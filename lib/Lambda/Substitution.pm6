@@ -1,6 +1,7 @@
 use v6;
 
 use Lambda::Base;
+use Lambda::BaseP6;
 use Lambda::Boolean;
 use Lambda::MaybeADT;
 use Lambda::TermADT;

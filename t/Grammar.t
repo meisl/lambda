@@ -1,11 +1,12 @@
 use v6;
-
 use Test;
 use Test::Util;
 
 use Lambda::Boolean;
 use Lambda::TermADT;
 
+
+# module under test:
 use Lambda::LambdaGrammar;
 
 plan 37;

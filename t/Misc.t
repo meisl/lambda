@@ -1,12 +1,8 @@
 use v6;
-
 use Test;
 use Test::Util;
 
-use Lambda::Base;
-use Lambda::Boolean;
 use Lambda::MaybeADT;
-use Lambda::ListADT;
 use Lambda::TermADT;
 use Lambda::FreeVars;
 use Lambda::EtaReduction;

@@ -1,12 +1,11 @@
 use v6;
-
 use Test;
 use Test::Util;
 
-use Lambda::Base;
-use Lambda::Boolean;
 use Lambda::ListADT;
 
+
+# module under test:
 use Lambda::Streams;
 
 plan 11;

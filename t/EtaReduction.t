@@ -1,14 +1,16 @@
 use v6;
-
 use Test;
 use Test::Util;
 
 use Lambda::Boolean;
 use Lambda::MaybeADT;
 use Lambda::TermADT;
-use Lambda::EtaReduction;
 
 use Lambda::Conversion::Bool-conv;
+
+
+# module under test:
+use Lambda::EtaReduction;
 
 plan 80;
 

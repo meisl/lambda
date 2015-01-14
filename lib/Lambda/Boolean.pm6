@@ -1,6 +1,6 @@
 use v6;
 
-use Lambda::Base;
+use Lambda::BaseP6;
 
 module Lambda::Boolean;
 
@@ -68,4 +68,3 @@ constant $_xor is export = lambdaFn(
         $p($not($q), $q)
     }
 );
-
