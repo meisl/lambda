@@ -26,23 +26,6 @@ role Definition is export {
 }
 
 
-
-        #T.perl ~ ' -> ' ~ @!restParams.map(*.perl ~ ' ->') ~ ' ' ~ R.perl;
-
-role Curried {
-    method lambdaStr(*@args) {
-            '(' ~ self  ~ @args.map( -> $a {' ' ~ ($a.?symbol // $a.?lambda // $a.perl) }) ~ ')'
-    }
-
-    method partial(&f, *@args) {
-        lambdaFn(Str, self.lambdaStr(@args), &f);
-    }
-}
-
-sub lambdaStr($self, *@args) {
-        '(' ~ $self ~ @args.map( -> $a {' ' ~ ($a.?symbol // $a.?lambda // $a.perl) }) ~ ')'
-}
-
 sub lambdaFn(Str $symbol, Str:D $lambdaExpr, &f) is export {
     my $arity = &f.?arity // &f.signature.params.elems;
     if $arity == 0 {
