@@ -12,8 +12,8 @@ constant $I is export := $id;
 
 
 constant $const is export = lambdaFn(
-    'const', 'λx.λy.x',
-    -> $b { lambdaFn(Str, 'λy.' ~ ($b.?symbol // $b.?lambda // $b.perl), -> $y { $b }) }
+    'const', 'λx.λ_.x',
+    -> $x { lambdaFn(Str, 'λ_.' ~ ($x.?symbol // $x.?lambda // $x.perl), -> Mu { $x }) }
 );
 constant $K is export := $const;
 

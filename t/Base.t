@@ -30,9 +30,9 @@ plan 52;
 
     is $const('x')(5),  'x',        'const("x")(5)';
     is $const(5)(23),   5,          'const(5)(23)';
-    is $const(42).Str,  '(λy.42)',  'const(42).Str';
+    is $const(42).Str,  '(λ_.42)',  'const(42).Str';
     is $const($id)(23), $id,        'const(id)(23)';
-    is $const($id).Str, "(λy.$id)", 'const($id).Str';
+    is $const($id).Str, "(λ_.$id)", 'const($id).Str';
 
     #is $const("x", 5), "x", 'const("x", 5)';
     #is $const(5, 23), 5, 'const(5, 23)';

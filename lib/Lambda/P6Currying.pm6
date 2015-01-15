@@ -235,6 +235,9 @@ class Fn does Callable {
             my $finalResult = $myResult(|as.list[$n..*]);
             return $finalResult;
         } else {
+            my @expectedTypes = self.sig[0..*-2];
+            #say (@expectedTypes Z as.list).map(-> $t, $a { "{$t.perl}: {$a.perl}\n" });
+
             die X::Typing::ArgBinding.new(:whatsInFuncPos(self), :args(as));
         }
     }

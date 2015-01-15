@@ -10,7 +10,7 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::TermADT;
 
-plan 146;
+plan 129;
 
 
 # ->Str -----------------------------------------------------------------------
@@ -25,44 +25,25 @@ plan 146;
 
 # pattern matching ------------------------------------------------------------
 
-{ # given-Term
-    is_properLambdaFn($given-Term);
+{ # destruct-Term
+    is_properLambdaFn($destruct-Term);
 
-    is $given-Term.symbol, 'given-Term', '$given-Term.symbol';
-    is $given-Term.Str,    'given-Term', '$given-Term.Str';
-}
-
-{ # when-XYZ
-    is_properLambdaFn($when-VarT);
-    is $when-VarT.symbol, 'when-VarT', '$when-VarT.symbol';
-    is $when-VarT.Str,    'when-VarT', '$when-VarT.Str';
-
-    is_properLambdaFn($when-AppT);
-    is $when-AppT.symbol, 'when-AppT', '$when-AppT.symbol';
-    is $when-AppT.Str,    'when-AppT', '$when-AppT.Str';
-
-    is_properLambdaFn($when-LamT);
-    is $when-LamT.symbol, 'when-LamT', '$when-LamT.symbol';
-    is $when-LamT.Str,    'when-LamT', '$when-LamT.Str';
-
-    is_properLambdaFn($when-ConstT);
-    is $when-ConstT.symbol, 'when-ConstT', '$when-ConstT.symbol';
-    is $when-ConstT.Str,    'when-ConstT', '$when-ConstT.Str';
-
+    is $destruct-Term.symbol, 'destruct-Term', '$destruct-Term.symbol';
+    is $destruct-Term.Str,    'destruct-Term', '$destruct-Term.Str';
 
     my (&onVarT, &onAppT, &onLamT, &onConstT);
     {
-        my &thenFn = curry(-> Str $which, $field0, $field1 {
-            "&$which called: " ~ ($field0.?lambda // $field0.perl) ~ ', ' ~ ($field1.?lambda // $field1.perl);
+        my &thenFn1 = curry(-> Str $which, $field1 {
+            "&$which called: " ~ ($field1.?lambda // $field1.perl);
         });
-        &onVarT   = &thenFn('onVarT');
-        &onAppT   = &thenFn('onAppT');
-        &onLamT   = &thenFn('onLamT');
-        &onConstT = &thenFn('onConstT');
+        my &thenFn2 = curry(-> Str $which, $field1, $field2 {
+            "&$which called: " ~ ($field1.?lambda // $field1.perl) ~ ', ' ~ ($field2.?lambda // $field2.perl);
+        });
+        &onVarT   = &thenFn1('onVarT');
+        &onAppT   = &thenFn2('onAppT');
+        &onLamT   = &thenFn2('onLamT');
+        &onConstT = &thenFn1('onConstT');
     }
-    my &otherwise = -> $tag1, $tag0, $field0, $field1 {
-        "&otherwise called: $tag1, $tag0, " ~ ($field0.?lambda // $field0.perl) ~ ', ' ~ ($field1.?lambda // $field1.perl);
-    };
     
     my $x = $VarT('x');
     my $y = $VarT('y');
@@ -77,117 +58,23 @@ plan 146;
 
     subtest( {  # when-VarT alone
         sub match(TTerm:D $t) {
-            $given-Term($t,
-                $when-VarT(&onVarT,
-                &otherwise)
-            );
+            $destruct-Term($t,
+                &onVarT,
+                &onAppT,
+                &onLamT,
+                &onConstT,
+            )
         };
 
-        is match($x),       '&onVarT called: "x", Mu', 'match on (VarT x) passes fields to &onVarT';
-        is match($y),       '&onVarT called: "y", Mu', 'match on (VarT y) passes fields to &onVarT';
-        is match($app1),    '&otherwise called: #false, #true, (VarT "y"), (VarT "x")', 'match on (AppT y x) passes tags and fields to &otherwise';
-        is match($app2),    '&otherwise called: #false, #true, (VarT "x"), (VarT "y")', 'match on (AppT x y) passes tags and fields to &otherwise';
-        is match($lam1),    '&otherwise called: #true, #false, (VarT "y"), (VarT "x")', 'match on (LamT y x) passes tags and fields to &otherwise';
-        is match($lam2),    '&otherwise called: #true, #false, (VarT "x"), (LamT (VarT "y") (VarT "x"))', 'match on (LamT x (LamT y x)) passes tags and fields to &otherwise';
-        is match($c1),      '&otherwise called: #true, #true, "one", Mu', 'match on (ConstT "one") passes tags and fields to &otherwise';
-        is match($c2),      '&otherwise called: #true, #true, "two", Mu', 'match on (ConstT "two") passes tags and fields to &otherwise';
-    }, 'when-VarT alone') or die;
-
-    subtest( {  # when-AppT alone
-        sub match(TTerm:D $t) {
-            $given-Term($t,
-                $when-AppT(&onAppT,
-                &otherwise)
-            );
-        };
-
-        is match($x),       '&otherwise called: #false, #false, "x", Mu', 'match on (AppT y x) passes tags and fields to &otherwise';
-        is match($y),       '&otherwise called: #false, #false, "y", Mu', 'match on (AppT y x) passes tags and fields to &otherwise';
-        is match($app1),    '&onAppT called: (VarT "y"), (VarT "x")', 'match on (AppT y x) passes fields to &onAppT';
-        is match($app2),    '&onAppT called: (VarT "x"), (VarT "y")', 'match on (AppT x y) passes fields to &onAppT';
-        is match($lam1),    '&otherwise called: #true, #false, (VarT "y"), (VarT "x")', 'match on (LamT y x) passes tags and fields to &otherwise';
-        is match($lam2),    '&otherwise called: #true, #false, (VarT "x"), (LamT (VarT "y") (VarT "x"))', 'match on (LamT x (LamT y x)) passes tags and fields to &otherwise';
-        is match($c1),      '&otherwise called: #true, #true, "one", Mu', 'match on (ConstT "one") passes tags and fields to &otherwise';
-        is match($c2),      '&otherwise called: #true, #true, "two", Mu', 'match on (ConstT "two") passes tags and fields to &otherwise';
-    }, 'when-AppT alone') or die;
-
-    subtest( {  # when-LamT alone
-        sub match(TTerm:D $t) {
-            $given-Term($t,
-                $when-LamT(&onLamT,
-                &otherwise)
-            );
-        };
-
-        is match($x),       '&otherwise called: #false, #false, "x", Mu', 'match on (AppT y x) passes tags and fields to &otherwise';
-        is match($y),       '&otherwise called: #false, #false, "y", Mu', 'match on (AppT y x) passes tags and fields to &otherwise';
-        is match($app1),    '&otherwise called: #false, #true, (VarT "y"), (VarT "x")', 'match on (AppT y x) passes tags and fields to &otherwise';
-        is match($app2),    '&otherwise called: #false, #true, (VarT "x"), (VarT "y")', 'match on (AppT x y) passes tags and fields to &otherwise';
-        is match($lam1),    '&onLamT called: (VarT "y"), (VarT "x")', 'match on (LamT y x) passes fields to &onLamT';
-        is match($lam2),    '&onLamT called: (VarT "x"), (LamT (VarT "y") (VarT "x"))', 'match on (LamT x (LamT y x)) passes fields to &onLamT';
-        is match($c1),      '&otherwise called: #true, #true, "one", Mu', 'match on (ConstT "one") passes tags and fields to &otherwise';
-        is match($c2),      '&otherwise called: #true, #true, "two", Mu', 'match on (ConstT "two") passes tags and fields to &otherwise';
-    }, 'when-LamT alone') or die;
-
-    subtest( {  # when-ConstT alone
-        sub match(TTerm:D $t) {
-            $given-Term($t,
-                $when-ConstT(&onConstT,
-                &otherwise)
-            );
-        };
-
-        is match($x),       '&otherwise called: #false, #false, "x", Mu', 'match on (AppT y x) passes tags and fields to &otherwise';
-        is match($y),       '&otherwise called: #false, #false, "y", Mu', 'match on (AppT y x) passes tags and fields to &otherwise';
-        is match($app1),    '&otherwise called: #false, #true, (VarT "y"), (VarT "x")', 'match on (AppT y x) passes tags and fields to &otherwise';
-        is match($app2),    '&otherwise called: #false, #true, (VarT "x"), (VarT "y")', 'match on (AppT x y) passes tags and fields to &otherwise';
-        is match($lam1),    '&otherwise called: #true, #false, (VarT "y"), (VarT "x")', 'match on (LamT y x) passes tags and fields to &otherwise';
-        is match($lam2),    '&otherwise called: #true, #false, (VarT "x"), (LamT (VarT "y") (VarT "x"))', 'match on (LamT x (LamT y x)) passes tags and fields to &otherwise';
-        is match($c1),      '&onConstT called: "one", Mu', 'match on (ConstT "one") passes fields to &onConstT';
-        is match($c2),      '&onConstT called: "two", Mu', 'match on (ConstT "two") passes fields to &onConstT';
-    }, 'when-LamT alone') or die;
-
-    subtest( {  # altogether
-        sub match(TTerm:D $t) {
-            $given-Term($t,
-                $when-VarT(&onVarT,
-                $when-AppT(&onAppT,
-                $when-LamT(&onLamT,
-                $when-ConstT(&onConstT,
-                &otherwise))))
-            );
-        };
-
-        is match($x),       '&onVarT called: "x", Mu', 'match on (VarT x) passes fields to &onVarT';
-        is match($y),       '&onVarT called: "y", Mu', 'match on (VarT y) passes fields to &onVarT';
+        is match($x),       '&onVarT called: "x"', 'match on (VarT x) passes fields to &onVarT';
+        is match($y),       '&onVarT called: "y"', 'match on (VarT y) passes fields to &onVarT';
         is match($app1),    '&onAppT called: (VarT "y"), (VarT "x")', 'match on (AppT y x) passes fields to &onAppT';
         is match($app2),    '&onAppT called: (VarT "x"), (VarT "y")', 'match on (AppT x y) passes fields to &onAppT';
         is match($lam1),    '&onLamT called: (VarT "y"), (VarT "x")', 'match on (LamT y x) passes fields to &onLamT';
         is match($lam2),    '&onLamT called: (VarT "x"), (LamT (VarT "y") (VarT "x"))', 'match on (LamT x (LamT y x)) passes fields to &onLamT';
-        is match($c1),      '&onConstT called: "one", Mu', 'match on (ConstT "one") passes fields to &onConstT';
-        is match($c2),      '&onConstT called: "two", Mu', 'match on (ConstT "two") passes fields to &onConstT';
-    }, 'altogether') or die;
-
-    subtest( {  # altogether, different order of clauses
-        sub match(TTerm:D $t) {
-            $given-Term($t,
-                $when-ConstT(&onConstT,
-                $when-AppT(&onAppT,
-                $when-LamT(&onLamT,
-                $when-VarT(&onVarT,
-                &otherwise))))
-            );
-        };
-
-        is match($x),       '&onVarT called: "x", Mu', 'match on (VarT x) passes fields to &onVarT';
-        is match($y),       '&onVarT called: "y", Mu', 'match on (VarT y) passes fields to &onVarT';
-        is match($app1),    '&onAppT called: (VarT "y"), (VarT "x")', 'match on (AppT y x) passes fields to &onAppT';
-        is match($app2),    '&onAppT called: (VarT "x"), (VarT "y")', 'match on (AppT x y) passes fields to &onAppT';
-        is match($lam1),    '&onLamT called: (VarT "y"), (VarT "x")', 'match on (LamT y x) passes fields to &onLamT';
-        is match($lam2),    '&onLamT called: (VarT "x"), (LamT (VarT "y") (VarT "x"))', 'match on (LamT x (LamT y x)) passes fields to &onLamT';
-        is match($c1),      '&onConstT called: "one", Mu', 'match on (ConstT "one") passes fields to &onConstT';
-        is match($c2),      '&onConstT called: "two", Mu', 'match on (ConstT "two") passes fields to &onConstT';
-    }, 'altogether, different order of clauses') or die;
+        is match($c1),      '&onConstT called: "one"', 'match on (ConstT "one") passes fields to &onConstT';
+        is match($c2),      '&onConstT called: "two"', 'match on (ConstT "two") passes fields to &onConstT';
+    });
 
 }
 
@@ -366,7 +253,7 @@ plan 146;
     is_validLambda $x;
     doesnt_ok $x, Definition;
 
-    dies_ok({ $LamT($x, $v) }, "($LamT $x $v) yields an error");
+    dies_ok({ $LamT($x, $v) }, '$LamT yields an error if 1st arg is not a VarT');
 }
 
 { # predicate LamT?
