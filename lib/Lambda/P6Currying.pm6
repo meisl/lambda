@@ -2,50 +2,77 @@ use v6;
 
 # Partial0
 role Partial0[::T0] {
-    multi method _(T0 $a0) {                            self.apply($a0)                }
+    multi method _(T0 $a0) {                                    self.apply($a0)                     }
 }
 role Partial0[::T0, ::T1] {
-    multi method _(T0 $a0) {                            self.apply($a0)                }
-    multi method _(T0 $a0, T1 $a1) {                    self.apply($a0, $a1)           }
+    multi method _(T0 $a0) {                                    self.apply($a0)                     }
+    multi method _(T0 $a0, T1 $a1) {                            self.apply($a0, $a1)                }
 }
 role Partial0[::T0, ::T1, ::T2] {
-    multi method _(T0 $a0) {                            self.apply($a0)                }
-    multi method _(T0 $a0, T1 $a1) {                    self.apply($a0, $a1)           }
-    multi method _(T0 $a0, T1 $a1, T2 $a2) {            self.apply($a0, $a1, $a2)      }
+    multi method _(T0 $a0) {                                    self.apply($a0)                     }
+    multi method _(T0 $a0, T1 $a1) {                            self.apply($a0, $a1)                }
+    multi method _(T0 $a0, T1 $a1, T2 $a2) {                    self.apply($a0, $a1, $a2)           }
 }
 role Partial0[::T0, ::T1, ::T2, ::T3] {
-    multi method _(T0 $a0) {                            self.apply($a0)                }
-    multi method _(T0 $a0, T1 $a1) {                    self.apply($a0, $a1)           }
-    multi method _(T0 $a0, T1 $a1, T2 $a2) {            self.apply($a0, $a1, $a2)      }
-    multi method _(T0 $a0, T1 $a1, T2 $a2, T3 $a3) {    self.apply($a0, $a1, $a2, $a3) }
+    multi method _(T0 $a0) {                                    self.apply($a0)                     }
+    multi method _(T0 $a0, T1 $a1) {                            self.apply($a0, $a1)                }
+    multi method _(T0 $a0, T1 $a1, T2 $a2) {                    self.apply($a0, $a1, $a2)           }
+    multi method _(T0 $a0, T1 $a1, T2 $a2, T3 $a3) {            self.apply($a0, $a1, $a2, $a3)      }
+}
+role Partial0[::T0, ::T1, ::T2, ::T3, ::T4] {
+    multi method _(T0 $a0) {                                    self.apply($a0)                     }
+    multi method _(T0 $a0, T1 $a1) {                            self.apply($a0, $a1)                }
+    multi method _(T0 $a0, T1 $a1, T2 $a2) {                    self.apply($a0, $a1, $a2)           }
+    multi method _(T0 $a0, T1 $a1, T2 $a2, T3 $a3) {            self.apply($a0, $a1, $a2, $a3)      }
+    multi method _(T0 $a0, T1 $a1, T2 $a2, T3 $a3, T4 $a4) {    self.apply($a0, $a1, $a2, $a3, $a4) }
 }
 
 # Partial1
 role Partial1[$a0, ::T1] {
-    multi method _(T1 $a1) {                            self.apply($a0, $a1)           }
+    multi method _(T1 $a1) {                                    self.apply($a0, $a1)                }
 }
 role Partial1[$a0, ::T1, ::T2] {
-    multi method _(T1 $a1) {                            self.apply($a0, $a1)           }
-    multi method _(T1 $a1, T2 $a2) {                    self.apply($a0, $a1, $a2)      }
+    multi method _(T1 $a1) {                                    self.apply($a0, $a1)                }
+    multi method _(T1 $a1, T2 $a2) {                            self.apply($a0, $a1, $a2)           }
 }
 role Partial1[$a0, ::T1, ::T2, ::T3] {
-    multi method _(T1 $a1) {                            self.apply($a0, $a1)           }
-    multi method _(T1 $a1, T2 $a2) {                    self.apply($a0, $a1, $a2)      }
-    multi method _(T1 $a1, T2 $a2, T3 $a3) {            self.apply($a0, $a1, $a2, $a3) }
+    multi method _(T1 $a1) {                                    self.apply($a0, $a1)                }
+    multi method _(T1 $a1, T2 $a2) {                            self.apply($a0, $a1, $a2)           }
+    multi method _(T1 $a1, T2 $a2, T3 $a3) {                    self.apply($a0, $a1, $a2, $a3)      }
+}
+role Partial1[$a0, ::T1, ::T2, ::T3, ::T4] {
+    multi method _(T1 $a1) {                                    self.apply($a0, $a1)                }
+    multi method _(T1 $a1, T2 $a2) {                            self.apply($a0, $a1, $a2)           }
+    multi method _(T1 $a1, T2 $a2, T3 $a3) {                    self.apply($a0, $a1, $a2, $a3)      }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4) {            self.apply($a0, $a1, $a2, $a3, $a4) }
 }
 
 # Partial2
 role Partial2[$a0, $a1, ::T2] {
-    multi method _(T2 $a2) {                            self.apply($a0, $a1, $a2)      }
+    multi method _(T2 $a2) {                                    self.apply($a0, $a1, $a2)           }
 }
 role Partial2[$a0, $a1, ::T2, ::T3] {
-    multi method _(T2 $a2) {                            self.apply($a0, $a1, $a2)      }
-    multi method _(T2 $a2, T3 $a3) {                    self.apply($a0, $a1, $a2, $a3) }
+    multi method _(T2 $a2) {                                    self.apply($a0, $a1, $a2)           }
+    multi method _(T2 $a2, T3 $a3) {                            self.apply($a0, $a1, $a2, $a3)      }
+}
+role Partial2[$a0, $a1, ::T2, ::T3, ::T4] {
+    multi method _(T2 $a2) {                                    self.apply($a0, $a1, $a2)           }
+    multi method _(T2 $a2, T3 $a3) {                            self.apply($a0, $a1, $a2, $a3)      }
+    multi method _(T2 $a2, T3 $a3, T4 $a4) {                    self.apply($a0, $a1, $a2, $a3, $a4) }
 }
 
 # Partial3
 role Partial3[$a0, $a1, $a2, ::T3] {
-    multi method _(T3 $a3) {                            self.apply($a0, $a1, $a2, $a3) }
+    multi method _(T3 $a3) {                                    self.apply($a0, $a1, $a2, $a3)      }
+}
+role Partial3[$a0, $a1, $a2, ::T3, ::T4] {
+    multi method _(T3 $a3) {                                    self.apply($a0, $a1, $a2, $a3)      }
+    multi method _(T3 $a3, T4 $a4) {                            self.apply($a0, $a1, $a2, $a3, $a4) }
+}
+
+# Partial4
+role Partial4[$a0, $a1, $a2, $a3, ::T4] {
+    multi method _(T4 $a4) {                                    self.apply($a0, $a1, $a2, $a3, $a4) }
 }
 
 
@@ -131,37 +158,46 @@ class Fn does Callable {
             if $arity == 0;
         die "cannot curry fn with optional/slurpy/named/capture or parcel parameters - signature: {&!f.signature.perl}; fn: {&!f.gist}"
             if @ps.map({$_.optional || $_.slurpy || $_.named || $_.capture || $_.parcel}).any;
-        die "NYI: Fn with arity > $arity - signature: {&!f.signature.perl}; fn: {&!f.gist}"
-            if $arity > 4;
+        die "NYI: Fn with arity $arity (> 5) - signature: {&!f.signature.perl}; fn: {&!f.gist}"
+            if $arity > 5;
 
         my @ts = @ps.map(*.type);
-        my ($a0, $a1, $a2, $a3) = @!partialArgs;
-        my ($t0, $t1, $t2, $t3) = @ts;
+        my ($a0, $a1, $a2, $a3, $a4) = @!partialArgs;
+        my ($t0, $t1, $t2, $t3, $t4) = @ts;
         given @!partialArgs.elems {
             when 0 {
                 given $arity {
-                    when 1 { self does Partial0[$t0                 ] }
-                    when 2 { self does Partial0[$t0, $t1            ] }
-                    when 3 { self does Partial0[$t0, $t1, $t2       ] }
-                    when 4 { self does Partial0[$t0, $t1, $t2, $t3  ] }
+                    when 1 { self does Partial0[$t0                     ] }
+                    when 2 { self does Partial0[$t0, $t1                ] }
+                    when 3 { self does Partial0[$t0, $t1, $t2           ] }
+                    when 4 { self does Partial0[$t0, $t1, $t2, $t3      ] }
+                    when 5 { self does Partial0[$t0, $t1, $t2, $t3, $t4 ] }
                 }
             }
             when 1 {
                 given $arity {
-                    when 2 { self does Partial1[$a0, $t1            ] }
-                    when 3 { self does Partial1[$a0, $t1, $t2       ] }
-                    when 4 { self does Partial1[$a0, $t1, $t2, $t3  ] }
+                    when 2 { self does Partial1[$a0, $t1                ] }
+                    when 3 { self does Partial1[$a0, $t1, $t2           ] }
+                    when 4 { self does Partial1[$a0, $t1, $t2, $t3      ] }
+                    when 5 { self does Partial1[$a0, $t1, $t2, $t3, $t4 ] }
                 }
             }
             when 2 {
                 given $arity {
-                    when 3 { self does Partial2[$a0, $a1, $t2       ] }
-                    when 4 { self does Partial2[$a0, $a1, $t2, $t3  ] }
+                    when 3 { self does Partial2[$a0, $a1, $t2           ] }
+                    when 4 { self does Partial2[$a0, $a1, $t2, $t3      ] }
+                    when 5 { self does Partial2[$a0, $a1, $t2, $t3, $t4 ] }
                 }
             }
             when 3 {
                 given $arity {
-                    when 4 { self does Partial3[$a0, $a1, $a2, $t3  ] }
+                    when 4 { self does Partial3[$a0, $a1, $a2, $t3      ] }
+                    when 5 { self does Partial3[$a0, $a1, $a2, $t3, $t4 ] }
+                }
+            }
+            when 4 {
+                given $arity {
+                    when 5 { self does Partial4[$a0, $a1, $a2, $t3, $t4 ] }
                 }
             }
         }
