@@ -32,6 +32,48 @@ my constant $K2false = $K($K1false);
 my constant $K2true  = $K($K1true);
 
 
+# pattern-matching ------------------------------------------------------------
+
+constant $on-VarT is export = lambdaFn(
+    'on-VarT', '',
+    -> &thenFn, &elseFn {
+        my $lambdaExpr = "λterm.let ((t {&thenFn.lambda}) (e {&elseFn.lambda}) (e1 λ_.e term) (e2 (K e1))) (term t e2 e2 e1)";
+        lambdaFn(
+            Str, $lambdaExpr,
+            -> TTerm $term {
+                my $else1 = -> Mu { &elseFn($term) };
+                my $else2 = $K($else1);
+                $destruct-Term($term,
+                    &thenFn,
+                    $else2,
+                    $else2,
+                    $else1
+                )
+            }
+        )
+    }
+);
+
+constant $on-AppT is export = lambdaFn(
+    'on-AppT', '',
+    -> &thenFn, &elseFn {
+        my $lambdaExpr = "λterm.let ((t {&thenFn.lambda}) (e {&elseFn.lambda}) (e1 λ_.e term) (e2 (K e1))) (term e1 t e2 e1)";
+        lambdaFn(
+            Str, $lambdaExpr,
+            -> TTerm $term {
+                my $else1 = -> Mu { &elseFn($term) };
+                my $else2 = $K($else1);
+                $destruct-Term($term,
+                    $else1,
+                    &thenFn,
+                    $else2,
+                    $else1
+                )
+            }
+        )
+    }
+);
+
 
 
 # constructors ----------------------------------------------------------------
@@ -159,28 +201,10 @@ constant $Term-eq is export = $Y(lambdaFn(
 # predicates ------------------------------------------------------------------
 
 # VarT?: Term -> TBool
-constant $is-VarT is export = lambdaFn(
-    'VarT?', 'λt.t (λname.#true) (λfunc.λarg.#false) (λvar.λbody.#false) (λvalue.#false)',
-    -> TTerm:D $t -->TBool{
-        $t( -> Str          { $true  },   # onVarT
-            -> TTerm, TTerm { $false },   # onAppT
-            -> TTerm, TTerm { $false },   # onLamT
-            -> Any          { $false },   # onConstT
-        )
-    }
-);
+constant $is-VarT is export = $on-VarT($K1true, $K1false) does Definition('VarT?');
 
 # AppT?: Term -> TBool
-constant $is-AppT is export = lambdaFn(
-    'AppT?', 'λt.t (λname.#false) (λfunc.λarg.#true) (λvar.λbody.#false) (λvalue.#false)',
-    -> TTerm:D $t -->TBool{
-        $t( -> Str          { $false },   # onVarT
-            -> TTerm, TTerm { $true  },   # onAppT
-            -> TTerm, TTerm { $false },   # onLamT
-            -> Any          { $false },   # onConstT
-        )
-    }
-);
+constant $is-AppT is export = $on-AppT($K2true, $K1false) does Definition('AppT?');
 
 # LamT?: Term -> TBool
 constant $is-LamT is export = lambdaFn(
@@ -210,43 +234,31 @@ constant $is-ConstT is export = lambdaFn(
 # projections -----------------------------------------------------------------
 
 # VarT->name: Term -> Str
-constant $VarT2name is export = lambdaFn(
-    'VarT->name', 'λt.(λe.t (λname.name) (λfunc.λarg.e t) (λvar.λbody.e t) (λvalue.e t)) (λt.error (~ "cannot apply VarT->name to " (Term->Str t)))',
-    -> TTerm:D $t -->Str{
-        my $e = -> TTerm:D $t { die "cannot apply VarT->name to $t" };
-        $t( -> Str $name    { $name  },   # onVarT
-            -> TTerm, TTerm { $e($t) },   # onAppT
-            -> TTerm, TTerm { $e($t) },   # onLamT
-            -> Any          { $e($t) },   # onConstT
-        )
-    }
-);
+constant $VarT2name is export = $on-VarT(
+    $pi1o1,
+    lambdaFn(
+        Str, 'λterm.error (~ "cannot apply VarT->name to " (Term->Str term))',
+        -> TTerm $term { die "cannot apply VarT->name to $term" }
+    )
+) does Definition('VarT->name');
 
 # AppT->func: Term -> Term
-constant $AppT2func is export = lambdaFn(
-    'AppT->func', 'λt.(λe.t (λname.e t) (λfunc.λarg.func) (λvar.λbody.e t) (λvalue.e t)) (λt.error (~ "cannot apply AppT->func to " (Term->Str t)))',
-    -> TTerm:D $t {
-        my $e = -> TTerm:D $t { die "cannot apply AppT->func to $t" };
-        $t( -> Str                { $e($t) },   # onVarT
-            -> TTerm $func, TTerm { $func  },   # onAppT
-            -> TTerm, TTerm       { $e($t) },   # onLamT
-            -> Any                { $e($t) },   # onConstT
-        )
-    }
-);
+constant $AppT2func is export = $on-AppT(
+    $pi1o2,
+    lambdaFn(
+        Str, 'λterm.error (~ "cannot apply AppT->func to " (Term->Str term))',
+        -> TTerm $term { die "cannot apply AppT->func to $term" }
+    )
+) does Definition('AppT->func');
 
 # AppT->arg: Term -> Term
-constant $AppT2arg is export = lambdaFn(
-    'AppT->arg', 'λt.(λe.t (λname.e t) (λfunc.λarg.arg) (λvar.λbody.e t) (λvalue.e t)) (λt.error (~ "cannot apply AppT->arg to " (Term->Str t)))',
-    -> TTerm:D $t {
-        my $e = -> TTerm:D $t { die "cannot apply AppT->arg to $t" };
-        $t( -> Str               { $e($t) },   # onVarT
-            -> TTerm, TTerm $arg { $arg   },   # onAppT
-            -> TTerm, TTerm      { $e($t) },   # onLamT
-            -> Any               { $e($t) },   # onConstT
-        )
-    }
-);
+constant $AppT2arg is export = $on-AppT(
+    $pi2o2,
+    lambdaFn(
+        Str, 'λterm.error (~ "cannot apply AppT->arg to " (Term->Str term))',
+        -> TTerm $term { die "cannot apply AppT->arg to $term" }
+    )
+) does Definition('AppT->arg');
 
 # LamT->var: Term -> Term
 constant $LamT2var is export = lambdaFn(

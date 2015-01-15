@@ -113,6 +113,9 @@ constant $findFP is export = $Y(lambdaFn(
 
 # projections ---------------------------------------------------------
 
+# of 1:
+constant $pi1o1 is export = $id does Definition('π1->1'); # I
+
 # of 2:
 constant $pi1o2 is export = lambdaFn('π2->1', 'λx.λ_.x', -> $x, Mu { $x }); # K     = L I = B K I = λx.K (I x) = λx.K x = λx.λ_.x
 constant $pi2o2 is export = lambdaFn('π2->2', 'λ_.λx.x', -> Mu, $x { $x }); # K I
