@@ -6,7 +6,7 @@ use Test::Util;
 # module under test (the VarT part only):
 use Lambda::TermADT;
 
-plan 25;
+plan 28;
 
 
 { # (VarT Str) [fka VarT.get]
@@ -28,10 +28,18 @@ plan 25;
     is $fresh-var-for.symbol, 'fresh-var-for', '$fresh-var-for.symbol';
     is $fresh-var-for.Str,    'fresh-var-for', '$fresh-var-for.Str';
 
-    my $x = $VarT('x');
+    my $x   = $VarT('x');
+    my $y   = $VarT('y');
+    my $app = $AppT($x, $y);
+    my $lam = $LamT($x, $x);
+    my $c   = $ConstT(23);
+
+    dies_ok( { $fresh-var-for($app) }, '$fresh-var-for does not accept an AppT arg');
+    dies_ok( { $fresh-var-for($lam) }, '$fresh-var-for does not accept an LamT arg');
+    dies_ok( { $fresh-var-for($c  ) }, '$fresh-var-for does not accept an ConstT arg');
+
     my $fresh1 = $fresh-var-for($x);
     my $fresh2 = $fresh-var-for($x);
-    my $y = $VarT('y');
 
     isnt($VarT2name($fresh1), $VarT2name($x), "fresh var has name different from any other");
     isnt($VarT2name($fresh1), $VarT2name($y), "fresh var has name different from any other");

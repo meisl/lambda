@@ -27,14 +27,18 @@ constant $destruct-Term is export = lambdaFn(
 );
 
 my constant $K1false = $K($false);
+my constant $K1true  = $K($true);
 my constant $K2false = $K($K1false);
+my constant $K2true  = $K($K1true);
 
+
+
+
+# constructors ----------------------------------------------------------------
 
 # must make the hash a constant (it's still mutable though)
 # in order to have it real global
 my constant %names2vars = %();
-
-# constructors ----------------------------------------------------------------
 
 # VarT: Str -> (Str -> a) -> (Term -> Term -> b) -> (Term -> Term -> c) -> (* -> d) -> a
 constant $VarT is export = lambdaFn(
@@ -149,6 +153,8 @@ constant $Term-eq is export = $Y(lambdaFn(
         )
     }
 ));
+
+
 
 # predicates ------------------------------------------------------------------
 
@@ -288,7 +294,6 @@ constant $Term2Str is export = lambdaFn(
     'Term->Str', 'λt.(error "NYI")',
     -> TTerm:D $t { $t.Str }
 );
-
 
 
 # functions on Term -----------------------------------------------------------
@@ -512,8 +517,10 @@ constant $fresh-var-for is export = {
             my $v = $VarT('α' ~ $nextAlphaNr);
             $v ~~ TTerm or die $v.perl;
             if $for.defined {
-                $is-VarT($for) or die "can make fresh var for another var but not for $for";
-                $v does AlphaVarT(:$for);
+                $_if( $is-VarT($for),
+                    -> Mu { $v does AlphaVarT(:$for) },
+                    -> Mu { die "can make fresh var for another var but not for $for" }
+                )
             }
             $nextAlphaNr++;
             $v;
