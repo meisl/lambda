@@ -10,7 +10,72 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::TermADT;
 
-plan 129;
+plan 150;
+
+
+# Term-eq ---------------------------------------------------------------------
+
+{
+    sub test-eq(TTerm $t1, TTerm $t2, TBool $expected) {
+        subtest({
+            my $msg;
+
+            $msg = "'{$Term2source($t1)} should " ~ ($expected === $true ?? '' !! 'NOT ') ~ "equal {$Term2source($t2)}";
+            is $Term-eq($t1, $t2), $expected, $msg;
+            # (in-)equality is symmetric:
+            $msg = "'{$Term2source($t2)} should " ~ ($expected === $true ?? '' !! 'NOT ') ~ "equal {$Term2source($t1)}";
+            is $Term-eq($t2, $t1), $expected, $msg;
+        });
+    }
+
+    my $x = $VarT('x');
+    my $y = $VarT('y');
+    my $c1 = $ConstT(5);
+    my $c2 = $ConstT('5');
+    my $c3 = $ConstT(7);
+    my $c4 = $ConstT('7');
+    my $app_x_x = $AppT($x, $x);
+    my $app_x_y = $AppT($x, $y);
+    my $app_y_x = $AppT($y, $x);
+    my $lam_x_x = $LamT($x, $x);
+    my $lam_y_y = $LamT($y, $y);
+
+    test-eq($x,         $x,             $true );
+    test-eq($x,         $VarT('x'),     $true );
+    test-eq($x,         $y,             $false);
+    test-eq($x,         $app_x_y,       $false);
+    test-eq($x,         $app_y_x,       $false);
+    test-eq($x,         $c1,            $false);
+    test-eq($x,         $c2,            $false);
+
+    test-eq($app_x_y,   $app_x_y,       $true );
+    test-eq($app_x_y,   $AppT($x, $y),  $true );    # another instance
+    test-eq($app_x_y,   $app_y_x,       $false);
+    test-eq($app_x_y,   $c1,            $false);
+    test-eq($app_x_y,   $c2,            $false);
+
+    test-eq($lam_x_x,   $lam_x_x,       $true );
+    test-eq($lam_x_x,   $LamT($x, $x),  $true );    # another instance
+    test-eq($lam_y_y,   $lam_y_y,       $true );
+    test-eq($lam_x_x,   $lam_y_y,       $false);    # this is NOT alpha-equivalence!
+    test-eq($lam_x_x,   $app_y_x,       $false);
+    test-eq($lam_x_x,   $app_x_x,       $false);
+    test-eq($lam_x_x,   $x,             $false);
+    test-eq($lam_x_x,   $c1,            $false);
+    test-eq($lam_x_x,   $c2,            $false);
+
+    #test-eq($c1,        $c1,            $true );   # TODO: compare two ConstT for equality
+    #test-eq($c1,        $c2,            $false);
+    #test-eq($c1,        $c3,            $false);
+    #test-eq($c1,        $c4,            $false);
+    #test-eq($c2,        $c2,            $true );
+    #test-eq($c2,        $c3,            $false);
+    #test-eq($c2,        $c4,            $false);
+    #test-eq($c3,        $c3,            $true );
+    #test-eq($c3,        $c4,            $false);
+    #test-eq($c4,        $c4,            $true );
+
+}
 
 
 # ->Str -----------------------------------------------------------------------
@@ -387,3 +452,5 @@ plan 129;
     $x = $LamT($u, $v);
     dies_ok( { $ConstT2value($x) }, "($ConstT2value $x) yields error");
 }
+
+

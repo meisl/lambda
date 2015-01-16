@@ -19,13 +19,6 @@ role TTerm is export {
 }
 
 
-constant $destruct-Term is export = lambdaFn(
-    'destruct-Term', 'λterm.λcases.term cases',
-    -> TTerm:D $t, &onVarT, &onAppT, &onLamT, &onConstT { 
-        $t(&onVarT, &onAppT, &onLamT, &onConstT)
-    }
-);
-
 my constant $K1false = $K($false);
 my constant $K1true  = $K($true);
 my constant $K2false = $K($K1false);
@@ -33,6 +26,13 @@ my constant $K2true  = $K($K1true);
 
 
 # pattern-matching ------------------------------------------------------------
+
+constant $destruct-Term is export = lambdaFn(
+    'destruct-Term', 'λterm.λcases.term cases',
+    -> TTerm:D $t, &onVarT, &onAppT, &onLamT, &onConstT { 
+        $t(&onVarT, &onAppT, &onLamT, &onConstT)
+    }
+);
 
 constant $on-VarT is export = lambdaFn(
     'on-VarT', '',
@@ -68,6 +68,46 @@ constant $on-AppT is export = lambdaFn(
                     &thenFn,
                     $else2,
                     $else1
+                )
+            }
+        )
+    }
+);
+
+constant $on-LamT is export = lambdaFn(
+    'on-LamT', '',
+    -> &thenFn, &elseFn {
+        my $lambdaExpr = "λterm.let ((t {&thenFn.lambda}) (e {&elseFn.lambda}) (e1 λ_.e term) (e2 (K e1))) (term e1 e2 t e1)";
+        lambdaFn(
+            Str, $lambdaExpr,
+            -> TTerm $term {
+                my $else1 = -> Mu { &elseFn($term) };
+                my $else2 = $K($else1);
+                $destruct-Term($term,
+                    $else1,
+                    $else2,
+                    &thenFn,
+                    $else1
+                )
+            }
+        )
+    }
+);
+
+constant $on-ConstT is export = lambdaFn(
+    'on-ConstT', '',
+    -> &thenFn, &elseFn {
+        my $lambdaExpr = "λterm.let ((t {&thenFn.lambda}) (e {&elseFn.lambda}) (e1 λ_.e term) (e2 (K e1))) (term e1 e2 e2 t)";
+        lambdaFn(
+            Str, $lambdaExpr,
+            -> TTerm $term {
+                my $else1 = -> Mu { &elseFn($term) };
+                my $else2 = $K($else1);
+                $destruct-Term($term,
+                    $else1,
+                    $else2,
+                    $else2,
+                    &thenFn
                 )
             }
         )
@@ -150,46 +190,80 @@ constant $Term-eq is export = $Y(lambdaFn(
     -> &self, TTerm $s, TTerm $t -->TBool{
         $destruct-Term($s,
             -> Str $sName {
-                $destruct-Term($t,
-                    -> Str $tName { convertP6Bool2TBool($sName eq $tName) },
-                    $K2false,
-                    $K2false,
-                    $K1false
+                $on-VarT(
+                    -> Str $tName {
+                        convertP6Bool2TBool($sName eq $tName)
+                    } does lambda("Str-eq? \"$sName\"" ),
+                    $K1false,
+                    $t
                 )
+                #$destruct-Term($t,
+                #    -> Str $tName { convertP6Bool2TBool($sName eq $tName) },
+                #    $K2false,
+                #    $K2false,
+                #    $K1false
+                #)
             },
             -> TTerm $sFunc, TTerm $sArg {
-                $destruct-Term($t,
-                    $K1false,
+                $on-AppT(
                     -> TTerm $tFunc, TTerm $tArg {
                         $_and(
                             &self($sFunc, $tFunc),
                             &self($sArg,  $tArg)
                         )
-                    },
-                    $K2false,
-                    $K1false
-                )
+                    } does lambda("λtFunc.λtArg.and (Term-eq? sFunc tFunc) (Term-eq? sArg tArg)" ),
+                    $K1false,
+                    $t
+                );
+                #$destruct-Term($t,
+                #    $K1false,
+                #    -> TTerm $tFunc, TTerm $tArg {
+                #        $_and(
+                #            &self($sFunc, $tFunc),
+                #            &self($sArg,  $tArg)
+                #        )
+                #    },
+                #    $K2false,
+                #    $K1false
+                #)
             },
             -> TTerm $sVar, TTerm $sBody {
-                $destruct-Term($t,
-                    $K1false,
-                    $K2false,
+                $on-LamT(
                     -> TTerm $tVar, TTerm $tBody {
                         $_and(
-                            &self($sVar,  $tVar),
-                            &self($sBody, $tBody)
+                            &self($sVar, $tVar),
+                            &self($sBody,  $tBody)
                         )
-                    },
-                    $K1false
-                )
+                    } does lambda("λtVar.λtBody.and (Term-eq? sVar tVar) (Term-eq? sBody tBody)" ),
+                    $K1false,
+                    $t
+                );
+                #$destruct-Term($t,
+                #    $K1false,
+                #    $K2false,
+                #    -> TTerm $tVar, TTerm $tBody {
+                #        $_and(
+                #            &self($sVar,  $tVar),
+                #            &self($sBody, $tBody)
+                #        )
+                #    },
+                #    $K1false
+                #)
             },
             -> Any $sValue {
-                $destruct-Term($t,
+                $on-ConstT(
+                    -> Any $tValue {
+                        die "NYI: equality test for $sValue, $tValue"
+                    } does lambda("eq? \"$sValue\"" ),
                     $K1false,
-                    $K2false,
-                    $K2false,
-                    -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
-                )
+                    $t
+                );
+                #$destruct-Term($t,
+                #    $K1false,
+                #    $K2false,
+                #    $K2false,
+                #    -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
+                #)
             },
 
         )
@@ -207,28 +281,10 @@ constant $is-VarT is export = $on-VarT($K1true, $K1false) does Definition('VarT?
 constant $is-AppT is export = $on-AppT($K2true, $K1false) does Definition('AppT?');
 
 # LamT?: Term -> TBool
-constant $is-LamT is export = lambdaFn(
-    'LamT?', 'λt.t (λname.#false) (λfunc.λarg.#false) (λvar.λbody.#true) (λvalue.#false)',
-    -> TTerm:D $t -->TBool{
-        $t( -> Str          { $false },   # onVarT
-            -> TTerm, TTerm { $false },   # onAppT
-            -> TTerm, TTerm { $true  },   # onLamT
-            -> Any          { $false },   # onConstT
-        )
-    }
-);
+constant $is-LamT is export = $on-LamT($K2true, $K1false) does Definition('LamT?');
 
 # ConstT?: Term -> TBool
-constant $is-ConstT is export = lambdaFn(
-    'ConstT?', 'λt.t (λname.#false) (λfunc.λarg.#false) (λvar.λbody.#false) (λvalue.#true)',
-    -> TTerm:D $t -->TBool{
-        $t( -> Str          { $false },   # onVarT      K #false
-            -> TTerm, TTerm { $false },   # onAppT      K^2 #false
-            -> TTerm, TTerm { $false },   # onLamT      K^2 #false
-            -> Any          { $true  },   # onConstT    K #true
-        )
-    }
-);
+constant $is-ConstT is export = $on-ConstT($K1true, $K1false) does Definition('ConstT?');
 
 
 # projections -----------------------------------------------------------------
@@ -261,43 +317,31 @@ constant $AppT2arg is export = $on-AppT(
 ) does Definition('AppT->arg');
 
 # LamT->var: Term -> Term
-constant $LamT2var is export = lambdaFn(
-    'LamT->var', 'λt.(λe.t (λname.e t) (λfunc.λarg.e t) (λvar.λbody.var) (λvalue.e t)) (λt.error (~ "cannot apply LamT->var to " (Term->Str t)))',
-    -> TTerm:D $t {
-        my $e = -> TTerm:D $t { die "cannot apply LamT->var to $t" };
-        $t( -> Str               { $e($t) },   # onVarT
-            -> TTerm, TTerm      { $e($t) },   # onAppT
-            -> TTerm $var, TTerm { $var   },   # onLamT
-            -> Any               { $e($t) },   # onConstT
-        )
-    }
-);
+constant $LamT2var is export = $on-LamT(
+    $pi1o2,
+    lambdaFn(
+        Str, 'λterm.error (~ "cannot apply LamT->var to " (Term->Str term))',
+        -> TTerm $term { die "cannot apply LamT->var to $term" }
+    )
+) does Definition('LamT->var');
 
 # LamT->body: Term -> Term
-constant $LamT2body is export = lambdaFn(
-    'LamT->body', 'λt.(λe.t (λname.e t) (λfunc.λarg.e t) (λvar.λbody.body) (λvalue.e t)) (λt.error (~ "cannot apply LamT->body to " (Term->Str t)))',
-    -> TTerm:D $t {
-        my $e = -> TTerm:D $t { die "cannot apply LamT->body to $t" };
-        $t( -> Str                { $e($t) },   # onVarT
-            -> TTerm, TTerm       { $e($t) },   # onAppT
-            -> TTerm, TTerm $body { $body  },   # onLamT
-            -> Any                { $e($t) },   # onConstT
-        )
-    }
-);
+constant $LamT2body is export = $on-LamT(
+    $pi2o2,
+    lambdaFn(
+        Str, 'λterm.error (~ "cannot apply LamT->body to " (Term->Str term))',
+        -> TTerm $term { die "cannot apply LamT->body to $term" }
+    )
+) does Definition('LamT->body');
 
 # ConstT->value: Term -> *
-constant $ConstT2value is export = lambdaFn(
-    'ConstT->value', 'λt.(λe.t (λname.e t) (λfunc.λarg.e t) (λvar.λbody.e t) (λvalue.value)) (λt.error (~ "cannot apply ConstT->value to " (Term->Str t)))',
-    -> TTerm:D $t {
-        my $e = -> TTerm:D $t { die "cannot apply LamT->body to $t" };
-        $t( -> Str          { $e($t) },   # onVarT
-            -> TTerm, TTerm { $e($t) },   # onAppT
-            -> TTerm, TTerm { $e($t) },   # onLamT
-            -> Any $value   { $value },   # onConstT
-        )
-    }
-);
+constant $ConstT2value is export = $on-ConstT(
+    $pi1o1,
+    lambdaFn(
+        Str, 'λterm.error (~ "cannot apply ConstT->value to " (Term->Str term))',
+        -> TTerm $term { die "cannot apply ConstT->value to $term" }
+    )
+) does Definition('ConstT->value');
 
 
 # ->Str -----------------------------------------------------------------------

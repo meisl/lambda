@@ -143,7 +143,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
             my $expected = $test.value;
             my $toItself = $expected === $None;
             my $expStr  = $toItself
-                ?? "itself"
+                ?? "itself (None)"
                 !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "$termStr beta-contracts to $expStr";
 
@@ -223,7 +223,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
             my $expected = $test.value;
             my $toItself = $expected === $None;
             my $expStr = $toItself
-                ?? "itself"
+                ?? "itself (None)"
                 !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "$termStr beta-reduces to $expStr";
 
