@@ -278,8 +278,8 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
     my $lamX = $LamT($x, $AppT($AppT($z, $y), $x));             # λx.z y x
     my $lamZ = $LamT($z, $lamX);                                # λz.λx.z y x
     my $func = $LamT($y, $lamZ);                                # λy.λz.λx.z y x
-    my $app  = $AppT($func, $arg);                              # ((λy.λz.λx.z y x) (x y z (u v)))
-    my $lam  = $LamT($x, $app);                                 # λx.x ((λy.λz.λx.z y x) (x y z (u v)))
+    my $app  = $AppT($func, $arg);                              # (λy.λz.λx.z y x) (x y z (u v))
+    my $lam  = $LamT($x, $app);                                 # λx.((λy.λz.λx.z y x) (x y z (u v)))
 
     my ($t, $apvs);
 
@@ -307,6 +307,9 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
     $has_length($apvs, 2,    "(alpha-problematic-vars '{$Term2source($t)})");
     $contains_ok($x, $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
     $contains_ok($z, $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
+
+    #$t = $betaReduce($app);
+    #diag $Term2source($t);
 }
 
 

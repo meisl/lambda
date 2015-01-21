@@ -164,7 +164,7 @@ ENDOFLAMBDA
 
 
 # one-step β-simplification (either of $t or any (one) child)
-constant $betaContract is export = $Y(lambdaFn(
+constant $betaContractXXX is export = $Y(lambdaFn(
     'betaContract',
 q:to/ENDOFLAMBDA/,
     λself.λt.
@@ -280,6 +280,90 @@ ENDOFLAMBDA
             } else {
                 die "fell off type-dispatch with type " ~ $t.WHAT.perl
             }
+        }
+    }
+));
+
+my constant $K1None = $K($None);
+my constant $liftedCtor2 = lambdaFn(
+    Str, 'λctor.λa1.λtransform2nd.λa2.let ((a2-transformed (transform2nd a2))) if (None? a2-transformed) None (Some (ctor a1 (Some->value a2-transformed)))',
+    -> &ctor, TTerm $a1, &transform2nd, TTerm $a2 {
+        my $a2transformed = &transform2nd($a2);
+        $_if( $is-None($a2transformed),
+            $K1None,
+            -> Mu { $Some(&ctor($a1, $Some2value($a2transformed))) }
+        )
+    }
+);
+
+
+# one-step β-simplification (either of $t or any (one) child)
+constant $betaContract is export = $Y(lambdaFn(
+    'betaContract', 'not yet implemented',
+    -> &self {
+        -> TTerm $t {
+            $destruct-Term($t,
+                # t is VarT
+                $K1None,
+
+                # t is AppT
+                -> TTerm $func, TTerm $arg {
+                    $destruct-Term($func,
+                        # func is VarT
+                        -> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
+                        
+                        # func is AppT
+                        -> Mu, Mu {
+                            my $func2 = &self($func);
+                            $_if( $is-Some($func2),
+                                -> Mu { $Some($AppT($Some2value($func2), $arg)) },
+                                -> Mu { $liftedCtor2($AppT, $func, &self, $arg) }
+                            )
+                        },
+                        
+                        # func is LamT
+                        -> $funcVar, $funcBody {    # so t is a beta-redex
+                            my $alpha-problematic = $filter(
+                                # no need to filter out $var itself separately
+                                # since it cannot be free under itself in the body
+                                -> $v { $is-free-under($funcVar, $v, $funcBody) },
+                                $free-vars($arg)
+                            );
+                            $_if( $is-nil($alpha-problematic),
+                                -> Mu {
+                                    my $substituted-func = $subst($funcBody, $arg, $funcVar);
+                                    my $isSame = $is-None($substituted-func);
+                                    $_if( $isSame,   # TODO: use Maybe-or or something like that
+                                        -> Mu { $Some($funcBody) },
+                                        -> Mu {
+                                            $_if( $is-Omega($t),    # TODO: optimize
+                                                -> Mu { $_if( $Term-eq($funcVar, $LamT2var($arg)),
+                                                            $K1None, # func and arg are both the (literally) same omega
+                                                            -> Mu { $substituted-func }  # otherwise one more step to make them so
+                                                        )
+                                                },
+                                                -> Mu { $substituted-func }
+                                            )
+                                        }
+                                    )
+                                },
+                                -> Mu { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
+                            )
+                        },
+                        
+                        # func is ConstT
+                        -> Mu { $liftedCtor2($AppT, $func, &self, $arg) }
+                    )
+                },
+
+                # t is LamT
+                -> TTerm $var, TTerm $body {
+                    $liftedCtor2($LamT, $var, &self, $body)
+                },
+
+                # t is ConstT
+                $K1None
+            )
         }
     }
 ));
