@@ -9,7 +9,7 @@ use Lambda::Boolean;
 # module under test:
 use Lambda::TermADT;
 
-plan 106;
+plan 108;
 
 
 my $x ::= $VarT('x');
@@ -170,6 +170,8 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
         $LamT($x, $AppT($y, $x))                                    => $false,  # λx.y x
         $AppT($LamT($x, $AppT($x, $x)), $LamT($x, $AppT($x, $x)))   => $true,   # ((λx.x x) (λx.x x))    # Omega = (omega omega)
         $AppT($LamT($x, $AppT($x, $x)), $LamT($y, $AppT($y, $y)))   => $true,   # ((λx.x x) (λy.y y))    # Omega = (omega omega)
+        $AppT($LamT($x, $AppT($x, $x)), $AppT($y, $y))              => $false,  # ((λx.x x) (y y))
+        $AppT($AppT($y, $y), $LamT($x, $AppT($x, $x)))              => $false,  # ((y y) (λx.x x))
     );
 
 }

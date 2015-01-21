@@ -483,7 +483,7 @@ constant $is-omega is export =
 constant $is-Omega is export =
     $on-AppT(
         -> TTerm $func, TTerm $arg {
-            $_and($is-omega($func), $is-omega($func))
+            $_and($is-omega($func), $is-omega($arg))
         } does lambda('λfunc.λarg.and (ω? func) (ω? arg)'),
         $K1false
     ) does Definition('Ω?')
