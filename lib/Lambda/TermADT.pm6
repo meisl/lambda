@@ -35,9 +35,9 @@ constant $destruct-Term is export = lambdaFn(
 );
 
 constant $on-VarT is export = lambdaFn(
-    'on-VarT', '',
+    'on-VarT', 'λthenFn.λelseFn.λterm.let ((e1 λ_.elseFn term) (e2 λ_.e1)) (term thenFn e2 e2 e1)',
     -> &thenFn, &elseFn {
-        my $lambdaExpr = "λterm.let ((t {&thenFn.lambda}) (e {&elseFn.lambda}) (e1 λ_.e term) (e2 (K e1))) (term t e2 e2 e1)";
+        my $lambdaExpr = "on-VarT {&thenFn.lambda} {&elseFn.lambda}";
         lambdaFn(
             Str, $lambdaExpr,
             -> TTerm $term {
@@ -55,9 +55,9 @@ constant $on-VarT is export = lambdaFn(
 );
 
 constant $on-AppT is export = lambdaFn(
-    'on-AppT', '',
+    'on-AppT', 'λthenFn.λelseFn.λterm.let ((e1 λ_.elseFn term) (e2 λ_.e1)) (term e1 thenFn e2 e1)',
     -> &thenFn, &elseFn {
-        my $lambdaExpr = "λterm.let ((t {&thenFn.lambda}) (e {&elseFn.lambda}) (e1 λ_.e term) (e2 (K e1))) (term e1 t e2 e1)";
+        my $lambdaExpr = "on-AppT {&thenFn.lambda} {&elseFn.lambda}";
         lambdaFn(
             Str, $lambdaExpr,
             -> TTerm $term {
@@ -75,9 +75,9 @@ constant $on-AppT is export = lambdaFn(
 );
 
 constant $on-LamT is export = lambdaFn(
-    'on-LamT', '',
+    'on-LamT', 'λthenFn.λelseFn.λterm.let ((e1 λ_.elseFn term) (e2 λ_.e1)) (term e1 e2 thenFn e1)',
     -> &thenFn, &elseFn {
-        my $lambdaExpr = "λterm.let ((t {&thenFn.lambda}) (e {&elseFn.lambda}) (e1 λ_.e term) (e2 (K e1))) (term e1 e2 t e1)";
+        my $lambdaExpr = "on-LamT {&thenFn.lambda} {&elseFn.lambda}";
         lambdaFn(
             Str, $lambdaExpr,
             -> TTerm $term {
@@ -95,9 +95,9 @@ constant $on-LamT is export = lambdaFn(
 );
 
 constant $on-ConstT is export = lambdaFn(
-    'on-ConstT', '',
+    'on-ConstT', 'λthenFn.λelseFn.λterm.let ((e1 λ_.elseFn term) (e2 λ_.e1)) (term e1 e2 e2 thenFn)',
     -> &thenFn, &elseFn {
-        my $lambdaExpr = "λterm.let ((t {&thenFn.lambda}) (e {&elseFn.lambda}) (e1 λ_.e term) (e2 (K e1))) (term e1 e2 e2 t)";
+        my $lambdaExpr = "on-ConstT {&thenFn.lambda} {&elseFn.lambda}";
         lambdaFn(
             Str, $lambdaExpr,
             -> TTerm $term {
@@ -274,16 +274,16 @@ constant $Term-eq is export = $Y(lambdaFn(
 
 # predicates ------------------------------------------------------------------
 
-# VarT?: Term -> TBool
+# VarT?: Term -> Bool
 constant $is-VarT is export = $on-VarT($K1true, $K1false) does Definition('VarT?');
 
-# AppT?: Term -> TBool
+# AppT?: Term -> Bool
 constant $is-AppT is export = $on-AppT($K2true, $K1false) does Definition('AppT?');
 
-# LamT?: Term -> TBool
+# LamT?: Term -> Bool
 constant $is-LamT is export = $on-LamT($K2true, $K1false) does Definition('LamT?');
 
-# ConstT?: Term -> TBool
+# ConstT?: Term -> Bool
 constant $is-ConstT is export = $on-ConstT($K1true, $K1false) does Definition('ConstT?');
 
 
@@ -437,120 +437,57 @@ constant $Term2size is export = $Y(lambdaFn(
 ));
 
 
-constant $is-selfApp is export = lambdaFn(
-    'selfApp?',
-q:to/ENDOFLAMBDA/,
-#    λt.given t
-#        (when (AppT (VarT fName) (VarT aName)) (eq? fName aName)
-#        (λ_.λ_.λ_.λ_.false)
-#    )
-    λt.given-Term t
-        (when-AppT (λf.λa.
-            given-Term f
-                (when-VarT (λfName.λ_.
-                    given-Term a
-                        (when-VarT (λaName.λ_.
-                            eq? fName aName
-                        )
-                        λ_.λ_.λ_.λ_.#false
+# (on-AppT (on-VarT λfuncName.on-VarT (Str-eq? funcName) (λ_.false) (λ_.λ_.false)) (λ_.false))
+# (unless-AppT (λ_.false) (unless-VarT (λ_.λ_.false) λfuncName.unless-VarT (λ_.false) (Str-eq? funcName)))
+# selfApp?: Term -> Bool
+constant $is-selfApp is export = 
+    $on-AppT(
+        $on-VarT(   # takes the AppT's func
+            -> Str $funcName {
+                $on-VarT(   # take the AppT's arg
+                    -> Str $argName {
+                        convertP6Bool2TBool($funcName eq $argName)    # TODO: dispense with convertP6Bool2TBool
+                    } does lambda('Str-eq? "' ~ $funcName ~ '"'),
+                    $K1false
+                )
+            } does lambda('λfuncName.on-VarT (λargName.Str-eq? funcName argName) (λ_.#false)'),
+            $K2false    # eat up both, the func and arg from AppT
+        ),
+        $K1false
+    ) does Definition('selfApp?')
+;
+
+
+constant $is-omega is export =
+    $on-LamT(
+        -> TTerm $var, TTerm $body {
+            $on-AppT(
+                -> TTerm $f, TTerm $a {
+
+                    #$_and($Term-eq($var, $f), $Term-eq($var, $a))
+                    
+                    $_if( $Term-eq($var, $f),
+                        -> Mu { $Term-eq($var, $a) },
+                        $K1false
                     )
-                )
-                λ_.λ_.λ_.λ_.#false
+                } does lambda('λfunc.λarg.if (Term-eq? var func) (Term-eq? var arg) #false'),
+                $K1false,
+                $body
             )
-        )
-        λ_.λ_.λ_.λ_.#false
-        )
-ENDOFLAMBDA
-    -> TTerm:D $t -->TBool{
-        #say "inside is-selfApp";
-        $destruct-Term($t,
-            $K1false,
-            -> TTerm $func, TTerm $arg {
-                $destruct-Term($func,
-                    -> Str $funcName {
-                        #$Term-eq($func, $arg)
-                        $destruct-Term($arg,
-                            -> Str $argName {
-                                convertP6Bool2TBool($funcName eq $argName)    # TODO: dispense with convertP6Bool2TBool
-                            },
-                            $K2false,
-                            $K2false,
-                            $K1false
-                        )
-                    },
-                    $K2false,
-                    $K2false,
-                    $K1false
-                )
-            },
-            $K2false,
-            $K1false
-        )
-    }
-);
+        } does lambda('λvar.λbody.on-AppT (λfunc.λarg.if (Term-eq? var func) (Term-eq? var arg) #false) λ_.#false'),
+        $K1false
+    ) does Definition('ω?')
+;
 
 
-constant $is-omega is export = lambdaFn(
-    'ω?',
-q:to/ENDOFLAMBDA/,
-    λt.given-Term t
-        (when-LamT (λv.λb.
-            _if (selfApp? b)
-                (λ_.eq? (VarT->name (AppT->func b)) (VarT->name v))
-                (K #false)
-            
-        )
-        λ_.λ_.λ_.λ_.#false
-        )
-ENDOFLAMBDA
-    -> TTerm:D $t -->TBool{
-        $destruct-Term($t,
-            $K1false,
-            $K2false,
-            -> TTerm $var, TTerm $body {
-                $destruct-Term($body,
-                    $K1false,
-                    -> TTerm $f, TTerm $a {
-
-                        #$_and($Term-eq($var, $f), $Term-eq($var, $a))
-                        
-                        $_if( $Term-eq($var, $f),
-                            -> Mu { $Term-eq($var, $a) },
-                            $K1false
-                        )
-                    },
-                    $K2false,
-                    $K1false
-                )
-            },
-            $K1false
-        )
-    }
-);
-
-
-constant $is-Omega is export = lambdaFn(
-    'Ω?',
-q:to/ENDOFLAMBDA/,
-    λt.given-Term t
-        (when-AppT (λf.λa.
-           (_and (ω? f) (ω? a))
-        )
-        λ_.λ_.λ_.λ_.#false
-        )
-ENDOFLAMBDA
-    -> TTerm:D $t -->TBool{
-        $destruct-Term($t,
-            $K1false,
-            -> TTerm $func, TTerm $arg {
-                $_and($is-omega($func), $is-omega($func))
-            },
-            $K2false,
-            $K1false
-        )
-    }
-);
-
+constant $is-Omega is export =
+    $on-AppT(
+        -> TTerm $func, TTerm $arg {
+            $_and($is-omega($func), $is-omega($func))
+        } does lambda('λfunc.λarg.and (ω? func) (ω? arg)'),
+        $K1false
+    ) does Definition('Ω?')
+;
 
 
 constant $fresh-var-for is export = {
