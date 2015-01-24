@@ -336,13 +336,21 @@ constant $betaContract is export = $Y(lambdaFn(
                                     $_if( $isSame,   # TODO: use Maybe-or or something like that
                                         -> Mu { $Some($funcBody) },
                                         -> Mu {
-                                            $_if( $is-Omega($t),    # TODO: optimize
-                                                -> Mu { $_if( $Term-eq($funcVar, $LamT2var($arg)),
-                                                            $K1None, # func and arg are both the (literally) same omega
-                                                            -> Mu { $substituted-func }  # otherwise one more step to make them so
-                                                        )
+                                            my $K1substituted-func = $K($substituted-func);
+                                            $_if( $is-selfAppOfVar($funcVar, $funcBody),    # is t (literal Omega?) / pt 1
+                                                -> Mu {
+                                                    $on-LamT(   # is t (literal Omega?) / pt 2
+                                                        -> TTerm $argVar, TTerm $argBody {
+                                                            $_if( $is-selfAppOfVar($funcVar, $argBody),    # should be *literal* Omega
+                                                                $K1None, # func and arg are both the (literally) same omega
+                                                                $K1substituted-func  # otherwise one more step to make them so
+                                                            )
+                                                        } does lambda("λargVar.λargBody.if (selfAppOfVar? funcVar argBody) (K None) (K1substituted-func)"),
+                                                        $K1substituted-func,
+                                                        $arg
+                                                    )
                                                 },
-                                                -> Mu { $substituted-func }
+                                                $K1substituted-func
                                             )
                                         }
                                     )

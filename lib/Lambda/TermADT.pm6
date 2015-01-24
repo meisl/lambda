@@ -457,24 +457,39 @@ constant $is-selfApp is export =
     ) does Definition('selfApp?')
 ;
 
+# selfAppOfVar?: Term -> Term -> Bool
+constant $is-selfAppOfVar is export =
+    $on-VarT(
+        -> Str $varName {
+            my $equalsVarName = -> Str $s {
+                convertP6Bool2TBool($varName eq $s)    # TODO: dispense with convertP6Bool2TBool
+            } does lambda('Str-eq? "' ~ $varName ~ '"');
+            $on-AppT(
+                $on-VarT(   # takes the AppT's func
+                    -> Str $funcName {
+                        $_if( $equalsVarName($funcName),
+                            -> Mu {
+                                $on-VarT(   # take the AppT's arg
+                                    $equalsVarName,
+                                    $K1false
+                                )
+                            },
+                            $K2false    # eat up both, the dummy arg from _if and the arg from AppT
+                        )
+                    } does lambda("(λfuncName.if ({$equalsVarName.lambda} funcName) (on-VarT ({$equalsVarName.lambda}) λ_.#false) λ_.#false)"),
+                    $K2false    # eat up both, the func and arg from AppT
+                ),
+                $K1false
+            )
+        } does lambda('bar'),
+        $K2false    # eat up outermost non-VarT term and return a function which takes another term and returns #false
+    ) does Definition('selfAppOfVar?')
+;
+
 
 constant $is-omega is export =
     $on-LamT(
-        -> TTerm $var, TTerm $body {
-            $on-AppT(
-                -> TTerm $f, TTerm $a {
-
-                    #$_and($Term-eq($var, $f), $Term-eq($var, $a))
-                    
-                    $_if( $Term-eq($var, $f),
-                        -> Mu { $Term-eq($var, $a) },
-                        $K1false
-                    )
-                } does lambda('λfunc.λarg.if (Term-eq? var func) (Term-eq? var arg) #false'),
-                $K1false,
-                $body
-            )
-        } does lambda('λvar.λbody.on-AppT (λfunc.λarg.if (Term-eq? var func) (Term-eq? var arg) #false) λ_.#false'),
+        $is-selfAppOfVar,
         $K1false
     ) does Definition('ω?')
 ;
@@ -483,7 +498,10 @@ constant $is-omega is export =
 constant $is-Omega is export =
     $on-AppT(
         -> TTerm $func, TTerm $arg {
-            $_and($is-omega($func), $is-omega($arg))
+            $_if( $is-omega($func),
+                -> Mu { $is-omega($arg) },
+                $K1false
+            )
         } does lambda('λfunc.λarg.and (ω? func) (ω? arg)'),
         $K1false
     ) does Definition('Ω?')

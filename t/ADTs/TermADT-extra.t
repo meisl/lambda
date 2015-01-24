@@ -9,7 +9,7 @@ use Lambda::Boolean;
 # module under test:
 use Lambda::TermADT;
 
-plan 108;
+plan 159;
 
 
 my $x ::= $VarT('x');
@@ -117,6 +117,71 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
         $AppT($LamT($x, $AppT($x, $x)), $LamT($x, $AppT($x, $x)))   => $false,  # ((λx.x x) (λx.x x))    # Omega = (omega omega)
         $AppT($LamT($x, $AppT($x, $x)), $LamT($y, $AppT($y, $y)))   => $false,  # ((λx.x x) (λy.y y))    # Omega = (omega omega)
     );
+}
+
+{ # predicate selfAppOfVar?
+    is_properLambdaFn($is-selfAppOfVar);
+
+    is $is-selfAppOfVar.symbol, 'selfAppOfVar?', '$is-selfAppOfVar.symbol';
+    is $is-selfAppOfVar.Str,    'selfAppOfVar?', '$is-selfAppOfVar.Str';
+
+    test( $is-selfAppOfVar($x), :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+        $x                                                          => $false,  # x
+        $c                                                          => $false,  # "c"
+        $ConstT(5)                                                  => $false,  # 5
+        $AppT($x, $c)                                               => $false,  # (x "c")
+        $AppT($x, $x)                                               => $true,   # (x x)
+        $AppT($y, $y)                                               => $false,  # (y y)  [wrong var]
+        $AppT($x, $y)                                               => $false,  # (x y)
+        $LamT($x, $c)                                               => $false,  # λx."c"
+        $LamT($x, $x)                                               => $false,  # λx.x
+        $LamT($x, $AppT($x, $x))                                    => $false,  # λx.x x    # omega
+        $LamT($y, $AppT($y, $y))                                    => $false,  # λy.y y    # omega
+        $LamT($x, $AppT($x, $c))                                    => $false,  # λx.x "c"
+        $LamT($x, $AppT($x, $y))                                    => $false,  # λx.x y
+        $LamT($x, $AppT($y, $x))                                    => $false,  # λx.y x
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($x, $AppT($x, $x)))   => $false,  # ((λx.x x) (λx.x x))    # Omega = (omega omega)
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($y, $AppT($y, $y)))   => $false,  # ((λx.x x) (λy.y y))    # Omega = (omega omega)
+    );
+
+    test( $is-selfAppOfVar($y), :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+        $x                                                          => $false,  # x
+        $c                                                          => $false,  # "c"
+        $ConstT(5)                                                  => $false,  # 5
+        $AppT($x, $c)                                               => $false,  # (x "c")
+        $AppT($x, $x)                                               => $false,  # (x x)  [wrong var]
+        $AppT($y, $y)                                               => $true,   # (y y)
+        $AppT($x, $y)                                               => $false,  # (x y)
+        $LamT($x, $c)                                               => $false,  # λx."c"
+        $LamT($x, $x)                                               => $false,  # λx.x
+        $LamT($x, $AppT($x, $x))                                    => $false,  # λx.x x    # omega
+        $LamT($y, $AppT($y, $y))                                    => $false,  # λy.y y    # omega
+        $LamT($x, $AppT($x, $c))                                    => $false,  # λx.x "c"
+        $LamT($x, $AppT($x, $y))                                    => $false,  # λx.x y
+        $LamT($x, $AppT($y, $x))                                    => $false,  # λx.y x
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($x, $AppT($x, $x)))   => $false,  # ((λx.x x) (λx.x x))    # Omega = (omega omega)
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($y, $AppT($y, $y)))   => $false,  # ((λx.x x) (λy.y y))    # Omega = (omega omega)
+    );
+
+    test( $is-selfAppOfVar($c), :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+        $x                                                          => $false,  # x
+        $c                                                          => $false,  # "c"
+        $ConstT(5)                                                  => $false,  # 5
+        $AppT($x, $c)                                               => $false,  # (x "c")
+        $AppT($x, $x)                                               => $false,  # (x x)  [passed a ConstT as 1st arg]
+        $AppT($y, $y)                                               => $false,  # (y y)  [passed a ConstT as 1st arg]
+        $AppT($x, $y)                                               => $false,  # (x y)
+        $LamT($x, $c)                                               => $false,  # λx."c"
+        $LamT($x, $x)                                               => $false,  # λx.x
+        $LamT($x, $AppT($x, $x))                                    => $false,  # λx.x x    # omega
+        $LamT($y, $AppT($y, $y))                                    => $false,  # λy.y y    # omega
+        $LamT($x, $AppT($x, $c))                                    => $false,  # λx.x "c"
+        $LamT($x, $AppT($x, $y))                                    => $false,  # λx.x y
+        $LamT($x, $AppT($y, $x))                                    => $false,  # λx.y x
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($x, $AppT($x, $x)))   => $false,  # ((λx.x x) (λx.x x))    # Omega = (omega omega)
+        $AppT($LamT($x, $AppT($x, $x)), $LamT($y, $AppT($y, $y)))   => $false,  # ((λx.x x) (λy.y y))    # Omega = (omega omega)
+    );
+
 }
 
 
