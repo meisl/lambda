@@ -135,9 +135,13 @@ my role Unapplicable {
     method postcircumfix:<( )>($as) {
         die X::Typing::Unapplicable.new(:whatsInFuncPos(self), :args($as));
     }
+    method _(|as) is hidden_from_backtrace {
+        self.(|as.list);
+    }
 }
 
-
+my $overAppCount = 0;
+my $partialAppCount = 0;
 
 class Fn does Callable {
     has &.f;
@@ -217,23 +221,36 @@ class Fn does Callable {
 
     # Dispatch to one of the _ methods from role PartialX 
     # NOTE: doesn't work with postcircumfix:<( )> overrides there, for some reason...?!
-    method postcircumfix:<( )>($as) {
+    method postcircumfix:<( )>($as) is hidden_from_backtrace {
         die X::Typing::UnsupportedNamedArgs.new(:whatsInFuncPos(self), :args($as))
             unless $as.hash.elems == 0;
         self._(|$as);
     }
 
-    # Fallback, if none of _ methods from role PartialX matches.
+    # Fallback, if none of the _ methods from role PartialX matches.
     # Here, *additional* args arrive (to be appended to @!partialArgs).
     # NOT to be used from outside - use normal postcircumfix<( )> instead!
-    multi method _(|as) {
-        my $n = self.arity; # orig fn's arity - # of @!partialArgs
-        if as.list.elems > $n {
+    multi method _(|as) is hidden_from_backtrace {
+        my $arity = self.arity; # orig fn's arity - # of @!partialArgs
+        my $argCount = as.list.elems;
+        if $argCount > $arity {
+            $overAppCount++;
+            #warn ">>>> over-app $overAppCount: " ~ self ~ Backtrace.new;   #   ;  #   
             #say "n=$n, partialArgs={@!partialArgs.perl}, as={as.perl}";
-            my $myResult = self._(|as.list[0..$n-1]);
-            #say '################# ' ~ $myResult.WHICH;
-            my $finalResult = $myResult(|as.list[$n..*]);
-            return $finalResult;
+            my $k = 0;
+            my $n = $arity;
+            my $result = self;
+            loop {
+                $result = $result._(|as.list[$k..$n-1]);
+                $k = $n;
+                $n += $result.?arity // last;
+                last if $n >= $argCount;
+            };
+            $result = $result._(|as.list[$k..*]);
+            return $result;
+            #my $result = self._(|as.list[0..$arity-1]);
+            #my $finalResult = $result(|as.list[$arity..*]);
+            #return $finalResult;
         } else {
             my @expectedTypes = self.sig[0..*-2];
             #say (@expectedTypes Z as.list).map(-> $t, $a { "{$t.perl}: {$a.perl}\n" });
@@ -244,20 +261,21 @@ class Fn does Callable {
 
     # This one expects to receive *all of or less than* the args which the orig fn $!f expects.
     # NOT to be used from outside - use normal postcircumfix<( )> instead!
-    method apply(*@as) {
+    method apply(*@as) is hidden_from_backtrace {
         my $out;
         my $n = &!f.signature.arity;
         if @as == $n {
             $out = &!f.(|@as);
-        } else { # got *LESS* params (if it were more then we'd ended up in the fallback method _ above)
+        } else { # got *LESS* params (if it were more, then we'd ended up in the fallback method _ above)
+            $partialAppCount++;
+            #warn ">>>> partial app $partialAppCount:" ~ self ~ Backtrace.new;
             $out = Fn.new(&!f, |@as);
             &!f.?onPartialApp($out, |@as);
         }
-        if ($out ~~ Callable) && ($out !~~ Unapplicable) { #or $out.^can('postcircumfix:<( )>') {
+        if $out ~~ Callable {
             $out = curry($out);
-        } else {
-            $out does Unapplicable
-                unless $out ~~ Unapplicable;
+        } elsif $out !~~ Unapplicable {
+            $out does Unapplicable;
         }
         return $out;
     }

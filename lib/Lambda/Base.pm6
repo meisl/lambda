@@ -13,7 +13,15 @@ constant $I is export := $id;
 
 constant $const is export = lambdaFn(
     'const', 'λx.λ_.x',
-    -> $x { lambdaFn(Str, 'λ_.' ~ ($x.?symbol // $x.?lambda // $x.perl), -> Mu { $x }) }
+    -> $x {
+        my $lambdaExpr = $x === $I
+            ?? 'λ_.λx.x'
+            !! 'λ_.' ~ ($x.?symbol // ($x.^can('lambda') ?? $x.lambda.substr(1, *-1) !! $x.perl));
+        lambdaFn(
+            Str, $lambdaExpr,
+            -> Mu { $x }
+        )
+    }
 );
 constant $K is export := $const;
 
@@ -37,6 +45,8 @@ constant $compose is export := $B;
 # (λx.λh.λy.f x (h y)) x h
 # (λh.λy.f x (h y)) h
 # λy.f x (h y)
+
+#multi sub infix:<°>(Callable $f, Callable $g -->Callable) is export { $B($f, $g) }
 
 
 constant $C is export = lambdaFn(
@@ -114,7 +124,7 @@ constant $findFP is export = $Y(lambdaFn(
 # projections ---------------------------------------------------------
 
 # of 1:
-constant $pi1o1 is export = $id does Definition('π1->1'); # I
+constant $pi1o1 is export = $id but Definition('π1->1'); # I
 
 # of 2:
 constant $pi1o2 is export = lambdaFn('π2->1', 'λx.λ_.x', -> $x, Mu { $x }); # K     = L I = B K I = λx.K (I x) = λx.K x = λx.λ_.x
@@ -161,4 +171,4 @@ constant $eq-pi3 = lambdaFn(
         my $p-other = $q($false, $q-other, $q-other);
         $p($p-first, $p-other, $p-other);
     }
-)
+);

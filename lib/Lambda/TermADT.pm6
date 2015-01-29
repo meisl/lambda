@@ -21,8 +21,8 @@ role TTerm is export {
 
 my constant $K1false = $K($false);
 my constant $K1true  = $K($true);
-my constant $K2false = $K($K1false);
-my constant $K2true  = $K($K1true);
+my constant $K2false = lambdaFn(Str, 'λ_.λ_.#false', -> Mu, Mu { $false });
+my constant $K2true  = lambdaFn(Str, 'λ_.λ_.#true',  -> Mu, Mu { $true  });
 
 
 # pattern-matching ------------------------------------------------------------
@@ -42,7 +42,7 @@ constant $on-VarT is export = lambdaFn(
             Str, $lambdaExpr,
             -> TTerm $term {
                 my $else1 = -> Mu { &elseFn($term) };
-                my $else2 = $K($else1);
+                my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
                 $destruct-Term($term,
                     &thenFn,
                     $else2,
@@ -62,7 +62,7 @@ constant $on-AppT is export = lambdaFn(
             Str, $lambdaExpr,
             -> TTerm $term {
                 my $else1 = -> Mu { &elseFn($term) };
-                my $else2 = $K($else1);
+                my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
                 $destruct-Term($term,
                     $else1,
                     &thenFn,
@@ -82,7 +82,7 @@ constant $on-LamT is export = lambdaFn(
             Str, $lambdaExpr,
             -> TTerm $term {
                 my $else1 = -> Mu { &elseFn($term) };
-                my $else2 = $K($else1);
+                my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
                 $destruct-Term($term,
                     $else1,
                     $else2,
@@ -102,7 +102,7 @@ constant $on-ConstT is export = lambdaFn(
             Str, $lambdaExpr,
             -> TTerm $term {
                 my $else1 = -> Mu { &elseFn($term) };
-                my $else2 = $K($else1);
+                my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
                 $destruct-Term($term,
                     $else1,
                     $else2,
