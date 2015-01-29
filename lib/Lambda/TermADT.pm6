@@ -125,7 +125,7 @@ my constant %names2vars = %();
 # VarT: Str -> (Str -> a) -> (Term -> Term -> b) -> (Term -> Term -> c) -> (* -> d) -> a
 constant $VarT is export = lambdaFn(
     'VarT', 'λname.λonVarT.λonAppT.λonLamT.λonConstT.onVarT name',
-    -> Str:D $name {
+    -> Str:D $name -->TTerm{
         my $out = %names2vars{$name};
         unless $out.defined {
             my $nameStr = $name.perl;
@@ -143,7 +143,7 @@ constant $VarT is export = lambdaFn(
 # AppT: Term -> Term -> (Str -> a) -> (Term -> Term -> b) -> (Term -> Term -> c) -> (* -> d) -> b
 constant $AppT is export = lambdaFn(
     'AppT', 'λfunc.λarg.λonVarT.λonAppT.λonLamT.λonConstT.onAppT func arg',
-    -> TTerm:D $func, TTerm:D $arg {
+    -> TTerm:D $func, TTerm:D $arg -->TTerm{
         lambdaFn(
             Str, "(AppT $func $arg)",
             -> &onVarT, &onAppT, &onLamT, &onConstT { &onAppT($func, $arg) }
@@ -155,7 +155,7 @@ constant $AppT is export = lambdaFn(
 constant $LamT is export = lambdaFn(
     'LamT', 'λvar.λbody.λonVarT.λonAppT.λonLamT.λonConstT.onLamT var body',
     {   my $e = -> $t { die "first arg to LamT ctor must be a VarT - got instead $t" };
-        -> TTerm:D $var, TTerm:D $body {
+        -> TTerm:D $var, TTerm:D $body -->TTerm{
             $destruct-Term($var,
                 -> Str $name {
                     lambdaFn(
@@ -175,7 +175,7 @@ constant $LamT is export = lambdaFn(
 # ConstT: Term -> Term -> (Str -> a) -> (Term -> Term -> b) -> (Term -> Term -> c) -> (* -> d) -> d
 constant $ConstT is export = lambdaFn(
     'ConstT', 'λvalue.λonVarT.λonAppT.λonLamT.λonConstT.onConstT value',
-    -> $value {
+    -> $value -->TTerm{
         my $valueStr = $value.perl;
         lambdaFn(
             Str, "(ConstT $valueStr)",
@@ -187,86 +187,88 @@ constant $ConstT is export = lambdaFn(
 
 constant $Term-eq is export = $Y(lambdaFn(
     'Term-eq?', 'NYI',
-    -> &self, TTerm $s, TTerm $t -->TBool{
-        $destruct-Term($s,
-            -> Str $sName {
-                $on-VarT(
-                    -> Str $tName {
-                        convertP6Bool2TBool($sName eq $tName)
-                    } does lambda("Str-eq? \"$sName\"" ),
-                    $K1false,
-                    $t
-                )
-                #$destruct-Term($t,
-                #    -> Str $tName { convertP6Bool2TBool($sName eq $tName) },
-                #    $K2false,
-                #    $K2false,
-                #    $K1false
-                #)
-            },
-            -> TTerm $sFunc, TTerm $sArg {
-                $on-AppT(
-                    -> TTerm $tFunc, TTerm $tArg {
-                        $_and(
-                            &self($sFunc, $tFunc),
-                            &self($sArg,  $tArg)
-                        )
-                    } does lambda("λtFunc.λtArg.and (Term-eq? sFunc tFunc) (Term-eq? sArg tArg)" ),
-                    $K1false,
-                    $t
-                );
-                #$destruct-Term($t,
-                #    $K1false,
-                #    -> TTerm $tFunc, TTerm $tArg {
-                #        $_and(
-                #            &self($sFunc, $tFunc),
-                #            &self($sArg,  $tArg)
-                #        )
-                #    },
-                #    $K2false,
-                #    $K1false
-                #)
-            },
-            -> TTerm $sVar, TTerm $sBody {
-                $on-LamT(
-                    -> TTerm $tVar, TTerm $tBody {
-                        $_and(
-                            &self($sVar, $tVar),
-                            &self($sBody,  $tBody)
-                        )
-                    } does lambda("λtVar.λtBody.and (Term-eq? sVar tVar) (Term-eq? sBody tBody)" ),
-                    $K1false,
-                    $t
-                );
-                #$destruct-Term($t,
-                #    $K1false,
-                #    $K2false,
-                #    -> TTerm $tVar, TTerm $tBody {
-                #        $_and(
-                #            &self($sVar,  $tVar),
-                #            &self($sBody, $tBody)
-                #        )
-                #    },
-                #    $K1false
-                #)
-            },
-            -> Any $sValue {
-                $on-ConstT(
-                    -> Any $tValue {
-                        die "NYI: equality test for $sValue, $tValue"
-                    } does lambda("eq? \"$sValue\"" ),
-                    $K1false,
-                    $t
-                );
-                #$destruct-Term($t,
-                #    $K1false,
-                #    $K2false,
-                #    $K2false,
-                #    -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
-                #)
-            },
+    -> &self {
+        -> TTerm $s, TTerm $t -->TBool{
+            $destruct-Term($s,
+                -> Str $sName {
+                    $on-VarT(
+                        -> Str $tName {
+                            convertP6Bool2TBool($sName eq $tName)
+                        } does lambda("Str-eq? \"$sName\"" ),
+                        $K1false,
+                        $t
+                    )
+                    #$destruct-Term($t,
+                    #    -> Str $tName { convertP6Bool2TBool($sName eq $tName) },
+                    #    $K2false,
+                    #    $K2false,
+                    #    $K1false
+                    #)
+                },
+                -> TTerm $sFunc, TTerm $sArg {
+                    $on-AppT(
+                        -> TTerm $tFunc, TTerm $tArg {
+                            $_and(
+                                &self($sFunc, $tFunc),
+                                &self($sArg,  $tArg)
+                            )
+                        } does lambda("λtFunc.λtArg.and (Term-eq? sFunc tFunc) (Term-eq? sArg tArg)" ),
+                        $K1false,
+                        $t
+                    );
+                    #$destruct-Term($t,
+                    #    $K1false,
+                    #    -> TTerm $tFunc, TTerm $tArg {
+                    #        $_and(
+                    #            &self($sFunc, $tFunc),
+                    #            &self($sArg,  $tArg)
+                    #        )
+                    #    },
+                    #    $K2false,
+                    #    $K1false
+                    #)
+                },
+                -> TTerm $sVar, TTerm $sBody {
+                    $on-LamT(
+                        -> TTerm $tVar, TTerm $tBody {
+                            $_and(
+                                &self($sVar, $tVar),
+                                &self($sBody,  $tBody)
+                            )
+                        } does lambda("λtVar.λtBody.and (Term-eq? sVar tVar) (Term-eq? sBody tBody)" ),
+                        $K1false,
+                        $t
+                    );
+                    #$destruct-Term($t,
+                    #    $K1false,
+                    #    $K2false,
+                    #    -> TTerm $tVar, TTerm $tBody {
+                    #        $_and(
+                    #            &self($sVar,  $tVar),
+                    #            &self($sBody, $tBody)
+                    #        )
+                    #    },
+                    #    $K1false
+                    #)
+                },
+                -> Any $sValue {
+                    $on-ConstT(
+                        -> Any $tValue {
+                            die "NYI: equality test for $sValue, $tValue"
+                        } does lambda("eq? \"$sValue\"" ),
+                        $K1false,
+                        $t
+                    );
+                    #$destruct-Term($t,
+                    #    $K1false,
+                    #    $K2false,
+                    #    $K2false,
+                    #    -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
+                    #)
+                },
 
-        )
+            )
+        }
     }
 ));
 
@@ -523,8 +525,8 @@ constant $fresh-var-for is export = {
     }
     lambdaFn(
         'fresh-var-for', 'λfor.error "NYI"',
-        -> TTerm:D $for -->TTerm{
-            say $nextAlphaNr;
+        -> TTerm $for -->TTerm{
+            #say $nextAlphaNr;
             my $v = $VarT('α' ~ $nextAlphaNr);
             $v ~~ TTerm or die $v.perl;
             if $for.defined {
