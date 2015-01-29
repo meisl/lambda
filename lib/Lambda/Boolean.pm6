@@ -27,6 +27,14 @@ constant $false is export = lambdaFn(
     -> $a, $b { $b }
 ) does TBool;
 
+
+
+constant $K1false is export = lambdaFn(Str, 'λ_.#false', -> Mu { $false });
+constant $K1true  is export = lambdaFn(Str, 'λ_.#true',  -> Mu { $true  });
+constant $K2false is export = lambdaFn(Str, 'λ_.λ_.#false', -> Mu, Mu { $false });
+constant $K2true  is export = lambdaFn(Str, 'λ_.λ_.#true',  -> Mu, Mu { $true  });
+
+
 # functions on TBool
 
 constant $not is export = lambdaFn(

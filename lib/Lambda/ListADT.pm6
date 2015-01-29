@@ -32,6 +32,8 @@ constant $cons is export = lambdaFn(
     }
 );
 
+constant $K1nil is export = $K($nil);
+constant $K2nil is export = lambdaFn(Str, 'λ_.λ_.nil', -> Mu, Mu { $nil } );
 
 # predicates
 
@@ -276,7 +278,7 @@ constant $first is export = $Y( lambdaFn(
     }
 ));
 
-constant $exists is export = lambdaFn(
+constant $___exists is export = lambdaFn(
     'exists', 'λp.λxs.Some? (first p xs)',
 #   'exists', 'λp.(B not (B nil? (first p))',
     -> &p, TList:D $xs {
@@ -284,15 +286,15 @@ constant $exists is export = lambdaFn(
     }
 );
 
-constant $___exists is export = $Y( lambdaFn(
+constant $exists is export = $Y( lambdaFn(
     'exists', 'λself.λp.λxs.if (nil? xs) #false',
     -> &self {
         -> &predicate, TList:D $xs -->TBool{ 
             $if-nil($xs,
-                    -> $_ { $false },
+                    $K1false,
                     -> $hd, TList $tl -->TBool{
                         $_if( &predicate($hd),
-                            -> $_ { $true },
+                            $K1true,
                             -> $_ { &self(&predicate, $tl) }
                         )
                     })
