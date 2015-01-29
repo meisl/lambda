@@ -19,11 +19,6 @@ role TTerm is export {
 }
 
 
-my constant $K1false = $K($false);
-my constant $K1true  = $K($true);
-my constant $K2false = lambdaFn(Str, 'λ_.λ_.#false', -> Mu, Mu { $false });
-my constant $K2true  = lambdaFn(Str, 'λ_.λ_.#true',  -> Mu, Mu { $true  });
-
 
 # pattern-matching ------------------------------------------------------------
 

@@ -27,22 +27,19 @@ q:to/ENDOFLAMBDA/,
           (error (~ "unknown TTerm" (Term->Str t)))
 ENDOFLAMBDA
     -> TTerm:D $t {
-        if convertTBool2P6Bool($is-ConstT($t)) {
-            $false
-        } elsif convertTBool2P6Bool($is-VarT($t)) {
-            $false
-        } elsif convertTBool2P6Bool($is-LamT($t)) {
-            $false
-        } elsif convertTBool2P6Bool($is-AppT($t)) {
-            # (P Q) is a β-redex if P is of form (λx.B).
-            # If so, it β-contracts to [P/x] B, ie P substituted for x
-            # in the λ's body but beware: any free var in P
-            # must NOT be accidentally captured by a binding in B.
-            # If that would be the case, we need to α-convert before.
-            $is-LamT($AppT2func($t))
-        } else {
-            die "fell off type-dispatch with type " ~ $t.WHAT.perl
-        }
+        $destruct-Term($t,
+            $K1false,       # onVarT
+            -> TTerm $func, TTerm $arg {
+                # (P Q) is a β-redex if P is of form (λx.B).
+                # If so, it β-contracts to [P/x] B, ie P substituted for x
+                # in the λ's body but beware: any free var in P
+                # must NOT be accidentally captured by a binding in B.
+                # If that would be the case, we need to α-convert before.
+                $is-LamT($func)
+            },
+            $K2false,       # onLamT
+            $K1false        # onConstT
+        )
     }
 );
 
@@ -94,30 +91,28 @@ q:to/ENDOFLAMBDA/,
 
 ENDOFLAMBDA
     -> TTerm $t {
-        $_if( $_or($is-ConstT($t), $_or($is-VarT($t), $is-LamT($t))),
-            -> $_ { $nil },
-            -> $_ { $_if( $is-AppT($t),
-                        -> $_ { my $func = $AppT2func($t);
-                                my $arg  = $AppT2arg($t);
-                                $_if( $is-betaRedex($t),
-                                    -> $_ { my $var   = $LamT2var($func);
-                                        my $body  = $LamT2body($func);
-                                        $filter(
-                                            -> $v {
-                                              # no need to filter out $var itself separately
-                                              # since it cannot be free under itself in the body
-                                              $is-free-under($var, $v, $body)
-                                            },
-                                            $free-vars($arg)
-                                        );
-                                    },
-                                    -> $_ { $nil },
-                                )
-                        },
-                        -> $_ { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
-                      )
-            }
-        )
+        $destruct-Term($t,
+            $K1nil,     # t is a VarT
+            -> TTerm $func, TTerm $arg {    # t is an AppT
+                $destruct-Term($func,
+                    $K1nil,     # func is a VarT
+                    $K2nil,     # func is an AppT
+                    -> TTerm $var, TTerm $body {    # func is a LamT, so t is a beta-redex...
+                        $filter(
+                            -> $v {
+                              # no need to filter out $var itself separately
+                              # since it cannot be free under itself in the body
+                              $is-free-under($var, $v, $body)
+                            },
+                            $free-vars($arg)
+                        );
+                    },
+                    $K1nil,     # func is a ConstT
+                )
+            },
+            $K2nil,     # t is a LamT
+            $K1nil      # t is a ConstT
+        );
     }
 );
 
@@ -138,26 +133,21 @@ q:to/ENDOFLAMBDA/,
 ENDOFLAMBDA
     -> &self {
         -> TTerm $t, TList $keepfreevars {
-            if convertTBool2P6Bool($is-ConstT($t)) {
-                $nil;
-            } elsif convertTBool2P6Bool($is-VarT($t)) {
-                $nil;
-            } elsif convertTBool2P6Bool($is-AppT($t)) {
-                my $func = $AppT2func($t);
-                my $arg  = $AppT2arg($t);
-                $append(&self($func, $keepfreevars), &self($arg, $keepfreevars));
-            } elsif convertTBool2P6Bool($is-LamT($t)) {
-                my $var   = $LamT2var($t);
-                my $vName = $VarT2name($var);
-                my $body  = $LamT2body($t);
-                my $fromBody = &self($body, $keepfreevars);
-                $_if( $exists( -> $v { convertP6Bool2TBool($VarT2name($v) eq $vName) }, $keepfreevars),
-                    -> $_ { $cons($t, $fromBody) },
-                    -> $_ { $fromBody },
-                );
-            } else {
-                die "fell off type-dispatch with type " ~ $t.WHAT.perl
-            }
+            $destruct-Term($t,
+                $K1nil, # onVarT
+                -> TTerm $func, TTerm $arg {    # onAppT
+                    $append(&self($func, $keepfreevars), &self($arg, $keepfreevars));
+                },
+                -> TTerm $var, TTerm $body {    # onLamT
+                    my $vName = $VarT2name($var);
+                    my $fromBody = &self($body, $keepfreevars);
+                    $_if( $exists( -> $v { convertP6Bool2TBool($VarT2name($v) eq $vName) }, $keepfreevars),
+                        -> $_ { $cons($t, $fromBody) },
+                        -> $_ { $fromBody },
+                    );
+                },
+                $K1nil, # onConstT
+            );
         }
     }
 ));

@@ -10,8 +10,8 @@ use Lambda::TermADT;
 use Lambda::Conversion::Bool-conv;
 
 
-constant $is-free is export = $Y(lambdaFn(
-    'free?', 
+constant $is-free-varName is export = $Y(lambdaFn(
+    'free-varName?', 
  q:to/ENDOFLAMBDA/,
     λself.λvar.λt.
         (case t
@@ -24,27 +24,37 @@ constant $is-free is export = $Y(lambdaFn(
         )
 ENDOFLAMBDA
     -> &self {
-        -> TTerm $var, TTerm $t {
-            if convertTBool2P6Bool($is-ConstT($t)) {
-                $false
-            } elsif convertTBool2P6Bool($is-VarT($t)) {
-                $VarT2name($t) eq $VarT2name($var) ?? $true !! $false
-            } elsif convertTBool2P6Bool($is-AppT($t)) {
-                $_or(
-                    &self($var, $AppT2func($t)),
-                    &self($var, $AppT2arg($t))
-                )
-            } elsif convertTBool2P6Bool($is-LamT($t)) {
-                $_and(
-                    $VarT2name($LamT2var($t)) ne $VarT2name($var) ?? $true !! $false,
-                    &self($var, $LamT2body($t))
-                )
-            } else {
-                die "fell off type-dispatch with type " ~ $t.WHAT.perl
-            }
+        -> $equalsVarName, TTerm $t {
+            $destruct-Term($t,
+                $equalsVarName,                 # t is a VarT
+                -> TTerm $func, TTerm $arg {    # t is an AppT
+                    $_if( &self($equalsVarName, $func),       # short-circuit OR
+                        $K1true,
+                        -> Mu { &self($equalsVarName, $arg) }
+                    )
+                },
+                -> TTerm $lamVar, TTerm $body { # t is a LamT
+                    $_if( $equalsVarName($VarT2name($lamVar)),
+                        $K1false,
+                        -> Mu { &self($equalsVarName, $body) }
+                    )
+                },
+                $K1false    # t is a ConstT
+            );
         }
     }
 ));
+
+constant $is-free is export = lambdaFn(
+    'free?', 'λvar.free-varName (Str-eq? (VarT->name var))',  # free-varName (B Str-eq? VarT->name)
+    -> TTerm $var {
+        my $varName = $VarT2name($var);
+        my $equalsVarName = -> Str $name {
+            convertP6Bool2TBool( $varName eq $name )
+        };
+        $is-free-varName($equalsVarName);
+    }
+);
 
 constant $is-free-under is export = $Y(lambdaFn(
     'free-under?', 
@@ -72,29 +82,33 @@ constant $is-free-under is export = $Y(lambdaFn(
 ENDOFLAMBDA
     -> &self {
         -> TTerm $var, TTerm $binder, TTerm $t {
-            if convertTBool2P6Bool($is-ConstT($t)) {
-                $false
-            } elsif convertTBool2P6Bool($is-VarT($t)) {
-                $false
-            } elsif convertTBool2P6Bool($is-AppT($t)) {
-                $_or(
-                    &self($var, $binder, $AppT2func($t)),
-                    &self($var, $binder, $AppT2arg($t))
-                )
-            } elsif convertTBool2P6Bool($is-LamT($t)) {
-                my $vName    = $VarT2name($var);
-                my $tVarName = $VarT2name($LamT2var($t));
-                my $bName    = $VarT2name($binder);
-                $_and(
-                    convertP6Bool2TBool($tVarName ne $vName),     # if the λ binds the var then it's not free anywhere in the λ's body
-                    $_if( convertP6Bool2TBool($bName eq $tVarName),     # or else, if the binder is the λ's var then...
-                        -> $_ { $is-free($var, $LamT2body($t)) },       # $var is free under $binder if $var is free in the λ's body
-                        -> $_ { &self($var, $binder, $LamT2body($t)) }  # otherwise it depends on the λ's body
+            $destruct-Term($t,
+                $K1false,                   #   t is a VarT
+                -> TTerm $func, $arg {      #   t is an AppT
+                    $_if( &self($var, $binder, $func),  # short-circuit OR
+                        $K1true,
+                        -> Mu { &self($var, $binder, $arg) }
                     )
-                );
-            } else {
-                die "fell off type-dispatch with type " ~ $t.WHAT.perl
-            }
+                },
+                -> TTerm $lamVar, $body {   #   t is an AppT
+                    my $lamVarName = $VarT2name($lamVar);
+                    my $equalsLamVarName = -> Str $name {
+                        convertP6Bool2TBool($lamVarName eq $name)
+                    };
+                    my $vName    = $VarT2name($var);
+                    $_if( $equalsLamVarName($vName),
+                        $K1false,               # if the λ binds the var then it's not free anywhere in the λ's body
+                        -> Mu {
+                            my $bName = $VarT2name($binder);
+                            $_if( $equalsLamVarName($bName),     # or else, if the binder is the λ's var then...
+                                -> Mu { $is-free($var, $body) },       # $var is free under $binder if $var is free in the λ's body
+                                -> Mu { &self($var, $binder, $body) }  # otherwise it depends on the λ's body
+                            )
+                        },
+                    );
+                },
+                $K1false                    #   t is a ConstT
+            );
         }
     }
 ));
@@ -190,30 +204,37 @@ constant $free-vars is export = $Y(lambdaFn(
         )
 ENDOFLAMBDA
     -> &self {
-        -> TTerm $t {
-            if convertTBool2P6Bool($is-ConstT($t)) {
-                $nil;
-            } elsif convertTBool2P6Bool($is-VarT($t)) {
-                $cons($t, $nil);
-            } elsif convertTBool2P6Bool($is-AppT($t)) {
-                my $argFVs      = &self($AppT2arg($t));
-                my $argFVnames  = $map($VarT2name, $argFVs);
-                my $notInArgFVs = -> $e { 
-                    my $eName = $VarT2name($e);
-                    my $found =$exists(-> $n { convertP6Bool2TBool($eName eq $n) }, $argFVnames);
-                    $not($found)
-                };
-                my $funcFVs     = $filter($notInArgFVs, &self($AppT2func($t)));
-                $foldl($swap-args($cons), $argFVs, $funcFVs);
-            } elsif convertTBool2P6Bool($is-LamT($t)) {
-                my $lbName      = $VarT2name($LamT2var($t));
-                my $isnt-binder = -> $e { convertP6Bool2TBool($VarT2name($e) ne $lbName) };
-                my $bodyFVs     = &self($LamT2body($t));
-                $filter($isnt-binder, $bodyFVs);
-            } else {
-                die "fell off type-dispatch with $t [:" ~ $t.WHAT.perl ~ ']';
-            }
-            
+        -> TTerm $t -->TList{
+            $destruct-Term($t,
+                -> Mu { $cons($t, $nil) },      # t is a VarT
+                -> TTerm $func, TTerm $arg {    # t is an AppT
+                    my $argFVs      = &self($arg);
+                    my $argFVnames  = $map($VarT2name, $argFVs);
+                    my $notInArgFVs = -> $e { 
+                        my $eName = $VarT2name($e);
+                        my $found = $exists(-> $n { convertP6Bool2TBool($eName eq $n) }, $argFVnames);
+                        $not($found)
+                    };
+                    my $funcFVs     = $filter($notInArgFVs, &self($func));
+                    $foldl($swap-args($cons), $argFVs, $funcFVs);
+
+                    #my $argFVs      = &self($arg);
+                    #my $notInArgFVs = -> $var { 
+                    #    my $found = $exists($Term-eq($var), $argFVs);
+                    #    $not($found)
+                    #};
+                    #my $funcFVs     = $filter($notInArgFVs, &self($func));
+                    #$foldl($swap-args($cons), $argFVs, $funcFVs);
+                },
+                -> TTerm $var, TTerm $body {    # t is a LamT
+                    my $lbName      = $VarT2name($var);
+                    my $isnt-binder = -> $e { convertP6Bool2TBool($VarT2name($e) ne $lbName) };
+                    $filter($isnt-binder, &self($body));
+
+                    #$filter($B($not, $Term-eq($var)), &self($body));
+                },
+                $K1nil                          # t is a ConstT
+            );
         }
     }
 ));
