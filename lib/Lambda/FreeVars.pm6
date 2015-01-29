@@ -244,13 +244,14 @@ constant $free-vars-internal = $Y(lambdaFn(
     'free-vars-internal', '',
     -> &self {
         -> TList:D $ignore, TList:D $results, TTerm:D $t -->TList{
+            my $K1results = -> Mu { $results };
             $destruct-Term($t,
                 -> Str:D $varName {                 # t is a VarT
                     my $eqVar = -> TTerm:D $var {
                         convertP6Bool2TBool($varName eq $VarT2name($var))
                     };
                     $_if( $exists($eqVar, $ignore),
-                        -> Mu { $results }, # don't make duplicates
+                        $K1results,     # don't make duplicates (ie leave results as is)
                         -> Mu { $cons($t, $results) }
                     );
                 },
@@ -264,16 +265,10 @@ constant $free-vars-internal = $Y(lambdaFn(
                 -> TTerm:D $var, TTerm:D $body {    # t is a LamT
                     &self($cons($var, $ignore), $results, $body);
                 },
-                $K1nil                              # t is a ConstT
+                $K1results                          # t is a ConstT ~> leave results as is
             );
         }
     }
 ));
 
 constant $free-vars is export = lambdaFn('free-vars', 'free-vars-internal nil nil', $free-vars-internal($nil, $nil));
-#constant $free-vars is export = lambdaFn(
-#    'free-vars', 'λterm.free-vars-internal nil nil term',
-#    -> TTerm:D $t { 
-#        $free-vars-internal($nil, $nil, $t)
-#    }
-#);

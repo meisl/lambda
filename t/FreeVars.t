@@ -12,7 +12,7 @@ use Lambda::TermADT;
 # module under test:
 use Lambda::FreeVars;
 
-plan 82;
+plan 88;
 
 
 my $w = $VarT('w');
@@ -175,6 +175,8 @@ my sub test-pred($f, *@tests) {
     my $app2 = $AppT($x, $x);       # (x x)
     my $lam1 = $LamT($x, $app1);    # λx.x y
     my $app3 = $AppT($x, $lam1);    # (x λx.x y)
+    my $app4 = $AppT($app3, $c);    # (x λx.x y) c
+    my $app5 = $AppT($c, $app3);    # c (x λx.x y)
 
     is($free-vars($c),   $nil,              "($free-vars $c)");
     is($free-vars($x),   $cons($x, $nil),   "($free-vars $x)");
@@ -200,4 +202,14 @@ my sub test-pred($f, *@tests) {
     $has_length($fvs, 2, "($free-vars $app3)");
     $contains_ok($x, $fvs, "(free-vars $app3)");
     $contains_ok($y, $fvs, "(free-vars $app3)");
+
+    $fvs = $free-vars($app4);
+    $has_length($fvs, 2, "($free-vars $app4)");
+    $contains_ok($x, $fvs, "(free-vars $app4)");
+    $contains_ok($y, $fvs, "(free-vars $app4)");
+
+    $fvs = $free-vars($app5);
+    $has_length($fvs, 2, "($free-vars $app5)");
+    $contains_ok($x, $fvs, "(free-vars $app5)");
+    $contains_ok($y, $fvs, "(free-vars $app5)");
 }
