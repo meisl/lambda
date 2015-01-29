@@ -172,7 +172,7 @@ ENDOFLAMBDA
 ));
 
 
-constant $free-vars is export = $Y(lambdaFn(
+constant $___free-vars is export = $Y(lambdaFn(
     'free-vars', 
  q:to/ENDOFLAMBDA/,
     λself.λt.
@@ -238,3 +238,42 @@ ENDOFLAMBDA
         }
     }
 ));
+
+
+constant $free-vars-internal = $Y(lambdaFn(
+    'free-vars-internal', '',
+    -> &self {
+        -> TList:D $ignore, TList:D $results, TTerm:D $t -->TList{
+            $destruct-Term($t,
+                -> Str:D $varName {                 # t is a VarT
+                    my $eqVar = -> TTerm:D $var {
+                        convertP6Bool2TBool($varName eq $VarT2name($var))
+                    };
+                    $_if( $exists($eqVar, $ignore),
+                        -> Mu { $results }, # don't make duplicates
+                        -> Mu { $cons($t, $results) }
+                    );
+                },
+                -> TTerm:D $func, TTerm:D $arg {    # t is an AppT
+                    my $freeInArg = &self($ignore, $results, $arg);
+                    # freeInArg possibly contains more stuff to be ignored (ie results plus a prefix)
+                    # but ignore may contain some vars which are not in there (ie binders from lambdas above):
+                    my $newIgnore = $foldl($swap-args($cons), $freeInArg, $ignore);
+                    &self($newIgnore, $freeInArg, $func);
+                },
+                -> TTerm:D $var, TTerm:D $body {    # t is a LamT
+                    &self($cons($var, $ignore), $results, $body);
+                },
+                $K1nil                              # t is a ConstT
+            );
+        }
+    }
+));
+
+constant $free-vars is export = lambdaFn('free-vars', 'free-vars-internal nil nil', $free-vars-internal($nil, $nil));
+#constant $free-vars is export = lambdaFn(
+#    'free-vars', 'λterm.free-vars-internal nil nil term',
+#    -> TTerm:D $t { 
+#        $free-vars-internal($nil, $nil, $t)
+#    }
+#);
