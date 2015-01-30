@@ -243,27 +243,29 @@ ENDOFLAMBDA
 constant $free-vars-internal = $Y(lambdaFn(
     'free-vars-internal', '',
     -> &self {
-        -> TList:D $ignore, TList:D $results, TTerm:D $t -->TList{
+        -> TList:D $bindersAbove, TList:D $results, TTerm:D $t -->TList{
             my $K1results = -> Mu { $results };
             $destruct-Term($t,
                 -> Str:D $varName {                 # t is a VarT
                     my $eqVar = -> TTerm:D $var {
                         convertP6Bool2TBool($varName eq $VarT2name($var))
                     };
-                    $_if( $exists($eqVar, $ignore),
-                        $K1results,     # don't make duplicates (ie leave results as is)
-                        -> Mu { $cons($t, $results) }
-                    );
+                    $_if( $exists($eqVar, $bindersAbove),
+                        $K1results,     # don't add bound variable (ie leave results as is)
+                        -> Mu {
+                            $_if( $exists($eqVar, $results),
+                                $K1results,     # don't make duplicates (ie leave results as is)
+                                -> Mu { $cons($t, $results) }
+                            )
+                        }
+                    )
                 },
                 -> TTerm:D $func, TTerm:D $arg {    # t is an AppT
-                    my $freeInArg = &self($ignore, $results, $arg);
-                    # freeInArg possibly contains more stuff to be ignored (ie results plus a prefix)
-                    # but ignore may contain some vars which are not in there (ie binders from lambdas above):
-                    my $newIgnore = $foldl($swap-args($cons), $freeInArg, $ignore);
-                    &self($newIgnore, $freeInArg, $func);
+                    my $freeInArg = &self($bindersAbove, $results, $arg);
+                    &self($bindersAbove, $freeInArg, $func);
                 },
                 -> TTerm:D $var, TTerm:D $body {    # t is a LamT
-                    &self($cons($var, $ignore), $results, $body);
+                    &self($cons($var, $bindersAbove), $results, $body);
                 },
                 $K1results                          # t is a ConstT ~> leave results as is
             );
