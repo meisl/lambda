@@ -375,16 +375,14 @@ constant $betaReduce is export = lambdaFn(
     'betaReduce',
 q:to/ENDOFLAMBDA/,
     λt.(findFP
-         (λx.None?)
-         (Maybe-lift-in betaContract)
+         (λ_.None?)
+         (λm.m >>= betaContract)
          (betaContract t)
        )
 ENDOFLAMBDA
     -> TTerm $t {
-        $findFP(
-            -> $x, TMaybe:D $y { $is-None($y) },
-            $Maybe-lift-in($betaContract),
-            $betaContract($t)
-        );
+        $findFP( $K($is-None), $Maybe-lift-in($betaContract), $betaContract($t) );
     }
+    
+    #$B($findFP($K($is-None), $Maybe-lift-in($betaContract)), $betaContract)
 );
