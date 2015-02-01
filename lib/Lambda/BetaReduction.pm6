@@ -277,20 +277,58 @@ ENDOFLAMBDA
 my constant $K1None = $K($None);
 my constant $liftedCtor2 = lambdaFn(
     Str, 'λctor.λa1.λtransform2nd.λa2.let ((a2-transformed (transform2nd a2))) if (None? a2-transformed) None (Some (ctor a1 (Some->value a2-transformed)))',
-    -> &ctor, TTerm $a1, &transform2nd, TTerm $a2 {
-        my $a2transformed = &transform2nd($a2);
-        $_if( $is-None($a2transformed),
-            $K1None,
-            -> Mu { $Some(&ctor($a1, $Some2value($a2transformed))) }
-        )
+    -> &ctor, TTerm $a1, &transform2nd {
+        #-> TTerm $a2 {
+        #    my $a2transformed = &transform2nd($a2);
+        #    $a2transformed(
+        #        $None,
+        #        -> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) }
+        #    );
+        #    #$bindMaybe(&transform2nd($a2), -> $a2transformedVal { $Some(&ctor($a1, $a2transformedVal)) } );
+        #    #$bindMaybe(&transform2nd($a2), $B($Some, &ctor($a1)) );
+        #    #$B($liftMaybe(&ctor($a1)), &transform2nd)($a2);
+        #};
+        
+        #$B($liftMaybe(&ctor($a1)), &transform2nd);
     }
 );
 
+my constant $liftedCtor2XX = lambdaFn(
+    Str, '',
+    #-> &ctor {
+    #    my $liftedPartialCtor = $B($liftMaybe, &ctor);
+    #    -> &transform2nd {
+    #        $B($C($B, &transform2nd), $liftedPartialCtor );
+    #    }
+    #}
+    
+    #-> &ctor, &transform2nd {
+    #    $B($C($B, &transform2nd), $B($liftMaybe, &ctor) );
+    #}
+    
+    -> &ctor, &transform2nd {
+        -> $a1, $a2 {
+            &transform2nd($a2,
+                $None,
+                -> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) }
+            );
+        }
+    }
+);
+
+
+my constant $BBSomeAppT = lambdaFn(
+    'BBSomeAppT', '(B Some) ° AppT',
+    #-> $f, $a { $Some($AppT($f, $a)); }
+    $B($B($Some), $AppT)
+);
 
 # one-step β-simplification (either of $t or any (one) child)
 constant $betaContract is export = $Y(lambdaFn(
     'betaContract', 'not yet implemented',
     -> &self {
+        my $LamT_intoMaybe = $liftedCtor2XX($LamT, &self);
+        my $AppT_intoMaybe = $liftedCtor2XX($AppT, &self);
         -> TTerm $t {
             $destruct-Term($t,
                 # t is VarT
@@ -300,15 +338,35 @@ constant $betaContract is export = $Y(lambdaFn(
                 -> TTerm $func, TTerm $arg {
                     $destruct-Term($func,
                         # func is VarT
-                        -> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
+                        #-> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
+                        #-> Mu { $B($liftMaybe($AppT($func)), &self)($arg) },
+                        -> Mu { $AppT_intoMaybe($func, $arg) },
                         
                         # func is AppT
                         -> Mu, Mu {
-                            my $func2 = &self($func);
-                            $_if( $is-Some($func2),
-                                -> Mu { $Some($AppT($Some2value($func2), $arg)) },
-                                -> Mu { $liftedCtor2($AppT, $func, &self, $arg) }
-                            )
+                            #my $func2 = &self($func);
+                            #$_if( $is-Some($func2),
+                            #    -> Mu { $Some($AppT($Some2value($func2), $arg)) },
+                            #    #-> Mu { $bindMaybe($func2, $B($Some, -> $func2val { $AppT($func2val, $arg) })) },
+                            #    #-> Mu { $bindMaybe($func2, $B($Some, $C($AppT, $arg))) },
+                            #    #-> Mu { $liftMaybe($C($AppT, $arg), $func2) },
+                            #
+                            #    #-> Mu { $liftedCtor2($AppT, $func, &self, $arg) }
+                            #    -> Mu { $B($liftMaybe($AppT($func)), &self)($arg) }
+                            #    -> Mu { $AppT_intoMaybe($func, $arg) }
+                            #)
+                            $destruct-Maybe(&self($func),
+                                #$liftedCtor2($AppT, $func, &self),
+                                #$B($liftMaybe($AppT($func)), &self),
+                                $AppT_intoMaybe($func),
+                                
+                                #-> $reducedFunc {
+                                #    -> $arg { $Some($AppT($reducedFunc, $arg)) }
+                                #}
+                                #-> $reducedFunc { $B($Some, $AppT($reducedFunc)) }
+                                #$B($B($Some), $AppT)
+                                $BBSomeAppT
+                            )($arg);
                         },
                         
                         # func is LamT
@@ -350,14 +408,17 @@ constant $betaContract is export = $Y(lambdaFn(
                         },
                         
                         # func is ConstT
-                        -> Mu { $liftedCtor2($AppT, $func, &self, $arg) }
+                        #-> Mu { $liftedCtor2($AppT, $func, &self, $arg) }
+                        -> Mu { $AppT_intoMaybe($func, $arg) }
                     )
                 },
 
                 # t is LamT
-                -> TTerm $var, TTerm $body {
-                    $liftedCtor2($LamT, $var, &self, $body)
-                },
+                #-> TTerm $var, TTerm $body {
+                #    $liftedCtor2($LamT, $var, &self, $body)
+                #},
+                #$liftedCtor2XX($LamT, &self),
+                $LamT_intoMaybe,
 
                 # t is ConstT
                 $K1None

@@ -115,7 +115,7 @@ constant $liftMaybe is export = lambdaFn(
     }
 );
 
-# lift2Maybe: (a -> b -> c) -> Maybe a -> Maybe b
+# lift2Maybe: (a -> b -> c) -> Maybe a -> Maybe b -> Maybe c
 constant $lift2Maybe is export = lambdaFn(
     'lift2Maybe', 'λf.λma.λmb.ma `bindMaybe` λa.mb `bindMaybe` λb.returnMaybe (f a b)', 
     # λf.λma.λmb.ma `bindMaybe` λa.mb `bindMaybe` (returnMaybe ° (f a))
