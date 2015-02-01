@@ -18,6 +18,9 @@ use Lambda::BetaReduction;
 plan 128;
 
 
+my $g = $VarT('g');
+my $h = $VarT('h');
+my $k = $VarT('k');
 my $u = $VarT('u');
 my $v = $VarT('v');
 my $x = $VarT('x');
