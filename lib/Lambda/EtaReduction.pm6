@@ -164,20 +164,4 @@ ENDOFLAMBDA
 
 # Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
 # is that we don't need to compare terms for equality then.
-constant $etaReduce is export = lambdaFn(
-    'etaReduce',
-q:to/ENDOFLAMBDA/,
-    λt.(findFP
-         (λx.None?)
-         (Maybe-lift-in etaContract)
-         (etaContract t)
-       )
-ENDOFLAMBDA
-    -> TTerm $t {
-        $findFP(
-            -> $x, TMaybe:D $y { $is-None($y) },
-            $Maybe-lift-in($etaContract),
-            $etaContract($t)
-        );
-    }
-);
+constant $etaReduce is export = $findFP-inMaybe($etaContract) does Definition('etaReduce');

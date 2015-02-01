@@ -154,3 +154,20 @@ constant $Maybe-lift-in is export = lambdaFn(
     }
 );
 
+# findFP-inMaybe: (a -> Maybe b) -> Maybe a -> Maybe b
+constant $findFP-inMaybe is export = {
+    my $stopCond = -> Mu, $v { $is-None($v) } does lambda('K None?');
+    lambdaFn(
+        'findFP-inMaybe', 'let ((stopCond (K None?))) λstepFn.B (findFP stopCond (λm.m >>= stepFn)) stepFn',
+        -> &stepFunc {
+            $B(
+                $findFP(
+                    $stopCond,
+                    #-> TMaybe:D $m { $bindMaybe($m, &stepFunc) }
+                    -> TMaybe:D $m { $m($None, &stepFunc) } does lambda("λm.m >>= {&stepFunc.gist}")
+                ),
+                &stepFunc
+            )
+        }
+    )
+}();

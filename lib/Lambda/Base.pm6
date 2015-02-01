@@ -104,22 +104,31 @@ constant $Y is export = -> $U { lambdaFn(
 # ie. the first x st. (predicate x (&method x)) == True
 # where "===" is the default end-condition.
 # ...or diverges if there is none...
-constant $findFP is export = $Y(lambdaFn(
-    'findFP', 'λself.λp.λf.λstart.let ((next (f start)) (done (p start next))) (if done start (self f next p))',
-    -> &self {
-        -> &predicate, &f, $start {
-            #say "inside findFP: "  ~ $start;
-            my $next = &f($start);
-            my $done = &predicate($start, $next);    # TODO: move findFP out of Base.pm6, st. dependency on Boolean.pm6 is made clear
-            if $done(True, False) { # TODO: once findFP is moved out of Base.pm6: implement using $_if
-                $start;
-            } else {
-                &self(&predicate, &f, $next);
-            }
-        }
+constant $findFP is export = {
+    my sub mkLambdaExpr($p, $f) {
+        "λself.λstart.let ((next ($f start)) (done ($p start next))) (if done start (self next))";
     }
-));
-
+    lambdaFn(
+        'findFP', 'λp.λf.Y ' ~ mkLambdaExpr('p', 'f'),
+        -> &predicate, &f {
+            $Y(lambdaFn(
+                Str, mkLambdaExpr(&predicate.gist, &f.gist),
+                -> &self {
+                    -> $start {
+                        #say "inside findFP: "  ~ $start;
+                        my $next = &f($start);
+                        my $done = &predicate($start, $next);    # TODO: move findFP out of Base.pm6, st. dependency on Boolean.pm6 is made clear
+                        if $done(True, False) { # TODO: once findFP is moved out of Base.pm6: implement using $_if
+                            $start;
+                        } else {
+                            &self($next);
+                        }
+                    }
+                }
+            ))
+        }
+    );
+}();
 
 # projections ---------------------------------------------------------
 
