@@ -29,6 +29,18 @@ constant $destruct-Term is export = lambdaFn(
     }
 );
 
+
+multi sub case-Term(TTerm:D $term,
+    :VarT(&onVarT)!,
+    :AppT(&onAppT)!,
+    :LamT(&onLamT)!,
+    :ConstT(&onConstT)!
+) is export {
+    $term(&onVarT, &onAppT, &onLamT, &onConstT);
+    #curry(-> TTerm:D $term { $term(&onVarT, &onAppT, &onLamT, &onConstT) });
+}
+
+
 constant $on-VarT is export = lambdaFn(
     'on-VarT', 'λthenFn.λelseFn.λterm.let ((e1 λ_.elseFn term) (e2 λ_.e1)) (term thenFn e2 e2 e1)',
     -> &thenFn, &elseFn {

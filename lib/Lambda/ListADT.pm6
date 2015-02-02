@@ -55,6 +55,17 @@ constant $if-nil is export = lambdaFn(
     }
 );
 
+multi sub case-List(TList:D $list,
+    :nil(&onNil)!,
+    :cons(&onCons)!
+) is export {
+    #$list(&onNil, &onCons);
+    $if-nil($list,
+        -> Mu { &onNil },
+        &onCons
+    )
+}
+
 # projections
 
 constant $car is export = lambdaFn(

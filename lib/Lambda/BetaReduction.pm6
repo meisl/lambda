@@ -308,10 +308,14 @@ my constant $liftedCtor2XX = lambdaFn(
     
     -> &ctor, &transform2nd {
         -> $a1, $a2 {
-            &transform2nd($a2,
-                $None,
-                -> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) }
+            case-Maybe(&transform2nd($a2),
+                :None( $None ),
+                :Some( -> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) } )
             );
+            #&transform2nd($a2,
+            #    $None,
+            #    -> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) }
+            #);
         }
     }
 );
@@ -329,101 +333,92 @@ constant $betaContract is export = $Y(lambdaFn(
     -> &self {
         my $LamT_intoMaybe = $liftedCtor2XX($LamT, &self);
         my $AppT_intoMaybe = $liftedCtor2XX($AppT, &self);
-        -> TTerm $t {
-            $destruct-Term($t,
-                # t is VarT
-                $K1None,
+        -> TTerm $t { case-Term($t,
+            :VarT( $K1None ),
 
-                # t is AppT
-                -> TTerm $func, TTerm $arg {
-                    $destruct-Term($func,
-                        # func is VarT
-                        #-> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
-                        #-> Mu { $B($liftMaybe($AppT($func)), &self)($arg) },
-                        -> Mu { $AppT_intoMaybe($func, $arg) },
-                        
-                        # func is AppT
-                        -> Mu, Mu {
-                            #my $func2 = &self($func);
-                            #$_if( $is-Some($func2),
-                            #    -> Mu { $Some($AppT($Some2value($func2), $arg)) },
-                            #    #-> Mu { $bindMaybe($func2, $B($Some, -> $func2val { $AppT($func2val, $arg) })) },
-                            #    #-> Mu { $bindMaybe($func2, $B($Some, $C($AppT, $arg))) },
-                            #    #-> Mu { $liftMaybe($C($AppT, $arg), $func2) },
-                            #
-                            #    #-> Mu { $liftedCtor2($AppT, $func, &self, $arg) }
-                            #    -> Mu { $B($liftMaybe($AppT($func)), &self)($arg) }
-                            #    -> Mu { $AppT_intoMaybe($func, $arg) }
-                            #)
-                            $destruct-Maybe(&self($func),
-                                #$liftedCtor2($AppT, $func, &self),
-                                #$B($liftMaybe($AppT($func)), &self),
-                                $AppT_intoMaybe($func),
-                                
-                                #-> $reducedFunc {
-                                #    -> $arg { $Some($AppT($reducedFunc, $arg)) }
-                                #}
-                                #-> $reducedFunc { $B($Some, $AppT($reducedFunc)) }
-                                #$B($B($Some), $AppT)
-                                $BBSomeAppT
-                            )($arg);
-                        },
-                        
-                        # func is LamT
-                        -> $funcVar, $funcBody {    # so t is a beta-redex
-                            my $alpha-problematic = $filter(
-                                # no need to filter out $var itself separately
-                                # since it cannot be free under itself in the body
-                                -> $v { $is-free-under($funcVar, $v, $funcBody) },
-                                $free-vars($arg)
-                            );
-                            $_if( $is-nil($alpha-problematic),
-                                -> Mu {
-                                    my $substituted-func = $subst($funcBody, $arg, $funcVar);
-                                    my $isSame = $is-None($substituted-func);
-                                    $_if( $isSame,   # TODO: use Maybe-or or something like that
-                                        -> Mu { $Some($funcBody) },
-                                        -> Mu {
-                                            my $K1substituted-func = $K($substituted-func);
-                                            $_if( $is-selfAppOfVar($funcVar, $funcBody),    # is t (literal Omega?) / pt 1
-                                                -> Mu {
-                                                    $on-LamT(   # is t (literal Omega?) / pt 2
-                                                        -> TTerm $argVar, TTerm $argBody {
-                                                            $_if( $is-selfAppOfVar($funcVar, $argBody),    # should be *literal* Omega
-                                                                $K1None, # func and arg are both the (literally) same omega
-                                                                $K1substituted-func  # otherwise one more step to make them so
-                                                            )
-                                                        } does lambda("λargVar.λargBody.if (selfAppOfVar? funcVar argBody) (K None) (K1substituted-func)"),
-                                                        $K1substituted-func,
-                                                        $arg
+            :ConstT( $K1None ),
+
+            #:LamT(-> TTerm $var, TTerm $body {
+            #    $liftedCtor2($LamT, $var, &self, $body)
+            #}),
+            #:LamT( $liftedCtor2XX($LamT, &self) ),
+            :LamT( $LamT_intoMaybe ),
+
+            :AppT(-> TTerm $func, TTerm $arg {
+                case-Term($func,
+                    #:VarT( -> Mu { $liftedCtor2($AppT, $func, &self, $arg) } ),
+                    #:VarT( -> Mu { $B($liftMaybe($AppT($func)), &self)($arg) } ),
+                    :VarT( -> Mu { $AppT_intoMaybe($func, $arg) } ),
+                    
+                    #:ConstT( -> Mu { $liftedCtor2($AppT, $func, &self, $arg) } ),
+                    :ConstT( -> Mu { $AppT_intoMaybe($func, $arg) } ),
+                    
+                    # func is AppT
+                    :AppT( -> Mu, Mu {
+                        #my $func2 = &self($func);
+                        #$_if( $is-Some($func2),
+                        #    -> Mu { $Some($AppT($Some2value($func2), $arg)) },
+                        #    #-> Mu { $bindMaybe($func2, $B($Some, -> $func2val { $AppT($func2val, $arg) })) },
+                        #    #-> Mu { $bindMaybe($func2, $B($Some, $C($AppT, $arg))) },
+                        #    #-> Mu { $liftMaybe($C($AppT, $arg), $func2) },
+                        #
+                        #    #-> Mu { $liftedCtor2($AppT, $func, &self, $arg) }
+                        #    -> Mu { $B($liftMaybe($AppT($func)), &self)($arg) }
+                        #    -> Mu { $AppT_intoMaybe($func, $arg) }
+                        #)
+                        case-Maybe(&self($func),
+                            #:None( $liftedCtor2($AppT, $func, &self) ),
+                            #:None( $B($liftMaybe($AppT($func)), &self) ),
+                            :None( $AppT_intoMaybe($func) ),
+                            
+                            #:Some(-> $reducedFunc {
+                            #    -> $arg { $Some($AppT($reducedFunc, $arg)) }
+                            #})
+                            #:Some(-> $reducedFunc { $B($Some, $AppT($reducedFunc)) } )
+                            #:Some( $B($B($Some), $AppT) )
+                            :Some( $BBSomeAppT )
+                        )($arg);
+                    } ),
+                    
+                    :LamT(-> $funcVar, $funcBody {    # so t is a beta-redex
+                        my $alpha-problematic = $filter(
+                            # no need to filter out $var itself separately
+                            # since it cannot be free under itself in the body
+                            -> $v { $is-free-under($funcVar, $v, $funcBody) },
+                            $free-vars($arg)
+                        );
+                        case-List($alpha-problematic,
+                            :cons(-> $hd, $tl {
+                                die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic)
+                            }),
+                            :nil(-> Mu {
+                                my $substituted-func = $subst($funcBody, $arg, $funcVar);
+                                case-Maybe($substituted-func,
+                                    :None( $Some($funcBody) ),  # TODO: make it a thunk
+                                    :Some( -> Mu {
+                                        my $K1substituted-func = $K($substituted-func);
+                                        $_if( $is-selfAppOfVar($funcVar, $funcBody),    # is t (literal Omega?) / pt 1
+                                            -> Mu { case-Term($arg,
+                                                :LamT(-> TTerm $argVar, TTerm $argBody {   # is t (literal Omega?) / pt 2
+                                                    $_if( $is-selfAppOfVar($funcVar, $argBody),    # should be *literal* Omega
+                                                        $K1None, # func and arg are both the (literally) same omega
+                                                        $K1substituted-func  # otherwise one more step to make them so
                                                     )
-                                                },
-                                                $K1substituted-func
-                                            )
-                                        }
-                                    )
-                                },
-                                -> Mu { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
-                            )
-                        },
-                        
-                        # func is ConstT
-                        #-> Mu { $liftedCtor2($AppT, $func, &self, $arg) }
-                        -> Mu { $AppT_intoMaybe($func, $arg) }
-                    )
-                },
-
-                # t is LamT
-                #-> TTerm $var, TTerm $body {
-                #    $liftedCtor2($LamT, $var, &self, $body)
-                #},
-                #$liftedCtor2XX($LamT, &self),
-                $LamT_intoMaybe,
-
-                # t is ConstT
-                $K1None
-            )
-        }
+                                                }),
+                                                :VarT( $K1substituted-func ),
+                                                :AppT( -> Mu, Mu { $substituted-func } ),
+                                                :ConstT( $K1substituted-func )
+                                            )},
+                                            $K1substituted-func
+                                        )
+                                    })
+                                )
+                            }),
+                        )(Mu)
+                    })
+                )
+            })
+        )}
     }
 ));
 

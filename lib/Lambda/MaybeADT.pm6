@@ -4,12 +4,14 @@ use Lambda::Base;
 use Lambda::BaseP6;
 use Lambda::Boolean;
 
+use Lambda::P6Currying;
+
+
 module Lambda::MaybeADT;
 # data Maybe = None
 #            | Some value:_
 role TMaybe is export {
 }
-
 
 
 # pattern-matching ------------------------------------------------------------
@@ -20,6 +22,13 @@ constant $destruct-Maybe is export = lambdaFn(
         $m($onNone, $onSome)
     }
 );
+
+multi sub case-Maybe(TMaybe:D $maybe,
+    :None(&onNone)!,
+    :Some(&onSome)!
+) is export {
+    $maybe(&onNone, &onSome);
+}
 
 
 # constructors
