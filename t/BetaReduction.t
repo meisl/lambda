@@ -15,7 +15,7 @@ use Lambda::LambdaGrammar;
 # module under test:
 use Lambda::BetaReduction;
 
-plan 128;
+plan 131;
 
 
 my $g = $VarT('g');
@@ -27,6 +27,8 @@ my $x = $VarT('x');
 my $y = $VarT('y');
 my $z = $VarT('z');
 my $c = $ConstT('c');
+
+my $yz = $AppT($y, $z);
 
 
 # [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
@@ -128,6 +130,8 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
         $omegaY                                                     => $false,  # (λy.y y)
         $OmegaYY                                                    => $true,   # ((λy.y y) (λy.y y))       # a redex, contracting to itself
         $OmegaXY                                                    => $true,   # ((λx.x x) (λy.y y))       # a redex, contracting to itself (module alpha-conv)
+        
+        $AppT($LamT($x, $AppT($x, $x)), $yz)                        => $true,   # ((λx.(x x)) (y z)) # only "half of" Omega
     );
 
 }
@@ -187,6 +191,8 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
         $omegaY                                                     => $None,               # (λy.y y)
         $OmegaYY                                                    => $None,               # ((λy.y y) (λy.y y))   # a redex, contracting to itself
         $OmegaXY                                                    => $Some($OmegaYY),     # ((λx.x x) (λy.y y))   # a redex, contracting to itself (module alpha-conv)
+        
+        $AppT($LamT($x, $AppT($x, $x)), $yz)                        => $Some($AppT($yz, $yz)),  # ((λx.(x x)) (y z)) # only "half of" Omega
     );
 
     my ($t, $bcd1, $bcd2, $expectedBrd);
@@ -236,6 +242,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
         }
     }
 
+
     betaReducesTo(
         $x                                                          => $None,  # x
         $c                                                          => $None,  # "c"
@@ -267,6 +274,8 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
         $omegaY                                                     => $None,               # (λy.y y)
         $OmegaYY                                                    => $None,               # ((λy.y y) (λy.y y))   # a redex, contracting to itself
         $OmegaXY                                                    => $Some($OmegaYY),     # ((λx.x x) (λy.y y))   # a redex, contracting to itself (module alpha-conv)
+        
+        $AppT($LamT($x, $AppT($x, $x)), $yz)                        => $Some($AppT($yz, $yz)),  # ((λx.(x x)) (y z)) # only "half of" Omega
     );
 }
 
