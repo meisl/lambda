@@ -11,6 +11,7 @@ use Lambda::BetaReduction;
 plan 3;
 
 
+my $dc = $VarT('_');    # don't-care variable
 my $g = $VarT('g');
 my $h = $VarT('h');
 my $k = $VarT('k');
@@ -23,7 +24,6 @@ my $c = $ConstT('c');
 
 
 { # profiling betaReduce
-    my $dc = $VarT('_');    # don't-care variable
     my $f1 = $VarT('f1');   # field 1
     my $f2 = $VarT('f2');   # field 2
     my $f3 = $VarT('f3');   # field 3

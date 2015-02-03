@@ -16,26 +16,26 @@ role TMaybe is export {
 
 # pattern-matching ------------------------------------------------------------
 
-constant $destruct-Maybe is export = lambdaFn(
-    'destruct-Maybe', 'λmaybe.λcases.term cases',
-    -> TMaybe:D $m, $onNone, $onSome { 
-        $m($onNone, $onSome)
-    }
-);
-
 multi sub case-Maybe(TMaybe:D $maybe,
-    :None(&onNone)!,
-    :Some(&onSome)!
+    :None($onNone)!,
+    :Some($onSome)!
 ) is export {
-    $maybe(&onNone, &onSome);
+    $maybe($onNone, $onSome);
 }
 
+multi sub case-Maybe(|args) {
+    die "error applying case-Maybe: " ~ args.perl;
+}
 
 # constructors
 
 constant $None is export = lambdaFn(
     'None', 'λonNone.λonSome.onNone',
-    -> $onNone, $onSome { $onNone }
+    -> $onNone, $onSome {
+        ($onNone ~~ Block) && ($onNone.signature.arity == 0) 
+        ?? $onNone()    # simulate lazy evaluation by passing a thunk (needed only for ctors of arity 0)
+        !! $onNone
+    }
 ) does TMaybe;
 
 constant $Some is export = lambdaFn(
@@ -66,16 +66,12 @@ constant $is-Some is export = lambdaFn(
 # projections
 
 constant $Some2value is export = lambdaFn(
-    'Some->value', 'λm.if (Some? m) (m π2->2) (error "cannot get value of None")',
+    'Some->value', 'λm.case m ((Some v) v) (None (error "cannot get value of None"))',
     -> TMaybe:D $m {
-        #$_if( $is-Some($m),
-        #    -> $_ { $m(Mu, $pi1o1) },
-        #    -> $_ {  }
-        #)
-        $destruct-Maybe($m,
-            -> Mu { die "cannot get value of None" },
-            $pi1o2
-        )(Mu);
+        case-Maybe($m,
+            None => { die "cannot get value of None" },
+            Some => $I
+        );
     }
 );
 
@@ -84,14 +80,11 @@ constant $Some2value is export = lambdaFn(
 
 # Maybe->Str: Maybe a -> Str
 constant $Maybe2Str is export = lambdaFn(
-    'Maybe->Str', 'λm.(if (None? m) "None" (~ (~ "(Some " (->str (Some->value m))) ")"))',
+    'Maybe->Str', 'λm.case m (None "None") ((Some v) (~ (~ "(Some " (->str v)) ")"))',
     -> TMaybe:D $m {
-        $destruct-Maybe($m,
-            'None',
-            -> $v {
-              my $vStr = $v.?symbol // $v.?lambda // $v.perl;
-              "(Some $vStr)";
-            }
+        case-Maybe($m,
+            None => 'None',
+            Some => -> $v { "(Some {$v.?symbol // $v.?lambda // $v.perl})" }
         )
     }
 );
@@ -106,9 +99,9 @@ constant $returnMaybe is export := $Some;
 constant $bindMaybe is export = lambdaFn(
     'bindMaybe', 'λm.λf.if (None? m) (K None) (λ_.f (Some->value m))',
     -> TMaybe:D $m, $f {
-        $destruct-Maybe($m,
-            $None,
-            $f
+        case-Maybe($m,
+            None => $None,
+            Some => $f
         )
     }
 );
@@ -142,9 +135,9 @@ constant $lift2Maybe is export = lambdaFn(
 constant $Maybe2valueWithDefault is export = lambdaFn(
     'Maybe->valueWithDefault', 'λm.λdflt.if (None? m) (K dflt) (λ_.Some->value m)',
     -> TMaybe:D $m, $dflt {
-        $destruct-Maybe($m,
-            $dflt,
-            $pi1o1
+        case-Maybe($m,
+            None => $dflt,
+            Some => $I
         )
     }
 );
@@ -155,9 +148,9 @@ constant $Maybe-lift-in is export = lambdaFn(
     -> &f { lambdaFn(
         Str, 'Maybe-lift-in ' ~ &f.gist,
         -> TMaybe:D $m {
-            $destruct-Maybe($m,
-                $None,
-                &f
+            case-Maybe($m,
+                None => $None,
+                Some => &f
             )
         } )
     }

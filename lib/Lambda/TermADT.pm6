@@ -37,7 +37,6 @@ multi sub case-Term(TTerm:D $term,
     :ConstT(&onConstT)!
 ) is export {
     $term(&onVarT, &onAppT, &onLamT, &onConstT);
-    #curry(-> TTerm:D $term { $term(&onVarT, &onAppT, &onLamT, &onConstT) });
 }
 
 

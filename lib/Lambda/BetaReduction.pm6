@@ -309,8 +309,8 @@ my constant $liftedCtor2XX = lambdaFn(
     -> &ctor, &transform2nd {
         -> $a1, $a2 {
             case-Maybe(&transform2nd($a2),
-                :None( $None ),
-                :Some( -> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) } )
+                :None($None),
+                :Some(-> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) })
             );
             #&transform2nd($a2,
             #    $None,
@@ -369,14 +369,17 @@ constant $betaContract is export = $Y(lambdaFn(
                         case-Maybe(&self($func),
                             #:None( $liftedCtor2($AppT, $func, &self) ),
                             #:None( $B($liftMaybe($AppT($func)), &self) ),
-                            :None( $AppT_intoMaybe($func) ),
+
+                            #:None( -> $arg { $AppT_intoMaybe($func, $arg) } ),
+                            #:None( $AppT_intoMaybe($func) ),
+                            None => { $AppT_intoMaybe($func) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
                             
                             #:Some(-> $reducedFunc {
                             #    -> $arg { $Some($AppT($reducedFunc, $arg)) }
                             #})
                             #:Some(-> $reducedFunc { $B($Some, $AppT($reducedFunc)) } )
                             #:Some( $B($B($Some), $AppT) )
-                            :Some( $BBSomeAppT )
+                            Some => $BBSomeAppT
                         )($arg);
                     } ),
                     
@@ -394,8 +397,8 @@ constant $betaContract is export = $Y(lambdaFn(
                             :nil(-> Mu {
                                 my $substituted-func = $subst($funcBody, $arg, $funcVar);
                                 case-Maybe($substituted-func,
-                                    :None( $Some($funcBody) ),  # TODO: make it a thunk
-                                    :Some( -> Mu {
+                                    None => { $Some($funcBody) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
+                                    Some => -> Mu {
                                         my $K1substituted-func = $K($substituted-func);
                                         $_if( $is-selfAppOfVar($funcVar, $funcBody),    # is t (literal Omega?) / pt 1
                                             -> Mu { case-Term($arg,
@@ -411,7 +414,7 @@ constant $betaContract is export = $Y(lambdaFn(
                                             )},
                                             $K1substituted-func
                                         )
-                                    })
+                                    }
                                 )
                             }),
                         )(Mu)
