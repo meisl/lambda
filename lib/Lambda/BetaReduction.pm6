@@ -27,18 +27,18 @@ q:to/ENDOFLAMBDA/,
           (error (~ "unknown TTerm" (Term->Str t)))
 ENDOFLAMBDA
     -> TTerm:D $t {
-        $destruct-Term($t,
-            $K1false,       # onVarT
-            -> TTerm $func, TTerm $arg {
+        case-Term($t,
+            VarT   => $K1false,
+            ConstT => $K1false,
+            LamT   => $K2false,
+            AppT   => -> TTerm $func, TTerm $arg {
                 # (P Q) is a β-redex if P is of form (λx.B).
                 # If so, it β-contracts to [P/x] B, ie P substituted for x
                 # in the λ's body but beware: any free var in P
                 # must NOT be accidentally captured by a binding in B.
                 # If that would be the case, we need to α-convert before.
                 $is-LamT($func)
-            },
-            $K2false,       # onLamT
-            $K1false        # onConstT
+            }
         )
     }
 );
@@ -54,9 +54,9 @@ q:to/ENDOFLAMBDA/,
 ENDOFLAMBDA
     -> &self {
         -> TTerm $t {
-            $_if( $is-betaRedex($t),
-                -> $_ { $true },
-                -> $_ { $exists(&self, $Term2children($t)) }
+            $_if( $is-betaRedex($t),       # short-circuit OR
+                $K1true,
+                -> Mu { $exists(&self, $Term2children($t)) }
             )
             # self.isBetaRedex || ?self.children.map(*.isBetaReducible).any;
         }
@@ -91,13 +91,16 @@ q:to/ENDOFLAMBDA/,
 
 ENDOFLAMBDA
     -> TTerm $t {
-        $destruct-Term($t,
-            $K1nil,     # t is a VarT
-            -> TTerm $func, TTerm $arg {    # t is an AppT
-                $destruct-Term($func,
-                    $K1nil,     # func is a VarT
-                    $K2nil,     # func is an AppT
-                    -> TTerm $var, TTerm $body {    # func is a LamT, so t is a beta-redex...
+        case-Term($t,
+            VarT   => $K1nil,
+            ConstT => $K1nil,
+            LamT   => $K2nil,
+            AppT   => -> TTerm $func, TTerm $arg {    # t is an AppT
+                case-Term($func,
+                    VarT   => $K1nil,
+                    ConstT => $K1nil,
+                    AppT   => $K2nil,
+                    LamT   => -> TTerm $var, TTerm $body {    # func is a LamT, so t is a beta-redex...
                         $filter(
                             -> $v {
                               # no need to filter out $var itself separately
@@ -106,13 +109,10 @@ ENDOFLAMBDA
                             },
                             $free-vars($arg)
                         );
-                    },
-                    $K1nil,     # func is a ConstT
+                    }
                 )
-            },
-            $K2nil,     # t is a LamT
-            $K1nil      # t is a ConstT
-        );
+            }
+        )
     }
 );
 
@@ -133,20 +133,20 @@ q:to/ENDOFLAMBDA/,
 ENDOFLAMBDA
     -> &self {
         -> TTerm $t, TList $keepfreevars {
-            $destruct-Term($t,
-                $K1nil, # onVarT
-                -> TTerm $func, TTerm $arg {    # onAppT
+            case-Term($t,
+                VarT   => $K1nil,
+                ConstT => $K1nil,
+                AppT   => -> TTerm $func, TTerm $arg {
                     $append(&self($func, $keepfreevars), &self($arg, $keepfreevars));
                 },
-                -> TTerm $var, TTerm $body {    # onLamT
+                LamT   => -> TTerm $var, TTerm $body {
                     my $vName = $VarT2name($var);
                     my $fromBody = &self($body, $keepfreevars);
                     $_if( $exists( -> $v { convertP6Bool2TBool($VarT2name($v) eq $vName) }, $keepfreevars),
                         -> $_ { $cons($t, $fromBody) },
                         -> $_ { $fromBody },
                     );
-                },
-                $K1nil, # onConstT
+                }
             );
         }
     }
@@ -274,7 +274,6 @@ ENDOFLAMBDA
     }
 ));
 
-my constant $K1None = $K($None);
 my constant $liftedCtor2 = lambdaFn(
     Str, 'λctor.λa1.λtransform2nd.λa2.let ((a2-transformed (transform2nd a2))) if (None? a2-transformed) None (Some (ctor a1 (Some->value a2-transformed)))',
     -> &ctor, TTerm $a1, &transform2nd {

@@ -25,21 +25,21 @@ constant $is-free-varName is export = $Y(lambdaFn(
 ENDOFLAMBDA
     -> &self {
         -> $equalsVarName, TTerm $t {
-            $destruct-Term($t,
-                $equalsVarName,                 # t is a VarT
-                -> TTerm $func, TTerm $arg {    # t is an AppT
+            case-Term($t,
+                ConstT => $K1false,
+                VarT   => $equalsVarName,
+                AppT   => -> TTerm $func, TTerm $arg {
                     $_if( &self($equalsVarName, $func),       # short-circuit OR
                         $K1true,
                         -> Mu { &self($equalsVarName, $arg) }
                     )
                 },
-                -> TTerm $lamVar, TTerm $body { # t is a LamT
+                LamT   => -> TTerm $lamVar, TTerm $body {
                     $_if( $equalsVarName($VarT2name($lamVar)),
                         $K1false,
                         -> Mu { &self($equalsVarName, $body) }
                     )
-                },
-                $K1false    # t is a ConstT
+                }
             );
         }
     }
@@ -82,15 +82,16 @@ constant $is-free-under is export = $Y(lambdaFn(
 ENDOFLAMBDA
     -> &self {
         -> TTerm $var, TTerm $binder, TTerm $t {
-            $destruct-Term($t,
-                $K1false,                   #   t is a VarT
-                -> TTerm $func, $arg {      #   t is an AppT
+            case-Term($t,
+                VarT   => $K1false,
+                ConstT => $K1false,
+                AppT   => -> TTerm $func, $arg {
                     $_if( &self($var, $binder, $func),  # short-circuit OR
                         $K1true,
                         -> Mu { &self($var, $binder, $arg) }
                     )
                 },
-                -> TTerm $lamVar, $body {   #   t is an AppT
+                LamT   => -> TTerm $lamVar, $body {
                     my $lamVarName = $VarT2name($lamVar);
                     my $equalsLamVarName = -> Str $name {
                         convertP6Bool2TBool($lamVarName eq $name)
@@ -106,8 +107,7 @@ ENDOFLAMBDA
                             )
                         },
                     );
-                },
-                $K1false                    #   t is a ConstT
+                }
             );
         }
     }
@@ -146,27 +146,28 @@ constant $free-var is export = $Y(lambdaFn(
 ENDOFLAMBDA
     -> &self {
         -> Str:D $name, TTerm $t {
-            if convertTBool2P6Bool($is-ConstT($t)) {
-                $None
-            } elsif convertTBool2P6Bool($is-VarT($t)) {
-                $_if( convertP6Bool2TBool($VarT2name($t) eq $name),
-                    -> $_ { $Some($t) },
-                    -> $_ { $None }
-                )
-            } elsif convertTBool2P6Bool($is-AppT($t)) {
-                my $fromFunc = &self($name, $AppT2func($t));
-                $_if( $is-Some($fromFunc),
-                    -> $_ { $fromFunc },
-                    -> $_ { &self($name, $AppT2arg($t)) }
-                )
-            } elsif convertTBool2P6Bool($is-LamT($t)) {
-                $_if( convertP6Bool2TBool($VarT2name($LamT2var($t)) eq $name),
-                    -> $_ { $None },
-                    -> $_ { &self($name, $LamT2body($t)) }
-                )
-            } else {
-                die "fell off type-dispatch with type " ~ $t.WHAT.perl
-            }
+            case-Term($t,
+                ConstT   => $K1None,
+                VarT     => -> Str $thisName {
+                    $_if( convertP6Bool2TBool($name eq $thisName),
+                        -> Mu { $Some($t) },
+                        $K1None
+                    )
+                },
+                AppT => -> TTerm $func, TTerm $arg {
+                    my $fromFunc = &self($name, $func);
+                    case-Maybe($fromFunc,
+                        None => { &self($name, $arg) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
+                        Some => -> Mu { $fromFunc }
+                    )
+                },
+                LamT => -> TTerm $var, TTerm $body {
+                    $_if( convertP6Bool2TBool($name eq $VarT2name($var)),
+                        $K1None,
+                        -> Mu { &self($name, $body) }
+                    )
+                }
+            )
         }
     }
 ));
@@ -205,9 +206,10 @@ constant $___free-vars is export = $Y(lambdaFn(
 ENDOFLAMBDA
     -> &self {
         -> TTerm $t -->TList{
-            $destruct-Term($t,
-                -> Mu { $cons($t, $nil) },      # t is a VarT
-                -> TTerm $func, TTerm $arg {    # t is an AppT
+            case-Term($t,
+                VarT   => -> Mu { $cons($t, $nil) },
+                ConstT => $K1nil,
+                AppT   => -> TTerm $func, TTerm $arg {
                     my $argFVs      = &self($arg);
                     my $argFVnames  = $map($VarT2name, $argFVs);
                     my $notInArgFVs = -> $e { 
@@ -226,14 +228,13 @@ ENDOFLAMBDA
                     #my $funcFVs     = $filter($notInArgFVs, &self($func));
                     #$foldl($swap-args($cons), $argFVs, $funcFVs);
                 },
-                -> TTerm $var, TTerm $body {    # t is a LamT
+                LamT   => -> TTerm $var, TTerm $body {
                     my $lbName      = $VarT2name($var);
                     my $isnt-binder = -> $e { convertP6Bool2TBool($VarT2name($e) ne $lbName) };
                     $filter($isnt-binder, &self($body));
 
                     #$filter($B($not, $Term-eq($var)), &self($body));
-                },
-                $K1nil                          # t is a ConstT
+                }
             );
         }
     }
@@ -245,8 +246,9 @@ constant $free-vars-internal = $Y(lambdaFn(
     -> &self {
         -> TList:D $bindersAbove, TList:D $results, TTerm:D $t -->TList{
             my $K1results = -> Mu { $results };
-            $destruct-Term($t,
-                -> Str:D $varName {                 # t is a VarT
+            case-Term($t,
+                ConstT => $K1results,   # t is a ConstT ~> leave results as is
+                VarT => -> Str:D $varName {
                     my $eqVar = -> TTerm:D $var {
                         convertP6Bool2TBool($varName eq $VarT2name($var))
                     };
@@ -260,15 +262,14 @@ constant $free-vars-internal = $Y(lambdaFn(
                         }
                     )
                 },
-                -> TTerm:D $func, TTerm:D $arg {    # t is an AppT
+                AppT => -> TTerm:D $func, TTerm:D $arg {    # t is an AppT
                     my $freeInArg = &self($bindersAbove, $results, $arg);
                     &self($bindersAbove, $freeInArg, $func);
                 },
-                -> TTerm:D $var, TTerm:D $body {    # t is a LamT
+                LamT => -> TTerm:D $var, TTerm:D $body {    # t is a LamT
                     &self($cons($var, $bindersAbove), $results, $body);
-                },
-                $K1results                          # t is a ConstT ~> leave results as is
-            );
+                }
+            )
         }
     }
 ));

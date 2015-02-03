@@ -38,6 +38,10 @@ constant $None is export = lambdaFn(
     }
 ) does TMaybe;
 
+constant $K1None is export = $K($None);
+constant $K2None is export = lambdaFn(Str, 'λ_.λ_.None', -> Mu, Mu { $None });
+
+
 constant $Some is export = lambdaFn(
     'Some', 'λvalue.λonNone.λonSome.onSome value',
     -> $v {

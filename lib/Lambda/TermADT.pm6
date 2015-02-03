@@ -22,14 +22,6 @@ role TTerm is export {
 
 # pattern-matching ------------------------------------------------------------
 
-constant $destruct-Term is export = lambdaFn(
-    'destruct-Term', 'λterm.λcases.term cases',
-    -> TTerm:D $t, &onVarT, &onAppT, &onLamT, &onConstT { 
-        $t(&onVarT, &onAppT, &onLamT, &onConstT)
-    }
-);
-
-
 multi sub case-Term(TTerm:D $term,
     :VarT(&onVarT)!,
     :AppT(&onAppT)!,
@@ -37,6 +29,10 @@ multi sub case-Term(TTerm:D $term,
     :ConstT(&onConstT)!
 ) is export {
     $term(&onVarT, &onAppT, &onLamT, &onConstT);
+}
+
+multi sub case-Term(|args) {
+    die "error applying case-Term: " ~ args.perl;
 }
 
 
@@ -49,11 +45,11 @@ constant $on-VarT is export = lambdaFn(
             -> TTerm $term {
                 my $else1 = -> Mu { &elseFn($term) };
                 my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
-                $destruct-Term($term,
-                    &thenFn,
-                    $else2,
-                    $else2,
-                    $else1
+                case-Term($term,
+                    VarT   => &thenFn,
+                    AppT   => $else2,
+                    LamT   => $else2,
+                    ConstT => $else1
                 )
             }
         )
@@ -69,11 +65,11 @@ constant $on-AppT is export = lambdaFn(
             -> TTerm $term {
                 my $else1 = -> Mu { &elseFn($term) };
                 my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
-                $destruct-Term($term,
-                    $else1,
-                    &thenFn,
-                    $else2,
-                    $else1
+                case-Term($term,
+                    VarT   => $else1,
+                    AppT   => &thenFn,
+                    LamT   => $else2,
+                    ConstT => $else1
                 )
             }
         )
@@ -89,11 +85,11 @@ constant $on-LamT is export = lambdaFn(
             -> TTerm $term {
                 my $else1 = -> Mu { &elseFn($term) };
                 my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
-                $destruct-Term($term,
-                    $else1,
-                    $else2,
-                    &thenFn,
-                    $else1
+                case-Term($term,
+                    VarT   => $else1,
+                    AppT   => $else2,
+                    LamT   => &thenFn,
+                    ConstT => $else1
                 )
             }
         )
@@ -109,11 +105,11 @@ constant $on-ConstT is export = lambdaFn(
             -> TTerm $term {
                 my $else1 = -> Mu { &elseFn($term) };
                 my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
-                $destruct-Term($term,
-                    $else1,
-                    $else2,
-                    $else2,
-                    &thenFn
+                case-Term($term,
+                    VarT   => $else1,
+                    AppT   => $else2,
+                    LamT   => $else2,
+                    ConstT => &thenFn
                 )
             }
         )
@@ -162,17 +158,17 @@ constant $LamT is export = lambdaFn(
     'LamT', 'λvar.λbody.λonVarT.λonAppT.λonLamT.λonConstT.onLamT var body',
     {   my $e = -> $t { die "first arg to LamT ctor must be a VarT - got instead $t" };
         -> TTerm:D $var, TTerm:D $body -->TTerm{
-            $destruct-Term($var,
-                -> Str $name {
+            case-Term($var,
+                VarT => -> Str $name {
                     lambdaFn(
                         Str, "(LamT $var $body)",
                         -> &onVarT, &onAppT, &onLamT, &onConstT { &onLamT($var, $body) }
                     ) does TTerm;
             
                 },
-                -> TTerm $func, TTerm $arg  { $e($var) },
-                -> TTerm $var,  TTerm $body { $e($var) },
-                -> Any $value               { $e($var) }
+                AppT   => -> TTerm $func, TTerm $arg  { $e($var) },
+                LamT   => -> TTerm $var,  TTerm $body { $e($var) },
+                ConstT => -> Any $value               { $e($var) }
             )
         }
     }()
@@ -195,8 +191,8 @@ constant $Term-eq is export = $Y(lambdaFn(
     'Term-eq?', 'NYI',
     -> &self {
         -> TTerm $s, TTerm $t -->TBool{
-            $destruct-Term($s,
-                -> Str $sName {
+            case-Term($s,
+                VarT => -> Str $sName {
                     $on-VarT(
                         -> Str $tName {
                             convertP6Bool2TBool($sName eq $tName)
@@ -204,14 +200,14 @@ constant $Term-eq is export = $Y(lambdaFn(
                         $K1false,
                         $t
                     )
-                    #$destruct-Term($t,
-                    #    -> Str $tName { convertP6Bool2TBool($sName eq $tName) },
-                    #    $K2false,
-                    #    $K2false,
-                    #    $K1false
+                    #case-Term($t,
+                    #    VarT => -> Str $tName { convertP6Bool2TBool($sName eq $tName) },
+                    #    AppT => $K2false,
+                    #    LamT => $K2false,
+                    #    ConstT => $K1false
                     #)
                 },
-                -> TTerm $sFunc, TTerm $sArg {
+                AppT => -> TTerm $sFunc, TTerm $sArg {
                     $on-AppT(
                         -> TTerm $tFunc, TTerm $tArg {
                             $_and(
@@ -222,19 +218,19 @@ constant $Term-eq is export = $Y(lambdaFn(
                         $K1false,
                         $t
                     );
-                    #$destruct-Term($t,
-                    #    $K1false,
-                    #    -> TTerm $tFunc, TTerm $tArg {
+                    #case-Term($t,
+                    #    VarT => $K1false,
+                    #    AppT => -> TTerm $tFunc, TTerm $tArg {
                     #        $_and(
                     #            &self($sFunc, $tFunc),
                     #            &self($sArg,  $tArg)
                     #        )
                     #    },
-                    #    $K2false,
-                    #    $K1false
+                    #    LamT => $K2false,
+                    #    ConstT => $K1false
                     #)
                 },
-                -> TTerm $sVar, TTerm $sBody {
+                LamT => -> TTerm $sVar, TTerm $sBody {
                     $on-LamT(
                         -> TTerm $tVar, TTerm $tBody {
                             $_and(
@@ -245,19 +241,19 @@ constant $Term-eq is export = $Y(lambdaFn(
                         $K1false,
                         $t
                     );
-                    #$destruct-Term($t,
-                    #    $K1false,
-                    #    $K2false,
-                    #    -> TTerm $tVar, TTerm $tBody {
+                    #case-Term($t,
+                    #    VarT => $K1false,
+                    #    AppT => $K2false,
+                    #    LamT => -> TTerm $tVar, TTerm $tBody {
                     #        $_and(
                     #            &self($sVar,  $tVar),
                     #            &self($sBody, $tBody)
                     #        )
                     #    },
-                    #    $K1false
+                    #    ConstT => $K1false
                     #)
                 },
-                -> Any $sValue {
+                ConstT => -> Any $sValue {
                     $on-ConstT(
                         -> Any $tValue {
                             die "NYI: equality test for $sValue, $tValue"
@@ -265,11 +261,11 @@ constant $Term-eq is export = $Y(lambdaFn(
                         $K1false,
                         $t
                     );
-                    #$destruct-Term($t,
-                    #    $K1false,
-                    #    $K2false,
-                    #    $K2false,
-                    #    -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
+                    #case-Term($t,
+                    #    VarT => $K1false,
+                    #    AppT => $K2false,
+                    #    LamT => $K2false,
+                    #    ConstT => -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
                     #)
                 },
 
@@ -387,20 +383,20 @@ q:to/ENDOFLAMBDA/,
 ENDOFLAMBDA
     -> &self {
         -> TTerm:D $t -->Str{
-            $destruct-Term($t,
-                $id,                                 # onVarT
-                -> TTerm $func, TTerm$arg -->Str{    # onAppT
+            case-Term($t,
+                VarT => $I, # just return the name
+                AppT => -> TTerm $func, TTerm$arg -->Str{
                     my $fSrc = &self($func);
                     my $aSrc = &self($arg);
                     "($fSrc $aSrc)"
                 },
-                -> TTerm $var, TTerm $body -->Str{    # onLamT
+                LamT => -> TTerm $var, TTerm $body -->Str{
                     my $vSrc = &self($var);
                     my $bSrc = &self($body);
                     "(λ$vSrc.$bSrc)"
 
                 },
-                -> Any $val -->Str{           # onConstT
+                ConstT => -> Any $val -->Str{
                     $val.perl    #   $B($pi1o2, *.perl)
                 }
             )
@@ -421,15 +417,15 @@ q:to/ENDOFLAMBDA/,
         ))))
 ENDOFLAMBDA
     -> TTerm:D $t -->TList{
-        $destruct-Term($t,
-            -> $name  { $nil }, # onVarT
-            -> $f, $a {         # onAppT
+        case-Term($t,
+            ConstT => $K1nil,
+            VarT   => $K1nil,
+            AppT => -> $f, $a {
                 $cons($f, $cons($a, $nil))
             },
-            -> $v, $b {         # onLamT
+            LamT => -> $v, $b {
                 $cons($v, $cons($b, $nil))
-            },
-            -> $value { $nil } # onConstT
+            }
         )
     }
 );

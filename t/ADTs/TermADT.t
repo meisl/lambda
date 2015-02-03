@@ -10,7 +10,7 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::TermADT;
 
-plan 150;
+plan 147;
 
 
 # Term-eq ---------------------------------------------------------------------
@@ -91,11 +91,6 @@ plan 150;
 # pattern matching ------------------------------------------------------------
 
 { # destruct-Term
-    is_properLambdaFn($destruct-Term);
-
-    is $destruct-Term.symbol, 'destruct-Term', '$destruct-Term.symbol';
-    is $destruct-Term.Str,    'destruct-Term', '$destruct-Term.Str';
-
     my (&onVarT, &onAppT, &onLamT, &onConstT);
     {
         my &thenFn1 = curry(-> Str $which, $field1 {
@@ -123,11 +118,11 @@ plan 150;
 
     subtest( {  # when-VarT alone
         sub match(TTerm:D $t) {
-            $destruct-Term($t,
-                &onVarT,
-                &onAppT,
-                &onLamT,
-                &onConstT,
+            case-Term($t,
+                VarT => &onVarT,
+                AppT => &onAppT,
+                LamT => &onLamT,
+                ConstT => &onConstT
             )
         };
 
