@@ -4,8 +4,9 @@ use Test;
 use Lambda::BaseP6;
 
 
-# module under test:
+# modules under test:
 use Test::Util;
+use Test::Util_Lambda;
 
 plan 1;
 

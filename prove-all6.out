@@ -1,30 +1,30 @@
-[16:39:52] t\ADTs\Maybe-extra.t ....... ok    18130 ms
-[16:40:11] t\BetaReduction-perf.t ..... 4/5 # 13.6 sec consumed for ß-reduction
-[16:40:11] t\BetaReduction-perf.t ..... ok    37319 ms
-[16:40:48] t\Base.t ................... ok    22906 ms
-[16:41:11] t\ADTs\TermADT.t ........... ok    24366 ms
-[16:41:35] t\BetaReduction.t .......... ok    46625 ms
-[16:42:22] t\EtaReduction.t ........... ok    38156 ms
-[16:43:00] t\FreeVars.t ............... ok    27515 ms
-[16:43:28] t\ADTs\TermADT-extra.t ..... ok    31759 ms
-[16:43:59] t\VarT.t ................... ok    18156 ms
-[16:44:18] t\ADTs\ListADT-cXr.t ....... ok    20472 ms
-[16:44:38] t\Conversion\Conversion.t .. ok    19500 ms
-[16:44:58] t\ADTs\ListADT-extra.t ..... ok    27365 ms
-[16:45:25] t\ADTs\MaybeADT.t .......... ok    19078 ms
-[16:45:44] t\ADTs\Streams.t ........... ok    17864 ms
-[16:46:02] t\Test\Util.t .............. ok    17578 ms
-[16:46:19] t\ADTs\PairADT.t ........... ok    18895 ms
-[16:46:38] t\ADTs\ListADT.t ........... ok    19640 ms
-[16:46:58] t\Misc.t ................... ok    34488 ms
-[16:47:32] t\P6Currying.t ............. ok    19187 ms
-[16:47:52] t\Substitution.t ........... ok    30670 ms
-[16:48:22] t\Boolean.t ................ ok    19250 ms
-[16:48:42] t\Grammar.t ................ ok    18176 ms
-[16:49:00] t\ChurchNat.t .............. ok    33359 ms
-[16:49:33] t\LambdaInP6.t ............. ok    20484 ms
-[16:49:54] t\BaseP6.t ................. ok    18109 ms
-[16:50:12]
+[00:25:22] t\ADTs\Maybe-extra.t ....... ok    17863 ms
+[00:25:40] t\BetaReduction-perf.t ..... 3/5 # 13.8 sec consumed for ß-reduction
+[00:25:40] t\BetaReduction-perf.t ..... ok    37583 ms
+[00:26:18] t\Base.t ................... ok    22640 ms
+[00:26:40] t\ADTs\TermADT.t ........... ok    24099 ms
+[00:27:04] t\BetaReduction.t .......... ok    45750 ms
+[00:27:50] t\EtaReduction.t ........... ok    34531 ms
+[00:28:25] t\FreeVars.t ............... ok    25468 ms
+[00:28:50] t\ADTs\TermADT-extra.t ..... ok    30678 ms
+[00:29:21] t\VarT.t ................... ok    17781 ms
+[00:29:39] t\ADTs\ListADT-cXr.t ....... ok    20577 ms
+[00:29:59] t\Conversion\Conversion.t .. ok    15265 ms
+[00:30:15] t\ADTs\ListADT-extra.t ..... ok    27426 ms
+[00:30:42] t\ADTs\MaybeADT.t .......... ok    18906 ms
+[00:31:01] t\ADTs\Streams.t ........... ok    13928 ms
+[00:31:15] t\Test\Util.t .............. ok    17625 ms
+[00:31:32] t\ADTs\PairADT.t ........... ok    19114 ms
+[00:31:52] t\ADTs\ListADT.t ........... ok    19187 ms
+[00:32:11] t\Misc.t ................... ok    34630 ms
+[00:32:45] t\P6Currying.t ............. ok     4750 ms
+[00:32:50] t\Substitution.t ........... ok    30176 ms
+[00:33:20] t\Boolean.t ................ ok    18843 ms
+[00:33:39] t\Grammar.t ................ ok    18145 ms
+[00:33:57] t\ChurchNat.t .............. ok    32625 ms
+[00:34:30] t\LambdaInP6.t ............. ok    19609 ms
+[00:34:50] t\BaseP6.t ................. ok    17489 ms
+[00:35:07]
 All tests successful.
-Files=25, Tests=1332, 620 wallclock secs ( 0.67 usr +  0.17 sys =  0.84 CPU)
+Files=25, Tests=1332, 585 wallclock secs ( 0.63 usr +  0.19 sys =  0.81 CPU)
 Result: PASS

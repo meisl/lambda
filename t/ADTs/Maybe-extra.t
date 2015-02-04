@@ -1,6 +1,7 @@
 use v6;
 use Test;
 use Test::Util;
+use Test::Util_Lambda;
 
 use Lambda::BaseP6;
 use Lambda::Boolean;

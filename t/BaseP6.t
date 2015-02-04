@@ -2,6 +2,7 @@ use v6;
 
 use Test;
 use Test::Util;
+use Test::Util_Lambda;
 
 # module under test:
 use Lambda::BaseP6;
