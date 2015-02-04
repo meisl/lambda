@@ -542,3 +542,57 @@ constant $fresh-var-for is export = {
         }
     );
 }();
+
+macro onVarT($thenFn, $elseVal, $term) {
+    my $mkK1 := -> $x {
+        ($x ~~ Block) && ($x.signature.arity == 0) 
+        ?? -> Mu     { $x() }
+        !! -> Mu     { $x   }
+    };
+    my $mkK2 := -> $x {
+        ($x ~~ Block) && ($x.signature.arity == 0) 
+        ?? -> Mu, Mu { $x() }
+        !! -> Mu, Mu { $x   }
+    };
+
+    return quasi { 
+        #say 'thenFn:       ' ~ {{{$thenFn}}}.gist;
+        #say 'elseVal:      ' ~ {{{$elseVal}}}.gist;
+        #say 'term:         ' ~ {{{$term}}}.gist;
+        #say 'mkK1:         ' ~ $mkK1.gist;
+        #say 'mkK2:         ' ~ $mkK2.gist;
+        #say '';
+        {{{$term}}}(
+            {{{$thenFn}}},
+            $mkK2( {{{$elseVal}}} ),
+            $mkK2( {{{$elseVal}}} ),
+            $mkK1( {{{$elseVal}}} )
+        )
+    };
+}
+
+
+
+my TTerm $var = $VarT('x');
+my TTerm $app = $AppT($var, $var);
+my TTerm $lam = $LamT($var, $app);
+my TTerm $con = $ConstT(23);
+
+
+say "$var: " ~ onVarT(-> Str $tName { $tName }, 42, $var);
+say "$app: " ~ onVarT(-> Str $tName { $tName }, 42, $app);
+say "$lam: " ~ onVarT(-> Str $tName { $tName }, 42, $lam);
+
+say "$var: " ~ onVarT(-> Str $tName { $tName }, { say "not-a-VarT: $var" }, $var);
+say "$app: " ~ onVarT(-> Str $tName { $tName }, { say "not-a-VarT: $app" }, $app);
+say "$lam: " ~ onVarT(-> Str $tName { $tName }, { say "not-a-VarT: $lam" }, $lam);
+say "$con: " ~ onVarT(-> Str $tName { $tName }, { say "not-a-VarT: $con" }, $con);
+
+say '';
+
+say "$var: " ~ onVarT(-> Str $tName { $tName }, { warn "not-a-VarT: $var" }, $var);
+say "$app: " ~ onVarT(-> Str $tName { $tName }, { warn "not-a-VarT: $app" }, $app);
+say "$lam: " ~ onVarT(-> Str $tName { $tName }, { warn "not-a-VarT: $lam" }, $lam);
+say "$con: " ~ onVarT(-> Str $tName { $tName }, { warn "not-a-VarT: $con" }, $con);
+
+say "done.";
