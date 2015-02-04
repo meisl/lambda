@@ -199,18 +199,18 @@ plan 51;
 { # findFP
    is_properLambdaFn($findFP);
 
-    my $predicate;
+    my $arbiter;
     my $function;
     my $actual;
     my @seen;
     my $values;
 
-    $predicate = -> $x, $y {
+    $arbiter = -> $x, $y {
         ($x === $y) ?? $true !! $false
     };
 
     $function = $K(42);
-    $actual = $findFP($predicate, $function, 23); # just *some* start value different from any in @values
+    $actual = $findFP($arbiter, $function, 23); # just *some* start value different from any in @values
     is($actual, 42, "findFP with === finds fixed-point of K");
 
     $values = @(1, 3, '3', 2, 5, 5, 7);
@@ -222,17 +222,17 @@ plan 51;
         $out;
     };
 
-    $actual = $findFP($predicate, $function, 23); # just *some* start value different from any in @values
+    $actual = $findFP($arbiter, $function, 23); # just *some* start value different from any in @values
     is($actual, 5, "findFP with === finds fixed-point in \"enumerate\"(1, 3, '3', 2, 5, 5, 7)");
 
 
-    $predicate = -> $x, $y {
+    $arbiter = -> $x, $y {
         ($y === 7) ?? $true !! $false
     };
 
     @seen = @();
-    $actual = $findFP($predicate, $function, 23); # just *some* start value different from any in @values
-    is($actual, 5, "findFP with (y === 7) on \"enumerate\"(1, 3, '3', 2, 5, 5, 7) returns 1st arg to predicate rather than 2nd")
+    $actual = $findFP($arbiter, $function, 23); # just *some* start value different from any in @values
+    is($actual, 5, "findFP with (y === 7) on \"enumerate\"(1, 3, '3', 2, 5, 5, 7) returns 1st arg to arbiter rather than 2nd")
         or diag("seen: {@seen.perl}") and die;
 }
 

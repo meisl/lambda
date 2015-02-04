@@ -32,8 +32,8 @@ constant $cons is export = lambdaFn(
     }
 );
 
-constant $K1nil is export = $K($nil);
-constant $K2nil is export = lambdaFn(Str, 'λ_.λ_.nil', -> Mu, Mu { $nil } );
+constant $K1nil is export = $K1($nil);
+constant $K2nil is export = $K2($nil);
 
 # predicates
 

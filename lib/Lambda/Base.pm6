@@ -24,7 +24,20 @@ constant $const is export = lambdaFn(
     }
 );
 constant $K is export := $const;
+constant $K1 is export := $const;
 
+constant $K2 is export = lambdaFn(
+    'K^2', 'λx.λ_.λ_.x',
+    -> $x {
+        my $lambdaExpr = $x === $I
+            ?? 'λ_.λ_.λx.x'
+            !! 'λ_.λ_.' ~ ($x.?symbol // ($x.^can('lambda') ?? $x.lambda.substr(1, *-1) !! $x.perl));
+        lambdaFn(
+            Str, $lambdaExpr,
+            -> Mu, Mu { $x }
+        )
+    }
+);
 
 constant $B is export = lambdaFn(
     'B', 'λf.λg.λx.f (g x)',
@@ -99,25 +112,26 @@ constant $Y is export = -> $U { lambdaFn(
 
 # fixed-point search ----------------------------------------------------------
 
-# starting at $start, returns the first fixed-point of &method
-# wrt. to end-condition `predicate`,
-# ie. the first x st. (predicate x (&method x)) == True
+# findFP: (a -> a -> Bool) -> (a -> a) -> a -> a
+# starting at `start`, returns the first fixed-point of `f`
+# wrt. to end-condition `arbiter`,
+# ie. the first x st. (arbiter x (f x)) == True
 # where "===" is the default end-condition.
 # ...or diverges if there is none...
 constant $findFP is export = {
-    my sub mkLambdaExpr($p, $f) {
-        "λself.λstart.let ((next ($f start)) (done ($p start next))) (if done start (self next))";
+    my sub mkLambdaExpr($arbiter, $f) {
+        "λself.λstart.let ((next ($f start)) (done ($arbiter start next))) (if done start (self next))";
     }
     lambdaFn(
-        'findFP', 'λp.λf.Y ' ~ mkLambdaExpr('p', 'f'),
-        -> &predicate, &f {
+        'findFP', 'λarbiter.λf.Y ' ~ mkLambdaExpr('arbiter', 'f'),
+        -> &arbiter, &f {
             $Y(lambdaFn(
-                Str, mkLambdaExpr(&predicate.gist, &f.gist),
+                Str, mkLambdaExpr(&arbiter.gist, &f.gist),
                 -> &self {
                     -> $start {
                         #say "inside findFP: "  ~ $start;
                         my $next = &f($start);
-                        my $done = &predicate($start, $next);    # TODO: move findFP out of Base.pm6, st. dependency on Boolean.pm6 is made clear
+                        my $done = &arbiter($start, $next);    # TODO: move findFP out of Base.pm6, st. dependency on Boolean.pm6 is made clear
                         if $done(True, False) { # TODO: once findFP is moved out of Base.pm6: implement using $_if
                             $start;
                         } else {
