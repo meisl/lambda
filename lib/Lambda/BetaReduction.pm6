@@ -429,4 +429,7 @@ constant $betaContract is export = $Y(lambdaFn(
 
 # Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
 # is that we don't need to compare terms for equality then.
-constant $betaReduce is export = $findFP-inMaybe($betaContract) does Definition('betaReduce');
+constant $betaReduce is export = lambdaFn(
+    'betaReduce', 'findFP-inMaybe betaContract',
+    $findFP-inMaybe($betaContract)
+);

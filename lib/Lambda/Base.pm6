@@ -112,7 +112,7 @@ constant $Y is export = -> $U { lambdaFn(
 
 # fixed-point search ----------------------------------------------------------
 
-# findFP: (a -> a -> (a -> a) -> a) -> (a -> a) -> a -> a
+# findFP: (a -> b -> (a -> b) -> b) -> (a -> b) -> a -> b
 # starting at `start`, returns the first fixed-point of `f`
 # wrt. to end-condition `arbiter`,
 # ie. the first x st. (arbiter x (f x)) == True

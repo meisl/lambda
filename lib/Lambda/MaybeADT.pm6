@@ -162,23 +162,28 @@ constant $Maybe-lift-in is export = lambdaFn(
 
 # findFP-inMaybe: (a -> Maybe b) -> Maybe a -> Maybe b
 constant $findFP-inMaybe is export = {
-    #my $stopCond = -> Mu, $v { $is-None($v) } does lambda('K None?');
-    my $arbiter = -> TMaybe $v1, TMaybe $v2, &nextStep { 
-        case-Maybe($v2,
-            None => $v1,
-            Some => -> Mu { &nextStep($v2) } # once more with value of v2
-        )
-    } does lambda('K None?');
+    my $arbiter = lambdaFn(
+        Str, 'λv1.λm2.λnextStep.case m2 ((None (Some v1)) ((Some v2) (nextStep v2)))',
+        -> $v1, TMaybe $m2, &nextStep { 
+            case-Maybe($m2,
+                None => { $Some($v1) }, # simulate lazy eval by passing a thunk (the block)
+                Some => &nextStep # once more with value of m2
+            )
+        }
+    );
+    my $findFP-arbiter = $findFP($arbiter);
     lambdaFn(
         'findFP-inMaybe', 'let ((stopCond (K None?))) λstepFn.B (findFP stopCond (λm.m >>= stepFn)) stepFn',
-        -> &stepFunc {
-            $B(
-                $findFP(
-                    $arbiter,
-                    #-> TMaybe:D $m { $bindMaybe($m, &stepFunc) }
-                    -> TMaybe:D $m { $m($None, &stepFunc) } does lambda("λm.m >>= {&stepFunc.gist}")
-                ),
-                &stepFunc
+        -> &stepFn {
+            my $fpSearch = $findFP-arbiter(&stepFn);
+            lambdaFn(
+                Str, "λstart.case ({&stepFn} start) ((None None) ((Some v) (findFP $arbiter {&stepFn} v)))",
+                -> $start {
+                    case-Maybe(&stepFn($start),
+                        None => $None,  # must return None on 1st step rather than Some(start)
+                        Some => $fpSearch
+                    )
+                }
             )
         }
     )
