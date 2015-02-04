@@ -8,7 +8,7 @@ use Lambda::TermADT;
 # module under test:
 use Lambda::BetaReduction;
 
-plan 3;
+plan 4;
 
 
 my $dc = $VarT('_');    # don't-care variable
@@ -22,6 +22,13 @@ my $y = $VarT('y');
 my $z = $VarT('z');
 my $c = $ConstT('c');
 
+{ # first try with a minimal example:
+    my $app = $AppT($LamT($x, $x), $x);
+    my $actual = $Some2value($betaReduce($app));
+    my $actualLambda = $Term2source($actual);
+    is $Term-eq($actual, $x), '#true', "{$Term2source($app)} reduces to x"
+        or diag("exp: x\ngot: $actualLambda");
+}
 
 { # profiling betaReduce
     my $f1 = $VarT('f1');   # field 1

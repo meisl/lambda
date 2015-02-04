@@ -112,7 +112,7 @@ constant $Y is export = -> $U { lambdaFn(
 
 # fixed-point search ----------------------------------------------------------
 
-# findFP: (a -> a -> Bool) -> (a -> a) -> a -> a
+# findFP: (a -> a -> (a -> a) -> a) -> (a -> a) -> a -> a
 # starting at `start`, returns the first fixed-point of `f`
 # wrt. to end-condition `arbiter`,
 # ie. the first x st. (arbiter x (f x)) == True
@@ -131,12 +131,7 @@ constant $findFP is export = {
                     -> $start {
                         #say "inside findFP: "  ~ $start;
                         my $next = &f($start);
-                        my $done = &arbiter($start, $next);    # TODO: move findFP out of Base.pm6, st. dependency on Boolean.pm6 is made clear
-                        if $done(True, False) { # TODO: once findFP is moved out of Base.pm6: implement using $_if
-                            $start;
-                        } else {
-                            &self($next);
-                        }
+                        &arbiter($start, $next, &self);
                     }
                 }
             ))

@@ -205,8 +205,8 @@ plan 51;
     my @seen;
     my $values;
 
-    $arbiter = -> $x, $y {
-        ($x === $y) ?? $true !! $false
+    $arbiter = -> $x, $y, &nextStep {
+        ($x === $y) ?? $x !! &nextStep($y)
     };
 
     $function = $K(42);
@@ -226,8 +226,8 @@ plan 51;
     is($actual, 5, "findFP with === finds fixed-point in \"enumerate\"(1, 3, '3', 2, 5, 5, 7)");
 
 
-    $arbiter = -> $x, $y {
-        ($y === 7) ?? $true !! $false
+    $arbiter = -> $x, $y, &nextStep {
+        ($y === 7) ?? $x !! &nextStep($y)
     };
 
     @seen = @();
