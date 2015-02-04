@@ -160,7 +160,6 @@ constant $pi3o4 is export = lambdaFn('π4->3', 'λ_.λ_.λx.λ_.x', -> Mu, Mu, $
 constant $pi4o4 is export = lambdaFn('π4->4', 'λ_.λ_.λ_.λx.x', -> Mu, Mu, Mu, $x { $x });   # K π3->3   =  K (K (K I))
 
 
-
 constant $apply-χ-more = lambdaFn(
     'apply-χ-more', 'λf.λa.λn.n (λg.g a) f',
     -> $f, $a, $n {
@@ -173,20 +172,48 @@ constant $apply-χ-more = lambdaFn(
 constant $eq-pi2 = lambdaFn(
     'eq-π2?', 'λp.λq.p q (q p #true)',
     -> $p, $q {
-        my $true  = $K;
-        $p($q, $q($p, $true));
+        my $true  = $K      but Definition('TRUE');
+        my $false = $K($I)  but Definition('FALSE');
+        $p($q($true, $false), $q($false, $true));
     }
 );
+
 
 constant $eq-pi3 = lambdaFn(
     'eq-π3?', 'asdf',
     -> $p, $q {
-        my $true  = $K;
-        my $false = $K($I);
+        my $true  = $K      but Definition('TRUE');
+        my $false = $K($I)  but Definition('FALSE');
 
         my $p-first = $q($true, $false, $false);
-        my $q-other = $eq-pi2($p($_), $q($_));
+        my $q-other = $eq-pi2($p($I), $q($I));
         my $p-other = $q($false, $q-other, $q-other);
         $p($p-first, $p-other, $p-other);
     }
 );
+
+#`{
+    say $eq-pi2;
+    say $eq-pi2($pi1o2, $pi1o2);
+    say $eq-pi2($pi1o2, $pi2o2);
+    say '';
+    say $eq-pi2($pi2o2, $pi1o2);
+    say $eq-pi2($pi2o2, $pi2o2);
+    say '';
+
+    say '';
+    say $eq-pi3;
+    say $eq-pi3($pi1o3, $pi1o3);
+    say $eq-pi3($pi1o3, $pi2o3);
+    say $eq-pi3($pi1o3, $pi3o3);
+    say '';
+    say $eq-pi3($pi2o3, $pi1o3);
+    say $eq-pi3($pi2o3, $pi2o3);
+    say $eq-pi3($pi2o3, $pi3o3);
+    say '';
+    say $eq-pi3($pi3o3, $pi1o3);
+    say $eq-pi3($pi3o3, $pi2o3);
+    say $eq-pi3($pi3o3, $pi3o3);
+}
+
+
