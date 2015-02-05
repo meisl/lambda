@@ -261,7 +261,7 @@ class Fn does Callable {
 
     # This one expects to receive *all of or less than* the args which the orig fn $!f expects.
     # NOT to be used from outside - use normal postcircumfix<( )> instead!
-    method apply(*@as) is hidden_from_backtrace {
+    method apply(*@as) {
         my $out;
         my $n = &!f.signature.arity;
         if @as == $n {
