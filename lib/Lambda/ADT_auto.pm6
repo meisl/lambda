@@ -43,8 +43,15 @@ class ADTRepr is export {
 
 sub makeMatcher(ADT:U $adtTypeObject) is export {
     my Str $adt = $adtTypeObject.perl;
-    my Str $src = qq:to/ENDOFSOURCE/
-class {$adt}Matcher is GotPerlSrc does Callable \{    
+    my Str $firstLine = "class {$adt}Matcher does Callable \{\n";
+    
+    my Str $rest = qq:to/ENDOFSOURCE/
+    # we're getting a capture, so that's why the whole sig is wrapped in parens
+    multi method postcircumfix:<( )>(({$adt}:D \$instance, *%callbacks)) \{
+        #\$instance()
+        say "$adt: wonderful";
+    \}
+    
     multi method postcircumfix:<( )>(\$args) \{  # we're getting a capture - always...
         if \$args.list[0] !~~ $adt:D \{
             die 'cannot apply match($adt:D, ...) to ' ~ \$args.list[0].gist;
@@ -56,10 +63,20 @@ class {$adt}Matcher is GotPerlSrc does Callable \{
 ENDOFSOURCE
 ;
 
-    my class GotPerlSrc {
-        method perl { $src }
-    };
+    my $src = $firstLine 
+        ~ '    method perl {' ~ "\n"
+        ~ '        q:to/ENDOFSOURCE/' ~ "\n"
+        ~ $firstLine ~ "\n"
+        ~ '    method perl { ... } # well, cannot repeat this forever...' ~ "\n\n"
+        ~ $rest
+        ~ 'ENDOFSOURCE' ~ "\n"
+        ~ '    } # end of method `perl`' ~ "\n\n"
+        ~ $rest
+    ;
+    #say '>>>> ' ~ $adt ~ ': ' ~ $src;
+    #say '<<<<';
     my $result = EVAL($src);
+
     return $result;
 }
 

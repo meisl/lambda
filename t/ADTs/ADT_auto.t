@@ -7,7 +7,7 @@ use Lambda::BaseP6;
 # module under test:
 use Lambda::ADT_auto;
 
-plan 30;
+plan 39;
 
 
 # prep ------------------------------------------------------------------------
@@ -21,7 +21,25 @@ role Foo does ADT {
     );
     method repr { $repr }
 }
-my $fooInstance = lambdaFn( 'aFoo', 'λNYI."not yet implemented', -> $client { $client }) does Foo;
+
+
+my $FooCtor1o3 = lambdaFn( 'FooCtor1o3', 'λclient.client', -> $client { $client }) does Foo;
+my $FooCtor2o3 = lambdaFn( 'FooCtor2o3', 'λa.λclient.client a',
+    -> $a {
+        -> $client { $client($a) } does Foo
+    }
+);
+my $FooCtor3o3 = lambdaFn( 'FooCtor3o3', 'λa.λb.λclient.client a b',
+    -> $a, $b {
+        -> $client { $client($a, $b) } does Foo
+    }
+);
+
+my $fooInstance1o3 = $FooCtor1o3;   # 0-arity ctor is itself an instance
+my $fooInstance2o3 = $FooCtor2o3(23);
+my $fooInstance3o3 = $FooCtor3o3(23, 42);
+
+my $fooInstance = $fooInstance1o3;
 
 
 # another sample ADT
@@ -87,19 +105,29 @@ my $barInstance = lambdaFn( 'aBar', 'λNYI."not yet implemented', -> $client { $
 }
 
 { # output of makeMatcher (a concrete matcher)
-    my &fooMatcher;
-    lives_ok { &fooMatcher = makeMatcher(Foo) }, 'makeMatcher output does Callable (for ADT Foo)'
-        or die;
-    my &barMatcher;
+    my (&fooMatcher, &barMatcher);
+
     lives_ok { &barMatcher = makeMatcher(Bar) }, 'makeMatcher output does Callable (for ADT Bar)'
         or die;
+    is &barMatcher.WHICH, 'BarMatcher', '&barMatcher.WHICH';
 
-    my $src = &fooMatcher.perl;
-    diag $src;
-    lives_ok { 
-        my class GotPerlSrc {}; # ugly: got to have this in scope for successful EVAL
-        EVAL($src) 
-    }, 'matcher\'s .perl returns valid Perl6';
+    lives_ok { &fooMatcher = makeMatcher(Foo) }, 'makeMatcher output does Callable (for ADT Foo)'
+        or die;
+    is &fooMatcher.WHICH, 'FooMatcher', '&fooMatcher.WHICH';
+
+    is &barMatcher.WHICH, 'BarMatcher', '&barMatcher.WHICH';
+
+    isnt &fooMatcher.WHERE, &barMatcher.WHERE, '&fooMatcher and &barMatcher should NOT be the same';
+    
+    
+    { # concrete matcher .perl (the source of itself)
+        my $src = &fooMatcher.perl;
+        diag $src;
+        my $evalResult;
+        lives_ok { $evalResult = EVAL($src) }, 'matcher\'s .perl returns valid Perl6';
+        is $evalResult.HOW.Str.substr(0, 26), 'Perl6::Metamodel::ClassHOW', 'EVAL\'ing &fooMatcher.perl gives a class';
+        is $evalResult.WHICH, 'FooMatcher', 'EVAL\'ing &fooMatcher.perl gives a class named FooMatcher';
+    }
 
     { # concrete matcher parameter checking
         throws_like { fooMatcher }, X::AdHoc, 'calling matcher with no args throws (bare call `matcher`)';
@@ -108,6 +136,22 @@ my $barInstance = lambdaFn( 'aBar', 'λNYI."not yet implemented', -> $client { $
 
         throws_like { &fooMatcher($barInstance) }, X::AdHoc,
             'calling matcher with instance of another ADT throws (`&fooMatcher($barInstance)`)';
+
+        throws_like { &barMatcher($fooInstance) }, X::AdHoc,
+            'calling matcher with instance of another ADT throws (`&barMatcher($fooInstance)`)';
+
+        #throws_like { &fooMatcher($fooInstance) }, X::Typing::ArgBinding,
+        #    'calling matcher with instance but without any callbacks as named params throws (`&fooMatcher($fooInstance)`)';
     }
+
+    my $on1st = -> Mu {};
+    my $on2nd = -> $a {};
+    my $on3rd = -> $a, $b {};
+    
+    my $result;
+    lives_ok {$result = &fooMatcher($fooInstance1o3, FooCtor1o3 => $on1st, FooCtor2o3 => $on2nd, FooCtor2o3 => $on2nd)},
+        'lives: calling matcher with instance and callbacks for all ctors (same order as declared)';
+    lives_ok {$result = &fooMatcher($fooInstance1o3, FooCtor2o3 => $on2nd, FooCtor2o3 => $on2nd, FooCtor1o3 => $on1st)},
+        'lives: calling matcher with instance and callbacks for all ctors (reversed order as declared)';
 
 }
