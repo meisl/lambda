@@ -7,7 +7,7 @@ use Test::Util_Lambda;
 # module under test:
 use Lambda::PairADT;
 
-plan 32;
+plan 34;
 
 
 # ->Str -----------------------------------------------------------------------
@@ -48,7 +48,7 @@ plan 32;
 
 { # projection fst / Pair->fst
     is_properLambdaFn($Pair2fst);
-    ok $fst === $$Pair2fst, '$fst is a synonym for $Pair2fst';
+    ok $fst === $Pair2fst, '$fst is a synonym for $Pair2fst';
 
     is $Pair2fst.symbol,         'Pair->fst', '$Pair2fst.symbol';
     is $Pair2fst.Str,            'Pair->fst', '$Pair2fst.Str';
@@ -57,18 +57,21 @@ plan 32;
 
     my $x;
     $x = $Pair(5, 23);
-    is $Pair2fst($x),  5, "($Pair2fst $x)";
+    is $fst($x),  5, "(fst $x)";
 
     $x = $Pair("foo", 23);
-    is $Pair2fst($x),  'foo', "($Pair2fst $x)";
+    is $fst($x),  'foo', "(fst $x)";
 
     $x = $Pair("foo", "bar");
-    is $Pair2fst($x),  'foo', "($Pair2fst $x)";
+    is $fst($x),  'foo', "(fst $x)";
+
+    $x = $Pair($x, "qumbl");
+    is $fst($fst($x)),  'foo', "(fst (fst $x))";
 }
 
 { # projection snd / Pair->snd
     is_properLambdaFn($Pair2snd);
-    ok $snd === $$Pair2snd, '$snd is a synonym for $Pair2snd';
+    ok $snd === $Pair2snd, '$snd is a synonym for $Pair2snd';
 
     is $Pair2snd.symbol,         'Pair->snd', '$Pair2snd.symbol';
     is $Pair2snd.Str,            'Pair->snd', '$Pair2snd.Str';
@@ -77,11 +80,14 @@ plan 32;
 
     my $x;
     $x = $Pair(5, 23);
-    is $Pair2snd($x), 23, "($Pair2snd $x) -> 23";
+    is $snd($x), 23, "(snd $x) -> 23";
 
     $x = $Pair("foo", 23);
-    is $Pair2snd($x),  23, "($Pair2snd $x) -> 23";
+    is $snd($x),  23, "(snd $x) -> 23";
 
     $x = $Pair("foo", "bar");
-    is $Pair2snd($x),  'bar', "($Pair2snd $x) -> \"bar\"";
+    is $snd($x),  'bar', "(snd $x) -> \"bar\"";
+
+    $x = $Pair("qumbl", $x);
+    is $snd($snd($x)),  'bar', "(snd (snd $x))";
 }
