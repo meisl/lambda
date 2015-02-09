@@ -117,10 +117,10 @@ doesnt_ok $barInstance, Foo, '$barInstance';
 
 { # makeMatcher parameter checking
     dies_ok { makeMatcher }, 'throws with no args';
-    throws_like { makeMatcher(Int) }, X::TypeCheck::Binding, 'throws with 1st arg a type that isnt a subtype of ADT';
-    throws_like { makeMatcher(5) }, X::TypeCheck::Binding, 'throws with 1st arg an instance of a non-ADT subtype';
+    throws_like { makeMatcher(Int) }, X::TypeCheck::Binding, 'makeMatcher throws with 1st arg a type that isnt a subtype of ADT';
+    throws_like { makeMatcher(5) }, X::TypeCheck::Binding, 'makeMatcher throws with 1st arg an instance of a non-ADT subtype';
     
-    throws_like { makeMatcher($fooInstance) }, X::AdHoc, 'throws with 1st arg an *instance* of an ADT subtype';
+    throws_like { makeMatcher($fooInstance) }, X::AdHoc, 'makeMatcher throws with 1st arg an *instance* of an ADT subtype';
 }
 
 { # output of makeMatcher (a concrete matcher)
