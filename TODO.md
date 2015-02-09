@@ -49,10 +49,10 @@ We might even provide the actual fields of the ADT instance in a List (rather th
        - i) an instance of the ADT
        - ii) for each constructor (with which the instance could possibly have been built), a callback fn which in turn would receive the respective fields of the instance. Note the problem of 0-arity ctors, as eg in `data Bool = False | True`: in such cases *lazy evaluation* is imperative - so to simulate that in Perl we'll pass a 0-arity *Block* to indicate that lazy evaluation is needed.
   - [ ] then, *real* pattern matching, ie in addition to the above, and in any combination:
-       - i) incomplete patterns (leaving out some cases/ctors), with an "otherwise" clause
-       - ii) nested patterns
-       - iii) matching against constants OR variables
-       - iv) overlapping patterns?
-       - v) ...?
+       - [ ] incomplete patterns (leaving out some cases/ctors), with an "otherwise" clause
+       - [ ] nested patterns
+       - [ ] matching against constants OR variables
+       - [ ] overlapping patterns?
+       - [ ] ...?
  ...
 - [ ] #17 'add Types (eventually...)' - oh...
