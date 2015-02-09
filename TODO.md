@@ -54,5 +54,12 @@ We might even provide the actual fields of the ADT instance in a List (rather th
        - [ ] matching against constants OR variables
        - [ ] overlapping patterns?
        - [ ] ...?
- ...
+- [ ] #36 'Given an ADT (representation), auto-generate (two sides: Perl6 & in pure λ):'
+  - [ ] simple case-construct/fn (see #35)
+  - [ ] ctor-fns
+  - [ ] predicates (with which ctor was the ADT instance at hand made with)
+  - [ ] projections (extract a field from a particular ADT instance)
+  - [ ] full-blown pattern-matching (see #35)
+
+...
 - [ ] #17 'add Types (eventually...)' - oh...
