@@ -44,6 +44,15 @@
     - Consider using bit-strings (`List Bool`) for the type/ctor-tag. This would require to re-do ADT List with at least three-way mutual recursion (-> #33), but has the benefit of greatly simplifying the task of adding more ctors to an ADT. 
 It'd also open up an easy way of adding support for (runtime) type tags as well: instead a flat `List Bool` we'd use a `List (List Bool)`, one determining the runtime type, another determining the ctor used, ....
 We might even provide the actual fields of the ADT instance in a List (rather than as top-level args), thus making the interface for both, predicates and projections *completely* uniform.
-- [ ] #35 'add pattern matching, direct dispatch on type/ctor tag (rather than using the ADT's predicates)'
-- ...
+- [ ] #35 'add pattern matching (improve "nesting" & perf)
+  - [ ] at first: a rather simple "case"-construct, ie. a function which takes
+       - i) an instance of the ADT
+       - ii) for each constructor (with which the instance could possibly have been built), a callback fn which in turn would receive the respective fields of the instance. Note the problem of 0-arity ctors, as eg in `data Bool = False | True`: in such cases *lazy evaluation* is imperative - so to simulate that in Perl we'll pass a 0-arity *Block* to indicate that lazy evaluation is needed.
+  - [ ] then, *real* pattern matching, ie in addition to the above, and in any combination:
+       - [ ] incomplete patterns (leaving out some cases/ctors), with an "otherwise" clause
+       - [ ] nested patterns
+       - [ ] matching against constants OR variables
+       - [ ] overlapping patterns?
+       - [ ] ...?
+ ...
 - [ ] #17 'add Types (eventually...)' - oh...
