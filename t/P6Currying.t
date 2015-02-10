@@ -100,7 +100,7 @@ plan 19;
         
         cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
         
-        is $g('a', 5), 'aaaaa', 'can apply it to all the args at once';
+        is $g('a', 5), 'aaaaa', 'can apply it to all the args at once (aka "overapplying")';
     }, "curried unary fn {$g.ty} which returns another unary fn; unapplied";
 
     my $h = $g('foo');

@@ -72,7 +72,7 @@ class Fn { ... }
 
 
 # This one expects to receive *less than* the args which the orig fn &f expects.
-my sub partialApp(&f, *@as) {
+my sub apply_part(&f, *@as) {
     $partialAppCount++;
     #warn ">>>> partial app $partialAppCount:" ~ Backtrace.new;
     my $out = _curry(Fn.new, &f, :partialArgs(@as));
@@ -81,7 +81,7 @@ my sub partialApp(&f, *@as) {
 }
 
 # This one expects to receive *exactly* the args which the orig fn &f expects.
-my sub completeApp($result) {
+my sub apply_comp($result) {
     return curry($result)
         if $result ~~ Callable;
 
@@ -94,7 +94,7 @@ my sub completeApp($result) {
 
 # Partial0ofX
 role Partial0of1[&f, ::T1, ::R] {
-    multi method _(T1 $a1) {                                    completeApp(&f($a1))                     }
+    multi method _(T1 $a1) {                                    apply_comp(&f($a1))                     }
 
     method arity { 1 }
     method count { 1 }
@@ -102,8 +102,8 @@ role Partial0of1[&f, ::T1, ::R] {
     method ty    { "{T1.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 role Partial0of2[&f, ::T1, ::T2, ::R] {
-    multi method _(T1 $a1) {                                    partialApp(&f, $a1)                      }
-    multi method _(T1 $a1, T2 $a2) {                            completeApp(&f($a1, $a2))                }
+    multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
+    multi method _(T1 $a1, T2 $a2) {                            apply_comp(&f($a1, $a2))                }
 
     method arity { 2 }
     method count { 2 }
@@ -111,9 +111,9 @@ role Partial0of2[&f, ::T1, ::T2, ::R] {
     method ty    { "{T1.perl} -> {T2.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 role Partial0of3[&f, ::T1, ::T2, ::T3, ::R] {
-    multi method _(T1 $a1) {                                    partialApp(&f, $a1)                      }
-    multi method _(T1 $a1, T2 $a2) {                            partialApp(&f, $a1, $a2)                 }
-    multi method _(T1 $a1, T2 $a2, T3 $a3) {                    completeApp(&f($a1, $a2, $a3))           }
+    multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
+    multi method _(T1 $a1, T2 $a2) {                            apply_part(&f, $a1, $a2)                }
+    multi method _(T1 $a1, T2 $a2, T3 $a3) {                    apply_comp(&f($a1, $a2, $a3))           }
 
     method arity { 3 }
     method count { 3 }
@@ -121,10 +121,10 @@ role Partial0of3[&f, ::T1, ::T2, ::T3, ::R] {
     method ty    { "{T1.perl} -> {T2.perl} -> {T3.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 role Partial0of4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
-    multi method _(T1 $a1) {                                    partialApp(&f, $a1)                      }
-    multi method _(T1 $a1, T2 $a2) {                            partialApp(&f, $a1, $a2)                 }
-    multi method _(T1 $a1, T2 $a2, T3 $a3) {                    partialApp(&f, $a1, $a2, $a3)            }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4) {            completeApp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
+    multi method _(T1 $a1, T2 $a2) {                            apply_part(&f, $a1, $a2)                }
+    multi method _(T1 $a1, T2 $a2, T3 $a3) {                    apply_part(&f, $a1, $a2, $a3)           }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4) {            apply_comp(&f($a1, $a2, $a3, $a4))      }
 
     method arity { 4 }
     method count { 4 }
@@ -132,11 +132,11 @@ role Partial0of4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
     method ty    { "{T1.perl} -> {T2.perl} -> {T3.perl} -> {T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
-    multi method _(T1 $a1) {                                    partialApp(&f, $a1)                      }
-    multi method _(T1 $a1, T2 $a2) {                            partialApp(&f, $a1, $a2)                 }
-    multi method _(T1 $a1, T2 $a2, T3 $a3) {                    partialApp(&f, $a1, $a2, $a3)            }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4) {            partialApp(&f, $a1, $a2, $a3, $a4)       }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5) {    completeApp(&f($a1, $a2, $a3, $a4, $a5)) }
+    multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
+    multi method _(T1 $a1, T2 $a2) {                            apply_part(&f, $a1, $a2)                }
+    multi method _(T1 $a1, T2 $a2, T3 $a3) {                    apply_part(&f, $a1, $a2, $a3)           }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4) {            apply_part(&f, $a1, $a2, $a3, $a4)      }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5) {    apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
 
     method arity { 5 }
     method count { 5 }
@@ -146,7 +146,7 @@ role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
 
 # Partial1ofX
 role Partial1of2[&f, $a1, ::T2, ::R] {
-    multi method _(T2 $a2) {                                    completeApp(&f($a1, $a2))                }
+    multi method _(T2 $a2) {                                    apply_comp(&f($a1, $a2))                }
 
     method arity { 1 }
     method count { 1 }
@@ -154,8 +154,8 @@ role Partial1of2[&f, $a1, ::T2, ::R] {
     method ty    { "{T2.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 role Partial1of3[&f, $a1, ::T2, ::T3, ::R] {
-    multi method _(T2 $a2) {                                    partialApp(&f, $a1, $a2)                 }
-    multi method _(T2 $a2, T3 $a3) {                            completeApp(&f($a1, $a2, $a3))           }
+    multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
+    multi method _(T2 $a2, T3 $a3) {                            apply_comp(&f($a1, $a2, $a3))           }
 
     method arity { 2 }
     method count { 2 }
@@ -163,9 +163,9 @@ role Partial1of3[&f, $a1, ::T2, ::T3, ::R] {
     method ty    { "{T2.perl} -> {T3.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 role Partial1of4[&f, $a1, ::T2, ::T3, ::T4, ::R] {
-    multi method _(T2 $a2) {                                    partialApp(&f, $a1, $a2)                 }
-    multi method _(T2 $a2, T3 $a3) {                            partialApp(&f, $a1, $a2, $a3)            }
-    multi method _(T2 $a2, T3 $a3, T4 $a4) {                    completeApp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
+    multi method _(T2 $a2, T3 $a3) {                            apply_part(&f, $a1, $a2, $a3)           }
+    multi method _(T2 $a2, T3 $a3, T4 $a4) {                    apply_comp(&f($a1, $a2, $a3, $a4))      }
 
     method arity { 3 }
     method count { 3 }
@@ -173,10 +173,10 @@ role Partial1of4[&f, $a1, ::T2, ::T3, ::T4, ::R] {
     method ty    { "{T2.perl} -> {T3.perl} -> {T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
-    multi method _(T2 $a2) {                                    partialApp(&f, $a1, $a2)                 }
-    multi method _(T2 $a2, T3 $a3) {                            partialApp(&f, $a1, $a2, $a3)            }
-    multi method _(T2 $a2, T3 $a3, T4 $a4) {                    partialApp(&f, $a1, $a2, $a3, $a4)       }
-    multi method _(T2 $a2, T3 $a3, T4 $a4, T5 $a5) {            completeApp(&f($a1, $a2, $a3, $a4, $a5)) }
+    multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
+    multi method _(T2 $a2, T3 $a3) {                            apply_part(&f, $a1, $a2, $a3)           }
+    multi method _(T2 $a2, T3 $a3, T4 $a4) {                    apply_part(&f, $a1, $a2, $a3, $a4)      }
+    multi method _(T2 $a2, T3 $a3, T4 $a4, T5 $a5) {            apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
 
     method arity { 4 }
     method count { 4 }
@@ -186,7 +186,7 @@ role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
 
 # Partial2ofX
 role Partial2of3[&f, $a1, $a2, ::T3, ::R] {
-    multi method _(T3 $a3) {                                    completeApp(&f($a1, $a2, $a3))           }
+    multi method _(T3 $a3) {                                    apply_comp(&f($a1, $a2, $a3))           }
 
     method arity { 1 }
     method count { 1 }
@@ -194,8 +194,8 @@ role Partial2of3[&f, $a1, $a2, ::T3, ::R] {
     method ty    { "{T3.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 role Partial2of4[&f, $a1, $a2, ::T3, ::T4, ::R] {
-    multi method _(T3 $a3) {                                    partialApp(&f, $a1, $a2, $a3)            }
-    multi method _(T3 $a3, T4 $a4) {                            completeApp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
+    multi method _(T3 $a3, T4 $a4) {                            apply_comp(&f($a1, $a2, $a3, $a4))      }
 
     method arity { 2 }
     method count { 2 }
@@ -203,9 +203,9 @@ role Partial2of4[&f, $a1, $a2, ::T3, ::T4, ::R] {
     method ty    { "{T3.perl} -> {T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
-    multi method _(T3 $a3) {                                    partialApp(&f, $a1, $a2, $a3)            }
-    multi method _(T3 $a3, T4 $a4) {                            partialApp(&f, $a1, $a2, $a3, $a4)       }
-    multi method _(T3 $a3, T4 $a4, T5 $a5) {                    completeApp(&f($a1, $a2, $a3, $a4, $a5)) }
+    multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
+    multi method _(T3 $a3, T4 $a4) {                            apply_part(&f, $a1, $a2, $a3, $a4)      }
+    multi method _(T3 $a3, T4 $a4, T5 $a5) {                    apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
 
     method arity { 3 }
     method count { 3 }
@@ -215,7 +215,7 @@ role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
 
 # Partial3ofX
 role Partial3of4[&f, $a1, $a2, $a3, ::T4, ::R] {
-    multi method _(T4 $a4) {                                    completeApp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T4 $a4) {                                    apply_comp(&f($a1, $a2, $a3, $a4))      }
 
     method arity { 1 }
     method count { 1 }
@@ -223,8 +223,8 @@ role Partial3of4[&f, $a1, $a2, $a3, ::T4, ::R] {
     method ty    { "{T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
-    multi method _(T4 $a4) {                                    partialApp(&f, $a1, $a2, $a3, $a4)       }
-    multi method _(T4 $a4, T5 $a5) {                            completeApp(&f($a1, $a2, $a3, $a4, $a5)) }
+    multi method _(T4 $a4) {                                    apply_part(&f, $a1, $a2, $a3, $a4)      }
+    multi method _(T4 $a4, T5 $a5) {                            apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
 
     method arity { 2 }
     method count { 2 }
@@ -234,7 +234,7 @@ role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
 
 # Partial4ofX
 role Partial4of5[&f, $a1, $a2, $a3, $a4, ::T5, ::R] {
-    multi method _(T5 $a5) {                                    completeApp(&f($a1, $a2, $a3, $a4, $a5)) }
+    multi method _(T5 $a5) {                                    apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
 
     method arity { 1 }
     method count { 1 }
