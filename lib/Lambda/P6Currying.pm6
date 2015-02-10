@@ -92,8 +92,8 @@ my sub completeApp($result) {
 }
 
 
-# Partial0
-role Partial0[&f, ::T1, ::R] {
+# Partial0ofX
+role Partial0of1[&f, ::T1, ::R] {
     multi method _(T1 $a1) {                                    completeApp(&f($a1))                     }
 
     method arity { 1 }
@@ -101,7 +101,7 @@ role Partial0[&f, ::T1, ::R] {
     method sig   { @(T1, R) }
     method ty    { "{T1.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
-role Partial0[&f, ::T1, ::T2, ::R] {
+role Partial0of2[&f, ::T1, ::T2, ::R] {
     multi method _(T1 $a1) {                                    partialApp(&f, $a1)                      }
     multi method _(T1 $a1, T2 $a2) {                            completeApp(&f($a1, $a2))                }
 
@@ -110,7 +110,7 @@ role Partial0[&f, ::T1, ::T2, ::R] {
     method sig   { @(T1, T2, R) }
     method ty    { "{T1.perl} -> {T2.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
-role Partial0[&f, ::T1, ::T2, ::T3, ::R] {
+role Partial0of3[&f, ::T1, ::T2, ::T3, ::R] {
     multi method _(T1 $a1) {                                    partialApp(&f, $a1)                      }
     multi method _(T1 $a1, T2 $a2) {                            partialApp(&f, $a1, $a2)                 }
     multi method _(T1 $a1, T2 $a2, T3 $a3) {                    completeApp(&f($a1, $a2, $a3))           }
@@ -120,7 +120,7 @@ role Partial0[&f, ::T1, ::T2, ::T3, ::R] {
     method sig   { @(T1, T2, T3, R) }
     method ty    { "{T1.perl} -> {T2.perl} -> {T3.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
-role Partial0[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
+role Partial0of4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
     multi method _(T1 $a1) {                                    partialApp(&f, $a1)                      }
     multi method _(T1 $a1, T2 $a2) {                            partialApp(&f, $a1, $a2)                 }
     multi method _(T1 $a1, T2 $a2, T3 $a3) {                    partialApp(&f, $a1, $a2, $a3)            }
@@ -131,7 +131,7 @@ role Partial0[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
     method sig   { @(T1, T2, T3, T4, R) }
     method ty    { "{T1.perl} -> {T2.perl} -> {T3.perl} -> {T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
-role Partial0[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
+role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T1 $a1) {                                    partialApp(&f, $a1)                      }
     multi method _(T1 $a1, T2 $a2) {                            partialApp(&f, $a1, $a2)                 }
     multi method _(T1 $a1, T2 $a2, T3 $a3) {                    partialApp(&f, $a1, $a2, $a3)            }
@@ -144,8 +144,8 @@ role Partial0[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
     method ty    { "{T1.perl} -> {T2.perl} -> {T3.perl} -> {T4.perl} -> {T5.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 
-# Partial1
-role Partial1[&f, $a1, ::T2, ::R] {
+# Partial1ofX
+role Partial1of2[&f, $a1, ::T2, ::R] {
     multi method _(T2 $a2) {                                    completeApp(&f($a1, $a2))                }
 
     method arity { 1 }
@@ -153,7 +153,7 @@ role Partial1[&f, $a1, ::T2, ::R] {
     method sig   { @(T2, R) }
     method ty    { "{T2.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
-role Partial1[&f, $a1, ::T2, ::T3, ::R] {
+role Partial1of3[&f, $a1, ::T2, ::T3, ::R] {
     multi method _(T2 $a2) {                                    partialApp(&f, $a1, $a2)                 }
     multi method _(T2 $a2, T3 $a3) {                            completeApp(&f($a1, $a2, $a3))           }
 
@@ -162,7 +162,7 @@ role Partial1[&f, $a1, ::T2, ::T3, ::R] {
     method sig   { @(T2, T3, R) }
     method ty    { "{T2.perl} -> {T3.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
-role Partial1[&f, $a1, ::T2, ::T3, ::T4, ::R] {
+role Partial1of4[&f, $a1, ::T2, ::T3, ::T4, ::R] {
     multi method _(T2 $a2) {                                    partialApp(&f, $a1, $a2)                 }
     multi method _(T2 $a2, T3 $a3) {                            partialApp(&f, $a1, $a2, $a3)            }
     multi method _(T2 $a2, T3 $a3, T4 $a4) {                    completeApp(&f($a1, $a2, $a3, $a4))      }
@@ -172,7 +172,7 @@ role Partial1[&f, $a1, ::T2, ::T3, ::T4, ::R] {
     method sig   { @(T2, T3, T4, R) }
     method ty    { "{T2.perl} -> {T3.perl} -> {T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
-role Partial1[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
+role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T2 $a2) {                                    partialApp(&f, $a1, $a2)                 }
     multi method _(T2 $a2, T3 $a3) {                            partialApp(&f, $a1, $a2, $a3)            }
     multi method _(T2 $a2, T3 $a3, T4 $a4) {                    partialApp(&f, $a1, $a2, $a3, $a4)       }
@@ -184,8 +184,8 @@ role Partial1[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
     method ty    { "{T2.perl} -> {T3.perl} -> {T4.perl} -> {T5.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 
-# Partial2
-role Partial2[&f, $a1, $a2, ::T3, ::R] {
+# Partial2ofX
+role Partial2of3[&f, $a1, $a2, ::T3, ::R] {
     multi method _(T3 $a3) {                                    completeApp(&f($a1, $a2, $a3))           }
 
     method arity { 1 }
@@ -193,7 +193,7 @@ role Partial2[&f, $a1, $a2, ::T3, ::R] {
     method sig   { @(T3, R) }
     method ty    { "{T3.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
-role Partial2[&f, $a1, $a2, ::T3, ::T4, ::R] {
+role Partial2of4[&f, $a1, $a2, ::T3, ::T4, ::R] {
     multi method _(T3 $a3) {                                    partialApp(&f, $a1, $a2, $a3)            }
     multi method _(T3 $a3, T4 $a4) {                            completeApp(&f($a1, $a2, $a3, $a4))      }
 
@@ -202,7 +202,7 @@ role Partial2[&f, $a1, $a2, ::T3, ::T4, ::R] {
     method sig   { @(T3, T4, R) }
     method ty    { "{T3.perl} -> {T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
-role Partial2[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
+role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T3 $a3) {                                    partialApp(&f, $a1, $a2, $a3)            }
     multi method _(T3 $a3, T4 $a4) {                            partialApp(&f, $a1, $a2, $a3, $a4)       }
     multi method _(T3 $a3, T4 $a4, T5 $a5) {                    completeApp(&f($a1, $a2, $a3, $a4, $a5)) }
@@ -213,8 +213,8 @@ role Partial2[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
     method ty    { "{T3.perl} -> {T4.perl} -> {T5.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 
-# Partial3
-role Partial3[&f, $a1, $a2, $a3, ::T4, ::R] {
+# Partial3ofX
+role Partial3of4[&f, $a1, $a2, $a3, ::T4, ::R] {
     multi method _(T4 $a4) {                                    completeApp(&f($a1, $a2, $a3, $a4))      }
 
     method arity { 1 }
@@ -222,7 +222,7 @@ role Partial3[&f, $a1, $a2, $a3, ::T4, ::R] {
     method sig   { @(T4, R) }
     method ty    { "{T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
-role Partial3[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
+role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
     multi method _(T4 $a4) {                                    partialApp(&f, $a1, $a2, $a3, $a4)       }
     multi method _(T4 $a4, T5 $a5) {                            completeApp(&f($a1, $a2, $a3, $a4, $a5)) }
 
@@ -232,8 +232,8 @@ role Partial3[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
     method ty    { "{T4.perl} -> {T5.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
 }
 
-# Partial4
-role Partial4[&f, $a1, $a2, $a3, $a4, ::T5, ::R] {
+# Partial4ofX
+role Partial4of5[&f, $a1, $a2, $a3, $a4, ::T5, ::R] {
     multi method _(T5 $a5) {                                    completeApp(&f($a1, $a2, $a3, $a4, $a5)) }
 
     method arity { 1 }
@@ -253,41 +253,42 @@ my sub _curry($self, &f, :@partialArgs) {
     my $result = do given $argCount {
         when 0 {
             given $arity {
-                when 1 { $self does Partial0[&f, $t1                    , $r ] }
-                when 2 { $self does Partial0[&f, $t1, $t2               , $r ] }
-                when 3 { $self does Partial0[&f, $t1, $t2, $t3          , $r ] }
-                when 4 { $self does Partial0[&f, $t1, $t2, $t3, $t4     , $r ] }
-                when 5 { $self does Partial0[&f, $t1, $t2, $t3, $t4, $t5, $r ] }
+                when 1 { $self does Partial0of1[&f, $t1                    , $r ] }
+                when 2 { $self does Partial0of2[&f, $t1, $t2               , $r ] }
+                when 3 { $self does Partial0of3[&f, $t1, $t2, $t3          , $r ] }
+                when 4 { $self does Partial0of4[&f, $t1, $t2, $t3, $t4     , $r ] }
+                when 5 { $self does Partial0of5[&f, $t1, $t2, $t3, $t4, $t5, $r ] }
             }
         }
         when 1 {
             given $arity {
-                when 2 { $self does Partial1[&f, $a1, $t2               , $r ] }
-                when 3 { $self does Partial1[&f, $a1, $t2, $t3          , $r ] }
-                when 4 { $self does Partial1[&f, $a1, $t2, $t3, $t4     , $r ] }
-                when 5 { $self does Partial1[&f, $a1, $t2, $t3, $t4, $t5, $r ] }
+                when 2 { $self does Partial1of2[&f, $a1, $t2               , $r ] }
+                when 3 { $self does Partial1of3[&f, $a1, $t2, $t3          , $r ] }
+                when 4 { $self does Partial1of4[&f, $a1, $t2, $t3, $t4     , $r ] }
+                when 5 { $self does Partial1of5[&f, $a1, $t2, $t3, $t4, $t5, $r ] }
             }
         }
         when 2 {
             given $arity {
-                when 3 { $self does Partial2[&f, $a1, $a2, $t3          , $r ] }
-                when 4 { $self does Partial2[&f, $a1, $a2, $t3, $t4     , $r ] }
-                when 5 { $self does Partial2[&f, $a1, $a2, $t3, $t4, $t5, $r ] }
+                when 3 { $self does Partial2of3[&f, $a1, $a2, $t3          , $r ] }
+                when 4 { $self does Partial2of4[&f, $a1, $a2, $t3, $t4     , $r ] }
+                when 5 { $self does Partial2of5[&f, $a1, $a2, $t3, $t4, $t5, $r ] }
             }
         }
         when 3 {
             given $arity {
-                when 4 { $self does Partial3[&f, $a1, $a2, $a3, $t4     , $r ] }
-                when 5 { $self does Partial3[&f, $a1, $a2, $a3, $t4, $t5, $r ] }
+                when 4 { $self does Partial3of4[&f, $a1, $a2, $a3, $t4     , $r ] }
+                when 5 { $self does Partial3of5[&f, $a1, $a2, $a3, $t4, $t5, $r ] }
             }
         }
         when 4 {
             given $arity {
-                when 5 { $self does Partial4[&f, $a1, $a2, $a3, $t4, $t5, $r ] }
+                when 5 { $self does Partial4of5[&f, $a1, $a2, $a3, $t4, $t5, $r ] }
             }
         }
     }
     
+    # should not happen (I guess...)
     die "mismatch of arity $arity and nr of args $argCount"
         unless $result.defined;
 
@@ -327,9 +328,6 @@ class Fn does Callable {
         };
         $result = $result._(|as.list[$k..*]);
         return $result;
-        #my $result = self._(|as.list[0..$arity-1]);
-        #my $finalResult = $result(|as.list[$arity..*]);
-        #return $finalResult;
     }
 
 }
