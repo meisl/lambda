@@ -7,7 +7,7 @@ use Lambda::BaseP6;
 # module under test:
 use Lambda::ADT_auto;
 
-plan 50;
+plan 54;
 
 
 # prep ------------------------------------------------------------------------
@@ -140,14 +140,40 @@ doesnt_ok $barInstance, Foo, '$barInstance';
     
     
     { # concrete matcher .perl (the source of itself)
-        my $src = &fooMatcher.perl;
-        diag $src;
+        my ($src, $evalResult);
+        $src = &fooMatcher.perl;
+        #diag $src;
 
-        my $evalResult;
-        lives_ok { $evalResult = EVAL($src) }, 'matcher\'s .perl returns valid Perl6';
+        lives_ok { $evalResult = EVAL($src) }, 'matcher\'s .perl returns valid Perl6'
+            or diag $src and die;
         is $evalResult.HOW.Str.substr(0, 26), 'Perl6::Metamodel::ClassHOW', 'EVAL\'ing &fooMatcher.perl gives a class';
         is $evalResult.WHICH, 'FooMatcher', 'EVAL\'ing &fooMatcher.perl gives a class named FooMatcher';
+
+        # and now let's declare the ADT in a module:
+
+        my module Blah {
+            role Baz does ADT is export {
+                my $repr = ADTRepr.new(Baz,
+                    BazCtor1of2 => 0,
+                    BarCtor2of2 => 1
+                );
+                method repr { $repr }
+            }
+        }
+
+        lives_ok { $src = makeMatcher(Blah::Baz).perl }, 'can makeMatcher from an ADT declared in a module'
+            or die;
+        #diag $src;
+
+        lives_ok {
+            my \Baz = Blah::Baz;    # need to bring this into scope, it's named like this in the src
+            $evalResult = EVAL($src) 
+        }, 'matcher\'s .perl returns valid Perl6' or diag $src and die;
+
+        is $evalResult.HOW.Str.substr(0, 26), 'Perl6::Metamodel::ClassHOW', 'EVAL\'ing the source gives a class';
+        is $evalResult.WHICH, 'BazMatcher', 'EVAL\'ing the source gives a class named BazMatcher';
     }
+
 
     { # concrete matcher parameter checking
         throws_like { fooMatcher }, X::AdHoc, 'calling matcher with no args throws (bare call `matcher`)';

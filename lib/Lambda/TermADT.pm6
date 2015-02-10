@@ -6,34 +6,26 @@ use Lambda::Boolean;
 use Lambda::ListADT;
 
 use Lambda::P6Currying;
+use Lambda::ADT_auto;
 
 use Lambda::Conversion::Bool-conv;
 
-
 module Lambda::TermADT;
-# data Term = VarT   name:Str
-#           | AppT   func:Term  arg:Term
-#           | LamT   var:VarT   body:Term
-#           | ConstT value:_
-role TTerm is export {
+
+
+role TTerm does ADT is export {
+    our $repr is export = ADTRepr.new(TTerm,
+        VarT   => 1,    # name:Str
+        AppT   => 2,    # func:Term  arg:Term
+        LamT   => 2,    # var:VarT   body:Term
+        ConstT => 1     # value:_
+    );
+    method repr { $repr }
 }
-
-
 
 # pattern-matching ------------------------------------------------------------
 
-multi sub case-Term(TTerm:D $term,
-    :VarT(&onVarT)!,
-    :AppT(&onAppT)!,
-    :LamT(&onLamT)!,
-    :ConstT(&onConstT)!
-) is export {
-    $term(&onVarT, &onAppT, &onLamT, &onConstT);
-}
-
-multi sub case-Term(|args) {
-    die "error applying case-Term: " ~ args.perl;
-}
+our &case-Term is export = makeMatcher(TTerm);
 
 
 constant $on-VarT is export = lambdaFn(

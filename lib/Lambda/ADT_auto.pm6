@@ -43,96 +43,67 @@ class ADTRepr is export {
 }
 
 
-sub makeMatcher(ADT:U $adtTypeObject) is export {
-    my ADTRepr $adt = $adtTypeObject.repr;
+sub makeMatcher(ADT:U ::T) is export {
+    my @ctors = T.repr.ctors;
+
+    my Str $adtName_literal  = T.repr.name;
+    my Str $adtName_symbolic = 'S';
+    my \S := T;
 
     my Str $instanceName = '$instance';
-    my Str $instanceSig = "{$adt.name}:D {$instanceName}";
 
     my sub callbackName(Int:D $ctorNr) { "\$on{$ctorNr}" }
 
-    my @callbacks = $adt.ctors.map(-> Ctor $ctor { callbackName($ctor.nr) });
+    my @callbacks = @ctors.map(-> Ctor $ctor { callbackName($ctor.nr) });
 
     my Str $instanceApp = $instanceName ~ '(' ~ @callbacks.join(', ') ~ ')';
-    #say ">>> {$adt.name}: $instanceApp";
 
-    my Str $allCtorsSig = $adt.ctors.map(-> Ctor $ctor {
+    my Str $allCtorsSig = @ctors.map(-> Ctor $ctor {
         ":{$ctor.name}(" ~ callbackName($ctor.nr) ~ ')!'
     }).join(', ');
-    #say ">>>{$adt.name} allCtorsSig: $allCtorsSig";
 
 
     # -----------------------------------------------------------------------------------------------
 
-    my Str $firstLine = "class {$adt.name}Matcher does Callable \{\n";
-    
-    my Str $rest = qq:to/ENDOFSOURCE/
+    my sub firstLine(Str:D $adtName) {
+        "class {$adtName}Matcher does Callable \{\n";
+    }
+
+    my sub rest(Str:D $adtName) {
+        my $instanceSig = "{$adtName}:D {$instanceName}";
+        return qq:to/ENDOFSOURCE/
     # we're getting a capture, so that's why the whole sig is wrapped in parens
-    multi method postcircumfix:<( )>(  ( {$adt.name}:D \$instance, {$allCtorsSig} )  ) \{
-        #say ">>>{$adt.name} got called with: " ~ \$instance;
+    multi method postcircumfix:<( )>(({$instanceSig}, {$allCtorsSig})) \{
+        #say ">>>{$adtName_literal} got called with: " ~ \$instance;
         {$instanceApp}
     \}
     
     # fallback to give error message, if none of the other signatures matches
     multi method postcircumfix:<( )>(\$args) \{  # we're getting a capture - always...
-        if \$args.list[0] !~~ {$adt.name}:D \{
-            die 'expected {$adt.name} instance as 1st arg to match({$adt.name}:D, ...) - got ' ~ \$args.list[0].gist;
+        if (\$args.list[0] ~~ {$adtName}) \{
+            die 'cannot apply match({$adtName_literal}:D, ...) to ' ~ \$args.gist;
         \} else \{
-            die 'cannot apply match({$adt.name}:D, ...) to ' ~ \$args.gist;
+            die 'expected {$adtName_literal} instance as 1st arg to match({$adtName_literal}:D, ...) - got ' ~ \$args.list[0].gist;
         \}
     \}
 \}
 ENDOFSOURCE
-;
+    }
 
     # -----------------------------------------------------------------------------------------------
 
 
-    my $src = $firstLine 
+    my $src = firstLine($adtName_literal)
         ~ '    method perl {' ~ "\n"
         ~ '        q:to/ENDOFSOURCE/' ~ "\n"
-        ~ $firstLine ~ "\n"
+        ~ firstLine($adtName_literal) ~ "\n"
         ~ '    method perl { ... } # well, cannot repeat this forever...' ~ "\n\n"
-        ~ $rest
+        ~ rest($adtName_literal)
         ~ 'ENDOFSOURCE' ~ "\n"
         ~ '    } # end of method `perl`' ~ "\n\n"
-        ~ $rest
+        ~ rest($adtName_symbolic)
     ;
-    #say '>>>> ' ~ $adt ~ ': ' ~ $src;
-    #say '<<<<';
-    my $result = EVAL($src);
+    #say ">>>> {$adtName_literal}: $src\n<<<<";
 
-    return $result;
-}
-
-
-#`{
-
-my role TFoo {};
-
-my $x = 7 does TFoo;
-my $y = 9 does TFoo;
-
-constant &matchFoo is export = #EVAL q:to/ENDOFEVAL/
-    class {
-        multi method postcircumfix:<( )>((Int $x)) {
-            say 'postcircumfix:<( )>(Int) called: ' ~ $x;
-        }
-        multi method postcircumfix:<( )>((TFoo:D $x, TFoo:D $y)) {
-            say 'postcircumfix:<( )>(TFoo TFoo) called: ' ~ "$x, $y";
-        }
-        multi method postcircumfix:<( )>($args) {
-            say 'fallback postcircumfix:<( )> called: ' ~ $args.perl;
-        }
-    };
-#ENDOFEVAL
-;
-
-
-    say &matchFoo.perl;
-    say '';
-    matchFoo();
-    matchFoo(5);
-    matchFoo($x);
-    matchFoo($x, $y);
+    return EVAL($src);
 }

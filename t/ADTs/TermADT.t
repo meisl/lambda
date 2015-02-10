@@ -91,7 +91,7 @@ plan 147;
 
 # pattern matching ------------------------------------------------------------
 
-{ # destruct-Term
+{ # case-Term
     my (&onVarT, &onAppT, &onLamT, &onConstT);
     {
         my &thenFn1 = curry(-> Str $which, $field1 {
