@@ -79,7 +79,8 @@ plan 19;
         
         cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
         
-        is $g('foo'), 'foo', "can call it with expected nr of args";
+        is $g('foo'), 'foo', "can call it with expected nr of args"
+            or die;
     }, "curried unary fn {$g.ty}; unapplied";
 }
 
