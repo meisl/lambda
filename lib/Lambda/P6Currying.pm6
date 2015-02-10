@@ -266,16 +266,16 @@ class Fn does Callable {
         my $n = &!f.signature.arity;
         if @as == $n {
             $out = &!f.(|@as);
+            if $out ~~ Callable {
+                $out = curry($out);
+            } elsif $out !~~ Unapplicable {
+                $out does Unapplicable;
+            }
         } else { # got *LESS* params (if it were more, then we'd ended up in the fallback method _ above)
             $partialAppCount++;
             #warn ">>>> partial app $partialAppCount:" ~ self ~ Backtrace.new;
             $out = Fn.new(&!f, |@as);
             &!f.?onPartialApp($out, |@as);
-        }
-        if $out ~~ Callable {
-            $out = curry($out);
-        } elsif $out !~~ Unapplicable {
-            $out does Unapplicable;
         }
         return $out;
     }
