@@ -125,11 +125,11 @@ plan 19;
 
 { # binary fn
     my $g ::= curry(-> Int $x, Str $s -->Str{ $s x $x });
-    $g.f does role {
-        method onPartialApp($self, *@as) {
-            #exit;
-        }
-    }
+    #$g.f does role {
+    #    method onPartialApp($self, *@as) {
+    #        #exit;
+    #    }
+    #}
 
     subtest {
         does_ok $g, Callable;

@@ -244,9 +244,6 @@ role Partial4[&f, $a0, $a1, $a2, $a3, ::T4, ::R] {
 
 
 class Fn does Callable {
-    has &.f;
-    has @!partialArgs;
-
     method new(&f, *@partialArgs) {
         if &f ~~ Fn {
             die "FUCK: " ~ &f.?symbol ~ ' ' ~ &f.?lambda ~ ' ' ~ &f.WHICH;
@@ -255,55 +252,54 @@ class Fn does Callable {
             or die "mismatch of arity {self.arity} and nr of args {@partialArgs.elems}";
     }
 
-    submethod BUILD(:&!f, :@!partialArgs) {
-        my @ps = &!f.signature.params;
+    submethod BUILD(:&f, :@partialArgs) {
+        my @ps = &f.signature.params;
         my $arity = @ps.elems;
-        die "cannot curry nullary fn - signature: {&!f.signature.perl}; fn: {&!f.gist}" 
+        die "cannot curry nullary fn - signature: {&f.signature.perl}; fn: {&f.gist}" 
             if $arity == 0;
-        die "cannot curry fn with optional/slurpy/named/capture or parcel parameters - signature: {&!f.signature.perl}; fn: {&!f.gist}"
+        die "cannot curry fn with optional/slurpy/named/capture or parcel parameters - signature: {&f.signature.perl}; fn: {&f.gist}"
             if @ps.map({$_.optional || $_.slurpy || $_.named || $_.capture || $_.parcel}).any;
-        die "NYI: Fn with arity $arity (> 5) - signature: {&!f.signature.perl}; fn: {&!f.gist}"
+        die "NYI: Fn with arity $arity (> 5) - signature: {&f.signature.perl}; fn: {&f.gist}"
             if $arity > 5;
 
         my @ts = @ps.map(*.type);
-        my ($a0, $a1, $a2, $a3, $a4) = @!partialArgs;
+        my ($a0, $a1, $a2, $a3, $a4) = @partialArgs;
         my ($t0, $t1, $t2, $t3, $t4) = @ts;
-        my $r = &!f.signature.returns;
-        my $f = &!f;
-        given @!partialArgs.elems {
+        my $r = &f.signature.returns;
+        given @partialArgs.elems {
             when 0 {
                 given $arity {
-                    when 1 { self does Partial0[$f, $t0                    , $r ] }
-                    when 2 { self does Partial0[$f, $t0, $t1               , $r ] }
-                    when 3 { self does Partial0[$f, $t0, $t1, $t2          , $r ] }
-                    when 4 { self does Partial0[$f, $t0, $t1, $t2, $t3     , $r ] }
-                    when 5 { self does Partial0[$f, $t0, $t1, $t2, $t3, $t4, $r ] }
+                    when 1 { self does Partial0[&f, $t0                    , $r ] }
+                    when 2 { self does Partial0[&f, $t0, $t1               , $r ] }
+                    when 3 { self does Partial0[&f, $t0, $t1, $t2          , $r ] }
+                    when 4 { self does Partial0[&f, $t0, $t1, $t2, $t3     , $r ] }
+                    when 5 { self does Partial0[&f, $t0, $t1, $t2, $t3, $t4, $r ] }
                 }
             }
             when 1 {
                 given $arity {
-                    when 2 { self does Partial1[$f, $a0, $t1               , $r ] }
-                    when 3 { self does Partial1[$f, $a0, $t1, $t2          , $r ] }
-                    when 4 { self does Partial1[$f, $a0, $t1, $t2, $t3     , $r ] }
-                    when 5 { self does Partial1[$f, $a0, $t1, $t2, $t3, $t4, $r ] }
+                    when 2 { self does Partial1[&f, $a0, $t1               , $r ] }
+                    when 3 { self does Partial1[&f, $a0, $t1, $t2          , $r ] }
+                    when 4 { self does Partial1[&f, $a0, $t1, $t2, $t3     , $r ] }
+                    when 5 { self does Partial1[&f, $a0, $t1, $t2, $t3, $t4, $r ] }
                 }
             }
             when 2 {
                 given $arity {
-                    when 3 { self does Partial2[$f, $a0, $a1, $t2          , $r ] }
-                    when 4 { self does Partial2[$f, $a0, $a1, $t2, $t3     , $r ] }
-                    when 5 { self does Partial2[$f, $a0, $a1, $t2, $t3, $t4, $r ] }
+                    when 3 { self does Partial2[&f, $a0, $a1, $t2          , $r ] }
+                    when 4 { self does Partial2[&f, $a0, $a1, $t2, $t3     , $r ] }
+                    when 5 { self does Partial2[&f, $a0, $a1, $t2, $t3, $t4, $r ] }
                 }
             }
             when 3 {
                 given $arity {
-                    when 4 { self does Partial3[$f, $a0, $a1, $a2, $t3     , $r ] }
-                    when 5 { self does Partial3[$f, $a0, $a1, $a2, $t3, $t4, $r ] }
+                    when 4 { self does Partial3[&f, $a0, $a1, $a2, $t3     , $r ] }
+                    when 5 { self does Partial3[&f, $a0, $a1, $a2, $t3, $t4, $r ] }
                 }
             }
             when 4 {
                 given $arity {
-                    when 5 { self does Partial4[$f, $a0, $a1, $a2, $t3, $t4, $r ] }
+                    when 5 { self does Partial4[&f, $a0, $a1, $a2, $t3, $t4, $r ] }
                 }
             }
         }
@@ -318,35 +314,31 @@ class Fn does Callable {
     }
 
     # Fallback, if none of the _ methods from role PartialX matches.
-    # Here, *additional* args arrive (to be appended to @!partialArgs).
+    # Here, *additional* args arrive (to be appended to @partialArgs).
     # NOT to be used from outside - use normal postcircumfix<( )> instead!
     multi method _(|as) is hidden_from_backtrace {
-        my $arity = self.arity; # orig fn's arity - # of @!partialArgs
+        my $arity = self.arity; # orig fn's arity - nr of @partialArgs
         my $argCount = as.list.elems;
-        if $argCount > $arity {
-            $overAppCount++;
-            #warn ">>>> over-app $overAppCount: " ~ self ~ Backtrace.new;   #   ;  #   
-            #say "n=$n, partialArgs={@!partialArgs.perl}, as={as.perl}";
-            my $k = 0;
-            my $n = $arity;
-            my $result = self;
-            loop {
-                $result = $result._(|as.list[$k..$n-1]);
-                $k = $n;
-                $n += $result.?arity // last;
-                last if $n >= $argCount;
-            };
-            $result = $result._(|as.list[$k..*]);
-            return $result;
-            #my $result = self._(|as.list[0..$arity-1]);
-            #my $finalResult = $result(|as.list[$arity..*]);
-            #return $finalResult;
-        } else {
-            my @expectedTypes = self.sig[0..*-2];
-            #say (@expectedTypes Z as.list).map(-> $t, $a { "{$t.perl}: {$a.perl}\n" });
+        die X::Typing::ArgBinding.new(:whatsInFuncPos(self), :args(as))
+            unless $argCount > $arity;
 
-            die X::Typing::ArgBinding.new(:whatsInFuncPos(self), :args(as));
-        }
+        $overAppCount++;
+        #warn ">>>> over-app $overAppCount: " ~ self ~ Backtrace.new;   #   ;  #   
+        #say "n=$n, partialArgs={@partialArgs.perl}, as={as.perl}";
+        my $k = 0;
+        my $n = $arity;
+        my $result = self;
+        loop {
+            $result = $result._(|as.list[$k..$n-1]);    # TODO: use the fact that these are complete apps
+            $k = $n;
+            $n += $result.?arity // last;
+            last if $n >= $argCount;
+        };
+        $result = $result._(|as.list[$k..*]);
+        return $result;
+        #my $result = self._(|as.list[0..$arity-1]);
+        #my $finalResult = $result(|as.list[$arity..*]);
+        #return $finalResult;
     }
 
 }
