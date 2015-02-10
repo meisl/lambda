@@ -22,8 +22,8 @@ plan 19;
         my $g = curry($unaryLambdaUnderscore);
         does_ok $g, Callable;
 
-        is $g.arity, 1, "arity";
-        is $g.count, 1, ".count (==arity)";
+        is $g.arity, 1, "arity" or diag $g.perl;
+        is $g.count, 1, ".count (==arity)" or diag $g.perl;
         is $g.sig.elems, 2, "nr of elems in sig";
         isa_ok $g.sig[0], Mu, "type of 1st param";
         isa_ok $g.sig[1], Mu, "type of result";
