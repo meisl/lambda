@@ -140,7 +140,7 @@ role Partial0of1[&f, ::T1, ::R] {
     method arity { 1 }
     method count { 1 }
     method sig   { @(T1, R) }
-    method ty    { "{T1.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 role Partial0of2[&f, ::T1, ::T2, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
@@ -153,7 +153,7 @@ role Partial0of2[&f, ::T1, ::T2, ::R] {
     method arity { 2 }
     method count { 2 }
     method sig   { @(T1, T2, R) }
-    method ty    { "{T1.perl} -> {T2.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 role Partial0of3[&f, ::T1, ::T2, ::T3, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
@@ -165,7 +165,7 @@ role Partial0of3[&f, ::T1, ::T2, ::T3, ::R] {
     method arity { 3 }
     method count { 3 }
     method sig   { @(T1, T2, T3, R) }
-    method ty    { "{T1.perl} -> {T2.perl} -> {T3.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 role Partial0of4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
@@ -178,7 +178,7 @@ role Partial0of4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
     method arity { 4 }
     method count { 4 }
     method sig   { @(T1, T2, T3, T4, R) }
-    method ty    { "{T1.perl} -> {T2.perl} -> {T3.perl} -> {T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
@@ -192,7 +192,7 @@ role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
     method arity { 5 }
     method count { 5 }
     method sig   { @(T1, T2, T3, T4, T5, R) }
-    method ty    { "{T1.perl} -> {T2.perl} -> {T3.perl} -> {T4.perl} -> {T5.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 
 # Partial1ofX
@@ -205,7 +205,7 @@ role Partial1of2[&f, $a1, ::T2, ::R] {
     method arity { 1 }
     method count { 1 }
     method sig   { @(T2, R) }
-    method ty    { "{T2.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 role Partial1of3[&f, $a1, ::T2, ::T3, ::R] {
     multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
@@ -216,7 +216,7 @@ role Partial1of3[&f, $a1, ::T2, ::T3, ::R] {
     method arity { 2 }
     method count { 2 }
     method sig   { @(T2, T3, R) }
-    method ty    { "{T2.perl} -> {T3.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 role Partial1of4[&f, $a1, ::T2, ::T3, ::T4, ::R] {
     multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
@@ -228,7 +228,7 @@ role Partial1of4[&f, $a1, ::T2, ::T3, ::T4, ::R] {
     method arity { 3 }
     method count { 3 }
     method sig   { @(T2, T3, T4, R) }
-    method ty    { "{T2.perl} -> {T3.perl} -> {T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
@@ -241,7 +241,7 @@ role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
     method arity { 4 }
     method count { 4 }
     method sig   { @(T2, T3, T4, T5, R) }
-    method ty    { "{T2.perl} -> {T3.perl} -> {T4.perl} -> {T5.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 
 # Partial2ofX
@@ -253,7 +253,7 @@ role Partial2of3[&f, $a1, $a2, ::T3, ::R] {
     method arity { 1 }
     method count { 1 }
     method sig   { @(T3, R) }
-    method ty    { "{T3.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 role Partial2of4[&f, $a1, $a2, ::T3, ::T4, ::R] {
     multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
@@ -264,7 +264,7 @@ role Partial2of4[&f, $a1, $a2, ::T3, ::T4, ::R] {
     method arity { 2 }
     method count { 2 }
     method sig   { @(T3, T4, R) }
-    method ty    { "{T3.perl} -> {T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
@@ -276,7 +276,7 @@ role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
     method arity { 3 }
     method count { 3 }
     method sig   { @(T3, T4, T5, R) }
-    method ty    { "{T3.perl} -> {T4.perl} -> {T5.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 
 # Partial3ofX
@@ -288,7 +288,7 @@ role Partial3of4[&f, $a1, $a2, $a3, ::T4, ::R] {
     method arity { 1 }
     method count { 1 }
     method sig   { @(T4, R) }
-    method ty    { "{T4.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
     multi method _(T4 $a4) {                                    apply_part(&f, $a1, $a2, $a3, $a4)      }
@@ -299,7 +299,7 @@ role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
     method arity { 2 }
     method count { 2 }
     method sig   { @(T4, T5, R) }
-    method ty    { "{T4.perl} -> {T5.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 
 # Partial4ofX
@@ -311,7 +311,7 @@ role Partial4of5[&f, $a1, $a2, $a3, $a4, ::T5, ::R] {
     method arity { 1 }
     method count { 1 }
     method sig   { @(T5, R) }
-    method ty    { "{T5.perl} -> {R.perl}" }    #    self.sig.map(*.perl).join(' -> ') }     #     
+    method ty    { self.sig.map(*.perl).join(' -> ') }
 }
 
 
