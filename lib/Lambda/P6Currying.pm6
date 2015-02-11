@@ -1,9 +1,8 @@
 use v6;
 
 
-
-my $overAppCount = 0;
-my $partialAppCount = 0;
+my $nApp_o = 0;
+my $nApp_p = 0;
 
 my sub captureToStr($capture) {
     "\\({$capture.list.map(*.perl).join(', ')}"
@@ -40,6 +39,14 @@ class X::Typing::ArgBinding is X::Typing is export {
     method  expected    { $!whatsInFuncPos.ty }
     method  got         { self.args }
 
+    multi method new(Callable:D :$whatsInFuncPos!, Capture:D :$args!) {
+        self.bless(:$whatsInFuncPos, :$args);
+    }
+
+    multi method new(Callable:D $whatsInFuncPos, Capture:D $args) {
+        self.bless(:$whatsInFuncPos, :$args);
+    }
+
     submethod BUILD(:$!whatsInFuncPos, :$!args) {
         $!message = "cannot apply {$!whatsInFuncPos}: {self.expected} to {self.got}";
     }
@@ -63,7 +70,7 @@ my role Unapplicable {
     multi method postcircumfix:<( )>($as) {
         die X::Typing::Unapplicable.new(:whatsInFuncPos(self), :args($as));
     }
-    method _(|as) is hidden_from_backtrace {    # TODO: why do we need a fallback `_` method in role Unapplicable?
+    method _(|as) {    # TODO: why do we need a fallback `_` method in role Unapplicable?
         self.(|as.list);
     }
 }
@@ -93,8 +100,8 @@ role Partial4of5 { ... }
 
 # This one expects to receive *less than* the args which the orig fn &f expects.
 my sub apply_part(&f, *@as) {
-    $partialAppCount++;
-    #warn ">>>> partial app $partialAppCount:" ~ Backtrace.new;
+    $nApp_p++;
+    #warn ">>>> partial app $nApp_p:" ~ Backtrace.new;
     my $out = _curry(Fn.new, &f, :partialArgs(@as));
     &f.?onPartialApp($out, @as);
     return $out;
@@ -113,29 +120,48 @@ my sub apply_comp($result) {
 
 # This one expects to receive *more* args than the orig fn &f expects.
 my sub apply_more(&f, @as, @bs) {
-    #warn "got more: {@bs.perl}";
-    #die "FUCK" if @bs.elems == 0;
+    $nApp_o++;
     apply_comp(&f(|@as))(|@bs);
-    
-    #die X::Typing::Unapplicable.new(:whatsInFuncPos(self), :args($as))
-    #    unless $result ~~ Callable;
+}
 
+# This one expects to receive *more* args than the orig fn &f expects.
+my sub __apply_more(&f, @as, @bs) {
+
+    #warn ">>>> over-app $nApp_o: " ~ self ~ Backtrace.new;   #   ;  #   
+    #say "n=$n, partialArgs={@partialArgs.perl}, as={as.perl}";
+    my $argCount = @bs.elems;
+
+    my $result = apply_comp(&f(|@as));
+    $nApp_o++;
+    my $k = 0;
+    my $n = $result.?arity // $result(|@bs);    # throws X::Typing::Unapplicable
+    while ($n < $argCount) {
+        $result = $result._(|@bs[$k..$n-1]); # TODO: use the fact that these are all complete applications
+        $k = $n;
+        $n += $result.?arity // last;
+    }
+
+    $result = $result._(|@bs[$k..*]);    # this may be a partial application
+    return $result;
 }
 
 # Dispatch to one of the _ methods from role PartialX 
 # NOTE: doesn't work with postcircumfix:<( )> overrides there, for some reason...?!
-my sub fallback($self, Capture:D $args) {
+my sub enter($self, Capture:D $args) {
     die X::Typing::UnsupportedNamedArgs.new(:whatsInFuncPos($self), :$args)
         unless $args.hash.elems == 0;
     $self._(|$args);
 }
 
+
+
 # Partial0ofX
 role Partial0of1[&f, ::T1, ::R] {
     multi method _(T1 $a1) {                                    apply_comp(&f($a1))                     }
     multi method _(T1 $a1, *@bs) is default {                   apply_more(&f, [$a1], @bs)              }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 1 }
     method count { 1 }
@@ -144,11 +170,12 @@ role Partial0of1[&f, ::T1, ::R] {
 }
 role Partial0of2[&f, ::T1, ::T2, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
-#    multi multi method postcircumfix:<((T1 $a1))> { $partialAppCount++; Fn.new does Partial1of2[&f, $a1, T2, R] }
+#    multi multi method postcircumfix:<((T1 $a1))> { $nApp_p++; Fn.new does Partial1of2[&f, $a1, T2, R] }
     multi method _(T1 $a1, T2 $a2) {                            apply_comp(&f($a1, $a2))                }
     multi method _(T1 $a1, T2 $a2, *@bs) is default {           apply_more(&f, [$a1, $a2], @bs)         }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 2 }
     method count { 2 }
@@ -159,8 +186,10 @@ role Partial0of3[&f, ::T1, ::T2, ::T3, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
     multi method _(T1 $a1, T2 $a2) {                            apply_part(&f, $a1, $a2)                }
     multi method _(T1 $a1, T2 $a2, T3 $a3) {                    apply_comp(&f($a1, $a2, $a3))           }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, *@bs) is default {   apply_more(&f, [$a1, $a2, $a3], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 3 }
     method count { 3 }
@@ -172,8 +201,10 @@ role Partial0of4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
     multi method _(T1 $a1, T2 $a2) {                            apply_part(&f, $a1, $a2)                }
     multi method _(T1 $a1, T2 $a2, T3 $a3) {                    apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4) {            apply_comp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@bs) is default {   apply_more(&f, [$a1, $a2, $a3, $a4], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 4 }
     method count { 4 }
@@ -186,8 +217,10 @@ role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T1 $a1, T2 $a2, T3 $a3) {                    apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4) {            apply_part(&f, $a1, $a2, $a3, $a4)      }
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5) {    apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@bs) is default {   apply_more(&f, [$a1, $a2, $a3, $a4, $a5], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 5 }
     method count { 5 }
@@ -199,8 +232,9 @@ role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
 role Partial1of2[&f, $a1, ::T2, ::R] {
     multi method _(T2 $a2) {                                    apply_comp(&f($a1, $a2))                }
     multi method _(T2 $a2, *@bs) is default {                   apply_more(&f, [$a1, $a2], @bs)         }
-    
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
+
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 1 }
     method count { 1 }
@@ -210,8 +244,10 @@ role Partial1of2[&f, $a1, ::T2, ::R] {
 role Partial1of3[&f, $a1, ::T2, ::T3, ::R] {
     multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
     multi method _(T2 $a2, T3 $a3) {                            apply_comp(&f($a1, $a2, $a3))           }
-    
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method _(T2 $a2, T3 $a3, *@bs) is default {           apply_more(&f, [$a1, $a2, $a3], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
+
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 2 }
     method count { 2 }
@@ -222,8 +258,10 @@ role Partial1of4[&f, $a1, ::T2, ::T3, ::T4, ::R] {
     multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
     multi method _(T2 $a2, T3 $a3) {                            apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T2 $a2, T3 $a3, T4 $a4) {                    apply_comp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T2 $a2, T3 $a3, T4 $a4, *@bs) is default {   apply_more(&f, [$a1, $a2, $a3, $a4], @bs)   }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 3 }
     method count { 3 }
@@ -235,8 +273,10 @@ role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T2 $a2, T3 $a3) {                            apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T2 $a2, T3 $a3, T4 $a4) {                    apply_part(&f, $a1, $a2, $a3, $a4)      }
     multi method _(T2 $a2, T3 $a3, T4 $a4, T5 $a5) {            apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
+    multi method _(T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@bs) is default {   apply_more(&f, [$a1, $a2, $a3, $a4, $a5], @bs)   }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 4 }
     method count { 4 }
@@ -247,8 +287,10 @@ role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
 # Partial2ofX
 role Partial2of3[&f, $a1, $a2, ::T3, ::R] {
     multi method _(T3 $a3) {                                    apply_comp(&f($a1, $a2, $a3))           }
+    multi method _(T3 $a3, *@bs) is default {                   apply_more(&f, [$a1, $a2, $a3], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 1 }
     method count { 1 }
@@ -258,8 +300,10 @@ role Partial2of3[&f, $a1, $a2, ::T3, ::R] {
 role Partial2of4[&f, $a1, $a2, ::T3, ::T4, ::R] {
     multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T3 $a3, T4 $a4) {                            apply_comp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T3 $a3, T4 $a4, *@bs) is default {           apply_more(&f, [$a1, $a2, $a3, $a4], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 2 }
     method count { 2 }
@@ -270,8 +314,10 @@ role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T3 $a3, T4 $a4) {                            apply_part(&f, $a1, $a2, $a3, $a4)      }
     multi method _(T3 $a3, T4 $a4, T5 $a5) {                    apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
+    multi method _(T3 $a3, T4 $a4, T5 $a5, *@bs) is default {   apply_more(&f, [$a1, $a2, $a3, $a4, $a5], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 3 }
     method count { 3 }
@@ -282,8 +328,10 @@ role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
 # Partial3ofX
 role Partial3of4[&f, $a1, $a2, $a3, ::T4, ::R] {
     multi method _(T4 $a4) {                                    apply_comp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T4 $a4, *@bs) is default {                   apply_more(&f, [$a1, $a2, $a3, $a4], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 1 }
     method count { 1 }
@@ -293,8 +341,10 @@ role Partial3of4[&f, $a1, $a2, $a3, ::T4, ::R] {
 role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
     multi method _(T4 $a4) {                                    apply_part(&f, $a1, $a2, $a3, $a4)      }
     multi method _(T4 $a4, T5 $a5) {                            apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
+    multi method _(T4 $a4, T5 $a5, *@bs) is default {           apply_more(&f, [$a1, $a2, $a3, $a4, $a5], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 2 }
     method count { 2 }
@@ -305,8 +355,10 @@ role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
 # Partial4ofX
 role Partial4of5[&f, $a1, $a2, $a3, $a4, ::T5, ::R] {
     multi method _(T5 $a5) {                                    apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
+    multi method _(T5 $a5, *@bs) is default {                   apply_more(&f, [$a1, $a2, $a3, $a4, $a5], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
     
-    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
     method arity { 1 }
     method count { 1 }
@@ -368,31 +420,6 @@ my sub _curry($self, &f, :@partialArgs) {
 }
 
 class Fn does Callable {
-
-    # Fallback, if none of the _ methods from role PartialX matches.
-    # Here, *additional* args arrive (to be appended to @partialArgs).
-    # NOT to be used from outside - use normal postcircumfix<( )> instead!
-    multi method _(|as) is hidden_from_backtrace {
-        my $arity = self.arity; # orig fn's arity - nr of @partialArgs
-        my $argCount = as.list.elems;
-        die X::Typing::ArgBinding.new(:whatsInFuncPos(self), :args(as))
-            unless $argCount > $arity;
-
-        $overAppCount++;
-        #warn ">>>> over-app $overAppCount: " ~ self ~ Backtrace.new;   #   ;  #   
-        #say "n=$n, partialArgs={@partialArgs.perl}, as={as.perl}";
-        my $k = 0;
-        my $n = $arity;
-        my $result = self;
-        loop {
-            $result = $result._(|as.list[$k..$n-1]);    # TODO: use the fact that these are complete apps
-            $k = $n;
-            $n += $result.?arity // last;
-            last if $n >= $argCount;
-        };
-        $result = $result._(|as.list[$k..*]);
-        return $result;
-    }
 
 }
 
