@@ -97,6 +97,10 @@ role Partial2of5 { ... }
 role Partial3of5 { ... }
 role Partial4of5 { ... }
 
+my sub typeStr(@types) {
+    @types.map(*.perl).join(' -> ');
+}
+
 
 # This one expects to receive *less than* the args which the orig fn &f expects.
 my sub apply_part(&f, *@as) {
@@ -155,7 +159,7 @@ my sub enter($self, Capture:D $args) {
 
 
 
-# Partial0ofX
+# arity 1
 role Partial0of1[&f, ::T1, ::R] {
     multi method _(T1 $a1) {                                    apply_comp(&f($a1))                     }
     multi method _(T1 $a1, *@bs) is default {                   apply_more(&f, [$a1], @bs)              }
@@ -166,8 +170,11 @@ role Partial0of1[&f, ::T1, ::R] {
     method arity { 1 }
     method count { 1 }
     method sig   { @(T1, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
+    method ty    { typeStr(self.sig) }
 }
+
+
+# arity 2
 role Partial0of2[&f, ::T1, ::T2, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
 #    multi multi method postcircumfix:<((T1 $a1))> { $nApp_p++; Fn.new does Partial1of2[&f, $a1, T2, R] }
@@ -180,8 +187,22 @@ role Partial0of2[&f, ::T1, ::T2, ::R] {
     method arity { 2 }
     method count { 2 }
     method sig   { @(T1, T2, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
+    method ty    { typeStr(self.sig) }
 }
+role Partial1of2[&f, $a1, ::T2, ::R] {
+    multi method _(T2 $a2) {                                    apply_comp(&f($a1, $a2))                }
+    multi method _(T2 $a2, *@bs) is default {                   apply_more(&f, [$a1, $a2], @bs)         }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
+
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+
+    method arity { 1 }
+    method count { 1 }
+    method sig   { @(T2, R) }
+    method ty    { typeStr(self.sig) }
+}
+
+# arity 3
 role Partial0of3[&f, ::T1, ::T2, ::T3, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
     multi method _(T1 $a1, T2 $a2) {                            apply_part(&f, $a1, $a2)                }
@@ -194,8 +215,35 @@ role Partial0of3[&f, ::T1, ::T2, ::T3, ::R] {
     method arity { 3 }
     method count { 3 }
     method sig   { @(T1, T2, T3, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
+    method ty    { typeStr(self.sig) }
 }
+role Partial1of3[&f, $a1, ::T2, ::T3, ::R] {
+    multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
+    multi method _(T2 $a2, T3 $a3) {                            apply_comp(&f($a1, $a2, $a3))           }
+    multi method _(T2 $a2, T3 $a3, *@bs) is default {           apply_more(&f, [$a1, $a2, $a3], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
+
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+
+    method arity { 2 }
+    method count { 2 }
+    method sig   { @(T2, T3, R) }
+    method ty    { typeStr(self.sig) }
+}
+role Partial2of3[&f, $a1, $a2, ::T3, ::R] {
+    multi method _(T3 $a3) {                                    apply_comp(&f($a1, $a2, $a3))           }
+    multi method _(T3 $a3, *@bs) is default {                   apply_more(&f, [$a1, $a2, $a3], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
+    
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+
+    method arity { 1 }
+    method count { 1 }
+    method sig   { @(T3, R) }
+    method ty    { typeStr(self.sig) }
+}
+
+# arity 4
 role Partial0of4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
     multi method _(T1 $a1, T2 $a2) {                            apply_part(&f, $a1, $a2)                }
@@ -209,8 +257,49 @@ role Partial0of4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
     method arity { 4 }
     method count { 4 }
     method sig   { @(T1, T2, T3, T4, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
+    method ty    { typeStr(self.sig) }
 }
+role Partial1of4[&f, $a1, ::T2, ::T3, ::T4, ::R] {
+    multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
+    multi method _(T2 $a2, T3 $a3) {                            apply_part(&f, $a1, $a2, $a3)           }
+    multi method _(T2 $a2, T3 $a3, T4 $a4) {                    apply_comp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T2 $a2, T3 $a3, T4 $a4, *@bs) is default {   apply_more(&f, [$a1, $a2, $a3, $a4], @bs)   }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
+    
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+
+    method arity { 3 }
+    method count { 3 }
+    method sig   { @(T2, T3, T4, R) }
+    method ty    { typeStr(self.sig) }
+}
+role Partial2of4[&f, $a1, $a2, ::T3, ::T4, ::R] {
+    multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
+    multi method _(T3 $a3, T4 $a4) {                            apply_comp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T3 $a3, T4 $a4, *@bs) is default {           apply_more(&f, [$a1, $a2, $a3, $a4], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
+    
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+
+    method arity { 2 }
+    method count { 2 }
+    method sig   { @(T3, T4, R) }
+    method ty    { typeStr(self.sig) }
+}
+role Partial3of4[&f, $a1, $a2, $a3, ::T4, ::R] {
+    multi method _(T4 $a4) {                                    apply_comp(&f($a1, $a2, $a3, $a4))      }
+    multi method _(T4 $a4, *@bs) is default {                   apply_more(&f, [$a1, $a2, $a3, $a4], @bs)    }
+    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
+    
+    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+
+    method arity { 1 }
+    method count { 1 }
+    method sig   { @(T4, R) }
+    method ty    { typeStr(self.sig) }
+}
+
+# arity 5
 role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
     multi method _(T1 $a1, T2 $a2) {                            apply_part(&f, $a1, $a2)                }
@@ -225,48 +314,7 @@ role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
     method arity { 5 }
     method count { 5 }
     method sig   { @(T1, T2, T3, T4, T5, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
-}
-
-# Partial1ofX
-role Partial1of2[&f, $a1, ::T2, ::R] {
-    multi method _(T2 $a2) {                                    apply_comp(&f($a1, $a2))                }
-    multi method _(T2 $a2, *@bs) is default {                   apply_more(&f, [$a1, $a2], @bs)         }
-    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
-
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
-
-    method arity { 1 }
-    method count { 1 }
-    method sig   { @(T2, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
-}
-role Partial1of3[&f, $a1, ::T2, ::T3, ::R] {
-    multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
-    multi method _(T2 $a2, T3 $a3) {                            apply_comp(&f($a1, $a2, $a3))           }
-    multi method _(T2 $a2, T3 $a3, *@bs) is default {           apply_more(&f, [$a1, $a2, $a3], @bs)    }
-    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
-
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
-
-    method arity { 2 }
-    method count { 2 }
-    method sig   { @(T2, T3, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
-}
-role Partial1of4[&f, $a1, ::T2, ::T3, ::T4, ::R] {
-    multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
-    multi method _(T2 $a2, T3 $a3) {                            apply_part(&f, $a1, $a2, $a3)           }
-    multi method _(T2 $a2, T3 $a3, T4 $a4) {                    apply_comp(&f($a1, $a2, $a3, $a4))      }
-    multi method _(T2 $a2, T3 $a3, T4 $a4, *@bs) is default {   apply_more(&f, [$a1, $a2, $a3, $a4], @bs)   }
-    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
-    
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
-
-    method arity { 3 }
-    method count { 3 }
-    method sig   { @(T2, T3, T4, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
+    method ty    { typeStr(self.sig) }
 }
 role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
@@ -281,34 +329,7 @@ role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
     method arity { 4 }
     method count { 4 }
     method sig   { @(T2, T3, T4, T5, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
-}
-
-# Partial2ofX
-role Partial2of3[&f, $a1, $a2, ::T3, ::R] {
-    multi method _(T3 $a3) {                                    apply_comp(&f($a1, $a2, $a3))           }
-    multi method _(T3 $a3, *@bs) is default {                   apply_more(&f, [$a1, $a2, $a3], @bs)    }
-    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
-    
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
-
-    method arity { 1 }
-    method count { 1 }
-    method sig   { @(T3, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
-}
-role Partial2of4[&f, $a1, $a2, ::T3, ::T4, ::R] {
-    multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
-    multi method _(T3 $a3, T4 $a4) {                            apply_comp(&f($a1, $a2, $a3, $a4))      }
-    multi method _(T3 $a3, T4 $a4, *@bs) is default {           apply_more(&f, [$a1, $a2, $a3, $a4], @bs)    }
-    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
-    
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
-
-    method arity { 2 }
-    method count { 2 }
-    method sig   { @(T3, T4, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
+    method ty    { typeStr(self.sig) }
 }
 role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
@@ -322,21 +343,7 @@ role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
     method arity { 3 }
     method count { 3 }
     method sig   { @(T3, T4, T5, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
-}
-
-# Partial3ofX
-role Partial3of4[&f, $a1, $a2, $a3, ::T4, ::R] {
-    multi method _(T4 $a4) {                                    apply_comp(&f($a1, $a2, $a3, $a4))      }
-    multi method _(T4 $a4, *@bs) is default {                   apply_more(&f, [$a1, $a2, $a3, $a4], @bs)    }
-    multi method _(|as) {                                       die X::Typing::ArgBinding.new(self, as) }
-    
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
-
-    method arity { 1 }
-    method count { 1 }
-    method sig   { @(T4, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
+    method ty    { typeStr(self.sig) }
 }
 role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
     multi method _(T4 $a4) {                                    apply_part(&f, $a1, $a2, $a3, $a4)      }
@@ -349,10 +356,8 @@ role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
     method arity { 2 }
     method count { 2 }
     method sig   { @(T4, T5, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
+    method ty    { typeStr(self.sig) }
 }
-
-# Partial4ofX
 role Partial4of5[&f, $a1, $a2, $a3, $a4, ::T5, ::R] {
     multi method _(T5 $a5) {                                    apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
     multi method _(T5 $a5, *@bs) is default {                   apply_more(&f, [$a1, $a2, $a3, $a4, $a5], @bs)    }
@@ -363,8 +368,9 @@ role Partial4of5[&f, $a1, $a2, $a3, $a4, ::T5, ::R] {
     method arity { 1 }
     method count { 1 }
     method sig   { @(T5, R) }
-    method ty    { self.sig.map(*.perl).join(' -> ') }
+    method ty    { typeStr(self.sig) }
 }
+
 
 
 my sub _curry($self, &f, :@partialArgs) {
