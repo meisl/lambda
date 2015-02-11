@@ -60,7 +60,7 @@ class X::Typing::Unapplicable is X::Typing is export {
 }
 
 my role Unapplicable {
-    method postcircumfix:<( )>($as) {
+    multi method postcircumfix:<( )>($as) {
         die X::Typing::Unapplicable.new(:whatsInFuncPos(self), :args($as));
     }
     method _(|as) is hidden_from_backtrace {    # TODO: why do we need a fallback `_` method in role Unapplicable?
@@ -122,10 +122,20 @@ my sub apply_more(&f, @as, @bs) {
 
 }
 
+# Dispatch to one of the _ methods from role PartialX 
+# NOTE: doesn't work with postcircumfix:<( )> overrides there, for some reason...?!
+my sub fallback($self, Capture:D $args) {
+    die X::Typing::UnsupportedNamedArgs.new(:whatsInFuncPos($self), :$args)
+        unless $args.hash.elems == 0;
+    $self._(|$args);
+}
+
 # Partial0ofX
 role Partial0of1[&f, ::T1, ::R] {
     multi method _(T1 $a1) {                                    apply_comp(&f($a1))                     }
     multi method _(T1 $a1, *@bs) is default {                   apply_more(&f, [$a1], @bs)              }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 1 }
     method count { 1 }
@@ -134,9 +144,11 @@ role Partial0of1[&f, ::T1, ::R] {
 }
 role Partial0of2[&f, ::T1, ::T2, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
-#    multi method postcircumfix:<((T1 $a1))> { $partialAppCount++; Fn.new does Partial1of2[&f, $a1, T2, R] }
+#    multi multi method postcircumfix:<((T1 $a1))> { $partialAppCount++; Fn.new does Partial1of2[&f, $a1, T2, R] }
     multi method _(T1 $a1, T2 $a2) {                            apply_comp(&f($a1, $a2))                }
     multi method _(T1 $a1, T2 $a2, *@bs) is default {           apply_more(&f, [$a1, $a2], @bs)         }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 2 }
     method count { 2 }
@@ -147,6 +159,8 @@ role Partial0of3[&f, ::T1, ::T2, ::T3, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
     multi method _(T1 $a1, T2 $a2) {                            apply_part(&f, $a1, $a2)                }
     multi method _(T1 $a1, T2 $a2, T3 $a3) {                    apply_comp(&f($a1, $a2, $a3))           }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 3 }
     method count { 3 }
@@ -158,6 +172,8 @@ role Partial0of4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
     multi method _(T1 $a1, T2 $a2) {                            apply_part(&f, $a1, $a2)                }
     multi method _(T1 $a1, T2 $a2, T3 $a3) {                    apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4) {            apply_comp(&f($a1, $a2, $a3, $a4))      }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 4 }
     method count { 4 }
@@ -170,6 +186,8 @@ role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T1 $a1, T2 $a2, T3 $a3) {                    apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4) {            apply_part(&f, $a1, $a2, $a3, $a4)      }
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5) {    apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 5 }
     method count { 5 }
@@ -181,6 +199,8 @@ role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
 role Partial1of2[&f, $a1, ::T2, ::R] {
     multi method _(T2 $a2) {                                    apply_comp(&f($a1, $a2))                }
     multi method _(T2 $a2, *@bs) is default {                   apply_more(&f, [$a1, $a2], @bs)         }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 1 }
     method count { 1 }
@@ -190,6 +210,8 @@ role Partial1of2[&f, $a1, ::T2, ::R] {
 role Partial1of3[&f, $a1, ::T2, ::T3, ::R] {
     multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
     multi method _(T2 $a2, T3 $a3) {                            apply_comp(&f($a1, $a2, $a3))           }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 2 }
     method count { 2 }
@@ -200,6 +222,8 @@ role Partial1of4[&f, $a1, ::T2, ::T3, ::T4, ::R] {
     multi method _(T2 $a2) {                                    apply_part(&f, $a1, $a2)                }
     multi method _(T2 $a2, T3 $a3) {                            apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T2 $a2, T3 $a3, T4 $a4) {                    apply_comp(&f($a1, $a2, $a3, $a4))      }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 3 }
     method count { 3 }
@@ -211,6 +235,8 @@ role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T2 $a2, T3 $a3) {                            apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T2 $a2, T3 $a3, T4 $a4) {                    apply_part(&f, $a1, $a2, $a3, $a4)      }
     multi method _(T2 $a2, T3 $a3, T4 $a4, T5 $a5) {            apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 4 }
     method count { 4 }
@@ -221,6 +247,8 @@ role Partial1of5[&f, $a1, ::T2, ::T3, ::T4, ::T5, ::R] {
 # Partial2ofX
 role Partial2of3[&f, $a1, $a2, ::T3, ::R] {
     multi method _(T3 $a3) {                                    apply_comp(&f($a1, $a2, $a3))           }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 1 }
     method count { 1 }
@@ -230,6 +258,8 @@ role Partial2of3[&f, $a1, $a2, ::T3, ::R] {
 role Partial2of4[&f, $a1, $a2, ::T3, ::T4, ::R] {
     multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T3 $a3, T4 $a4) {                            apply_comp(&f($a1, $a2, $a3, $a4))      }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 2 }
     method count { 2 }
@@ -240,6 +270,8 @@ role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T3 $a3) {                                    apply_part(&f, $a1, $a2, $a3)           }
     multi method _(T3 $a3, T4 $a4) {                            apply_part(&f, $a1, $a2, $a3, $a4)      }
     multi method _(T3 $a3, T4 $a4, T5 $a5) {                    apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 3 }
     method count { 3 }
@@ -250,6 +282,8 @@ role Partial2of5[&f, $a1, $a2, ::T3, ::T4, ::T5, ::R] {
 # Partial3ofX
 role Partial3of4[&f, $a1, $a2, $a3, ::T4, ::R] {
     multi method _(T4 $a4) {                                    apply_comp(&f($a1, $a2, $a3, $a4))      }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 1 }
     method count { 1 }
@@ -259,6 +293,8 @@ role Partial3of4[&f, $a1, $a2, $a3, ::T4, ::R] {
 role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
     multi method _(T4 $a4) {                                    apply_part(&f, $a1, $a2, $a3, $a4)      }
     multi method _(T4 $a4, T5 $a5) {                            apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 2 }
     method count { 2 }
@@ -269,6 +305,8 @@ role Partial3of5[&f, $a1, $a2, $a3, ::T4, ::T5, ::R] {
 # Partial4ofX
 role Partial4of5[&f, $a1, $a2, $a3, $a4, ::T5, ::R] {
     multi method _(T5 $a5) {                                    apply_comp(&f($a1, $a2, $a3, $a4, $a5)) }
+    
+    multi method postcircumfix:<( )>($as) is hidden_from_backtrace {  fallback(self, $as)                     }
 
     method arity { 1 }
     method count { 1 }
@@ -330,14 +368,6 @@ my sub _curry($self, &f, :@partialArgs) {
 }
 
 class Fn does Callable {
-
-    # Dispatch to one of the _ methods from role PartialX 
-    # NOTE: doesn't work with postcircumfix:<( )> overrides there, for some reason...?!
-    method postcircumfix:<( )>($as) is hidden_from_backtrace {
-        die X::Typing::UnsupportedNamedArgs.new(:whatsInFuncPos(self), :args($as))
-            unless $as.hash.elems == 0;
-        self._(|$as);
-    }
 
     # Fallback, if none of the _ methods from role PartialX matches.
     # Here, *additional* args arrive (to be appended to @partialArgs).
