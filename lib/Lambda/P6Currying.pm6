@@ -63,12 +63,32 @@ my role Unapplicable {
     method postcircumfix:<( )>($as) {
         die X::Typing::Unapplicable.new(:whatsInFuncPos(self), :args($as));
     }
-    method _(|as) is hidden_from_backtrace {
+    method _(|as) is hidden_from_backtrace {    # TODO: why do we need a fallback `_` method in role Unapplicable?
         self.(|as.list);
     }
 }
 
 class Fn { ... }
+
+role Partial0of1 { ... }
+
+role Partial0of2 { ... }
+role Partial1of2 { ... }
+
+role Partial0of3 { ... }
+role Partial1of3 { ... }
+role Partial2of3 { ... }
+
+role Partial0of4 { ... }
+role Partial1of4 { ... }
+role Partial2of4 { ... }
+role Partial3of4 { ... }
+
+role Partial0of5 { ... }
+role Partial1of5 { ... }
+role Partial2of5 { ... }
+role Partial3of5 { ... }
+role Partial4of5 { ... }
 
 
 # This one expects to receive *less than* the args which the orig fn &f expects.
@@ -76,7 +96,7 @@ my sub apply_part(&f, *@as) {
     $partialAppCount++;
     #warn ">>>> partial app $partialAppCount:" ~ Backtrace.new;
     my $out = _curry(Fn.new, &f, :partialArgs(@as));
-    &f.?onPartialApp($out, |@as);
+    &f.?onPartialApp($out, @as);
     return $out;
 }
 
@@ -91,10 +111,21 @@ my sub apply_comp($result) {
     return $result;
 }
 
+# This one expects to receive *more* args than the orig fn &f expects.
+my sub apply_more(&f, @as, @bs) {
+    #warn "got more: {@bs.perl}";
+    #die "FUCK" if @bs.elems == 0;
+    apply_comp(&f(|@as))(|@bs);
+    
+    #die X::Typing::Unapplicable.new(:whatsInFuncPos(self), :args($as))
+    #    unless $result ~~ Callable;
+
+}
 
 # Partial0ofX
 role Partial0of1[&f, ::T1, ::R] {
     multi method _(T1 $a1) {                                    apply_comp(&f($a1))                     }
+    multi method _(T1 $a1, *@bs) is default {                   apply_more(&f, [$a1], @bs)              }
 
     method arity { 1 }
     method count { 1 }
@@ -103,7 +134,9 @@ role Partial0of1[&f, ::T1, ::R] {
 }
 role Partial0of2[&f, ::T1, ::T2, ::R] {
     multi method _(T1 $a1) {                                    apply_part(&f, $a1)                     }
+#    multi method postcircumfix:<((T1 $a1))> { $partialAppCount++; Fn.new does Partial1of2[&f, $a1, T2, R] }
     multi method _(T1 $a1, T2 $a2) {                            apply_comp(&f($a1, $a2))                }
+    multi method _(T1 $a1, T2 $a2, *@bs) is default {           apply_more(&f, [$a1, $a2], @bs)         }
 
     method arity { 2 }
     method count { 2 }
@@ -147,6 +180,7 @@ role Partial0of5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
 # Partial1ofX
 role Partial1of2[&f, $a1, ::T2, ::R] {
     multi method _(T2 $a2) {                                    apply_comp(&f($a1, $a2))                }
+    multi method _(T2 $a2, *@bs) is default {                   apply_more(&f, [$a1, $a2], @bs)         }
 
     method arity { 1 }
     method count { 1 }
