@@ -1,316 +1,316 @@
 ---
-generation: 110
-last_run_time: 1423662297.37627
+generation: 116
+last_run_time: 1424005028.01777
 tests:
   t\ADTs\ADT_auto.t:
-    elapsed: 6.31721997261047
-    gen: 110
-    last_pass_time: 1423661709.6875
+    elapsed: 6.14802193641663
+    gen: 116
+    last_pass_time: 1424004567.875
     last_result: 0
-    last_run_time: 1423661709.6875
+    last_run_time: 1424004567.875
     last_todo: 0
     mtime: 1423573416
-    seq: 2612
-    total_passes: 22
+    seq: 2771
+    total_passes: 28
   t\ADTs\ListADT-cXr.t:
-    elapsed: 23.328125
-    gen: 110
+    elapsed: 23.046875
+    gen: 116
     last_fail_time: 1423082413.96875
-    last_pass_time: 1423661809.04688
+    last_pass_time: 1424004663.9375
     last_result: 0
-    last_run_time: 1423661809.04688
+    last_run_time: 1424004663.9375
     last_todo: 0
     mtime: 1423093754
-    seq: 2616
+    seq: 2775
     total_failures: 8
-    total_passes: 102
+    total_passes: 108
   t\ADTs\ListADT-extra.t:
-    elapsed: 31.9746360778809
-    gen: 110
+    elapsed: 31.453125
+    gen: 116
     last_fail_time: 1423082459.625
-    last_pass_time: 1423662099.90625
+    last_pass_time: 1424004828.84375
     last_result: 0
-    last_run_time: 1423662099.90625
+    last_run_time: 1424004828.84375
     last_todo: 0
     mtime: 1423093445
-    seq: 2625
+    seq: 2781
     total_failures: 12
-    total_passes: 98
+    total_passes: 104
   t\ADTs\ListADT.t:
-    elapsed: 21.4375
-    gen: 110
+    elapsed: 21.515625
+    gen: 116
     last_fail_time: 1423054512.82813
-    last_pass_time: 1423662157.90625
+    last_pass_time: 1424004887.9375
     last_result: 0
-    last_run_time: 1423662157.90625
+    last_run_time: 1424004887.9375
     last_todo: 0
     mtime: 1423093445
-    seq: 2628
+    seq: 2784
     total_failures: 8
-    total_passes: 102
+    total_passes: 108
   t\ADTs\Maybe-extra.t:
-    elapsed: 20.859375
-    gen: 110
+    elapsed: 19.8733789920807
+    gen: 116
     last_fail_time: 1423082170.84375
-    last_pass_time: 1423661869.67188
+    last_pass_time: 1424004683.82813
     last_result: 0
-    last_run_time: 1423661869.67188
+    last_run_time: 1424004683.82813
     last_todo: 0
     mtime: 1423093445
-    seq: 2618
+    seq: 2776
     total_failures: 9
-    total_passes: 101
+    total_passes: 107
   t\ADTs\MaybeADT.t:
-    elapsed: 21.609375
-    gen: 110
+    elapsed: 21.828125
+    gen: 116
     last_fail_time: 1423082476.23438
-    last_pass_time: 1423662121.51563
+    last_pass_time: 1424004850.6875
     last_result: 0
-    last_run_time: 1423662121.51563
+    last_run_time: 1424004850.6875
     last_todo: 0
     mtime: 1423093445
-    seq: 2626
+    seq: 2782
     total_failures: 8
-    total_passes: 102
+    total_passes: 108
   t\ADTs\PairADT.t:
-    elapsed: 22.078125
-    gen: 110
+    elapsed: 21.375
+    gen: 116
     last_fail_time: 1423082508.45313
-    last_pass_time: 1423661731.79688
+    last_pass_time: 1424004589.25
     last_result: 0
-    last_run_time: 1423661731.79688
+    last_run_time: 1424004589.25
     last_todo: 0
     mtime: 1423145289
-    seq: 2613
+    seq: 2772
     total_failures: 7
-    total_passes: 103
+    total_passes: 109
   t\ADTs\Streams.t:
-    elapsed: 14.9420299530029
-    gen: 110
+    elapsed: 15.7072041034698
+    gen: 116
     last_fail_time: 1423054485.67188
-    last_pass_time: 1423662136.46875
+    last_pass_time: 1424004866.40625
     last_result: 0
-    last_run_time: 1423662136.46875
+    last_run_time: 1424004866.40625
     last_todo: 0
     mtime: 1423093445
-    seq: 2627
+    seq: 2783
     total_failures: 7
-    total_passes: 103
+    total_passes: 109
   t\ADTs\TermADT-extra.t:
-    elapsed: 34.179102897644
-    gen: 110
+    elapsed: 34.225368976593
+    gen: 116
     last_fail_time: 1423082373.92188
-    last_pass_time: 1423662047.39063
+    last_pass_time: 1424004408.125
     last_result: 0
-    last_run_time: 1423662047.39063
+    last_run_time: 1424004408.125
     last_todo: 0
-    mtime: 1423093445
-    seq: 2623
+    mtime: 1423675238
+    seq: 2766
     total_failures: 9
-    total_passes: 101
+    total_passes: 107
   t\ADTs\TermADT.t:
-    elapsed: 27.1875
-    gen: 110
+    elapsed: 26.796875
+    gen: 116
     last_fail_time: 1423082269.84375
-    last_pass_time: 1423661703.35938
+    last_pass_time: 1424004561.71875
     last_result: 0
-    last_run_time: 1423661703.35938
+    last_run_time: 1424004561.71875
     last_todo: 0
     mtime: 1423573556
-    seq: 2611
+    seq: 2770
     total_failures: 10
-    total_passes: 100
+    total_passes: 106
   t\Base.t:
-    elapsed: 25.8195090293884
-    gen: 110
+    elapsed: 25.9375
+    gen: 116
     last_fail_time: 1423082230.64063
-    last_pass_time: 1423661895.5
+    last_pass_time: 1424004709.78125
     last_result: 0
-    last_run_time: 1423661895.5
+    last_run_time: 1424004709.78125
     last_todo: 0
     mtime: 1423093445
-    seq: 2619
+    seq: 2777
     total_failures: 13
-    total_passes: 97
+    total_passes: 103
   t\BaseP6.t:
-    elapsed: 20.0324349403381
-    gen: 110
+    elapsed: 19.4605810642242
+    gen: 116
     last_fail_time: 1423054567.76563
-    last_pass_time: 1423662277.98438
+    last_pass_time: 1424005008.39063
     last_result: 0
-    last_run_time: 1423662277.98438
+    last_run_time: 1424005008.39063
     last_todo: 0
     mtime: 1423093445
-    seq: 2633
+    seq: 2789
     total_failures: 2
-    total_passes: 75
+    total_passes: 81
   t\BetaReduction-perf.t:
-    elapsed: 39.7581260204315
-    gen: 110
+    elapsed: 41.421875
+    gen: 116
     last_fail_time: 1423054410.5
-    last_pass_time: 1423661848.8125
+    last_pass_time: 1424004500.76563
     last_result: 0
-    last_run_time: 1423661848.8125
+    last_run_time: 1424004500.76563
     last_todo: 0
-    mtime: 1423093683
-    seq: 2617
+    mtime: 1423662373
+    seq: 2768
     total_failures: 1
-    total_passes: 42
+    total_passes: 48
   t\BetaReduction.t:
-    elapsed: 51.15625
-    gen: 110
+    elapsed: 51.171875
+    gen: 116
     last_fail_time: 1423082300.5
-    last_pass_time: 1423661946.67188
+    last_pass_time: 1424004459.3125
     last_result: 0
-    last_run_time: 1423661946.67188
+    last_run_time: 1424004459.3125
     last_todo: 0
-    mtime: 1423093445
-    seq: 2620
+    mtime: 1423662381
+    seq: 2767
     total_failures: 13
-    total_passes: 97
+    total_passes: 103
   t\Boolean.t:
-    elapsed: 21.140625
-    gen: 110
+    elapsed: 20.96875
+    gen: 116
     last_fail_time: 1423054540.35938
-    last_pass_time: 1423662215.40625
+    last_pass_time: 1424004946.34375
     last_result: 0
-    last_run_time: 1423662215.40625
+    last_run_time: 1424004946.34375
     last_todo: 0
     mtime: 1423093445
-    seq: 2630
+    seq: 2786
     total_failures: 9
-    total_passes: 101
+    total_passes: 107
   t\ChurchNat.t:
-    elapsed: 33.8468549251556
-    gen: 110
+    elapsed: 34.15625
+    gen: 116
     last_fail_time: 1423603905.9375
-    last_pass_time: 1423661676.15625
+    last_pass_time: 1424004534.92188
     last_result: 0
-    last_run_time: 1423661676.15625
+    last_run_time: 1424004534.92188
     last_todo: 0
     mtime: 1423656974
-    seq: 2610
+    seq: 2769
     total_failures: 3
-    total_passes: 75
+    total_passes: 81
   t\Conversion\Conversion.t:
-    elapsed: 17.4873270988464
-    gen: 110
+    elapsed: 16.6010088920593
+    gen: 116
     last_fail_time: 1423054465.25
-    last_pass_time: 1423661749.29688
+    last_pass_time: 1424004605.85938
     last_result: 0
-    last_run_time: 1423661749.29688
+    last_run_time: 1424004605.85938
     last_todo: 0
     mtime: 1423145124
-    seq: 2614
+    seq: 2773
     total_failures: 7
-    total_passes: 103
+    total_passes: 109
   t\EtaReduction.t:
-    elapsed: 37.59375
-    gen: 110
+    elapsed: 38.5519950389862
+    gen: 116
     last_fail_time: 1423082324.9375
-    last_pass_time: 1423661984.28125
+    last_pass_time: 1424004748.34375
     last_result: 0
-    last_run_time: 1423661984.28125
+    last_run_time: 1424004748.34375
     last_todo: 0
     mtime: 1423093445
-    seq: 2621
+    seq: 2778
     total_failures: 10
-    total_passes: 100
+    total_passes: 106
   t\FreeVars.t:
-    elapsed: 28.890625
-    gen: 110
+    elapsed: 29.421875
+    gen: 116
     last_fail_time: 1423082348.1875
-    last_pass_time: 1423662013.20313
+    last_pass_time: 1424004777.78125
     last_result: 0
-    last_run_time: 1423662013.20313
+    last_run_time: 1424004777.78125
     last_todo: 0
     mtime: 1423093445
-    seq: 2622
+    seq: 2779
     total_failures: 12
-    total_passes: 98
+    total_passes: 104
   t\Grammar.t:
-    elapsed: 20.67853307724
-    gen: 110
+    elapsed: 20.3674960136414
+    gen: 116
     last_fail_time: 1423054546.89063
-    last_pass_time: 1423662236.09375
+    last_pass_time: 1424004966.71875
     last_result: 0
-    last_run_time: 1423662236.09375
+    last_run_time: 1424004966.71875
     last_todo: 0
     mtime: 1423093445
-    seq: 2631
+    seq: 2787
     total_failures: 8
-    total_passes: 102
+    total_passes: 108
   t\LambdaInP6.t:
-    elapsed: 21.828125
-    gen: 110
+    elapsed: 22.1875
+    gen: 116
     last_fail_time: 1423054560.96875
-    last_pass_time: 1423662257.9375
+    last_pass_time: 1424004988.92188
     last_result: 0
-    last_run_time: 1423662257.9375
+    last_run_time: 1424004988.92188
     last_todo: 0
     mtime: 1423093445
-    seq: 2632
+    seq: 2788
     total_failures: 7
-    total_passes: 92
+    total_passes: 98
   t\Misc.t:
-    elapsed: 36.3157720565796
-    gen: 110
+    elapsed: 37.4253630638123
+    gen: 116
     last_fail_time: 1423054520.14063
-    last_pass_time: 1423662194.23438
+    last_pass_time: 1424004925.375
     last_result: 0
-    last_run_time: 1423662194.23438
+    last_run_time: 1424004925.375
     last_todo: 0
     mtime: 1423093445
-    seq: 2629
+    seq: 2785
     total_failures: 9
-    total_passes: 101
+    total_passes: 107
   t\P6Currying.t:
-    elapsed: 5.77646994590759
-    gen: 110
+    elapsed: 5.87810802459717
+    gen: 116
     last_fail_time: 1423054526.92188
-    last_pass_time: 1423661642.29688
+    last_pass_time: 1424004373.89063
     last_result: 0
-    last_run_time: 1423661642.29688
+    last_run_time: 1424004373.89063
     last_todo: 0
-    mtime: 1423661633
-    seq: 2609
+    mtime: 1424003771
+    seq: 2765
     total_failures: 7
-    total_passes: 103
+    total_passes: 109
   t\Substitution.t:
-    elapsed: 36.40625
-    gen: 110
+    elapsed: 35.015625
+    gen: 116
     last_fail_time: 1423082592.98438
-    last_pass_time: 1423661785.70313
+    last_pass_time: 1424004640.89063
     last_result: 0
-    last_run_time: 1423661785.70313
+    last_run_time: 1424004640.89063
     last_todo: 0
     mtime: 1423144573
-    seq: 2615
+    seq: 2774
     total_failures: 11
-    total_passes: 99
+    total_passes: 105
   t\Test\Util.t:
-    elapsed: 19.375
-    gen: 110
+    elapsed: 19.59375
+    gen: 116
     last_fail_time: 1423082495.0625
-    last_pass_time: 1423662297.375
+    last_pass_time: 1424005028
     last_result: 0
-    last_run_time: 1423662297.375
+    last_run_time: 1424005028
     last_todo: 0
     mtime: 1423093320
-    seq: 2634
+    seq: 2790
     total_failures: 7
-    total_passes: 103
+    total_passes: 109
   t\VarT.t:
-    elapsed: 20.515625
-    gen: 110
+    elapsed: 19.5817959308624
+    gen: 116
     last_fail_time: 1423082392.73438
-    last_pass_time: 1423662067.92188
+    last_pass_time: 1424004797.375
     last_result: 0
-    last_run_time: 1423662067.92188
+    last_run_time: 1424004797.375
     last_todo: 0
     mtime: 1423093445
-    seq: 2624
+    seq: 2780
     total_failures: 9
-    total_passes: 101
+    total_passes: 107
 version: 1
 ...
