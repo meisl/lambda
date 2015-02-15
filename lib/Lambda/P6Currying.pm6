@@ -409,7 +409,7 @@ my sub _curry(&original, &clone, :@partialArgs) {
         }
         when 4 {
             given $arity {
-                when 5 { &original does Partial4of5[&clone, $a1, $a2, $a3, $t4, $t5, $r ] }
+                when 5 { &original does Partial4of5[&clone, $a1, $a2, $a3, $a4, $t5, $r ] }
             }
         }
     }
