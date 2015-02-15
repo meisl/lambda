@@ -201,7 +201,7 @@ class Fn does Callable {
             }
             when 4 {
                 given $arity {
-                    when 5 { self does Partial4[$a0, $a1, $a2, $t3, $t4 ] }
+                    when 5 { self does Partial4[$a0, $a1, $a2, $a3, $t4 ] }
                 }
             }
         }
