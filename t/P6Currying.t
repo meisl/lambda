@@ -186,7 +186,7 @@ plan 20;
         throws_like({$g('x', 5)}, X::Typing::ArgBinding, "passing two args of wrong type to bin fn throws (immediately)");
         throws_like({$g('x')}, X::Typing::ArgBinding, "passing one arg of wrong type to bin fn throws (immediately)");
         throws_like({$g3(5)}, X::Typing::ArgBinding, "passing one more arg of wrong type to partially applied bin fn throws (immediately)");
-
+        
         throws_like({$g(5, 'a', 7)}, X::Typing::Unapplicable, 
             "passing 3rd positional arg: throws X::Unapplicable if bin fn doesn't return another fn");
         throws_like({$g(5, 'a', :foo(7))},  X::Typing::UnsupportedNamedArgs, 
