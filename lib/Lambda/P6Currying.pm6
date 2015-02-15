@@ -167,6 +167,8 @@ role Partial0of1[&f, ::T1, ::R] {
     
     multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
 
+    method arity { 1 }
+    method count { 1 }
     method sig   { @(T1, R) }
     method ty    { typeStr(self.sig) }
 }
