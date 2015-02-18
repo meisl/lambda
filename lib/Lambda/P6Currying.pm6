@@ -1,10 +1,11 @@
 use v6;
 
 
-my $nApp_o = 0;
-my $nApp_p = 0;
+my $nApp_c = 0; # "complete" application
+my $nApp_o = 0; # "over-" application
+my $nApp_p = 0; # "partial" application
 
-my sub captureToStr($capture) {
+my sub captureToStr(Capture:D $capture) {
     "\\({$capture.list.map(*.perl).join(', ')}"
         ~ ($capture.hash > 0 
             ?? ', ' ~ $capture.hash.pairs.map(-> $p { $p.key ~ ' => ' ~ $p.value.perl }).join(', ')
@@ -66,15 +67,21 @@ class X::Typing::Unapplicable is X::Typing is export {
     }
 }
 
-my role Unapplicable {
-    multi method postcircumfix:<( )>($as) {
-        die X::Typing::Unapplicable.new(:whatsInFuncPos(self), :args($as));
-    }
-    method _(|as) {    # TODO: why do we need a fallback `_` method in role Unapplicable?
-        self.(|as.list);
-    }
+my sub dieUnapplicable($self, Capture:D $args) {
+    die X::Typing::Unapplicable.new(:whatsInFuncPos($self), :$args);
 }
 
+my role Unapplicable {
+    multi method invoke(*@pos, *%nmd) {
+        dieUnapplicable(self, \(@pos, %nmd));
+    }
+    multi method invoke(Capture:D $args) {  # TODO: remove once Rakudo* 2015-02 has landed
+        dieUnapplicable(self, $args);
+    }
+    method _(|args) {    # "over-applying" will come here
+        dieUnapplicable(self, args);
+    }
+}
 
 my sub typeStr(@types) {
     @types.map(*.perl).join(' -> ');
@@ -119,23 +126,28 @@ my sub __apply_more(&f, @as, @bs) {
     return $result;
 }
 
-# Dispatch to one of the _ methods from role PartialX 
+# Dispatch to one of the _ methods, with positional args unpacked, or die if there are named args
 # NOTE: doesn't work with postcircumfix:<( )> overrides there, for some reason...?!
-my sub enter($self, Capture:D $args) {
-    die X::Typing::UnsupportedNamedArgs.new(:whatsInFuncPos($self), :$args)
-        unless $args.hash.elems == 0;
-    $self._(|$args);
+# TODO: remove once Rakudo* 2015-02 has landed (when invoke/postcircumfix:<( )> will get args *as is*, rather than a Capture)
+my sub enter($self, @pos, %nmd) {
+    die X::Typing::UnsupportedNamedArgs.new(:whatsInFuncPos($self), :args(\(@pos, %nmd)))
+        unless %nmd.elems == 0;
+    $self._(|@pos);
 }
 
-
+# gets called if none of the _ signatures matches (~> invalid call)
+my sub dieArgBinding($self, Capture:D $args) {
+    die X::Typing::ArgBinding.new($self, $args)
+}
 
 # arity 1
 role C1[&f, ::T1, ::R] {
-    multi method _(T1 $a1                        )            { apply_comp(&f($a1))                     }
-    multi method _(T1 $a1, *@bs                  ) is default { apply_more(&f, [$a1], @bs)              }
-    multi method _(|as                           )            { die X::Typing::ArgBinding.new(self, as) }
-    
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+    multi method _(T1 $a1                               )            { $nApp_c++; apply_comp(&f($a1))                                       }
+    multi method _(T1 $a1, *@bs                         ) is default { $nApp_o++; apply_comp(&f($a1))._(|@bs)                               }
+    multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
+
+    multi method invoke(*@pos, *%nmd) { enter(self, @pos, %nmd) }
+    multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
 
     method arity { 1 }
     method count { 1 }
@@ -145,12 +157,13 @@ role C1[&f, ::T1, ::R] {
 
 # arity 2
 role C2[&f, ::T1, ::T2, ::R] {
-    multi method _(T1 $a1                        )            { $nApp_p++; {...} does C1[{ &f($a1, $^b) }, T2, R];  }   #   apply_part(&f, $a1)  }   #   
-    multi method _(T1 $a1, T2 $a2                )            { apply_comp(&f($a1, $a2))                }
-    multi method _(T1 $a1, T2 $a2, *@bs          ) is default { apply_more(&f, [$a1, $a2], @bs)         }
-    multi method _(|as                           )            { die X::Typing::ArgBinding.new(self, as) }
-    
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+    multi method _(T1 $a1                               )            { $nApp_p++; {...} does C1[{ &f($a1, $^b) }, T2, R]                    }
+    multi method _(T1 $a1, T2 $a2                       )            { $nApp_c++; apply_comp(&f($a1, $a2))                                  }
+    multi method _(T1 $a1, T2 $a2, *@bs                 ) is default { $nApp_o++; apply_comp(&f($a1, $a2))._(|@bs)                          }
+    multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
+
+    multi method invoke(*@pos, *%nmd ) { enter(self, @pos, %nmd) }
+    multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
 
     method arity { 2 }
     method count { 2 }
@@ -160,13 +173,14 @@ role C2[&f, ::T1, ::T2, ::R] {
 
 # arity 3
 role C3[&f, ::T1, ::T2, ::T3, ::R] {
-    multi method _(T1 $a1                        )            { $nApp_p++; {...} does C2[{ &f($a1, $^b, $^c) }, T2, T3, R];  }   #   apply_part(&f, $a1)                     }
-    multi method _(T1 $a1, T2 $a2                )            { $nApp_p++; {...} does C1[{ &f($a1, $a2, $^c) },     T3, R];  }   #   apply_part(&f, $a1, $a2)                }
-    multi method _(T1 $a1, T2 $a2, T3 $a3        )            { apply_comp(&f($a1, $a2, $a3))           }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, *@bs  ) is default { apply_more(&f, [$a1, $a2, $a3], @bs)    }
-    multi method _(|as                           )            { die X::Typing::ArgBinding.new(self, as) }
-    
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+    multi method _(T1 $a1                               )            { $nApp_p++; {...} does C2[{ &f($a1, $^b, $^c) }, T2, T3, R]           }
+    multi method _(T1 $a1, T2 $a2                       )            { $nApp_p++; {...} does C1[{ &f($a1, $a2, $^c) },     T3, R]           }
+    multi method _(T1 $a1, T2 $a2, T3 $a3               )            { $nApp_c++; apply_comp(&f($a1, $a2, $a3))                             }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, *@bs         ) is default { $nApp_o++; apply_comp(&f($a1, $a2, $a3))._(|@bs)                     }
+    multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
+
+    multi method invoke(*@pos, *%nmd ) { enter(self, @pos, %nmd) }
+    multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
 
     method arity { 3 }
     method count { 3 }
@@ -176,14 +190,15 @@ role C3[&f, ::T1, ::T2, ::T3, ::R] {
 
 # arity 4
 role C4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
-    multi method _(T1 $a1                               )            { $nApp_p++; {...} does C3[{ &f($a1, $^b, $^c, $^d) }, T2, T3, T4, R];  }   #   apply_part(&f, $a1)                          }
-    multi method _(T1 $a1, T2 $a2                       )            { $nApp_p++; {...} does C2[{ &f($a1, $a2, $^c, $^d) },     T3, T4, R];  }   #   apply_part(&f, $a1, $a2)                     }
-    multi method _(T1 $a1, T2 $a2, T3 $a3               )            { $nApp_p++; {...} does C1[{ &f($a1, $a2, $a3, $^d) },         T4, R];  }   #   apply_part(&f, $a1, $a2, $a3)                }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4       )            { apply_comp(&f($a1, $a2, $a3, $a4))           }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@bs ) is default { apply_more(&f, [$a1, $a2, $a3, $a4], @bs)    }
-    multi method _(|as                                  )            { die X::Typing::ArgBinding.new(self, as)      }
-    
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+    multi method _(T1 $a1                               )            { $nApp_p++; {...} does C3[{ &f($a1, $^b, $^c, $^d) }, T2, T3, T4, R]  }
+    multi method _(T1 $a1, T2 $a2                       )            { $nApp_p++; {...} does C2[{ &f($a1, $a2, $^c, $^d) },     T3, T4, R]  }
+    multi method _(T1 $a1, T2 $a2, T3 $a3               )            { $nApp_p++; {...} does C1[{ &f($a1, $a2, $a3, $^d) },         T4, R]  }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4       )            { $nApp_c++; apply_comp(&f($a1, $a2, $a3, $a4))                        }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@bs ) is default { $nApp_o++; apply_comp(&f($a1, $a2, $a3, $a4))._(|@bs)                }
+    multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
+
+    multi method invoke(*@pos, *%nmd ) { enter(self, @pos, %nmd) }
+    multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
 
     method arity { 4 }
     method count { 4 }
@@ -193,15 +208,16 @@ role C4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
 
 # arity 5
 role C5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
-    multi method _(T1 $a1                                      )            { $nApp_p++; {...} does C4[{ &f($a1, $^b, $^c, $^d, $^e) }, T2, T3, T4, T5, R];  }   #    apply_part(&f, $a1)                               }
-    multi method _(T1 $a1, T2 $a2                              )            { $nApp_p++; {...} does C3[{ &f($a1, $a2, $^c, $^d, $^e) },     T3, T4, T5, R];  }   #    apply_part(&f, $a1, $a2)                          }
-    multi method _(T1 $a1, T2 $a2, T3 $a3                      )            { $nApp_p++; {...} does C2[{ &f($a1, $a2, $a3, $^d, $^e) },         T4, T5, R];  }   #    apply_part(&f, $a1, $a2, $a3)                     }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4              )            { $nApp_p++; {...} does C1[{ &f($a1, $a2, $a3, $a4, $^e) },             T5, R];  }   #    apply_part(&f, $a1, $a2, $a3, $a4)                }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5      )            { apply_comp(&f($a1, $a2, $a3, $a4, $a5))           }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@bs) is default { apply_more(&f, [$a1, $a2, $a3, $a4, $a5], @bs)    }
-    multi method _(|as                                         )            { die X::Typing::ArgBinding.new(self, as)           }
-    
-    multi method postcircumfix:<( )>($as) {  enter(self, $as)                     }
+    multi method _(T1 $a1                                      )            { $nApp_p++; {...} does C4[{ &f($a1, $^b, $^c, $^d, $^e) }, T2, T3, T4, T5, R]  }
+    multi method _(T1 $a1, T2 $a2                              )            { $nApp_p++; {...} does C3[{ &f($a1, $a2, $^c, $^d, $^e) },     T3, T4, T5, R]  }
+    multi method _(T1 $a1, T2 $a2, T3 $a3                      )            { $nApp_p++; {...} does C2[{ &f($a1, $a2, $a3, $^d, $^e) },         T4, T5, R]  }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4              )            { $nApp_p++; {...} does C1[{ &f($a1, $a2, $a3, $a4, $^e) },             T5, R]  }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5      )            { $nApp_c++; apply_comp(&f($a1, $a2, $a3, $a4, $a5))                            }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@bs) is default { $nApp_o++; apply_comp(&f($a1, $a2, $a3, $a4, $a5))._(@bs)                     }
+    multi method _(|as                                  )                   { dieArgBinding(self, as)                                                       }
+
+    multi method invoke(*@pos, *%nmd ) { enter(self, @pos, %nmd) }
+    multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
 
     method arity { 5 }
     method count { 5 }

@@ -102,7 +102,6 @@ plan 20;
         
     }, "curried unary fn {$g.ty} which returns another unary fn; unapplied";
 
-        
     subtest({
         is $g('a', 5), 'aaaaa', 'can apply it to all the args at once (aka "overapplying")';
 
