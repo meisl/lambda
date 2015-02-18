@@ -214,7 +214,7 @@ role C5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4              )            { $nApp_p++; {...} does C1[{ &f($a1, $a2, $a3, $a4, $^e) },             T5, R]  }
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5      )            { $nApp_c++; apply_comp(&f($a1, $a2, $a3, $a4, $a5))                            }
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@bs) is default { $nApp_o++; apply_comp(&f($a1, $a2, $a3, $a4, $a5))._(@bs)                     }
-    multi method _(|as                                  )                   { dieArgBinding(self, as)                                                       }
+    multi method _(|as                                         )            { dieArgBinding(self, as)                                                       }
 
     multi method invoke(*@pos, *%nmd ) { enter(self, @pos, %nmd) }
     multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
@@ -272,6 +272,6 @@ sub curry(&f) is export {
     die "NYI: Fn with arity $arity (> 5) - signature: {&f.signature.perl}; fn: {&f.gist}"
         if $arity > 5;
 
-    return _curry(&f, &f.clone);
+    return _curry(&f, nqp::getattr(nqp::decont(&f), Code, '$!do'));
 }
 
