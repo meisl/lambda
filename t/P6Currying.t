@@ -9,19 +9,29 @@ use Lambda::P6Currying;
 plan 20;
 
 
-sub check_signature($f, *@types) {
-    my $expectedSigElems = @types.elems;
-    my $expectedArity    = @types.elems - 1;
-    my $expectedTypeStr  = @types.map(*.perl).join(' -> ');
+sub check_signature($f, Signature:D $s) {
+    my @argTypes = $s.params.map(*.type);
+    my $retType  = $s.returns;
+    my $expectedArity    = @argTypes.elems;
+    my $expectedSigElems = @argTypes.elems + 1;
+    my $expectedTypeStr  = (@argTypes, $retType).map(*.perl).join(' -> ');
 
     is $f.arity, $expectedArity, "arity" or diag $f.perl;
     is $f.count, $expectedArity, ".count (==arity)" or diag $f.perl;
     is $f.sig.elems, $expectedSigElems, "nr of elems in sig";
     for 0..$expectedArity - 1 -> $i {
-        isa_ok $f.sig[$i], @types[$i], "type of param $i (counting from 0): should be {@types[$i].perl} - and is {$f.sig[$i].perl}";
+        my $actual   = $f.sig[$i];
+        my $expected = @argTypes[$i];
+        isa_ok $actual, $expected, "type of param $i (counting from 0): should be {$expected.perl} - and is {$actual.perl}";
     }
-    isa_ok $f.sig[*-1], @types[*-1], "type of result: should be {@types[*-1].perl} - and is {$f.sig[*-1].perl}";
+    isa_ok $f.sig[*-1], $retType, "type of result: should be {$retType.perl} - and is {$f.sig[*-1].perl}";
     is $f.ty, $expectedTypeStr, "ty(pe) string";
+}
+
+sub check_std($f, Signature:D $s) {
+    does_ok $f, Callable;
+    check_signature($f, $s);
+    cmp_ok curry($f), '===', $f, 'currying it again returns the same thing unchanged';
 }
 
 { # invalid signature
@@ -35,11 +45,8 @@ sub check_signature($f, *@types) {
 
     subtest {
         my $g = curry($unaryLambdaUnderscore);
-        does_ok $g, Callable;
-
-        check_signature($g, Mu, Mu);
         
-        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
+        check_std($g, :(Mu -->Mu));
         
         is $g(Mu), 'foo', "can call it with expected nr of args";
     }, 'currying unary lambda where param is named "$_"';
@@ -78,11 +85,7 @@ sub check_signature($f, *@types) {
     my $g = curry(-> Str $x -->Str{ $x });
     
     subtest {
-        does_ok $g, Callable;
-
-        check_signature($g, Str, Str);
-        
-        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
+        check_std($g, :(Str -->Str));
         
         is $g('foo'), 'foo', "can call it with expected nr of args"
             or die;
@@ -94,12 +97,7 @@ sub check_signature($f, *@types) {
     my $g = curry(-> Str $x { -> Int $n -->Str{ $x x $n } });
     
     subtest {
-        does_ok $g, Callable;
-
-        check_signature($g, Str, Mu);
-        
-        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
-        
+        check_std($g, :(Str -->Mu));
     }, "curried unary fn {$g.ty} which returns another unary fn; unapplied";
 
     subtest({
@@ -121,11 +119,7 @@ sub check_signature($f, *@types) {
     my $h = $g('foo');
     
     subtest({
-        does_ok $h, Callable;
-
-        check_signature($h, Int, Str);
-        
-        cmp_ok curry($h), '===', $h, 'currying it again returns the same thing unchanged';
+        check_std($h, :(Int -->Str));
         
         is $h(3), 'foofoofoo', 'can apply it to expected args';
         throws_like { $h('x') }, X::Typing::ArgBinding, 'applying returned fn to with wrongly typed arg';
@@ -145,22 +139,14 @@ sub check_signature($f, *@types) {
     #}
 
     subtest {
-        does_ok $g, Callable;
-
-        check_signature($g, Int, Str, Str);
-        
-        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
+        check_std($g, :(Int, Str -->Str));
 
         is $g(3, 'x'), 'xxx', "can call it with expected nr of args";
     }, "curried binary fn {$g.ty}; unapplied";
 
     my $g3 = $g(3);
     subtest {
-        does_ok $g3, Callable;
-
-        check_signature($g3, Str, Str) or die;
-        
-        cmp_ok curry($g3), '===', $g3, 'currying it again returns the same thing unchanged';
+        check_std($g3, :(Str -->Str)) or die;
 
         is $g3('y'), 'yyy', "can call it with expected nr of args";
     }, "curried binary fn {$g.ty}; partially applied to \(3)";
@@ -196,11 +182,7 @@ sub check_signature($f, *@types) {
     );
     
     subtest {
-        does_ok $g, Callable;
-
-        check_signature($g, Int, Str, Mu) or die;
-        
-        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
+        check_std($g, :(Int, Str -->Mu)) or die;
 
         is $g(5, 'a', 74), '@ call 1: (5, "a", 74)', 'can apply it to all args at once (aka "overapplying")' or die;
     }, 'curried binary fn ' ~ $g.ty ~ ' which returns a unary fn; unapplied' or die;
@@ -223,18 +205,14 @@ sub check_signature($f, *@types) {
 
     my $g1 = $g(1);
     subtest {
-        check_signature($g1, Str, Mu) or die;
-        
-        cmp_ok curry($g1), '===', $g1, 'currying it again returns the same thing unchanged';
+        check_std($g1, :(Str -->Mu)) or die;
 
         is $g1('b', 9), '@ call 2: (1, "b", 9)', 'can apply it to all the args at once (aka "overapplying")' or die;
     }, 'curried binary fn ' ~ $g.ty ~ ' which returns a unary fn; partially applied to \(1)' or die;
 
     my $g1_two = $g1("two");
     subtest {
-        check_signature($g1_two, Int, Str) or die;
-        
-        cmp_ok curry($g1_two), '===', $g1_two, 'currying it again returns the same thing unchanged';
+        check_std($g1_two, :(Int -->Str)) or die;
 
         is $g1_two(23), '@ call 3: (1, "two", 23)', 'can apply it to the args expected by the returned fn")' or die;
     }, 'curried binary fn ' ~ $g.ty ~ ' which returns a unary fn; partially applied to \(1), then to \("two")' or die;
@@ -251,11 +229,7 @@ sub check_signature($f, *@types) {
     );
     
     subtest {
-        does_ok $g, Callable;
-
-        check_signature($g, Int, Str, Int, Str) or die;
-        
-        cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
+        check_std($g, :(Int, Str, Int -->Str)) or die;
     }, "curried ternary fn; unapplied";
 
     #say $g(1, "two", 3);
@@ -263,23 +237,17 @@ sub check_signature($f, *@types) {
 
     my $g1 = $g(1);
     subtest {
-        check_signature($g1, Str, Int, Str) or die;
-        
-        cmp_ok curry($g1), '===', $g1, 'currying it again returns the same thing unchanged';
+        check_std($g1, :(Str, Int -->Str)) or die;
     }, 'ternary fn; partially applied to \(1)';
 
     my $g1_two = $g1("two");
     subtest {
-        check_signature($g1_two, Int, Str) or die;
-        
-        cmp_ok curry($g1_two), '===', $g1_two, 'currying it again returns the same thing unchanged';
+        check_std($g1_two, :(Int -->Str)) or die;
     }, 'ternary fn; partially applied to \(1), then to \("two")';
 
     my $g1two = $g(1, "two");
     subtest {
-        check_signature($g1two, Int, Str) or die;
-        
-        cmp_ok curry($g1two), '===', $g1two, 'currying it again returns the same thing unchanged';
+        check_std($g1two, :(Int -->Str)) or die;
     }, 'ternary fn; partially applied to \(1, "two")';
 
 }
