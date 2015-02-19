@@ -28,10 +28,11 @@ sub check_signature($f, Signature:D $s) {
     is $f.ty, $expectedTypeStr, "ty(pe) string";
 }
 
-sub check_std($f, Signature:D $s) {
+sub check_std($f, Signature:D $s, Capture:D $stdArgs where $s.ACCEPTS($_), Mu $stdResult where $_ ~~ $s.returns) {
     does_ok $f, Callable;
     check_signature($f, $s);
     cmp_ok curry($f), '===', $f, 'currying it again returns the same thing unchanged';
+    cmp_ok $f(|$stdArgs), '~~', $stdResult, "can call it with expected nr of args";
 }
 
 { # invalid signature
@@ -46,9 +47,7 @@ sub check_std($f, Signature:D $s) {
     subtest {
         my $g = curry($unaryLambdaUnderscore);
         
-        check_std($g, :(Mu -->Mu));
-        
-        is $g(Mu), 'foo', "can call it with expected nr of args";
+        check_std($g, :(Mu -->Mu), \(Mu), 'foo');
     }, 'currying unary lambda where param is named "$_"';
 
     subtest {
@@ -85,19 +84,16 @@ sub check_std($f, Signature:D $s) {
     my $g = curry(-> Str $x -->Str{ $x });
     
     subtest {
-        check_std($g, :(Str -->Str));
-        
-        is $g('foo'), 'foo', "can call it with expected nr of args"
-            or die;
+        check_std($g, :(Str -->Str), \('foo'), 'foo');
     }, "curried unary fn {$g.ty}; unapplied";
 }
 
 
 { # (seemingly) "unary" fn Str -> (Int -> Str)
-    my $g = curry(-> Str $x { -> Int $n -->Str{ $x x $n } });
+    my $g = curry(-> Str $x -->Code{ -> Int $n -->Str{ $x x $n } });
     
     subtest {
-        check_std($g, :(Str -->Mu));
+        check_std($g, :(Str -->Code), \('b'), Code);
     }, "curried unary fn {$g.ty} which returns another unary fn; unapplied";
 
     subtest({
@@ -119,7 +115,7 @@ sub check_std($f, Signature:D $s) {
     my $h = $g('foo');
     
     subtest({
-        check_std($h, :(Int -->Str));
+        check_std($h, :(Int -->Str), \(3), 'foofoofoo');
         
         is $h(3), 'foofoofoo', 'can apply it to expected args';
         throws_like { $h('x') }, X::Typing::ArgBinding, 'applying returned fn to with wrongly typed arg';
@@ -139,16 +135,12 @@ sub check_std($f, Signature:D $s) {
     #}
 
     subtest {
-        check_std($g, :(Int, Str -->Str));
-
-        is $g(3, 'x'), 'xxx', "can call it with expected nr of args";
+        check_std($g, :(Int, Str -->Str), \(3, 'x'), 'xxx');
     }, "curried binary fn {$g.ty}; unapplied";
 
     my $g3 = $g(3);
     subtest {
-        check_std($g3, :(Str -->Str)) or die;
-
-        is $g3('y'), 'yyy', "can call it with expected nr of args";
+        check_std($g3, :(Str -->Str), \('y'), 'yyy') or die;
     }, "curried binary fn {$g.ty}; partially applied to \(3)";
 
     subtest({
@@ -174,7 +166,7 @@ sub check_std($f, Signature:D $s) {
     my @seen = @();
 
     my $g ::= curry(
-        -> Int $a0, Str $a1 {
+        -> Int $a0, Str $a1 -->Code{
             -> Int $a2 -->Str{ 
                 @seen.push(($a0, $a1, $a2).tree); "@ call {@seen.elems}: (" ~ @seen[*-1].map(*.perl).join(', ') ~ ")" 
             }
@@ -182,7 +174,7 @@ sub check_std($f, Signature:D $s) {
     );
     
     subtest {
-        check_std($g, :(Int, Str -->Mu)) or die;
+        check_std($g, :(Int, Str -->Code), \(5, 'a'), Code) or die;
 
         is $g(5, 'a', 74), '@ call 1: (5, "a", 74)', 'can apply it to all args at once (aka "overapplying")' or die;
     }, 'curried binary fn ' ~ $g.ty ~ ' which returns a unary fn; unapplied' or die;
@@ -205,16 +197,14 @@ sub check_std($f, Signature:D $s) {
 
     my $g1 = $g(1);
     subtest {
-        check_std($g1, :(Str -->Mu)) or die;
+        check_std($g1, :(Str -->Code), \('b'), Code) or die;
 
         is $g1('b', 9), '@ call 2: (1, "b", 9)', 'can apply it to all the args at once (aka "overapplying")' or die;
     }, 'curried binary fn ' ~ $g.ty ~ ' which returns a unary fn; partially applied to \(1)' or die;
 
     my $g1_two = $g1("two");
     subtest {
-        check_std($g1_two, :(Int -->Str)) or die;
-
-        is $g1_two(23), '@ call 3: (1, "two", 23)', 'can apply it to the args expected by the returned fn")' or die;
+        check_std($g1_two, :(Int -->Str), \(23), '@ call 3: (1, "two", 23)') or die;
     }, 'curried binary fn ' ~ $g.ty ~ ' which returns a unary fn; partially applied to \(1), then to \("two")' or die;
 }
 
@@ -229,7 +219,7 @@ sub check_std($f, Signature:D $s) {
     );
     
     subtest {
-        check_std($g, :(Int, Str, Int -->Str)) or die;
+        check_std($g, :(Int, Str, Int -->Str), \(4, 'qumbl', 7), '@ call 1: (4, "qumbl", 7)') or die;
     }, "curried ternary fn; unapplied";
 
     #say $g(1, "two", 3);
@@ -237,17 +227,17 @@ sub check_std($f, Signature:D $s) {
 
     my $g1 = $g(1);
     subtest {
-        check_std($g1, :(Str, Int -->Str)) or die;
+        check_std($g1, :(Str, Int -->Str), \("baz", 8), '@ call 2: (1, "baz", 8)') or die;
     }, 'ternary fn; partially applied to \(1)';
 
     my $g1_two = $g1("two");
     subtest {
-        check_std($g1_two, :(Int -->Str)) or die;
+        check_std($g1_two, :(Int -->Str), \(9), '@ call 3: (1, "two", 9)') or die;
     }, 'ternary fn; partially applied to \(1), then to \("two")';
 
     my $g1two = $g(1, "two");
     subtest {
-        check_std($g1two, :(Int -->Str)) or die;
+        check_std($g1two, :(Int -->Str), \(11), '@ call 4: (1, "two", 11)') or die;
     }, 'ternary fn; partially applied to \(1, "two")';
 
 }
