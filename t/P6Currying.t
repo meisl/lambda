@@ -9,6 +9,21 @@ use Lambda::P6Currying;
 plan 20;
 
 
+sub check_signature($f, *@types) {
+    my $expectedSigElems = @types.elems;
+    my $expectedArity    = @types.elems - 1;
+    my $expectedTypeStr  = @types.map(*.perl).join(' -> ');
+
+    is $f.arity, $expectedArity, "arity" or diag $f.perl;
+    is $f.count, $expectedArity, ".count (==arity)" or diag $f.perl;
+    is $f.sig.elems, $expectedSigElems, "nr of elems in sig";
+    for 0..$expectedArity - 1 -> $i {
+        isa_ok $f.sig[$i], @types[$i], "type of param $i (counting from 0): should be {@types[$i].perl} - and is {$f.sig[$i].perl}";
+    }
+    isa_ok $f.sig[*-1], @types[*-1], "type of result: should be {@types[*-1].perl} - and is {$f.sig[*-1].perl}";
+    is $f.ty, $expectedTypeStr, "ty(pe) string";
+}
+
 { # invalid signature
     my sub nullarySub { 'bar' };                    # NOT OK    signature: :()
     my $nullaryBlock = { 'baz' };                   # NOT OK    signature: :($_? is parcel)
@@ -22,12 +37,7 @@ plan 20;
         my $g = curry($unaryLambdaUnderscore);
         does_ok $g, Callable;
 
-        is $g.arity, 1, "arity" or diag $g.perl;
-        is $g.count, 1, ".count (==arity)" or diag $g.perl;
-        is $g.sig.elems, 2, "nr of elems in sig";
-        isa_ok $g.sig[0], Mu, "type of 1st param";
-        isa_ok $g.sig[1], Mu, "type of result";
-        is $g.ty, 'Mu -> Mu', "ty(pe) string";
+        check_signature($g, Mu, Mu);
         
         cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
         
@@ -70,12 +80,7 @@ plan 20;
     subtest {
         does_ok $g, Callable;
 
-        is $g.arity, 1, "arity";
-        is $g.count, 1, ".count (==arity)";
-        is $g.sig.elems, 2, "nr of elems in sig";
-        isa_ok $g.sig[0], Str, "type of 1st param";
-        isa_ok $g.sig[1], Str, "type of result";
-        is $g.ty, 'Str -> Str', "ty(pe) string";
+        check_signature($g, Str, Str);
         
         cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
         
@@ -91,12 +96,7 @@ plan 20;
     subtest {
         does_ok $g, Callable;
 
-        is $g.arity, 1, "arity";
-        is $g.count, 1, ".count (==arity)";
-        is $g.sig.elems, 2, "nr of elems in sig";
-        isa_ok $g.sig[0], Str, "type of 1st param";
-        isa_ok $g.sig[1], Mu, "type of result";
-        is $g.ty, 'Str -> Mu', "ty(pe) string";
+        check_signature($g, Str, Mu);
         
         cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
         
@@ -123,12 +123,7 @@ plan 20;
     subtest({
         does_ok $h, Callable;
 
-        is $h.arity, 1, "arity";
-        is $h.count, 1, ".count (==arity)";
-        is $h.sig.elems, 2, "nr of elems in sig";
-        isa_ok $h.sig[0], Int, "type of 1st param";
-        isa_ok $h.sig[1], Str, "type of result";
-        is $h.ty, 'Int -> Str', "ty(pe) string";
+        check_signature($h, Int, Str);
         
         cmp_ok curry($h), '===', $h, 'currying it again returns the same thing unchanged';
         
@@ -152,13 +147,7 @@ plan 20;
     subtest {
         does_ok $g, Callable;
 
-        is $g.arity, 2, "arity";
-        is $g.count, 2, ".count (==arity)";
-        is $g.sig.elems, 3, "nr of elems in sig";
-        isa_ok $g.sig[0], Int, "type of 1st param";
-        isa_ok $g.sig[1], Str, "type of 2nd param";
-        isa_ok $g.sig[2], Str, "type of result";
-        is $g.ty, 'Int -> Str -> Str', "ty(pe) string";
+        check_signature($g, Int, Str, Str);
         
         cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
 
@@ -169,12 +158,7 @@ plan 20;
     subtest {
         does_ok $g3, Callable;
 
-        is $g3.arity, 1, "arity";
-        is $g3.count, 1, ".count (==arity)";
-        is $g3.sig.elems, 2, "nr of elems in sig";
-        isa_ok $g3.sig[0], Str, "type of 1st param";
-        isa_ok $g3.sig[1], Str, "type of result";
-        is $g3.ty, 'Str -> Str', "ty(pe) string";
+        check_signature($g3, Str, Str) or die;
         
         cmp_ok curry($g3), '===', $g3, 'currying it again returns the same thing unchanged';
 
@@ -214,13 +198,7 @@ plan 20;
     subtest {
         does_ok $g, Callable;
 
-        is $g.arity, 2, "arity";
-        is $g.count, 2, ".count (==arity)";
-        is $g.sig.elems, 3, "nr of elems in sig";
-        isa_ok $g.sig[0], Int, "type of 1st param";
-        isa_ok $g.sig[1], Str, "type of 2nd param";
-        isa_ok $g.sig[3], Mu,  "type of result";
-        is $g.ty, 'Int -> Str -> Mu', "ty(pe) string";
+        check_signature($g, Int, Str, Mu) or die;
         
         cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
 
@@ -245,12 +223,7 @@ plan 20;
 
     my $g1 = $g(1);
     subtest {
-        is $g1.arity, 1, "arity";
-        is $g1.count, 1, ".count (==arity)";
-        is $g1.sig.elems, 2, "nr of elems in sig";
-        isa_ok $g1.sig[0], Str, "type of 1st param";
-        isa_ok $g1.sig[2], Mu, "type of result";
-        is $g1.ty, 'Str -> Mu', "ty(pe) string";
+        check_signature($g1, Str, Mu) or die;
         
         cmp_ok curry($g1), '===', $g1, 'currying it again returns the same thing unchanged';
 
@@ -259,12 +232,7 @@ plan 20;
 
     my $g1_two = $g1("two");
     subtest {
-        is $g1_two.arity, 1, "arity";
-        is $g1_two.count, 1, ".count (==arity)";
-        is $g1_two.sig.elems, 2, "nr of elems in sig";
-        isa_ok $g1_two.sig[0], Int, "type of 1st param";
-        isa_ok $g1_two.sig[1], Str, "type of result";
-        is $g1_two.ty, 'Int -> Str', "ty(pe) string";
+        check_signature($g1_two, Int, Str) or die;
         
         cmp_ok curry($g1_two), '===', $g1_two, 'currying it again returns the same thing unchanged';
 
@@ -285,14 +253,7 @@ plan 20;
     subtest {
         does_ok $g, Callable;
 
-        is $g.arity, 3, "arity";
-        is $g.count, 3, ".count (==arity)";
-        is $g.sig.elems, 4, "nr of elems in sig";
-        isa_ok $g.sig[0], Int, "type of 1st param";
-        isa_ok $g.sig[1], Str, "type of 2nd param";
-        isa_ok $g.sig[2], Int, "type of 3rd param";
-        isa_ok $g.sig[3], Str, "type of result";
-        is $g.ty, 'Int -> Str -> Int -> Str', "ty(pe) string";
+        check_signature($g, Int, Str, Int, Str) or die;
         
         cmp_ok curry($g), '===', $g, 'currying it again returns the same thing unchanged';
     }, "curried ternary fn; unapplied";
@@ -302,37 +263,21 @@ plan 20;
 
     my $g1 = $g(1);
     subtest {
-        is $g1.arity, 2, "arity";
-        is $g1.count, 2, ".count (==arity)";
-        is $g1.sig.elems, 3, "nr of elems in sig";
-        isa_ok $g1.sig[0], Str, "type of 1st param";
-        isa_ok $g1.sig[1], Int, "type of 2nd param";
-        isa_ok $g1.sig[2], Str, "type of result";
-        is $g1.ty, 'Str -> Int -> Str', "ty(pe) string";
+        check_signature($g1, Str, Int, Str) or die;
         
         cmp_ok curry($g1), '===', $g1, 'currying it again returns the same thing unchanged';
     }, 'ternary fn; partially applied to \(1)';
 
     my $g1_two = $g1("two");
     subtest {
-        is $g1_two.arity, 1, "arity";
-        is $g1_two.count, 1, ".count (==arity)";
-        is $g1_two.sig.elems, 2, "nr of elems in sig";
-        isa_ok $g1_two.sig[0], Int, "type of 1st param";
-        isa_ok $g1_two.sig[1], Str, "type of result";
-        is $g1_two.ty, 'Int -> Str', "ty(pe) string";
+        check_signature($g1_two, Int, Str) or die;
         
         cmp_ok curry($g1_two), '===', $g1_two, 'currying it again returns the same thing unchanged';
     }, 'ternary fn; partially applied to \(1), then to \("two")';
 
     my $g1two = $g(1, "two");
     subtest {
-        is $g1two.arity, 1, "arity";
-        is $g1two.count, 1, ".count (==arity)";
-        is $g1two.sig.elems, 2, "nr of elems in sig";
-        isa_ok $g1two.sig[0], Int, "type of 1st param";
-        isa_ok $g1two.sig[1], Str, "type of result";
-        is $g1two.ty, 'Int -> Str', "ty(pe) string";
+        check_signature($g1two, Int, Str) or die;
         
         cmp_ok curry($g1two), '===', $g1two, 'currying it again returns the same thing unchanged';
     }, 'ternary fn; partially applied to \(1, "two")';
