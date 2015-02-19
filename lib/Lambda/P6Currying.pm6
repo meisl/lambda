@@ -5,6 +5,13 @@ my $nApp_c = 0; # "complete" application
 my $nApp_o = 0; # "over-" application
 my $nApp_p = 0; # "partial" application
 
+sub curryStats is export {
+    { partial => $nApp_p,
+      complete => $nApp_c,
+      over => $nApp_p
+    }
+}
+
 my sub captureToStr(Capture:D $capture) {
     "\\({$capture.list.map(*.perl).join(', ')}"
         ~ ($capture.hash > 0 
@@ -25,6 +32,14 @@ class X::Typing::UnsupportedNamedArgs is X::Typing is export {
 
     has Str $.expected  = 'positional args only';
     method  got         { self.args }
+
+    multi method new(Callable:D :$whatsInFuncPos!, Capture:D :$args!) {
+        self.bless(:$whatsInFuncPos, :$args);
+    }
+
+    multi method new(Callable:D $whatsInFuncPos, Capture:D $args) {
+        self.bless(:$whatsInFuncPos, :$args);
+    }
 
     submethod BUILD(:$!whatsInFuncPos, :$!args) {
         $!message = "named args not supported for curried fn {$!whatsInFuncPos.WHICH}; got {self.args}";
@@ -126,18 +141,14 @@ my sub __apply_more(&f, @as, @bs) {
     return $result;
 }
 
-# Dispatch to one of the _ methods, with positional args unpacked, or die if there are named args
-# NOTE: doesn't work with postcircumfix:<( )> overrides there, for some reason...?!
-# TODO: remove once Rakudo* 2015-02 has landed (when invoke/postcircumfix:<( )> will get args *as is*, rather than a Capture)
-my sub enter($self, @pos, %nmd) {
-    die X::Typing::UnsupportedNamedArgs.new(:whatsInFuncPos($self), :args(\(@pos, %nmd)))
-        unless %nmd.elems == 0;
-    $self._(|@pos);
-}
 
 # gets called if none of the _ signatures matches (~> invalid call)
 my sub dieArgBinding($self, Capture:D $args) {
     die X::Typing::ArgBinding.new($self, $args)
+}
+
+my sub dieNamedArgs($self, Capture:D $args) {
+    die X::Typing::UnsupportedNamedArgs.new($self, $args)
 }
 
 # arity 1
@@ -146,8 +157,8 @@ role C1[&f, ::T1, ::R] {
     multi method _(T1 $a1, *@bs                         ) is default { $nApp_o++; apply_comp(&f($a1))._(|@bs)                               }
     multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
 
-    multi method invoke(*@pos, *%nmd) { enter(self, @pos, %nmd) }
-    multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
+    #method invoke(*@pos, *%nmd) { ( !@pos or dieNamedArgs(self, \(|@pos, |%nmd)) ) and self._(|@pos) }
+    method invoke(Capture:D $as) { ( !$as.hash or dieNamedArgs(self, $as) ) and self._(|($as.list)) }  # TODO: remove once Rakudo* 2015-02 has landed
 
     method arity { 1 }
     method count { 1 }
@@ -162,8 +173,8 @@ role C2[&f, ::T1, ::T2, ::R] {
     multi method _(T1 $a1, T2 $a2, *@bs                 ) is default { $nApp_o++; apply_comp(&f($a1, $a2))._(|@bs)                          }
     multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
 
-    multi method invoke(*@pos, *%nmd ) { enter(self, @pos, %nmd) }
-    multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
+    #method invoke(*@pos, *%nmd) { ( !@pos or dieNamedArgs(self, \(|@pos, |%nmd)) ) and self._(|@pos) }
+    method invoke(Capture:D $as) { ( !$as.hash or dieNamedArgs(self, $as) ) and self._(|($as.list)) }  # TODO: remove once Rakudo* 2015-02 has landed
 
     method arity { 2 }
     method count { 2 }
@@ -173,14 +184,16 @@ role C2[&f, ::T1, ::T2, ::R] {
 
 # arity 3
 role C3[&f, ::T1, ::T2, ::T3, ::R] {
-    multi method _(T1 $a1                               )            { $nApp_p++; {...} does C2[{ &f($a1, $^b, $^c) }, T2, T3, R]           }
-    multi method _(T1 $a1, T2 $a2                       )            { $nApp_p++; {...} does C1[{ &f($a1, $a2, $^c) },     T3, R]           }
-    multi method _(T1 $a1, T2 $a2, T3 $a3               )            { $nApp_c++; apply_comp(&f($a1, $a2, $a3))                             }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, *@bs         ) is default { $nApp_o++; apply_comp(&f($a1, $a2, $a3))._(|@bs)                     }
+    has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
+
+    multi method _(T1 $a1                               )            { $nApp_p++; {...} does C2[{ &!do($a1, $^b, $^c) }, T2, T3, R]           }
+    multi method _(T1 $a1, T2 $a2                       )            { $nApp_p++; {...} does C1[{ &!do($a1, $a2, $^c) },     T3, R]           }
+    multi method _(T1 $a1, T2 $a2, T3 $a3               )            { $nApp_c++; apply_comp(self.do($a1, $a2, $a3))                             }
+    multi method _(T1 $a1, T2 $a2, T3 $a3, *@bs         ) is default { $nApp_o++; apply_comp(self.do($a1, $a2, $a3))._(|@bs)                     }
     multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
 
-    multi method invoke(*@pos, *%nmd ) { enter(self, @pos, %nmd) }
-    multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
+    #method invoke(*@pos, *%nmd) { ( !@pos or dieNamedArgs(self, \(|@pos, |%nmd)) ) and self._(|@pos) }
+    method invoke(Capture:D $as) { ( !$as.hash or dieNamedArgs(self, $as) ) and self._(|($as.list)) }  # TODO: remove once Rakudo* 2015-02 has landed
 
     method arity { 3 }
     method count { 3 }
@@ -197,8 +210,8 @@ role C4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@bs ) is default { $nApp_o++; apply_comp(&f($a1, $a2, $a3, $a4))._(|@bs)                }
     multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
 
-    multi method invoke(*@pos, *%nmd ) { enter(self, @pos, %nmd) }
-    multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
+    #method invoke(*@pos, *%nmd) { ( !@pos or dieNamedArgs(self, \(|@pos, |%nmd)) ) and self._(|@pos) }
+    method invoke(Capture:D $as) { ( !$as.hash or dieNamedArgs(self, $as) ) and self._(|($as.list)) }  # TODO: remove once Rakudo* 2015-02 has landed
 
     method arity { 4 }
     method count { 4 }
@@ -216,8 +229,8 @@ role C5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
     multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@bs) is default { $nApp_o++; apply_comp(&f($a1, $a2, $a3, $a4, $a5))._(@bs)                     }
     multi method _(|as                                         )            { dieArgBinding(self, as)                                                       }
 
-    multi method invoke(*@pos, *%nmd ) { enter(self, @pos, %nmd) }
-    multi method invoke(Capture:D $as) { enter(self, $as.list, $as.hash) }  # TODO: remove once Rakudo* 2015-02 has landed
+    #method invoke(*@pos, *%nmd) { ( !@pos or dieNamedArgs(self, \(|@pos, |%nmd)) ) and self._(|@pos) }
+    method invoke(Capture:D $as) { ( !$as.hash or dieNamedArgs(self, $as) ) and self._(|($as.list)) }  # TODO: remove once Rakudo* 2015-02 has landed
 
     method arity { 5 }
     method count { 5 }
@@ -233,11 +246,11 @@ my sub _curry(&original, &clone -->Callable) {
     my $r = $sig.returns;
     my ($t1, $t2, $t3, $t4, $t5) = $sig.params.map(*.type);
     given $arity {
-        when 1 { &original does C1[&clone, $t1                    , $r ] }
-        when 2 { &original does C2[&clone, $t1, $t2               , $r ] }
-        when 3 { &original does C3[&clone, $t1, $t2, $t3          , $r ] }
-        when 4 { &original does C4[&clone, $t1, $t2, $t3, $t4     , $r ] }
-        when 5 { &original does C5[&clone, $t1, $t2, $t3, $t4, $t5, $r ] }
+        when 1 { &original does C1[&clone, $t1                    , $r] }
+        when 2 { &original does C2[&clone, $t1, $t2               , $r] }
+        when 3 { &original does C3[&clone, $t1, $t2, $t3          , $r] }
+        when 4 { &original does C4[&clone, $t1, $t2, $t3, $t4     , $r] }
+        when 5 { &original does C5[&clone, $t1, $t2, $t3, $t4, $t5, $r] }
     }
 }
 

@@ -4,6 +4,7 @@ use Test;
 use Lambda::MaybeADT;
 use Lambda::TermADT;
 
+use Lambda::P6Currying;
 
 # module under test:
 use Lambda::BetaReduction;
@@ -64,3 +65,6 @@ my $c = $ConstT('c');
     is $Term-eq($actualTerm, $expectedTerm), '#true', "\$bigTerm reduces to $expectedLambda"
         or diag("exp: $expectedLambda\ngot: $actualLambda");
 }
+
+
+diag curryStats;
