@@ -59,7 +59,7 @@ class X::Typing::ArgBinding is X::Typing is export {
     has     $!args;
     method  args        { captureToStr($!args)    }
 
-    method  expected    { $!whatsInFuncPos.ty }
+    method  expected    { typeof($!whatsInFuncPos) }
     method  got         { self.args }
 
     multi method new(Callable:D :$whatsInFuncPos!, Capture:D :$args!) {
@@ -102,20 +102,11 @@ my role Unapplicable {
     }
 }
 
-my sub typeStr(@types) {
-    @types.map(*.perl).join(' -> ');
+my sub typeof(&f) is export {
+    my $s = &f.signature;
+    @($s.params.map(*.type), $s.returns).map(*.perl).join(' -> ');
 }
 
-
-sub curry_sig(Signature:D $s, $n = 1) {
-    my $out = (class :: is Signature {
-        has @.params = $s.params[$n..*];
-        has $.arity = +@!params;
-        has $.count = $!arity;
-    }).new;
-    $out.set_returns($s.returns);
-    return $out;
-}
 
 # This one expects to receive *exactly* the args which the orig fn &f expects.
 my sub apply_comp($result) is hidden_from_backtrace {
@@ -167,28 +158,29 @@ my sub dieNamedArgs($self, Capture:D $args) is hidden_from_backtrace {
 
 role Curried is export {...}
 
-role Curried[::T1, ::R] {
-    
-}
 role Curried[::T1, ::T2, ::R] {
     
 }
+
+role Curried[::T1, ::T2, ::R] {
+    
+}
+
 
 # arity 1
 role C1[$f, ::T1, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
     has $.T1 = T1;
     has $.TR = TR;
-    has $.signature = $f === self ?? $f.Code::signature !! curry_sig($f.signature, $f.arity - self.arity);
+
+    has Signature $!s;
+    method signature { $!s // $!s = (EVAL ":(T1 -->TR)") }
 
     multi method invoke(T1 $a1                               , *%()) { $nApp_c++; apply_comp(&!do($a1))                                       }
     multi method invoke(T1 $a1, *@_($, *@)                   , *%()) { $nApp_o++; apply_comp(&!do($a1)).invoke(|@_)                           }
     multi method invoke(|as                                        ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)         }
 
     multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
-
-    method sig   { @(T1, TR) }
-    method ty    { typeStr(self.sig) }
 }
 
 # arity 2
@@ -197,7 +189,9 @@ role C2[$f, ::T1, ::T2, ::TR] {
     has $.T1 = T1;
     has $.T2 = T2;
     has $.TR = TR;
-    has $.signature = $f === self ?? $f.Code::signature !! curry_sig($f.signature, $f.arity - self.arity);
+
+    has Signature $!s;
+    method signature { $!s // ($!s := EVAL ":(T1, T2 -->TR)") }
 
     multi method invoke(T1 $a1                               , *%()) { $nApp_p++; ({ &!do($a1, $^b) } does C1[self, $!T2, $!TR])              }
     multi method invoke(T1 $a1, T2 $a2                       , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2))                                  }
@@ -205,9 +199,6 @@ role C2[$f, ::T1, ::T2, ::TR] {
     multi method invoke(|as                                        ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)         }
 
     multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
-
-    method sig   { @(T1, T2, TR) }
-    method ty    { typeStr(self.sig) }
 }
 
 # arity 3
@@ -217,7 +208,9 @@ role C3[$f, ::T1, ::T2, ::T3, ::TR] {
     has $.T2 = T2;
     has $.T3 = T3;
     has $.TR = TR;
-    has $.signature = $f === self ?? $f.Code::signature !! curry_sig($f.signature, $f.arity - self.arity);
+
+    has Signature $!s;
+    method signature { $!s // ($!s := EVAL ":(T1, T2, T3 -->TR)") }
 
     multi method invoke(T1 $a1                               , *%()) { $nApp_p++; { &!do($a1, $^b, $^c) } does C2[self, $!T2, $!T3, $!TR]     }
     multi method invoke(T1 $a1, T2 $a2                       , *%()) { $nApp_p++; { &!do($a1, $a2, $^c) } does C1[self,       $!T3, $!TR]     }
@@ -226,9 +219,6 @@ role C3[$f, ::T1, ::T2, ::T3, ::TR] {
     multi method invoke(|as                                        ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)         }
 
     multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
-
-    method sig   { @(T1, T2, T3, TR) }
-    method ty    { typeStr(self.sig) }
 }
 
 # arity 4
@@ -239,7 +229,9 @@ role C4[$f, ::T1, ::T2, ::T3, ::T4, ::TR] {
     has $.T3 = T3;
     has $.T4 = T4;
     has $.TR = TR;
-    has $.signature = $f === self ?? $f.Code::signature !! curry_sig($f.signature, $f.arity - self.arity);
+
+    has Signature $!s;
+    method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4 -->TR)") }
 
     multi method invoke(T1 $a1                                    , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d) } does C3[self, $!T2, $!T3, $!T4, $!TR]   }
     multi method invoke(T1 $a1, T2 $a2                            , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d) } does C2[self,       $!T3, $!T4, $!TR]   }
@@ -249,9 +241,6 @@ role C4[$f, ::T1, ::T2, ::T3, ::T4, ::TR] {
     multi method invoke(|as                                             ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)                  }
 
     multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
-
-    method sig   { @(T1, T2, T3, T4, TR) }
-    method ty    { typeStr(self.sig) }
 }
 
 # arity 5
@@ -263,7 +252,9 @@ role C5[$f, ::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
     has $.T4 = T4;
     has $.T5 = T5;
     has $.TR = TR;
-    has $.signature = $f === self ?? $f.Code::signature !! curry_sig($f.signature, $f.arity - self.arity);
+
+    has Signature $!s;
+    method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4, T5 -->TR)") }
 
     multi method invoke(T1 $a1                                            , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d, $^e) } does C4[self, $!T2, $!T3, $!T4, $!T5, $!TR]}
     multi method invoke(T1 $a1, T2 $a2                                    , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d, $^e) } does C3[self,       $!T3, $!T4, $!T5, $!TR]}
@@ -274,9 +265,6 @@ role C5[$f, ::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
 
     multi method invoke(|as) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as) }
     multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
-
-    method sig   { @(T1, T2, T3, T4, T5, TR) }
-    method ty    { typeStr(self.sig) }
 }
 
 
