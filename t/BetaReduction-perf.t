@@ -57,6 +57,7 @@ my $c = $ConstT('c');
     $expectedLambda = '(λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((((h f1) f2) f3) f4) f5))))))))))';
     is $Term2source($expectedTerm), $expectedLambda, "\$expectedTerm.lambda is $expectedLambda";
 
+    diag curryStats;
     my $time = now;
     $actualTerm = $Some2value($betaReduce($bigTerm)); #   $expectedTerm;    #   
     $time = (now.Real - $time.Real).round(0.2);
