@@ -58,6 +58,7 @@ my $c = $ConstT('c');
     is $Term2source($expectedTerm), $expectedLambda, "\$expectedTerm.lambda is $expectedLambda";
 
     diag curryStats;
+
     my $time = now;
     $actualTerm = $Some2value($betaReduce($bigTerm)); #   $expectedTerm;    #   
     $time = (now.Real - $time.Real).round(0.2);
