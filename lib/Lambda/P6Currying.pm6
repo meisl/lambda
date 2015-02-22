@@ -106,6 +106,17 @@ my role Unapplicable {
     }
 }
 
+
+# gets called if none of the _ signatures matches (~> invalid call)
+my sub dieArgBinding($self, Capture:D $args) is hidden_from_backtrace {
+    die X::Typing::ArgBinding.new($self, $args)
+}
+
+my sub dieNamedArgs($self, Capture:D $args) is hidden_from_backtrace {
+    die X::Typing::UnsupportedNamedArgs.new($self, $args)
+}
+
+
 my sub typeof(&f) is export {
     my $s = &f.signature;
     @($s.params.map(*.type), $s.returns).map(*.perl).join(' -> ');
@@ -130,19 +141,8 @@ my sub apply_more(&f, @as, @bs) {
 }
 
 
-
-# gets called if none of the _ signatures matches (~> invalid call)
-my sub dieArgBinding($self, Capture:D $args) is hidden_from_backtrace {
-    die X::Typing::ArgBinding.new($self, $args)
-}
-
-my sub dieNamedArgs($self, Capture:D $args) is hidden_from_backtrace {
-    die X::Typing::UnsupportedNamedArgs.new($self, $args)
-}
-
-
 # arity 1
-role C1[::T1, ::TR] {
+role Curried[::T1, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
     has Signature $!s;
@@ -157,13 +157,13 @@ role C1[::T1, ::TR] {
 
 
 # arity 2
-role C2[::T1, ::T2, ::TR] {
+role Curried[::T1, ::T2, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
     has Signature $!s;
     method signature { $!s // ($!s := EVAL ":(T1, T2 -->TR)") }
 
-    multi method invoke(T1 $a1                               , *%()) { $nApp_p++; ({ &!do($a1, $^b) } does C1[|@(self.signature.params[1..*].map(*.type), $!s.returns)])              }
+    multi method invoke(T1 $a1                               , *%()) { $nApp_p++; ({ &!do($a1, $^b) } does Curried[|@(self.signature.params[1..*].map(*.type), $!s.returns)])              }
     multi method invoke(T1 $a1, T2 $a2                       , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2))                                  }
     multi method invoke(T1 $a1, T2 $a2, *@_($, *@)           , *%()) { $nApp_o++; apply_comp(&!do($a1, $a2)).invoke(|@_)                      }
     multi method invoke(|as                                        ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)         }
@@ -173,14 +173,14 @@ role C2[::T1, ::T2, ::TR] {
 
 
 # arity 3
-role C3[::T1, ::T2, ::T3, ::TR] {
+role Curried[::T1, ::T2, ::T3, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
     has Signature $!s;
     method signature { $!s // ($!s := EVAL ":(T1, T2, T3 -->TR)") }
 
-    multi method invoke(T1 $a1                               , *%()) { $nApp_p++; { &!do($a1, $^b, $^c) } does C2[|@(self.signature.params[1..*].map(*.type), $!s.returns)]     }
-    multi method invoke(T1 $a1, T2 $a2                       , *%()) { $nApp_p++; { &!do($a1, $a2, $^c) } does C1[|@(self.signature.params[2..*].map(*.type), $!s.returns)]     }
+    multi method invoke(T1 $a1                               , *%()) { $nApp_p++; { &!do($a1, $^b, $^c) } does Curried[|@(self.signature.params[1..*].map(*.type), $!s.returns)]     }
+    multi method invoke(T1 $a1, T2 $a2                       , *%()) { $nApp_p++; { &!do($a1, $a2, $^c) } does Curried[|@(self.signature.params[2..*].map(*.type), $!s.returns)]     }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3               , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2, $a3))                             }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3, *@_($, *@)   , *%()) { $nApp_o++; apply_comp(&!do($a1, $a2, $a3)).invoke(|@_)                 }
     multi method invoke(|as                                        ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)         }
@@ -190,15 +190,15 @@ role C3[::T1, ::T2, ::T3, ::TR] {
 
 
 # arity 4
-role C4[::T1, ::T2, ::T3, ::T4, ::TR] {
+role Curried[::T1, ::T2, ::T3, ::T4, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
     has Signature $!s;
     method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4 -->TR)") }
 
-    multi method invoke(T1 $a1                                    , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d) } does C3[|@(self.signature.params[1..*].map(*.type), $!s.returns)]   }
-    multi method invoke(T1 $a1, T2 $a2                            , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d) } does C2[|@(self.signature.params[2..*].map(*.type), $!s.returns)]   }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3                    , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $^d) } does C1[|@(self.signature.params[3..*].map(*.type), $!s.returns)]   }
+    multi method invoke(T1 $a1                                    , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d) } does Curried[|@(self.signature.params[1..*].map(*.type), $!s.returns)]   }
+    multi method invoke(T1 $a1, T2 $a2                            , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d) } does Curried[|@(self.signature.params[2..*].map(*.type), $!s.returns)]   }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3                    , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $^d) } does Curried[|@(self.signature.params[3..*].map(*.type), $!s.returns)]   }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4            , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2, $a3, $a4))                                 }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@_($, *@), *%()) { $nApp_o++; apply_comp(&!do($a1, $a2, $a3, $a4)).invoke(|@_)                     }
     multi method invoke(|as                                             ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)                  }
@@ -208,16 +208,16 @@ role C4[::T1, ::T2, ::T3, ::T4, ::TR] {
 
 
 # arity 5
-role C5[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
+role Curried[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
     has Signature $!s;
     method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4, T5 -->TR)") }
 
-    multi method invoke(T1 $a1                                            , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d, $^e) } does C4[|@(self.signature.params[1..*].map(*.type), $!s.returns)]}
-    multi method invoke(T1 $a1, T2 $a2                                    , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d, $^e) } does C3[|@(self.signature.params[2..*].map(*.type), $!s.returns)]}
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3                            , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $^d, $^e) } does C2[|@(self.signature.params[3..*].map(*.type), $!s.returns)]}
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4                    , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $a4, $^e) } does C1[|@(self.signature.params[4..*].map(*.type), $!s.returns)]}
+    multi method invoke(T1 $a1                                            , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d, $^e) } does Curried[|@(self.signature.params[1..*].map(*.type), $!s.returns)]}
+    multi method invoke(T1 $a1, T2 $a2                                    , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d, $^e) } does Curried[|@(self.signature.params[2..*].map(*.type), $!s.returns)]}
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3                            , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $^d, $^e) } does Curried[|@(self.signature.params[3..*].map(*.type), $!s.returns)]}
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4                    , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $a4, $^e) } does Curried[|@(self.signature.params[4..*].map(*.type), $!s.returns)]}
     multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5            , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2, $a3, $a4, $a5))                                    }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@_($, *@), *%()) { $nApp_o++; apply_comp(&!do($a1, $a2, $a3, $a4, $a5)).invoke(|@_)                        }
 
@@ -230,12 +230,7 @@ role C5[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
 sub curry(&f -->Callable) is export {
     $nCurry_ttl++;
     return &f
-        if (&f ~~ C1)
-        || (&f ~~ C2)
-        || (&f ~~ C3)
-        || (&f ~~ C4)
-        || (&f ~~ C5)
-    ;
+        if &f ~~ Curried;
 
     $nCurry++;
     my $sig = &f.signature;
@@ -250,13 +245,7 @@ sub curry(&f -->Callable) is export {
     die "NYI: Fn with arity $arity (> 5) - signature: {&f.signature.perl}; fn: {&f.gist}"
         if $arity > 5;
 
-    my $r = $sig.returns;
-    my ($t1, $t2, $t3, $t4, $t5) = @ps.map(*.type);
-    given $arity {
-        when 1 { &f does C1[$t1                    , $r] }
-        when 2 { &f does C2[$t1, $t2               , $r] }
-        when 3 { &f does C3[$t1, $t2, $t3          , $r] }
-        when 4 { &f does C4[$t1, $t2, $t3, $t4     , $r] }
-        when 5 { &f does C5[$t1, $t2, $t3, $t4, $t5, $r] }
-    }
+    my $out = &f does Curried[|@(@ps.map(*.type), $sig.returns)];
+
+    return $out;
 }
