@@ -125,26 +125,6 @@ my sub apply_more(&f, @as, @bs) {
     apply_comp(&f(|@as))._(|@bs);
 }
 
-# This one expects to receive *more* args than the orig fn &f expects.
-my sub __apply_more(&f, @as, @bs) {
-
-    #warn ">>>> over-app $nApp_o: " ~ self ~ Backtrace.new;   #   ;  #   
-    #say "n=$n, partialArgs={@partialArgs.perl}, as={as.perl}";
-    my $argCount = @bs.elems;
-
-    my $result = apply_comp(&f(|@as));
-    $nApp_o++;
-    my $k = 0;
-    my $n = $result.?arity // $result(|@bs);    # throws X::Typing::Unapplicable
-    while ($n < $argCount) {
-        $result = $result._(|@bs[$k..$n-1]); # TODO: use the fact that these are all complete applications
-        $k = $n;
-        $n += $result.?arity // last;
-    }
-
-    $result = $result._(|@bs[$k..*]);    # this may be a partial application
-    return $result;
-}
 
 
 # gets called if none of the _ signatures matches (~> invalid call)
@@ -154,16 +134,6 @@ my sub dieArgBinding($self, Capture:D $args) is hidden_from_backtrace {
 
 my sub dieNamedArgs($self, Capture:D $args) is hidden_from_backtrace {
     die X::Typing::UnsupportedNamedArgs.new($self, $args)
-}
-
-role Curried is export {...}
-
-role Curried[::T1, ::T2, ::R] {
-    
-}
-
-role Curried[::T1, ::T2, ::R] {
-    
 }
 
 
@@ -273,34 +243,7 @@ role C5[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
 
 
 
-my sub _curry(&f -->Callable) {
-    my $sig = &f.signature;
-    my $arity = $sig.arity;
-    my $r = $sig.returns;
-    my ($t1, $t2, $t3, $t4, $t5) = $sig.params.map(*.type);
-    given $arity {
-        when 1 { &f does C1[$t1                    , $r] }
-        when 2 { &f does C2[$t1, $t2               , $r] }
-        when 3 { &f does C3[$t1, $t2, $t3          , $r] }
-        when 4 { &f does C4[$t1, $t2, $t3, $t4     , $r] }
-        when 5 { &f does C5[$t1, $t2, $t3, $t4, $t5, $r] }
-    }
-}
-
-class Fn does Callable {
-
-}
-
-role Func[::T, ::R] {
-
-    method fnType {
-        my $t = T.?fnType // T.WHICH;
-        $t = "($t)" if T ~~ Func;
-        $t ~ ' -> ' ~ (R.?fnType // R.WHICH)
-    }
-}
-
-sub curry(&f) is export {
+sub curry(&f -->Callable) is export {
     return &f
         if (&f ~~ C1)
         || (&f ~~ C2)
@@ -309,44 +252,25 @@ sub curry(&f) is export {
         || (&f ~~ C5)
     ;
 
-    my @ps = &f.signature.params;
-    my $arity = @ps.elems;
+    my $sig = &f.signature;
+    my $arity = $sig.arity;
     die "cannot curry nullary fn - signature: {&f.signature.perl}; fn: {&f.gist}" 
         if $arity == 0;
+
+    my @ps = $sig.params;
     die "cannot curry fn with optional/slurpy/named/capture or parcel parameters - signature: {&f.signature.perl}; fn: {&f.gist}"
         if @ps.map({$_.optional || $_.slurpy || $_.named || $_.capture || $_.parcel}).any;
+
     die "NYI: Fn with arity $arity (> 5) - signature: {&f.signature.perl}; fn: {&f.gist}"
         if $arity > 5;
 
-    return _curry(&f);
-}
-
-#`{
-my $f = sub (Str $x, Int $y -->Str) {$x x $y};
-my $fc = curry($f);
-
-say $fc.WHICH;
-say $fc.WHAT;
-say $fc.WHERE;
-say $fc.signature;
-my @ms = $fc.^find_method('invoke').candidates\
-    .grep(*.count == $fc.count + 1)\
-    .map(*.signature.params)\
-    .grep(!*.invocant)\
-    .grep(!*.slurpy)
-;
-say "{+@ms}: " ~ @ms.perl;
-say '';
-
-my $g = $fc("foo");
-say $g.WHICH;
-say $g.signature;
-say '';
-
-my $h = $fc("foo", 3);
-say $h;
-say $h.signature;
-
-#say $fc('baz', foo => 'bar');
-##say $fc._(foo => 'bar');
+    my $r = $sig.returns;
+    my ($t1, $t2, $t3, $t4, $t5) = @ps.map(*.type);
+    given $arity {
+        when 1 { &f does C1[$t1                    , $r] }
+        when 2 { &f does C2[$t1, $t2               , $r] }
+        when 3 { &f does C3[$t1, $t2, $t3          , $r] }
+        when 4 { &f does C4[$t1, $t2, $t3, $t4     , $r] }
+        when 5 { &f does C5[$t1, $t2, $t3, $t4, $t5, $r] }
+    }
 }

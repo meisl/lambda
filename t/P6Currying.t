@@ -36,7 +36,13 @@ sub check_signature($f, Signature:D $s) {
 sub check_std($f, Signature:D $s, Capture:D $stdArgs where $s.ACCEPTS($_), Mu $stdResult where $_ ~~ $s.returns) {
     does_ok $f, Callable;
     check_signature($f, $s);
-    cmp_ok curry($f), '===', $f, 'currying it again returns the same thing unchanged';
+    
+    my $beforeStr = $f.perl;
+    my $curried = curry($f);
+    my $afterStr = $curried.perl;
+    cmp_ok $curried, '===', $f, 'currying it again returns the same thing unchanged (a)';
+    is $afterStr, $beforeStr, 'currying it again returns the same thing unchanged (b)';
+    
     cmp_ok $f(|$stdArgs), '~~', $stdResult, "can call it with expected nr of args";
 }
 
