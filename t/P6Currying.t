@@ -6,7 +6,7 @@ use Test::Util;
 # module under test:
 use Lambda::P6Currying;
 
-plan 20;
+plan 21;
 
 
 sub check_signature($f, Signature:D $s) {
@@ -16,15 +16,31 @@ sub check_signature($f, Signature:D $s) {
     my $expectedSigElems = @argTypes.elems + 1;
     my $expectedTypeStr  = (@argTypes, $retType).map(*.perl).join(' -> ');
 
-    is $f.arity, $expectedArity, "arity" or diag $f.perl;
+    is $f.arity, $expectedArity, ".arity" or diag $f.perl;
     is $f.count, $expectedArity, ".count (==arity)" or diag $f.perl;
+
+    my $fs = $f.signature;
+
+    is $fs.params.elems, $expectedArity, "nr of params in signature";
+    for 0..$expectedArity - 1 -> $i {
+        my $actual   = $fs.params[$i].type;
+        my $expected = @argTypes[$i];
+        cmp_ok $actual, '~~', $expected, "type of param $i (counting from 0 / pt a): should be {$expected.perl} - and is {$actual.perl}";
+        cmp_ok $expected, '~~', $actual, "type of param $i (counting from 0 / pt b): should be {$expected.perl} - and is {$actual.perl}";
+    }
+    cmp_ok $fs.returns, '~~', $retType, "type of result (pt a): should be {$retType.perl} - and is {$fs.returns.perl}";
+    cmp_ok $retType, '~~', $fs.returns, "type of result (pt b): should be {$retType.perl} - and is {$fs.returns.perl}";
+
     is $f.sig.elems, $expectedSigElems, "nr of elems in sig";
     for 0..$expectedArity - 1 -> $i {
         my $actual   = $f.sig[$i];
         my $expected = @argTypes[$i];
-        isa_ok $actual, $expected, "type of param $i (counting from 0): should be {$expected.perl} - and is {$actual.perl}";
+        cmp_ok $actual, '~~', $expected, "type of param $i (counting from 0 / pt a): should be {$expected.perl} - and is {$actual.perl}";
+        cmp_ok $expected, '~~', $actual, "type of param $i (counting from 0 / pt b): should be {$expected.perl} - and is {$actual.perl}";
     }
-    isa_ok $f.sig[*-1], $retType, "type of result: should be {$retType.perl} - and is {$f.sig[*-1].perl}";
+    cmp_ok $f.sig[*-1], '~~', $retType, "type of result (pt a): should be {$retType.perl} - and is {$f.sig[*-1].perl}";
+    cmp_ok $retType, '~~', $f.sig[*-1], "type of result (pt b): should be {$retType.perl} - and is {$f.sig[*-1].perl}";
+
     is $f.ty, $expectedTypeStr, "ty(pe) string";
 }
 
@@ -85,6 +101,17 @@ sub check_std($f, Signature:D $s, Capture:D $stdArgs where $s.ACCEPTS($_), Mu $s
     
     subtest {
         check_std($g, :(Str -->Str), \('foo'), 'foo');
+    }, "curried unary fn {$g.ty}; unapplied";
+}
+
+{ # unary fn Foo -> Bar (with types which are not visible inside P6Currying)
+    my class Foo {};
+    my role Bar {};
+
+    my $g = curry(-> Foo $x -->Bar{ $x does Bar });
+    
+    subtest {
+        check_std($g, :(Foo -->Bar), \(Foo.new), Bar);
     }, "curried unary fn {$g.ty}; unapplied";
 }
 
