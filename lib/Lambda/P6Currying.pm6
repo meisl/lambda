@@ -168,10 +168,10 @@ role Curried[::T1, ::T2, ::R] {
 
 
 # arity 1
-role C1[$f, ::T1, ::TR] {
+role C1[::T1, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
-    has $.T1 = T1;
-    has $.TR = TR;
+    has $!T1 = T1;
+    has $!TR = TR;
 
     has Signature $!s;
     method signature { $!s // $!s = (EVAL ":(T1 -->TR)") }
@@ -183,17 +183,18 @@ role C1[$f, ::T1, ::TR] {
     multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
 }
 
+
 # arity 2
-role C2[$f, ::T1, ::T2, ::TR] {
+role C2[::T1, ::T2, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
-    has $.T1 = T1;
-    has $.T2 = T2;
-    has $.TR = TR;
+    has $!T1 = T1;
+    has $!T2 = T2;
+    has $!TR = TR;
 
     has Signature $!s;
     method signature { $!s // ($!s := EVAL ":(T1, T2 -->TR)") }
 
-    multi method invoke(T1 $a1                               , *%()) { $nApp_p++; ({ &!do($a1, $^b) } does C1[self, $!T2, $!TR])              }
+    multi method invoke(T1 $a1                               , *%()) { $nApp_p++; ({ &!do($a1, $^b) } does C1[$!T2, $!TR])              }
     multi method invoke(T1 $a1, T2 $a2                       , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2))                                  }
     multi method invoke(T1 $a1, T2 $a2, *@_($, *@)           , *%()) { $nApp_o++; apply_comp(&!do($a1, $a2)).invoke(|@_)                      }
     multi method invoke(|as                                        ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)         }
@@ -201,19 +202,20 @@ role C2[$f, ::T1, ::T2, ::TR] {
     multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
 }
 
+
 # arity 3
-role C3[$f, ::T1, ::T2, ::T3, ::TR] {
+role C3[::T1, ::T2, ::T3, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
-    has $.T1 = T1;
-    has $.T2 = T2;
-    has $.T3 = T3;
-    has $.TR = TR;
+    has $!T1 = T1;
+    has $!T2 = T2;
+    has $!T3 = T3;
+    has $!TR = TR;
 
     has Signature $!s;
     method signature { $!s // ($!s := EVAL ":(T1, T2, T3 -->TR)") }
 
-    multi method invoke(T1 $a1                               , *%()) { $nApp_p++; { &!do($a1, $^b, $^c) } does C2[self, $!T2, $!T3, $!TR]     }
-    multi method invoke(T1 $a1, T2 $a2                       , *%()) { $nApp_p++; { &!do($a1, $a2, $^c) } does C1[self,       $!T3, $!TR]     }
+    multi method invoke(T1 $a1                               , *%()) { $nApp_p++; { &!do($a1, $^b, $^c) } does C2[$!T2, $!T3, $!TR]     }
+    multi method invoke(T1 $a1, T2 $a2                       , *%()) { $nApp_p++; { &!do($a1, $a2, $^c) } does C1[      $!T3, $!TR]     }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3               , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2, $a3))                             }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3, *@_($, *@)   , *%()) { $nApp_o++; apply_comp(&!do($a1, $a2, $a3)).invoke(|@_)                 }
     multi method invoke(|as                                        ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)         }
@@ -221,21 +223,22 @@ role C3[$f, ::T1, ::T2, ::T3, ::TR] {
     multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
 }
 
+
 # arity 4
-role C4[$f, ::T1, ::T2, ::T3, ::T4, ::TR] {
+role C4[::T1, ::T2, ::T3, ::T4, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
-    has $.T1 = T1;
-    has $.T2 = T2;
-    has $.T3 = T3;
-    has $.T4 = T4;
-    has $.TR = TR;
+    has $!T1 = T1;
+    has $!T2 = T2;
+    has $!T3 = T3;
+    has $!T4 = T4;
+    has $!TR = TR;
 
     has Signature $!s;
     method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4 -->TR)") }
 
-    multi method invoke(T1 $a1                                    , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d) } does C3[self, $!T2, $!T3, $!T4, $!TR]   }
-    multi method invoke(T1 $a1, T2 $a2                            , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d) } does C2[self,       $!T3, $!T4, $!TR]   }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3                    , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $^d) } does C1[self,             $!T4, $!TR]   }
+    multi method invoke(T1 $a1                                    , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d) } does C3[$!T2, $!T3, $!T4, $!TR]   }
+    multi method invoke(T1 $a1, T2 $a2                            , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d) } does C2[      $!T3, $!T4, $!TR]   }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3                    , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $^d) } does C1[            $!T4, $!TR]   }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4            , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2, $a3, $a4))                                 }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@_($, *@), *%()) { $nApp_o++; apply_comp(&!do($a1, $a2, $a3, $a4)).invoke(|@_)                     }
     multi method invoke(|as                                             ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)                  }
@@ -243,23 +246,24 @@ role C4[$f, ::T1, ::T2, ::T3, ::T4, ::TR] {
     multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
 }
 
+
 # arity 5
-role C5[$f, ::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
+role C5[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
-    has $.T1 = T1;
-    has $.T2 = T2;
-    has $.T3 = T3;
-    has $.T4 = T4;
-    has $.T5 = T5;
-    has $.TR = TR;
+    has $!T1 = T1;
+    has $!T2 = T2;
+    has $!T3 = T3;
+    has $!T4 = T4;
+    has $!T5 = T5;
+    has $!TR = TR;
 
     has Signature $!s;
     method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4, T5 -->TR)") }
 
-    multi method invoke(T1 $a1                                            , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d, $^e) } does C4[self, $!T2, $!T3, $!T4, $!T5, $!TR]}
-    multi method invoke(T1 $a1, T2 $a2                                    , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d, $^e) } does C3[self,       $!T3, $!T4, $!T5, $!TR]}
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3                            , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $^d, $^e) } does C2[self,             $!T4, $!T5, $!TR]}
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4                    , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $a4, $^e) } does C1[self,                   $!T5, $!TR]}
+    multi method invoke(T1 $a1                                            , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d, $^e) } does C4[$!T2, $!T3, $!T4, $!T5, $!TR]}
+    multi method invoke(T1 $a1, T2 $a2                                    , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d, $^e) } does C3[      $!T3, $!T4, $!T5, $!TR]}
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3                            , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $^d, $^e) } does C2[            $!T4, $!T5, $!TR]}
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4                    , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $a4, $^e) } does C1[                  $!T5, $!TR]}
     multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5            , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2, $a3, $a4, $a5))                                    }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@_($, *@), *%()) { $nApp_o++; apply_comp(&!do($a1, $a2, $a3, $a4, $a5)).invoke(|@_)                        }
 
@@ -275,11 +279,11 @@ my sub _curry(&f -->Callable) {
     my $r = $sig.returns;
     my ($t1, $t2, $t3, $t4, $t5) = $sig.params.map(*.type);
     given $arity {
-        when 1 { &f does C1[&f, $t1                    , $r] }
-        when 2 { &f does C2[&f, $t1, $t2               , $r] }
-        when 3 { &f does C3[&f, $t1, $t2, $t3          , $r] }
-        when 4 { &f does C4[&f, $t1, $t2, $t3, $t4     , $r] }
-        when 5 { &f does C5[&f, $t1, $t2, $t3, $t4, $t5, $r] }
+        when 1 { &f does C1[$t1                    , $r] }
+        when 2 { &f does C2[$t1, $t2               , $r] }
+        when 3 { &f does C3[$t1, $t2, $t3          , $r] }
+        when 4 { &f does C4[$t1, $t2, $t3, $t4     , $r] }
+        when 5 { &f does C5[$t1, $t2, $t3, $t4, $t5, $r] }
     }
 }
 
