@@ -121,9 +121,13 @@ my sub dieInvalidArgs($self, Capture:D $args) is hidden_from_backtrace {
 }
 
 
-my sub typeof(&f) is export {
+my sub types(&f, $n = 0) is export {
     my $s = &f.signature;
-    @($s.params.map(*.type), $s.returns).map(*.perl).join(' -> ');
+    @($s.params[$n..*].map(*.type), $s.returns)
+}
+
+my sub typeof(&f, $n = 0) is export {
+    types(&f, $n).map(*.perl).join(' -> ');
 }
 
 role Curried {...}
@@ -145,30 +149,48 @@ my multi sub apply_more(Unapplicable $f, @rest)            { $nApp_o++;         
 my multi sub apply_more(             $f, @rest)            { $nApp_o++; ($f does Unapplicable).invoke(|@rest) }
 
 
+my role P[::T1, ::TR] does Curried[T1, TR] {
+    has Signature $!s;
+    method signature { $!s // $!s = (EVAL ":(T1 -->TR)") }
+}
+
+my role P[::T1, ::T2, ::TR] does Curried[T1, T2, TR] {
+    has Signature $!s;
+    method signature { $!s // $!s = (EVAL ":(T1, T2 -->TR)") }
+}
+
+my role P[::T1, ::T2, ::T3, ::TR] does Curried[T1, T2, T3, TR] {
+    has Signature $!s;
+    method signature { $!s // $!s = (EVAL ":(T1, T2, T3 -->TR)") }
+}
+
+my role P[::T1, ::T2, ::T3, ::T4, ::TR] does Curried[T1, T2, T3, T4, TR] {
+    has Signature $!s;
+    method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4 -->TR)") }
+}
+
+my role P[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] does Curried[T1, T2, T3, T4, T5, TR] {
+    has Signature $!s;
+    method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4, T5 -->TR)") }
+}
+
 my sub apply_part(&self, Mu $do, *@args) {
     $nApp_p++;
-    my $n = +@args;
-    my $s = &self.signature;
-    my &out;
-    given $s.arity - $n {
-        when 1 { &out = { $do(|@args, $^b)                 } }
-        when 2 { &out = { $do(|@args, $^b, $^c)            } }
-        when 3 { &out = { $do(|@args, $^b, $^c, $^d)       } }
-        when 4 { &out = { $do(|@args, $^b, $^c, $^d, $^e)  } }
+    my @types = types(&self, +@args);
+    given @types {
+        when 2 { return { $do(|@args, $^b)                 } does P[|@types] }
+        when 3 { return { $do(|@args, $^b, $^c)            } does P[|@types] }
+        when 4 { return { $do(|@args, $^b, $^c, $^d)       } does P[|@types] }
+        when 5 { return { $do(|@args, $^b, $^c, $^d, $^e)  } does P[|@types] }
     }
-    my @types = ($s.params[$n..*].map(*.type), $s.returns);
-    return &out does Curried[|@types];
 }
 
 # arity 1
 role Curried[::T1, ::TR] {
     has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
-    has Signature $!s;
-    method signature { $!s // $!s = (EVAL ":(T1 -->TR)") }
-
-    multi method invoke(T1 $a1                               , *%()) { apply_comp(&!do($a1))                                       }
-    multi method invoke(T1 $a1, *@_($, *@)                   , *%()) { apply_more(&!do($a1), @_)                           }
+    multi method invoke(T1 $a1                               , *%()) { apply_comp(      &!do( $a1)    ) }
+    multi method invoke(T1 $a1, *@_($, *@)                   , *%()) { apply_more(      &!do( $a1), @_) }
 
     multi method invoke(|as) { dieInvalidArgs(self, as) }
 
@@ -179,9 +201,6 @@ role Curried[::T1, ::TR] {
 # arity 2
 role Curried[::T1, ::T2, ::TR] {
     has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
-
-    has Signature $!s;
-    method signature { $!s // ($!s := EVAL ":(T1, T2 -->TR)") }
 
     multi method invoke(T1 $a1                               , *%()) { apply_part(self, &!do, $a1          ) }
     multi method invoke(T1 $a1, T2 $a2                       , *%()) { apply_comp(      &!do( $a1, $a2)    ) }
@@ -196,9 +215,6 @@ role Curried[::T1, ::T2, ::TR] {
 # arity 3
 role Curried[::T1, ::T2, ::T3, ::TR] {
     has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
-
-    has Signature $!s;
-    method signature { $!s // ($!s := EVAL ":(T1, T2, T3 -->TR)") }
 
     multi method invoke(T1 $a1                               , *%()) { apply_part(self, &!do, $a1               ) }
     multi method invoke(T1 $a1, T2 $a2                       , *%()) { apply_part(self, &!do, $a1, $a2          ) }
@@ -215,9 +231,6 @@ role Curried[::T1, ::T2, ::T3, ::TR] {
 role Curried[::T1, ::T2, ::T3, ::T4, ::TR] {
     has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
-    has Signature $!s;
-    method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4 -->TR)") }
-
     multi method invoke(T1 $a1                                    , *%()) { apply_part(self, &!do, $a1                    ) }
     multi method invoke(T1 $a1, T2 $a2                            , *%()) { apply_part(self, &!do, $a1, $a2               ) }
     multi method invoke(T1 $a1, T2 $a2, T3 $a3                    , *%()) { apply_part(self, &!do, $a1, $a2, $a3          ) }
@@ -233,9 +246,6 @@ role Curried[::T1, ::T2, ::T3, ::T4, ::TR] {
 # arity 5
 role Curried[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
     has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
-
-    has Signature $!s;
-    method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4, T5 -->TR)") }
 
     multi method invoke(T1 $a1                                            , *%()) { apply_part(self, &!do, $a1                         ) }
     multi method invoke(T1 $a1, T2 $a2                                    , *%()) { apply_part(self, &!do, $a1, $a2                    ) }
