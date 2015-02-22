@@ -28,13 +28,13 @@ my $c = $ConstT('c');
 
     $app = $AppT($x, $x);
     $actual = $betaReduce($app);
-    is $actual, 'None', '(x x) reduces to itself'
+    is $actual, 'None', '(x x) reduces to itself (sanity check)'
         or die;
 
     $app = $AppT($LamT($x, $x), $x);
     $actual = $Some2value($betaReduce($app));
     $actualLambda = $Term2source($actual);
-    is $Term-eq($actual, $x), '#true', "{$Term2source($app)} reduces to x"
+    is $Term-eq($actual, $x), '#true', "{$Term2source($app)} reduces to x (sanity check)"
         or diag("exp: x\ngot: $actualLambda")
         and die;
 }

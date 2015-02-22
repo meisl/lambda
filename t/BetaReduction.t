@@ -12,6 +12,7 @@ use Lambda::TermADT;
 use Lambda::Conversion::Bool-conv;
 use Lambda::LambdaGrammar;
 
+use Lambda::P6Currying;
 
 # module under test:
 use Lambda::BetaReduction;
@@ -374,3 +375,5 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
     $contains_ok($lamZ, $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
     $contains_ok($lam , $ants,  "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
 }
+
+diag curryStats;

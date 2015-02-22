@@ -5,11 +5,18 @@ my $nApp_c = 0; # "complete" application
 my $nApp_o = 0; # "over-" application
 my $nApp_p = 0; # "partial" application
 
+my role CurryStats {
+    method gist { self.Str }
+    method Str {
+        "CurryStats: {self<partial>}p, {self<over>}o, {self<complete>}c";
+    }
+}
+
 sub curryStats is export {
     { partial => $nApp_p,
       complete => $nApp_c,
       over => $nApp_p
-    }
+    } does CurryStats;
 }
 
 my sub captureToStr(Capture:D $capture) {
@@ -87,13 +94,10 @@ my sub dieUnapplicable($self, Capture:D $args) {
 }
 
 my role Unapplicable {
-    multi method invoke(*@pos, *%nmd) {
-        dieUnapplicable(self, \(@pos, %nmd));
-    }
     multi method invoke(Capture:D $args) {  # TODO: remove once Rakudo* 2015-02 has landed
         dieUnapplicable(self, $args);
     }
-    method _(|args) {    # "over-applying" will come here
+    multi method invoke(|args) {    # "over-applying" will come here
         dieUnapplicable(self, args);
     }
 }
@@ -103,8 +107,18 @@ my sub typeStr(@types) {
 }
 
 
+sub curry_sig(Signature:D $s, $n = 1) {
+    my $out = (class :: is Signature {
+        has @.params = $s.params[$n..*];
+        has $.arity = +@!params;
+        has $.count = $!arity;
+    }).new;
+    $out.set_returns($s.returns);
+    return $out;
+}
+
 # This one expects to receive *exactly* the args which the orig fn &f expects.
-my sub apply_comp($result) {
+my sub apply_comp($result) is hidden_from_backtrace {
     return curry($result)
         if $result ~~ Callable;
 
@@ -143,114 +157,141 @@ my sub __apply_more(&f, @as, @bs) {
 
 
 # gets called if none of the _ signatures matches (~> invalid call)
-my sub dieArgBinding($self, Capture:D $args) {
+my sub dieArgBinding($self, Capture:D $args) is hidden_from_backtrace {
     die X::Typing::ArgBinding.new($self, $args)
 }
 
-my sub dieNamedArgs($self, Capture:D $args) {
+my sub dieNamedArgs($self, Capture:D $args) is hidden_from_backtrace {
     die X::Typing::UnsupportedNamedArgs.new($self, $args)
 }
 
+role Curried is export {...}
+
+role Curried[::T1, ::R] {
+    
+}
+role Curried[::T1, ::T2, ::R] {
+    
+}
+
 # arity 1
-role C1[&f, ::T1, ::R] {
-    multi method _(T1 $a1                               )            { $nApp_c++; apply_comp(&f($a1))                                       }
-    multi method _(T1 $a1, *@bs                         ) is default { $nApp_o++; apply_comp(&f($a1))._(|@bs)                               }
-    multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
+role C1[$f, ::T1, ::TR] {
+    has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
+    has $.T1 = T1;
+    has $.TR = TR;
+    has $.signature = $f === self ?? $f.Code::signature !! curry_sig($f.signature, $f.arity - self.arity);
 
-    #method invoke(*@pos, *%nmd) { ( !@pos or dieNamedArgs(self, \(|@pos, |%nmd)) ) and self._(|@pos) }
-    method invoke(Capture:D $as) { ( !$as.hash or dieNamedArgs(self, $as) ) and self._(|($as.list)) }  # TODO: remove once Rakudo* 2015-02 has landed
+    multi method invoke(T1 $a1                               , *%()) { $nApp_c++; apply_comp(&!do($a1))                                       }
+    multi method invoke(T1 $a1, *@_($, *@)                   , *%()) { $nApp_o++; apply_comp(&!do($a1)).invoke(|@_)                           }
+    multi method invoke(|as                                        ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)         }
 
-    method arity { 1 }
-    method count { 1 }
-    method sig   { @(T1, R) }
+    multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
+
+    method sig   { @(T1, TR) }
     method ty    { typeStr(self.sig) }
 }
 
 # arity 2
-role C2[&f, ::T1, ::T2, ::R] {
-    multi method _(T1 $a1                               )            { $nApp_p++; {...} does C1[{ &f($a1, $^b) }, T2, R]                    }
-    multi method _(T1 $a1, T2 $a2                       )            { $nApp_c++; apply_comp(&f($a1, $a2))                                  }
-    multi method _(T1 $a1, T2 $a2, *@bs                 ) is default { $nApp_o++; apply_comp(&f($a1, $a2))._(|@bs)                          }
-    multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
+role C2[$f, ::T1, ::T2, ::TR] {
+    has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
+    has $.T1 = T1;
+    has $.T2 = T2;
+    has $.TR = TR;
+    has $.signature = $f === self ?? $f.Code::signature !! curry_sig($f.signature, $f.arity - self.arity);
 
-    #method invoke(*@pos, *%nmd) { ( !@pos or dieNamedArgs(self, \(|@pos, |%nmd)) ) and self._(|@pos) }
-    method invoke(Capture:D $as) { ( !$as.hash or dieNamedArgs(self, $as) ) and self._(|($as.list)) }  # TODO: remove once Rakudo* 2015-02 has landed
+    multi method invoke(T1 $a1                               , *%()) { $nApp_p++; ({ &!do($a1, $^b) } does C1[self, $!T2, $!TR])              }
+    multi method invoke(T1 $a1, T2 $a2                       , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2))                                  }
+    multi method invoke(T1 $a1, T2 $a2, *@_($, *@)           , *%()) { $nApp_o++; apply_comp(&!do($a1, $a2)).invoke(|@_)                      }
+    multi method invoke(|as                                        ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)         }
 
-    method arity { 2 }
-    method count { 2 }
-    method sig   { @(T1, T2, R) }
+    multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
+
+    method sig   { @(T1, T2, TR) }
     method ty    { typeStr(self.sig) }
 }
 
 # arity 3
-role C3[&f, ::T1, ::T2, ::T3, ::R] {
+role C3[$f, ::T1, ::T2, ::T3, ::TR] {
     has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
+    has $.T1 = T1;
+    has $.T2 = T2;
+    has $.T3 = T3;
+    has $.TR = TR;
+    has $.signature = $f === self ?? $f.Code::signature !! curry_sig($f.signature, $f.arity - self.arity);
 
-    multi method _(T1 $a1                               )            { $nApp_p++; {...} does C2[{ &!do($a1, $^b, $^c) }, T2, T3, R]           }
-    multi method _(T1 $a1, T2 $a2                       )            { $nApp_p++; {...} does C1[{ &!do($a1, $a2, $^c) },     T3, R]           }
-    multi method _(T1 $a1, T2 $a2, T3 $a3               )            { $nApp_c++; apply_comp(self.do($a1, $a2, $a3))                             }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, *@bs         ) is default { $nApp_o++; apply_comp(self.do($a1, $a2, $a3))._(|@bs)                     }
-    multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
+    multi method invoke(T1 $a1                               , *%()) { $nApp_p++; { &!do($a1, $^b, $^c) } does C2[self, $!T2, $!T3, $!TR]     }
+    multi method invoke(T1 $a1, T2 $a2                       , *%()) { $nApp_p++; { &!do($a1, $a2, $^c) } does C1[self,       $!T3, $!TR]     }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3               , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2, $a3))                             }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, *@_($, *@)   , *%()) { $nApp_o++; apply_comp(&!do($a1, $a2, $a3)).invoke(|@_)                 }
+    multi method invoke(|as                                        ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)         }
 
-    #method invoke(*@pos, *%nmd) { ( !@pos or dieNamedArgs(self, \(|@pos, |%nmd)) ) and self._(|@pos) }
-    method invoke(Capture:D $as) { ( !$as.hash or dieNamedArgs(self, $as) ) and self._(|($as.list)) }  # TODO: remove once Rakudo* 2015-02 has landed
+    multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
 
-    method arity { 3 }
-    method count { 3 }
-    method sig   { @(T1, T2, T3, R) }
+    method sig   { @(T1, T2, T3, TR) }
     method ty    { typeStr(self.sig) }
 }
 
 # arity 4
-role C4[&f, ::T1, ::T2, ::T3, ::T4, ::R] {
-    multi method _(T1 $a1                               )            { $nApp_p++; {...} does C3[{ &f($a1, $^b, $^c, $^d) }, T2, T3, T4, R]  }
-    multi method _(T1 $a1, T2 $a2                       )            { $nApp_p++; {...} does C2[{ &f($a1, $a2, $^c, $^d) },     T3, T4, R]  }
-    multi method _(T1 $a1, T2 $a2, T3 $a3               )            { $nApp_p++; {...} does C1[{ &f($a1, $a2, $a3, $^d) },         T4, R]  }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4       )            { $nApp_c++; apply_comp(&f($a1, $a2, $a3, $a4))                        }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@bs ) is default { $nApp_o++; apply_comp(&f($a1, $a2, $a3, $a4))._(|@bs)                }
-    multi method _(|as                                  )            { dieArgBinding(self, as)                                              }
+role C4[$f, ::T1, ::T2, ::T3, ::T4, ::TR] {
+    has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
+    has $.T1 = T1;
+    has $.T2 = T2;
+    has $.T3 = T3;
+    has $.T4 = T4;
+    has $.TR = TR;
+    has $.signature = $f === self ?? $f.Code::signature !! curry_sig($f.signature, $f.arity - self.arity);
 
-    #method invoke(*@pos, *%nmd) { ( !@pos or dieNamedArgs(self, \(|@pos, |%nmd)) ) and self._(|@pos) }
-    method invoke(Capture:D $as) { ( !$as.hash or dieNamedArgs(self, $as) ) and self._(|($as.list)) }  # TODO: remove once Rakudo* 2015-02 has landed
+    multi method invoke(T1 $a1                                    , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d) } does C3[self, $!T2, $!T3, $!T4, $!TR]   }
+    multi method invoke(T1 $a1, T2 $a2                            , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d) } does C2[self,       $!T3, $!T4, $!TR]   }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3                    , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $^d) } does C1[self,             $!T4, $!TR]   }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4            , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2, $a3, $a4))                                 }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@_($, *@), *%()) { $nApp_o++; apply_comp(&!do($a1, $a2, $a3, $a4)).invoke(|@_)                     }
+    multi method invoke(|as                                             ) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as)                  }
 
-    method arity { 4 }
-    method count { 4 }
-    method sig   { @(T1, T2, T3, T4, R) }
+    multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
+
+    method sig   { @(T1, T2, T3, T4, TR) }
     method ty    { typeStr(self.sig) }
 }
 
 # arity 5
-role C5[&f, ::T1, ::T2, ::T3, ::T4, ::T5, ::R] {
-    multi method _(T1 $a1                                      )            { $nApp_p++; {...} does C4[{ &f($a1, $^b, $^c, $^d, $^e) }, T2, T3, T4, T5, R]  }
-    multi method _(T1 $a1, T2 $a2                              )            { $nApp_p++; {...} does C3[{ &f($a1, $a2, $^c, $^d, $^e) },     T3, T4, T5, R]  }
-    multi method _(T1 $a1, T2 $a2, T3 $a3                      )            { $nApp_p++; {...} does C2[{ &f($a1, $a2, $a3, $^d, $^e) },         T4, T5, R]  }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4              )            { $nApp_p++; {...} does C1[{ &f($a1, $a2, $a3, $a4, $^e) },             T5, R]  }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5      )            { $nApp_c++; apply_comp(&f($a1, $a2, $a3, $a4, $a5))                            }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@bs) is default { $nApp_o++; apply_comp(&f($a1, $a2, $a3, $a4, $a5))._(@bs)                     }
-    multi method _(|as                                         )            { dieArgBinding(self, as)                                                       }
+role C5[$f, ::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
+    has &.do = nqp::getattr(nqp::decont(self), Code, '$!do');
+    has $.T1 = T1;
+    has $.T2 = T2;
+    has $.T3 = T3;
+    has $.T4 = T4;
+    has $.T5 = T5;
+    has $.TR = TR;
+    has $.signature = $f === self ?? $f.Code::signature !! curry_sig($f.signature, $f.arity - self.arity);
 
-    #method invoke(*@pos, *%nmd) { ( !@pos or dieNamedArgs(self, \(|@pos, |%nmd)) ) and self._(|@pos) }
-    method invoke(Capture:D $as) { ( !$as.hash or dieNamedArgs(self, $as) ) and self._(|($as.list)) }  # TODO: remove once Rakudo* 2015-02 has landed
+    multi method invoke(T1 $a1                                            , *%()) { $nApp_p++; { &!do($a1, $^b, $^c, $^d, $^e) } does C4[self, $!T2, $!T3, $!T4, $!T5, $!TR]}
+    multi method invoke(T1 $a1, T2 $a2                                    , *%()) { $nApp_p++; { &!do($a1, $a2, $^c, $^d, $^e) } does C3[self,       $!T3, $!T4, $!T5, $!TR]}
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3                            , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $^d, $^e) } does C2[self,             $!T4, $!T5, $!TR]}
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4                    , *%()) { $nApp_p++; { &!do($a1, $a2, $a3, $a4, $^e) } does C1[self,                   $!T5, $!TR]}
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5            , *%()) { $nApp_c++; apply_comp(&!do($a1, $a2, $a3, $a4, $a5))                                    }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@_($, *@), *%()) { $nApp_o++; apply_comp(&!do($a1, $a2, $a3, $a4, $a5)).invoke(|@_)                        }
 
-    method arity { 5 }
-    method count { 5 }
-    method sig   { @(T1, T2, T3, T4, T5, R) }
+    multi method invoke(|as) { ?as.hash and dieNamedArgs(self, as) or dieArgBinding(self, as) }
+    multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
+
+    method sig   { @(T1, T2, T3, T4, T5, TR) }
     method ty    { typeStr(self.sig) }
 }
 
 
 
-my sub _curry(&original, &clone -->Callable) {
-    my $sig = &original.signature;
+my sub _curry(&f -->Callable) {
+    my $sig = &f.signature;
     my $arity = $sig.arity;
     my $r = $sig.returns;
     my ($t1, $t2, $t3, $t4, $t5) = $sig.params.map(*.type);
     given $arity {
-        when 1 { &original does C1[&clone, $t1                    , $r] }
-        when 2 { &original does C2[&clone, $t1, $t2               , $r] }
-        when 3 { &original does C3[&clone, $t1, $t2, $t3          , $r] }
-        when 4 { &original does C4[&clone, $t1, $t2, $t3, $t4     , $r] }
-        when 5 { &original does C5[&clone, $t1, $t2, $t3, $t4, $t5, $r] }
+        when 1 { &f does C1[&f, $t1                    , $r] }
+        when 2 { &f does C2[&f, $t1, $t2               , $r] }
+        when 3 { &f does C3[&f, $t1, $t2, $t3          , $r] }
+        when 4 { &f does C4[&f, $t1, $t2, $t3, $t4     , $r] }
+        when 5 { &f does C5[&f, $t1, $t2, $t3, $t4, $t5, $r] }
     }
 }
 
@@ -285,6 +326,35 @@ sub curry(&f) is export {
     die "NYI: Fn with arity $arity (> 5) - signature: {&f.signature.perl}; fn: {&f.gist}"
         if $arity > 5;
 
-    return _curry(&f, nqp::getattr(nqp::decont(&f), Code, '$!do'));
+    return _curry(&f);
 }
 
+#`{
+my $f = sub (Str $x, Int $y -->Str) {$x x $y};
+my $fc = curry($f);
+
+say $fc.WHICH;
+say $fc.WHAT;
+say $fc.WHERE;
+say $fc.signature;
+my @ms = $fc.^find_method('invoke').candidates\
+    .grep(*.count == $fc.count + 1)\
+    .map(*.signature.params)\
+    .grep(!*.invocant)\
+    .grep(!*.slurpy)
+;
+say "{+@ms}: " ~ @ms.perl;
+say '';
+
+my $g = $fc("foo");
+say $g.WHICH;
+say $g.signature;
+say '';
+
+my $h = $fc("foo", 3);
+say $h;
+say $h.signature;
+
+#say $fc('baz', foo => 'bar');
+##say $fc._(foo => 'bar');
+}
