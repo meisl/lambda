@@ -151,27 +151,27 @@ my multi sub apply_more(             $f, @rest)            { $nApp_o++; ($f does
 
 my role P[::T1, ::TR] does Curried[T1, TR] {
     has Signature $!s;
-    method signature { $!s // $!s = (EVAL ":(T1 -->TR)") }
+    method signature { $!s //= EVAL ":(T1 -->TR)" }
 }
 
 my role P[::T1, ::T2, ::TR] does Curried[T1, T2, TR] {
     has Signature $!s;
-    method signature { $!s // $!s = (EVAL ":(T1, T2 -->TR)") }
+    method signature { $!s //= EVAL ":(T1, T2 -->TR)" }
 }
 
 my role P[::T1, ::T2, ::T3, ::TR] does Curried[T1, T2, T3, TR] {
     has Signature $!s;
-    method signature { $!s // $!s = (EVAL ":(T1, T2, T3 -->TR)") }
+    method signature { $!s //= EVAL ":(T1, T2, T3 -->TR)" }
 }
 
 my role P[::T1, ::T2, ::T3, ::T4, ::TR] does Curried[T1, T2, T3, T4, TR] {
     has Signature $!s;
-    method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4 -->TR)") }
+    method signature { $!s //= EVAL ":(T1, T2, T3, T4 -->TR)" }
 }
 
 my role P[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] does Curried[T1, T2, T3, T4, T5, TR] {
     has Signature $!s;
-    method signature { $!s // ($!s := EVAL ":(T1, T2, T3, T4, T5 -->TR)") }
+    method signature { $!s //= EVAL ":(T1, T2, T3, T4, T5 -->TR)" }
 }
 
 my sub apply_part(&self, Mu $do, *@args) {
@@ -268,18 +268,22 @@ sub curry(&f -->Callable) is export {
 
     $nCurry++;
     my $sig = &f.signature;
+
+    my @ps = $sig.params;
+
+    die "cannot curry fn with optional/slurpy/named/capture or parcel parameters - signature: {$sig.perl}; fn: {&f.gist}"
+        if @ps.map({$_.optional || $_.slurpy || $_.named || $_.capture || $_.parcel}).any;
+    
+    try {
+        my $out = &f does Curried[|@(@ps.map(*.type), $sig.returns)];
+        return $out;
+    }
+
     my $arity = $sig.arity;
+
     die "cannot curry nullary fn - signature: {$sig.perl}; fn: {&f.gist}" 
         if $arity == 0;
 
-    my @ps = $sig.params;
-    die "cannot curry fn with optional/slurpy/named/capture or parcel parameters - signature: {$sig.perl}; fn: {&f.gist}"
-        if @ps.map({$_.optional || $_.slurpy || $_.named || $_.capture || $_.parcel}).any;
-
     die "NYI: Fn with arity $arity (> 5) - signature: {$sig.perl}; fn: {&f.gist}"
         if $arity > 5;
-
-    my $out = &f does Curried[|@(@ps.map(*.type), $sig.returns)];
-
-    return $out;
 }

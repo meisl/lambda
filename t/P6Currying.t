@@ -6,7 +6,7 @@ use Test::Util;
 # module under test:
 use Lambda::P6Currying;
 
-plan 21;
+plan 23;
 
 
 sub check_signature($f, Signature:D $s) {
@@ -50,16 +50,6 @@ sub check_std($f, Signature:D $s, Capture:D $stdArgs where $s.ACCEPTS($_), Mu $s
     my sub nullarySub { 'bar' };                    # NOT OK    signature: :()
     my $nullaryBlock = { 'baz' };                   # NOT OK    signature: :($_? is parcel)
     my $unaryBlock1 = { ~$_ };                      # NOT OK    signature: :($_? is parcel)
-    my $unaryBlock2 = { ~$^a };                     # OK        signature: :($a)                <<< TODO
-    my $binaryBlock = { $^a ~ $^b };                # OK        signature: :($a, $b)            <<< TODO
-    my $unaryLambdaUnderscore = -> $_ { 'foo' };    # OK        signature: :($_)
-
-
-    subtest {
-        my $g = curry($unaryLambdaUnderscore);
-        
-        check_std($g, :(Mu -->Mu), \(Mu), 'foo');
-    }, 'currying unary lambda where param is named "$_"';
 
     subtest {
         dies_ok({curry($nullaryBlock)}, 'nullary block');
@@ -88,6 +78,31 @@ sub check_std($f, Signature:D $s, Capture:D $stdArgs where $s.ACCEPTS($_), Mu $s
         # parcel param
         dies_ok({curry(-> \x {'bar'})}, "lambda expr with parcel param");
     }, 'sub and lambda: cannot curry...';
+}
+
+{ # OK signatures, special notation
+    my $unaryLambdaUnderscore = -> $_ { 'foo' };    # OK        signature: :($_)
+    my $unaryBlock2 = { ~$^a };                     # OK        signature: :($a)
+    my $binaryBlock = { $^a ~ $^b };                # OK        signature: :($a, $b)
+
+    subtest {
+        my $g = curry($unaryLambdaUnderscore);
+        
+        check_std($g, :(Mu -->Mu), \(Mu), 'foo');
+    }, 'currying unary lambda where param is named "$_"';
+
+    subtest({
+        my $g = curry($unaryBlock2);
+        
+        check_std($g, :(Mu -->Mu), \(42), Str);
+    }, 'currying unary block with implicit param "$^a"') or die;
+
+    subtest({
+        my $g = curry($binaryBlock);
+        
+        check_std($g, :(Mu, Mu -->Mu), \(47, 11), '4711');
+    }, 'currying binary block with implicit params "$^a" and "$^b"') or die;
+
 }
 
 
