@@ -100,11 +100,18 @@ constant $Y is export = -> $U { lambdaFn(
     #'Y', 'let (U λu.λf.f(u u f)) (U U)',
     #'Y', 'let (U λu.λf.f(u u f)) (λf.f(U U f))',
     -> &f {
-        #say '(Y ' ~ &f.Str ~ ')';
-        lambdaFn(
-            recFnSymbol(&f), recFnLambda(&f),
-            &f( $U($U, &f) )
-        )
+        my $out = &f( $U($U, &f) );
+        unless $out ~~ lambda {
+            my $bt = Backtrace.new;
+            $bt = $bt[$bt.first-index(*.file eq $?FILE)..*];
+            $bt = $bt[$bt.first-index(*.file ne $?FILE)..*];
+            $bt = $bt[0..$bt.first-index(!*.code.defined)-1];
+            warn "Y combinator: non-lambda val returned from open-recursion function {&f.gist}"
+                ~ "\n $bt"
+            ;
+            $out = lambdaFn(recFnSymbol(&f), recFnLambda(&f), $out);
+        }
+        $out;
     }
 ) }( -> $u, &f { -> |args { &f( $u($u, &f) )(|args) } } );
 #) }( -> $u, &f { say "u"; &f( $u($u, &f) ) } );
@@ -125,16 +132,13 @@ constant $findFP is export = {
     lambdaFn(
         'findFP', 'λarbiter.λf.Y ' ~ mkLambdaExpr('arbiter', 'f'),
         -> &arbiter, &f {
-            $Y(lambdaFn(
-                Str, mkLambdaExpr(&arbiter.gist, &f.gist),
-                -> &self {
-                    -> $start {
-                        #say "inside findFP: "  ~ $start;
-                        my $next = &f($start);
-                        &arbiter($start, $next, &self);
-                    }
+            $Y(-> &self { lambdaFn(Str, mkLambdaExpr(&arbiter.gist, &f.gist),
+                -> $start {
+                    #say "inside findFP: "  ~ $start;
+                    my $next = &f($start);
+                    &arbiter($start, $next, &self);
                 }
-            ))
+            )})
         }
     );
 }();
