@@ -1,35 +1,76 @@
-e:\proj\perl6\Lambda>prove-all6.bat
-[13:52:20] t\Base.t ................... ok    23078 ms
-[13:52:43] t\BaseP6.t ................. ok    17466 ms
-[13:53:01] t\BetaReduction-perf.t ..... 3/5 # CurryStats: 3p, 2o, 748c, 395/421i
-# 14.2 sec consumed for ß-reduction
-[13:53:01] t\BetaReduction-perf.t ..... 5/5 # CurryStats: 29p, 49o, 13639c, 3321/3347i
-[13:53:01] t\BetaReduction-perf.t ..... ok    38187 ms
-[13:53:39] t\BetaReduction.t .......... 128/131 # CurryStats: 28p, 56o, 15986c, 3842/3868i
-[13:53:39] t\BetaReduction.t .......... ok    47890 ms
-[13:54:27] t\Boolean.t ................ ok    19062 ms
-[13:54:46] t\ChurchNat.t .............. ok    31201 ms
-[13:55:17] t\EtaReduction.t ........... ok    35390 ms
-[13:55:53] t\FreeVars.t ............... ok    26906 ms
-[13:56:20] t\Grammar.t ................ ok    20193 ms
-[13:56:40] t\LambdaInP6.t ............. ok    20171 ms
-[13:57:00] t\Misc.t ................... ok    34613 ms
-[13:57:35] t\P6Currying.t ............. ok     7406 ms
-[13:57:42] t\Substitution.t ........... ok    32021 ms
-[13:58:14] t\VarT.t ................... ok    18078 ms
-[13:58:32] t\ADTs\ADT_auto.t .......... ok     4756 ms
-[13:58:37] t\ADTs\ListADT-cXr.t ....... ok    21162 ms
-[13:58:58] t\ADTs\ListADT-extra.t ..... ok    28796 ms
-[13:59:27] t\ADTs\ListADT.t ........... ok    19349 ms
-[13:59:46] t\ADTs\Maybe-extra.t ....... ok    18078 ms
-[14:00:04] t\ADTs\MaybeADT.t .......... ok    19505 ms
-[14:00:24] t\ADTs\PairADT.t ........... ok    19312 ms
-[14:00:43] t\ADTs\Streams.t ........... ok    13569 ms
-[14:00:57] t\ADTs\TermADT-extra.t ..... ok    31796 ms
-[14:01:29] t\ADTs\TermADT.t ........... ok    24562 ms
-[14:01:53] t\Conversion\Conversion.t .. ok    15418 ms
-[14:02:09] t\Test\Util.t .............. ok    17703 ms
-[14:02:26]
+[16:38:13] t\Base.t ................... ok    28006 ms
+[16:38:41] t\BaseP6.t ................. ok    18832 ms
+[16:39:00] t\BetaReduction-perf.t ..... 3/5 # CurryStats: 3p, 2o, 748c, 395/421i
+# 113 (1): Term->source(("bogus-curry" => 1, "complete" => 113).hash)
+# 59 (1): id(("bogus-curry" => 0, "complete" => 59).hash)
+# 31 (1): LamT(("bogus-curry" => 0, "complete" => 31).hash)
+# 30 (1): B(("complete" => 30, "bogus-curry" => 0).hash)
+# 24 (1): AppT(("complete" => 24, "bogus-curry" => 0).hash)
+# 21 (1): Y(("bogus-curry" => 0, "complete" => 21).hash)
+# 17 (1): _if(("bogus-curry" => 0, "complete" => 17).hash)
+# 14 (1): VarT(("complete" => 14, "bogus-curry" => 0).hash)
+# 12 (1): #false(("complete" => 12, "bogus-curry" => 0).hash)
+# 7 (1): #true(("bogus-curry" => 0, "complete" => 7).hash)
+# 5 (2): const(("complete" => 5, "bogus-curry" => 0).hash), nil(("bogus-curry" => 0, "complete" => 5).hash)
+# 2 (1): cons(("bogus-curry" => 0, "complete" => 2).hash)
+# 0 (3): _and(("bogus-curry" => 0, "complete" => 0).hash), _or(("complete" => 0, "bogus-curry" => 0).hash), Term->source(("bogus-curry" => 0, "complete" => 0).hash)
+# 38 sec consumed for ß-reduction
+[16:39:00] t\BetaReduction-perf.t ..... 5/5 # CurryStats: 29p, 49o, 13639c, 3321/3347i
+# 1441 (1): _if(("complete" => 1441, "bogus-curry" => 0).hash)
+# 891 (1): #false(("complete" => 891, "bogus-curry" => 0).hash)
+# 712 (1): #true(("bogus-curry" => 0, "complete" => 712).hash)
+# 157 (1): nil(("complete" => 157, "bogus-curry" => 0).hash)
+# 142 (1): Term->source(("complete" => 142, "bogus-curry" => 1).hash)
+# 132 (1): LamT(("complete" => 132, "bogus-curry" => 0).hash)
+# 112 (1): cons(("complete" => 112, "bogus-curry" => 0).hash)
+# 107 (1): const(("bogus-curry" => 0, "complete" => 107).hash)
+# 96 (1): id(("bogus-curry" => 0, "complete" => 96).hash)
+# 40 (2): _and(("bogus-curry" => 0, "complete" => 40).hash), AppT(("complete" => 40, "bogus-curry" => 0).hash)
+# 30 (1): B(("bogus-curry" => 0, "complete" => 30).hash)
+# 21 (1): Y(("bogus-curry" => 0, "complete" => 21).hash)
+# 14 (1): VarT(("bogus-curry" => 0, "complete" => 14).hash)
+# 0 (2): _or(("bogus-curry" => 0, "complete" => 0).hash), Term->source(("complete" => 0, "bogus-curry" => 0).hash)
+[16:39:00] t\BetaReduction-perf.t ..... ok    73328 ms
+[16:40:13] t\BetaReduction.t .......... 129/131 # CurryStats: 28p, 56o, 15986c, 3842/3868i
+# 1319 (1): _if(("complete" => 1319, "bogus-curry" => 0).hash)
+# 1081 (1): Term->source(("bogus-curry" => 1, "complete" => 1081).hash)
+# 853 (1): #false(("bogus-curry" => 0, "complete" => 853).hash)
+# 655 (1): #true(("complete" => 655, "bogus-curry" => 0).hash)
+# 637 (1): id(("bogus-curry" => 0, "complete" => 637).hash)
+# 328 (1): AppT(("complete" => 328, "bogus-curry" => 0).hash)
+# 247 (1): nil(("complete" => 247, "bogus-curry" => 0).hash)
+# 164 (1): VarT(("bogus-curry" => 0, "complete" => 164).hash)
+# 130 (1): const(("bogus-curry" => 0, "complete" => 130).hash)
+# 129 (1): cons(("bogus-curry" => 0, "complete" => 129).hash)
+# 108 (1): LamT(("complete" => 108, "bogus-curry" => 0).hash)
+# 30 (1): B(("bogus-curry" => 0, "complete" => 30).hash)
+# 22 (1): _and(("bogus-curry" => 0, "complete" => 22).hash)
+# 21 (1): Y(("complete" => 21, "bogus-curry" => 0).hash)
+# 0 (2): _or(("bogus-curry" => 0, "complete" => 0).hash), Term->source(("complete" => 0, "bogus-curry" => 0).hash)
+[16:40:13] t\BetaReduction.t .......... ok    91140 ms
+[16:41:44] t\Boolean.t ................ ok    21281 ms
+[16:42:06] t\ChurchNat.t .............. ok    35508 ms
+[16:42:41] t\EtaReduction.t ........... ok    53484 ms
+[16:43:35] t\FreeVars.t ............... ok    34000 ms
+[16:44:09] t\Grammar.t ................ ok    18859 ms
+[16:44:27] t\LambdaInP6.t ............. ok    21333 ms
+[16:44:49] t\Misc.t ................... ok    50500 ms
+[16:45:39] t\P6Currying.t ............. ok     6718 ms
+[16:45:46] t\Substitution.t ........... ok    42552 ms
+[16:46:29] t\VarT.t ................... ok    18609 ms
+[16:46:47] t\ADTs\ADT_auto.t .......... ok     5068 ms
+[16:46:52] t\ADTs\ListADT-cXr.t ....... ok    21864 ms
+[16:47:14] t\ADTs\ListADT-extra.t ..... ok    32937 ms
+[16:47:47] t\ADTs\ListADT.t ........... ok    20125 ms
+[16:48:07] t\ADTs\Maybe-extra.t ....... ok    18552 ms
+[16:48:26] t\ADTs\MaybeADT.t .......... ok    19937 ms
+[16:48:46] t\ADTs\PairADT.t ........... ok    19835 ms
+[16:49:06] t\ADTs\Streams.t ........... ok    14046 ms
+[16:49:20] t\ADTs\TermADT-extra.t ..... ok    39350 ms
+[16:49:59] t\ADTs\TermADT.t ........... ok    26562 ms
+[16:50:26] t\Conversion\Conversion.t .. ok    15569 ms
+[16:50:41] t\Test\Util.t .............. ok    18093 ms
+[16:50:59]
 All tests successful.
-Files=26, Tests=1392, 606 wallclock secs ( 0.69 usr +  0.20 sys =  0.89 CPU)
+Files=26, Tests=1392, 766 wallclock secs ( 0.73 usr +  0.19 sys =  0.92 CPU)
 Result: PASS

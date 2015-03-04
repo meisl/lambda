@@ -23,6 +23,10 @@ my $y = $VarT('y');
 my $z = $VarT('z');
 my $c = $ConstT('c');
 
+
+diag curryStats;
+
+
 { # first try with two minimal examples, as a sanity check:
     my ($app, $actual, $actualLambda);
 
