@@ -343,7 +343,7 @@ constant $ConstT2value is export = $on-ConstT(
 # ->Str -----------------------------------------------------------------------
 
 constant $Term2Str is export = lambdaFn(
-    'Term->Str', 'λt.(error "NYI")',
+    'Term->Str', 'λt.error "NYI"',
     -> TTerm:D $t { $t.Str }
 );
 
@@ -507,29 +507,29 @@ constant $is-Omega is export =
 constant $fresh-var-for is export = {
     my $nextAlphaNr = 1;
 
-    my role AlphaVarT {
-        has TTerm:D $.for;
-
-        method gist {
-            my $forStr = ($!for ~~ AlphaVarT)
-                ?? $!for.gist
-                !! $VarT2name($!for);
-            $VarT2name(self) ~ "[/$forStr]";
-        }
+    my role AlphaVarT[TTerm:D $for, Str:D $gist] {
+        method for  { $for  }
+        method gist { $gist }
     }
+
     lambdaFn(
         'fresh-var-for', 'λfor.error "NYI"',
         -> TTerm $for -->TTerm{
             #say $nextAlphaNr;
-            my $v = $VarT('α' ~ $nextAlphaNr);
+            my $vName = 'α' ~ $nextAlphaNr;
+            $nextAlphaNr++;
+            my $v = $VarT($vName);
             $v ~~ TTerm or die $v.perl;
             if $for.defined {
+                my $forStr = ($for ~~ AlphaVarT)
+                    ?? $for.gist
+                    !! $VarT2name($for);
+                my $gistStr = $vName ~ "[/$forStr]";
                 $_if( $is-VarT($for),
-                    -> Mu { $v does AlphaVarT(:$for) },
+                    -> Mu { $v does AlphaVarT[$for, $gistStr] },
                     -> Mu { die "can make fresh var for another var but not for $for" }
                 )
             }
-            $nextAlphaNr++;
             $v;
         }
     );
