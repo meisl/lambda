@@ -12,14 +12,14 @@ my constant %fnStats = Hash.new;
 my role CurryStats {
     method gist { self.Str }
     method Str {
-        my $result = "CurryStats: {self<partial>}p, {self<over>}o, {self<complete>}c, {self<curry>}/{self<curry_ttl>}i";
+        my $result = "CurryStats: {self<partial>}p, {self<complete>}f, {self<over>}o, {self<curry>}+{self<curry_ttl>-self<curry>}i";
         
         $result ~= "\n";
         my @entries = %fnStats.values\
-            .grep({ $_<complete>.defined && $_<fn>.?symbol eq any('Term->source', <LamT AppT VarT [LamT] [AppT] [VarT] id I Y B K const cons nil _if _and _or #true #false>) })
+            .grep({ $_<full>.defined && $_<fn>.?symbol eq any('Term->source', '#true', '#false', <_if K>) })   #    <LamT AppT VarT [LamT] [AppT] [VarT] id I Y B K const cons nil _if _and _or #true #false>) })
         ;
         my %classified = @entries\
-            .classify({$_<complete>});
+            .classify({$_<full>});
         
         my &fn2Str = -> $fn { ($fn.?symbol // $fn.?lambda // typeof($fn)) };
         #my &fn2Str = -> $fn { ($fn.gist };
@@ -47,6 +47,40 @@ sub curryStats is export {
       curry_ttl => $nCurry_ttl,
     } does CurryStats;
 }
+
+sub stats-key-individual(&f) {
+    #&f.gist;                # not working because type changes (roles may be added later) & dangerous because .gist might *apply* the fn again ~> inf regression
+    #&f.do.WHICH.Str;        # not working if objects are moved by GC
+    #&f.WHICH.Str;           # not working because type changes (ObjAt, roles may be added later)
+    #&f.WHICH.WHERE.Str;     # not working if objects are moved by GC (real mem-address of ObjAt)
+    &f.WHICH.Str.substr(&f.WHAT.perl.Str.chars + 1);    # this is only the (pseudo) "mem-address" of the ObjAt, guaranteed to stay the same
+}
+
+sub stats-key(&f) {
+    #stats-key-individual(&f);
+    &f.?symbol // stats-key-individual(&f);     # if we do recursion with the generic Y, then every rec. calls yields a new fn...
+}
+
+sub stats-entry(&f) {
+    my $key = stats-key(&f);
+    my $out = %fnStats{$key};
+    return $out
+        if $out.defined;
+    $out = %fnStats{$key} //= (fn => &f, key => $key, init => 0, init-bogus => 0, part => 0, full => 0, over => 0).hash;
+    #if $key ~~ /\d+/ {
+    #    $out<bt> = Backtrace.new;
+    #}
+    return $out;
+}
+
+sub stats-inc(&f, *@fieldNames) {
+    my $entry = stats-entry(&f);
+    for @fieldNames -> $fieldName {
+        my $v = $entry{$fieldName}++;
+    }
+    return $entry;
+}
+
 
 my sub captureToStr(Capture:D $capture) {
     "\\({$capture.list.map(*.perl).join(', ')}"
@@ -166,14 +200,9 @@ my multi sub apply_comp($self, Curried      $result) is default { $result       
 my multi sub apply_comp($self, Unapplicable $result)            { $result                   }  # 223
 my multi sub apply_comp($self,              $result)            { $result does Unapplicable }  #  65
 
-&apply_comp.wrap(-> $self, $x {
+&apply_comp.wrap(-> $self, |rest {
     $nApp_c++;
-    if %fnStats{$self.gist}:exists {
-        %fnStats{$self.gist}<complete>++;
-    } else {
-        #die '>>>>> ' ~ $self.WHICH ~ '|' ~ $self.gist ~ '|' ~ $self.perl ~ "\n   " ~ %fnStats.keys.sort;
-        %fnStats{$self.gist} = (fn => $self, complete => 1).hash;
-    }
+    stats-inc($self, 'full');
     nextsame; 
 });
 
@@ -184,11 +213,14 @@ my multi sub apply_more($self, Curried      $f, @rest) is default {             
 my multi sub apply_more($self, Unapplicable $f, @rest)            {                     $f.invoke(|@rest) }
 my multi sub apply_more($self,              $f, @rest)            { ($f does Unapplicable).invoke(|@rest) }
 
-&apply_more.wrap(-> |as { $nApp_o++; nextsame; });
+&apply_more.wrap(-> $self, |rest {
+    $nApp_o++;
+    stats-inc($self, 'over');
+    nextsame;
+});
 
 
 my sub apply_part(&self, Mu $do, *@args) {
-    $nApp_p++;
     my @types = types(&self, +@args);
     given @types {
         when 2 { return { $do(|@args, $^b)                 } does P[|@types] }
@@ -197,6 +229,12 @@ my sub apply_part(&self, Mu $do, *@args) {
         when 5 { return { $do(|@args, $^b, $^c, $^d, $^e)  } does P[|@types] }
     }
 }
+
+&apply_part.wrap(-> $self, |rest {
+    $nApp_p++;
+    stats-inc($self, 'part');
+    nextsame;
+});
 
 
 my role P[::T1, ::TR] does Curried[T1, TR] {
@@ -302,8 +340,9 @@ role Curried[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
 
 sub curry(&f -->Callable) is export {
     $nCurry_ttl++;
+
     if &f ~~ Curried {
-        %fnStats{&f.gist}<bogus-curry>++;
+        stats-inc(&f, 'init-bogus');
         return &f;
     }
 
@@ -317,12 +356,8 @@ sub curry(&f -->Callable) is export {
     
     try {
         my $g = &f does Curried[|@(@ps.map(*.type), $sig.returns)];
-        %fnStats{$g.gist} = (fn => $g, bogus-curry => 0, complete => 0).hash;
-        #if %fnStats{$g.gist}:exists {
-        #    warn "##### {$g.gist}|{$g.?symbol // $g.?lambda // typeof($g)}: " ~ %fnStats{$g.gist}.perl;
-        #} else {
-        #    warn "!!!!! {$g.gist}|{$g.?symbol // $g.?lambda // typeof($g)}\n    {%fnStats.keys}";
-        #}
+        #stats-init($g); # create entry and set field "init" to 1
+        stats-inc($g, 'init');
         return $g;
     }
 
