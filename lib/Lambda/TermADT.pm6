@@ -124,9 +124,8 @@ constant $VarT is export = lambdaFn(
     -> Str:D $name -->TTerm{
         my $out = %names2vars{$name};
         unless $out.defined {
-            my $nameStr = $name.perl;
             $out = lambdaFn(
-                Str, "(VarT $nameStr)",
+                Str, { "(VarT {$name.perl})" },
                 -> &onVarT, &onAppT, &onLamT, &onConstT { &onVarT($name) }
             ) does TTerm;
             %names2vars{$name} = $out;
@@ -141,7 +140,7 @@ constant $AppT is export = lambdaFn(
     'AppT', 'λfunc.λarg.λonVarT.λonAppT.λonLamT.λonConstT.onAppT func arg',
     -> TTerm:D $func, TTerm:D $arg -->TTerm{
         lambdaFn(
-            Str, "(AppT $func $arg)",
+            Str, { "(AppT $func $arg)" },
             -> &onVarT, &onAppT, &onLamT, &onConstT { &onAppT($func, $arg) }
         ) does TTerm;
     }
@@ -155,7 +154,7 @@ constant $LamT is export = lambdaFn(
             case-Term($var,
                 VarT => -> Str $name {
                     lambdaFn(
-                        Str, "(LamT $var $body)",
+                        Str, { "(LamT $var $body)" },
                         -> &onVarT, &onAppT, &onLamT, &onConstT { &onLamT($var, $body) }
                     ) does TTerm;
             
@@ -172,9 +171,8 @@ constant $LamT is export = lambdaFn(
 constant $ConstT is export = lambdaFn(
     'ConstT', 'λvalue.λonVarT.λonAppT.λonLamT.λonConstT.onConstT value',
     -> $value -->TTerm{
-        my $valueStr = $value.perl;
         lambdaFn(
-            Str, "(ConstT $valueStr)",
+            Str, { "(ConstT {$value.perl})" },
             -> &onVarT, &onAppT, &onLamT, &onConstT { &onConstT($value) }
         ) does TTerm;
     }

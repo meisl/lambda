@@ -15,10 +15,8 @@ role TPair is export {
 constant $Pair is export = lambdaFn(
     'Pair', 'λx.λy.λprj.prj x y',
     -> $x, $y {
-        my $xStr = $x.?symbol // $x.?lambda // $x.perl;
-        my $yStr = $y.?symbol // $y.?lambda // $y.perl;
         lambdaFn(
-            "(Pair $xStr $yStr)", "λprj.prj $xStr $yStr",
+            Str, { 'Pair ' ~ ($x.?symbol // $x.?lambda // $x.perl) ~ ' ' ~ ($y.?symbol // $y.?lambda // $y.perl) },
             -> &prj { &prj($x, $y) }
         ) does TPair
     }

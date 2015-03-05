@@ -22,9 +22,8 @@ constant $nil is export = lambdaFn(
 constant $cons is export = lambdaFn(
     'cons', 'λx.λxs.λsel.sel #true x xs',
     -> $x, TList:D $xs {
-            my $xStr = $x.?symbol // $x.?lambda // $x.perl;
             lambdaFn(
-                Str, "cons $xStr $xs",
+                Str, { "(cons {$x.?symbol // $x.?lambda // $x.perl} $xs)" },
                 -> &sel {
                     &sel($true, $x, $xs)
                 }
