@@ -1,5 +1,8 @@
 use v6;
 
+use Lambda::P6Currying_common;
+use Lambda::P6Currying_X;
+
 
 role Curried {...}
 role P       {...}
@@ -123,114 +126,6 @@ sub stats(&f) {
     #    $out<bt> = Backtrace.new;
     #}
     return $out;
-}
-
-
-my sub captureToStr(Capture:D $capture) {
-    "\\({$capture.list.map(*.perl).join(', ')}"
-        ~ ($capture.hash > 0 
-            ?? ', ' ~ $capture.hash.pairs.map(-> $p { $p.key ~ ' => ' ~ $p.value.perl }).join(', ')
-            !! '')
-        ~ ')'
-}
-
-class X::Typing is X::TypeCheck is export {
-    has Str $.operation = 'curried fn application';
-}
-
-class X::Typing::UnsupportedNamedArgs is X::Typing is export {
-    has Str $.message;
-    has     $.whatsInFuncPos;
-    has     $!args;
-    method  args        { captureToStr($!args)    }
-
-    has Str $.expected  = 'positional args only';
-    method  got         { self.args }
-
-    multi method new(Callable:D :$whatsInFuncPos!, Capture:D :$args!) {
-        self.bless(:$whatsInFuncPos, :$args);
-    }
-
-    multi method new(Callable:D $whatsInFuncPos, Capture:D $args) {
-        self.bless(:$whatsInFuncPos, :$args);
-    }
-
-    submethod BUILD(:$!whatsInFuncPos, :$!args) {
-        $!message = "named args not supported for curried fn {$!whatsInFuncPos.WHICH}; got {self.args}";
-    }
-}
-
-class X::Typing::ArgBinding is X::Typing is export {
-    has Str $.message;
-    has     $.whatsInFuncPos;
-    has     $!args;
-    method  args        { captureToStr($!args)    }
-
-    method  expected    { typeof($!whatsInFuncPos) }
-    method  got         { self.args }
-
-    multi method new(Callable:D :$whatsInFuncPos!, Capture:D :$args!) {
-        self.bless(:$whatsInFuncPos, :$args);
-    }
-
-    multi method new(Callable:D $whatsInFuncPos, Capture:D $args) {
-        self.bless(:$whatsInFuncPos, :$args);
-    }
-
-    submethod BUILD(:$!whatsInFuncPos, :$!args) {
-        $!message = "cannot apply {$!whatsInFuncPos.gist}: {self.expected} to {self.got}";
-    }
-}
-
-class X::Typing::Unapplicable is X::Typing is export {
-    has Str $.message;
-    has     $.whatsInFuncPos;
-    has     $!args;
-    method  args        { captureToStr($!args)    }
-
-    has Str $.expected  = 'a function to apply';
-    method  got         { ~$!whatsInFuncPos.WHICH }
-    
-    submethod BUILD(:$!whatsInFuncPos, :$!args) {
-        $!message = "cannot apply non-function {self.got} to {self.args}";
-    }
-}
-
-my sub dieUnapplicable($self, Capture:D $args) {
-    die X::Typing::Unapplicable.new(:whatsInFuncPos($self), :$args);
-}
-
-my role Unapplicable {
-    multi method invoke(Capture:D $args) {  # TODO: remove once Rakudo* 2015-02 has landed
-        dieUnapplicable(self, $args);
-    }
-    multi method invoke(|args) {    # "over-applying" will come here
-        dieUnapplicable(self, args);
-    }
-}
-
-
-# gets called if none of the signatures matches (~> invalid call)
-my sub dieArgBinding($self, Capture:D $args) is hidden_from_backtrace {
-    die X::Typing::ArgBinding.new($self, $args)
-}
-
-my sub dieNamedArgs($self, Capture:D $args) is hidden_from_backtrace {
-    die X::Typing::UnsupportedNamedArgs.new($self, $args)
-}
-
-my sub dieInvalidArgs($self, Capture:D $args) is hidden_from_backtrace {
-    ?$args.hash and dieNamedArgs($self, $args) or dieArgBinding($self, $args)
-}
-
-
-my sub types(&f, $n = 0) is export {
-    my $s = &f.signature;
-    @($s.params[$n..*].map(*.type), $s.returns)
-}
-
-my sub typeof(&f, $n = 0) is export {
-    types(&f, $n).map(*.perl).join(' -> ');
 }
 
 

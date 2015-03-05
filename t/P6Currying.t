@@ -3,8 +3,11 @@ use Test;
 use Test::Util;
 
 
-# module under test:
+# modules under test:
+use Lambda::P6Currying_common;
+use Lambda::P6Currying_X;
 use Lambda::P6Currying;
+
 
 plan 23;
 

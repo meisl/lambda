@@ -1,76 +1,52 @@
-[16:38:13] t\Base.t ................... ok    28006 ms
-[16:38:41] t\BaseP6.t ................. ok    18832 ms
-[16:39:00] t\BetaReduction-perf.t ..... 3/5 # CurryStats: 3p, 2o, 748c, 395/421i
-# 113 (1): Term->source(("bogus-curry" => 1, "complete" => 113).hash)
-# 59 (1): id(("bogus-curry" => 0, "complete" => 59).hash)
-# 31 (1): LamT(("bogus-curry" => 0, "complete" => 31).hash)
-# 30 (1): B(("complete" => 30, "bogus-curry" => 0).hash)
-# 24 (1): AppT(("complete" => 24, "bogus-curry" => 0).hash)
-# 21 (1): Y(("bogus-curry" => 0, "complete" => 21).hash)
-# 17 (1): _if(("bogus-curry" => 0, "complete" => 17).hash)
-# 14 (1): VarT(("complete" => 14, "bogus-curry" => 0).hash)
-# 12 (1): #false(("complete" => 12, "bogus-curry" => 0).hash)
-# 7 (1): #true(("bogus-curry" => 0, "complete" => 7).hash)
-# 5 (2): const(("complete" => 5, "bogus-curry" => 0).hash), nil(("bogus-curry" => 0, "complete" => 5).hash)
-# 2 (1): cons(("bogus-curry" => 0, "complete" => 2).hash)
-# 0 (3): _and(("bogus-curry" => 0, "complete" => 0).hash), _or(("complete" => 0, "bogus-curry" => 0).hash), Term->source(("bogus-curry" => 0, "complete" => 0).hash)
-# 38 sec consumed for ß-reduction
-[16:39:00] t\BetaReduction-perf.t ..... 5/5 # CurryStats: 29p, 49o, 13639c, 3321/3347i
-# 1441 (1): _if(("complete" => 1441, "bogus-curry" => 0).hash)
-# 891 (1): #false(("complete" => 891, "bogus-curry" => 0).hash)
-# 712 (1): #true(("bogus-curry" => 0, "complete" => 712).hash)
-# 157 (1): nil(("complete" => 157, "bogus-curry" => 0).hash)
-# 142 (1): Term->source(("complete" => 142, "bogus-curry" => 1).hash)
-# 132 (1): LamT(("complete" => 132, "bogus-curry" => 0).hash)
-# 112 (1): cons(("complete" => 112, "bogus-curry" => 0).hash)
-# 107 (1): const(("bogus-curry" => 0, "complete" => 107).hash)
-# 96 (1): id(("bogus-curry" => 0, "complete" => 96).hash)
-# 40 (2): _and(("bogus-curry" => 0, "complete" => 40).hash), AppT(("complete" => 40, "bogus-curry" => 0).hash)
-# 30 (1): B(("bogus-curry" => 0, "complete" => 30).hash)
-# 21 (1): Y(("bogus-curry" => 0, "complete" => 21).hash)
-# 14 (1): VarT(("bogus-curry" => 0, "complete" => 14).hash)
-# 0 (2): _or(("bogus-curry" => 0, "complete" => 0).hash), Term->source(("complete" => 0, "bogus-curry" => 0).hash)
-[16:39:00] t\BetaReduction-perf.t ..... ok    73328 ms
-[16:40:13] t\BetaReduction.t .......... 129/131 # CurryStats: 28p, 56o, 15986c, 3842/3868i
-# 1319 (1): _if(("complete" => 1319, "bogus-curry" => 0).hash)
-# 1081 (1): Term->source(("bogus-curry" => 1, "complete" => 1081).hash)
-# 853 (1): #false(("bogus-curry" => 0, "complete" => 853).hash)
-# 655 (1): #true(("complete" => 655, "bogus-curry" => 0).hash)
-# 637 (1): id(("bogus-curry" => 0, "complete" => 637).hash)
-# 328 (1): AppT(("complete" => 328, "bogus-curry" => 0).hash)
-# 247 (1): nil(("complete" => 247, "bogus-curry" => 0).hash)
-# 164 (1): VarT(("bogus-curry" => 0, "complete" => 164).hash)
-# 130 (1): const(("bogus-curry" => 0, "complete" => 130).hash)
-# 129 (1): cons(("bogus-curry" => 0, "complete" => 129).hash)
-# 108 (1): LamT(("complete" => 108, "bogus-curry" => 0).hash)
-# 30 (1): B(("bogus-curry" => 0, "complete" => 30).hash)
-# 22 (1): _and(("bogus-curry" => 0, "complete" => 22).hash)
-# 21 (1): Y(("complete" => 21, "bogus-curry" => 0).hash)
-# 0 (2): _or(("bogus-curry" => 0, "complete" => 0).hash), Term->source(("complete" => 0, "bogus-curry" => 0).hash)
-[16:40:13] t\BetaReduction.t .......... ok    91140 ms
-[16:41:44] t\Boolean.t ................ ok    21281 ms
-[16:42:06] t\ChurchNat.t .............. ok    35508 ms
-[16:42:41] t\EtaReduction.t ........... ok    53484 ms
-[16:43:35] t\FreeVars.t ............... ok    34000 ms
-[16:44:09] t\Grammar.t ................ ok    18859 ms
-[16:44:27] t\LambdaInP6.t ............. ok    21333 ms
-[16:44:49] t\Misc.t ................... ok    50500 ms
-[16:45:39] t\P6Currying.t ............. ok     6718 ms
-[16:45:46] t\Substitution.t ........... ok    42552 ms
-[16:46:29] t\VarT.t ................... ok    18609 ms
-[16:46:47] t\ADTs\ADT_auto.t .......... ok     5068 ms
-[16:46:52] t\ADTs\ListADT-cXr.t ....... ok    21864 ms
-[16:47:14] t\ADTs\ListADT-extra.t ..... ok    32937 ms
-[16:47:47] t\ADTs\ListADT.t ........... ok    20125 ms
-[16:48:07] t\ADTs\Maybe-extra.t ....... ok    18552 ms
-[16:48:26] t\ADTs\MaybeADT.t .......... ok    19937 ms
-[16:48:46] t\ADTs\PairADT.t ........... ok    19835 ms
-[16:49:06] t\ADTs\Streams.t ........... ok    14046 ms
-[16:49:20] t\ADTs\TermADT-extra.t ..... ok    39350 ms
-[16:49:59] t\ADTs\TermADT.t ........... ok    26562 ms
-[16:50:26] t\Conversion\Conversion.t .. ok    15569 ms
-[16:50:41] t\Test\Util.t .............. ok    18093 ms
-[16:50:59]
+[22:16:24] t\Base.t ................... ok    25801 ms
+[22:16:50] t\BaseP6.t ................. ok    19247 ms
+[22:17:10] t\BetaReduction-perf.t ..... 3/5 # CurryStats: 3p, 748f, 2o, 395+26i
+#   113 (  1):  Term->source => ( 0p,    113f,  0o,    1+ 1i :(Callable -> Mu))
+#    17 (  1):           _if => ( 0p,     17f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu))
+#    12 (  1):        #false => ( 0p,     12f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#     7 (  1):         #true => ( 0p,      7f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#     2 (  1):           K^2 => ( 0p,      2f,  0o,    1+ 0i :(Mu -> Mu))
+#     0 (  1):  Term->source => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> Str))
+# 17.6 sec consumed for ß-reduction
+[22:17:10] t\BetaReduction-perf.t ..... 5/5 # CurryStats: 29p, 13639f, 49o, 3321+26i
+#  1441 (  1):           _if => ( 0p,   1441f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu))
+#   891 (  1):        #false => ( 0p,    891f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#   712 (  1):         #true => ( 0p,    712f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#   142 (  1):  Term->source => ( 0p,    142f,  0o,    1+ 1i :(Callable -> Mu))
+#     2 (  1):           K^2 => ( 0p,      2f,  0o,    1+ 0i :(Mu -> Mu))
+#     0 (  1):  Term->source => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> Str))
+[22:17:10] t\BetaReduction-perf.t ..... ok    48125 ms
+[22:17:58] t\BetaReduction.t .......... 129/131 # CurryStats: 28p, 15986f, 56o, 3842+26i
+#  1319 (  1):           _if => ( 0p,   1319f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu))
+#  1081 (  1):  Term->source => ( 0p,   1081f,  0o,    1+ 1i :(Callable -> Mu))
+#   853 (  1):        #false => ( 0p,    853f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#   655 (  1):         #true => ( 0p,    655f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#     2 (  1):           K^2 => ( 0p,      2f,  0o,    1+ 0i :(Mu -> Mu))
+#     0 (  1):  Term->source => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> Str))
+[22:17:58] t\BetaReduction.t .......... ok    60703 ms
+[22:18:58] t\Boolean.t ................ ok    21015 ms
+[22:19:19] t\ChurchNat.t .............. ok    34647 ms
+[22:19:54] t\EtaReduction.t ........... ok    39156 ms
+[22:20:33] t\FreeVars.t ............... ok    29437 ms
+[22:21:03] t\Grammar.t ................ ok    19585 ms
+[22:21:22] t\LambdaInP6.t ............. ok    21656 ms
+[22:21:44] t\Misc.t ................... ok    38116 ms
+[22:22:22] t\P6Currying.t ............. ok     7093 ms
+[22:22:29] t\Substitution.t ........... ok    35160 ms
+[22:23:04] t\VarT.t ................... ok    19359 ms
+[22:23:24] t\ADTs\ADT_auto.t .......... ok     5426 ms
+[22:23:29] t\ADTs\ListADT-cXr.t ....... ok    22723 ms
+[22:23:52] t\ADTs\ListADT-extra.t ..... ok    31718 ms
+[22:24:24] t\ADTs\ListADT.t ........... ok    20859 ms
+[22:24:45] t\ADTs\Maybe-extra.t ....... ok    19567 ms
+[22:25:04] t\ADTs\MaybeADT.t .......... ok    21390 ms
+[22:25:26] t\ADTs\PairADT.t ........... ok    21935 ms
+[22:25:47] t\ADTs\Streams.t ........... ok    14796 ms
+[22:26:02] t\ADTs\TermADT-extra.t ..... ok    36007 ms
+[22:26:38] t\ADTs\TermADT.t ........... ok    26593 ms
+[22:27:05] t\Conversion\Conversion.t .. ok    16288 ms
+[22:27:21] t\Test\Util.t .............. ok    18906 ms
+[22:27:40]
 All tests successful.
-Files=26, Tests=1392, 766 wallclock secs ( 0.73 usr +  0.19 sys =  0.92 CPU)
+Files=26, Tests=1392, 676 wallclock secs ( 0.75 usr +  0.27 sys =  1.02 CPU)
 Result: PASS
