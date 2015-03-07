@@ -2,145 +2,32 @@ use v6;
 
 use Lambda::P6Currying_common;
 use Lambda::P6Currying_X;
+use Lambda::P6Currying_Stats;
+
+
+sub EXPORT is cached {   # do some re-exporting
+    my %out = (
+        EXPORT => 'dummy',
+        Lambda::P6Currying_common::,
+        Lambda::P6Currying_X::,
+        Lambda::P6Currying_Stats::,
+    ).grep(*.key ne 'EXPORT');
+    #note "re-exporting {%out.keys}";
+    return %out;
+}
 
 
 role Curried {...}
 role P       {...}
 
 
-my $nApp_c = 0; # "complete" application
-my $nApp_o = 0; # "over-" application
-my $nApp_p = 0; # "partial" application
-my $nCurry = 0; # calls to sub curry (without early exits)
-my $nCurry_ttl = 0; # calls to sub curry
-
-my constant %fnStats = Hash.new;
-
-my role CurryStats {
-    
-    my &fn2Str = -> $fn { ($fn.?symbol // $fn.?lambda // typeof($fn)) };
-    #my &fn2Str = -> $fn { ($fn.gist };
-
-
-    method entries(Code $filter?) {
-        my @out = %fnStats.values;
-        $filter.defined
-            ?? @out.grep($filter)
-            !! @out;
-    }
-
-    method gist { self.Str }
-    method Str {
-        my $result = "CurryStats: {self<partial>}p, {self<complete>}f, {self<over>}o, {self<curry>}+{self<curry_ttl>-self<curry>}i";
-        
-        $result ~= "\n";
-        my @entries = self.entries({ 
-            $_.fn.?symbol eq any('Term->source', '#true', '#false', <_if K K^2>)    #    <LamT AppT VarT [LamT] [AppT] [VarT] id I Y B K const cons nil _if _and _or #true #false>) })
-        });
-        my %classified = @entries\
-            .classify(*.full);
-        
-        my $s = %classified\
-            .sort({ $^a.key < $^b.key})\
-            #.map(-> (:$key, :value(@vs)) { "$key ({+@vs}): " ~ @vs.map(-> (:$fn, *%_) { &fn2Str($fn) }).join(', ') })\
-            .map(-> (:$key, :value(@vs)) { sprintf("%5d (%3d): %s", $key, +@vs, @vs.map(-> $entry { sprintf("%13s => %s", &fn2Str($entry.fn), $entry.Str(:no-key)) }).join(', ')) })\
-            #.map(-> $x { $x.WHAT })\
-            .join("\n")
-        ;
-        #$result ~= %fnStats.grep(-> (:$key, :$value) { $value<fn>.?symbol eq 'Term->source'}).perl;
-        #$result ~= @entries.map(-> (:$fn, *%_) { $fn.symbol ~ '|' ~ $fn.WHERE => %_ }).perl;
-        $result ~= $s;
-
-        $result;
-    }
-
-    method byKeyLen(Code $filter?) {
-        self.entries($filter).sort( { $^a.key.chars < $^b.key.chars} );
-    }
-}
-
-sub curryStats is export {
-    { partial => $nApp_p,
-      complete => $nApp_c,
-      over => $nApp_o,
-      curry => $nCurry,
-      curry_ttl => $nCurry_ttl,
-    } does CurryStats;
-}
-
-class StatsEntry {
-    my $maxKeyLen = 0;
-    has       &.fn;
-    has Str:D $.key;
-
-    has Int:D $.init-bogus is rw = 0;
-    has Int:D $.init       is rw = 0;
-    has Int:D $.part       is rw = 0;
-    has Int:D $.full       is rw = 0;
-    has Int:D $.over       is rw = 0;
-
-    submethod BUILD(:&!fn) {
-        $!key = stats-key(&!fn);
-        $maxKeyLen max= $!key.chars;
-    }
-
-    method gist { self.Str }
-    method Str(Bool :$no-key = False, Bool :$fn = True) {
-        sprintf('(%2dp, %6df, %2do, %4d+%2di%s%s)',
-            $!part, $!full, $!over, $!init, $!init-bogus, 
-            $no-key ?? '' !! ' ' ~ $!key,
-            $fn ?? ' ' ~ &!fn.^roles.grep({$_ ~~ none(Callable, Curried)}).map(*.perl).grep({$_ eq none <lambda Definition>}).join('+') ~ ':(' ~ typeof(&!fn) ~ ')' !! ''
-        );
-    }
-}
-
-sub stats-key-individual(&f) {
-    #&f.gist;                # not working because type changes (roles may be added later) & dangerous because .gist might *apply* the fn again ~> inf regression
-    #&f.do.WHICH.Str;        # not working if objects are moved by GC
-    #&f.WHICH.Str;           # not working because type changes (ObjAt, roles may be added later)
-    #&f.WHICH.WHERE.Str;     # not working if objects are moved by GC (real mem-address of ObjAt)
-    my $addr = &f.WHICH.Str.substr(&f.WHAT.perl.Str.chars + 1);    # this is only the (pseudo) "mem-address" of the ObjAt, guaranteed to stay the same
-
-    #$addr = sprintf("%08X", $addr.Int);
-    $addr;
-}
-
-sub stats-key(&f) {
-    #stats-key-individual(&f);
-
-    # If we do recursion with the generic Y, then every rec. calls yields a new fn.
-    # So at least this is a case where we want to subsume several different fn objects
-    # under one stats entry.
-    # Therefore we'll use the .symbol, if there is one.
-    # Note: for *anonymous recursive functions* there will still be a new entry for each recursive call.
-    &f.?symbol // stats-key-individual(&f);
-}
-
-sub stats(&f) {
-    my $key = stats-key(&f);
-    my $out = %fnStats{$key};
-    return $out
-        if $out.defined;
-    $out = %fnStats{$key} //= StatsEntry.new(fn => &f);
-    #if $key ~~ /\d+/ {
-    #    $out<bt> = Backtrace.new;
-    #}
-    return $out;
-}
-
-
 my proto sub apply_comp(|) {*}
 
-my multi sub apply_comp($self, Callable     $result)            { curry($result)            }  # 460
-my multi sub apply_comp($self, Curried      $result) is default { $result                   }  #   0
-my multi sub apply_comp($self, Unapplicable $result)            { $result                   }  # 223
-my multi sub apply_comp($self,              $result)            { $result does Unapplicable }  #  65
+my multi sub apply_comp($self, Callable     $result)            { curry($result)            }
+my multi sub apply_comp($self, Curried      $result) is default { $result                   }
+my multi sub apply_comp($self, Unapplicable $result)            { $result                   }
+my multi sub apply_comp($self,              $result)            { $result does Unapplicable }
 
-&apply_comp.wrap(-> $self, |rest {
-    $nApp_c++;
-    stats($self).full++;
-    nextsame; 
-});
 
 my proto sub apply_more(|) {*}
 
@@ -148,12 +35,6 @@ my multi sub apply_more($self, Callable     $f, @rest)            {             
 my multi sub apply_more($self, Curried      $f, @rest) is default {                     $f.invoke(|@rest) }
 my multi sub apply_more($self, Unapplicable $f, @rest)            {                     $f.invoke(|@rest) }
 my multi sub apply_more($self,              $f, @rest)            { ($f does Unapplicable).invoke(|@rest) }
-
-&apply_more.wrap(-> $self, |rest {
-    $nApp_o++;
-    stats($self).over++;
-    nextsame;
-});
 
 
 my sub apply_part(&self, Mu $do, *@args) {
@@ -166,11 +47,10 @@ my sub apply_part(&self, Mu $do, *@args) {
     }
 }
 
-&apply_part.wrap(-> $self, |rest {
-    $nApp_p++;
-    stats($self).part++;
-    nextsame;
-});
+
+&apply_comp.wrap(&statsWrapper_full);
+&apply_more.wrap(&statsWrapper_over);
+&apply_part.wrap(&statsWrapper_part);
 
 
 my role P[::T1, ::TR] does Curried[T1, TR] {
@@ -275,14 +155,13 @@ role Curried[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
 
 
 sub curry(&f -->Callable) is export {
-    $nCurry_ttl++;
-
     if &f ~~ Curried {
+        stats.init-bogus++; # global stats
         stats(&f).init-bogus++;
         return &f;
     }
 
-    $nCurry++;
+    stats.init++; # global stats
     my $sig = &f.signature;
 
     my @ps = $sig.params;

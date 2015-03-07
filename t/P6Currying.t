@@ -3,9 +3,7 @@ use Test;
 use Test::Util;
 
 
-# modules under test:
-use Lambda::P6Currying_common;
-use Lambda::P6Currying_X;
+# module under test:
 use Lambda::P6Currying;
 
 

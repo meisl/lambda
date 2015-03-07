@@ -1,10 +1,10 @@
 use v6;
-
 use Lambda::P6Currying_common;
 
+module Lambda::P6Currying_X;
 
 
-my role Unapplicable is export {
+our role Unapplicable is export {
     multi method invoke(Capture:D $args) {  # TODO: remove once Rakudo* 2015-02 has landed
         dieUnapplicable(self, $args);
     }
@@ -13,11 +13,11 @@ my role Unapplicable is export {
     }
 }
 
-class X::Typing is X::TypeCheck is export {
+our class X::Typing is X::TypeCheck is export {
     has Str $.operation = 'curried fn application';
 }
 
-class X::Typing::UnsupportedNamedArgs is X::Typing is export {
+our class X::Typing::UnsupportedNamedArgs is X::Typing is export {
     has Str $.message;
     has     $.whatsInFuncPos;
     has     $!args;
@@ -39,7 +39,7 @@ class X::Typing::UnsupportedNamedArgs is X::Typing is export {
     }
 }
 
-class X::Typing::ArgBinding is X::Typing is export {
+our class X::Typing::ArgBinding is X::Typing is export {
     has Str $.message;
     has     $.whatsInFuncPos;
     has     $!args;
@@ -61,7 +61,7 @@ class X::Typing::ArgBinding is X::Typing is export {
     }
 }
 
-class X::Typing::Unapplicable is X::Typing is export {
+our class X::Typing::Unapplicable is X::Typing is export {
     has Str $.message;
     has     $.whatsInFuncPos;
     has     $!args;
@@ -88,7 +88,7 @@ my sub dieNamedArgs($self, Capture:D $args) is hidden_from_backtrace {
     die X::Typing::UnsupportedNamedArgs.new($self, $args)
 }
 
-my sub dieInvalidArgs($self, Capture:D $args) is hidden_from_backtrace is export {
+our sub dieInvalidArgs($self, Capture:D $args) is hidden_from_backtrace is export {
     ?$args.hash and dieNamedArgs($self, $args) or dieArgBinding($self, $args)
 }
 

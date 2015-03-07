@@ -1,7 +1,5 @@
 use v6;
-
 use Lambda::P6Currying;
-
 
 module Lambda::BaseP6;
 
