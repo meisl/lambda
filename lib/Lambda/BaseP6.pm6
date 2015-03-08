@@ -44,8 +44,8 @@ role Definition is export {
         $!symbol = $symbol;
     }
 
-    method Str { $!symbol }
-    method gist { self.Str }
+    method Str  { $!symbol }
+    method gist { $!symbol }
 }
 
 

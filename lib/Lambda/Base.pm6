@@ -94,27 +94,41 @@ my sub recFnLambda(&f) {
     '(Y ' ~ (&f.?lambda // &f.gist) ~ ')' # TODO: "λu.&f u u", but then alpha-convert if necessary
 }
 
+my sub ensureItsLambda(&f, &g) {
+    my $out = &g;
+    unless $out ~~ lambda {
+        my $bt = Backtrace.new;
+        $bt = $bt[$bt.first-index(*.file eq $?FILE)..*];
+        $bt = $bt[$bt.first-index(*.file ne $?FILE)..*];
+        $bt = $bt[0..$bt.first-index(!*.code.defined)-1];
+        warn "Y combinator: non-lambda val {$out.perl} returned from open-recursion function {&f.gist}"
+            ~ "\n $bt"
+        ;
+        $out = lambdaFn(recFnSymbol(&f), recFnLambda(&f), $out);
+    }
+    return $out;
+}
+
 # Turing's Y combinator:
-constant $Y is export = -> $U { lambdaFn(
+constant $Y_Turing is export = -> $U { lambdaFn(
     'Y', '((λU.U U) λu.λf.f(u u f))',
     #'Y', 'let (U λu.λf.f(u u f)) (U U)',
     #'Y', 'let (U λu.λf.f(u u f)) (λf.f(U U f))',
     -> &f {
-        my $out = &f( $U($U, &f) );
-        unless $out ~~ lambda {
-            my $bt = Backtrace.new;
-            $bt = $bt[$bt.first-index(*.file eq $?FILE)..*];
-            $bt = $bt[$bt.first-index(*.file ne $?FILE)..*];
-            $bt = $bt[0..$bt.first-index(!*.code.defined)-1];
-            warn "Y combinator: non-lambda val returned from open-recursion function {&f.gist}"
-                ~ "\n $bt"
-            ;
-            $out = lambdaFn(recFnSymbol(&f), recFnLambda(&f), $out);
-        }
-        $out;
+        ensureItsLambda(  &f,  &f( $U($U, &f) )  );
     }
 ) }( -> $u, &f { -> |args { &f( $u($u, &f) )(|args) } } );
 #) }( -> $u, &f { say "u"; &f( $u($u, &f) ) } );
+
+
+constant $Y is export = lambdaFn(
+    'Y', 'not available',
+    -> &f {
+        my &g = &f(-> |args { &g(|args) });
+        ensureItsLambda(&f, &g);
+    }
+);
+
 
 
 # fixed-point search ----------------------------------------------------------
