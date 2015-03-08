@@ -3,12 +3,12 @@ use v6;
 
 module Lambda::ADT_auto;
 
+class ADTRepr is export { ... }
 
 role ADT is export {
     method repr { ... }
 }
 
-class ADTRepr is export { ... }
 
 class Ctor is export {
     has ADTRepr:D $.ADT;
@@ -72,18 +72,25 @@ sub makeMatcher(ADT:U ::T) is export {
     my sub rest(Str:D $adtName) {
         my $instanceSig = "{$adtName}:D {$instanceName}";
         return qq:to/ENDOFSOURCE/
-    # we're getting a capture, so that's why the whole sig is wrapped in parens
-    multi method postcircumfix:<( )>(({$instanceSig}, {$allCtorsSig})) \{
+    
+    # Note: prior to Rakudo* 2015-02 we were getting a *capture* (~> wrap whole sig in additional parens)
+    multi method invoke({$instanceSig}, {$allCtorsSig}) \{
+        #say ">>>{$adtName_literal} got called with: " ~ \$instance;
+        {$instanceApp}
+    \}
+    
+    # For compatibility with pre-Rakudo* 2015-02 (expecting a Capture, see above)
+    multi method invoke(({$instanceSig}, {$allCtorsSig})) \{
         #say ">>>{$adtName_literal} got called with: " ~ \$instance;
         {$instanceApp}
     \}
     
     # fallback to give error message, if none of the other signatures matches
-    multi method postcircumfix:<( )>(\$args) \{  # we're getting a capture - always...
-        if (\$args.list[0] ~~ {$adtName}) \{
-            die 'cannot apply match({$adtName_literal}:D, ...) to ' ~ \$args.gist;
+    multi method invoke(|args) \{
+        if (args.list[0] ~~ {$adtName}) \{
+            die 'cannot apply match({$adtName_literal}:D, ...) to ' ~ args.gist;
         \} else \{
-            die 'expected {$adtName_literal} instance as 1st arg to match({$adtName_literal}:D, ...) - got ' ~ \$args.list[0].gist;
+            die 'expected {$adtName_literal} instance as 1st arg to match({$adtName_literal}:D, ...) - got ' ~ args.list[0].gist;
         \}
     \}
 \}
