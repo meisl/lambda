@@ -45,9 +45,8 @@ constant $K2None is export = $K2($None);
 constant $Some is export = lambdaFn(
     'Some', 'λvalue.λonNone.λonSome.onSome value',
     -> $v {
-        my $vStr = $v.?symbol // $v.?lambda // $v.perl;
         lambdaFn(
-            Str, "Some $vStr",
+            Str, { "(Some {$v.?symbol // $v.?lambda // $v.perl})" },
             -> $onNone, $onSome { $onSome($v) }
         ) does TMaybe
     }

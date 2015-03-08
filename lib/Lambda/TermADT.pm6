@@ -48,6 +48,8 @@ constant $on-VarT is export = lambdaFn(
     }
 );
 
+
+
 constant $on-AppT is export = lambdaFn(
     'on-AppT', 'λthenFn.λelseFn.λterm.let ((e1 λ_.elseFn term) (e2 λ_.e1)) (term e1 thenFn e2 e1)',
     -> &thenFn, &elseFn {
@@ -122,9 +124,8 @@ constant $VarT is export = lambdaFn(
     -> Str:D $name -->TTerm{
         my $out = %names2vars{$name};
         unless $out.defined {
-            my $nameStr = $name.perl;
             $out = lambdaFn(
-                Str, "(VarT $nameStr)",
+                Str, { "(VarT {$name.perl})" },
                 -> &onVarT, &onAppT, &onLamT, &onConstT { &onVarT($name) }
             ) does TTerm;
             %names2vars{$name} = $out;
@@ -139,7 +140,7 @@ constant $AppT is export = lambdaFn(
     'AppT', 'λfunc.λarg.λonVarT.λonAppT.λonLamT.λonConstT.onAppT func arg',
     -> TTerm:D $func, TTerm:D $arg -->TTerm{
         lambdaFn(
-            Str, "(AppT $func $arg)",
+            Str, { "(AppT $func $arg)" },
             -> &onVarT, &onAppT, &onLamT, &onConstT { &onAppT($func, $arg) }
         ) does TTerm;
     }
@@ -153,7 +154,7 @@ constant $LamT is export = lambdaFn(
             case-Term($var,
                 VarT => -> Str $name {
                     lambdaFn(
-                        Str, "(LamT $var $body)",
+                        Str, { "(LamT $var $body)" },
                         -> &onVarT, &onAppT, &onLamT, &onConstT { &onLamT($var, $body) }
                     ) does TTerm;
             
@@ -170,103 +171,98 @@ constant $LamT is export = lambdaFn(
 constant $ConstT is export = lambdaFn(
     'ConstT', 'λvalue.λonVarT.λonAppT.λonLamT.λonConstT.onConstT value',
     -> $value -->TTerm{
-        my $valueStr = $value.perl;
         lambdaFn(
-            Str, "(ConstT $valueStr)",
+            Str, { "(ConstT {$value.perl})" },
             -> &onVarT, &onAppT, &onLamT, &onConstT { &onConstT($value) }
         ) does TTerm;
     }
 );
 
 
-constant $Term-eq is export = $Y(lambdaFn(
+constant $Term-eq is export = $Y(-> &self { lambdaFn(
     'Term-eq?', 'NYI',
-    -> &self {
-        -> TTerm $s, TTerm $t -->TBool{
-            case-Term($s,
-                VarT => -> Str $sName {
-                    $on-VarT(
-                        -> Str $tName {
-                            convertP6Bool2TBool($sName eq $tName)
-                        } does lambda("Str-eq? \"$sName\"" ),
-                        $K1false,
-                        $t
-                    )
-                    #case-Term($t,
-                    #    VarT => -> Str $tName { convertP6Bool2TBool($sName eq $tName) },
-                    #    AppT => $K2false,
-                    #    LamT => $K2false,
-                    #    ConstT => $K1false
-                    #)
-                },
-                AppT => -> TTerm $sFunc, TTerm $sArg {
-                    $on-AppT(
-                        -> TTerm $tFunc, TTerm $tArg {
-                            $_and(
-                                &self($sFunc, $tFunc),
-                                &self($sArg,  $tArg)
-                            )
-                        } does lambda("λtFunc.λtArg.and (Term-eq? sFunc tFunc) (Term-eq? sArg tArg)" ),
-                        $K1false,
-                        $t
-                    );
-                    #case-Term($t,
-                    #    VarT => $K1false,
-                    #    AppT => -> TTerm $tFunc, TTerm $tArg {
-                    #        $_and(
-                    #            &self($sFunc, $tFunc),
-                    #            &self($sArg,  $tArg)
-                    #        )
-                    #    },
-                    #    LamT => $K2false,
-                    #    ConstT => $K1false
-                    #)
-                },
-                LamT => -> TTerm $sVar, TTerm $sBody {
-                    $on-LamT(
-                        -> TTerm $tVar, TTerm $tBody {
-                            $_and(
-                                &self($sVar, $tVar),
-                                &self($sBody,  $tBody)
-                            )
-                        } does lambda("λtVar.λtBody.and (Term-eq? sVar tVar) (Term-eq? sBody tBody)" ),
-                        $K1false,
-                        $t
-                    );
-                    #case-Term($t,
-                    #    VarT => $K1false,
-                    #    AppT => $K2false,
-                    #    LamT => -> TTerm $tVar, TTerm $tBody {
-                    #        $_and(
-                    #            &self($sVar,  $tVar),
-                    #            &self($sBody, $tBody)
-                    #        )
-                    #    },
-                    #    ConstT => $K1false
-                    #)
-                },
-                ConstT => -> Any $sValue {
-                    $on-ConstT(
-                        -> Any $tValue {
-                            die "NYI: equality test for $sValue, $tValue"
-                        } does lambda("eq? \"$sValue\"" ),
-                        $K1false,
-                        $t
-                    );
-                    #case-Term($t,
-                    #    VarT => $K1false,
-                    #    AppT => $K2false,
-                    #    LamT => $K2false,
-                    #    ConstT => -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
-                    #)
-                },
+    -> TTerm $s, TTerm $t -->TBool{
+        case-Term($s,
+            VarT => -> Str $sName {
+                $on-VarT(
+                    -> Str $tName {
+                        convertP6Bool2TBool($sName eq $tName)
+                    } does lambda("Str-eq? \"$sName\"" ),
+                    $K1false,
+                    $t
+                )
+                #case-Term($t,
+                #    VarT => -> Str $tName { convertP6Bool2TBool($sName eq $tName) },
+                #    AppT => $K2false,
+                #    LamT => $K2false,
+                #    ConstT => $K1false
+                #)
+            },
+            AppT => -> TTerm $sFunc, TTerm $sArg {
+                $on-AppT(
+                    -> TTerm $tFunc, TTerm $tArg {
+                        $_and(
+                            &self($sFunc, $tFunc),
+                            &self($sArg,  $tArg)
+                        )
+                    } does lambda("λtFunc.λtArg.and (Term-eq? sFunc tFunc) (Term-eq? sArg tArg)" ),
+                    $K1false,
+                    $t
+                );
+                #case-Term($t,
+                #    VarT => $K1false,
+                #    AppT => -> TTerm $tFunc, TTerm $tArg {
+                #        $_and(
+                #            &self($sFunc, $tFunc),
+                #            &self($sArg,  $tArg)
+                #        )
+                #    },
+                #    LamT => $K2false,
+                #    ConstT => $K1false
+                #)
+            },
+            LamT => -> TTerm $sVar, TTerm $sBody {
+                $on-LamT(
+                    -> TTerm $tVar, TTerm $tBody {
+                        $_and(
+                            &self($sVar, $tVar),
+                            &self($sBody,  $tBody)
+                        )
+                    } does lambda("λtVar.λtBody.and (Term-eq? sVar tVar) (Term-eq? sBody tBody)" ),
+                    $K1false,
+                    $t
+                );
+                #case-Term($t,
+                #    VarT => $K1false,
+                #    AppT => $K2false,
+                #    LamT => -> TTerm $tVar, TTerm $tBody {
+                #        $_and(
+                #            &self($sVar,  $tVar),
+                #            &self($sBody, $tBody)
+                #        )
+                #    },
+                #    ConstT => $K1false
+                #)
+            },
+            ConstT => -> Any $sValue {
+                $on-ConstT(
+                    -> Any $tValue {
+                        die "NYI: equality test for $sValue, $tValue"
+                    } does lambda("eq? \"$sValue\"" ),
+                    $K1false,
+                    $t
+                );
+                #case-Term($t,
+                #    VarT => $K1false,
+                #    AppT => $K2false,
+                #    LamT => $K2false,
+                #    ConstT => -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
+                #)
+            },
 
-            )
-        }
+        )
     }
-));
-
-
+)});
 
 # predicates ------------------------------------------------------------------
 
@@ -350,51 +346,28 @@ constant $Term2Str is export = lambdaFn(
 
 # functions on Term -----------------------------------------------------------
 
-constant $Term2source is export = $Y(lambdaFn(
-    'Term->source', 
-q:to/ENDOFLAMBDA/,
-    λself.λt.given-Term t
-        (when-ConstT (λval.λ_.->Str val)    ; (B ->Str π2->1) = ->Str ° π2->1 = ->Str • π2->1 = ->Str·π2->1
-        (when-VarT   (λname.λ_.name)        ; π2->1
-        (when-AppT   (λfunc.λarg.
-            (let ((fSrc (self func))
-                  (aSrc (self arg))
-                 )
-               (~ "(" (~ fSrc (~ aSrc ")")))
-            )
-        )
-        (when-LamT (λv.λbody.
-            (let ((vSrc (self v))
-                  (bSrc (self body))
-                 )
-               (~ "(LAMBDA" (~ vSrc (~ DOT (~ bSrc ")"))))    ; TODO: put literal lambda and dot here (once we have got string literals in the syntax)
-            )
-        )
-        λ_.λ_.λ_.λ_.error (~ "unknown TTerm" (Term->Str t))
-        ))))
-ENDOFLAMBDA
-    -> &self {
-        -> TTerm:D $t -->Str{
-            case-Term($t,
-                VarT => $I, # just return the name
-                AppT => -> TTerm $func, TTerm$arg -->Str{
-                    my $fSrc = &self($func);
-                    my $aSrc = &self($arg);
-                    "($fSrc $aSrc)"
-                },
-                LamT => -> TTerm $var, TTerm $body -->Str{
-                    my $vSrc = &self($var);
-                    my $bSrc = &self($body);
-                    "(λ$vSrc.$bSrc)"
+constant $Term2source is export = $Y(-> &self { lambdaFn(
+    'Term->source', 'λt.(error "NYI")',
+    -> TTerm:D $t -->Str{
+        case-Term($t,
+            VarT => $I, # just return the name
+            AppT => -> TTerm $func, TTerm$arg -->Str{
+                my $fSrc = &self($func);
+                my $aSrc = &self($arg);
+                "($fSrc $aSrc)"
+            },
+            LamT => -> TTerm $var, TTerm $body -->Str{
+                my $vSrc = &self($var);
+                my $bSrc = &self($body);
+                "(λ$vSrc.$bSrc)"
 
-                },
-                ConstT => -> Any $val -->Str{
-                    $val.perl    #   $B($pi1o2, *.perl)
-                }
-            )
-        }
+            },
+            ConstT => -> Any $val -->Str{
+                $val.perl    #   $B($pi1o2, *.perl)
+            }
+        )
     }
-));
+)});
 
 
 constant $Term2children is export = lambdaFn(
@@ -423,14 +396,12 @@ ENDOFLAMBDA
 );
 
 
-constant $Term2size is export = $Y(lambdaFn(
+constant $Term2size is export = $Y(-> &self { lambdaFn(
     'Term->size', 'λself.λt.(foldl (λacc.λchild.(+ acc (self child))) 1 (Term->children t))',
-    -> &self {
-        -> TTerm:D $t -->Int{
-            $foldl(-> $acc, $child { $acc + &self($child) }, 1, $Term2children($t));
-        }
+    -> TTerm:D $t -->Int{
+        $foldl(-> $acc, $child { $acc + &self($child) }, 1, $Term2children($t));
     }
-));
+)});
 
 
 # (on-AppT (on-VarT λfuncName.on-VarT (Str-eq? funcName) (λ_.false) (λ_.λ_.false)) (λ_.false))

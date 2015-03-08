@@ -1,35 +1,79 @@
 This is perl6 version 2014.12 built on MoarVM version 2014.12
-[14:16:12] t\Base.t ................... ok    24104 ms
-[14:16:36] t\BaseP6.t ................. ok    18550 ms
-[14:16:54] t\BetaReduction-perf.t ..... 3/5 # CurryStats: n/a
-# 14.4 sec consumed for ß-reduction
-[14:16:54] t\BetaReduction-perf.t ..... 5/5 # CurryStats: n/a
-[14:16:54] t\BetaReduction-perf.t ..... ok    39250 ms
-[14:17:34] t\BetaReduction.t .......... 127/131 # CurryStats: n/a
-[14:17:34] t\BetaReduction.t .......... ok    48750 ms
-[14:18:23] t\Boolean.t ................ ok    20062 ms
-[14:18:43] t\ChurchNat.t .............. ok    31943 ms
-[14:19:15] t\EtaReduction.t ........... ok    35953 ms
-[14:19:51] t\FreeVars.t ............... ok    27968 ms
-[14:20:18] t\Grammar.t ................ ok    19157 ms
-[14:20:38] t\LambdaInP6.t ............. ok    21328 ms
-[14:20:59] t\Misc.t ................... ok    35794 ms
-[14:21:35] t\P6Currying.t ............. ok     7203 ms
-[14:21:42] t\Substitution.t ........... ok    33238 ms
-[14:22:15] t\VarT.t ................... ok    19843 ms
-[14:22:35] t\ADTs\ADT_auto.t .......... ok     5608 ms
-[14:22:41] t\ADTs\ListADT-cXr.t ....... ok    23007 ms
-[14:23:04] t\ADTs\ListADT-extra.t ..... ok    31234 ms
-[14:23:35] t\ADTs\ListADT.t ........... ok    21031 ms
-[14:23:56] t\ADTs\Maybe-extra.t ....... ok    19731 ms
-[14:24:16] t\ADTs\MaybeADT.t .......... ok    21296 ms
-[14:24:37] t\ADTs\PairADT.t ........... ok    21162 ms
-[14:24:58] t\ADTs\Streams.t ........... ok    15031 ms
-[14:25:13] t\ADTs\TermADT-extra.t ..... ok    36302 ms
-[14:25:50] t\ADTs\TermADT.t ........... ok    30859 ms
-[14:26:21] t\Conversion\Conversion.t .. ok    21046 ms
-[14:26:42] t\Test\Util.t .............. ok    24099 ms
-[14:27:06]
+[14:49:31] t\Base.t ................... ok    26741 ms
+[14:49:58] t\BaseP6.t ................. ok    19114 ms
+[14:50:17] t\BetaReduction-perf.t ..... 4/5 # CurryStats: ( 3p,    616f,  2o,  374+5i)
+#   112 (  1):  Term->source => ( 0p,    112f,  0o,  109+ 0i :(TTerm -> Str))
+#    59 (  1):            id => ( 0p,     59f,  0o,    1+ 0i :(Mu -> Mu))
+#    31 (  1):          LamT => ( 0p,     31f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm))
+#    30 (  1):             B => ( 1p,     30f,  0o,    1+ 0i :(Callable -> Callable -> Mu))
+#    24 (  1):          AppT => ( 0p,     24f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm))
+#    21 (  1):             Y => ( 0p,     21f,  0o,    1+ 0i :(Callable -> Mu))
+#    17 (  1):           _if => ( 0p,     17f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu))
+#    14 (  1):          VarT => ( 0p,     14f,  0o,    1+ 0i :(Str -> TTerm))
+#    12 (  1):        #false => ( 0p,     12f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#     7 (  1):         #true => ( 0p,      7f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#     5 (  2):         const => ( 0p,      5f,  0o,    1+ 0i :(Mu -> Mu)),           nil => ( 0p,      5f,  0o,    1+ 0i TList:(Callable -> Mu))
+#     2 (  2):           K^2 => ( 0p,      2f,  0o,    1+ 0i :(Mu -> Mu)),          cons => ( 0p,      2f,  0o,    1+ 0i :(Mu -> TList -> Mu))
+#     0 (  2):          _and => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> Mu)),           _or => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> Mu))
+# 19.8 sec consumed for ß-reduction
+[14:50:17] t\BetaReduction-perf.t ..... 5/5 # CurryStats: (29p,  12689f, 49o, 3300+5i)
+#  1441 (  1):           _if => ( 0p,   1441f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu))
+#   891 (  1):        #false => ( 0p,    891f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#   712 (  1):         #true => ( 0p,    712f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#   157 (  1):           nil => ( 0p,    157f,  0o,    1+ 0i TList:(Callable -> Mu))
+#   141 (  1):  Term->source => ( 0p,    141f,  0o,  137+ 0i :(TTerm -> Str))
+#   132 (  1):          LamT => ( 0p,    132f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm))
+#   112 (  1):          cons => ( 0p,    112f,  0o,    1+ 0i :(Mu -> TList -> Mu))
+#   107 (  1):         const => ( 0p,    107f,  0o,    1+ 0i :(Mu -> Mu))
+#    96 (  1):            id => ( 0p,     96f,  0o,    1+ 0i :(Mu -> Mu))
+#    40 (  2):          _and => ( 0p,     40f,  0o,    1+ 0i :(TBool -> TBool -> Mu)),          AppT => (16p,     40f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm))
+#    30 (  1):             B => ( 1p,     30f,  0o,    1+ 0i :(Callable -> Callable -> Mu))
+#    21 (  1):             Y => ( 0p,     21f,  0o,    1+ 0i :(Callable -> Mu))
+#    14 (  1):          VarT => ( 0p,     14f,  0o,    1+ 0i :(Str -> TTerm))
+#     2 (  1):           K^2 => ( 0p,      2f,  0o,    1+ 0i :(Mu -> Mu))
+#     0 (  1):           _or => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> Mu))
+[14:50:17] t\BetaReduction-perf.t ..... ok    52718 ms
+[14:51:09] t\BetaReduction.t .......... 131/131 # CurryStats: (28p,  14508f, 56o, 3815+5i)
+#  1319 (  1):           _if => ( 0p,   1319f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu))
+#  1080 (  1):  Term->source => ( 0p,   1080f,  0o,  943+ 0i :(TTerm -> Str))
+#   853 (  1):        #false => ( 0p,    853f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#   655 (  1):         #true => ( 0p,    655f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
+#   637 (  1):            id => ( 0p,    637f,  0o,    1+ 0i :(Mu -> Mu))
+#   324 (  1):          AppT => ( 6p,    324f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm))
+#   247 (  1):           nil => ( 0p,    247f,  0o,    1+ 0i TList:(Callable -> Mu))
+#   161 (  1):          VarT => ( 0p,    161f,  0o,    1+ 0i :(Str -> TTerm))
+#   130 (  1):         const => ( 0p,    130f,  0o,    1+ 0i :(Mu -> Mu))
+#   129 (  1):          cons => ( 0p,    129f,  0o,    1+ 0i :(Mu -> TList -> Mu))
+#   109 (  1):          LamT => ( 0p,    109f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm))
+#    30 (  1):             B => ( 1p,     30f,  0o,    1+ 0i :(Callable -> Callable -> Mu))
+#    22 (  1):          _and => ( 0p,     22f,  0o,    1+ 0i :(TBool -> TBool -> Mu))
+#    21 (  1):             Y => ( 0p,     21f,  0o,    1+ 0i :(Callable -> Mu))
+#     2 (  1):           K^2 => ( 0p,      2f,  0o,    1+ 0i :(Mu -> Mu))
+#     0 (  1):           _or => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> Mu))
+[14:51:09] t\BetaReduction.t .......... ok    65750 ms
+[14:52:15] t\Boolean.t ................ ok    20078 ms
+[14:52:35] t\ChurchNat.t .............. ok    33409 ms
+[14:53:09] t\EtaReduction.t ........... ok    39562 ms
+[14:53:48] t\FreeVars.t ............... ok    30078 ms
+[14:54:18] t\Grammar.t ................ ok    19078 ms
+[14:54:38] t\LambdaInP6.t ............. ok    21443 ms
+[14:54:59] t\Misc.t ................... ok    39890 ms
+[14:55:39] t\P6Currying.t ............. ok     7265 ms
+[14:55:46] t\Substitution.t ........... ok    35132 ms
+[14:56:21] t\VarT.t ................... ok    19171 ms
+[14:56:40] t\ADTs\ADT_auto.t .......... ok     5553 ms
+[14:56:46] t\ADTs\ListADT-cXr.t ....... ok    22115 ms
+[14:57:08] t\ADTs\ListADT-extra.t ..... ok    30640 ms
+[14:57:39] t\ADTs\ListADT.t ........... ok    20390 ms
+[14:57:59] t\ADTs\Maybe-extra.t ....... ok    18991 ms
+[14:58:18] t\ADTs\MaybeADT.t .......... ok    20390 ms
+[14:58:39] t\ADTs\PairADT.t ........... ok    20201 ms
+[14:58:59] t\ADTs\Streams.t ........... ok    14687 ms
+[14:59:14] t\ADTs\TermADT-extra.t ..... ok    34188 ms
+[14:59:48] t\ADTs\TermADT.t ........... ok    26281 ms
+[15:00:14] t\Conversion\Conversion.t .. ok    16239 ms
+[15:00:30] t\Test\Util.t .............. ok    18531 ms
+[15:00:49]
 All tests successful.
-Files=26, Tests=1392, 654 wallclock secs ( 0.72 usr +  0.27 sys =  0.99 CPU)
+Files=26, Tests=1408, 678 wallclock secs ( 0.73 usr +  0.28 sys =  1.02 CPU)
 Result: PASS
