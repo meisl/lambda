@@ -1,35 +1,35 @@
-This is perl6 version 2015.02 built on MoarVM version 2015.02
-[18:04:14] t\Base.t ................... ok    26114 ms
-[18:04:40] t\BaseP6.t ................. ok    18810 ms
-[18:04:59] t\BetaReduction-perf.t ..... 4/5 # CurryStats: n/a
-# 22 sec consumed for ß-reduction
-[18:04:59] t\BetaReduction-perf.t ..... 5/5 # CurryStats: n/a
-[18:04:59] t\BetaReduction-perf.t ..... ok    48484 ms
-[18:05:47] t\BetaReduction.t .......... 128/131 # CurryStats: n/a
-[18:05:47] t\BetaReduction.t .......... ok    59734 ms
-[18:06:47] t\Boolean.t ................ ok    20906 ms
-[18:07:08] t\ChurchNat.t .............. ok    34280 ms
-[18:07:42] t\EtaReduction.t ........... ok    43687 ms
-[18:08:26] t\FreeVars.t ............... ok    30640 ms
-[18:08:57] t\Grammar.t ................ ok    19671 ms
-[18:09:16] t\LambdaInP6.t ............. ok    22723 ms
-[18:09:39] t\Misc.t ................... ok    44453 ms
-[18:10:24] t\P6Currying.t ............. ok     7734 ms
-[18:10:31] t\Substitution.t ........... ok    35929 ms
-[18:11:07] t\VarT.t ................... ok    19187 ms
-[18:11:27] t\ADTs\ADT_auto.t .......... ok     5802 ms
-[18:11:32] t\ADTs\ListADT-cXr.t ....... ok    23598 ms
-[18:11:56] t\ADTs\ListADT-extra.t ..... ok    31515 ms
-[18:12:28] t\ADTs\ListADT.t ........... ok    21875 ms
-[18:12:49] t\ADTs\Maybe-extra.t ....... ok    19443 ms
-[18:13:09] t\ADTs\MaybeADT.t .......... ok    21187 ms
-[18:13:30] t\ADTs\PairADT.t ........... ok    21530 ms
-[18:13:52] t\ADTs\Streams.t ........... ok    15125 ms
-[18:14:07] t\ADTs\TermADT-extra.t ..... ok    33003 ms
-[18:14:40] t\ADTs\TermADT.t ........... ok    27937 ms
-[18:15:08] t\Conversion\Conversion.t .. ok    16380 ms
-[18:15:24] t\Test\Util.t .............. ok    19140 ms
-[18:15:43]
+This is perl6 version 2014.12 built on MoarVM version 2014.12
+[18:17:56] t\Base.t ................... ok    25510 ms
+[18:18:22] t\BaseP6.t ................. ok    18761 ms
+[18:18:41] t\BetaReduction-perf.t ..... 3/5 # CurryStats: n/a
+# 17.4 sec consumed for ß-reduction
+[18:18:41] t\BetaReduction-perf.t ..... 5/5 # CurryStats: n/a
+[18:18:41] t\BetaReduction-perf.t ..... ok    43750 ms
+[18:19:24] t\BetaReduction.t .......... 128/131 # CurryStats: n/a
+[18:19:24] t\BetaReduction.t .......... ok    55015 ms
+[18:20:19] t\Boolean.t ................ ok    19937 ms
+[18:20:39] t\ChurchNat.t .............. ok    32130 ms
+[18:21:12] t\EtaReduction.t ........... ok    37703 ms
+[18:21:49] t\FreeVars.t ............... ok    28718 ms
+[18:22:18] t\Grammar.t ................ ok    19025 ms
+[18:22:37] t\LambdaInP6.t ............. ok    20843 ms
+[18:22:58] t\Misc.t ................... ok    38075 ms
+[18:23:36] t\P6Currying.t ............. ok     7203 ms
+[18:23:43] t\Substitution.t ........... ok    33281 ms
+[18:24:17] t\VarT.t ................... ok    18765 ms
+[18:24:35] t\ADTs\ADT_auto.t .......... ok     5591 ms
+[18:24:41] t\ADTs\ListADT-cXr.t ....... ok    21785 ms
+[18:25:03] t\ADTs\ListADT-extra.t ..... ok    29625 ms
+[18:25:32] t\ADTs\ListADT.t ........... ok    20104 ms
+[18:25:53] t\ADTs\Maybe-extra.t ....... ok    18796 ms
+[18:26:11] t\ADTs\MaybeADT.t .......... ok    20029 ms
+[18:26:31] t\ADTs\PairADT.t ........... ok    20234 ms
+[18:26:52] t\ADTs\Streams.t ........... ok    14271 ms
+[18:27:06] t\ADTs\TermADT-extra.t ..... ok    32421 ms
+[18:27:38] t\ADTs\TermADT.t ........... ok    25750 ms
+[18:28:04] t\Conversion\Conversion.t .. ok    15833 ms
+[18:28:20] t\Test\Util.t .............. ok    18453 ms
+[18:28:38]
 All tests successful.
-Files=26, Tests=1387, 689 wallclock secs ( 0.78 usr +  0.22 sys =  1.00 CPU)
+Files=26, Tests=1387, 642 wallclock secs ( 0.83 usr +  0.28 sys =  1.11 CPU)
 Result: PASS
