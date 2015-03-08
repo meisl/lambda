@@ -79,8 +79,8 @@ my role Partial[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] does Curried[T1, T2, T3, T4,
 role Curried[::T1, ::TR] {
     has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
-    multi method invoke(T1 $a1                               , *%()) { apply_comp(self, &!do( $a1)    ) }
-    multi method invoke(T1 $a1, *@_($, *@)                   , *%()) { apply_more(self, &!do( $a1), @_) }
+    multi method invoke(T1 $a1                               , *% ()) { apply_comp(self, &!do( $a1)    ) }
+    multi method invoke(T1 $a1, *@_ ($, *@)                  , *% ()) { apply_more(self, &!do( $a1), @_) }
 
     multi method invoke(|as) { dieInvalidArgs(self, as) }
 
@@ -92,9 +92,9 @@ role Curried[::T1, ::TR] {
 role Curried[::T1, ::T2, ::TR] {
     has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
-    multi method invoke(T1 $a1                               , *%()) { apply_part(self, &!do, $a1          ) }
-    multi method invoke(T1 $a1, T2 $a2                       , *%()) { apply_comp(self, &!do( $a1, $a2)    ) }
-    multi method invoke(T1 $a1, T2 $a2, *@_($, *@)           , *%()) { apply_more(self, &!do( $a1, $a2), @_) }
+    multi method invoke(T1 $a1                               , *% ()) { apply_part(self, &!do, $a1          ) }
+    multi method invoke(T1 $a1, T2 $a2                       , *% ()) { apply_comp(self, &!do( $a1, $a2)    ) }
+    multi method invoke(T1 $a1, T2 $a2, *@_ ($, *@)          , *% ()) { apply_more(self, &!do( $a1, $a2), @_) }
 
     multi method invoke(|as) { dieInvalidArgs(self, as) }
 
@@ -106,10 +106,10 @@ role Curried[::T1, ::T2, ::TR] {
 role Curried[::T1, ::T2, ::T3, ::TR] {
     has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
-    multi method invoke(T1 $a1                               , *%()) { apply_part(self, &!do, $a1               ) }
-    multi method invoke(T1 $a1, T2 $a2                       , *%()) { apply_part(self, &!do, $a1, $a2          ) }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3               , *%()) { apply_comp(self, &!do( $a1, $a2, $a3)    ) }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3, *@_($, *@)   , *%()) { apply_more(self, &!do( $a1, $a2, $a3), @_) }
+    multi method invoke(T1 $a1                               , *% ()) { apply_part(self, &!do, $a1               ) }
+    multi method invoke(T1 $a1, T2 $a2                       , *% ()) { apply_part(self, &!do, $a1, $a2          ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3               , *% ()) { apply_comp(self, &!do( $a1, $a2, $a3)    ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, *@_ ($, *@)  , *% ()) { apply_more(self, &!do( $a1, $a2, $a3), @_) }
 
     multi method invoke(|as) { dieInvalidArgs(self, as) }
 
@@ -121,11 +121,11 @@ role Curried[::T1, ::T2, ::T3, ::TR] {
 role Curried[::T1, ::T2, ::T3, ::T4, ::TR] {
     has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
-    multi method invoke(T1 $a1                                    , *%()) { apply_part(self, &!do, $a1                    ) }
-    multi method invoke(T1 $a1, T2 $a2                            , *%()) { apply_part(self, &!do, $a1, $a2               ) }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3                    , *%()) { apply_part(self, &!do, $a1, $a2, $a3          ) }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4            , *%()) { apply_comp(self, &!do( $a1, $a2, $a3, $a4)    ) }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@_($, *@), *%()) { apply_more(self, &!do( $a1, $a2, $a3, $a4), @_) }
+    multi method invoke(T1 $a1                                     , *% ()) { apply_part(self, &!do, $a1                    ) }
+    multi method invoke(T1 $a1, T2 $a2                             , *% ()) { apply_part(self, &!do, $a1, $a2               ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3                     , *% ()) { apply_part(self, &!do, $a1, $a2, $a3          ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4             , *% ()) { apply_comp(self, &!do( $a1, $a2, $a3, $a4)    ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@_ ($, *@), *% ()) { apply_more(self, &!do( $a1, $a2, $a3, $a4), @_) }
 
     multi method invoke(|as) { dieInvalidArgs(self, as) }
 
@@ -137,12 +137,12 @@ role Curried[::T1, ::T2, ::T3, ::T4, ::TR] {
 role Curried[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
     has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
 
-    multi method invoke(T1 $a1                                            , *%()) { apply_part(self, &!do, $a1                         ) }
-    multi method invoke(T1 $a1, T2 $a2                                    , *%()) { apply_part(self, &!do, $a1, $a2                    ) }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3                            , *%()) { apply_part(self, &!do, $a1, $a2, $a3               ) }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4                    , *%()) { apply_part(self, &!do, $a1, $a2, $a3, $a4          ) }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5            , *%()) { apply_comp(self, &!do( $a1, $a2, $a3, $a4, $a5)    ) }
-    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@_($, *@), *%()) { apply_more(self, &!do( $a1, $a2, $a3, $a4, $a5), @_) }
+    multi method invoke(T1 $a1                                             , *% ()) { apply_part(self, &!do, $a1                         ) }
+    multi method invoke(T1 $a1, T2 $a2                                     , *% ()) { apply_part(self, &!do, $a1, $a2                    ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3                             , *% ()) { apply_part(self, &!do, $a1, $a2, $a3               ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4                     , *% ()) { apply_part(self, &!do, $a1, $a2, $a3, $a4          ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5             , *% ()) { apply_comp(self, &!do( $a1, $a2, $a3, $a4, $a5)    ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@_ ($, *@), *% ()) { apply_more(self, &!do( $a1, $a2, $a3, $a4, $a5), @_) }
 
     multi method invoke(|as) { dieInvalidArgs(self, as) }
 

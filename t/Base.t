@@ -9,7 +9,7 @@ use Lambda::BaseP6;
 
 # module under test:
 use Lambda::Base;
-plan 51;
+plan 46;
 
 
 { # id, aka I
@@ -110,28 +110,38 @@ plan 51;
     is_properLambdaFn $Y;
 }
 
-{ # Y combinator for unary f
-    my $fact-stub = lambdaFn(
-        'fact', 'λself.λn.if (zero? n) 1 (* n (self (- n 1)))',
-        -> &self {
+{ # Y combinator for unary fn
+    my $stub-callCount = 0;
+    my $fact-stub = -> &self {
+        $stub-callCount++;
+        lambdaFn(
+            'fact', 'λself.λn.if (zero? n) 1 (* n (self (- n 1)))',
             -> Int $n {
                 $n == 0 ?? 1 !! $n * &self($n - 1)
             }
-        }
-    );
+        );
+    };
     my $fact = $Y($fact-stub);
-    does_ok $fact, lambda, '(Y f)';
-    does_ok $fact, Definition, '(Y f)';
-    is $fact.symbol, $fact-stub.symbol, "Y uses stub's .symbol (if any) as Definition symbol of result";
-
-    does_ok $Y(-> &self { $id }), lambda, '(Y g) where g does not do role "lambda" itself';
-    doesnt_ok $Y(lambdaFn(Str, 'λfoo."bar"', -> &self { -> $foo { 'bar' } } )), Definition,
-        "Y doesn't make its result a Definition if stub doesnt Definition";
-
+    
     subtest {
+        does_ok $fact, lambda, '(Y f)';
+        does_ok $fact, Definition, '(Y f)';
+        
+        is $stub-callCount, 1, 'stub fn is called once by Y combinator';
+        
+        does_ok $Y(-> &self { $id }), lambda, '(Y g) where g does not do role "lambda" itself';
+        doesnt_ok $Y(-> &self { lambdaFn(Str, 'λfoo."bar"', -> $foo { 'bar' } )}), Definition,
+            "Y doesn't make its result a Definition if stub doesnt Definition";
+        
         is $fact(0),   1, '0! =   1';
+        is $stub-callCount, 1, 'stub fn is not called again if fn does not take recursive execution path';
+        
         is $fact(1),   1, '1! =   1';
+        is $stub-callCount, 2, 'stub fn is called once per recursive call';
+        
         is $fact(2),   2, '2! =   2';
+        is $stub-callCount, 4, 'stub fn is called once per recursive call';
+        
         is $fact(3),   6, '3! =   6';
         is $fact(4),  24, '4! =  24';
         is $fact(5), 120, '5! = 120';
@@ -140,21 +150,20 @@ plan 51;
     }, 'Y combinator for unary f; ex. factorial: ' ~ $fact.lambda;
 }
 
-{ # Y combinator for binary f
-    my $ackPeter = $Y( lambdaFn(
+
+{ # Y combinator for binary fn
+    my $ackPeter = $Y(-> &self { lambdaFn(
         'ackPeter', 'λself.λa.λb.(if (zero? a) (succ b) (if (zero? b) (self (pred a) 1) (self (pred a) (self a (pred b)))))',
-        -> &self {
-            -> Int $a, $b {
-                if $a == 0 {
-                    $b + 1;
-                } elsif $b == 0 {
-                    &self($a - 1, 1);
-                } else {
-                    &self($a - 1, &self($a, $b - 1));
-                }
+        -> Int $a, $b {
+            if $a == 0 {
+                $b + 1;
+            } elsif $b == 0 {
+                &self($a - 1, 1);
+            } else {
+                &self($a - 1, &self($a, $b - 1));
             }
         }
-    ));
+    )});
 
     subtest {
         # base case:
