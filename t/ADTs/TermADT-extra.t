@@ -27,7 +27,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
         my $expectedStr = $expToStr.defined
                             ?? ' -> ' ~ $expToStr($expected)
                             !! '';
-        my $desc        = "($f $argStr)$expectedStr";
+        my $desc        = "({$f.perl} $argStr)$expectedStr";
         
         is($f($arg), $expected, $desc);
     }

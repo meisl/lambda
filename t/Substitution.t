@@ -28,6 +28,14 @@ my $y = $VarT('y');
 my $z = $VarT('z');
 my $c = $ConstT('c');
 
+my $app_xx  = $AppT($x, $x);        # (x x)
+my $app_xy  = $AppT($x, $y);        # (x y)
+my $app_xyz = $AppT($app_xy, $z);   # ((x y) z)
+my $lam0    = $LamT($x, $y);        # λx.y
+my $lam1    = $LamT($x, $app_xy);   # λx.x y
+my $lam2    = $LamT($x, $app_xyz);  # λx.x y z
+my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
+
 
 { # function (subst inTerm whatTerm forVar)
     is_properLambdaFn $subst;
@@ -167,14 +175,6 @@ my $c = $ConstT('c');
         }
     }
 
-    my $app_xx  = $AppT($x, $x);        # (x x)
-    my $app_xy  = $AppT($x, $y);        # (x y)
-    my $app_xyz = $AppT($app_xy, $z);   # ((x y) z)
-    my $lam0    = $LamT($x, $y);        # λx.y
-    my $lam1    = $LamT($x, $app_xy);   # λx.x y
-    my $lam2    = $LamT($x, $app_xyz);  # λx.x y z
-    my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
-
     is_subst-with-alpha(
         [$x, $y,        [$y],         $c      ] => $None,
 
@@ -199,19 +199,25 @@ my $c = $ConstT('c');
         # neither forVar nor var free in body, and no external alpha-convs applicable
         [$v, $app_xy,   [$x, $y],     $lam3   ] => $None,
     );
-
+    
     subtest({ # [(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)
         my ($out, $newVar, $newBody, $keepfree);
         $keepfree = $cons($x, $cons($y, $nil));
         
         $out = $Some2value($subst-with-alpha($y, $app_xy, $keepfree, $lam2));
+        
         $newVar  = $LamT2var($out);
         $newBody = $LamT2body($out);
 
         isnt($VarT2name($newVar), 'x', "fresh var $newVar is different from var x");
         isnt($VarT2name($newVar), 'y', "fresh var $newVar is different from var y");
         isnt($VarT2name($newVar), 'z', "fresh var $newVar is different from var z");
+        
         is($newBody, $AppT($AppT($newVar, $app_xy), $z))
             or diag("     got: " ~ $Term2source($out));
+        # (λx.((x y) z))
+        # should have been turned into
+        # (λα1.((α1 (x y)) z))
+
     }, 'plus additional alpha-conversion (fresh var for x)');
 }

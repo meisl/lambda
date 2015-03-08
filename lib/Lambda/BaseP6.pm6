@@ -1,7 +1,5 @@
 use v6;
-
 use Lambda::P6Currying;
-
 
 module Lambda::BaseP6;
 
@@ -55,7 +53,7 @@ sub lambdaFn(Str $symbol, $lambdaExpr, &f) is export {
     if $arity == 0 {
         die "cannot make lambda function with zero parameters: symbol=$symbol, lambdaExpr=$lambdaExpr, &f.signature=" ~ &f.signature.perl ~ ', &f=' ~ &f.perl;
     } else {
-        my $out = curry(&f);
+        my $out = &f;
         my $lx;
         if ($lambdaExpr ~~ Str) && ($lambdaExpr.defined) {
             $lx = $lambdaExpr.substr(0, 1) eq '(' ?? $lambdaExpr !! "($lambdaExpr)";
@@ -66,6 +64,7 @@ sub lambdaFn(Str $symbol, $lambdaExpr, &f) is export {
         $out does lambda(:lambda($lx));
         $out does Definition(:$symbol)
             if $symbol.defined;
+        $out = curry($out);
         $out;
     }
 }

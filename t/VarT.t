@@ -10,6 +10,13 @@ use Lambda::TermADT;
 plan 28;
 
 
+my $x   = $VarT('x');
+my $y   = $VarT('y');
+my $app = $AppT($x, $y);
+my $lam = $LamT($x, $x);
+my $c   = $ConstT(23);
+
+
 { # (VarT Str) [fka VarT.get]
     my $x1 = $VarT('x');
     my $x2 = $VarT('x');
@@ -28,12 +35,6 @@ plan 28;
 
     is $fresh-var-for.symbol, 'fresh-var-for', '$fresh-var-for.symbol';
     is $fresh-var-for.Str,    'fresh-var-for', '$fresh-var-for.Str';
-
-    my $x   = $VarT('x');
-    my $y   = $VarT('y');
-    my $app = $AppT($x, $y);
-    my $lam = $LamT($x, $x);
-    my $c   = $ConstT(23);
 
     dies_ok( { $fresh-var-for($app) }, '$fresh-var-for does not accept an AppT arg');
     dies_ok( { $fresh-var-for($lam) }, '$fresh-var-for does not accept an LamT arg');

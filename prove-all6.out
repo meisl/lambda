@@ -1,32 +1,35 @@
 This is perl6 version 2014.12 built on MoarVM version 2014.12
-[18:57:59] t\Base.t ................... ok    22116 ms
-[18:58:21] t\BaseP6.t ................. ok    18504 ms
-[18:58:40] t\BetaReduction-perf.t ..... 3/5 # 11 sec consumed for ß-reduction
-[18:58:40] t\BetaReduction-perf.t ..... ok    35125 ms
-[18:59:15] t\BetaReduction.t .......... ok    42390 ms
-[18:59:57] t\ADTs\TermADT-extra.t ..... ok    28140 ms
-[19:00:25] t\P6Currying.t ............. ok     4838 ms
-[19:00:30] t\Substitution.t ........... ok    30359 ms
-[19:01:01] t\VarT.t ................... ok    18578 ms
-[19:01:19] t\ADTs\TermADT.t ........... ok    25210 ms
-[19:01:44] t\ADTs\ADT_auto.t .......... ok     5015 ms
-[19:01:49] t\ADTs\PairADT.t ........... ok    20209 ms
-[19:02:10] t\Conversion\Conversion.t .. ok    15443 ms
-[19:02:25] t\ADTs\ListADT-cXr.t ....... ok    21703 ms
-[19:02:47] t\ADTs\Maybe-extra.t ....... ok    18779 ms
-[19:03:06] t\EtaReduction.t ........... ok    35015 ms
-[19:03:41] t\FreeVars.t ............... ok    25828 ms
-[19:04:06] t\ADTs\ListADT-extra.t ..... ok    28849 ms
-[19:04:35] t\ADTs\MaybeADT.t .......... ok    20046 ms
-[19:04:55] t\ADTs\Streams.t ........... ok    14255 ms
-[19:05:10] t\ADTs\ListADT.t ........... ok    20093 ms
-[19:05:30] t\Misc.t ................... ok    32600 ms
-[19:06:02] t\Boolean.t ................ ok    19546 ms
-[19:06:22] t\Grammar.t ................ ok    18677 ms
-[19:06:41] t\ChurchNat.t .............. ok    34093 ms
-[19:07:15] t\LambdaInP6.t ............. ok    20515 ms
-[19:07:35] t\Test\Util.t .............. ok    17990 ms
-[19:07:53]
+[23:02:01] t\Base.t ................... ok    22714 ms
+[23:02:24] t\BaseP6.t ................. ok    18716 ms
+[23:02:43] t\BetaReduction-perf.t ..... 3/5 # CurryStats: n/a
+# 10.8 sec consumed for ß-reduction
+[23:02:43] t\BetaReduction-perf.t ..... 5/5 # CurryStats: n/a
+[23:02:43] t\BetaReduction-perf.t ..... ok    34781 ms
+[23:03:18] t\BetaReduction.t .......... 120/131 # CurryStats: n/a
+[23:03:18] t\BetaReduction.t .......... ok    42687 ms
+[23:04:00] t\Boolean.t ................ ok    20015 ms
+[23:04:21] t\ChurchNat.t .............. ok    32247 ms
+[23:04:53] t\EtaReduction.t ........... ok    34359 ms
+[23:05:27] t\FreeVars.t ............... ok    26109 ms
+[23:05:53] t\Grammar.t ................ ok    19259 ms
+[23:06:13] t\LambdaInP6.t ............. ok    20640 ms
+[23:06:33] t\Misc.t ................... ok    32465 ms
+[23:07:06] t\P6Currying.t ............. ok     7140 ms
+[23:07:13] t\Substitution.t ........... ok    31474 ms
+[23:07:44] t\VarT.t ................... ok    19078 ms
+[23:08:03] t\ADTs\ADT_auto.t .......... ok     5576 ms
+[23:08:09] t\ADTs\ListADT-cXr.t ....... ok    22021 ms
+[23:08:31] t\ADTs\ListADT-extra.t ..... ok    29515 ms
+[23:09:01] t\ADTs\ListADT.t ........... ok    20275 ms
+[23:09:21] t\ADTs\Maybe-extra.t ....... ok    19125 ms
+[23:09:40] t\ADTs\MaybeADT.t .......... ok    20405 ms
+[23:10:00] t\ADTs\PairADT.t ........... ok    20375 ms
+[23:10:21] t\ADTs\Streams.t ........... ok    14497 ms
+[23:10:35] t\ADTs\TermADT-extra.t ..... ok    28734 ms
+[23:11:04] t\ADTs\TermADT.t ........... ok    24958 ms
+[23:11:29] t\Conversion\Conversion.t .. ok    15828 ms
+[23:11:45] t\Test\Util.t .............. ok    18521 ms
+[23:12:03]
 All tests successful.
-Files=26, Tests=1404, 594 wallclock secs ( 0.78 usr +  0.17 sys =  0.95 CPU)
+Files=26, Tests=1408, 602 wallclock secs ( 0.78 usr +  0.17 sys =  0.95 CPU)
 Result: PASS

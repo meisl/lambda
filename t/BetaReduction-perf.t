@@ -1,9 +1,8 @@
 use v6;
 use Test;
-
 use Lambda::MaybeADT;
 use Lambda::TermADT;
-
+use Lambda::P6Currying;
 
 # module under test:
 use Lambda::BetaReduction;
@@ -22,18 +21,22 @@ my $y = $VarT('y');
 my $z = $VarT('z');
 my $c = $ConstT('c');
 
+
+diag curryStats;
+
+
 { # first try with two minimal examples, as a sanity check:
     my ($app, $actual, $actualLambda);
 
     $app = $AppT($x, $x);
     $actual = $betaReduce($app);
-    is $actual, 'None', '(x x) reduces to itself'
+    is $actual, 'None', '(x x) reduces to itself (sanity check)'
         or die;
 
     $app = $AppT($LamT($x, $x), $x);
     $actual = $Some2value($betaReduce($app));
     $actualLambda = $Term2source($actual);
-    is $Term-eq($actual, $x), '#true', "{$Term2source($app)} reduces to x"
+    is $Term-eq($actual, $x), '#true', "{$Term2source($app)} reduces to x (sanity check)"
         or diag("exp: x\ngot: $actualLambda")
         and die;
 }
@@ -56,6 +59,8 @@ my $c = $ConstT('c');
     $expectedLambda = '(λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((((h f1) f2) f3) f4) f5))))))))))';
     is $Term2source($expectedTerm), $expectedLambda, "\$expectedTerm.lambda is $expectedLambda";
 
+    diag curryStats;
+
     my $time = now;
     $actualTerm = $Some2value($betaReduce($bigTerm)); #   $expectedTerm;    #   
     $time = (now.Real - $time.Real).round(0.2);
@@ -64,3 +69,7 @@ my $c = $ConstT('c');
     is $Term-eq($actualTerm, $expectedTerm), '#true', "\$bigTerm reduces to $expectedLambda"
         or diag("exp: $expectedLambda\ngot: $actualLambda");
 }
+
+
+#diag curryStats.byKeyLen({$_.key ~~ /\d+/}).join("\n");
+diag curryStats;

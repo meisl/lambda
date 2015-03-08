@@ -1,298 +1,179 @@
 use v6;
 
-# Partial0
-role Partial0[::T0] {
-    multi method _(T0 $a0) {                                    self.apply($a0)                     }
-}
-role Partial0[::T0, ::T1] {
-    multi method _(T0 $a0) {                                    self.apply($a0)                     }
-    multi method _(T0 $a0, T1 $a1) {                            self.apply($a0, $a1)                }
-}
-role Partial0[::T0, ::T1, ::T2] {
-    multi method _(T0 $a0) {                                    self.apply($a0)                     }
-    multi method _(T0 $a0, T1 $a1) {                            self.apply($a0, $a1)                }
-    multi method _(T0 $a0, T1 $a1, T2 $a2) {                    self.apply($a0, $a1, $a2)           }
-}
-role Partial0[::T0, ::T1, ::T2, ::T3] {
-    multi method _(T0 $a0) {                                    self.apply($a0)                     }
-    multi method _(T0 $a0, T1 $a1) {                            self.apply($a0, $a1)                }
-    multi method _(T0 $a0, T1 $a1, T2 $a2) {                    self.apply($a0, $a1, $a2)           }
-    multi method _(T0 $a0, T1 $a1, T2 $a2, T3 $a3) {            self.apply($a0, $a1, $a2, $a3)      }
-}
-role Partial0[::T0, ::T1, ::T2, ::T3, ::T4] {
-    multi method _(T0 $a0) {                                    self.apply($a0)                     }
-    multi method _(T0 $a0, T1 $a1) {                            self.apply($a0, $a1)                }
-    multi method _(T0 $a0, T1 $a1, T2 $a2) {                    self.apply($a0, $a1, $a2)           }
-    multi method _(T0 $a0, T1 $a1, T2 $a2, T3 $a3) {            self.apply($a0, $a1, $a2, $a3)      }
-    multi method _(T0 $a0, T1 $a1, T2 $a2, T3 $a3, T4 $a4) {    self.apply($a0, $a1, $a2, $a3, $a4) }
-}
-
-# Partial1
-role Partial1[$a0, ::T1] {
-    multi method _(T1 $a1) {                                    self.apply($a0, $a1)                }
-}
-role Partial1[$a0, ::T1, ::T2] {
-    multi method _(T1 $a1) {                                    self.apply($a0, $a1)                }
-    multi method _(T1 $a1, T2 $a2) {                            self.apply($a0, $a1, $a2)           }
-}
-role Partial1[$a0, ::T1, ::T2, ::T3] {
-    multi method _(T1 $a1) {                                    self.apply($a0, $a1)                }
-    multi method _(T1 $a1, T2 $a2) {                            self.apply($a0, $a1, $a2)           }
-    multi method _(T1 $a1, T2 $a2, T3 $a3) {                    self.apply($a0, $a1, $a2, $a3)      }
-}
-role Partial1[$a0, ::T1, ::T2, ::T3, ::T4] {
-    multi method _(T1 $a1) {                                    self.apply($a0, $a1)                }
-    multi method _(T1 $a1, T2 $a2) {                            self.apply($a0, $a1, $a2)           }
-    multi method _(T1 $a1, T2 $a2, T3 $a3) {                    self.apply($a0, $a1, $a2, $a3)      }
-    multi method _(T1 $a1, T2 $a2, T3 $a3, T4 $a4) {            self.apply($a0, $a1, $a2, $a3, $a4) }
-}
-
-# Partial2
-role Partial2[$a0, $a1, ::T2] {
-    multi method _(T2 $a2) {                                    self.apply($a0, $a1, $a2)           }
-}
-role Partial2[$a0, $a1, ::T2, ::T3] {
-    multi method _(T2 $a2) {                                    self.apply($a0, $a1, $a2)           }
-    multi method _(T2 $a2, T3 $a3) {                            self.apply($a0, $a1, $a2, $a3)      }
-}
-role Partial2[$a0, $a1, ::T2, ::T3, ::T4] {
-    multi method _(T2 $a2) {                                    self.apply($a0, $a1, $a2)           }
-    multi method _(T2 $a2, T3 $a3) {                            self.apply($a0, $a1, $a2, $a3)      }
-    multi method _(T2 $a2, T3 $a3, T4 $a4) {                    self.apply($a0, $a1, $a2, $a3, $a4) }
-}
-
-# Partial3
-role Partial3[$a0, $a1, $a2, ::T3] {
-    multi method _(T3 $a3) {                                    self.apply($a0, $a1, $a2, $a3)      }
-}
-role Partial3[$a0, $a1, $a2, ::T3, ::T4] {
-    multi method _(T3 $a3) {                                    self.apply($a0, $a1, $a2, $a3)      }
-    multi method _(T3 $a3, T4 $a4) {                            self.apply($a0, $a1, $a2, $a3, $a4) }
-}
-
-# Partial4
-role Partial4[$a0, $a1, $a2, $a3, ::T4] {
-    multi method _(T4 $a4) {                                    self.apply($a0, $a1, $a2, $a3, $a4) }
-}
+use Lambda::P6Currying_common;
+use Lambda::P6Currying_X;
+use Lambda::P6Currying_Stats;
 
 
-
-my sub captureToStr($capture) {
-    "\\({$capture.list.map(*.perl).join(', ')}"
-        ~ ($capture.hash > 0 
-            ?? ', ' ~ $capture.hash.pairs.map(-> $p { $p.key ~ ' => ' ~ $p.value.perl }).join(', ')
-            !! '')
-        ~ ')'
+sub EXPORT is cached {   # do some re-exporting
+    my %out = (
+        EXPORT => 'dummy',
+        Lambda::P6Currying_common::,
+        Lambda::P6Currying_X::,
+        Lambda::P6Currying_Stats::,
+    ).grep(*.key ne 'EXPORT');
+    #note "re-exporting {%out.keys}";
+    return %out;
 }
 
-class X::Typing is X::TypeCheck is export {
-    has Str $.operation = 'curried fn application';
-}
+constant $STATS_ENABLED = False;  #   True;   #   
 
-class X::Typing::UnsupportedNamedArgs is X::Typing is export {
-    has Str $.message;
-    has     $.whatsInFuncPos;
-    has     $!args;
-    method  args        { captureToStr($!args)    }
 
-    has Str $.expected  = 'positional args only';
-    method  got         { self.args }
+role Curried {...}
+role Partial {...}
 
-    submethod BUILD(:$!whatsInFuncPos, :$!args) {
-        $!message = "named args not supported for curried fn {$!whatsInFuncPos.WHICH}; got {self.args}";
+
+my proto sub apply_comp(|) {*}
+
+my multi sub apply_comp($self, Callable     $result)            { curry($result)            }
+my multi sub apply_comp($self, Curried      $result) is default { $result                   }
+my multi sub apply_comp($self, Unapplicable $result)            { $result                   }
+my multi sub apply_comp($self,              $result)            { $result does Unapplicable }
+
+
+my proto sub apply_more(|) {*}
+
+my multi sub apply_more($self, Callable     $f, @rest)            {              curry($f).invoke(|@rest) }
+my multi sub apply_more($self, Curried      $f, @rest) is default {                     $f.invoke(|@rest) }
+my multi sub apply_more($self, Unapplicable $f, @rest)            {                     $f.invoke(|@rest) }
+my multi sub apply_more($self,              $f, @rest)            { ($f does Unapplicable).invoke(|@rest) }
+
+
+my sub apply_part(&self, Mu $do, *@args) {
+    my @types = types(&self, +@args);
+    given @types {
+        when 2 { return { $do(|@args, $^b)                 } does Partial[|@types] }
+        when 3 { return { $do(|@args, $^b, $^c)            } does Partial[|@types] }
+        when 4 { return { $do(|@args, $^b, $^c, $^d)       } does Partial[|@types] }
+        when 5 { return { $do(|@args, $^b, $^c, $^d, $^e)  } does Partial[|@types] }
     }
 }
 
-class X::Typing::ArgBinding is X::Typing is export {
-    has Str $.message;
-    has     $.whatsInFuncPos;
-    has     $!args;
-    method  args        { captureToStr($!args)    }
 
-    method  expected    { $!whatsInFuncPos.ty }
-    method  got         { self.args }
-
-    submethod BUILD(:$!whatsInFuncPos, :$!args) {
-        $!message = "cannot apply {$!whatsInFuncPos}: {self.expected} to {self.got}";
-    }
+my role Partial[::T1, ::TR] does Curried[T1, TR] {
+    has Signature $!s;
+    method signature { $!s //= EVAL ":(T1 -->TR)" }
 }
 
-class X::Typing::Unapplicable is X::Typing is export {
-    has Str $.message;
-    has     $.whatsInFuncPos;
-    has     $!args;
-    method  args        { captureToStr($!args)    }
-
-    has Str $.expected  = 'a function to apply';
-    method  got         { ~$!whatsInFuncPos.WHICH }
-    
-    submethod BUILD(:$!whatsInFuncPos, :$!args) {
-        $!message = "cannot apply non-function {self.got} to {self.args}";
-    }
+my role Partial[::T1, ::T2, ::TR] does Curried[T1, T2, TR] {
+    has Signature $!s;
+    method signature { $!s //= EVAL ":(T1, T2 -->TR)" }
 }
 
-my role Unapplicable {
-    method postcircumfix:<( )>($as) {
-        die X::Typing::Unapplicable.new(:whatsInFuncPos(self), :args($as));
-    }
-    method _(|as) is hidden_from_backtrace {
-        self.(|as.list);
-    }
+my role Partial[::T1, ::T2, ::T3, ::TR] does Curried[T1, T2, T3, TR] {
+    has Signature $!s;
+    method signature { $!s //= EVAL ":(T1, T2, T3 -->TR)" }
 }
 
-my $overAppCount = 0;
-my $partialAppCount = 0;
-
-class Fn does Callable {
-    has &.f;
-    has @!partialArgs;
-
-    method new(&f, *@partialArgs) {
-        if &f ~~ Fn {
-            die "FUCK: " ~ &f.?symbol ~ ' ' ~ &f.?lambda ~ ' ' ~ &f.WHICH;
-        }
-        self.bless(:&f, :@partialArgs)
-            or die "mismatch of arity {self.arity} and nr of args {@partialArgs.elems}";
-    }
-
-    submethod BUILD(:&!f, :@!partialArgs) {
-        my @ps = &!f.signature.params;
-        my $arity = @ps.elems;
-        die "cannot curry nullary fn - signature: {&!f.signature.perl}; fn: {&!f.gist}" 
-            if $arity == 0;
-        die "cannot curry fn with optional/slurpy/named/capture or parcel parameters - signature: {&!f.signature.perl}; fn: {&!f.gist}"
-            if @ps.map({$_.optional || $_.slurpy || $_.named || $_.capture || $_.parcel}).any;
-        die "NYI: Fn with arity $arity (> 5) - signature: {&!f.signature.perl}; fn: {&!f.gist}"
-            if $arity > 5;
-
-        my @ts = @ps.map(*.type);
-        my ($a0, $a1, $a2, $a3, $a4) = @!partialArgs;
-        my ($t0, $t1, $t2, $t3, $t4) = @ts;
-        given @!partialArgs.elems {
-            when 0 {
-                given $arity {
-                    when 1 { self does Partial0[$t0                     ] }
-                    when 2 { self does Partial0[$t0, $t1                ] }
-                    when 3 { self does Partial0[$t0, $t1, $t2           ] }
-                    when 4 { self does Partial0[$t0, $t1, $t2, $t3      ] }
-                    when 5 { self does Partial0[$t0, $t1, $t2, $t3, $t4 ] }
-                }
-            }
-            when 1 {
-                given $arity {
-                    when 2 { self does Partial1[$a0, $t1                ] }
-                    when 3 { self does Partial1[$a0, $t1, $t2           ] }
-                    when 4 { self does Partial1[$a0, $t1, $t2, $t3      ] }
-                    when 5 { self does Partial1[$a0, $t1, $t2, $t3, $t4 ] }
-                }
-            }
-            when 2 {
-                given $arity {
-                    when 3 { self does Partial2[$a0, $a1, $t2           ] }
-                    when 4 { self does Partial2[$a0, $a1, $t2, $t3      ] }
-                    when 5 { self does Partial2[$a0, $a1, $t2, $t3, $t4 ] }
-                }
-            }
-            when 3 {
-                given $arity {
-                    when 4 { self does Partial3[$a0, $a1, $a2, $t3      ] }
-                    when 5 { self does Partial3[$a0, $a1, $a2, $t3, $t4 ] }
-                }
-            }
-            when 4 {
-                given $arity {
-                    when 5 { self does Partial4[$a0, $a1, $a2, $a3, $t4 ] }
-                }
-            }
-        }
-    }
-
-    method arity { &!f.signature.params.elems - @!partialArgs.elems }
-    method count { self.arity }
-
-    method sig {
-        my $s = &!f.signature;
-        @($s.params[@!partialArgs.elems..*].map(*.type), $s.returns);
-    }
-
-    method ty {
-        self.sig.map(*.perl).join(' -> ');
-    }
-
-    # Dispatch to one of the _ methods from role PartialX 
-    # NOTE: doesn't work with postcircumfix:<( )> overrides there, for some reason...?!
-    method postcircumfix:<( )>($as) is hidden_from_backtrace {
-        die X::Typing::UnsupportedNamedArgs.new(:whatsInFuncPos(self), :args($as))
-            unless $as.hash.elems == 0;
-        self._(|$as);
-    }
-
-    # Fallback, if none of the _ methods from role PartialX matches.
-    # Here, *additional* args arrive (to be appended to @!partialArgs).
-    # NOT to be used from outside - use normal postcircumfix<( )> instead!
-    multi method _(|as) is hidden_from_backtrace {
-        my $arity = self.arity; # orig fn's arity - # of @!partialArgs
-        my $argCount = as.list.elems;
-        if $argCount > $arity {
-            $overAppCount++;
-            #warn ">>>> over-app $overAppCount: " ~ self ~ Backtrace.new;   #   ;  #   
-            #say "n=$n, partialArgs={@!partialArgs.perl}, as={as.perl}";
-            my $k = 0;
-            my $n = $arity;
-            my $result = self;
-            loop {
-                $result = $result._(|as.list[$k..$n-1]);
-                $k = $n;
-                $n += $result.?arity // last;
-                last if $n >= $argCount;
-            };
-            $result = $result._(|as.list[$k..*]);
-            return $result;
-            #my $result = self._(|as.list[0..$arity-1]);
-            #my $finalResult = $result(|as.list[$arity..*]);
-            #return $finalResult;
-        } else {
-            my @expectedTypes = self.sig[0..*-2];
-            #say (@expectedTypes Z as.list).map(-> $t, $a { "{$t.perl}: {$a.perl}\n" });
-
-            die X::Typing::ArgBinding.new(:whatsInFuncPos(self), :args(as));
-        }
-    }
-
-    # This one expects to receive *all of or less than* the args which the orig fn $!f expects.
-    # NOT to be used from outside - use normal postcircumfix<( )> instead!
-    method apply(*@as) {
-        my $out;
-        my $n = &!f.signature.arity;
-        if @as == $n {
-            $out = &!f.(|@as);
-        } else { # got *LESS* params (if it were more, then we'd ended up in the fallback method _ above)
-            $partialAppCount++;
-            #warn ">>>> partial app $partialAppCount:" ~ self ~ Backtrace.new;
-            $out = Fn.new(&!f, |@as);
-            &!f.?onPartialApp($out, |@as);
-        }
-        if $out ~~ Callable {
-            $out = curry($out);
-        } elsif $out !~~ Unapplicable {
-            $out does Unapplicable;
-        }
-        return $out;
-    }
-
+my role Partial[::T1, ::T2, ::T3, ::T4, ::TR] does Curried[T1, T2, T3, T4, TR] {
+    has Signature $!s;
+    method signature { $!s //= EVAL ":(T1, T2, T3, T4 -->TR)" }
 }
 
-role Func[::T, ::R] {
-
-    method fnType {
-        my $t = T.?fnType // T.WHICH;
-        $t = "($t)" if T ~~ Func;
-        $t ~ ' -> ' ~ (R.?fnType // R.WHICH)
-    }
+my role Partial[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] does Curried[T1, T2, T3, T4, T5, TR] {
+    has Signature $!s;
+    method signature { $!s //= EVAL ":(T1, T2, T3, T4, T5 -->TR)" }
 }
 
-sub curry(&f) is export {
-    &f ~~ Fn
-        ?? &f
-        !! Fn.new(&f);
+# arity 1
+role Curried[::T1, ::TR] {
+    has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
+
+    multi method invoke(T1 $a1                               , *% ()) { apply_comp(self, &!do( $a1)    ) }
+    multi method invoke(T1 $a1, *@_ ($, *@)                  , *% ()) { apply_more(self, &!do( $a1), @_) }
+
+    multi method invoke(|as) { dieInvalidArgs(self, as) }
+
+    multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
+}
+
+
+# arity 2
+role Curried[::T1, ::T2, ::TR] {
+    has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
+
+    multi method invoke(T1 $a1                               , *% ()) { apply_part(self, &!do, $a1          ) }
+    multi method invoke(T1 $a1, T2 $a2                       , *% ()) { apply_comp(self, &!do( $a1, $a2)    ) }
+    multi method invoke(T1 $a1, T2 $a2, *@_ ($, *@)          , *% ()) { apply_more(self, &!do( $a1, $a2), @_) }
+
+    multi method invoke(|as) { dieInvalidArgs(self, as) }
+
+    multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
+}
+
+
+# arity 3
+role Curried[::T1, ::T2, ::T3, ::TR] {
+    has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
+
+    multi method invoke(T1 $a1                               , *% ()) { apply_part(self, &!do, $a1               ) }
+    multi method invoke(T1 $a1, T2 $a2                       , *% ()) { apply_part(self, &!do, $a1, $a2          ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3               , *% ()) { apply_comp(self, &!do( $a1, $a2, $a3)    ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, *@_ ($, *@)  , *% ()) { apply_more(self, &!do( $a1, $a2, $a3), @_) }
+
+    multi method invoke(|as) { dieInvalidArgs(self, as) }
+
+    multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
+}
+
+
+# arity 4
+role Curried[::T1, ::T2, ::T3, ::T4, ::TR] {
+    has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
+
+    multi method invoke(T1 $a1                                     , *% ()) { apply_part(self, &!do, $a1                    ) }
+    multi method invoke(T1 $a1, T2 $a2                             , *% ()) { apply_part(self, &!do, $a1, $a2               ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3                     , *% ()) { apply_part(self, &!do, $a1, $a2, $a3          ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4             , *% ()) { apply_comp(self, &!do( $a1, $a2, $a3, $a4)    ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, *@_ ($, *@), *% ()) { apply_more(self, &!do( $a1, $a2, $a3, $a4), @_) }
+
+    multi method invoke(|as) { dieInvalidArgs(self, as) }
+
+    multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
+}
+
+
+# arity 5
+role Curried[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
+    has &!do = nqp::getattr(nqp::decont(self), Code, '$!do');
+
+    multi method invoke(T1 $a1                                             , *% ()) { apply_part(self, &!do, $a1                         ) }
+    multi method invoke(T1 $a1, T2 $a2                                     , *% ()) { apply_part(self, &!do, $a1, $a2                    ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3                             , *% ()) { apply_part(self, &!do, $a1, $a2, $a3               ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4                     , *% ()) { apply_part(self, &!do, $a1, $a2, $a3, $a4          ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5             , *% ()) { apply_comp(self, &!do( $a1, $a2, $a3, $a4, $a5)    ) }
+    multi method invoke(T1 $a1, T2 $a2, T3 $a3, T4 $a4, T5 $a5, *@_ ($, *@), *% ()) { apply_more(self, &!do( $a1, $a2, $a3, $a4, $a5), @_) }
+
+    multi method invoke(|as) { dieInvalidArgs(self, as) }
+
+    multi method invoke(Capture:D $as) { self.invoke(|$as) }  # TODO: remove once Rakudo* 2015-02 has landed
+}
+
+
+
+sub curry(&f -->Callable) is export {
+    return &f
+        if &f ~~ Curried;
+
+    my $sig = &f.signature;
+    my @ps = $sig.params;
+    die "cannot curry fn with optional/slurpy/named/capture or parcel parameters - signature: {$sig.perl}; fn: {&f.gist}"
+        if @ps.map({$_.optional || $_.slurpy || $_.named || $_.capture || $_.parcel}).any;
+
+    try {
+        return &f does Curried[|@(@ps.map(*.type), $sig.returns)];
+    }
+
+    my $arity = $sig.arity;
+    die "cannot curry nullary fn - signature: {$sig.perl}; fn: {&f.gist}" 
+        if $arity == 0;
+    die "NYI: Fn with arity $arity (> 5) - signature: {$sig.perl}; fn: {&f.gist}"
+        if $arity > 5;
+}
+
+
+if $STATS_ENABLED {
+    wrapCurry(&curry, Curried);
+    wrapApp(part => &apply_part, full => &apply_comp, over => &apply_more);
+
 }
