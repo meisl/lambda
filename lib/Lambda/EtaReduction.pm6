@@ -73,30 +73,28 @@ ENDOFLAMBDA
 
 
 # either t is an η-redex or any child is etaReducible?
-constant $is-etaReducible is export = $Y(lambdaFn(
+constant $is-etaReducible is export = $Y(-> &self { lambdaFn(
     'etaReducible?',
 q:to/ENDOFLAMBDA/,
     λself.λt._if (etaRedex? t)
                  (K #true)
                  (λ_.exists self (Term->children t))
 ENDOFLAMBDA
-    -> &self {
-        -> TTerm $t {
-            $_if( $is-etaRedex($t),
-                -> $_ { $true },
-                -> $_ { $exists(&self, $Term2children($t)) }
-            )
-            # self.isEtaRedex || ?self.children.map(*.isEtaReducible).any;
-        }
+    -> TTerm $t {
+        $_if( $is-etaRedex($t),
+            -> $_ { $true },
+            -> $_ { $exists(&self, $Term2children($t)) }
+        )
+        # self.isEtaRedex || ?self.children.map(*.isEtaReducible).any;
     }
-));
+)});
 
 
 # etaContract: one-step η-simplification, either of η-redex itself or any (one) child
 
 # Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
 # is that we don't need to compare terms for equality then.
-constant $etaContract is export = $Y(lambdaFn(
+constant $etaContract is export = $Y(-> &self { lambdaFn(
     'etaContract',
 q:to/ENDOFLAMBDA/,
     λself.λt.
@@ -124,40 +122,38 @@ q:to/ENDOFLAMBDA/,
             )
             (error (~ "unknown TTerm" (Term->Str t)))
 ENDOFLAMBDA
-    -> &self {
-        -> TTerm $t {
-            if convertTBool2P6Bool($is-ConstT($t)) {
-                $None
-            } elsif convertTBool2P6Bool($is-VarT($t)) {
-                $None
-            } elsif convertTBool2P6Bool($is-AppT($t)) {
-                my $func = $AppT2func($t);
-                my $arg  = $AppT2arg($t);
-                $_if( $is-etaReducible($func),
-                    -> $_ { $Some($AppT($Some2value(&self($func)), $arg)) },
-                    -> $_ { $_if( $is-etaReducible($arg),
-                                -> $_ { $Some($AppT($func, $Some2value(&self($arg)))) },
-                                -> $_ { $None }
-                      )
-                    }
-                )
-            } elsif convertTBool2P6Bool($is-LamT($t)) {
-                my $var  = $LamT2var($t);
-                my $body = $LamT2body($t);
-                $_if( $is-etaRedex($t),
-                    -> $_ { $Some($AppT2func($body)) },
-                    -> $_ { $_if( $is-etaReducible($body),
-                                -> $_ { $Some($LamT($var, $Some2value(&self($body)))) },
-                                -> $_ { $None }
-                      )
-                    }
-                )
-            } else {
-                die "fell off type-dispatch with type " ~ $t.WHAT.perl
-            }
+    -> TTerm $t {
+        if convertTBool2P6Bool($is-ConstT($t)) {
+            $None
+        } elsif convertTBool2P6Bool($is-VarT($t)) {
+            $None
+        } elsif convertTBool2P6Bool($is-AppT($t)) {
+            my $func = $AppT2func($t);
+            my $arg  = $AppT2arg($t);
+            $_if( $is-etaReducible($func),
+                -> $_ { $Some($AppT($Some2value(&self($func)), $arg)) },
+                -> $_ { $_if( $is-etaReducible($arg),
+                            -> $_ { $Some($AppT($func, $Some2value(&self($arg)))) },
+                            -> $_ { $None }
+                  )
+                }
+            )
+        } elsif convertTBool2P6Bool($is-LamT($t)) {
+            my $var  = $LamT2var($t);
+            my $body = $LamT2body($t);
+            $_if( $is-etaRedex($t),
+                -> $_ { $Some($AppT2func($body)) },
+                -> $_ { $_if( $is-etaReducible($body),
+                            -> $_ { $Some($LamT($var, $Some2value(&self($body)))) },
+                            -> $_ { $None }
+                  )
+                }
+            )
+        } else {
+            die "fell off type-dispatch with type " ~ $t.WHAT.perl
         }
     }
-));
+)});
 
 
 # etaReduce: η-contract until fixed-point
