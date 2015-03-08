@@ -4,6 +4,10 @@ use Lambda::P6Currying_common;
 module Lambda::P6Currying_Stats;
 
 
+# `wrapCurry` below will set this to type of role Curried from P6Currying
+my $CurriedType;
+my $isStatsEnabled = False;
+
 my class StatsEntry {
     has Int:D $.init-bogus is rw = 0;
     has Int:D $.init       is rw = 0;
@@ -33,7 +37,7 @@ my class PerFnStatsEntry is StatsEntry {
         sprintf('(%2dp, %6df, %2do, %4d+%2di%s%s)',
             self.part, self.full, self.over, self.init, self.init-bogus, 
             $no-key ?? '' !! ' ' ~ $!key,
-            $fn ?? #' ' ~ &!fn.^roles.grep({$_ ~~ none(Callable, Curried)}).map(*.perl).grep({$_ eq none <lambda Definition>}).join('+') ~
+            $fn ?? ' ' ~ &!fn.^roles.grep({$_ ~~ none(Callable, $CurriedType)}).map(*.perl).grep({$_ eq none <lambda Definition>}).join('+') ~
                     ':(' ~ typeof(&!fn) ~ ')'
                 !! ''
         );
@@ -62,7 +66,12 @@ my sub byKeyLen(Code $filter?) {
 }
 
 our sub curryStats is export {
-    my $result = 'CurryStats: ' ~ $globalStats;
+    my $result = 'CurryStats: ';
+    
+    return $result ~ 'n/a'
+        unless $isStatsEnabled;
+    
+    $result ~= $globalStats;
     
     $result ~= "\n";
     my @entries = entries({ 
@@ -124,23 +133,49 @@ sub stats(&f?) is export {
 }
 
 
-my sub statsWrapper_full($self, |rest) is export {
-    $globalStats.full++;
-    stats($self).full++;
-    nextsame; 
-};
-
-my sub statsWrapper_over($self, |rest) is export {
-    $globalStats.over++;
-    stats($self).over++;
-    nextsame;
-};
-
-my sub statsWrapper_part($self, |rest) is export {
+my sub statsWrapper_part($self, |rest) {
     $globalStats.part++;
     stats($self).part++;
     my $out = callsame;
     stats($out);    # make sure we have a PerFnStatsEntry for the partially applied fn
     return $out;
 };
+
+my sub statsWrapper_full($self, |rest) {
+    $globalStats.full++;
+    stats($self).full++;
+    nextsame; 
+};
+
+my sub statsWrapper_over($self, |rest) {
+    $globalStats.over++;
+    stats($self).over++;
+    nextsame;
+};
+
+my sub statsWrapper_curry(&f, |rest) {
+    if &f ~~ $CurriedType {
+        $globalStats.init-bogus++;
+        stats(&f).init-bogus++;
+        nextsame;
+    } else {
+        my &out = callsame;
+        $globalStats.init++;
+        stats(&out).init++;
+        return &out;
+    }
+}
+
+
+my sub wrapCurry(&curry, $curriedType) is export {
+    &curry.wrap(&statsWrapper_curry);
+    $CurriedType = $curriedType;
+    $isStatsEnabled = True;
+}
+
+my sub wrapApp(:&part!, :&full!, :&over!) is export {
+    &part.wrap(&statsWrapper_part);
+    &full.wrap(&statsWrapper_full);
+    &over.wrap(&statsWrapper_over);
+}
 

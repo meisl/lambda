@@ -1,9 +1,7 @@
 use v6;
 use Test;
-
 use Lambda::MaybeADT;
 use Lambda::TermADT;
-
 use Lambda::P6Currying;
 
 # module under test:

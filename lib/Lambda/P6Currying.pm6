@@ -16,6 +16,8 @@ sub EXPORT is cached {   # do some re-exporting
     return %out;
 }
 
+constant $STATS_ENABLED = True;   #   False;  #   
+
 
 role Curried {...}
 role P       {...}
@@ -46,11 +48,6 @@ my sub apply_part(&self, Mu $do, *@args) {
         when 5 { return { $do(|@args, $^b, $^c, $^d, $^e)  } does P[|@types] }
     }
 }
-
-
-&apply_comp.wrap(&statsWrapper_full);
-&apply_more.wrap(&statsWrapper_over);
-&apply_part.wrap(&statsWrapper_part);
 
 
 my role P[::T1, ::TR] does Curried[T1, TR] {
@@ -155,33 +152,28 @@ role Curried[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] {
 
 
 sub curry(&f -->Callable) is export {
-    if &f ~~ Curried {
-        stats.init-bogus++; # global stats
-        stats(&f).init-bogus++;
-        return &f;
-    }
+    return &f
+        if &f ~~ Curried;
 
-    stats.init++; # global stats
     my $sig = &f.signature;
-
     my @ps = $sig.params;
-
     die "cannot curry fn with optional/slurpy/named/capture or parcel parameters - signature: {$sig.perl}; fn: {&f.gist}"
         if @ps.map({$_.optional || $_.slurpy || $_.named || $_.capture || $_.parcel}).any;
-    
+
     try {
-        my $g = &f does Curried[|@(@ps.map(*.type), $sig.returns)];
-        #stats-init($g); # create entry and set field "init" to 1
-        stats($g).init++;
-        return $g;
+        return &f does Curried[|@(@ps.map(*.type), $sig.returns)];
     }
 
     my $arity = $sig.arity;
-
     die "cannot curry nullary fn - signature: {$sig.perl}; fn: {&f.gist}" 
         if $arity == 0;
-
     die "NYI: Fn with arity $arity (> 5) - signature: {$sig.perl}; fn: {&f.gist}"
         if $arity > 5;
 }
 
+
+if $STATS_ENABLED {
+    wrapCurry(&curry, Curried);
+    wrapApp(part => &apply_part, full => &apply_comp, over => &apply_more);
+
+}
