@@ -20,7 +20,7 @@ constant $STATS_ENABLED = True;   #   False;  #
 
 
 role Curried {...}
-role P       {...}
+role Partial {...}
 
 
 my proto sub apply_comp(|) {*}
@@ -42,35 +42,35 @@ my multi sub apply_more($self,              $f, @rest)            { ($f does Una
 my sub apply_part(&self, Mu $do, *@args) {
     my @types = types(&self, +@args);
     given @types {
-        when 2 { return { $do(|@args, $^b)                 } does P[|@types] }
-        when 3 { return { $do(|@args, $^b, $^c)            } does P[|@types] }
-        when 4 { return { $do(|@args, $^b, $^c, $^d)       } does P[|@types] }
-        when 5 { return { $do(|@args, $^b, $^c, $^d, $^e)  } does P[|@types] }
+        when 2 { return { $do(|@args, $^b)                 } does Partial[|@types] }
+        when 3 { return { $do(|@args, $^b, $^c)            } does Partial[|@types] }
+        when 4 { return { $do(|@args, $^b, $^c, $^d)       } does Partial[|@types] }
+        when 5 { return { $do(|@args, $^b, $^c, $^d, $^e)  } does Partial[|@types] }
     }
 }
 
 
-my role P[::T1, ::TR] does Curried[T1, TR] {
+my role Partial[::T1, ::TR] does Curried[T1, TR] {
     has Signature $!s;
     method signature { $!s //= EVAL ":(T1 -->TR)" }
 }
 
-my role P[::T1, ::T2, ::TR] does Curried[T1, T2, TR] {
+my role Partial[::T1, ::T2, ::TR] does Curried[T1, T2, TR] {
     has Signature $!s;
     method signature { $!s //= EVAL ":(T1, T2 -->TR)" }
 }
 
-my role P[::T1, ::T2, ::T3, ::TR] does Curried[T1, T2, T3, TR] {
+my role Partial[::T1, ::T2, ::T3, ::TR] does Curried[T1, T2, T3, TR] {
     has Signature $!s;
     method signature { $!s //= EVAL ":(T1, T2, T3 -->TR)" }
 }
 
-my role P[::T1, ::T2, ::T3, ::T4, ::TR] does Curried[T1, T2, T3, T4, TR] {
+my role Partial[::T1, ::T2, ::T3, ::T4, ::TR] does Curried[T1, T2, T3, T4, TR] {
     has Signature $!s;
     method signature { $!s //= EVAL ":(T1, T2, T3, T4 -->TR)" }
 }
 
-my role P[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] does Curried[T1, T2, T3, T4, T5, TR] {
+my role Partial[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] does Curried[T1, T2, T3, T4, T5, TR] {
     has Signature $!s;
     method signature { $!s //= EVAL ":(T1, T2, T3, T4, T5 -->TR)" }
 }
