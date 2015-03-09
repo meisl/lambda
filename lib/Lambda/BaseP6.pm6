@@ -1,52 +1,76 @@
 use v6;
 use Lambda::P6Currying;
 
+
+
 module Lambda::BaseP6;
 
 
+role Definition is export {
+    has Str $.name;
+
+    method symbol { $!name }
+    method Str  { $!name }
+    method gist { $!name }
+}
+
+
+my sub insistOnArityZeroThunk(Code:D $thunk) {
+    die "thunk must not expect any args, got  " ~ $thunk.perl
+        unless $thunk.arity == 0;
+    return $thunk;
+}
+
 role lambda is export {
-    has Str $.lambda;
+    has        $.init;
+    has Str:D  $!lambda;
+    has        &!makeLambda;
 
-    has &!makeLambda;
-
-    method lambda is default {
+    method lambda {
         $!lambda //= &!makeLambda();
     }
 
-    submethod BUILD(:$lambda) {  # MUST be named arg - and named exactly like this!! Doesn't work with positional arg, neither with multi submethod BUILD
-        if ($lambda.defined) {
-            if $lambda ~~ Str {
-                $!lambda = $lambda;
-                return self;
-            } elsif $lambda ~~ Callable {
-                die "thunk must not expect any args, got  " ~ $lambda.perl
-                    unless $lambda.arity == 0;
-                #warn "got code: {$lambda.perl}";
-                &!makeLambda = $lambda;
-                return self;
-            }
-        }
-        die "need a Str:D or a Callable:D, got " ~ $lambda.perl;
+    # roles with initialization value 
+    # - must have exactly one public attribute
+    # - are initialized by calling BUILD with one named arg, where the name of the arg is exactly the attribute's name
+    #   (compiler inserts this invocation at the call site, ie. where you say `does Foo(...)`)
+    # So, in order to pass multiple initialization values we can use a single (named) *parcel* parameter:
+    #
+    # Also note: strangely, we cannot use multi submethod BUILD, subsequently mixed-in roles will confuse which BUILD to call...(?!)
+
+    submethod BUILD(|args) {
+        return self._BUILD(|args);
     }
 
-    method Str {
-        self.?symbol // self.lambda;
+    multi method _BUILD(:$!init! is parcel (Str:D $lambda, Str $name?)) {
+        $!lambda = $lambda;
+        return self;
     }
+
+    multi method _BUILD(:$!init! is parcel (Code:D $lambda, Str $name?)) {
+        #warn "got code: {$lambda.perl}";
+        &!makeLambda = insistOnArityZeroThunk $lambda;
+        return self;
+    }
+
+    multi method _BUILD(Str:D :$init!) {
+        $!lambda = $init;
+        $!init = $($!lambda, Str);
+        return self;
+    }
+
+    multi method _BUILD(Code:D :$init!) {
+        &!makeLambda = insistOnArityZeroThunk $init;
+        $!init = $(Str, Str);
+        return self;
+    }
+
+
+    method symbol { $!init[1] } # TODO: remove method `symbol` from role lambda
+    method name { $!init[1] }
+    method Str  { $!init[1] // self.lambda }
     method gist { self.Str }
 }
-
-role Definition is export {
-    has Str $.symbol;
-
-    submethod BUILD(Str:D :$symbol) {
-        $!symbol = $symbol;
-    }
-
-    method name { $!symbol }
-    method Str  { $!symbol }
-    method gist { $!symbol }
-}
-
 
 
 sub lambdaFn(Str $symbol, $lambdaExpr, &f) is export {
@@ -62,11 +86,21 @@ sub lambdaFn(Str $symbol, $lambdaExpr, &f) is export {
         } else {
             $lx = { my $out = $lambdaExpr(); $out.substr(0, 1) eq '(' ?? $out !! "($out)" };
         }
-        $out does lambda(:lambda($lx));
-        $out does Definition(:$symbol)
-            if $symbol.defined;
+        
+        $out does lambda(($lx, $symbol));
         $out = curry($out);
         $out;
     }
 }
+
+#`{
+    multi sub trait_mod:<is>(Routine:D $f, Str:D :$LAMBDA!) is export {
+        lambdaFn(Str, $LAMBDA, $f);
+    }
+
+    my $f = -> Str $x, Int $y { $x x $y };
+    my $fl = lambdaFn('foo', 'λx.x', $f);
+    say $fl;
+}
+
 

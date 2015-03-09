@@ -16,7 +16,7 @@ sub EXPORT is cached {   # do some re-exporting
     return %out;
 }
 
-constant $STATS_ENABLED = True;   #   False;  #   
+constant $STATS_ENABLED = False;  #   True;   #   
 
 
 role Curried {...}
@@ -163,12 +163,14 @@ sub curry(&f -->Callable) is export {
     try {
         return &f does Curried[|@(@ps.map(*.type), $sig.returns)];
     }
+    my $err = $!;
 
     my $arity = $sig.arity;
     die "cannot curry nullary fn - signature: {$sig.perl}; fn: {&f.gist}" 
         if $arity == 0;
     die "NYI: Fn with arity $arity (> 5) - signature: {$sig.perl}; fn: {&f.gist}"
         if $arity > 5;
+    die $err;   # whatever it was
 }
 
 

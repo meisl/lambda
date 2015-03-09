@@ -13,17 +13,18 @@ plan 23;
 { # role lambda
     my $f;
     
-    lives_ok { $f = -> $x { $x } does lambda(:lambda('foo')) }, 'can pass a Str:D as initializer';
+    lives_ok { $f = -> $x { $x } does lambda('foo') }, 'can pass a single Str:D as initializer';
     is $f.lambda, 'foo', '.lambda returns the initializer value';
     is $f.Str, 'foo', '.Str returns what .lambda returns';
-    
-    dies_ok { -> $x { $x } does lambda(:lambda(Str)) }, 'cannot pass an undefined Str as initializer';
-    dies_ok { -> $x { $x } does lambda(:lambda(Callable)) }, 'cannot pass an undefined Callable as initializer';
-    dies_ok { -> $x { $x } does lambda(:lambda(-> $x { $x x 10 })) }, 'cannot pass a non-0-arity Callable as initializer';
+    say $f.WHICH;
+
+    dies_ok { -> $x { $x } does lambda(Str) }, 'cannot pass an undefined Str as initializer';
+    dies_ok { -> $x { $x } does lambda(Callable) }, 'cannot pass an undefined Callable as initializer';
+    dies_ok { -> $x { $x } does lambda(-> $x { $x x 10 }) }, 'cannot pass a non-0-arity Callable as initializer';
 
     my $callCount = 0;
     my &makeLambda = { $callCount++; 'bar' };
-    $f = -> $x { $x } does lambda(:lambda(&makeLambda));
+    $f = -> $x { $x } does lambda(&makeLambda);
     is $callCount, 0, 'block is NOT called until .lambda has been invoked';
     is $f.Str, 'bar', '.Str returns what .lambda returns';
     is $callCount, 1, 'block is called when .lambda is invoked the first time';
