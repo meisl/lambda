@@ -8,18 +8,21 @@ use Lambda::BaseP6;
 use Test::Util;
 use Test::Util_Lambda;
 
-plan 1;
+plan 4;
 
 
 { # does_ok, is_properLambdaFn
-    # use ::= to make it immutable
-    my $good ::= ( { 42 } but Definition(:symbol<good>) ) but lambda('λx.x');
-    my $bad  ::= ( { 23 } but Definition(:symbol<bad>)  ) but lambda('not.a.valid)lambda(term');
+    # using ::= to make it immutable
+    my $bad   ::= ( { 23 } but lambda('not.a.valid)lambda(term') ) but Definition<bad> ;
+    my $good1 ::= ( { 42 } but lambda('λx.x')                    ) but Definition<good1>;
+    my $good2 ::=   { 11 } but lambda(('λx.x', 'good2'));
 
-    is_properLambdaFn($good);
+    is_properLambdaFn($good1);
+    is_properLambdaFn($good1, 'good1');
+    is_properLambdaFn($good2);
+    is_properLambdaFn($good2, 'good2');
 
-    # don't know how to test this:
-    #is_properLambdaFn($bad);# - should fail with X::Lambda::SyntaxError;
+    # TODO: how to test this: `is_properLambdaFn($bad)`- should fail with X::Lambda::SyntaxError;
 }
 
 todo 'does_ok';

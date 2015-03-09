@@ -112,20 +112,21 @@ plan 46;
 
 { # Y combinator for unary fn
     my $stub-callCount = 0;
+    my $fact-symbol = 'fact';
+    my $fact-lambda = 'λself.λn.if (zero? n) 1 (* n (self (- n 1)))';
     my $fact-stub = -> &self {
         $stub-callCount++;
         lambdaFn(
-            'fact', 'λself.λn.if (zero? n) 1 (* n (self (- n 1)))',
+            $fact-symbol, $fact-lambda,
             -> Int $n {
                 $n == 0 ?? 1 !! $n * &self($n - 1)
             }
         );
     };
-    my $fact = $Y($fact-stub);
+    my $fact ::= $Y($fact-stub);    # ::= to make immutable
     
     subtest {
-        does_ok $fact, lambda, '(Y f)';
-        does_ok $fact, Definition, '(Y f)';
+        is_properLambdaFn($fact, $fact-symbol) or die;
         
         is $stub-callCount, 1, 'stub fn is called once by Y combinator';
         
