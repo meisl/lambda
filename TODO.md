@@ -35,8 +35,9 @@
 - [ ] #37 'λ-like function application in Perl6 (auto-currying & "over-application")':
   - [x] partial application simply by providing *fewer* arguments (yielding another applicable thing)
   - [x] "over-applying": since every application in λ yields something that can be applied again (except for constants and fns that return constants): providing *more* than the nomimal nr of args should simply apply the rest-args to the result of the first fn application
-  - [ ] do it via a role (rather than via an extra class), or maybe using Perl6's wrap mechanism (trickier!)
-  - [ ] do it efficiently, ie using as few indirections and as much compile-time binding and type-checking  as possible. -> overload/override `multi postcircumfix:<( )> (...)` with appropriate signatures (nest actual sig in extra parens `(` and `)`, since we'll be passed a capture); avoid introducing extra "internal" methods like "apply" etc.
+  - [x] do it via a role (rather than via an extra class), or 
+  - [ ] maybe use Perl6's wrap mechanism (trickier!; and only works with `Routine`s, not `Block`s)
+  - [x] do it efficiently, ie using as few indirections and as much compile-time binding and type-checking  as possible. -> overload/override `multi invoke (...)` with appropriate signatures (nest actual sig in extra parens `(` and `)`, since we'll be passed a capture); avoid introducing extra "internal" methods like "apply" etc.
 - [ ] #2 'add most simple symbol-lookup using "δ"'
 - [ ] #22 'add comments to syntax'
 - [ ] #30 'add literal string constants to the grammar, using " (double-quotes) and \ (back-slash) for escape'

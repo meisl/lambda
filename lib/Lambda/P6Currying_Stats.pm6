@@ -50,7 +50,7 @@ my constant $globalStats = StatsEntry.new;
 
 
 
-my sub fn2Str($fn) { $fn.name || $fn.?symbol // $fn.?lambda // typeof($fn) };
+my sub fn2Str($fn) { $fn.name || typeof($fn) };
 #my sub fn2Str($fn) { $fn.gist };
 
 
@@ -75,7 +75,7 @@ our sub curryStats is export {
     
     $result ~= "\n";
     my @entries = entries({ 
-        $_.fn.?symbol eq any('Term->source', '#true', '#false', <LamT AppT VarT [LamT] [AppT] [VarT] id I const K K^2 Y B cons nil _if _and _or>)
+        $_.fn.name eq any('Term->source', '#true', '#false', <LamT AppT VarT [LamT] [AppT] [VarT] id I const K K^2 Y B cons nil _if _and _or>)
     });
     my %classified = @entries\
         .classify(*.full);
@@ -87,8 +87,6 @@ our sub curryStats is export {
         #.map(-> $x { $x.WHAT })\
         .join("\n")
     ;
-    #$result ~= %fnStats.grep(-> (:$key, :$value) { $value<fn>.?symbol eq 'Term->source'}).perl;
-    #$result ~= @entries.map(-> (:$fn, *%_) { $fn.symbol ~ '|' ~ $fn.WHERE => %_ }).perl;
     $result ~= $s;
 
     $result;
@@ -112,9 +110,9 @@ sub stats-key(&f) {
     # If we do recursion with the generic Y, then every rec. calls yields a new fn.
     # So at least this is a case where we want to subsume several different fn objects
     # under one stats entry.
-    # Therefore we'll use the .symbol, if there is one.
+    # Therefore we'll use the .name, if there is one.
     # Note: for *anonymous recursive functions* there will still be a new entry for each recursive call.
-    &f.?symbol // stats-key-individual(&f);
+    &f.name || stats-key-individual(&f);
 }
 
 
