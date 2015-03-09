@@ -46,9 +46,9 @@ sub is_properLambdaFn(&f, Str $expectedName?) is export {
                 or $failed = True;
             isnt($s.perl, '""', 'its .name returns a non-empty Str:D')
                 or $failed = True;
-            #my $bt = Backtrace.new;
-            #$bt = $bt[$bt.last-index(*.file eq $?FILE)+1..*];
-            #note "WARNING: is_properLambdaFn called without \$expectedName on fn `$fStr`\n " ~ $bt;
+            my $bt = Backtrace.new;
+            $bt = $bt[$bt.last-index(*.file eq $?FILE)+1..*];
+            note "WARNING: is_properLambdaFn called without \$expectedName on fn `$fStr`\n " ~ $bt;
         }
 
         my $orig = &f;

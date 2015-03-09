@@ -1,35 +1,885 @@
 This is perl6 version 2014.12 built on MoarVM version 2014.12
-[23:02:01] t\Base.t ................... ok    22714 ms
-[23:02:24] t\BaseP6.t ................. ok    18716 ms
-[23:02:43] t\BetaReduction-perf.t ..... 3/5 # CurryStats: n/a
-# 10.8 sec consumed for ß-reduction
-[23:02:43] t\BetaReduction-perf.t ..... 5/5 # CurryStats: n/a
-[23:02:43] t\BetaReduction-perf.t ..... ok    34781 ms
-[23:03:18] t\BetaReduction.t .......... 120/131 # CurryStats: n/a
-[23:03:18] t\BetaReduction.t .......... ok    42687 ms
-[23:04:00] t\Boolean.t ................ ok    20015 ms
-[23:04:21] t\ChurchNat.t .............. ok    32247 ms
-[23:04:53] t\EtaReduction.t ........... ok    34359 ms
-[23:05:27] t\FreeVars.t ............... ok    26109 ms
-[23:05:53] t\Grammar.t ................ ok    19259 ms
-[23:06:13] t\LambdaInP6.t ............. ok    20640 ms
-[23:06:33] t\Misc.t ................... ok    32465 ms
-[23:07:06] t\P6Currying.t ............. ok     7140 ms
-[23:07:13] t\Substitution.t ........... ok    31474 ms
-[23:07:44] t\VarT.t ................... ok    19078 ms
-[23:08:03] t\ADTs\ADT_auto.t .......... ok     5576 ms
-[23:08:09] t\ADTs\ListADT-cXr.t ....... ok    22021 ms
-[23:08:31] t\ADTs\ListADT-extra.t ..... ok    29515 ms
-[23:09:01] t\ADTs\ListADT.t ........... ok    20275 ms
-[23:09:21] t\ADTs\Maybe-extra.t ....... ok    19125 ms
-[23:09:40] t\ADTs\MaybeADT.t .......... ok    20405 ms
-[23:10:00] t\ADTs\PairADT.t ........... ok    20375 ms
-[23:10:21] t\ADTs\Streams.t ........... ok    14497 ms
-[23:10:35] t\ADTs\TermADT-extra.t ..... ok    28734 ms
-[23:11:04] t\ADTs\TermADT.t ........... ok    24958 ms
-[23:11:29] t\Conversion\Conversion.t .. ok    15828 ms
-[23:11:45] t\Test\Util.t .............. ok    18521 ms
-[23:12:03]
+[23:33:07] t\Base.t ................... WARNING: is_properLambdaFn called without $expectedName on fn `id`
+   in block  at t\Base.t:16
+   in block <unit> at t\Base.t:15
+   in any <unit-outer> at t\Base.t:1
+
+[23:33:07] t\Base.t ................... 1/46 WARNING: is_properLambdaFn called without $expectedName on fn `const`
+   in block  at t\Base.t:25
+   in block <unit> at t\Base.t:24
+   in any <unit-outer> at t\Base.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `B`
+   in block  at t\Base.t:41
+   in block <unit> at t\Base.t:40
+   in any <unit-outer> at t\Base.t:1
+
+[23:33:07] t\Base.t ................... 13/46 WARNING: is_properLambdaFn called without $expectedName on fn `C`
+   in block  at t\Base.t:62
+   in block <unit> at t\Base.t:61
+   in any <unit-outer> at t\Base.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `W`
+   in block  at t\Base.t:88
+   in block <unit> at t\Base.t:87
+   in any <unit-outer> at t\Base.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `Y`
+   in block  at t\Base.t:110
+   in block <unit> at t\Base.t:109
+   in any <unit-outer> at t\Base.t:1
+
+[23:33:07] t\Base.t ................... 24/46 WARNING: is_properLambdaFn called without $expectedName on fn `findFP`
+   in block  at t\Base.t:211
+   in block <unit> at t\Base.t:210
+   in any <unit-outer> at t\Base.t:1
+
+[23:33:07] t\Base.t ................... 26/46 WARNING: is_properLambdaFn called without $expectedName on fn `p2->1`
+   in block  at t\Base.t:254
+   in block <unit> at t\Base.t:253
+   in any <unit-outer> at t\Base.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `p2->2`
+   in block  at t\Base.t:255
+   in block <unit> at t\Base.t:253
+   in any <unit-outer> at t\Base.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `p3->1`
+   in block  at t\Base.t:262
+   in block <unit> at t\Base.t:261
+   in any <unit-outer> at t\Base.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `p3->2`
+   in block  at t\Base.t:263
+   in block <unit> at t\Base.t:261
+   in any <unit-outer> at t\Base.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `p3->3`
+   in block  at t\Base.t:264
+   in block <unit> at t\Base.t:261
+   in any <unit-outer> at t\Base.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `p4->1`
+   in block  at t\Base.t:272
+   in block <unit> at t\Base.t:271
+   in any <unit-outer> at t\Base.t:1
+
+[23:33:07] t\Base.t ................... 39/46 WARNING: is_properLambdaFn called without $expectedName on fn `p4->2`
+   in block  at t\Base.t:273
+   in block <unit> at t\Base.t:271
+   in any <unit-outer> at t\Base.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `p4->3`
+   in block  at t\Base.t:274
+   in block <unit> at t\Base.t:271
+   in any <unit-outer> at t\Base.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `p4->4`
+   in block  at t\Base.t:275
+   in block <unit> at t\Base.t:271
+   in any <unit-outer> at t\Base.t:1
+
+[23:33:07] t\Base.t ................... ok    24333 ms
+[23:33:31] t\BaseP6.t ................. 4/23 WARNING: is_properLambdaFn called without $expectedName on fn `?`
+   in block  at t\BaseP6.t:41
+   in block <unit> at t\BaseP6.t:38
+   in any <unit-outer> at t\BaseP6.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `?`
+   in block  at t\BaseP6.t:54
+   in block <unit> at t\BaseP6.t:38
+   in any <unit-outer> at t\BaseP6.t:1
+
+[23:33:31] t\BaseP6.t ................. ok    20574 ms
+[23:33:52] t\BetaReduction-perf.t ..... 3/5 # CurryStats: n/a
+# 12 sec consumed for ß-reduction
+[23:33:52] t\BetaReduction-perf.t ..... 5/5 # CurryStats: n/a
+[23:33:52] t\BetaReduction-perf.t ..... ok    39187 ms
+[23:34:31] t\BetaReduction.t .......... WARNING: is_properLambdaFn called without $expectedName on fn `betaRedex?`
+   in block  at t\BetaReduction.t:45
+   in block <unit> at t\BetaReduction.t:44
+   in any <unit-outer> at t\BetaReduction.t:1
+
+[23:34:31] t\BetaReduction.t .......... 10/131 WARNING: is_properLambdaFn called without $expectedName on fn `betaReducible?`
+   in block  at t\BetaReduction.t:92
+   in block <unit> at t\BetaReduction.t:91
+   in any <unit-outer> at t\BetaReduction.t:1
+
+[23:34:31] t\BetaReduction.t .......... 46/131 WARNING: is_properLambdaFn called without $expectedName on fn `betaContract`
+   in block  at t\BetaReduction.t:143
+   in block <unit> at t\BetaReduction.t:142
+   in any <unit-outer> at t\BetaReduction.t:1
+
+[23:34:31] t\BetaReduction.t .......... 78/131 WARNING: is_properLambdaFn called without $expectedName on fn `betaReduce`
+   in block  at t\BetaReduction.t:225
+   in block <unit> at t\BetaReduction.t:224
+   in any <unit-outer> at t\BetaReduction.t:1
+
+[23:34:31] t\BetaReduction.t .......... 104/131 WARNING: is_properLambdaFn called without $expectedName on fn `alpha-problematic-vars`
+   in block  at t\BetaReduction.t:286
+   in block <unit> at t\BetaReduction.t:285
+   in any <unit-outer> at t\BetaReduction.t:1
+
+[23:34:31] t\BetaReduction.t .......... 113/131 WARNING: is_properLambdaFn called without $expectedName on fn `alpha-needy-terms`
+   in block  at t\BetaReduction.t:331
+   in block <unit> at t\BetaReduction.t:330
+   in any <unit-outer> at t\BetaReduction.t:1
+
+[23:34:31] t\BetaReduction.t .......... 128/131 # CurryStats: n/a
+[23:34:31] t\BetaReduction.t .......... ok    46843 ms
+[23:35:18] t\Boolean.t ................ WARNING: is_properLambdaFn called without $expectedName on fn `Bool->Str`
+   in block  at t\Boolean.t:18
+   in block <unit> at t\Boolean.t:17
+   in any <unit-outer> at t\Boolean.t:1
+
+[23:35:18] t\Boolean.t ................ 1/67 WARNING: is_properLambdaFn called without $expectedName on fn `#true`
+   in block  at t\Boolean.t:28
+   in block <unit> at t\Boolean.t:27
+   in any <unit-outer> at t\Boolean.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `#false`
+   in block  at t\Boolean.t:40
+   in block <unit> at t\Boolean.t:39
+   in any <unit-outer> at t\Boolean.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `not`
+   in block  at t\Boolean.t:52
+   in block <unit> at t\Boolean.t:51
+   in any <unit-outer> at t\Boolean.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `_and`
+   in block  at t\Boolean.t:72
+   in block <unit> at t\Boolean.t:71
+   in any <unit-outer> at t\Boolean.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `_or`
+   in block  at t\Boolean.t:86
+   in block <unit> at t\Boolean.t:85
+   in any <unit-outer> at t\Boolean.t:1
+
+[23:35:18] t\Boolean.t ................ 34/67 WARNING: is_properLambdaFn called without $expectedName on fn `_eqv`
+   in block  at t\Boolean.t:100
+   in block <unit> at t\Boolean.t:99
+   in any <unit-outer> at t\Boolean.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `_xor`
+   in block  at t\Boolean.t:114
+   in block <unit> at t\Boolean.t:113
+   in any <unit-outer> at t\Boolean.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `_if`
+   in block  at t\Boolean.t:128
+   in block <unit> at t\Boolean.t:127
+   in any <unit-outer> at t\Boolean.t:1
+
+[23:35:18] t\Boolean.t ................ ok    21375 ms
+[23:35:39] t\ChurchNat.t .............. WARNING: is_properLambdaFn called without $expectedName on fn `?0`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:43
+   in block <unit> at t\ChurchNat.t:42
+   in any <unit-outer> at t\ChurchNat.t:1
+
+[23:35:39] t\ChurchNat.t .............. 1/87 WARNING: is_properLambdaFn called without $expectedName on fn `?1`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:44
+   in block <unit> at t\ChurchNat.t:42
+   in any <unit-outer> at t\ChurchNat.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `?2`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:45
+   in block <unit> at t\ChurchNat.t:42
+   in any <unit-outer> at t\ChurchNat.t:1
+
+[23:35:39] t\ChurchNat.t .............. 3/87 WARNING: is_properLambdaFn called without $expectedName on fn `?3`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:46
+   in block <unit> at t\ChurchNat.t:42
+   in any <unit-outer> at t\ChurchNat.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `?4`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:47
+   in block <unit> at t\ChurchNat.t:42
+   in any <unit-outer> at t\ChurchNat.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `?5`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:48
+   in block <unit> at t\ChurchNat.t:42
+   in any <unit-outer> at t\ChurchNat.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `?6`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:49
+   in block <unit> at t\ChurchNat.t:42
+   in any <unit-outer> at t\ChurchNat.t:1
+
+[23:35:39] t\ChurchNat.t .............. 7/87 WARNING: is_properLambdaFn called without $expectedName on fn `?7`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:50
+   in block <unit> at t\ChurchNat.t:42
+   in any <unit-outer> at t\ChurchNat.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `?8`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:51
+   in block <unit> at t\ChurchNat.t:42
+   in any <unit-outer> at t\ChurchNat.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `?9`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:52
+   in block <unit> at t\ChurchNat.t:42
+   in any <unit-outer> at t\ChurchNat.t:1
+
+[23:35:39] t\ChurchNat.t .............. 10/87 WARNING: is_properLambdaFn called without $expectedName on fn `?0?`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:69
+   in block <unit> at t\ChurchNat.t:68
+   in any <unit-outer> at t\ChurchNat.t:1
+
+[23:35:39] t\ChurchNat.t .............. 30/87 WARNING: is_properLambdaFn called without $expectedName on fn `?succ`
+   in block  at t\ChurchNat.t:32
+   in sub subtest at lib/Test.pm:197
+   in sub isFormal at t\ChurchNat.t:38
+   in block  at t\ChurchNat.t:84
+   in block <unit> at t\ChurchNat.t:83
+   in any <unit-outer> at t\ChurchNat.t:1
+
+[23:35:39] t\ChurchNat.t .............. ok    36964 ms
+[23:36:16] t\EtaReduction.t ........... WARNING: is_properLambdaFn called without $expectedName on fn `etaRedex?`
+   in block  at t\EtaReduction.t:20
+   in block <unit> at t\EtaReduction.t:19
+   in any <unit-outer> at t\EtaReduction.t:1
+
+[23:36:16] t\EtaReduction.t ........... 11/80 WARNING: is_properLambdaFn called without $expectedName on fn `etaReducible?`
+   in block  at t\EtaReduction.t:66
+   in block <unit> at t\EtaReduction.t:65
+   in any <unit-outer> at t\EtaReduction.t:1
+
+[23:36:16] t\EtaReduction.t ........... 39/80 WARNING: is_properLambdaFn called without $expectedName on fn `etaContract`
+   in block  at t\EtaReduction.t:112
+   in block <unit> at t\EtaReduction.t:111
+   in any <unit-outer> at t\EtaReduction.t:1
+
+[23:36:16] t\EtaReduction.t ........... 57/80 WARNING: is_properLambdaFn called without $expectedName on fn `etaReduce`
+   in block  at t\EtaReduction.t:207
+   in block <unit> at t\EtaReduction.t:206
+   in any <unit-outer> at t\EtaReduction.t:1
+
+[23:36:16] t\EtaReduction.t ........... ok    37515 ms
+[23:36:54] t\FreeVars.t ............... WARNING: is_properLambdaFn called without $expectedName on fn `free?`
+   in block  at t\FreeVars.t:48
+   in block <unit> at t\FreeVars.t:47
+   in any <unit-outer> at t\FreeVars.t:1
+
+[23:36:54] t\FreeVars.t ............... 1/88 WARNING: is_properLambdaFn called without $expectedName on fn `free-under?`
+   in block  at t\FreeVars.t:75
+   in block <unit> at t\FreeVars.t:74
+   in any <unit-outer> at t\FreeVars.t:1
+
+[23:36:54] t\FreeVars.t ............... 41/88 WARNING: is_properLambdaFn called without $expectedName on fn `free-var`
+   in block  at t\FreeVars.t:155
+   in block <unit> at t\FreeVars.t:154
+   in any <unit-outer> at t\FreeVars.t:1
+
+[23:36:54] t\FreeVars.t ............... 61/88 WARNING: is_properLambdaFn called without $expectedName on fn `free-vars`
+   in block  at t\FreeVars.t:173
+   in block <unit> at t\FreeVars.t:172
+   in any <unit-outer> at t\FreeVars.t:1
+
+[23:36:54] t\FreeVars.t ............... ok    28015 ms
+[23:37:22] t\Grammar.t ................ ok    20431 ms
+[23:37:42] t\LambdaInP6.t ............. ok    22515 ms
+[23:38:05] t\Misc.t ................... ok    36475 ms
+[23:38:41] t\P6Currying.t ............. ok     8187 ms
+[23:38:50] t\Substitution.t ........... WARNING: is_properLambdaFn called without $expectedName on fn `subst`
+   in block  at t\Substitution.t:41
+   in block <unit> at t\Substitution.t:40
+   in any <unit-outer> at t\Substitution.t:1
+
+[23:38:50] t\Substitution.t ........... 1/41 WARNING: is_properLambdaFn called without $expectedName on fn `subst-seq`
+   in block  at t\Substitution.t:81
+   in block <unit> at t\Substitution.t:80
+   in any <unit-outer> at t\Substitution.t:1
+
+[23:38:50] t\Substitution.t ........... 24/41 WARNING: is_properLambdaFn called without $expectedName on fn `subst-with-alpha`
+   in block  at t\Substitution.t:142
+   in block <unit> at t\Substitution.t:141
+   in any <unit-outer> at t\Substitution.t:1
+
+[23:38:50] t\Substitution.t ........... ok    34060 ms
+[23:39:24] t\VarT.t ................... 1/28 WARNING: is_properLambdaFn called without $expectedName on fn `fresh-var-for`
+   in block  at t\VarT.t:34
+   in block <unit> at t\VarT.t:33
+   in any <unit-outer> at t\VarT.t:1
+
+[23:39:24] t\VarT.t ................... ok    20703 ms
+[23:39:44] t\ADTs\ADT_auto.t .......... ok     6021 ms
+[23:39:50] t\ADTs\ListADT-cXr.t ....... WARNING: is_properLambdaFn called without $expectedName on fn `car`
+   in block  at t\ADTs\ListADT-cXr.t:16
+   in block <unit> at t\ADTs\ListADT-cXr.t:15
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+[23:39:50] t\ADTs\ListADT-cXr.t ....... 1/55 WARNING: is_properLambdaFn called without $expectedName on fn `cdr`
+   in block  at t\ADTs\ListADT-cXr.t:31
+   in block <unit> at t\ADTs\ListADT-cXr.t:30
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `caar`
+   in block  at t\ADTs\ListADT-cXr.t:46
+   in block <unit> at t\ADTs\ListADT-cXr.t:45
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cadr`
+   in block  at t\ADTs\ListADT-cXr.t:61
+   in block <unit> at t\ADTs\ListADT-cXr.t:60
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cdar`
+   in block  at t\ADTs\ListADT-cXr.t:76
+   in block <unit> at t\ADTs\ListADT-cXr.t:75
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cddr`
+   in block  at t\ADTs\ListADT-cXr.t:88
+   in block <unit> at t\ADTs\ListADT-cXr.t:87
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+[23:39:50] t\ADTs\ListADT-cXr.t ....... 27/55 WARNING: is_properLambdaFn called without $expectedName on fn `caaar`
+   in block  at t\ADTs\ListADT-cXr.t:104
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `caadr`
+   in block  at t\ADTs\ListADT-cXr.t:105
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cadar`
+   in block  at t\ADTs\ListADT-cXr.t:106
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `caddr`
+   in block  at t\ADTs\ListADT-cXr.t:107
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cdaar`
+   in block  at t\ADTs\ListADT-cXr.t:108
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cdadr`
+   in block  at t\ADTs\ListADT-cXr.t:109
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cddar`
+   in block  at t\ADTs\ListADT-cXr.t:110
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cdddr`
+   in block  at t\ADTs\ListADT-cXr.t:111
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+[23:39:50] t\ADTs\ListADT-cXr.t ....... 39/55 WARNING: is_properLambdaFn called without $expectedName on fn `caaaar`
+   in block  at t\ADTs\ListADT-cXr.t:113
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `caaadr`
+   in block  at t\ADTs\ListADT-cXr.t:114
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `caadar`
+   in block  at t\ADTs\ListADT-cXr.t:115
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `caaddr`
+   in block  at t\ADTs\ListADT-cXr.t:116
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cadaar`
+   in block  at t\ADTs\ListADT-cXr.t:117
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cadadr`
+   in block  at t\ADTs\ListADT-cXr.t:118
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `caddar`
+   in block  at t\ADTs\ListADT-cXr.t:119
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cadddr`
+   in block  at t\ADTs\ListADT-cXr.t:120
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+[23:39:50] t\ADTs\ListADT-cXr.t ....... 47/55 WARNING: is_properLambdaFn called without $expectedName on fn `cdaaar`
+   in block  at t\ADTs\ListADT-cXr.t:121
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cdaadr`
+   in block  at t\ADTs\ListADT-cXr.t:122
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cdadar`
+   in block  at t\ADTs\ListADT-cXr.t:123
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cdaddr`
+   in block  at t\ADTs\ListADT-cXr.t:124
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cddaar`
+   in block  at t\ADTs\ListADT-cXr.t:125
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cddadr`
+   in block  at t\ADTs\ListADT-cXr.t:126
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cdddar`
+   in block  at t\ADTs\ListADT-cXr.t:127
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `cddddr`
+   in block  at t\ADTs\ListADT-cXr.t:128
+   in block <unit> at t\ADTs\ListADT-cXr.t:103
+   in any <unit-outer> at t\ADTs\ListADT-cXr.t:1
+
+[23:39:50] t\ADTs\ListADT-cXr.t ....... ok    24132 ms
+[23:40:15] t\ADTs\ListADT-extra.t ..... WARNING: is_properLambdaFn called without $expectedName on fn `foldl`
+   in block  at t\ADTs\ListADT-extra.t:19
+   in block <unit> at t\ADTs\ListADT-extra.t:18
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 3/79 WARNING: is_properLambdaFn called without $expectedName on fn `reverse`
+   in block  at t\ADTs\ListADT-extra.t:47
+   in block  at src/gen/m-CORE.setting:8467
+   in method reify at src/gen/m-CORE.setting:8374
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8259
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `foldr-rec`
+   in block  at t\ADTs\ListADT-extra.t:48
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `foldr-rec`
+   in block  at t\ADTs\ListADT-extra.t:49
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 6/79 WARNING: is_properLambdaFn called without $expectedName on fn `foldr-iter`
+   in block  at t\ADTs\ListADT-extra.t:50
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `reverse`
+   in block  at t\ADTs\ListADT-extra.t:47
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 9/79 WARNING: is_properLambdaFn called without $expectedName on fn `foldr-rec`
+   in block  at t\ADTs\ListADT-extra.t:48
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `foldr-rec`
+   in block  at t\ADTs\ListADT-extra.t:49
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `foldr-iter`
+   in block  at t\ADTs\ListADT-extra.t:50
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 12/79 WARNING: is_properLambdaFn called without $expectedName on fn `reverse`
+   in block  at t\ADTs\ListADT-extra.t:47
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `foldr-iter`
+   in block  at t\ADTs\ListADT-extra.t:48
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 15/79 WARNING: is_properLambdaFn called without $expectedName on fn `foldr-rec`
+   in block  at t\ADTs\ListADT-extra.t:49
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `foldr-iter`
+   in block  at t\ADTs\ListADT-extra.t:50
+   in block  at src/gen/m-CORE.setting:8452
+   in method reify at src/gen/m-CORE.setting:8375
+   in block  at src/gen/m-CORE.setting:8288
+   in block  at src/gen/m-CORE.setting:8284
+   in method reify at src/gen/m-CORE.setting:8260
+   in method gimme at src/gen/m-CORE.setting:8775
+   in method sink at src/gen/m-CORE.setting:9267
+   in block <unit> at t\ADTs\ListADT-extra.t:46
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 18/79 WARNING: is_properLambdaFn called without $expectedName on fn `reverse`
+   in block  at t\ADTs\ListADT-extra.t:81
+   in block <unit> at t\ADTs\ListADT-extra.t:80
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `length`
+   in block  at t\ADTs\ListADT-extra.t:102
+   in block <unit> at t\ADTs\ListADT-extra.t:101
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 30/79 WARNING: is_properLambdaFn called without $expectedName on fn `append`
+   in block  at t\ADTs\ListADT-extra.t:118
+   in block <unit> at t\ADTs\ListADT-extra.t:117
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 44/79 WARNING: is_properLambdaFn called without $expectedName on fn `map`
+   in block  at t\ADTs\ListADT-extra.t:152
+   in block <unit> at t\ADTs\ListADT-extra.t:151
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `map-foldr`
+   in block  at t\ADTs\ListADT-extra.t:153
+   in block <unit> at t\ADTs\ListADT-extra.t:151
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `map-rec`
+   in block  at t\ADTs\ListADT-extra.t:154
+   in block <unit> at t\ADTs\ListADT-extra.t:151
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `map-iter`
+   in block  at t\ADTs\ListADT-extra.t:155
+   in block <unit> at t\ADTs\ListADT-extra.t:151
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 50/79 WARNING: is_properLambdaFn called without $expectedName on fn `filter`
+   in block  at t\ADTs\ListADT-extra.t:172
+   in block <unit> at t\ADTs\ListADT-extra.t:171
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 53/79 WARNING: is_properLambdaFn called without $expectedName on fn `exists`
+   in block  at t\ADTs\ListADT-extra.t:193
+   in block <unit> at t\ADTs\ListADT-extra.t:192
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... 66/79 WARNING: is_properLambdaFn called without $expectedName on fn `first`
+   in block  at t\ADTs\ListADT-extra.t:215
+   in block <unit> at t\ADTs\ListADT-extra.t:214
+   in any <unit-outer> at t\ADTs\ListADT-extra.t:1
+
+[23:40:15] t\ADTs\ListADT-extra.t ..... ok    33062 ms
+[23:40:48] t\ADTs\ListADT.t ........... ok    21750 ms
+[23:41:09] t\ADTs\Maybe-extra.t ....... WARNING: is_properLambdaFn called without $expectedName on fn `Maybe->valueWithDefault`
+   in block  at t\ADTs\Maybe-extra.t:19
+   in block <unit> at t\ADTs\Maybe-extra.t:18
+   in any <unit-outer> at t\ADTs\Maybe-extra.t:1
+
+[23:41:09] t\ADTs\Maybe-extra.t ....... 1/19 WARNING: is_properLambdaFn called without $expectedName on fn `Maybe-lift-in`
+   in block  at t\ADTs\Maybe-extra.t:34
+   in block <unit> at t\ADTs\Maybe-extra.t:33
+   in any <unit-outer> at t\ADTs\Maybe-extra.t:1
+
+[23:41:09] t\ADTs\Maybe-extra.t ....... ok    20611 ms
+[23:41:30] t\ADTs\MaybeADT.t .......... WARNING: is_properLambdaFn called without $expectedName on fn `Maybe->Str`
+   in block  at t\ADTs\MaybeADT.t:20
+   in block <unit> at t\ADTs\MaybeADT.t:19
+   in any <unit-outer> at t\ADTs\MaybeADT.t:1
+
+[23:41:30] t\ADTs\MaybeADT.t .......... 1/60 WARNING: is_properLambdaFn called without $expectedName on fn `None`
+   in block  at t\ADTs\MaybeADT.t:30
+   in block <unit> at t\ADTs\MaybeADT.t:29
+   in any <unit-outer> at t\ADTs\MaybeADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `None?`
+   in block  at t\ADTs\MaybeADT.t:39
+   in block <unit> at t\ADTs\MaybeADT.t:38
+   in any <unit-outer> at t\ADTs\MaybeADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `Some`
+   in block  at t\ADTs\MaybeADT.t:67
+   in block <unit> at t\ADTs\MaybeADT.t:66
+   in any <unit-outer> at t\ADTs\MaybeADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `Some?`
+   in block  at t\ADTs\MaybeADT.t:108
+   in block <unit> at t\ADTs\MaybeADT.t:107
+   in any <unit-outer> at t\ADTs\MaybeADT.t:1
+
+[23:41:30] t\ADTs\MaybeADT.t .......... 46/60 WARNING: is_properLambdaFn called without $expectedName on fn `Some->value`
+   in block  at t\ADTs\MaybeADT.t:133
+   in block <unit> at t\ADTs\MaybeADT.t:132
+   in any <unit-outer> at t\ADTs\MaybeADT.t:1
+
+[23:41:30] t\ADTs\MaybeADT.t .......... ok    23078 ms
+[23:41:53] t\ADTs\PairADT.t ........... WARNING: is_properLambdaFn called without $expectedName on fn `Pair->Str`
+   in block  at t\ADTs\PairADT.t:16
+   in block <unit> at t\ADTs\PairADT.t:15
+   in any <unit-outer> at t\ADTs\PairADT.t:1
+
+[23:41:53] t\ADTs\PairADT.t ........... 1/34 WARNING: is_properLambdaFn called without $expectedName on fn `Pair`
+   in block  at t\ADTs\PairADT.t:26
+   in block <unit> at t\ADTs\PairADT.t:25
+   in any <unit-outer> at t\ADTs\PairADT.t:1
+
+[23:41:53] t\ADTs\PairADT.t ........... 4/34 WARNING: is_properLambdaFn called without $expectedName on fn `Pair->fst`
+   in block  at t\ADTs\PairADT.t:50
+   in block <unit> at t\ADTs\PairADT.t:49
+   in any <unit-outer> at t\ADTs\PairADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `Pair->snd`
+   in block  at t\ADTs\PairADT.t:73
+   in block <unit> at t\ADTs\PairADT.t:72
+   in any <unit-outer> at t\ADTs\PairADT.t:1
+
+[23:41:53] t\ADTs\PairADT.t ........... ok    22176 ms
+[23:42:15] t\ADTs\Streams.t ........... ok    15046 ms
+[23:42:30] t\ADTs\TermADT-extra.t ..... WARNING: is_properLambdaFn called without $expectedName on fn `Term->source`
+   in block  at t\ADTs\TermADT-extra.t:38
+   in block <unit> at t\ADTs\TermADT-extra.t:37
+   in any <unit-outer> at t\ADTs\TermADT-extra.t:1
+
+[23:42:30] t\ADTs\TermADT-extra.t ..... 4/159 WARNING: is_properLambdaFn called without $expectedName on fn `Term->children`
+   in block  at t\ADTs\TermADT-extra.t:67
+   in block <unit> at t\ADTs\TermADT-extra.t:66
+   in any <unit-outer> at t\ADTs\TermADT-extra.t:1
+
+[23:42:30] t\ADTs\TermADT-extra.t ..... 22/159 WARNING: is_properLambdaFn called without $expectedName on fn `selfApp?`
+   in block  at t\ADTs\TermADT-extra.t:98
+   in block <unit> at t\ADTs\TermADT-extra.t:97
+   in any <unit-outer> at t\ADTs\TermADT-extra.t:1
+
+[23:42:30] t\ADTs\TermADT-extra.t ..... 39/159 WARNING: is_properLambdaFn called without $expectedName on fn `selfAppOfVar?`
+   in block  at t\ADTs\TermADT-extra.t:124
+   in block <unit> at t\ADTs\TermADT-extra.t:123
+   in any <unit-outer> at t\ADTs\TermADT-extra.t:1
+
+[23:42:30] t\ADTs\TermADT-extra.t ..... 90/159 WARNING: is_properLambdaFn called without $expectedName on fn `??`
+   in block  at t\ADTs\TermADT-extra.t:190
+   in block <unit> at t\ADTs\TermADT-extra.t:189
+   in any <unit-outer> at t\ADTs\TermADT-extra.t:1
+
+[23:42:30] t\ADTs\TermADT-extra.t ..... 121/159 WARNING: is_properLambdaFn called without $expectedName on fn `O?`
+   in block  at t\ADTs\TermADT-extra.t:217
+   in block <unit> at t\ADTs\TermADT-extra.t:216
+   in any <unit-outer> at t\ADTs\TermADT-extra.t:1
+
+[23:42:30] t\ADTs\TermADT-extra.t ..... 142/159 WARNING: is_properLambdaFn called without $expectedName on fn `Term->size`
+   in block  at t\ADTs\TermADT-extra.t:246
+   in block <unit> at t\ADTs\TermADT-extra.t:245
+   in any <unit-outer> at t\ADTs\TermADT-extra.t:1
+
+[23:42:30] t\ADTs\TermADT-extra.t ..... ok    31020 ms
+[23:43:01] t\ADTs\TermADT.t ........... 13/147 WARNING: is_properLambdaFn called without $expectedName on fn `Term->Str`
+   in block  at t\ADTs\TermADT.t:85
+   in block <unit> at t\ADTs\TermADT.t:84
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `VarT`
+   in block  at t\ADTs\TermADT.t:147
+   in block <unit> at t\ADTs\TermADT.t:146
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+[23:43:01] t\ADTs\TermADT.t ........... 26/147 WARNING: is_properLambdaFn called without $expectedName on fn `VarT?`
+   in block  at t\ADTs\TermADT.t:164
+   in block <unit> at t\ADTs\TermADT.t:163
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `VarT->name`
+   in block  at t\ADTs\TermADT.t:188
+   in block <unit> at t\ADTs\TermADT.t:187
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `AppT`
+   in block  at t\ADTs\TermADT.t:212
+   in block <unit> at t\ADTs\TermADT.t:211
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+[23:43:01] t\ADTs\TermADT.t ........... 52/147 WARNING: is_properLambdaFn called without $expectedName on fn `AppT?`
+   in block  at t\ADTs\TermADT.t:231
+   in block <unit> at t\ADTs\TermADT.t:230
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `AppT->func`
+   in block  at t\ADTs\TermADT.t:255
+   in block <unit> at t\ADTs\TermADT.t:254
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+[23:43:01] t\ADTs\TermADT.t ........... 70/147 WARNING: is_properLambdaFn called without $expectedName on fn `AppT->arg`
+   in block  at t\ADTs\TermADT.t:276
+   in block <unit> at t\ADTs\TermADT.t:275
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `LamT`
+   in block  at t\ADTs\TermADT.t:300
+   in block <unit> at t\ADTs\TermADT.t:299
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `LamT?`
+   in block  at t\ADTs\TermADT.t:321
+   in block <unit> at t\ADTs\TermADT.t:320
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+[23:43:01] t\ADTs\TermADT.t ........... 96/147 WARNING: is_properLambdaFn called without $expectedName on fn `LamT->var`
+   in block  at t\ADTs\TermADT.t:344
+   in block <unit> at t\ADTs\TermADT.t:343
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `LamT->body`
+   in block  at t\ADTs\TermADT.t:365
+   in block <unit> at t\ADTs\TermADT.t:364
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `VarT`
+   in block  at t\ADTs\TermADT.t:389
+   in block <unit> at t\ADTs\TermADT.t:388
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+[23:43:01] t\ADTs\TermADT.t ........... 121/147 WARNING: is_properLambdaFn called without $expectedName on fn `ConstT?`
+   in block  at t\ADTs\TermADT.t:406
+   in block <unit> at t\ADTs\TermADT.t:405
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+WARNING: is_properLambdaFn called without $expectedName on fn `ConstT->value`
+   in block  at t\ADTs\TermADT.t:430
+   in block <unit> at t\ADTs\TermADT.t:429
+   in any <unit-outer> at t\ADTs\TermADT.t:1
+
+[23:43:01] t\ADTs\TermADT.t ........... ok    26984 ms
+[23:43:28] t\Conversion\Conversion.t .. ok    18163 ms
+[23:43:47] t\Test\Util.t .............. WARNING: is_properLambdaFn called without $expectedName on fn `good1`
+   in block  at t\Test\Util.t:20
+   in block <unit> at t\Test\Util.t:14
+   in any <unit-outer> at t\Test\Util.t:1
+
+[23:43:47] t\Test\Util.t .............. 1/4 WARNING: is_properLambdaFn called without $expectedName on fn `good2`
+   in block  at t\Test\Util.t:22
+   in block <unit> at t\Test\Util.t:14
+   in any <unit-outer> at t\Test\Util.t:1
+
+[23:43:47] t\Test\Util.t .............. ok    19562 ms
+[23:44:06]
 All tests successful.
-Files=26, Tests=1408, 602 wallclock secs ( 0.78 usr +  0.17 sys =  0.95 CPU)
+Files=26, Tests=1405, 659 wallclock secs ( 0.75 usr +  0.17 sys =  0.92 CPU)
 Result: PASS

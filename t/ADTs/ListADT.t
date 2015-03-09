@@ -9,32 +9,27 @@ use Lambda::Boolean;
 # module under test:
 use Lambda::ListADT;
 
-plan 39;
+plan 33;
 
 
 # ->Str -----------------------------------------------------------------------
 
 { # List->Str
-    is_properLambdaFn($List2Str);
-
-    is $List2Str.symbol, 'List->Str', '$List.symbol';
-    is $List2Str.Str,    'List->Str', '$List.Str';
+    is_properLambdaFn $List2Str, 'List->Str';
 }
 
 
 # nil -------------------------------------------------------------------------
 
 { # ctor nil
-    is_properLambdaFn($nil);
+    is_properLambdaFn $nil, 'nil';
 
-    is $nil.symbol,         'nil', '$nil.symbol';
-    is $nil.Str,            'nil', '$nil.Str';
     does_ok $nil, TList,    'nil', :msg('nil is a TList in itself');
     is $List2Str($nil),     'nil', "($List2Str $nil)";
 }
 
 { # predicate nil?, List2Str, .Str
-    is_properLambdaFn($is-nil);
+    is_properLambdaFn $is-nil, 'nil?';
 
     is $is-nil($nil), $true, '(nil? nil)';
     
@@ -62,10 +57,8 @@ plan 39;
 # cons ------------------------------------------------------------------------
 
 { # ctor cons
-    is_properLambdaFn($cons);
+    is_properLambdaFn $cons, 'cons';
 
-    is $cons.symbol,        'cons', '$cons.symbol';
-    is $cons.Str,           'cons', '$cons.Str';
     doesnt_ok $cons, TList, 'cons', :msg('cons is NOT a TList in itself');
     dies_ok { $List2Str($cons) }, "($List2Str $cons) yields error";
 
