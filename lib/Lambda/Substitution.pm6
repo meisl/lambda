@@ -25,11 +25,12 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                     my $for  = $fst($head);
                     my $what = $snd($head);
                     $_if( convertP6Bool2TBool($VarT2name($for) eq $VarT2name($t)),
-                        -> $_ { my $out = &self($what, $tail);
-                             $_if( $is-Some($out),
-                                 -> $_ { $out },
-                                 -> $_ { $Some($what) }
-                             )
+                        -> $_ {
+                            my $out = &self($what, $tail);
+                            case-Maybe($out,
+                                None => { $Some($what) },
+                                Some => -> Mu { $out }
+                            )
                         },
                         -> $_ { &self($t, $tail) }
                     )
@@ -40,8 +41,14 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                     $_if( $_and($is-None($newFunc), $is-None($newArg)),
                         -> $_ { $None },
                         -> $_ { $Some( $AppT(
-                             $_if( $is-Some($newFunc), -> $_ { $Some2value($newFunc) }, -> $_ { $oldFunc } ),
-                             $_if( $is-Some($newArg),  -> $_ { $Some2value($newArg)  }, -> $_ { $oldArg  } )
+                             case-Maybe($newFunc,
+                                Some => $pi1o1,
+                                None => $oldFunc
+                             ),
+                             case-Maybe($newArg,
+                                Some => $pi1o1,
+                                None => $oldArg
+                             )
                           ))
                         }
                     )
@@ -55,9 +62,9 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                           $ss
                         )
                     );
-                    $_if( $is-None($body),
-                        -> $_ { $None },
-                        -> $_ { $Some($LamT($tVar, $Some2value($body))) }
+                    case-Maybe($body,
+                        None => $None,
+                        Some => -> $bodyVal { $Some($LamT($tVar, $bodyVal)) }
                     )
                 }
             )}

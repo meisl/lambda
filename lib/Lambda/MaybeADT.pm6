@@ -16,11 +16,11 @@ role TMaybe is export {
 
 # pattern-matching ------------------------------------------------------------
 
-multi sub case-Maybe(TMaybe:D $maybe,
+multi sub case-Maybe(TMaybe:D $instance,
     :None($onNone)!,
     :Some($onSome)!
 ) is export {
-    $maybe($onNone, $onSome);
+    $instance($onNone, $onSome);
 }
 
 multi sub case-Maybe(|args) {
