@@ -10,14 +10,13 @@ use Lambda::ListADT;
 use Lambda::TermADT;
 
 use Lambda::Conversion::Bool-conv;
-use Lambda::LambdaGrammar;
 
 use Lambda::P6Currying;
 
 # module under test:
 use Lambda::BetaReduction;
 
-plan 131;
+plan 119;
 
 
 my $g = $VarT('g');
@@ -42,10 +41,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
 
 
 { # predicate betaRedex?
-    is_properLambdaFn($is-betaRedex);
-
-    is $is-betaRedex.symbol, 'betaRedex?', '$is-betaRedex.symbol';
-    is $is-betaRedex.Str,    'betaRedex?', '$is-betaRedex.Str';
+    is_properLambdaFn($is-betaRedex, 'betaRedex?');
 
     my sub is_betaRedex(*@tests) {
         for @tests -> $test {
@@ -89,10 +85,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
 }
 
 { # predicate betaReducible?
-    is_properLambdaFn($is-betaReducible);
-
-    is $is-betaReducible.symbol, 'betaReducible?', '$is-betaReducible.symbol';
-    is $is-betaReducible.Str,    'betaReducible?', '$is-betaReducible.Str';
+    is_properLambdaFn($is-betaReducible, 'betaReducible?');
 
     my sub is_betaReducible(*@tests) {
         for @tests -> $test {
@@ -140,10 +133,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
 
 
 { # function betaContract
-    is_properLambdaFn($betaContract);
-
-    is $betaContract.symbol, 'betaContract', '$betaContract.symbol';
-    is $betaContract.Str,    'betaContract', '$betaContract.Str';
+    is_properLambdaFn($betaContract, 'betaContract');
 
     my sub betaContractsTo(*@tests) {
         for @tests -> $test {
@@ -222,10 +212,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
 
 
 { # function betaReduce
-    is_properLambdaFn($betaReduce);
-
-    is $betaReduce.symbol, 'betaReduce', '$betaReduce.symbol';
-    is $betaReduce.Str,    'betaReduce', '$betaReduce.Str';
+    is_properLambdaFn($betaReduce, 'betaReduce');
 
     my sub betaReducesTo(*@tests) {
         for @tests -> $test {
@@ -283,10 +270,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
 
 
 { #alpha-problematic-vars
-    is_properLambdaFn($alpha-problematic-vars);
-
-    is $alpha-problematic-vars.symbol, 'alpha-problematic-vars', '$alpha-problematic-vars.symbol';
-    is $alpha-problematic-vars.Str,    'alpha-problematic-vars', '$alpha-problematic-vars.Str';
+    is_properLambdaFn($alpha-problematic-vars, 'alpha-problematic-vars');
 
     my $arg  = $AppT($AppT($AppT($x, $y), $z), $AppT($u, $v));  # (x y z (u v))
     my $lamX = $LamT($x, $AppT($AppT($z, $y), $x));             # λx.z y x
@@ -328,10 +312,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
 
 
 { #alpha-needy-terms
-    is_properLambdaFn($alpha-needy-terms);
-
-    is $alpha-needy-terms.symbol, 'alpha-needy-terms', '$alpha-needy-terms.symbol';
-    is $alpha-needy-terms.Str,    'alpha-needy-terms', '$alpha-needy-terms.Str';
+    is_properLambdaFn($alpha-needy-terms, 'alpha-needy-terms');
 
     my $arg  = $AppT($AppT($AppT($x, $y), $z), $AppT($u, $v));  # (x y z (u v))
     my $lamX = $LamT($x, $AppT($AppT($z, $y), $x));             # λx.z y x

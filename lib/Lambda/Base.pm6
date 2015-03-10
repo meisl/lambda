@@ -4,15 +4,15 @@ use Lambda::BaseP6;
 module Lambda::Base;
 
 
-constant $id is export = lambdaFn(
-    'id', 'λx.x',
+constant $I is export = lambdaFn(
+    'I', 'λx.x',
     -> $x { $x }
 );
-constant $I is export := $id;
+constant $id is export := $I;
 
 
-constant $const is export = lambdaFn(
-    'const', 'λx.λ_.x',
+constant $K is export = lambdaFn(
+    'K', 'λx.λ_.x',
     -> $x {
         my $lambdaExpr = $x === $I
             ?? 'λ_.λx.x'
@@ -23,8 +23,8 @@ constant $const is export = lambdaFn(
         )
     }
 );
-constant $K is export := $const;
-constant $K1 is export := $const;
+constant $const is export := $K;
+constant $K1    is export := $K;
 
 constant $K2 is export = lambdaFn(
     'K^2', 'λx.λ_.λ_.x',

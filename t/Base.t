@@ -9,36 +9,35 @@ use Lambda::BaseP6;
 
 # module under test:
 use Lambda::Base;
-plan 46;
+plan 49;
 
 
-{ # id, aka I
-    is_properLambdaFn $id;
-    ok $I === $id, '$I is a synonym for $id';
+{ # I, aka id
+    is_properLambdaFn $I, 'I';
+    ok $id === $I, '$id is a synonym for $I';
 
-    is $id("x"), "x", 'id("x")';
-    is $id(5), 5, 'id(5)';
-    is $id($id), $id, 'id(id)';
+    is $I("x"), "x", 'I("x")';
+    is $I(5), 5, 'I(5)';
+    is $I($I), $I, 'I(I)';
 }
 
-{ # const, aka K
-    is_properLambdaFn $const;
-    ok $K === $const, '$K is a synonym for $const';
+{ # K, aka const
+    is_properLambdaFn $K, 'K';
+    ok $const === $K, '$const is a synonym for $K';
 
-    is $const('x')(5),  'x',        'const("x")(5)';
-    is $const(5)(23),   5,          'const(5)(23)';
-    is $const(42).Str,  '(λ_.42)',  'const(42).Str';
-    is $const($id)(23), $id,        'const(id)(23)';
-    is $const($id).Str, "(λ_.λx.x)", 'const($id).Str';
+    is $K('x')(5), 'x',         'K("x")(5)';
+    is $K(5)(23),  5,           'K(5)(23)';
+    is $K(42).Str, '(λ_.42)',   'K(42).Str';
+    is $K($I)(23), $I,          'K(I)(23)';
+    is $K($I).Str, "(λ_.λx.x)", 'K(I).Str';
 
-    #is $const("x", 5), "x", 'const("x", 5)';
-    #is $const(5, 23), 5, 'const(5, 23)';
-    #is $const($id, 23), $id, 'const(id, 23)';
-
+    is $K("x", 5), "x", 'K("x", 5)';
+    is $K(5, 23),  5,   'K(5, 23)';
+    is $K($I, 23), $I,  'K(I, 23)';
 }
 
 { # compose, aka B
-    is_properLambdaFn $B;
+    is_properLambdaFn $B, 'B';
     ok $compose === $B, '$compose is a synonym for $B';
 
     my @seen = @();
@@ -59,7 +58,7 @@ plan 46;
 }
 
 { # swap-args, aka C
-    is_properLambdaFn $C;
+    is_properLambdaFn $C, 'C';
     ok $swap-args === $C, '$swap-args is a synonym for $C';
 
     my @seen = @();
@@ -85,7 +84,7 @@ plan 46;
 }
 
 { # double-arg, aka W
-    is_properLambdaFn $W;
+    is_properLambdaFn $W, 'W';
     ok $double-arg === $W, '$double-arg is a synonym for W';
 
     my @seen = @();
@@ -107,7 +106,7 @@ plan 46;
 }
 
 { # Y combinator
-    is_properLambdaFn $Y;
+    is_properLambdaFn $Y, 'Y';
 }
 
 { # Y combinator for unary fn
@@ -208,7 +207,7 @@ plan 46;
 
 
 { # findFP
-   is_properLambdaFn($findFP);
+   is_properLambdaFn $findFP, 'findFP';
 
     my $arbiter;
     my $function;
@@ -251,17 +250,17 @@ plan 46;
 # projections -----------------------------------------------------------------
 
 { # projections of 2
-    is_properLambdaFn $pi1o2;
-    is_properLambdaFn $pi2o2;
+    is_properLambdaFn $pi1o2, 'π2->1';
+    is_properLambdaFn $pi2o2, 'π2->2';
 
     is $pi1o2(23, 42), 23, 'π2->1 returns 1st arg';
     is $pi2o2(23, 42), 42, 'π2->2 returns 2nd arg';
 }
 
 { # projections of 3
-    is_properLambdaFn $pi1o3;
-    is_properLambdaFn $pi2o3;
-    is_properLambdaFn $pi3o3;
+    is_properLambdaFn $pi1o3, 'π3->1';
+    is_properLambdaFn $pi2o3, 'π3->2';
+    is_properLambdaFn $pi3o3, 'π3->3';
 
     is $pi1o3(23, 42, 4711),   23, 'π3->1 returns 1st arg';
     is $pi2o3(23, 42, 4711),   42, 'π3->2 returns 2nd arg';
@@ -269,10 +268,10 @@ plan 46;
 }
 
 { # projections of 4
-    is_properLambdaFn $pi1o4;
-    is_properLambdaFn $pi2o4;
-    is_properLambdaFn $pi3o4;
-    is_properLambdaFn $pi4o4;
+    is_properLambdaFn $pi1o4, 'π4->1';
+    is_properLambdaFn $pi2o4, 'π4->2';
+    is_properLambdaFn $pi3o4, 'π4->3';
+    is_properLambdaFn $pi4o4, 'π4->4';
 
     is $pi1o4(23, 42, 4711, "foo"),    23, 'π4->1 returns 1st arg';
     is $pi2o4(23, 42, 4711, "foo"),    42, 'π4->2 returns 2nd arg';

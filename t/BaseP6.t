@@ -7,7 +7,7 @@ use Test::Util_Lambda;
 # module under test:
 use Lambda::BaseP6;
 
-plan 23;
+plan 21;
 
 
 { # role lambda
@@ -38,8 +38,7 @@ plan 23;
 { # lambdaFn
 
     my $omega0 ::= lambdaFn( 'ω', 'λx.x x', -> &x { &x(&x) } );
-    is_properLambdaFn($omega0);
-    is $omega0.symbol, 'ω', 'ω.symbol';
+    is_properLambdaFn($omega0, 'ω');
     is $omega0.lambda, '(λx.x x)', 'parens are put around automatically if there aren\'t any' or die;
     
     my $callCount = 0;
@@ -51,9 +50,7 @@ plan 23;
     is $omega.lambda, '(λx.x x)', '.lambda returns the same result on subsequent invocations';
     is $callCount, 1, '.lambda DOES NOT call the thunk again on subsequent invocations';
 
-    is_properLambdaFn($omega);
-    is $omega.symbol, 'ω', 'ω.symbol';
-
+    is_properLambdaFn($omega, 'ω');
 }
 
 
