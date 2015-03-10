@@ -16,7 +16,7 @@ constant $Pair is export = lambdaFn(
     'Pair', 'λx.λy.λprj.prj x y',
     -> $x, $y {
         lambdaFn(
-            Str, { 'Pair ' ~ ($x.?symbol // $x.?lambda // $x.perl) ~ ' ' ~ ($y.?symbol // $y.?lambda // $y.perl) },
+            'TPair@Pair', { 'Pair ' ~ ($x.?symbol // $x.?lambda // $x.perl) ~ ' ' ~ ($y.?symbol // $y.?lambda // $y.perl) },
             -> &prj { &prj($x, $y) }
         ) does TPair
     }

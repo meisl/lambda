@@ -4,8 +4,9 @@ use Lambda::P6Currying_common;
 module Lambda::P6Currying_Stats;
 
 
-# `wrapCurry` below will set this to type of role Curried from P6Currying
+# `wrapCurry` below will set this to the type of roles Curried/Partial from P6Currying
 my $CurriedType;
+my $PartialType;
 my $isStatsEnabled = False;
 
 my class StatsEntry {
@@ -37,7 +38,7 @@ my class PerFnStatsEntry is StatsEntry {
         sprintf('(%2dp, %6df, %2do, %4d+%2di%s%s)',
             self.part, self.full, self.over, self.init, self.init-bogus, 
             $no-key ?? '' !! ' ' ~ $!key,
-            $fn ?? ' ' ~ &!fn.^roles.grep({$_ ~~ none(Callable, $CurriedType)}).map(*.perl).grep({$_ eq none <lambda Definition>}).join('+') ~
+            $fn ?? ' ' ~ &!fn.^roles.grep({$_ ~~ none(Callable, $CurriedType, $PartialType)}).map(*.perl).grep({$_ eq none <lambda Definition>}).join('+') ~
                     ':(' ~ typeof(&!fn) ~ ')'
                 !! ''
         );
@@ -77,6 +78,7 @@ our sub curryStats is export {
     my @entries = entries({ 
         False
         || ($_.full >= 50)
+        || ($_.fn ~~ $PartialType)
         || ($_.fn.name // '') eq any('Term->source', 'Term-eq?', 'Str-eq?', '#true', '#false', <LamT AppT VarT [LamT] [AppT] [VarT] id I const K K^2 Y B cons nil _if _and _or not>)
         || ($_.fn.name // '').substr(0, 5) eq 'subst'
     });
@@ -93,29 +95,6 @@ our sub curryStats is export {
     $result ~= $s;
 
     $result;
-}
-
-
-sub stats-key-individual(&f) {
-    #&f.gist;                # not working because type changes (roles may be added later) & dangerous because .gist might *apply* the fn again ~> inf regression
-    #&f.do.WHICH.Str;        # not working if objects are moved by GC
-    #&f.WHICH.Str;           # not working because type changes (ObjAt, roles may be added later)
-    #&f.WHICH.WHERE.Str;     # not working if objects are moved by GC (real mem-address of ObjAt)
-    my $addr = &f.WHICH.Str.substr(&f.WHAT.perl.Str.chars + 1);    # this is only the (pseudo) "mem-address" of the ObjAt, guaranteed to stay the same
-
-    #$addr = sprintf("%08X", $addr.Int);
-    $addr;
-}
-
-sub stats-key(&f) {
-    #stats-key-individual(&f);
-
-    # If we do recursion with the generic Y, then every rec. calls yields a new fn.
-    # So at least this is a case where we want to subsume several different fn objects
-    # under one stats entry.
-    # Therefore we'll use the .name, if there is one.
-    # Note: for *anonymous recursive functions* there will still be a new entry for each recursive call.
-    &f.name || stats-key-individual(&f);
 }
 
 
@@ -168,9 +147,10 @@ my sub statsWrapper_curry(&f, |rest) {
 }
 
 
-my sub wrapCurry(&curry, $curriedType) is export {
+my sub wrapCurry(&curry, $curriedType, $partialType) is export {
     &curry.wrap(&statsWrapper_curry);
     $CurriedType = $curriedType;
+    $PartialType = $partialType;
     $isStatsEnabled = True;
 }
 
