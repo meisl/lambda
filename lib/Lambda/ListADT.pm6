@@ -261,7 +261,7 @@ constant $filter is export = lambdaFn(
         -> $x, TList $acc -->TList{
             _if_( &p($x),
                 { $cons($x, $acc) },
-                { $acc }
+                $acc
             )
         },
         $nil,

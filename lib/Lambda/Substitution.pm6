@@ -2,6 +2,7 @@ use v6;
 
 use Lambda::Base;
 use Lambda::BaseP6;
+use Lambda::String;
 use Lambda::Boolean;
 use Lambda::MaybeADT;
 use Lambda::TermADT;
@@ -22,25 +23,25 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
             cons => -> $head, TList:D $tail { case-Term($t,
                 ConstT => $K1None,
                 VarT   => -> $tName {   # TODO
-                    my $for  = $fst($head);
-                    my $what = $snd($head);
-                    $_if( convertP6Bool2TBool($VarT2name($for) eq $VarT2name($t)),
-                        -> $_ {
-                            my $out = &self($what, $tail);
+                    my $forName = $VarT2name($fst($head));
+                    _if_($Str-eq($forName, $tName),
+                        {
+                            my $what = $snd($head);
+                            my $out  = &self($what, $tail);
                             case-Maybe($out,
                                 None => { $Some($what) },
                                 Some => -> Mu { $out }
                             )
                         },
-                        -> $_ { &self($t, $tail) }
+                        { &self($t, $tail) }
                     )
                 },
                 AppT   => -> $oldFunc, $oldArg {   # TODO
                     my $newFunc = &self($oldFunc, $ss);
                     my $newArg  = &self($oldArg,  $ss);
-                    $_if( $_and($is-None($newFunc), $is-None($newArg)),
-                        -> $_ { $None },
-                        -> $_ { $Some( $AppT(
+                    _if_( $_and($is-None($newFunc), $is-None($newArg)),
+                        $None,
+                        { $Some( $AppT(
                              case-Maybe($newFunc,
                                 Some => $pi1o1,
                                 None => $oldFunc
@@ -53,12 +54,13 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                         }
                     )
                 },
-                LamT   => -> $tVar, $tBody {   # TODO
+                LamT   => -> $tVar, $tBody {
                     my $body = &self(
                         $tBody,
+                        # TODO: add TList fn `except` = λp.filter (not p) and use it here
                         $filter( # kick out substs for our binder since there
                                  # won't be free occurrances of it in our body
-                          -> $x { convertP6Bool2TBool($VarT2name($fst($x)) ne $VarT2name($tVar)) },
+                          -> $substPair { $not($Term-eq($fst($substPair), $tVar)) },
                           $ss
                         )
                     );

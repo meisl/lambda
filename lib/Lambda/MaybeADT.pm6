@@ -140,7 +140,7 @@ constant $Maybe2valueWithDefault is export = lambdaFn(
     -> TMaybe:D $m, $dflt {
         case-Maybe($m,
             None => $dflt,
-            Some => $I
+            Some => $pi1o1
         )
     }
 );
