@@ -245,73 +245,125 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
 # predicates ------------------------------------------------------------------
 
 # VarT?: Term -> Bool
-constant $is-VarT is export = $on-VarT($K1true, $K1false) does Definition('VarT?');
+#constant $is-VarT is export = $on-VarT($K1true, $K1false) does Definition('VarT?');
+constant $is-VarT is export = lambdaFn(
+    'VarT?', 'not yet implemented', 
+    -> TTerm:D $t { case-Term($t,
+        VarT   => $K1true,
+        AppT   => $K2false,
+        LamT   => $K2false,
+        ConstT => $K1false
+    )}
+);
 
 # AppT?: Term -> Bool
-constant $is-AppT is export = $on-AppT($K2true, $K1false) does Definition('AppT?');
+#constant $is-AppT is export = $on-AppT($K2true, $K1false) does Definition('AppT?');
+constant $is-AppT is export = lambdaFn(
+    'AppT?', 'not yet implemented', 
+    -> TTerm:D $t { case-Term($t,
+        VarT   => $K1false,
+        AppT   => $K2true,
+        LamT   => $K2false,
+        ConstT => $K1false
+    )}
+);
 
 # LamT?: Term -> Bool
-constant $is-LamT is export = $on-LamT($K2true, $K1false) does Definition('LamT?');
+#constant $is-LamT is export = $on-LamT($K2true, $K1false) does Definition('LamT?');
+constant $is-LamT is export = lambdaFn(
+    'LamT?', 'not yet implemented', 
+    -> TTerm:D $t { case-Term($t,
+        VarT   => $K1false,
+        AppT   => $K2false,
+        LamT   => $K2true,
+        ConstT => $K1false
+    )}
+);
 
 # ConstT?: Term -> Bool
-constant $is-ConstT is export = $on-ConstT($K1true, $K1false) does Definition('ConstT?');
+#constant $is-ConstT is export = $on-ConstT($K1true, $K1false) does Definition('ConstT?');
+constant $is-ConstT is export = lambdaFn(
+    'ConstT?', 'not yet implemented', 
+    -> TTerm:D $t { case-Term($t,
+        VarT   => $K1false,
+        AppT   => $K2false,
+        LamT   => $K2false,
+        ConstT => $K1true
+    )}
+);
 
 
 # projections -----------------------------------------------------------------
+my constant $prj-error = lambdaFn(
+    'prj-error', 'λfnName.λterm.error (~ (~ (~ "cannot apply " fnName) " to ") (Term->Str term)))',
+    -> Str $fnName, TTerm $term { die "cannot apply $fnName to $term" }
+);
 
 # VarT->name: Term -> Str
-constant $VarT2name is export = $on-VarT(
-    $pi1o1,
-    lambdaFn(
-        Str, 'λterm.error (~ "cannot apply VarT->name to " (Term->Str term))',
-        -> TTerm $term { die "cannot apply VarT->name to $term" }
-    )
-) does Definition('VarT->name');
+constant $VarT2name is export = lambdaFn(
+    'VarT->name', 'not yet implemented',
+    -> TTerm:D $t -->Str{ case-Term($t, 
+        VarT   => $pi1o1,
+        AppT   => -> Mu, Mu { $prj-error('VarT->name', $t) },
+        LamT   => -> Mu, Mu { $prj-error('VarT->name', $t) },
+        ConstT => -> Mu     { $prj-error('VarT->name', $t) }
+    ) }
+);
 
 # AppT->func: Term -> Term
-constant $AppT2func is export = $on-AppT(
-    $pi1o2,
-    lambdaFn(
-        Str, 'λterm.error (~ "cannot apply AppT->func to " (Term->Str term))',
-        -> TTerm $term { die "cannot apply AppT->func to $term" }
-    )
-) does Definition('AppT->func');
+constant $AppT2func is export = lambdaFn(
+    'AppT->func', 'not yet implemented',
+    -> TTerm:D $t -->TTerm{ case-Term($t, 
+        VarT   => -> Mu     { $prj-error('AppT->func', $t) },
+        AppT   => $pi1o2,
+        LamT   => -> Mu, Mu { $prj-error('AppT->func', $t) },
+        ConstT => -> Mu     { $prj-error('AppT->func', $t) }
+    ) }
+);
 
 # AppT->arg: Term -> Term
-constant $AppT2arg is export = $on-AppT(
-    $pi2o2,
-    lambdaFn(
-        Str, 'λterm.error (~ "cannot apply AppT->arg to " (Term->Str term))',
-        -> TTerm $term { die "cannot apply AppT->arg to $term" }
-    )
-) does Definition('AppT->arg');
+constant $AppT2arg is export = lambdaFn(
+    'AppT->arg', 'not yet implemented',
+    -> TTerm:D $t -->TTerm{ case-Term($t, 
+        VarT   => -> Mu     { $prj-error('AppT->arg', $t) },
+        AppT   => $pi2o2,
+        LamT   => -> Mu, Mu { $prj-error('AppT->arg', $t) },
+        ConstT => -> Mu     { $prj-error('AppT->arg', $t) }
+    ) }
+);
 
 # LamT->var: Term -> Term
-constant $LamT2var is export = $on-LamT(
-    $pi1o2,
-    lambdaFn(
-        Str, 'λterm.error (~ "cannot apply LamT->var to " (Term->Str term))',
-        -> TTerm $term { die "cannot apply LamT->var to $term" }
-    )
-) does Definition('LamT->var');
+constant $LamT2var is export = lambdaFn(
+    'LamT->var', 'not yet implemented',
+    -> TTerm:D $t -->TTerm{ case-Term($t, 
+        VarT   => -> Mu     { $prj-error('LamT->var', $t) },
+        AppT   => -> Mu, Mu { $prj-error('LamT->var', $t) },
+        LamT   => $pi1o2,
+        ConstT => -> Mu     { $prj-error('LamT->var', $t) }
+    ) }
+);
 
 # LamT->body: Term -> Term
-constant $LamT2body is export = $on-LamT(
-    $pi2o2,
-    lambdaFn(
-        Str, 'λterm.error (~ "cannot apply LamT->body to " (Term->Str term))',
-        -> TTerm $term { die "cannot apply LamT->body to $term" }
-    )
-) does Definition('LamT->body');
+constant $LamT2body is export = lambdaFn(
+    'LamT->body', 'not yet implemented',
+    -> TTerm:D $t -->TTerm{ case-Term($t, 
+        VarT   => -> Mu     { $prj-error('LamT->body', $t) },
+        AppT   => -> Mu, Mu { $prj-error('LamT->body', $t) },
+        LamT   => $pi2o2,
+        ConstT => -> Mu     { $prj-error('LamT->body', $t) }
+    ) }
+);
 
 # ConstT->value: Term -> *
-constant $ConstT2value is export = $on-ConstT(
-    $pi1o1,
-    lambdaFn(
-        Str, 'λterm.error (~ "cannot apply ConstT->value to " (Term->Str term))',
-        -> TTerm $term { die "cannot apply ConstT->value to $term" }
-    )
-) does Definition('ConstT->value');
+constant $ConstT2value is export = lambdaFn(
+    'ConstT->value', 'not yet implemented',
+    -> TTerm:D $t -->Any{ case-Term($t, 
+        VarT   => -> Mu     { $prj-error('ConstT->value', $t) },
+        AppT   => -> Mu, Mu { $prj-error('ConstT->value', $t) },
+        LamT   => -> Mu, Mu { $prj-error('ConstT->value', $t) },
+        ConstT => $pi1o1
+    ) }
+);
 
 
 # ->Str -----------------------------------------------------------------------
