@@ -32,7 +32,7 @@ multi sub case-Maybe(|args) {
 constant $None is export = lambdaFn(
     'None', 'λonNone.λonSome.onNone',
     -> $onNone, $onSome {
-        ($onNone ~~ Block) && ($onNone.signature.arity == 0) 
+        ($onNone ~~ Block) && ($onNone.arity == 0) 
         ?? $onNone()    # simulate lazy evaluation by passing a thunk (needed only for ctors of arity 0)
         !! $onNone
     }

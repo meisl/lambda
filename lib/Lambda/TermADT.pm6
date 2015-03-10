@@ -192,28 +192,38 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
                     ConstT => $K1false
                 )
             },
+
             AppT => -> TTerm $sFunc, TTerm $sArg {
                 case-Term($t,
                     VarT => $K1false,
                     AppT => -> TTerm $tFunc, TTerm $tArg {
-                        $_and(
-                            &self($sFunc, $tFunc),
-                            &self($sArg,  $tArg)
+                        $_if(&self($sFunc, $tFunc),
+                            -> Mu { &self($sArg,  $tArg) },
+                            $K1false
                         )
+                        #$_and(
+                        #    &self($sFunc, $tFunc),
+                        #    &self($sArg,  $tArg),
+                        #)
                     },
                     LamT => $K2false,
                     ConstT => $K1false
                 )
             },
+
             LamT => -> TTerm $sVar, TTerm $sBody {
                 case-Term($t,
                     VarT => $K1false,
                     AppT => $K2false,
                     LamT => -> TTerm $tVar, TTerm $tBody {
-                        $_and(
-                            &self($sVar,  $tVar),
-                            &self($sBody, $tBody)
+                        $_if(&self($sVar, $tVar),
+                            -> Mu { &self($sBody,  $tBody) },
+                            $K1false
                         )
+                        #$_and(
+                        #    &self($sVar,  $tVar),
+                        #    &self($sBody, $tBody)
+                        #)
                     },
                     ConstT => $K1false
                 )
