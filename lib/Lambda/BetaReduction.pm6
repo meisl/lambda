@@ -240,15 +240,15 @@ ENDOFLAMBDA
                                                 -> $v { $is-free-under($funcVar, $v, $funcBody) },
                                                 $free-vars($arg)
                                             );
-                                            $_if( $is-nil($alpha-problematic),
-                                                -> $_ { my $substituted-func = $subst($funcBody, $arg, $funcVar);
+                                            case-List($alpha-problematic,
+                                                nil  => { my $substituted-func = $subst($funcBody, $arg, $funcVar);
                                                     my $isSame = $is-None($substituted-func);
                                                     $_if( $isSame,   # TODO: use Maybe-or or something like that
                                                         -> $_ { $Some($funcBody) },
                                                         -> $_ { $substituted-func }
                                                     )
                                                 },
-                                                -> $_ { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
+                                                cons => -> $head, TList:D $tail { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
                                             )
                                     }
                                 );

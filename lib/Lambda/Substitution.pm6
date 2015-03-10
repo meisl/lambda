@@ -62,62 +62,59 @@ q:to/ENDOFLAMBDA/,
       )
 ENDOFLAMBDA
     -> TTerm $t, TList $ss {
-        $_if( $is-nil($ss),
-            -> $_ { $None },
-            -> $_ { $_if( $is-ConstT($t),
-                        -> $_ { $None },
-                        -> $_ { $_if( $is-VarT($t),
-                                    -> $_ { my $head = $car($ss);
-                                            my $for  = $fst($head);
-                                            my $what = $snd($head);
-                                            my $tail = $cdr($ss);
-                                            $_if( convertP6Bool2TBool($VarT2name($for) eq $VarT2name($t)),
-                                                -> $_ { my $out = &self($what, $tail);
-                                                     $_if( $is-Some($out),
-                                                         -> $_ { $out },
-                                                         -> $_ { $Some($what) }
-                                                     )
-                                                },
-                                                -> $_ { &self($t, $tail) }
-                                            )
-                                    },
-                                    -> $_ { $_if( $is-AppT($t),
-                                                -> $_ { my $oldFunc = $AppT2func($t);
-                                                        my $oldArg  = $AppT2arg($t);
-                                                        my $newFunc = &self($oldFunc, $ss);
-                                                        my $newArg  = &self($oldArg,  $ss);
-                                                        $_if( $_and($is-None($newFunc), $is-None($newArg)),
-                                                            -> $_ { $None },
-                                                            -> $_ { $Some( $AppT(
-                                                                             $_if( $is-Some($newFunc), -> $_ { $Some2value($newFunc) }, -> $_ { $oldFunc } ),
-                                                                             $_if( $is-Some($newArg),  -> $_ { $Some2value($newArg)  }, -> $_ { $oldArg  } )
-                                                              ))
-                                                            }
-                                                        )
-                                                },
-                                                -> $_ { $_if( $is-LamT($t),
-                                                            -> $_ { my $body = &self(
-                                                                        $LamT2body($t),
-                                                                        $filter( # kick out substs for our binder since there
-                                                                                 # won't be free occurrances of it in our body
-                                                                          -> $x { convertP6Bool2TBool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
-                                                                          $ss
-                                                                        )
-                                                                    );
-                                                                    $_if( $is-None($body),
-                                                                        -> $_ { $None },
-                                                                        -> $_ { $Some($LamT($LamT2var($t), $Some2value($body))) }
-                                                                    )
-                                                            },
-                                                            -> $_ { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
-                                                        )
-                                                }
-                                         )
-                                    }
-                               )
-                        }
-                     )
-            }
+        case-List($ss,
+            nil  => $None,
+            cons => -> $head, TList:D $tail { $_if( $is-ConstT($t),
+                -> $_ { $None },
+                -> $_ { $_if( $is-VarT($t),
+                            -> $_ { my $for  = $fst($head);
+                                    my $what = $snd($head);
+                                    $_if( convertP6Bool2TBool($VarT2name($for) eq $VarT2name($t)),
+                                        -> $_ { my $out = &self($what, $tail);
+                                             $_if( $is-Some($out),
+                                                 -> $_ { $out },
+                                                 -> $_ { $Some($what) }
+                                             )
+                                        },
+                                        -> $_ { &self($t, $tail) }
+                                    )
+                            },
+                            -> $_ { $_if( $is-AppT($t),
+                                        -> $_ { my $oldFunc = $AppT2func($t);
+                                                my $oldArg  = $AppT2arg($t);
+                                                my $newFunc = &self($oldFunc, $ss);
+                                                my $newArg  = &self($oldArg,  $ss);
+                                                $_if( $_and($is-None($newFunc), $is-None($newArg)),
+                                                    -> $_ { $None },
+                                                    -> $_ { $Some( $AppT(
+                                                                     $_if( $is-Some($newFunc), -> $_ { $Some2value($newFunc) }, -> $_ { $oldFunc } ),
+                                                                     $_if( $is-Some($newArg),  -> $_ { $Some2value($newArg)  }, -> $_ { $oldArg  } )
+                                                      ))
+                                                    }
+                                                )
+                                        },
+                                        -> $_ { $_if( $is-LamT($t),
+                                                    -> $_ { my $body = &self(
+                                                                $LamT2body($t),
+                                                                $filter( # kick out substs for our binder since there
+                                                                         # won't be free occurrances of it in our body
+                                                                  -> $x { convertP6Bool2TBool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
+                                                                  $ss
+                                                                )
+                                                            );
+                                                            $_if( $is-None($body),
+                                                                -> $_ { $None },
+                                                                -> $_ { $Some($LamT($LamT2var($t), $Some2value($body))) }
+                                                            )
+                                                    },
+                                                    -> $_ { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
+                                                )
+                                        }
+                                 )
+                            }
+                       )
+                }
+            ) }
         )
     }
 )});

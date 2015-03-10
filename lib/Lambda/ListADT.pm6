@@ -71,20 +71,6 @@ constant $is-cons is export = lambdaFn(
 );
 
 
-# helper function if-nil, to reduce nr of calls to xs by half
-constant $if-nil is export = lambdaFn(
-    'if-nil', 'λxs.λwhenNil.λotherwise.xs λnotNil.λhead.λtail._if notNil (λ_.otherwise head tail) whenNil',
-    -> TList:D $xs, &whenNil, &otherwise {
-        $xs(-> $notNil, $head, $tail {
-                _if_( $notNil,
-                    { &otherwise($head, $tail) },
-                    { &whenNil(Mu) }
-                )
-        })
-    }
-);
-
-
 # projections
 
 my constant $cXr-nil-error = -> Str $fnName { die "cannot get $fnName of nil" }
