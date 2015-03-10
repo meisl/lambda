@@ -14,20 +14,11 @@ role TList is export {
 
 # pattern-matching ------------------------------------------------------------
 
-multi sub case-List(TList:D $list,
+multi sub case-List(TList:D $instance,
     :nil($onNil)!,
-    :cons(&onCons)!
+    :cons($onCons)!
 ) is export {
-    #$list(&onNil, &onCons);
-    $list(-> $notNil, $head, $tail {
-        _if_( $notNil,
-            { &onCons($head, $tail) },
-            { $onNil ~~ Block && $onNil.arity == 0
-                ?? $onNil()
-                !! $onNil
-            }
-        )
-    })
+    $instance($onNil, $onCons);
 }
 
 
@@ -39,19 +30,23 @@ multi sub case-List(|args) {
 # constructors ----------------------------------------------------------------
 
 constant $nil is export = lambdaFn(
-    'nil', 'λsel.sel #false _ _',
-    -> &sel { &sel($false, Any, Any) }
+    'nil', 'λonNil.λonCons.onNil',
+    -> $onNil, $onCons {
+        ($onNil ~~ Block) && ($onNil.arity == 0) 
+        ?? $onNil()    # simulate lazy evaluation by passing a thunk (needed only for ctors of arity 0)
+        !! $onNil
+    }
 ) does TList;
 
 constant $cons is export = lambdaFn(
-    'cons', 'λx.λxs.λsel.sel #true x xs',
+    'cons', 'λx.λxs.λonNil.λonCons.onCons x xs',
     -> $x, TList:D $xs {
-            lambdaFn(
-                Str, { "(cons {$x.?symbol // $x.?lambda // $x.perl} $xs)" },
-                -> &sel {
-                    &sel($true, $x, $xs)
-                }
-            ) does TList
+        lambdaFn(
+            Str, { "(cons {$x.?symbol // $x.?lambda // $x.perl} $xs)" },
+            -> $onNil, $onCons {
+                $onCons($x, $xs)
+            }
+        ) does TList
     }
 );
 
