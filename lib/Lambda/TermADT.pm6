@@ -472,9 +472,25 @@ constant $is-selfAppOfVar is export = lambdaFn(
             VarT   => -> $sName {
                 case-Term($t,
                     AppT   => -> $func, $arg {
-                        _if_($Term-eq($s, $func),
-                            { $Term-eq($s, $arg) },
-                            $false
+                        #_if_($Term-eq($s, $func),
+                        #    { $Term-eq($s, $arg) },
+                        #    $false
+                        #)
+                        case-Term($func,
+                            VarT   => -> $funcName {
+                                _if_( $Str-eq($sName, $funcName),
+                                    { case-Term($arg,
+                                        VarT   => -> $argName { $Str-eq($sName, $argName) },
+                                        LamT   => $K2false,
+                                        AppT   => $K2false,
+                                        ConstT => $K1false
+                                    ) },
+                                    $false
+                                )
+                            },
+                            LamT   => $K2false,
+                            AppT   => $K2false,
+                            ConstT => $K1false
                         )
                     },
                     LamT   => $K2false,
