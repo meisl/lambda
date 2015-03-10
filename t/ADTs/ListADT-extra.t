@@ -190,6 +190,28 @@ plan 70;
     is $cadr($ys), 4, "found second even";
 }
 
+{ # except = λp.filter (not p)
+    is_properLambdaFn $except, 'except';
+
+    my &isEven = -> $x { if ($x % 2 == 0) { $true } else { $false } };
+    my ($xs, $ys);
+
+    $xs = $nil;
+    $ys = $except(&isEven, $nil);
+    does_ok $ys, TList;
+    is_validLambda $ys;
+    is $ys, $nil, '"excepting" the empty list yields the empty list';
+
+    $xs = $cons(1, $cons(2, $cons(3, $cons(4, $nil))));
+    $ys = $except(&isEven, $xs);
+    does_ok $ys, TList;
+    is_validLambda $ys;
+    is $length($ys), 2, "should haved filtered out half of them";
+    is $car($ys), 1, "found first non-even";
+    is $cadr($ys), 3, "found second non-even";
+    exit;
+}
+
 { # exists
     is_properLambdaFn $exists, 'exists';
 

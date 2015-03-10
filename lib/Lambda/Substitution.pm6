@@ -57,10 +57,9 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                 LamT   => -> $tVar, $tBody {
                     my $body = &self(
                         $tBody,
-                        # TODO: add TList fn `except` = λp.filter (not p) and use it here
-                        $filter( # kick out substs for our binder since there
+                        $except( # kick out substs for our binder since there
                                  # won't be free occurrances of it in our body
-                          -> $substPair { $not($Term-eq($fst($substPair), $tVar)) },
+                          -> $substPair { $Term-eq($tVar, $fst($substPair)) },
                           $ss
                         )
                     );

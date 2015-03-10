@@ -269,6 +269,20 @@ constant $filter is export = lambdaFn(
     )}
 );
 
+constant $except is export = lambdaFn(
+    'except', 'λp.λxs.foldr (λx.λacc.((p x) (λ_.acc) (λ_.cons x acc)) _) nil xs',
+    -> &p, TList $xs -->TList{ $foldr(
+        -> $x, TList:D $acc -->TList{
+            _if_( &p($x),
+                $acc,
+                { $cons($x, $acc) }
+            )
+        },
+        $nil,
+        $xs
+    )}
+);
+
 constant $first is export = $Y(-> &self { lambdaFn(
     'first', 'λself.λp.λxs.(if (nil? xs) None (if (p (car xs)) (cons (car xs) nil) (self p (cdr xs))))',
     -> &p, TList:D $xs {
