@@ -29,90 +29,6 @@ role TTerm does ADT is export {
 our &case-Term is export = makeMatcher(TTerm);
 
 
-constant $on-VarT is export = lambdaFn(
-    'on-VarT', 'λthenFn.λelseFn.λterm.let ((e1 λ_.elseFn term) (e2 λ_.e1)) (term thenFn e2 e2 e1)',
-    -> &thenFn, &elseFn {
-        my $lambdaExpr = "on-VarT {&thenFn.lambda} {&elseFn.lambda}";
-        lambdaFn(
-            Str, $lambdaExpr,
-            -> TTerm $term {
-                my $else1 = -> Mu { &elseFn($term) };
-                my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
-                case-Term($term,
-                    VarT   => &thenFn,
-                    AppT   => $else2,
-                    LamT   => $else2,
-                    ConstT => $else1
-                )
-            }
-        )
-    }
-);
-
-
-
-constant $on-AppT is export = lambdaFn(
-    'on-AppT', 'λthenFn.λelseFn.λterm.let ((e1 λ_.elseFn term) (e2 λ_.e1)) (term e1 thenFn e2 e1)',
-    -> &thenFn, &elseFn {
-        my $lambdaExpr = "on-AppT {&thenFn.lambda} {&elseFn.lambda}";
-        lambdaFn(
-            Str, $lambdaExpr,
-            -> TTerm $term {
-                my $else1 = -> Mu { &elseFn($term) };
-                my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
-                case-Term($term,
-                    VarT   => $else1,
-                    AppT   => &thenFn,
-                    LamT   => $else2,
-                    ConstT => $else1
-                )
-            }
-        )
-    }
-);
-
-constant $on-LamT is export = lambdaFn(
-    'on-LamT', 'λthenFn.λelseFn.λterm.let ((e1 λ_.elseFn term) (e2 λ_.e1)) (term e1 e2 thenFn e1)',
-    -> &thenFn, &elseFn {
-        my $lambdaExpr = "on-LamT {&thenFn.lambda} {&elseFn.lambda}";
-        lambdaFn(
-            Str, $lambdaExpr,
-            -> TTerm $term {
-                my $else1 = -> Mu { &elseFn($term) };
-                my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
-                case-Term($term,
-                    VarT   => $else1,
-                    AppT   => $else2,
-                    LamT   => &thenFn,
-                    ConstT => $else1
-                )
-            }
-        )
-    }
-);
-
-constant $on-ConstT is export = lambdaFn(
-    'on-ConstT', 'λthenFn.λelseFn.λterm.let ((e1 λ_.elseFn term) (e2 λ_.e1)) (term e1 e2 e2 thenFn)',
-    -> &thenFn, &elseFn {
-        my $lambdaExpr = "on-ConstT {&thenFn.lambda} {&elseFn.lambda}";
-        lambdaFn(
-            Str, $lambdaExpr,
-            -> TTerm $term {
-                my $else1 = -> Mu { &elseFn($term) };
-                my $else2 = -> Mu, Mu { &elseFn($term) };   #   $K($else1);     #   
-                case-Term($term,
-                    VarT   => $else1,
-                    AppT   => $else2,
-                    LamT   => $else2,
-                    ConstT => &thenFn
-                )
-            }
-        )
-    }
-);
-
-
-
 # constructors ----------------------------------------------------------------
 
 # must make the hash a constant (it's still mutable though)
@@ -245,7 +161,6 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
 # predicates ------------------------------------------------------------------
 
 # VarT?: Term -> Bool
-#constant $is-VarT is export = $on-VarT($K1true, $K1false) does Definition('VarT?');
 constant $is-VarT is export = lambdaFn(
     'VarT?', 'not yet implemented', 
     -> TTerm:D $t { case-Term($t,
@@ -257,7 +172,6 @@ constant $is-VarT is export = lambdaFn(
 );
 
 # AppT?: Term -> Bool
-#constant $is-AppT is export = $on-AppT($K2true, $K1false) does Definition('AppT?');
 constant $is-AppT is export = lambdaFn(
     'AppT?', 'not yet implemented', 
     -> TTerm:D $t { case-Term($t,
@@ -269,7 +183,6 @@ constant $is-AppT is export = lambdaFn(
 );
 
 # LamT?: Term -> Bool
-#constant $is-LamT is export = $on-LamT($K2true, $K1false) does Definition('LamT?');
 constant $is-LamT is export = lambdaFn(
     'LamT?', 'not yet implemented', 
     -> TTerm:D $t { case-Term($t,
@@ -281,7 +194,6 @@ constant $is-LamT is export = lambdaFn(
 );
 
 # ConstT?: Term -> Bool
-#constant $is-ConstT is export = $on-ConstT($K1true, $K1false) does Definition('ConstT?');
 constant $is-ConstT is export = lambdaFn(
     'ConstT?', 'not yet implemented', 
     -> TTerm:D $t { case-Term($t,

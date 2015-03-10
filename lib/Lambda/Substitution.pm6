@@ -15,106 +15,52 @@ use Lambda::Conversion::Bool-conv;
 # Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
 # is that we don't need to compare terms for equality then.
 constant $subst-seq is export = $Y(-> &self { lambdaFn(
-    'subst-seq',
-q:to/ENDOFLAMBDA/,
-    λself.λt.λss.
-      (if (nil? ss)
-          None
-          (if (VarT? t) ; TODO: case ConstT
-              (let ((head (car ss))
-                    (next (if (eq? (VarT->name (fst head)) (VarT->name t))  ; FIXME!
-                              (snd head)
-                              t)))
-                (self next (cdr ss))
-              )
-              (if (AppT? t)
-                  (let ((f (AppT->func t))
-                        (a (AppT->arg  t))
-                        (f´ (self f ss))
-                        (a´ (self a ss))
-                       )
-                    (if (and (None? f´) (None? a´))
-                      None
-                      (Some (AppT
-                              (if (Some? f´) (Some->value f´) f)
-                              (if (Some? a´) (Some->value a´) a)
-                      ))
-                    )
-                  )
-                  (if (LamT? t)
-                      (let ((var (LamT->var t))
-                            (nm  (VarT->name var))
-                            (ss´ (filter    ; kick out substs for our binder
-                                   (λv.not (eq? (VarT->name v) nm))
-                                   ss))
-                            (b´  (self (LamT->body t) ss´))
-                           )
-                        (if (None? b´)
-                            None
-                            (Some (LamT var (Some->value b´)))
-                        )
-                      )
-                      # TODO: ConstT -> None
-                      (error (~ "unknown Term ctor: " (Term->Str t)))
-                  )
-              )
-          )
-      )
-ENDOFLAMBDA
-    -> TTerm $t, TList $ss {
+    'subst-seq', 'λterm.λsubstitutions.error "NYI"',
+    -> TTerm $t, TList $ss -->TMaybe{
         case-List($ss,
             nil  => $None,
-            cons => -> $head, TList:D $tail { $_if( $is-ConstT($t),
-                -> $_ { $None },
-                -> $_ { $_if( $is-VarT($t),
-                            -> $_ { my $for  = $fst($head);
-                                    my $what = $snd($head);
-                                    $_if( convertP6Bool2TBool($VarT2name($for) eq $VarT2name($t)),
-                                        -> $_ { my $out = &self($what, $tail);
-                                             $_if( $is-Some($out),
-                                                 -> $_ { $out },
-                                                 -> $_ { $Some($what) }
-                                             )
-                                        },
-                                        -> $_ { &self($t, $tail) }
-                                    )
-                            },
-                            -> $_ { $_if( $is-AppT($t),
-                                        -> $_ { my $oldFunc = $AppT2func($t);
-                                                my $oldArg  = $AppT2arg($t);
-                                                my $newFunc = &self($oldFunc, $ss);
-                                                my $newArg  = &self($oldArg,  $ss);
-                                                $_if( $_and($is-None($newFunc), $is-None($newArg)),
-                                                    -> $_ { $None },
-                                                    -> $_ { $Some( $AppT(
-                                                                     $_if( $is-Some($newFunc), -> $_ { $Some2value($newFunc) }, -> $_ { $oldFunc } ),
-                                                                     $_if( $is-Some($newArg),  -> $_ { $Some2value($newArg)  }, -> $_ { $oldArg  } )
-                                                      ))
-                                                    }
-                                                )
-                                        },
-                                        -> $_ { $_if( $is-LamT($t),
-                                                    -> $_ { my $body = &self(
-                                                                $LamT2body($t),
-                                                                $filter( # kick out substs for our binder since there
-                                                                         # won't be free occurrances of it in our body
-                                                                  -> $x { convertP6Bool2TBool($VarT2name($fst($x)) ne $VarT2name($LamT2var($t))) },
-                                                                  $ss
-                                                                )
-                                                            );
-                                                            $_if( $is-None($body),
-                                                                -> $_ { $None },
-                                                                -> $_ { $Some($LamT($LamT2var($t), $Some2value($body))) }
-                                                            )
-                                                    },
-                                                    -> $_ { die "fell off type-dispatch with type " ~ $t.WHAT.perl }
-                                                )
-                                        }
-                                 )
-                            }
-                       )
+            cons => -> $head, TList:D $tail { case-Term($t,
+                ConstT => $K1None,
+                VarT   => -> $tName {   # TODO
+                    my $for  = $fst($head);
+                    my $what = $snd($head);
+                    $_if( convertP6Bool2TBool($VarT2name($for) eq $VarT2name($t)),
+                        -> $_ { my $out = &self($what, $tail);
+                             $_if( $is-Some($out),
+                                 -> $_ { $out },
+                                 -> $_ { $Some($what) }
+                             )
+                        },
+                        -> $_ { &self($t, $tail) }
+                    )
+                },
+                AppT   => -> $oldFunc, $oldArg {   # TODO
+                    my $newFunc = &self($oldFunc, $ss);
+                    my $newArg  = &self($oldArg,  $ss);
+                    $_if( $_and($is-None($newFunc), $is-None($newArg)),
+                        -> $_ { $None },
+                        -> $_ { $Some( $AppT(
+                             $_if( $is-Some($newFunc), -> $_ { $Some2value($newFunc) }, -> $_ { $oldFunc } ),
+                             $_if( $is-Some($newArg),  -> $_ { $Some2value($newArg)  }, -> $_ { $oldArg  } )
+                          ))
+                        }
+                    )
+                },
+                LamT   => -> $tVar, $tBody {   # TODO
+                    my $body = &self(
+                        $tBody,
+                        $filter( # kick out substs for our binder since there
+                                 # won't be free occurrances of it in our body
+                          -> $x { convertP6Bool2TBool($VarT2name($fst($x)) ne $VarT2name($tVar)) },
+                          $ss
+                        )
+                    );
+                    $_if( $is-None($body),
+                        -> $_ { $None },
+                        -> $_ { $Some($LamT($tVar, $Some2value($body))) }
+                    )
                 }
-            ) }
+            )}
         )
     }
 )});
