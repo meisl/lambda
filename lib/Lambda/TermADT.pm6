@@ -437,67 +437,85 @@ constant $Term2size is export = $Y(-> &self { lambdaFn(
 # (on-AppT (on-VarT λfuncName.on-VarT (Str-eq? funcName) (λ_.false) (λ_.λ_.false)) (λ_.false))
 # (unless-AppT (λ_.false) (unless-VarT (λ_.λ_.false) λfuncName.unless-VarT (λ_.false) (Str-eq? funcName)))
 # selfApp?: Term -> Bool
-constant $is-selfApp is export = 
-    $on-AppT(
-        $on-VarT(   # takes the AppT's func
-            -> Str $funcName {
-                $on-VarT(   # take the AppT's arg
-                    $Str-eq($funcName),
-                    $K1false
-                )
-            } does lambda('λfuncName.on-VarT (λargName.Str-eq? funcName argName) (λ_.#false)'),
-            $K2false    # eat up both, the func and arg from AppT
-        ),
-        $K1false
-    ) does Definition('selfApp?')
-;
+constant $is-selfApp is export = lambdaFn(
+    'selfApp?', 'not yet implemented',
+    -> TTerm:D $t -->TBool{ case-Term($t,
+        AppT   => -> $func, $arg {
+            case-Term($func,
+                VarT   => -> $funcName {
+                    case-Term($arg,
+                        VarT   => -> $argName {
+                            $Str-eq($funcName, $argName)
+                        },
+                        ConstT => $K1false,
+                        LamT   => $K2false,
+                        AppT   => $K2false
+                    )
+                },
+                ConstT => $K1false,
+                LamT   => $K2false,
+                AppT   => $K2false
+            )
+        },
+        ConstT => $K1false,
+        VarT   => $K1false,
+        LamT   => $K2false,
+    )}
+);
+
 
 # selfAppOfVar?: Term -> Term -> Bool
-constant $is-selfAppOfVar is export =
-    $on-VarT(
-        -> Str $varName {
-            my $equalsVarName = $Str-eq($varName);
-            $on-AppT(
-                $on-VarT(   # takes the AppT's func
-                    -> Str $funcName {
-                        _if_( $equalsVarName($funcName),
-                            { $on-VarT(   # take the AppT's arg
-                                    $equalsVarName,
-                                    $K1false
-                                )
-                            },
-                            $K1false    # eat up both, the dummy arg from _if and the arg from AppT
+constant $is-selfAppOfVar is export = lambdaFn(
+    'selfAppOfVar?', 'λs.λt.error "NYI"',
+    -> TTerm:D $s, TTerm $t -->TBool{
+        case-Term($s,
+            VarT   => -> $sName {
+                case-Term($t,
+                    AppT   => -> $func, $arg {
+                        _if_($Term-eq($s, $func),
+                            { $Term-eq($s, $arg) },
+                            $false
                         )
-                    } does lambda("(λfuncName.if ({$equalsVarName.lambda} funcName) (on-VarT ({$equalsVarName.lambda}) λ_.#false) λ_.#false)"),
-                    $K2false    # eat up both, the func and arg from AppT
-                ),
-                $K1false
-            )
-        } does lambda('bar'),
-        $K2false    # eat up outermost non-VarT term and return a function which takes another term and returns #false
-    ) does Definition('selfAppOfVar?')
-;
+                    },
+                    LamT   => $K2false,
+                    VarT   => $K1false,
+                    ConstT => $K1false
+                );
+            },
+            ConstT => $K1false,
+            AppT   => $K2false,
+            LamT   => $K2false
+        );
+    }
+);
 
 
-constant $is-omega is export =
-    $on-LamT(
-        $is-selfAppOfVar,
-        $K1false
-    ) does Definition('ω?')
-;
+constant $is-omega is export = lambdaFn(
+    'ω?', 'λt.error "NYI"',
+    -> TTerm:D $t -->TBool{ case-Term($t,
+        LamT   => $is-selfAppOfVar,
+        VarT   => $K1false,
+        AppT   => $K2false,
+        ConstT => $K1false
+    ) }
+);
 
 
-constant $is-Omega is export =
-    $on-AppT(
-        -> TTerm $func, TTerm $arg {
+constant $is-Omega is export = lambdaFn(
+    'Ω?', 'λt.error "NYI"',
+    -> TTerm:D $t -->TBool{ case-Term($t,
+        AppT => -> TTerm $func, TTerm $arg {
             _if_( $is-omega($func),
                 { $is-omega($arg) },
                 $false
             )
-        } does lambda('λfunc.λarg.and (ω? func) (ω? arg)'),
-        $K1false
-    ) does Definition('Ω?')
-;
+        },
+        LamT   => $K2false,
+        VarT   => $K1false,
+        ConstT => $K1false
+    ) }
+);
+
 
 
 constant $fresh-var-for is export = {
@@ -508,6 +526,8 @@ constant $fresh-var-for is export = {
         method gist { $gist }
     }
 
+    my &fresh-var-error = -> $term { die "can make fresh var for another var but not for $term" };
+
     lambdaFn(
         'fresh-var-for', 'λfor.error "NYI"',
         -> TTerm $for -->TTerm{
@@ -516,16 +536,18 @@ constant $fresh-var-for is export = {
             $nextAlphaNr++;
             my $v = $VarT($vName);
             $v ~~ TTerm or die $v.perl;
-            if $for.defined {
-                my $forStr = ($for ~~ AlphaVarT)
-                    ?? $for.gist
-                    !! $VarT2name($for);
-                my $gistStr = $vName ~ "[/$forStr]";
-                _if_( $is-VarT($for),
-                    { $v does AlphaVarT[$for, $gistStr] },
-                    { die "can make fresh var for another var but not for $for" }
-                )
-            }
+            if $for.defined { case-Term($for,
+                VarT => -> $forName {
+                    my $forStr = ($for ~~ AlphaVarT)
+                        ?? $for.gist
+                        !! $forName;
+                    my $gistStr = $vName ~ "[/$forStr]";
+                    $v does AlphaVarT[$for, $gistStr];
+                },
+                ConstT => -> Mu     { &fresh-var-error($for) },
+                AppT   => -> Mu, Mu { &fresh-var-error($for) },
+                LamT   => -> Mu, Mu { &fresh-var-error($for) }
+            ) }
             $v;
         }
     );
