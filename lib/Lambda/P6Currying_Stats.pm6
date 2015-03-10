@@ -75,7 +75,10 @@ our sub curryStats is export {
     
     $result ~= "\n";
     my @entries = entries({ 
-        ($_.full >= 50) || ($_.fn.name // '') eq any('Term->source', 'Term-eq?', 'Str-eq?', '#true', '#false', <LamT AppT VarT [LamT] [AppT] [VarT] id I const K K^2 Y B cons nil _if _and _or not>)
+        False
+        || ($_.full >= 50)
+        || ($_.fn.name // '') eq any('Term->source', 'Term-eq?', 'Str-eq?', '#true', '#false', <LamT AppT VarT [LamT] [AppT] [VarT] id I const K K^2 Y B cons nil _if _and _or not>)
+        || ($_.fn.name // '').substr(0, 5) eq 'subst'
     });
     my %classified = @entries\
         .classify(*.full);

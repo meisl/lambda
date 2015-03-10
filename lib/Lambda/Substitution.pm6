@@ -22,7 +22,7 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
             nil  => $None,
             cons => -> $head, TList:D $tail { case-Term($t,
                 ConstT => $K1None,
-                VarT   => -> $tName {   # TODO
+                VarT   => -> $tName {
                     my $forName = $VarT2name($fst($head));
                     _if_($Str-eq($forName, $tName),
                         {
@@ -36,30 +36,52 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                         { &self($t, $tail) }
                     )
                 },
+
                 AppT   => -> $oldFunc, $oldArg {   # TODO
                     my $newFunc = &self($oldFunc, $ss);
                     my $newArg  = &self($oldArg,  $ss);
-                    _if_( $_and($is-None($newFunc), $is-None($newArg)),
-                        $None,
-                        { $Some( $AppT(
-                             case-Maybe($newFunc,
-                                Some => $pi1o1,
-                                None => $oldFunc
-                             ),
-                             case-Maybe($newArg,
-                                Some => $pi1o1,
-                                None => $oldArg
-                             )
-                          ))
+#                    _if_( $_and($is-None($newFunc), $is-None($newArg)),
+#                        $None,
+#                        { $Some( $AppT(
+#                            case-Maybe($newFunc,
+#                                Some => $pi1o1,
+#                                None => $oldFunc
+#                            ),
+#                            case-Maybe($newArg,
+#                                Some => $pi1o1,
+#                                None => $oldArg
+#                            )
+#                        ))}
+#                    )
+                    case-Maybe($newFunc,
+                        None => {
+                            case-Maybe($newArg,
+                                Some => -> $newArgVal{
+                                    $Some($AppT($oldFunc, $newArgVal))
+                                },
+                                None => $None
+                            )
+                        },
+                        Some => -> $newFuncVal {
+                            $Some( $AppT(
+                                $newFuncVal,
+                                case-Maybe($newArg,
+                                    Some => $pi1o1,
+                                    None => $oldArg
+                                )
+                            ))
                         }
                     )
+
                 },
+
                 LamT   => -> $tVar, $tBody {
                     my $body = &self(
                         $tBody,
-                        $except( # kick out substs for our binder since there
+                        $except( # kick out substitutions for our binder since there
                                  # won't be free occurrances of it in our body
-                          -> $substPair { $Term-eq($tVar, $fst($substPair)) },
+                          # TODO: fn composition via B is bad for perf...
+                          -> $substPair { $Term-eq($tVar, $fst($substPair)) },    #   $B($Term-eq($tVar), $fst),    #   
                           $ss
                         )
                     );
