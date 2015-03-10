@@ -3,8 +3,6 @@ use Test;
 use Test::Util;
 use Test::Util_Lambda;
 
-use Lambda::P6Currying;
-
 
 # module under test:
 use Lambda::Boolean;
@@ -115,8 +113,8 @@ plan 51;
 
     my @seenThen = @();
     my @seenElse = @();
-    my $then = curry(-> $x { @seenThen.push($x); 'then called' });
-    my $else = curry(-> $x { @seenElse.push($x); 'else called' });
+    my $then = -> $x { @seenThen.push($x); 'then called' };
+    my $else = -> $x { @seenElse.push($x); 'else called' };
 
     is $_if($true, $then, $else), 'then called', '(_if #true ... ...) calls then-branch';
     is @seenElse.elems, 0, '(_if #true ... ...) calls then-branch (only)';

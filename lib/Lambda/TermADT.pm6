@@ -3,6 +3,7 @@ use v6;
 use Lambda::Base;
 use Lambda::BaseP6;
 use Lambda::Boolean;
+use Lambda::String;
 use Lambda::ListADT;
 
 use Lambda::P6Currying;
@@ -184,80 +185,46 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
     -> TTerm $s, TTerm $t -->TBool{
         case-Term($s,
             VarT => -> Str $sName {
-                $on-VarT(
-                    -> Str $tName {
-                        convertP6Bool2TBool($sName eq $tName)
-                    } does lambda("Str-eq? \"$sName\"" ),
-                    $K1false,
-                    $t
+                case-Term($t,
+                    VarT => $Str-eq($sName),
+                    AppT => $K2false,
+                    LamT => $K2false,
+                    ConstT => $K1false
                 )
-                #case-Term($t,
-                #    VarT => -> Str $tName { convertP6Bool2TBool($sName eq $tName) },
-                #    AppT => $K2false,
-                #    LamT => $K2false,
-                #    ConstT => $K1false
-                #)
             },
             AppT => -> TTerm $sFunc, TTerm $sArg {
-                $on-AppT(
-                    -> TTerm $tFunc, TTerm $tArg {
+                case-Term($t,
+                    VarT => $K1false,
+                    AppT => -> TTerm $tFunc, TTerm $tArg {
                         $_and(
                             &self($sFunc, $tFunc),
                             &self($sArg,  $tArg)
                         )
-                    } does lambda("λtFunc.λtArg.and (Term-eq? sFunc tFunc) (Term-eq? sArg tArg)" ),
-                    $K1false,
-                    $t
-                );
-                #case-Term($t,
-                #    VarT => $K1false,
-                #    AppT => -> TTerm $tFunc, TTerm $tArg {
-                #        $_and(
-                #            &self($sFunc, $tFunc),
-                #            &self($sArg,  $tArg)
-                #        )
-                #    },
-                #    LamT => $K2false,
-                #    ConstT => $K1false
-                #)
+                    },
+                    LamT => $K2false,
+                    ConstT => $K1false
+                )
             },
             LamT => -> TTerm $sVar, TTerm $sBody {
-                $on-LamT(
-                    -> TTerm $tVar, TTerm $tBody {
+                case-Term($t,
+                    VarT => $K1false,
+                    AppT => $K2false,
+                    LamT => -> TTerm $tVar, TTerm $tBody {
                         $_and(
-                            &self($sVar, $tVar),
-                            &self($sBody,  $tBody)
+                            &self($sVar,  $tVar),
+                            &self($sBody, $tBody)
                         )
-                    } does lambda("λtVar.λtBody.and (Term-eq? sVar tVar) (Term-eq? sBody tBody)" ),
-                    $K1false,
-                    $t
-                );
-                #case-Term($t,
-                #    VarT => $K1false,
-                #    AppT => $K2false,
-                #    LamT => -> TTerm $tVar, TTerm $tBody {
-                #        $_and(
-                #            &self($sVar,  $tVar),
-                #            &self($sBody, $tBody)
-                #        )
-                #    },
-                #    ConstT => $K1false
-                #)
+                    },
+                    ConstT => $K1false
+                )
             },
             ConstT => -> Any $sValue {
-                $on-ConstT(
-                    -> Any $tValue {
-                        die "NYI: equality test for $sValue, $tValue"
-                    } does lambda("eq? \"$sValue\"" ),
-                    $K1false,
-                    $t
-                );
-                #case-Term($t,
-                #    VarT => $K1false,
-                #    AppT => $K2false,
-                #    LamT => $K2false,
-                #    ConstT => -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
-                #)
+                case-Term($t,
+                    VarT => $K1false,
+                    AppT => $K2false,
+                    LamT => $K2false,
+                    ConstT => -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
+                )
             },
 
         )
