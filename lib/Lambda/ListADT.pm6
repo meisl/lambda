@@ -258,7 +258,7 @@ constant $append is export = lambdaFn(
 constant $filter is export = lambdaFn(
     'filter', 'λp.λxs.foldr (λx.λacc.((p x) (λ_.cons x acc) (λ_.acc)) _) nil xs',
     -> &p, TList $xs -->TList{ $foldr(
-        -> $x, TList $acc -->TList{
+        -> $x, TList:D $acc -->TList{
             _if_( &p($x),
                 { $cons($x, $acc) },
                 $acc

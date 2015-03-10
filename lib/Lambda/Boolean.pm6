@@ -63,17 +63,17 @@ constant $false is export = lambdaFn(
 
 
 
-constant $K1false is export = lambdaFn(Str, 'λ_.#false', -> Mu { $false });
-constant $K1true  is export = lambdaFn(Str, 'λ_.#true',  -> Mu { $true  });
-constant $K2false is export = lambdaFn(Str, 'λ_.λ_.#false', -> Mu, Mu { $false });
-constant $K2true  is export = lambdaFn(Str, 'λ_.λ_.#true',  -> Mu, Mu { $true  });
+constant $K1false is export = lambdaFn(Str, 'λ_.#false', -> Mu -->TBool{ $false });
+constant $K1true  is export = lambdaFn(Str, 'λ_.#true',  -> Mu -->TBool{ $true  });
+constant $K2false is export = lambdaFn(Str, 'λ_.λ_.#false', -> Mu, Mu -->TBool{ $false });
+constant $K2true  is export = lambdaFn(Str, 'λ_.λ_.#true',  -> Mu, Mu -->TBool{ $true  });
 
 
 # functions on TBool
 
 constant $not is export = lambdaFn(
     'not', 'λp.p #false #true',
-    -> TBool:D $p { $p($false, $true) }
+    -> TBool:D $p -->TBool{ $p($false, $true) }
 );
 
 constant $_if is export = lambdaFn(
@@ -85,28 +85,28 @@ constant $_if is export = lambdaFn(
 
 constant $_and is export = lambdaFn(
     '_and', 'λp.λq.p q #false',
-    -> TBool:D $p, TBool:D $q {
+    -> TBool:D $p, TBool:D $q -->TBool{
         $p($q, $false)
     }
 );
 
 constant $_or is export = lambdaFn(
     '_or', 'λp.λq.p #true q',
-    -> TBool:D $p, TBool:D $q {
+    -> TBool:D $p, TBool:D $q -->TBool{
         $p($true, $q)
     }
 );
 
 constant $_eqv is export = lambdaFn(
     '_eqv', 'λp.λq.p q (not q)',
-    -> TBool:D $p, TBool:D $q {
+    -> TBool:D $p, TBool:D $q -->TBool{
         $p($q, $not($q))
     }
 );
 
 constant $_xor is export = lambdaFn(
     '_xor', 'λp.λq.p (not q) q',
-    -> TBool:D $p, TBool:D $q {
+    -> TBool:D $p, TBool:D $q -->TBool{
         $p($not($q), $q)
     }
 );
