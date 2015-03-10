@@ -3,7 +3,6 @@ use Test;
 use Test::Util;
 use Test::Util_Lambda;
 
-use Lambda::Boolean;    # TODO: move findFP (tests) out of Base.pm6, st. dependency on Boolean.pm6 is made clear
 use Lambda::BaseP6;
 
 
