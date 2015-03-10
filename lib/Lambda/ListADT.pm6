@@ -192,7 +192,7 @@ constant $foldr-iter is export = lambdaFn(
         )})($id, $xs);
     }
 );
-constant $foldr is export = $foldr-rec;
+constant $foldr is export = $foldr-rec but name<foldr>;
 
 constant $map-foldr is export = lambdaFn(
     'map-foldr', 'λf.foldr (B cons f) nil',

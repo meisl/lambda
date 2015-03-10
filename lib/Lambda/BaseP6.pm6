@@ -7,11 +7,15 @@ module Lambda::BaseP6;
 
 
 role Definition is export {
-    has Str $.name;
+    has Str $.symbol;
 
-    method symbol { $!name }
-    method Str  { $!name }
-    method gist { $!name }
+    method name { $!symbol }
+    method Str  { $!symbol }
+    method gist { $!symbol }
+}
+
+role name is export {
+    has Str:D $.name;
 }
 
 

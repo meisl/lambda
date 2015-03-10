@@ -10,13 +10,13 @@ use Lambda::MaybeADT;
 # module under test:
 use Lambda::ListADT;
 
-plan 79;
+plan 70;
 
 
 # functions on List -----------------------------------------------------------
 
 { # foldl
-    is_properLambdaFn($foldl);
+    is_properLambdaFn $foldl, 'foldl';
     {
         my $xs = $nil;
         my @seen = @();
@@ -42,43 +42,44 @@ plan 79;
     }
 }
 
-# foldr
-for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
-    is_properLambdaFn($reverse);
-    is_properLambdaFn($foldr);
-    is_properLambdaFn($foldr-rec);
-    is_properLambdaFn($foldr-iter);
-    subtest {
-        {
-            my $xs = $nil;
-            my @seen = @();
-            subtest({
-                my $result = $foldr(-> $a, $b { say "got $a and $b"; @seen.push([$a, $b].item); @seen.elems * 2 }, 4711, $xs);
-                is @seen.elems, 0, "never calls f";
-                is $result, 4711, "returns initial value";
-            }, "foldr on empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
-        }
+{ # foldr
+    is_properLambdaFn $foldr,      'foldr'      or die;
+    is_properLambdaFn $foldr-rec,  'foldr-rec'  or die;
+    is_properLambdaFn $foldr-iter, 'foldr-iter' or die;
 
-        {
-            my $xs = $cons('A', $cons('B', $cons('C', $nil)));
-            my @seen = @();
-            subtest({
-                my $result = $foldr(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 23, $xs);
-                is @seen.elems, 3, "calls f as many times as there are elements";
-                is $result, 6, "returns what f returned last";
-                is @seen[0][0], 'C', "passes current elem to f as 1st arg";
-                is @seen[0][1], 23, "passes initial value to f as 2nd arg in first call";
-                is @seen[1][0], 'B', "passes current elem to f as 1st arg";
-                is @seen[1][1], 2, "passes last result from f to f as 2nd arg in subsequent calls";
-                is @seen[2][0], 'A', "passes current elem to f as 1st arg";
-                is @seen[2][1], 4, "passes last result from f to f as 2nd arg in subsequent calls";
-            }, "foldr on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
-        }
-    }, "foldr implemented as {$foldr.symbol}: {$foldr.lambda}";
+    for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
+        subtest {
+            {
+                my $xs = $nil;
+                my @seen = @();
+                subtest({
+                    my $result = $foldr(-> $a, $b { say "got $a and $b"; @seen.push([$a, $b].item); @seen.elems * 2 }, 4711, $xs);
+                    is @seen.elems, 0, "never calls f";
+                    is $result, 4711, "returns initial value";
+                }, "foldr on empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
+            }
+
+            {
+                my $xs = $cons('A', $cons('B', $cons('C', $nil)));
+                my @seen = @();
+                subtest({
+                    my $result = $foldr(-> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 }, 23, $xs);
+                    is @seen.elems, 3, "calls f as many times as there are elements";
+                    is $result, 6, "returns what f returned last";
+                    is @seen[0][0], 'C', "passes current elem to f as 1st arg";
+                    is @seen[0][1], 23, "passes initial value to f as 2nd arg in first call";
+                    is @seen[1][0], 'B', "passes current elem to f as 1st arg";
+                    is @seen[1][1], 2, "passes last result from f to f as 2nd arg in subsequent calls";
+                    is @seen[2][0], 'A', "passes current elem to f as 1st arg";
+                    is @seen[2][1], 4, "passes last result from f to f as 2nd arg in subsequent calls";
+                }, "foldr on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
+            }
+        }, "foldr implemented as {$foldr.symbol}: {$foldr.lambda}";
+    }
 }
 
 { # reverse
-    is_properLambdaFn($reverse);
+    is_properLambdaFn $reverse, 'reverse';
 
     is $reverse($nil), $nil, 'reversing the empty list yields the empty list';
     
@@ -99,7 +100,7 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # length
-    is_properLambdaFn($length);
+    is_properLambdaFn $length, 'length';
 
     my $xs = $nil;
     is $length($xs), 0, "(length $xs) -> 0";
@@ -115,7 +116,7 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # append
-    is_properLambdaFn($append);
+    is_properLambdaFn $append, 'append';
 
     my $xs = $nil;
     my $ys = $append($xs, $xs);
@@ -149,10 +150,10 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # map
-    is_properLambdaFn($map);
-    is_properLambdaFn($map-foldr);
-    is_properLambdaFn($map-rec);
-    is_properLambdaFn($map-iter);
+    is_properLambdaFn $map,       'map';
+    is_properLambdaFn $map-foldr, 'map-foldr';
+    is_properLambdaFn $map-rec,   'map-rec';
+    is_properLambdaFn $map-iter,  'map-iter';
 
     my $xs = $cons(1, $cons(2, $cons(3, $cons(4, $nil))));
     my &f = -> $x { 2*$x };
@@ -169,7 +170,7 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # filter
-    is_properLambdaFn($filter);
+    is_properLambdaFn $filter, 'filter';
 
     my &isEven = -> $x { if ($x % 2 == 0) { $true } else { $false } };
     my ($xs, $ys);
@@ -190,7 +191,7 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # exists
-    is_properLambdaFn($exists);
+    is_properLambdaFn $exists, 'exists';
 
     my &even = -> $x { if ($x % 2 == 0) { $true } else { $false } };
     my &odd  = -> $x { if ($x % 2 == 1) { $true } else { $false } };
@@ -212,7 +213,7 @@ for ($foldr, $foldr-rec, $foldr-iter) -> $foldr {
 }
 
 { # first
-    is_properLambdaFn($first);
+    is_properLambdaFn $first, 'first';
 
     my &even = -> $x { if ($x % 2 == 0) { $true } else { $false } };
     my &odd  = -> $x { if ($x % 2 == 1) { $true } else { $false } };

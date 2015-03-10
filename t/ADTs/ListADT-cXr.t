@@ -13,7 +13,7 @@ plan 55;
 
 
 { # car
-    is_properLambdaFn($car);
+    is_properLambdaFn $car, 'car';
 
     doesnt_ok $car, TList, 'car', :msg('car is NOT a TList in itself');
     dies_ok {$List2Str($car) }, "($List2Str car) yields error";
@@ -28,7 +28,7 @@ plan 55;
 }
 
 { # cdr
-    is_properLambdaFn($cdr);
+    is_properLambdaFn $cdr, 'cdr';
 
     doesnt_ok $cdr, TList, 'cdr', :msg('cdr is NOT a TList in itself');
     dies_ok {$List2Str($cdr) }, "($List2Str cdr) yields error";
@@ -43,7 +43,7 @@ plan 55;
 }
 
 { # caar
-    is_properLambdaFn($caar);
+    is_properLambdaFn $caar, 'caar';
 
     dies_ok({ $caar($nil) }, 'caar on nil yields error');
 
@@ -58,7 +58,7 @@ plan 55;
 }
 
 { # cadr
-    is_properLambdaFn($cadr);
+    is_properLambdaFn $cadr, 'cadr';
 
     dies_ok({ $cadr($nil) }, 'cadr on nil yields error');
 
@@ -73,7 +73,7 @@ plan 55;
 }
 
 { # cdar
-    is_properLambdaFn($cdar);
+    is_properLambdaFn $cdar, 'cdar';
 
     dies_ok({ $cdar($nil) }, 'cdar on nil yields error');
 
@@ -85,7 +85,7 @@ plan 55;
 }
 
 { # cddr
-    is_properLambdaFn($cddr);
+    is_properLambdaFn $cddr, 'cddr';
 
     dies_ok({ $cddr($nil) }, 'cddr on nil yields error');
 
@@ -101,29 +101,29 @@ plan 55;
 
 
 {
-    is_properLambdaFn($caaar);
-    is_properLambdaFn($caadr);
-    is_properLambdaFn($cadar);
-    is_properLambdaFn($caddr);
-    is_properLambdaFn($cdaar);
-    is_properLambdaFn($cdadr);
-    is_properLambdaFn($cddar);
-    is_properLambdaFn($cdddr);
+    is_properLambdaFn $caaar, 'caaar';
+    is_properLambdaFn $caadr, 'caadr';
+    is_properLambdaFn $cadar, 'cadar';
+    is_properLambdaFn $caddr, 'caddr';
+    is_properLambdaFn $cdaar, 'cdaar';
+    is_properLambdaFn $cdadr, 'cdadr';
+    is_properLambdaFn $cddar, 'cddar';
+    is_properLambdaFn $cdddr, 'cdddr';
 
-    is_properLambdaFn($caaaar);
-    is_properLambdaFn($caaadr);
-    is_properLambdaFn($caadar);
-    is_properLambdaFn($caaddr);
-    is_properLambdaFn($cadaar);
-    is_properLambdaFn($cadadr);
-    is_properLambdaFn($caddar);
-    is_properLambdaFn($cadddr);
-    is_properLambdaFn($cdaaar);
-    is_properLambdaFn($cdaadr);
-    is_properLambdaFn($cdadar);
-    is_properLambdaFn($cdaddr);
-    is_properLambdaFn($cddaar);
-    is_properLambdaFn($cddadr);
-    is_properLambdaFn($cdddar);
-    is_properLambdaFn($cddddr);
+    is_properLambdaFn $caaaar, 'caaaar';
+    is_properLambdaFn $caaadr, 'caaadr';
+    is_properLambdaFn $caadar, 'caadar';
+    is_properLambdaFn $caaddr, 'caaddr';
+    is_properLambdaFn $cadaar, 'cadaar';
+    is_properLambdaFn $cadadr, 'cadadr';
+    is_properLambdaFn $caddar, 'caddar';
+    is_properLambdaFn $cadddr, 'cadddr';
+    is_properLambdaFn $cdaaar, 'cdaaar';
+    is_properLambdaFn $cdaadr, 'cdaadr';
+    is_properLambdaFn $cdadar, 'cdadar';
+    is_properLambdaFn $cdaddr, 'cdaddr';
+    is_properLambdaFn $cddaar, 'cddaar';
+    is_properLambdaFn $cddadr, 'cddadr';
+    is_properLambdaFn $cdddar, 'cdddar';
+    is_properLambdaFn $cddddr, 'cddddr';
 }
