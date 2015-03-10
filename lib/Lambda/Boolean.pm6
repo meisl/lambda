@@ -24,13 +24,13 @@ multi sub case-Bool(|args) {
 }
 
 
-macro xxx_if($instance, $then, $else) is export {
-    return quasi { 
-        {{{$instance}}}( {{{$then}}}, {{{$else}}} );
-    };
+macro xxx_if_($instance, $then, $else) is export {
+    quasi { 
+        {{{$instance}}}({{{$then}}},{{{$else}}})
+    }
 }
 
-sub _if_($instance, $then, $else) is export {
+sub _if_($instance, $then, $else) is inlinable is export {
     $instance($then, $else);
 }
 

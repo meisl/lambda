@@ -387,7 +387,7 @@ constant $betaContract is export = $Y(-> &self {
                             :cons(-> $hd, $tl {
                                 die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic)
                             }),
-                            :nil(-> Mu {
+                            :nil({
                                 my $substituted-func = $subst($funcBody, $arg, $funcVar);
                                 case-Maybe($substituted-func,
                                     None => { $Some($funcBody) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
@@ -409,8 +409,8 @@ constant $betaContract is export = $Y(-> &self {
                                         )
                                     }
                                 )
-                            }),
-                        )(Mu)
+                            })
+                        )
                     })
                 )
             })

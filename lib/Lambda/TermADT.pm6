@@ -147,25 +147,25 @@ constant $AppT is export = lambdaFn(
     }
 );
 
+my constant $LamT-error = -> $t { die "first arg to LamT ctor must be a VarT - got instead $t" };
+
 # LamT: Term -> Term -> (Str -> a) -> (Term -> Term -> b) -> (Term -> Term -> c) -> (* -> d) -> c
 constant $LamT is export = lambdaFn(
     'LamT', 'λvar.λbody.λonVarT.λonAppT.λonLamT.λonConstT.onLamT var body',
-    {   my $e = -> $t { die "first arg to LamT ctor must be a VarT - got instead $t" };
-        -> TTerm:D $var, TTerm:D $body -->TTerm{
-            case-Term($var,
-                VarT => -> Str $name {
-                    lambdaFn(
-                        Str, { "(LamT $var $body)" },
-                        -> &onVarT, &onAppT, &onLamT, &onConstT { &onLamT($var, $body) }
-                    ) does TTerm;
-            
-                },
-                AppT   => -> TTerm $func, TTerm $arg  { $e($var) },
-                LamT   => -> TTerm $var,  TTerm $body { $e($var) },
-                ConstT => -> Any $value               { $e($var) }
-            )
-        }
-    }()
+    -> TTerm:D $var, TTerm:D $body -->TTerm{
+        case-Term($var,
+            VarT => -> Str $name {
+                lambdaFn(
+                    Str, { "(LamT $var $body)" },
+                    -> &onVarT, &onAppT, &onLamT, &onConstT { &onLamT($var, $body) }
+                ) does TTerm;
+        
+            },
+            AppT   => -> Mu, Mu { $LamT-error($var) },
+            LamT   => -> Mu, Mu { $LamT-error($var) },
+            ConstT => -> Mu     { $LamT-error($var) }
+        )
+    }
 );
 
 # ConstT: Term -> Term -> (Str -> a) -> (Term -> Term -> b) -> (Term -> Term -> c) -> (* -> d) -> d

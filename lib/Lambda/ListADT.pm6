@@ -12,7 +12,31 @@ role TList is export {
 }
 
 
-# constructors
+# pattern-matching ------------------------------------------------------------
+
+multi sub case-List(TList:D $list,
+    :nil($onNil)!,
+    :cons(&onCons)!
+) is export {
+    #$list(&onNil, &onCons);
+    $list(-> $notNil, $head, $tail {
+        _if_( $notNil,
+            { &onCons($head, $tail) },
+            { $onNil ~~ Block && $onNil.arity == 0
+                ?? $onNil()
+                !! $onNil
+            }
+        )
+    })
+}
+
+
+multi sub case-List(|args) {
+    die "error applying case-List: " ~ args.perl;
+}
+
+
+# constructors ----------------------------------------------------------------
 
 constant $nil is export = lambdaFn(
     'nil', 'λsel.sel #false _ _',
@@ -34,12 +58,18 @@ constant $cons is export = lambdaFn(
 constant $K1nil is export = $K1($nil);
 constant $K2nil is export = $K2($nil);
 
-# predicates
+# predicates ----------------------------------------------------------------
 
 constant $is-nil is export = lambdaFn(
-    'nil?', 'λxs.not (xs π3->1)',
-    -> TList:D $xs { $not($xs($pi1o3)) }
+    'nil?', 'λxs.xs #true λ_.λ_.#false',
+    -> TList:D $xs { case-List($xs, nil => $true, cons => $K2false) }
 );
+
+constant $is-cons is export = lambdaFn(
+    'cons?', 'λxs.xs #false λ_.λ_.#true',
+    -> TList:D $xs { case-List($xs, nil => $false, cons => $K2true) }
+);
+
 
 # helper function if-nil, to reduce nr of calls to xs by half
 constant $if-nil is export = lambdaFn(
@@ -54,37 +84,25 @@ constant $if-nil is export = lambdaFn(
     }
 );
 
-multi sub case-List(TList:D $list,
-    :nil(&onNil)!,
-    :cons(&onCons)!
-) is export {
-    #$list(&onNil, &onCons);
-    $if-nil($list,
-        -> Mu { &onNil },
-        &onCons
-    )
-}
 
 # projections
 
+my constant $cXr-nil-error = -> Str $fnName { die "cannot get $fnName of nil" }
+
 constant $car is export = lambdaFn(
     'car', 'λxs.if-nil xs (λ_.error "cannot get car of nil") π2->1',
-    -> TList:D $xs {
-        $if-nil( $xs,
-               { die "cannot get car of nil" },
-                 $pi1o2
-        )
-    }
+    -> TList:D $xs { case-List($xs,
+        nil  => { $cXr-nil-error('car') },
+        cons => $pi1o2
+    ) }
 );
 
 constant $cdr is export = lambdaFn(
     'cdr', 'λxs.if-nil xs (λ_.error "cannot get cdr of nil") π2->2',
-    -> TList:D $xs {
-            $if-nil( $xs,
-                   { die "cannot get cdr of nil" },
-                     $pi2o2
-            )
-    }
+    -> TList:D $xs { case-List($xs,
+        nil  => { $cXr-nil-error('cdr') },
+        cons => $pi2o2
+    ) }
 );
 
 constant $caar2 is export = lambdaFn('caar', 'B car car', $B($car, $car) );
@@ -127,9 +145,10 @@ constant $cddddr is export = $B($cdr, $cdddr) does Definition(:symbol<cddddr>);
 # (and we cannot use recursive references with constant declarations)
 constant $yfoldl is export = -> {
     my $_foldl = -> &f, $acc, TList:D $xs {
-        $if-nil( $xs,
-                 $K($acc),
-                 -> $head, TList:D $tail { $_foldl(&f, &f($acc, $head), $tail) })
+        case-List($xs,
+            nil  => $acc,
+            cons => -> $head, TList:D $tail { $_foldl(&f, &f($acc, $head), $tail) }
+        )
     };
     lambdaFn(
         'foldl', 'λf.λacc.λxs.(if-nil xs (K acc) (λhead.λtail.foldl f (f acc head) tail))',
@@ -141,9 +160,9 @@ constant $yfoldl is export = -> {
 constant $foldl is export = $Y(-> &self { lambdaFn(
     'foldl', 'λself.λf.λacc.λxs.(if-nil xs λ_.acc λhead.λtail.self f (f acc head) tail)',
     -> &f, $acc, TList:D $xs {
-        $if-nil( $xs,
-                 $K($acc),
-                 -> $head, TList:D $tail { &self(&f, &f($acc, $head), $tail) }
+        case-List( $xs,
+            nil  => $acc,
+            cons => -> $head, TList:D $tail { &self(&f, &f($acc, $head), $tail) }
         )
     }
 )});
@@ -162,9 +181,9 @@ constant $foldr-left-reverse is export = lambdaFn(
 constant $foldr-rec is export = $Y(-> &self { lambdaFn(
     'foldr-rec', 'λself.λf.λacc.λxs.(if-nil xs λ_.acc λhead.λtail.f head (self f acc tail))',
     -> &f, $acc, TList:D $xs {
-        $if-nil( $xs,
-                 $K($acc),
-                 -> $head, TList:D $tail { &f($head, &self(&f, $acc, $tail)) }
+        case-List($xs,
+            nil  => $acc,
+            cons => -> $head, TList:D $tail { &f($head, &self(&f, $acc, $tail)) }
         )
     }
 )});
@@ -178,15 +197,16 @@ constant $foldr-iter is export = lambdaFn(
         $Y(-> &self { lambdaFn(
             'foldr-iter-stub', 'λself.λtodo.λxs.(if (nil? xs) (todo ' ~ $initial ~ ') (self (λacc.h (car xs) acc) (cdr xs)))',
             -> &todo, $xs {
-                $if-nil( $xs,
-                    -> $_ { &todo($initial) },
-                    -> $hd, TList $tl { &self( 
+                case-List($xs,
+                    nil  => { &todo($initial) },
+                    cons => -> $hd, TList:D $tl { &self( 
                         lambdaFn( Str, 'λacc.(' ~ &todo ~ ' (h ' ~ $hd ~ ' acc))',
                             -> $acc {
                                 &todo(&h($hd, $acc));
                             }
                          ),
-                         $tl ) }
+                         $tl
+                     ) }
                 )
             }
         )})($id, $xs);
@@ -204,9 +224,9 @@ constant $map-foldr is export = lambdaFn(
 constant $map-rec is export = $Y(-> &self { lambdaFn(
     'map-rec', 'λself.λf.λxs.(if-nil xs λ_.nil λhead.λtail.(cons (f head) (self f tail)))',
     -> &f, TList:D $xs {
-        $if-nil( $xs,
-                 $K($nil),
-               -> $head, TList:D $tail { $cons(&f($head), &self(&f, $tail)) }
+        case-List($xs,
+            nil  => $nil,
+            cons => -> $head, TList:D $tail { $cons(&f($head), &self(&f, $tail)) }
         )
     }
 )});
@@ -218,11 +238,11 @@ constant $map-iter is export = lambdaFn(
     
         -> &todo {
             -> &f, $xs {
-                $if-nil( $xs,
-                         -> $_ { &todo($nil) },
-                         -> $head, TList:D $tail {
-                             &self( -> $results { &todo($cons(&f($head), $results)) } )(&f, $tail) 
-                         }
+                case-List($xs,
+                    nil  => { &todo($nil) },
+                    cons => -> $head, TList:D $tail {
+                         &self( -> $results { &todo($cons(&f($head), $results)) } )(&f, $tail) 
+                     }
                 )
             }
         }
@@ -266,14 +286,14 @@ constant $filter is export = lambdaFn(
 constant $first is export = $Y(-> &self { lambdaFn(
     'first', 'λself.λp.λxs.(if (nil? xs) None (if (p (car xs)) (cons (car xs) nil) (self p (cdr xs))))',
     -> &p, TList:D $xs {
-        $if-nil( $xs,
-                 $K($None),
-                 -> $head, TList:D $tail {
-                     _if_( &p($head),
-                         { $Some($head) },
-                         { &self(&p, $tail) }
-                     )
-                 }
+        case-List($xs,
+            nil  => $None,
+            cons => -> $head, TList:D $tail {
+                 _if_( &p($head),
+                     { $Some($head) },
+                     { &self(&p, $tail) }
+                 )
+             }
         )
     }
 )});
@@ -282,21 +302,26 @@ constant $___exists is export = lambdaFn(
     'exists', 'λp.λxs.Some? (first p xs)',
 #   'exists', 'λp.(B not (B nil? (first p))',
     -> &p, TList:D $xs {
-        $is-Some($first(&p, $xs))
+        #$is-Some($first(&p, $xs))
+        case-Maybe($first(&p, $xs),
+            None => $false,
+            Some => $true
+        )
     }
 );
 
 constant $exists is export = $Y(-> &self { lambdaFn(
     'exists', 'λself.λp.λxs.if (nil? xs) #false',
     -> &predicate, TList:D $xs -->TBool{ 
-        $if-nil($xs,
-                $K1false,
-                -> $hd, TList $tl -->TBool{
-                    _if_( &predicate($hd),
-                        $true,
-                        { &self(&predicate, $tl) }
-                    )
-                })
+        case-List($xs,
+            nil  => $false,
+            cons => -> $hd, TList $tl -->TBool{
+                _if_( &predicate($hd),
+                    $true,
+                    { &self(&predicate, $tl) }
+                )
+            }
+        )
     }
     # alternative (not as efficient): foldl(-> $acc, $x { _if_($acc, $true, { &predicate($x) }) }, $false, $xs)
 )});
