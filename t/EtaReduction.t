@@ -1,6 +1,5 @@
 use v6;
 use Test;
-use Test::Util;
 use Test::Util_Lambda;
 
 use Lambda::Boolean;
@@ -13,14 +12,11 @@ use Lambda::Conversion::Bool-conv;
 # module under test:
 use Lambda::EtaReduction;
 
-plan 80;
+plan 72;
 
 
 { # predicate etaRedex?
-    is_properLambdaFn($is-etaRedex);
-
-    is $is-etaRedex.symbol, 'etaRedex?', '$is-etaRedex.symbol';
-    is $is-etaRedex.Str,    'etaRedex?', '$is-etaRedex.Str';
+    is_properLambdaFn($is-etaRedex, 'etaRedex?');
 
     my sub is_etaRedex(*@tests) {
         for @tests -> $test {
@@ -63,10 +59,7 @@ plan 80;
 
 
 { # predicate etaReducible?
-    is_properLambdaFn($is-etaReducible);
-
-    is $is-etaReducible.symbol, 'etaReducible?', '$is-etaReducible.symbol';
-    is $is-etaReducible.Str,    'etaReducible?', '$is-etaReducible.Str';
+    is_properLambdaFn($is-etaReducible, 'etaReducible?');
 
     my sub is_etaReducible(*@tests) {
         for @tests -> $test {
@@ -109,10 +102,7 @@ plan 80;
 
 
 { # function etaContract
-    is_properLambdaFn($etaContract);
-
-    is $etaContract.symbol, 'etaContract', '$etaContract.symbol';
-    is $etaContract.Str,    'etaContract', '$etaContract.Str';
+    is_properLambdaFn($etaContract, 'etaContract');
 
     my sub etaContractsTo(*@tests) {
         for @tests -> $test {
@@ -204,10 +194,7 @@ plan 80;
 
 
 { # function etaReduce
-    is_properLambdaFn($etaReduce);
-
-    is $etaReduce.symbol, 'etaReduce', '$etaReduce.symbol';
-    is $etaReduce.Str,    'etaReduce', '$etaReduce.Str';
+    is_properLambdaFn($etaReduce, 'etaReduce');
 
     my sub etaReducesTo(*@tests) {
         for @tests -> $test {

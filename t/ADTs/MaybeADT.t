@@ -11,35 +11,28 @@ use Lambda::Boolean;
 use Lambda::MaybeADT;
 
 
-plan 60;
+plan 48;
 
 
 # ->Str -----------------------------------------------------------------------
 
 { # Maybe->Str
-    is_properLambdaFn($Maybe2Str);
-
-    is $Maybe2Str.symbol,   'Maybe->Str', '$Maybe2Str.symbol';
-    is $Maybe2Str.Str,      'Maybe->Str', '$Maybe2Str.Str';
+    is_properLambdaFn($Maybe2Str, 'Maybe->Str');
 }
 
 
 # None ------------------------------------------------------------------------
 
 { # ctor None
-    is_properLambdaFn($None);
+    is_properLambdaFn($None, 'None');
 
-    is $None.symbol,        'None', '$None.symbol';
-    is $None.Str,           'None', '$None.Str';
     does_ok $None, TMaybe,  'None', :msg('None is a TMaybe in itself');
     is $Maybe2Str($None),   'None', "($Maybe2Str None)";
 }
 
 { # predicate None?
-    is_properLambdaFn($is-None);
+    is_properLambdaFn($is-None, 'None?');
 
-    is $is-None.symbol,         'None?', '$is-None.symbol';
-    is $is-None.Str,            'None?', '$is-None.Str';
     doesnt_ok $is-None, TMaybe, 'None?', :msg('None? is NOT a TMaybe in itself');
     dies_ok {$Maybe2Str($is-None) }, "($Maybe2Str None?) yields error";
     
@@ -64,10 +57,8 @@ plan 60;
 # Some ------------------------------------------------------------------------
 
 { # ctor Some
-    is_properLambdaFn($Some);
+    is_properLambdaFn($Some, 'Some');
 
-    is $Some.symbol,            'Some', '$Some.symbol';
-    is $Some.Str,               'Some', '$Some.Str';
     doesnt_ok $Some, TMaybe,    'Some', :msg('Some is NOT a TMaybe in itself');
     dies_ok { $Maybe2Str($Some) }, "($Maybe2Str $Some) yields error";
     
@@ -105,10 +96,8 @@ plan 60;
 
 
 { # predicate Some?
-    is_properLambdaFn($is-Some);
+    is_properLambdaFn($is-Some, 'Some?');
 
-    is $is-Some.symbol,         'Some?', '$is-Some.symbol';
-    is $is-Some.Str,            'Some?', '$is-Some.Str';
     doesnt_ok $is-Some, TMaybe, 'Some?', :msg('Some? is NOT a TMaybe in itself');
     dies_ok {$Maybe2Str($is-Some) }, "($Maybe2Str Some?) yields error";
     
@@ -130,10 +119,8 @@ plan 60;
 }
 
 { # projection Some->value
-    is_properLambdaFn($Some2value);
+    is_properLambdaFn($Some2value, 'Some->value');
 
-    is $Some2value.symbol,         'Some->value', '$Some2value.symbol';
-    is $Some2value.Str,            'Some->value', '$Some2value.Str';
     doesnt_ok $Some2value, TMaybe, 'Some->value', :msg('Some2value is NOT a TMaybe in itself');
     dies_ok {$Maybe2Str($Some2value) }, "($Maybe2Str Some->value) yields error";
     

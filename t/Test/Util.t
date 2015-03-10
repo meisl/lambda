@@ -17,9 +17,9 @@ plan 4;
     my $good1 ::= ( { 42 } but lambda('λx.x')                    ) but Definition<good1>;
     my $good2 ::=   { 11 } but lambda(('λx.x', 'good2'));
 
-    is_properLambdaFn($good1);
+    is_properLambdaFn($good1, :noWarning);
     is_properLambdaFn($good1, 'good1');
-    is_properLambdaFn($good2);
+    is_properLambdaFn($good2, :noWarning);
     is_properLambdaFn($good2, 'good2');
 
     # TODO: how to test this: `is_properLambdaFn($bad)`- should fail with X::Lambda::SyntaxError;

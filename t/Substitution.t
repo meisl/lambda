@@ -16,7 +16,7 @@ use Lambda::Conversion::ListADT-conv;
 # module under test:
 use Lambda::Substitution;
 
-plan 41;
+plan 35;
 
 
 my $a = $VarT('a');
@@ -38,10 +38,7 @@ my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
 
 
 { # function (subst inTerm whatTerm forVar)
-    is_properLambdaFn $subst;
-
-    is $subst.symbol, 'subst', '$subst.symbol';
-    is $subst.Str,    'subst', '$subst.Str';
+    is_properLambdaFn $subst, 'subst';
 
     my sub is_subst(*@tests) {
         for @tests -> $test {
@@ -78,10 +75,7 @@ my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
 }
 
 { # function (subst-seq inTerm substitutions)
-    is_properLambdaFn $subst-seq;
-
-    is $subst-seq.symbol, 'subst-seq', '$subst-seq.symbol';
-    is $subst-seq.Str,    'subst-seq', '$subst-seq.Str';
+    is_properLambdaFn $subst-seq, 'subst-seq';
 
     my sub is_subst-seq(*@tests) {
         for @tests -> $test {
@@ -139,10 +133,7 @@ my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
 }
 
 { # function (subst-with-alpha forVar whatTerm keepfree alpha-convs inTerm)
-    is_properLambdaFn $subst-with-alpha;
-
-    is $subst-with-alpha.symbol, 'subst-with-alpha', '$subst-with-alpha.symbol';
-    is $subst-with-alpha.Str,    'subst-with-alpha', '$subst-with-alpha.Str';
+    is_properLambdaFn $subst-with-alpha, 'subst-with-alpha';
 
     my sub is_subst-with-alpha(*@tests) {
         for @tests -> $test {

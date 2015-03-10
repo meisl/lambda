@@ -10,16 +10,13 @@ use Lambda::Boolean;
 # module under test:
 use Lambda::MaybeADT;
 
-plan 19;
+plan 15;
 
 
 # TODO: findFP-inMaybe
 
 { # Maybe->valueWithDefault
-   is_properLambdaFn($Maybe2valueWithDefault);
-
-    is $Maybe2valueWithDefault.symbol, 'Maybe->valueWithDefault', '$Maybe2valueWithDefault.symbol';
-    is $Maybe2valueWithDefault.Str,    'Maybe->valueWithDefault', '$Maybe2valueWithDefault.Str';
+   is_properLambdaFn($Maybe2valueWithDefault, 'Maybe->valueWithDefault');
 
     my $m;
 
@@ -31,10 +28,7 @@ plan 19;
 }
 
 { # Maybe-lift-in
-   is_properLambdaFn($Maybe-lift-in);
-
-    is $Maybe-lift-in.symbol, 'Maybe-lift-in', '$Maybe-lift-in.symbol';
-    is $Maybe-lift-in.Str,    'Maybe-lift-in', '$Maybe-lift-in.Str';
+   is_properLambdaFn($Maybe-lift-in, 'Maybe-lift-in');
    
     my ($f, $lifted, $v, $out);
     my @seen;

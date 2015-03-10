@@ -29,10 +29,8 @@ my $c9 = $chi9;
 
 sub isFormal(::T, $n, $p6Name, $lambdaSymbol) {
     subtest({
-        is_properLambdaFn($n);
+        is_properLambdaFn($n, $lambdaSymbol);
         
-        is $n.symbol,            $lambdaSymbol, "{$p6Name}.symbol = '$lambdaSymbol'";
-        is $n.Str,               $lambdaSymbol, "{$p6Name}.Str = '$lambdaSymbol'";
         does_ok $n, T,  $lambdaSymbol;
 
     }, "$lambdaSymbol / $p6Name is formally a {T.perl}");

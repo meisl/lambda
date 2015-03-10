@@ -13,7 +13,7 @@ use Lambda::TermADT;
 # module under test:
 use Lambda::FreeVars;
 
-plan 88;
+plan 84;
 
 
 my $w = $VarT('w');
@@ -45,10 +45,7 @@ my sub test-pred($f, *@tests) {
 }
 
 { # predicate free?
-    is_properLambdaFn($is-free);
-
-    is $is-free.symbol, 'free?', '$is-free.symbol';
-    is $is-free.Str,    'free?', '$is-free.Str';
+    is_properLambdaFn($is-free, 'free?');
 
     my $app = $AppT($x, $y);    # (x y)
     my $lam = $LamT($x, $app);  # λx.x y
@@ -72,10 +69,7 @@ my sub test-pred($f, *@tests) {
 
 
 { #predicate free-under?
-    is_properLambdaFn($is-free-under);
-
-    is $is-free-under.symbol, 'free-under?', '$is-free-under.symbol';
-    is $is-free-under.Str,    'free-under?', '$is-free-under.Str';
+    is_properLambdaFn($is-free-under, 'free-under?');
 
     my $a1 = $AppT($x,  $y);            # (x y)
     my $l1 = $LamT($x,  $a1);           # λx.x y
@@ -152,7 +146,7 @@ my sub test-pred($f, *@tests) {
 }
 
 { # free-var
-    is_properLambdaFn($free-var);
+    is_properLambdaFn($free-var, 'free-var');
 
     my $app = $AppT($x, $y);    # '(x y)'
     my $lam = $LamT($x, $app);  # 'λx.x y'
@@ -170,7 +164,7 @@ my sub test-pred($f, *@tests) {
 }
 
 { # free-vars
-    is_properLambdaFn($free-vars);
+    is_properLambdaFn($free-vars, 'free-vars');
 
     my $app1 = $AppT($x, $y);       # (x y)
     my $app2 = $AppT($x, $x);       # (x x)

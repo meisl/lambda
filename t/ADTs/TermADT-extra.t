@@ -10,7 +10,7 @@ use Lambda::Boolean;
 # module under test:
 use Lambda::TermADT;
 
-plan 159;
+plan 145;
 
 
 my $x ::= $VarT('x');
@@ -27,7 +27,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
         my $expectedStr = $expToStr.defined
                             ?? ' -> ' ~ $expToStr($expected)
                             !! '';
-        my $desc        = "({$f.perl} $argStr)$expectedStr";
+        my $desc        = "({$f.gist} $argStr)$expectedStr";
         
         is($f($arg), $expected, $desc);
     }
@@ -35,10 +35,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 
 
 { # Term->source
-    is_properLambdaFn($Term2source);
-
-    is $Term2source.symbol, 'Term->source', '$Term2source.symbol';
-    is $Term2source.Str,    'Term->source', '$Term2source.Str';
+    is_properLambdaFn($Term2source, 'Term->source');
 
     test( $Term2source, :argToStr($Term2Str),
         $x                                                          => 'x',
@@ -64,10 +61,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 
 
 { # Term->children
-    is_properLambdaFn($Term2children);
-
-    is $Term2children.symbol, 'Term->children', '$Term2children.symbol';
-    is $Term2children.Str,    'Term->children', '$Term2children.Str';
+    is_properLambdaFn($Term2children, 'Term->children');
 
     $has_length($Term2children($x), 0, "(Term->children $x)");
     $has_length($Term2children($c), 0, "(Term->children $c)");
@@ -95,10 +89,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 
 
 { # predicate selfApp?
-    is_properLambdaFn($is-selfApp);
-
-    is $is-selfApp.symbol, 'selfApp?', '$is-selfApp.symbol';
-    is $is-selfApp.Str,    'selfApp?', '$is-selfApp.Str';
+    is_properLambdaFn($is-selfApp, 'selfApp?');
 
     test( $is-selfApp, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         $x                                                          => $false,  # x
@@ -121,10 +112,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 }
 
 { # predicate selfAppOfVar?
-    is_properLambdaFn($is-selfAppOfVar);
-
-    is $is-selfAppOfVar.symbol, 'selfAppOfVar?', '$is-selfAppOfVar.symbol';
-    is $is-selfAppOfVar.Str,    'selfAppOfVar?', '$is-selfAppOfVar.Str';
+    is_properLambdaFn($is-selfAppOfVar, 'selfAppOfVar?');
 
     test( $is-selfAppOfVar($x), :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         $x                                                          => $false,  # x
@@ -187,10 +175,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 
 
 { # predicate omega?
-    is_properLambdaFn($is-omega);
-
-    is $is-omega.symbol, 'ω?', '$is-omega.symbol';
-    is $is-omega.Str,    'ω?', '$is-omega.Str';
+    is_properLambdaFn($is-omega, 'ω?');
 
     test( $is-omega, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         $x                                                          => $false,  # x
@@ -214,10 +199,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 
 
 { # predicate Omega?
-    is_properLambdaFn($is-Omega);
-
-    is $is-Omega.symbol, 'Ω?', '$is-Omega.symbol';
-    is $is-Omega.Str,    'Ω?', '$is-Omega.Str';
+    is_properLambdaFn($is-Omega, 'Ω?');
 
     test( $is-Omega, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         $x                                                          => $false,  # x
@@ -243,10 +225,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 }
 
 { # Term->size
-    is_properLambdaFn($Term2size);
-
-    is $Term2size.symbol, 'Term->size', '$Term2size.symbol';
-    is $Term2size.Str,    'Term->size', '$Term2size.Str';
+    is_properLambdaFn($Term2size, 'Term->size');
 
     test( $Term2size, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         $x                                                          =>  1,  # x

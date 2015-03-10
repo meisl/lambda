@@ -17,7 +17,7 @@ sub is_validLambda(&f) is export {
     subtest {
         my $failed = False;
         
-        does_ok(&f, lambda, 'it does role `lambda`')
+        does_ok(&f, lambda)
             or $failed = True;
         
         my $err = Any;
@@ -29,7 +29,7 @@ sub is_validLambda(&f) is export {
     }, "$fStr is valid lambda";
 }
 
-sub is_properLambdaFn(&f, Str $expectedName?) is export {
+sub is_properLambdaFn(&f, Str $expectedName?, :$noWarning) is export {
     my $fStr = fn2Str(&f);
     subtest {
         my $failed = False;
@@ -46,9 +46,11 @@ sub is_properLambdaFn(&f, Str $expectedName?) is export {
                 or $failed = True;
             isnt($s.perl, '""', 'its .name returns a non-empty Str:D')
                 or $failed = True;
-            my $bt = Backtrace.new;
-            $bt = $bt[$bt.last-index(*.file eq $?FILE)+1..*];
-            note "WARNING: is_properLambdaFn called without \$expectedName on fn `$fStr`\n " ~ $bt;
+            if !$noWarning {
+                my $bt = Backtrace.new;
+                $bt = $bt[$bt.last-index(*.file eq $?FILE)+1..*];
+                note "WARNING: is_properLambdaFn called without \$expectedName on fn `$fStr`\n " ~ $bt;
+            }
         }
 
         my $orig = &f;

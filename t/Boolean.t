@@ -9,26 +9,21 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::Boolean;
 
-plan 67;
+plan 51;
 
 
 # ->Str -----------------------------------------------------------------------
 
 { # Bool->Str
-    is_properLambdaFn($Bool2Str);
-
-    is $Bool2Str.symbol, 'Bool->Str', '$Bool2Str.symbol';
-    is $Bool2Str.Str,    'Bool->Str', '$Bool2Str.Str';
+    is_properLambdaFn($Bool2Str, 'Bool->Str');
 }
 
 
 # #true -----------------------------------------------------------------------
 
 { # "ctor" #true
-    is_properLambdaFn($true);
+    is_properLambdaFn($true, '#true');
     
-    is $true.symbol,        '#true', '$true.symbol';
-    is $true.Str,           '#true', '$true.Str';
     does_ok $true, TBool,   '#true';
     is $Bool2Str($true),    '#true', "($Bool2Str $true) -> \"#true\"";
 }
@@ -37,10 +32,8 @@ plan 67;
 # #false ----------------------------------------------------------------------
 
 { # "ctor" #false
-    is_properLambdaFn($false);
+    is_properLambdaFn($false, '#false');
 
-    is $false.symbol,       '#false', '$false.symbol';
-    is $false.Str,          '#false', '$false.Str';
     does_ok $false, TBool,  '#false';
     is $Bool2Str($false),   '#false', "($Bool2Str $false) -> \"#false\"";
 }
@@ -49,10 +42,8 @@ plan 67;
 # functions on Bool -----------------------------------------------------------
 
 { # not
-    is_properLambdaFn($not);
+    is_properLambdaFn($not, 'not');
 
-    is $not.symbol,         'not', '$not.symbol';
-    is $not.Str,            'not', '$not.Str';
     doesnt_ok $not, TBool,  'not';
     dies_ok { $Bool2Str($not) }, "($Bool2Str $not) yields error";
 
@@ -69,10 +60,8 @@ plan 67;
 }
 
 { # _and
-    is_properLambdaFn($_and);
+    is_properLambdaFn($_and, '_and');
 
-    is $_and.symbol,         '_and', '$_and.symbol';
-    is $_and.Str,            '_and', '$_and.Str';
     doesnt_ok $_and, TBool,  '_and';
     dies_ok { $Bool2Str($_and) }, "($Bool2Str $_and) yields error";
 
@@ -83,10 +72,8 @@ plan 67;
 }
 
 { # _or
-    is_properLambdaFn($_or);
+    is_properLambdaFn($_or, '_or');
 
-    is $_or.symbol,         '_or', '$_or.symbol';
-    is $_or.Str,            '_or', '$_or.Str';
     doesnt_ok $_or, TBool,  '_or';
     dies_ok { $Bool2Str($_or) }, "($Bool2Str $_or) yields error";
 
@@ -97,10 +84,8 @@ plan 67;
 }
 
 { # _eqv
-    is_properLambdaFn($_eqv);
+    is_properLambdaFn($_eqv, '_eqv');
 
-    is $_eqv.symbol,         '_eqv', '$_eqv.symbol';
-    is $_eqv.Str,            '_eqv', '$_eqv.Str';
     doesnt_ok $_eqv, TBool,  '_eqv';
     dies_ok { $Bool2Str($_eqv) }, "($Bool2Str $_eqv) yields error";
 
@@ -111,10 +96,8 @@ plan 67;
 }
 
 { # _xor
-    is_properLambdaFn($_xor);
+    is_properLambdaFn($_xor, '_xor');
 
-    is $_xor.symbol,         '_xor', '$_xor.symbol';
-    is $_xor.Str,            '_xor', '$_xor.Str';
     doesnt_ok $_xor, TBool,  '_xor';
     dies_ok { $Bool2Str($_xor) }, "($Bool2Str $_xor) yields error";
 
@@ -125,7 +108,7 @@ plan 67;
 }
 
 { # _if
-    is_properLambdaFn($_if);
+    is_properLambdaFn($_if, '_if');
 
     is $_if($true, -> $_ {"x"}, -> $_ {die "alternative should not be called"}), "x", '$_if($true, -> $_ {"x"}, -> $_ {die})';
     is $_if($false, -> $_ {die "consequence should not be called"}, -> $_ {"y"}), "y", '$_if($false, -> $_ {die}, -> $_ {"x"})';

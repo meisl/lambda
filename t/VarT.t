@@ -7,7 +7,7 @@ use Test::Util_Lambda;
 # module under test (the VarT part only):
 use Lambda::TermADT;
 
-plan 28;
+plan 26;
 
 
 my $x   = $VarT('x');
@@ -17,7 +17,7 @@ my $lam = $LamT($x, $x);
 my $c   = $ConstT(23);
 
 
-{ # (VarT Str) [fka VarT.get]
+{ # (VarT Str)
     my $x1 = $VarT('x');
     my $x2 = $VarT('x');
 
@@ -31,10 +31,7 @@ my $c   = $ConstT(23);
 }
 
 { # fresh-var-for
-    is_properLambdaFn($fresh-var-for);
-
-    is $fresh-var-for.symbol, 'fresh-var-for', '$fresh-var-for.symbol';
-    is $fresh-var-for.Str,    'fresh-var-for', '$fresh-var-for.Str';
+    is_properLambdaFn($fresh-var-for, 'fresh-var-for');
 
     dies_ok( { $fresh-var-for($app) }, '$fresh-var-for does not accept an AppT arg');
     dies_ok( { $fresh-var-for($lam) }, '$fresh-var-for does not accept an LamT arg');
