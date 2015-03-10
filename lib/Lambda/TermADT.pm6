@@ -197,9 +197,9 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
                 case-Term($t,
                     VarT => $K1false,
                     AppT => -> TTerm $tFunc, TTerm $tArg {
-                        $_if(&self($sFunc, $tFunc),
-                            -> Mu { &self($sArg,  $tArg) },
-                            $K1false
+                        _if_(&self($sFunc, $tFunc),
+                            { &self($sArg,  $tArg) },
+                            $false
                         )
                         #$_and(
                         #    &self($sFunc, $tFunc),
@@ -216,10 +216,11 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
                     VarT => $K1false,
                     AppT => $K2false,
                     LamT => -> TTerm $tVar, TTerm $tBody {
-                        $_if(&self($sVar, $tVar),
-                            -> Mu { &self($sBody,  $tBody) },
-                            $K1false
+                        _if_(&self($sVar, $tVar),
+                            { &self($sBody,  $tBody) },
+                            $false
                         )
+
                         #$_and(
                         #    &self($sVar,  $tVar),
                         #    &self($sBody, $tBody)
@@ -389,9 +390,7 @@ constant $is-selfApp is export =
         $on-VarT(   # takes the AppT's func
             -> Str $funcName {
                 $on-VarT(   # take the AppT's arg
-                    -> Str $argName {
-                        convertP6Bool2TBool($funcName eq $argName)    # TODO: dispense with convertP6Bool2TBool
-                    } does lambda('Str-eq? "' ~ $funcName ~ '"'),
+                    $Str-eq($funcName),
                     $K1false
                 )
             } does lambda('λfuncName.on-VarT (λargName.Str-eq? funcName argName) (λ_.#false)'),
@@ -405,20 +404,17 @@ constant $is-selfApp is export =
 constant $is-selfAppOfVar is export =
     $on-VarT(
         -> Str $varName {
-            my $equalsVarName = -> Str $s {
-                convertP6Bool2TBool($varName eq $s)    # TODO: dispense with convertP6Bool2TBool
-            } does lambda('Str-eq? "' ~ $varName ~ '"');
+            my $equalsVarName = $Str-eq($varName);
             $on-AppT(
                 $on-VarT(   # takes the AppT's func
                     -> Str $funcName {
-                        $_if( $equalsVarName($funcName),
-                            -> Mu {
-                                $on-VarT(   # take the AppT's arg
+                        _if_( $equalsVarName($funcName),
+                            { $on-VarT(   # take the AppT's arg
                                     $equalsVarName,
                                     $K1false
                                 )
                             },
-                            $K2false    # eat up both, the dummy arg from _if and the arg from AppT
+                            $K1false    # eat up both, the dummy arg from _if and the arg from AppT
                         )
                     } does lambda("(λfuncName.if ({$equalsVarName.lambda} funcName) (on-VarT ({$equalsVarName.lambda}) λ_.#false) λ_.#false)"),
                     $K2false    # eat up both, the func and arg from AppT
@@ -442,9 +438,9 @@ constant $is-omega is export =
 constant $is-Omega is export =
     $on-AppT(
         -> TTerm $func, TTerm $arg {
-            $_if( $is-omega($func),
-                -> Mu { $is-omega($arg) },
-                $K1false
+            _if_( $is-omega($func),
+                { $is-omega($arg) },
+                $false
             )
         } does lambda('λfunc.λarg.and (ω? func) (ω? arg)'),
         $K1false
@@ -473,9 +469,9 @@ constant $fresh-var-for is export = {
                     ?? $for.gist
                     !! $VarT2name($for);
                 my $gistStr = $vName ~ "[/$forStr]";
-                $_if( $is-VarT($for),
-                    -> Mu { $v does AlphaVarT[$for, $gistStr] },
-                    -> Mu { die "can make fresh var for another var but not for $for" }
+                _if_( $is-VarT($for),
+                    { $v does AlphaVarT[$for, $gistStr] },
+                    { die "can make fresh var for another var but not for $for" }
                 )
             }
             $v;

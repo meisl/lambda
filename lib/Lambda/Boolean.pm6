@@ -10,21 +10,55 @@ module Lambda::Boolean;
 my role TBool is export {
 }
 
+# pattern-matching ------------------------------------------------------------
+
+multi sub case-Bool(TBool:D $instance,
+    :true($onTrue)!,
+    :false($onFalse)!
+) is export {
+    $instance($onTrue, $onFalse);
+}
+
+multi sub case-Bool(|args) {
+    die "error applying case-Bool: " ~ args.perl;
+}
+
+
+macro xxx_if($instance, $then, $else) is export {
+    return quasi { 
+        {{{$instance}}}( {{{$then}}}, {{{$else}}} );
+    };
+}
+
+sub _if_($instance, $then, $else) is export {
+    $instance($then, $else);
+}
+
+# ->Str -----------------------------------------------------------------------
+
 constant $Bool2Str is export = lambdaFn(
     'Bool->Str', 'λp.p "#true" "#false"',
     -> TBool:D $p { $p('#true', '#false') }
 );
 
-# "constructors"
+# "constructors" --------------------------------------------------------------
 
 constant $true is export = lambdaFn(
-    '#true', 'λa.λb.a',
-    -> $a, $b { $a }
+    '#true', 'λx.λ_.x',
+    -> $onTrue, $onFalse {
+        ($onTrue ~~ Block) && ($onTrue.arity == 0) 
+        ?? $onTrue()    # simulate lazy evaluation by passing a thunk (needed only for ctors of arity 0)
+        !! $onTrue
+    }
 ) does TBool;
 
 constant $false is export = lambdaFn(
-    '#false', 'λa.λb.b',
-    -> $a, $b { $b }
+    '#false', 'λ_.λx.x',
+    -> $onTrue, $onFalse {
+        ($onFalse ~~ Block) && ($onFalse.arity == 0) 
+        ?? $onFalse()    # simulate lazy evaluation by passing a thunk (needed only for ctors of arity 0)
+        !! $onFalse
+    }
 ) does TBool;
 
 
@@ -76,3 +110,4 @@ constant $_xor is export = lambdaFn(
         $p($not($q), $q)
     }
 );
+

@@ -46,9 +46,9 @@ constant $if-nil is export = lambdaFn(
     'if-nil', 'λxs.λwhenNil.λotherwise.xs λnotNil.λhead.λtail._if notNil (λ_.otherwise head tail) whenNil',
     -> TList:D $xs, &whenNil, &otherwise {
         $xs(-> $notNil, $head, $tail {
-                $_if( $notNil,
-                    -> $_ { &otherwise($head, $tail) },
-                    &whenNil
+                _if_( $notNil,
+                    { &otherwise($head, $tail) },
+                    { &whenNil(Mu) }
                 )
         })
     }
@@ -253,9 +253,9 @@ constant $filter is export = lambdaFn(
     'filter', 'λp.λxs.foldr (λx.λacc.((p x) (λ_.cons x acc) (λ_.acc)) _) nil xs',
     -> &p, TList $xs -->TList{ $foldr(
         -> $x, TList $acc -->TList{
-            $_if( &p($x),
-                -> $_ { $cons($x, $acc) },
-                -> $_ { $acc }
+            _if_( &p($x),
+                { $cons($x, $acc) },
+                { $acc }
             )
         },
         $nil,
@@ -269,9 +269,9 @@ constant $first is export = $Y(-> &self { lambdaFn(
         $if-nil( $xs,
                  $K($None),
                  -> $head, TList:D $tail {
-                     $_if( &p($head),
-                         -> $_ { $Some($head) },
-                         -> $_ { &self(&p, $tail) }
+                     _if_( &p($head),
+                         { $Some($head) },
+                         { &self(&p, $tail) }
                      )
                  }
         )
@@ -292,13 +292,13 @@ constant $exists is export = $Y(-> &self { lambdaFn(
         $if-nil($xs,
                 $K1false,
                 -> $hd, TList $tl -->TBool{
-                    $_if( &predicate($hd),
-                        $K1true,
-                        -> $_ { &self(&predicate, $tl) }
+                    _if_( &predicate($hd),
+                        $true,
+                        { &self(&predicate, $tl) }
                     )
                 })
     }
-    # alternative (not as efficient): foldl(-> $acc, $x { $_if($acc, -> $_ {$true}, -> $_ {&predicate($x)}) }, $false, $xs)
+    # alternative (not as efficient): foldl(-> $acc, $x { _if_($acc, $true, { &predicate($x) }) }, $false, $xs)
 )});
 
 

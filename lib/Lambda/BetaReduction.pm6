@@ -53,9 +53,9 @@ q:to/ENDOFLAMBDA/,
                  (λ_.exists self (Term->children t))
 ENDOFLAMBDA
     -> TTerm $t {
-        $_if( $is-betaRedex($t),       # short-circuit OR
-            $K1true,
-            -> Mu { $exists(&self, $Term2children($t)) }
+        _if_( $is-betaRedex($t),       # short-circuit OR
+            $true,
+            { $exists(&self, $Term2children($t)) }
         )
         # self.isBetaRedex || ?self.children.map(*.isBetaReducible).any;
     }
@@ -139,9 +139,9 @@ ENDOFLAMBDA
             LamT   => -> TTerm $var, TTerm $body {
                 my $vName = $VarT2name($var);
                 my $fromBody = &self($body, $keepfreevars);
-                $_if( $exists( -> $v { convertP6Bool2TBool($VarT2name($v) eq $vName) }, $keepfreevars),
-                    -> $_ { $cons($t, $fromBody) },
-                    -> $_ { $fromBody },
+                _if_( $exists( -> $v { convertP6Bool2TBool($VarT2name($v) eq $vName) }, $keepfreevars),
+                    { $cons($t, $fromBody) },
+                    { $fromBody },
                 );
             }
         );
@@ -392,20 +392,20 @@ constant $betaContract is export = $Y(-> &self {
                                 case-Maybe($substituted-func,
                                     None => { $Some($funcBody) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
                                     Some => -> Mu {
-                                        my $K1substituted-func = $K($substituted-func);
-                                        $_if( $is-selfAppOfVar($funcVar, $funcBody),    # is t (literal Omega?) / pt 1
-                                            -> Mu { case-Term($arg,
+                                        _if_( $is-selfAppOfVar($funcVar, $funcBody),    # is t (literal Omega?) / pt 1
+                                            { my $K1substituted-func = $K($substituted-func);
+                                              case-Term($arg,
                                                 :LamT(-> TTerm $argVar, TTerm $argBody {   # is t (literal Omega?) / pt 2
-                                                    $_if( $is-selfAppOfVar($funcVar, $argBody),    # should be *literal* Omega
-                                                        $K1None, # func and arg are both the (literally) same omega
-                                                        $K1substituted-func  # otherwise one more step to make them so
+                                                    _if_( $is-selfAppOfVar($funcVar, $argBody),    # should be *literal* Omega
+                                                        $None, # func and arg are both the (literally) same omega
+                                                        $substituted-func  # otherwise one more step to make them so
                                                     )
                                                 }),
                                                 :VarT( $K1substituted-func ),
                                                 :AppT( -> Mu, Mu { $substituted-func } ),
                                                 :ConstT( $K1substituted-func )
                                             )},
-                                            $K1substituted-func
+                                            $substituted-func
                                         )
                                     }
                                 )
