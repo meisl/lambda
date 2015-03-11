@@ -62,7 +62,7 @@ ok 4 - $expectedTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_
 #                          subst-first => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TList -> Mu)),
 #                     subst-first_VarT => ( 0p,      0f,  0o,    1+ 0i :(Str -> TList -> Mu)),
 #                     subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu))
-# 6.8 sec consumed for β-reduction
+# 6.6 sec consumed for β-reduction
 ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((((h f1) f2) f3) f4) f5))))))))))
 # CurryStats: ( 2p,   6152f, 35o,  820+5i)
 #   455 (  1):                  #false => ( 0p,    455f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))

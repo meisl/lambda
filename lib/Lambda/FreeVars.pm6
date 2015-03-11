@@ -74,42 +74,14 @@ constant $is-free-under is export = $Y(-> &self { lambdaFn(
 
 
 constant $free-var is export = $Y(-> &self { lambdaFn(
-    'free-var', 
- q:to/ENDOFLAMBDA/,
-    λself.λname.λt.
-        (case t
-            (((ConstT val)    None)
-             ((VarT tName)    (_if (eq? name tName)
-                                (λ_.Some t)
-                                (λ_.None)
-                              )
-             )
-             ((AppT func arg) (let ((fromFunc (self name func))
-                                    (inFunc?  (Some? fromFunc))
-                                   )
-                                (_if inFunc?
-                                  fromFunc
-                                  (self name arg)
-                                )
-                              )
-             
-             )
-             ((LamT v body)   (_if (eq? name (VarT->name v))
-                                (λ_.None)
-                                (λ_.self name body)
-                              )
-             )
-             (error (~ "unknown TTerm" (Term->Str t)))
-           )
-        )
-ENDOFLAMBDA
-    -> Str:D $name, TTerm $t {
+    'free-var', 'λname.λterm.error "NYI"',
+    -> Str:D $name, TTerm $t -->TMaybe{
         case-Term($t,
             ConstT   => $K1None,
             VarT     => -> Str $thisName {
-                $_if( convertP6Bool2TBool($name eq $thisName),
-                    -> Mu { $Some($t) },
-                    $K1None
+                _if_( $Str-eq($name, $thisName),
+                    { $Some($t) },
+                    $None
                 )
             },
             AppT => -> TTerm $func, TTerm $arg {
@@ -120,9 +92,9 @@ ENDOFLAMBDA
                 )
             },
             LamT => -> TTerm $var, TTerm $body {
-                $_if( convertP6Bool2TBool($name eq $VarT2name($var)),
-                    $K1None,
-                    -> Mu { &self($name, $body) }
+                _if_( $Str-eq($name, $VarT2name($var)),
+                    $None,
+                    { &self($name, $body) }
                 )
             }
         )
