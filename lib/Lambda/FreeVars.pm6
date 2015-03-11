@@ -169,21 +169,21 @@ ENDOFLAMBDA
 
 
 constant $free-vars-internal = $Y(-> &self { lambdaFn(
-    'free-vars-internal', 'NYI',
+    'free-vars-internal', 'λbindersAbove.λresults.λterm.error "NYI"',
     -> TList:D $bindersAbove, TList:D $results, TTerm:D $t -->TList{
         my $K1results = -> Mu { $results };
         case-Term($t,
             ConstT => $K1results,   # t is a ConstT ~> leave results as is
             VarT => -> Str:D $varName {
                 my $eqVar = -> TTerm:D $var {
-                    convertP6Bool2TBool($varName eq $VarT2name($var))
+                    $Str-eq($varName, $VarT2name($var))
                 };
-                $_if( $exists($eqVar, $bindersAbove),
-                    $K1results,     # don't add bound variable (ie leave results as is)
-                    -> Mu {
-                        $_if( $exists($eqVar, $results),
-                            $K1results,     # don't make duplicates (ie leave results as is)
-                            -> Mu { $cons($t, $results) }
+                _if_( $exists($eqVar, $bindersAbove),
+                    $results,     # don't add bound variable (ie leave results as is)
+                    {
+                        _if_( $exists($eqVar, $results),
+                            $results,     # don't make duplicates (ie leave results as is)
+                            { $cons($t, $results) }
                         )
                     }
                 )

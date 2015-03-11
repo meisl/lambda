@@ -33,7 +33,7 @@ ok 1 - (x x) reduces to itself (sanity check)
 ok 2 - ((λx.x) x) reduces to x (sanity check)
 ok 3 - $bigTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.((λy.(λ_.y)) ((λg.(λh.((λy.(λ_.y)) (g h)))) ((λg.(λh.((λy.(λ_.y)) (g h)))) (λk.(((λk.(((λk.(((λk.(((λk.(((λx.x) k) f1)) k) f2)) k) f3)) k) f4)) k) f5))))))))))
 ok 4 - $expectedTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((((h f1) f2) f3) f4) f5))))))))))
-# CurryStats: ( 2p,    527f,  1o,  238+5i)
+# CurryStats: ( 2p,    523f,  1o,  236+5i)
 #   112 (  1):            Term->source => ( 0p,    112f,  0o,    1+ 0i :(TTerm -> Str))
 #    59 (  1):                       I => ( 0p,     59f,  0o,    1+ 0i :(Mu -> Mu))
 #    31 (  1):                    LamT => ( 0p,     31f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm))
@@ -45,8 +45,7 @@ ok 4 - $expectedTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_
 #     4 (  3):                       K => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu)),
 #                                  K^2 => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu)),
 #                               #false => ( 0p,      4f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
-#     2 (  3):                     _if => ( 0p,      2f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu)),
-#                                 cons => ( 0p,      2f,  0o,    1+ 0i :(Mu -> TList -> TList)),
+#     2 (  2):                    cons => ( 0p,      2f,  0o,    1+ 0i :(Mu -> TList -> TList)),
 #                            subst-seq => ( 0p,      2f,  0o,    1+ 0i :(TTerm -> TList -> TMaybe))
 #     1 (  6):                   #true => ( 0p,      1f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu)),
 #                                subst => ( 0p,      1f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm -> TTerm)),
@@ -54,7 +53,8 @@ ok 4 - $expectedTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_
 #                              Str-eq? => ( 0p,      1f,  1o,    1+ 0i :(Str -> Mu)),
 #                             Term-eq? => ( 0p,      1f,  0o,    1+ 0i :(TTerm -> TTerm -> TBool)),
 #                       findFP-inMaybe => ( 0p,      1f,  0o,    1+ 0i :(Callable -> Mu))
-#     0 (  8):                     _or => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
+#     0 (  9):                     _if => ( 0p,      0f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu)),
+#                                  _or => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
 #                                  not => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool)),
 #                                 _and => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
 #                               B(1/2) => ( 0p,      0f,  0o,    0+ 0i :(Callable -> Mu)),
@@ -62,9 +62,9 @@ ok 4 - $expectedTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_
 #                          subst-first => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TList -> Mu)),
 #                     subst-first_VarT => ( 0p,      0f,  0o,    1+ 0i :(Str -> TList -> Mu)),
 #                     subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu))
-# 6.6 sec consumed for β-reduction
+# 7.8 sec consumed for β-reduction
 ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((((h f1) f2) f3) f4) f5))))))))))
-# CurryStats: ( 2p,   6152f, 35o,  820+5i)
+# CurryStats: ( 2p,   6113f, 220o,  893+5i)
 #   455 (  1):                  #false => ( 0p,    455f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
 #   396 (  2):                   π1->1 => ( 0p,    396f,  0o,    0+ 0i :(Mu -> Mu)),
 #                           VarT->name => ( 0p,    396f,  0o,    1+ 0i :(TTerm -> Str))
@@ -80,8 +80,7 @@ ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((
 #   126 (  1):               <<TTerm>> => ( 0p,    126f,  0o,    1+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
 #   122 (  1):               subst-seq => ( 0p,    122f,  0o,    1+ 0i :(TTerm -> TList -> TMaybe))
 #   119 (  1):                   #true => ( 0p,    119f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
-#   112 (  2):                     _if => ( 0p,    112f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu)),
-#                                 cons => ( 0p,    112f,  0o,    1+ 0i :(Mu -> TList -> TList))
+#   112 (  1):                    cons => ( 0p,    112f,  0o,    1+ 0i :(Mu -> TList -> TList))
 #   105 (  1):         LamT-into-Maybe => ( 0p,    105f,  0o,    0+ 0i name:(Mu -> Mu -> Mu))
 #    91 (  1):               <<TTerm>> => ( 0p,     91f,  0o,    1+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
 #    88 (  2):                    None => ( 0p,     88f,  0o,    1+ 0i TMaybe:(Mu -> Mu -> Mu)),
@@ -97,7 +96,7 @@ ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((
 #    56 (  1):                    AppT => ( 0p,     56f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm))
 #    53 (  1):               <<TTerm>> => ( 0p,     53f,  0o,    1+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
 #    52 (  1):                Term-eq? => ( 0p,     52f,  0o,    1+ 0i :(TTerm -> TTerm -> TBool))
-#    38 (  1):                 Str-eq? => ( 0p,     38f, 35o,    1+ 0i :(Str -> Mu))
+#    38 (  1):                 Str-eq? => ( 0p,     38f, 220o,    1+ 0i :(Str -> Mu))
 #    30 (  1):                       B => ( 1p,     30f,  0o,    1+ 0i :(Callable -> Callable -> Mu))
 #    21 (  1):                       Y => ( 0p,     21f,  0o,    2+ 0i :(Callable -> Mu))
 #    14 (  1):                    VarT => ( 0p,     14f,  0o,    1+ 0i :(Str -> TTerm))
@@ -106,7 +105,8 @@ ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((
 #                                  K^2 => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu))
 #     1 (  2):                  findFP => ( 0p,      1f,  0o,    1+ 0i :(Callable -> Callable -> Mu)),
 #                       findFP-inMaybe => ( 0p,      1f,  0o,    1+ 0i :(Callable -> Mu))
-#     0 (  8):                     _or => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
+#     0 (  9):                     _if => ( 0p,      0f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu)),
+#                                  _or => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
 #                                  not => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool)),
 #                                 _and => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
 #                               B(1/2) => ( 0p,      0f,  0o,    0+ 0i :(Callable -> Mu)),
@@ -115,4 +115,4 @@ ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((
 #                     subst-first_VarT => ( 0p,      0f,  0o,    1+ 0i :(Str -> TList -> Mu)),
 #                     subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu))
 
-Output completed (36 sec consumed) - Normal Termination
+Output completed (38 sec consumed) - Normal Termination
