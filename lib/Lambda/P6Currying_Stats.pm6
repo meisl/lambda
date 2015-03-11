@@ -155,16 +155,16 @@ my sub statsWrapper_full($self, |rest) {
     $globalStats.full++;
     stats($self).full++;
 
-    if ($self.name // '') eq 'VarT->name' {
-        my $bt = Backtrace.new\
-        #.grep({
-        .first({
-            !(   $_.is-setting 
-              || $_.file ~~ /(P6Currying.+|\.nqp)$/
-            )
-        }).map(&btFrame2Str).join('');
-        note "full app: {fnStats($self)}\n" ~ $bt;
-    }
+#    if ($self.name // '') eq 'VarT->name' {
+#        my $bt = Backtrace.new\
+#        #.grep({
+#        .first({
+#            !(   $_.is-setting 
+#              || $_.file ~~ /(P6Currying.+|\.nqp)$/
+#            )
+#        }).map(&btFrame2Str).join('');
+#        note "full app: {fnStats($self)}\n" ~ $bt;
+#    }
 
     nextsame; 
 };
