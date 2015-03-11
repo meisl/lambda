@@ -3,6 +3,7 @@ use v6;
 use Lambda::Base;
 use Lambda::BaseP6;
 use Lambda::Boolean;
+use Lambda::String;
 use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
@@ -46,11 +47,7 @@ ENDOFLAMBDA
 constant $is-free is export = lambdaFn(
     'free?', 'λvar.free-varName (Str-eq? (VarT->name var))',  # free-varName (B Str-eq? VarT->name)
     -> TTerm $var {
-        my $varName = $VarT2name($var);
-        my $equalsVarName = -> Str $name {
-            convertP6Bool2TBool( $varName eq $name )
-        };
-        $is-free-varName($equalsVarName);
+        $is-free-varName($Str-eq($VarT2name($var)));
     }
 );
 
