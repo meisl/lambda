@@ -359,21 +359,34 @@ constant $betaContract is export = $Y(-> &self {
                         #    -> Mu { $B($liftMaybe($AppT($func)), &self)($arg) }
                         #    -> Mu { $AppT_intoMaybe($func, $arg) }
                         #)
-                        case-Maybe(&self($func),
+                        #case-Maybe(&self($func),
                             #:None( $liftedCtor2($AppT, $func, &self) ),
                             #:None( $B($liftMaybe($AppT($func)), &self) ),
 
                             #:None( -> $arg { $AppT_intoMaybe($func, $arg) } ),
                             #:None( $AppT_intoMaybe($func) ),
-                            None => { $AppT_intoMaybe($func) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
+                        #    None => { $AppT_intoMaybe($func) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
                             
                             #:Some(-> $reducedFunc {
                             #    -> $arg { $Some($AppT($reducedFunc, $arg)) }
                             #})
                             #:Some(-> $reducedFunc { $B($Some, $AppT($reducedFunc)) } )
                             #:Some( $B($B($Some), $AppT) )
-                            Some => $BBSomeAppT
-                        )($arg);
+                        #    Some => $BBSomeAppT
+                        #)($arg);
+
+                        case-Maybe(&self($func),
+                            None => {    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
+                                #$AppT_intoMaybe($func, $arg)
+                                case-Maybe(&self($arg),
+                                    None => $None,
+                                    Some => -> $reducedArg { $Some($AppT($func, $reducedArg)) }
+                                )
+                            },
+                            Some => -> $reducedFunc {
+                                $Some($AppT($reducedFunc, $arg))
+                            }
+                        );
                     } ),
                     
                     :LamT(-> $funcVar, $funcBody {    # so t is a beta-redex
