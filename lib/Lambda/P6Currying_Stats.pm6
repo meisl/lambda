@@ -68,6 +68,23 @@ my sub byKeyLen(Code $filter?) {
     entries($filter).sort( { $^a.key.chars < $^b.key.chars} );
 }
 
+my sub entryStats(PerFnStatsEntry:D $entry) {
+    sprintf("%{$maxKeyLen}s => %s", &fn2Str($entry.fn), $entry.Str(:no-key))
+}
+
+my sub fnStats(&f) {
+    entryStats(stats(&f));
+}
+
+my sub btFrame2Str ($frame) {
+    my $code = $frame.code;
+    if $code.^roles.map(*.perl).any eq 'lambda' {
+        "  in lambda {fn2Str($code)} at {$frame.file}:{$frame.line}\n";
+    } else {
+        $frame.Str;
+    };
+}
+
 our sub curryStats is export {
     my $result = 'CurryStats: ';
     
@@ -95,8 +112,8 @@ our sub curryStats is export {
             sprintf("%5d (%3d): %s", 
                 $key, 
                 +@vs, 
-                @vs.map(-> $entry { 
-                    sprintf("%{$maxKeyLen}s => %s", &fn2Str($entry.fn), $entry.Str(:no-key)) }
+                @vs.map(
+                    &entryStats
                 ).sort.join(",\n" ~ (' ' x 13))
             )
         }).join("\n")
@@ -130,9 +147,25 @@ my sub statsWrapper_part($self, |rest) {
     return $out;
 };
 
+sub skip(List:D $list, &predicate) {
+    $list[$list.first-index(&predicate)..*];
+}
+
 my sub statsWrapper_full($self, |rest) {
     $globalStats.full++;
     stats($self).full++;
+
+    if ($self.name // '') eq 'VarT->name' {
+        my $bt = Backtrace.new\
+        #.grep({
+        .first({
+            !(   $_.is-setting 
+              || $_.file ~~ /(P6Currying.+|\.nqp)$/
+            )
+        }).map(&btFrame2Str).join('');
+        note "full app: {fnStats($self)}\n" ~ $bt;
+    }
+
     nextsame; 
 };
 
