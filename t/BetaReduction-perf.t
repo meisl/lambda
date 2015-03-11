@@ -71,5 +71,4 @@ diag curryStats;
 }
 
 
-#diag curryStats.byKeyLen({$_.key ~~ /\d+/}).join("\n");
 diag curryStats;

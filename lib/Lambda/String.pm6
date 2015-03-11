@@ -8,13 +8,8 @@ module Lambda::String;
 
 
 constant $Str-eq is export = lambdaFn(
-    'Str-eq?', 'not available',
-    -> Str:D $s {
-        lambdaFn(
-            Str, "Str-eq? {$s.perl}",
-            -> Str:D $t -->TBool{
-                convertP6Bool2TBool($s eq $t)
-            }
-        )
+    'Str-eq?', 'λstr1.λstr2.built-in',
+    -> Str:D $str1, Str:D $str2 -->TBool{
+        convertP6Bool2TBool($str1 eq $str2)
     }
 );

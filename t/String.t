@@ -9,7 +9,7 @@ use Lambda::Boolean;
 # module under test:
 use Lambda::String;
 
-plan 17;
+plan 16;
 
 
 
@@ -36,7 +36,5 @@ plan 17;
     my $partial = $Str-eq('foo');
     is $partial('foo'), $true, 'partial application (1)';
     is $partial('bar'), $false, 'partial application (2)';
-
-    is $partial.lambda, '(Str-eq? "foo")', '.lambda of partially applied Str-eq?';
 }
 
