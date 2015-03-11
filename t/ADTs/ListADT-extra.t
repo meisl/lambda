@@ -10,7 +10,7 @@ use Lambda::MaybeADT;
 # module under test:
 use Lambda::ListADT;
 
-plan 70;
+plan 79;
 
 
 # functions on List -----------------------------------------------------------
@@ -209,7 +209,6 @@ plan 70;
     is $length($ys), 2, "should haved filtered out half of them";
     is $car($ys), 1, "found first non-even";
     is $cadr($ys), 3, "found second non-even";
-    exit;
 }
 
 { # exists

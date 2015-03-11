@@ -24,7 +24,8 @@ my $c   = $ConstT(23);
     cmp_ok($x1, '===', $x2, '(VarT Str) returns same var for same name');
     
     my $y1 = $VarT('y');
-    isnt($y1, $x1, '(VarT Str) returns new instance if necessary');
+    nok($y1 === $x1, '(VarT Str) returns new instance if necessary')
+        or diag "expected $y1 to be different from $x1";
     is($VarT2name($y1), 'y', '(VarT Str) returns new instance if necessary');
     my $y2 = $VarT('y');
     cmp_ok($y1, '===', $y2, '(VarT Str) returns same var for same name');
