@@ -10,17 +10,16 @@ use Lambda::ListADT;
 
 
 constant $iterate is export = $Y(-> &self { lambdaFn(
-    'iterate', 'λself.λf.λx.λprj.prj #true x (self f (f x))',
+    'iterate', 'λself.λf.λx.λonNil.λonCons.onCons x (self f (f x))',
     -> &f, $x {
         lambdaFn(   # must call lambdaFn so the result is curried
-            Str, 'λprj.prj #true x (λp.self f (f x) p)',
-            -> $prj {
-                $prj(
-                    $true,
+            Str, 'λonNil.λonCons.onCons x (λonNil.λonCons.self f (f x) onNil onCons)',
+            -> $onNil, $onCons {
+                $onCons(
                     $x,
-                    lambdaFn(   # must call lambdaFn so the result is curried
-                        Str, 'λp.self f (f x) p',
-                        -> $p { &self(&f, &f($x))($p) }
+                    lambdaFn(   # let's not η-contract this so the call to &self is lazy
+                        Str, 'λonNil.λonCons.self f (f x) onNil onCons',
+                        -> $onNil, $onCons { &self(&f, &f($x))($onNil, $onCons) }
                     ) does TList
                 )
             }
