@@ -40,7 +40,7 @@ constant $nil is export = lambdaFn(
 
 constant $cons is export = lambdaFn(
     'cons', 'λx.λxs.λonNil.λonCons.onCons x xs',
-    -> $x, TList:D $xs {
+    -> $x, TList:D $xs -->TList{
         lambdaFn(
             Str, { "(cons {$x.?symbol // $x.?lambda // $x.perl} $xs)" },
             -> $onNil, $onCons {

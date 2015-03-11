@@ -46,7 +46,7 @@ constant $Some is export = lambdaFn(
     'Some', 'λvalue.λonNone.λonSome.onSome value',
     -> $v {
         lambdaFn(
-            'TMaybe@Some', { "(Some {$v.?symbol // $v.?lambda // $v.perl})" },
+            Str, { "(Some {$v.?symbol // $v.?lambda // $v.perl})" },
             -> $onNone, $onSome { $onSome($v) }
         ) does TMaybe
     }
