@@ -41,38 +41,43 @@ my multi sub apply_more($self,              $f, @rest)            { ($f does Una
 
 my sub apply_part(&self, Mu $do, *@args) {
     my @types = types(&self, +@args);
-    given @types {
-        when 2 { return { $do(|@args, $^b)                 } does Partial[|@types] }
-        when 3 { return { $do(|@args, $^b, $^c)            } does Partial[|@types] }
-        when 4 { return { $do(|@args, $^b, $^c, $^d)       } does Partial[|@types] }
-        when 5 { return { $do(|@args, $^b, $^c, $^d, $^e)  } does Partial[|@types] }
+    my $name = stats-key(&self) ~ "({+@args}/{&self.arity})";
+    given +@types {
+        when 2 { return { $do(|@args, $^b)                 } does Partial[$name, |@types] }
+        when 3 { return { $do(|@args, $^b, $^c)            } does Partial[$name, |@types] }
+        when 4 { return { $do(|@args, $^b, $^c, $^d)       } does Partial[$name, |@types] }
+        when 5 { return { $do(|@args, $^b, $^c, $^d, $^e)  } does Partial[$name, |@types] }
     }
 }
 
 
-my role Partial[::T1, ::TR] does Curried[T1, TR] {
+my role Partial[Str:D $name, ::T1, ::TR] does Curried[T1, TR] {
     has Signature $!s;
     method signature { $!s //= EVAL ":(T1 -->TR)" }
+    method name { $name }
 }
 
-my role Partial[::T1, ::T2, ::TR] does Curried[T1, T2, TR] {
+my role Partial[Str:D $name, ::T1, ::T2, ::TR] does Curried[T1, T2, TR] {
     has Signature $!s;
     method signature { $!s //= EVAL ":(T1, T2 -->TR)" }
 }
 
-my role Partial[::T1, ::T2, ::T3, ::TR] does Curried[T1, T2, T3, TR] {
+my role Partial[Str:D $name, ::T1, ::T2, ::T3, ::TR] does Curried[T1, T2, T3, TR] {
     has Signature $!s;
     method signature { $!s //= EVAL ":(T1, T2, T3 -->TR)" }
+    method name { $name }
 }
 
-my role Partial[::T1, ::T2, ::T3, ::T4, ::TR] does Curried[T1, T2, T3, T4, TR] {
+my role Partial[Str:D $name, ::T1, ::T2, ::T3, ::T4, ::TR] does Curried[T1, T2, T3, T4, TR] {
     has Signature $!s;
     method signature { $!s //= EVAL ":(T1, T2, T3, T4 -->TR)" }
+    method name { $name }
 }
 
-my role Partial[::T1, ::T2, ::T3, ::T4, ::T5, ::TR] does Curried[T1, T2, T3, T4, T5, TR] {
+my role Partial[Str:D $name, ::T1, ::T2, ::T3, ::T4, ::T5, ::TR] does Curried[T1, T2, T3, T4, T5, TR] {
     has Signature $!s;
     method signature { $!s //= EVAL ":(T1, T2, T3, T4, T5 -->TR)" }
+    method name { $name }
 }
 
 # arity 1
@@ -175,7 +180,7 @@ sub curry(&f -->Callable) is export {
 
 
 if $STATS_ENABLED {
-    wrapCurry(&curry, Curried);
+    wrapCurry(&curry, Curried, Partial);
     wrapApp(part => &apply_part, full => &apply_comp, over => &apply_more);
 
 }

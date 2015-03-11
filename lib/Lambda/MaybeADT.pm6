@@ -170,11 +170,10 @@ constant $findFP-inMaybe is export = {
             )
         }
     );
-    my $findFP-arbiter = $findFP($arbiter);
     lambdaFn(
         'findFP-inMaybe', 'let ((stopCond (K None?))) λstepFn.B (findFP stopCond (λm.m >>= stepFn)) stepFn',
         -> &stepFn {
-            my $fpSearch = $findFP-arbiter(&stepFn);
+            my $fpSearch = $findFP($arbiter, &stepFn);
             lambdaFn(
                 Str, "λstart.case ({&stepFn} start) ((None None) ((Some v) (findFP $arbiter {&stepFn} v)))",
                 -> $start {

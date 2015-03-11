@@ -1,6 +1,7 @@
 use v6;
 
 use Lambda::BaseP6;
+use Lambda::Base;
 
 module Lambda::Boolean;
 
@@ -63,10 +64,10 @@ constant $false is export = lambdaFn(
 
 
 
-constant $K1false is export = lambdaFn(Str, 'λ_.#false', -> Mu -->TBool{ $false });
-constant $K1true  is export = lambdaFn(Str, 'λ_.#true',  -> Mu -->TBool{ $true  });
-constant $K2false is export = lambdaFn(Str, 'λ_.λ_.#false', -> Mu, Mu -->TBool{ $false });
-constant $K2true  is export = lambdaFn(Str, 'λ_.λ_.#true',  -> Mu, Mu -->TBool{ $true  });
+constant $K1false is export = $K1($false);
+constant $K1true  is export = $K1($true);
+constant $K2false is export = $K2($false);
+constant $K2true  is export = $K2($true); 
 
 
 # functions on TBool

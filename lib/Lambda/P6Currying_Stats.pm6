@@ -24,8 +24,15 @@ my class StatsEntry {
     }
 }
 
+my sub rolesStripped(&fn) {
+    &fn.^roles.grep({$_ ~~ none(Callable, $CurriedType, $PartialType)}).grep({$_.perl eq none <lambda Definition>})
+}
+
+my sub fn2Str($fn) { $fn.name || '<<' ~ (rolesStripped($fn).map(*.perl).join('+') || '???') ~ '>>' };
+
+
+my $maxKeyLen = 0;
 my class PerFnStatsEntry is StatsEntry {
-    my $maxKeyLen = 0;
     has       &.fn;
     has Str:D $.key;
 
@@ -38,7 +45,7 @@ my class PerFnStatsEntry is StatsEntry {
         sprintf('(%2dp, %6df, %2do, %4d+%2di%s%s)',
             self.part, self.full, self.over, self.init, self.init-bogus, 
             $no-key ?? '' !! ' ' ~ $!key,
-            $fn ?? ' ' ~ &!fn.^roles.grep({$_ ~~ none(Callable, $CurriedType, $PartialType)}).map(*.perl).grep({$_ eq none <lambda Definition>}).join('+') ~
+            $fn ?? ' ' ~ rolesStripped(&!fn).map(*.perl).join('+') ~
                     ':(' ~ typeof(&!fn) ~ ')'
                 !! ''
         );
@@ -48,11 +55,6 @@ my class PerFnStatsEntry is StatsEntry {
 
 my constant %fnStats = Hash.new;
 my constant $globalStats = StatsEntry.new;
-
-
-
-my sub fn2Str($fn) { $fn.name || typeof($fn) };
-#my sub fn2Str($fn) { $fn.gist };
 
 
 my sub entries(Code $filter?) {
@@ -81,6 +83,7 @@ our sub curryStats is export {
         || ($_.fn ~~ $PartialType)
         || ($_.fn.name // '') eq any('Term->source', 'Term-eq?', 'Str-eq?', '#true', '#false', <LamT AppT VarT [LamT] [AppT] [VarT] id I const K K^2 Y B cons nil _if _and _or not>)
         || ($_.fn.name // '').substr(0, 5) eq 'subst'
+        || ($_.fn.name // '').substr(0, 6) eq 'findFP'
     });
     my %classified = @entries\
         .classify(*.full);
@@ -88,9 +91,15 @@ our sub curryStats is export {
     my $s = %classified\
         .sort({ $^a.key < $^b.key})\
         #.map(-> (:$key, :value(@vs)) { "$key ({+@vs}): " ~ @vs.map(-> (:$fn, *%_) { &fn2Str($fn) }).join(', ') })\
-        .map(-> (:$key, :value(@vs)) { sprintf("%5d (%3d): %s", $key, +@vs, @vs.map(-> $entry { sprintf("%13s => %s", &fn2Str($entry.fn), $entry.Str(:no-key)) }).join(', ')) })\
-        #.map(-> $x { $x.WHAT })\
-        .join("\n")
+        .map(-> (:$key, :value(@vs)) {
+            sprintf("%5d (%3d): %s", 
+                $key, 
+                +@vs, 
+                @vs.map(-> $entry { 
+                    sprintf("%{$maxKeyLen}s => %s", &fn2Str($entry.fn), $entry.Str(:no-key)) }
+                ).sort.join(",\n" ~ (' ' x 13))
+            )
+        }).join("\n")
     ;
     $result ~= $s;
 

@@ -14,11 +14,16 @@ constant $id is export := $I;
 constant $K is export = lambdaFn(
     'K', 'λx.λ_.x',
     -> $x {
-        my $lambdaExpr = $x === $I
-            ?? 'λ_.λx.x'
-            !! 'λ_.' ~ ($x.?symbol // ($x.^can('lambda') ?? $x.lambda.substr(1, *-1) !! $x.perl));
+        my Str $name;
+        my $lambdaExpr;
+        if $x === $I {
+            $lambdaExpr = 'λ_.λx.x';
+        } else {
+            $lambdaExpr = 'λ_.' ~ ($x.?name || ($x.^can('lambda') ?? $x.lambda.substr(1, *-1) !! $x.perl));
+            $name = $x.?name && 'K1' ~ $x.name;
+        }
         lambdaFn(
-            Str, $lambdaExpr,
+            $name, $lambdaExpr,
             -> Mu { $x }
         )
     }
@@ -29,11 +34,16 @@ constant $K1    is export := $K;
 constant $K2 is export = lambdaFn(
     'K^2', 'λx.λ_.λ_.x',
     -> $x {
-        my $lambdaExpr = $x === $I
-            ?? 'λ_.λ_.λx.x'
-            !! 'λ_.λ_.' ~ ($x.?symbol // ($x.^can('lambda') ?? $x.lambda.substr(1, *-1) !! $x.perl));
+        my Str $name;
+        my $lambdaExpr;
+        if $x === $I {
+            $lambdaExpr = 'λ_.λ_.λx.x';
+        } else {
+            $lambdaExpr = 'λ_.λ_.' ~ ($x.?name || ($x.^can('lambda') ?? $x.lambda.substr(1, *-1) !! $x.perl));
+            $name = $x.?name && 'K2' ~ $x.name;
+        }
         lambdaFn(
-            Str, $lambdaExpr,
+            $name, $lambdaExpr,
             -> Mu, Mu { $x }
         )
     }

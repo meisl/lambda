@@ -322,8 +322,8 @@ my constant $BBSomeAppT = lambdaFn(
 
 # one-step β-simplification (either of $t or any (one) child)
 constant $betaContract is export = $Y(-> &self {
-    my $LamT_intoMaybe = $liftedCtor2XX($LamT, &self);
-    my $AppT_intoMaybe = $liftedCtor2XX($AppT, &self);
+    my $LamT_intoMaybe = $liftedCtor2XX($LamT, &self) does name('LamT-into-Maybe');
+    my $AppT_intoMaybe = $liftedCtor2XX($AppT, &self) does name('AppT-into-Maybe');
     lambdaFn(
         'betaContract', 'λt.error "NYI"',
         -> TTerm $t { case-Term($t,
