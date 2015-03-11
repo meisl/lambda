@@ -12,32 +12,21 @@ use Lambda::Conversion::Bool-conv;
 
 
 constant $is-free-varName is export = $Y(-> &self { lambdaFn(
-    'free-varName?', 
- q:to/ENDOFLAMBDA/,
-    λself.λvar.λt.
-        (case t
-            (((ConstT val)    #false)
-             ((VarT name)     (eq? name (VarT->name var)))
-             ((AppT func arg) (_or (self var func) (self var arg)))
-             ((LamT v body)   (_and (not (eq? v var)) (self var body)))
-            )
-            (error (~ "unknown TTerm" (Term->Str t)))
-        )
-ENDOFLAMBDA
-    -> $equalsVarName, TTerm $t {
+    'free-varName?', 'λself.λeq-varName?.λt.error "NYI"',
+    -> $equalsVarName, TTerm $t -->TBool{
         case-Term($t,
             ConstT => $K1false,
             VarT   => $equalsVarName,
             AppT   => -> TTerm $func, TTerm $arg {
-                $_if( &self($equalsVarName, $func),       # short-circuit OR
-                    $K1true,
-                    -> Mu { &self($equalsVarName, $arg) }
+                _if_( &self($equalsVarName, $func),       # short-circuit OR
+                    $true,
+                    { &self($equalsVarName, $arg) }
                 )
             },
             LamT   => -> TTerm $lamVar, TTerm $body {
-                $_if( $equalsVarName($VarT2name($lamVar)),
-                    $K1false,
-                    -> Mu { &self($equalsVarName, $body) }
+                _if_( $equalsVarName($VarT2name($lamVar)),
+                    $false,
+                    { &self($equalsVarName, $body) }
                 )
             }
         );
