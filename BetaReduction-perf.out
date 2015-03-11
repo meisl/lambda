@@ -62,16 +62,15 @@ ok 4 - $expectedTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_
 #                          subst-first => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TList -> Mu)),
 #                     subst-first_VarT => ( 0p,      0f,  0o,    1+ 0i :(Str -> TList -> Mu)),
 #                     subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu))
-# 8.6 sec consumed for β-reduction
+# 6.8 sec consumed for β-reduction
 ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((((h f1) f2) f3) f4) f5))))))))))
-# CurryStats: ( 2p,   6468f, 35o,  974+5i)
+# CurryStats: ( 2p,   6152f, 35o,  820+5i)
 #   455 (  1):                  #false => ( 0p,    455f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
 #   396 (  2):                   π1->1 => ( 0p,    396f,  0o,    0+ 0i :(Mu -> Mu)),
 #                           VarT->name => ( 0p,    396f,  0o,    1+ 0i :(TTerm -> Str))
-#   270 (  1):                     _if => ( 0p,    270f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu))
 #   255 (  1):                  exists => ( 0p,    255f,  0o,    2+ 0i :(Callable -> TList -> Mu))
 #   204 (  1):               <<TTerm>> => ( 0p,    204f,  0o,    1+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#   175 (  1):             free-under? => ( 0p,    175f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm -> Mu))
+#   175 (  1):             free-under? => ( 0p,    175f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm -> TBool))
 #   174 (  1):      free-vars-internal => ( 1p,    174f,  0o,    1+ 0i :(TList -> TList -> TTerm -> TList))
 #   157 (  1):                     nil => ( 0p,    157f,  0o,    1+ 0i TList:(Mu -> Mu -> Mu))
 #   148 (  1):                    Some => ( 0p,    148f,  0o,    1+ 0i :(Mu -> Mu))
@@ -81,13 +80,14 @@ ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((
 #   126 (  1):               <<TTerm>> => ( 0p,    126f,  0o,    1+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
 #   122 (  1):               subst-seq => ( 0p,    122f,  0o,    1+ 0i :(TTerm -> TList -> TMaybe))
 #   119 (  1):                   #true => ( 0p,    119f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
-#   112 (  1):                    cons => ( 0p,    112f,  0o,    1+ 0i :(Mu -> TList -> TList))
+#   112 (  2):                     _if => ( 0p,    112f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu)),
+#                                 cons => ( 0p,    112f,  0o,    1+ 0i :(Mu -> TList -> TList))
 #   105 (  1):         LamT-into-Maybe => ( 0p,    105f,  0o,    0+ 0i name:(Mu -> Mu -> Mu))
 #    91 (  1):               <<TTerm>> => ( 0p,     91f,  0o,    1+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
 #    88 (  2):                    None => ( 0p,     88f,  0o,    1+ 0i TMaybe:(Mu -> Mu -> Mu)),
 #                            <<TTerm>> => ( 0p,     88f,  0o,    1+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    79 (  1):                K1#false => ( 0p,     79f,  0o,    1+ 0i :(Mu -> Mu))
-#    75 (  1):                       I => ( 0p,     75f,  0o,    1+ 0i :(Mu -> Mu))
+#    75 (  2):                       I => ( 0p,     75f,  0o,    1+ 0i :(Mu -> Mu)),
+#                             K1#false => ( 0p,     75f,  0o,    1+ 0i :(Mu -> Mu))
 #    70 (  1):               <<TTerm>> => ( 0p,     70f,  0o,    1+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
 #    63 (  1):               <<TTerm>> => ( 0p,     63f,  0o,    1+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
 #    58 (  1):               <<TTerm>> => ( 0p,     58f,  0o,    1+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
@@ -115,4 +115,4 @@ ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((
 #                     subst-first_VarT => ( 0p,      0f,  0o,    1+ 0i :(Str -> TList -> Mu)),
 #                     subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu))
 
-Output completed (41 sec consumed) - Normal Termination
+Output completed (37 sec consumed) - Normal Termination

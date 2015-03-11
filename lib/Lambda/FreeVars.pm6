@@ -55,37 +55,15 @@ constant $is-free is export = lambdaFn(
 );
 
 constant $is-free-under is export = $Y(-> &self { lambdaFn(
-    'free-under?', 
- q:to/ENDOFLAMBDA/,
-    λself.λvar.λbinder.λt.
-        (case t ; TODO: case -> cascaded if
-            (((ConstT val)    #false)
-             ((VarT name)     #false)
-             ((AppT func arg) (_or (self var binder func) (self var binder arg)))
-             ((LamT v body)   (let ((vName  (VarT->name var))
-                                    (bName  (VarT->name binder))
-                                    (lbName (VarT->name v)))
-                                (_and
-                                  (not (eq? lbName vName))
-                                  (_if (eq? lbName bName)
-                                    (free? var body)
-                                    (self var binder body)
-                                  )
-                                )
-                              )
-             )
-            )
-            (error (~ "unknown TTerm" (Term->Str t)))
-        )
-ENDOFLAMBDA
-    -> TTerm $var, TTerm $binder, TTerm $t {
+    'free-under?', 'λself.λvar.λbinder.λt.error "NYI"',
+    -> TTerm $var, TTerm $binder, TTerm $t -->TBool{
         case-Term($t,
             VarT   => $K1false,
             ConstT => $K1false,
             AppT   => -> TTerm $func, $arg {
-                $_if( &self($var, $binder, $func),  # short-circuit OR
-                    $K1true,
-                    -> Mu { &self($var, $binder, $arg) }
+                _if_(&self($var, $binder, $func),  # short-circuit OR
+                    $true,
+                    { &self($var, $binder, $arg) }
                 )
             },
             LamT   => -> TTerm $lamVar, $body {
@@ -94,13 +72,12 @@ ENDOFLAMBDA
                     convertP6Bool2TBool($lamVarName eq $name)
                 };
                 my $vName    = $VarT2name($var);
-                $_if( $equalsLamVarName($vName),
-                    $K1false,               # if the λ binds the var then it's not free anywhere in the λ's body
-                    -> Mu {
-                        my $bName = $VarT2name($binder);
-                        $_if( $equalsLamVarName($bName),     # or else, if the binder is the λ's var then...
-                            -> Mu { $is-free($var, $body) },       # $var is free under $binder if $var is free in the λ's body
-                            -> Mu { &self($var, $binder, $body) }  # otherwise it depends on the λ's body
+                _if_($equalsLamVarName($vName),
+                    $false,               # if the λ binds the var then it's not free anywhere in the λ's body
+                    {   my $bName = $VarT2name($binder);
+                        _if_( $equalsLamVarName($bName),     # or else, if the binder is the λ's var then...
+                            { $is-free($var, $body) },       # $var is free under $binder if $var is free in the λ's body
+                            { &self($var, $binder, $body) }  # otherwise it depends on the λ's body
                         )
                     },
                 );
