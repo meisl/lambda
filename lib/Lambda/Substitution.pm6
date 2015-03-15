@@ -165,25 +165,29 @@ constant $subst-with-alpha is export = lambdaFn(
                     ConstT => $K1None,
                     VarT   => -> Str $varName {
                         #$subst-first_VarT($varName, $cons($mainSubst, $alpha-convs))
-                        $_if( $Str-eq($forVarName, $varName),
-                            -> $_ { $Some($whatTerm) },
-                            -> $_ { $subst-seq($t, $alpha-convs) }
-                        );
+                        _if_($Str-eq($forVarName, $varName),
+                            { $Some($whatTerm) },
+                            { $subst-seq($t, $alpha-convs) }
+                        )
                     },
                     AppT   => -> TTerm $func, TTerm $arg {
                         my $f = &self($alpha-convs, $func);
                         my $a = &self($alpha-convs, $arg);
-                        $_if( $is-None($f),
-                            -> $_ { $_if( $is-None($a),
-                                        -> $_ { $None },
-                                        -> $_ { $Some($AppT($func, $Some2value($a))) }
-                                    )
+                        case-Maybe($f,
+                            None => {
+                                case-Maybe($a,
+                                    None => $None,
+                                    Some => -> TTerm $newArg { $Some($AppT($func, $newArg)) }
+                                )
                             },
-                            -> $_ { $_if( $is-None($a),
-                                        -> $_ { $Some($AppT($Some2value($f), $arg)) },
-                                        -> $_ { $Some($AppT($Some2value($f), $Some2value($a))) }
+                            Some => -> TTerm $newFunc {
+                                $Some($AppT($newFunc,
+                                    case-Maybe($a,
+                                        None => $arg,
+                                        Some => $I
                                     )
-                            },
+                                ))
+                            }
                         )
                     },
                     LamT   => -> TTerm $myVar, TTerm $body {
@@ -211,29 +215,29 @@ constant $subst-with-alpha is export = lambdaFn(
                                         -> Str $vName { $Str-eq($myVarName, $vName) },
                                         $keepfreeNames
                                     );
-                                    $_if( $needFreshVar,
-                                        -> $_ { my $freshVar = $fresh-var-for($myVar);
-                                                my $myConvs  = $cons($Pair($myVar, $freshVar), $newConvs);
-                                                my $newBody  = &self($myConvs, $body);
-                                                # if (is-None newBody) then neither forVar nor myVar free in body, and no external alpha-convs applicable
-                                                $_if( $is-None($newBody),
-                                                    -> $_ { $None },
-                                                    -> $_ { $Some($LamT($freshVar, $Some2value($newBody))) }
-                                                )
+                                    _if_($needFreshVar,
+                                        {   my $freshVar = $fresh-var-for($myVar);
+                                            my $myConvs  = $cons($Pair($myVar, $freshVar), $newConvs);
+                                            my $newBody  = &self($myConvs, $body);
+                                            # if (is-None newBody) then neither forVar nor myVar free in body, and no external alpha-convs applicable
+                                            $_if( $is-None($newBody),
+                                                -> $_ { $None },
+                                                -> $_ { $Some($LamT($freshVar, $Some2value($newBody))) }
+                                            )
                                         },
-                                        -> $_ { my $newBody = &self($newConvs, $body);
-                                                $_if( $is-None($newBody),
-                                                    -> $_ { $None },
-                                                    -> $_ { $Some($LamT($myVar, $Some2value($newBody))) }
-                                                )
+                                        {
+                                            case-Maybe(&self($newConvs, $body),
+                                                None => $None,
+                                                Some => -> $newBody { $Some($LamT($myVar, $newBody)) }
+                                            )
                                         }
-                                    );
+                                    )
                             }
                         );
                     }
                 )
             }
-        )})($nil, $inTerm);
+        )}).($nil, $inTerm);
     }
 );
 
