@@ -6,7 +6,6 @@ use Lambda::Boolean;
 use Lambda::String;
 use Lambda::ListADT;
 
-use Lambda::P6Currying;
 use Lambda::ADT_auto;
 
 use Lambda::Conversion::Bool-conv;
@@ -15,7 +14,7 @@ module Lambda::TermADT;
 
 
 role TTerm does ADT is export {
-    our $repr is export = ADTRepr.new(TTerm,
+    my $repr = ADTRepr.new(TTerm,
         VarT   => 1,    # name:Str
         AppT   => 2,    # func:Term  arg:Term
         LamT   => 2,    # var:VarT   body:Term
@@ -51,6 +50,7 @@ constant $VarT is export = lambdaFn(
         $out;
     }
 );
+
 
 # AppT: Term -> Term -> (Str -> a) -> (Term -> Term -> b) -> (Term -> Term -> c) -> (* -> d) -> b
 constant $AppT is export = lambdaFn(

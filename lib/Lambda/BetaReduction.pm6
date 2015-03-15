@@ -390,11 +390,12 @@ constant $betaContract is export = $Y(-> &self {
                     } ),
                     
                     :LamT(-> $funcVar, $funcBody {    # so t is a beta-redex
+                        my $funcVarName = $VarT2name($funcVar);
                         my $alpha-problematic = $filter(
                             # no need to filter out $var itself separately
                             # since it cannot be free under itself in the body
-                            -> $v { $is-free-under($funcVar, $v, $funcBody) },
-                            $free-vars($arg)
+                            -> Str $vName { $is-freeName-under($funcVarName, $vName, $funcBody) },
+                            $free-varNames($arg)
                         );
                         case-List($alpha-problematic,
                             :cons(-> $hd, $tl {

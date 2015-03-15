@@ -16,16 +16,17 @@ role TMaybe is export {
 
 # pattern-matching ------------------------------------------------------------
 
-multi sub case-Maybe(TMaybe:D $instance,
+sub case-Maybe(TMaybe:D $instance,
     :None($onNone)!,
     :Some($onSome)!
 ) is export {
     $instance($onNone, $onSome);
 }
 
-multi sub case-Maybe(|args) {
-    die "error applying case-Maybe: " ~ args.perl;
-}
+#multi sub case-Maybe(|args) {
+#    die "error applying case-Maybe: " ~ args.perl;
+#}
+
 
 # constructors
 

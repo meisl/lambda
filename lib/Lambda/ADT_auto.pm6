@@ -44,11 +44,12 @@ class ADTRepr is export {
 
 
 sub makeMatcher(ADT:U ::T) is export {
-    my @ctors = T.repr.ctors;
+    my $repr = T.repr;
+    my @ctors = $repr.ctors;
 
-    my Str $adtName_literal  = T.repr.name;
+    my Str $adtName_literal  = $repr.name;
     my Str $adtName_symbolic = 'S';
-    my \S := T;
+    my \S := $repr.p6Type;
 
     my Str $instanceName = '$instance';
 

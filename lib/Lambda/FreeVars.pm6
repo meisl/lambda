@@ -11,22 +11,22 @@ use Lambda::TermADT;
 use Lambda::Conversion::Bool-conv;
 
 
-constant $is-free-varName is export = $Y(-> &self { lambdaFn(
-    'free-varName?', 'λself.λeq-varName?.λt.error "NYI"',
-    -> $equalsVarName, TTerm $t -->TBool{
+constant $is-free-varName = $Y(-> &self { lambdaFn(
+    'free-varName?', 'λself.λvarName.λt.error "NYI"',
+    -> Str:D $varName, TTerm $t -->TBool{
         case-Term($t,
             ConstT => $K1false,
-            VarT   => $equalsVarName,
+            VarT   => -> Str $name { $Str-eq($varName, $name) },
             AppT   => -> TTerm $func, TTerm $arg {
-                _if_( &self($equalsVarName, $func),       # short-circuit OR
+                _if_( &self($varName, $func),       # short-circuit OR
                     $true,
-                    { &self($equalsVarName, $arg) }
+                    { &self($varName, $arg) }
                 )
             },
             LamT   => -> TTerm $lamVar, TTerm $body {
-                _if_( $equalsVarName($VarT2name($lamVar)),
+                _if_( $Str-eq($varName, $VarT2name($lamVar)),
                     $false,
-                    { &self($equalsVarName, $body) }
+                    { &self($varName, $body) }
                 )
             }
         );
@@ -34,44 +34,45 @@ constant $is-free-varName is export = $Y(-> &self { lambdaFn(
 )});
 
 constant $is-free is export = lambdaFn(
-    'free?', 'λvar.free-varName (Str-eq? (VarT->name var))',  # free-varName (B Str-eq? VarT->name)
+    'free?', 'λvar.free-varName? (VarT->name var)',  # (B free-varName? VarT->name)
     -> TTerm $var {
-        $is-free-varName($Str-eq($VarT2name($var)));
+        $is-free-varName($VarT2name($var));
     }
 );
 
-constant $is-free-under is export = $Y(-> &self { lambdaFn(
-    'free-under?', 'λself.λvar.λbinder.λt.error "NYI"',
-    -> TTerm $var, TTerm $binder, TTerm $t -->TBool{
+
+constant $is-freeName-under is export = $Y(-> &self { lambdaFn(
+    'freeName-under?', 'λself.λvarName.λbinderName.λt.error "NYI"',
+    -> Str $varName, Str $binderName, TTerm $t -->TBool{
         case-Term($t,
             VarT   => $K1false,
             ConstT => $K1false,
-            AppT   => -> TTerm $func, $arg {
-                _if_(&self($var, $binder, $func),  # short-circuit OR
+            AppT   => -> TTerm $func, TTerm $arg {
+                _if_(&self($varName, $binderName, $func),  # short-circuit OR
                     $true,
-                    { &self($var, $binder, $arg) }
+                    { &self($varName, $binderName, $arg) }
                 )
             },
-            LamT   => -> TTerm $lamVar, $body {
+            LamT   => -> TTerm $lamVar, TTerm $body {
                 my $lamVarName = $VarT2name($lamVar);
-                my $equalsLamVarName = -> Str $name {
-                    convertP6Bool2TBool($lamVarName eq $name)
-                };
-                my $vName    = $VarT2name($var);
-                _if_($equalsLamVarName($vName),
+                _if_($Str-eq($varName, $lamVarName),
                     $false,               # if the λ binds the var then it's not free anywhere in the λ's body
-                    {   my $bName = $VarT2name($binder);
-                        _if_( $equalsLamVarName($bName),     # or else, if the binder is the λ's var then...
-                            { $is-free($var, $body) },       # $var is free under $binder if $var is free in the λ's body
-                            { &self($var, $binder, $body) }  # otherwise it depends on the λ's body
+                    {   _if_( $Str-eq($binderName, $lamVarName),        # or else, if the binder is the λ's var then...
+                            { $is-free-varName($varName, $body) },      # $var is free under $binder if $var is free in the λ's body
+                            { &self($varName, $binderName, $body) }     # otherwise it depends on the λ's body
                         )
                     },
                 );
             }
-        );
+        )
     }
 )});
 
+
+constant $is-free-under is export = lambdaFn(
+    'free-under?', 'λvar.λbinder.is-freeName? (VarT->name var) (VarT->name binder)',
+    -> TTerm $var, TTerm $binder, TTerm $t { $is-freeName-under($VarT2name($var), $VarT2name($binder), $t) }
+);
 
 constant $free-var is export = $Y(-> &self { lambdaFn(
     'free-var', 'λname.λterm.error "NYI"',
@@ -102,70 +103,36 @@ constant $free-var is export = $Y(-> &self { lambdaFn(
 )});
 
 
-constant $___free-vars is export = $Y(-> &self { lambdaFn(
-    'free-vars', 
- q:to/ENDOFLAMBDA/,
-    λself.λt.
-        (case t
-            (((ConstT val)    nil)
-             ((VarT name)     (cons t nil)
-             )
-             ((AppT func arg) (let ((argFVs      (self arg))
-                                    (argFVnames  (map VarT->name argFVs))
-                                    (notInArgFVs (λe.let ((eName  (VarT->name e))
-                                                          (found? (exists (λn.eq? eName n) argFVnames))
-                                                         )
-                                                   (not found)
-                                                 )
-                                    )
-                                    (funcFVs     (filter notInArgFVs (self func)))
-                                   )
-                                (foldl (swap-args cons) argFVs funcFVs)
-                              )
-             )
-             ((LamT var body) (let ((lbinder    (VarT->name var))
-                                    (ne-binder? (λv.(not (eq? (VarT->name v) lbinder))))
-                                    (bodyFVs    (self body)))
-                                (filter ne-binder? bodyFVs)
-                              )
-             )
-             (error (~ "unknown TTerm" (Term->Str t)))
-           )
-        )
-ENDOFLAMBDA
-    -> TTerm $t -->TList{
+constant $free-varNames-internal = $Y(-> &self { lambdaFn(
+    'free-varNames-internal', 'λbindersAbove.λresults.λterm.error "NYI"',
+    -> TList:D $bindersAbove, TList:D $results, TTerm:D $t -->TList{
+        my $K1results = -> Mu { $results };
         case-Term($t,
-            VarT   => -> Mu { $cons($t, $nil) },
-            ConstT => $K1nil,
-            AppT   => -> TTerm $func, TTerm $arg {
-                my $argFVs      = &self($arg);
-                my $argFVnames  = $map($VarT2name, $argFVs);
-                my $notInArgFVs = -> $e { 
-                    my $eName = $VarT2name($e);
-                    my $found = $exists(-> $n { convertP6Bool2TBool($eName eq $n) }, $argFVnames);
-                    $not($found)
-                };
-                my $funcFVs     = $filter($notInArgFVs, &self($func));
-                $foldl($swap-args($cons), $argFVs, $funcFVs);
-
-                #my $argFVs      = &self($arg);
-                #my $notInArgFVs = -> $var { 
-                #    my $found = $exists($Term-eq($var), $argFVs);
-                #    $not($found)
-                #};
-                #my $funcFVs     = $filter($notInArgFVs, &self($func));
-                #$foldl($swap-args($cons), $argFVs, $funcFVs);
+            ConstT => $K1results,   # t is a ConstT ~> leave results as is
+            VarT => -> Str:D $varName {
+                #my $eqVarName = $Str-eq($varName);
+                _if_( $exists(-> Str $bName { $Str-eq($varName, $bName) }, $bindersAbove),
+                    $results,     # don't add bound variable (ie leave results as is)
+                    {
+                        _if_( $exists(-> Str $rName { $Str-eq($varName, $rName) }, $results),
+                            $results,     # don't make duplicates (ie leave results as is)
+                            { $cons($varName, $results) }
+                        )
+                    }
+                )
             },
-            LamT   => -> TTerm $var, TTerm $body {
-                my $lbName      = $VarT2name($var);
-                my $isnt-binder = -> $e { convertP6Bool2TBool($VarT2name($e) ne $lbName) };
-                $filter($isnt-binder, &self($body));
-
-                #$filter($B($not, $Term-eq($var)), &self($body));
+            AppT => -> TTerm:D $func, TTerm:D $arg {    # t is an AppT
+                my $freeInArg = &self($bindersAbove, $results, $arg);
+                &self($bindersAbove, $freeInArg, $func);
+            },
+            LamT => -> TTerm:D $var, TTerm:D $body {    # t is a LamT
+                &self($cons($VarT2name($var), $bindersAbove), $results, $body);
             }
-        );
+        )
     }
 )});
+
+constant $free-varNames is export = lambdaFn('free-varNames', 'free-varNames-internal nil nil', $free-varNames-internal($nil, $nil));
 
 
 constant $free-vars-internal = $Y(-> &self { lambdaFn(
@@ -199,4 +166,5 @@ constant $free-vars-internal = $Y(-> &self { lambdaFn(
     }
 )});
 
-constant $free-vars is export = lambdaFn('free-vars', 'free-vars-internal nil nil', $free-vars-internal($nil, $nil));
+#constant $free-vars is export = lambdaFn('free-vars', 'free-vars-internal nil nil', $free-vars-internal($nil, $nil));
+constant $free-vars is export = lambdaFn('free-vars', 'λterm.map VarT (free-varNames term)', -> TTerm:D $term { $map($VarT, $free-varNames($term)) });
