@@ -17,8 +17,8 @@ use Lambda::Conversion::Bool-conv;
 # is that we don't need to compare terms for equality then.
 constant $subst-seq is export = $Y(-> &self { lambdaFn(
     'subst-seq', 'λterm.λsubstitutions.error "NYI"',
-    -> TTerm $t, TList $ss -->TMaybe{
-        case-List($ss,
+    -> TTerm $t, TList $substitutions -->TMaybe{
+        case-List($substitutions,
             nil  => $None,
             cons => -> $head, TList:D $tail { case-Term($t,
                 ConstT => $K1None,
@@ -38,21 +38,10 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                 },
 
                 AppT   => -> $oldFunc, $oldArg {   # TODO
-                    my $newFunc = &self($oldFunc, $ss);
-                    my $newArg  = &self($oldArg,  $ss);
-#                    _if_( $_and($is-None($newFunc), $is-None($newArg)),
-#                        $None,
-#                        { $Some( $AppT(
-#                            case-Maybe($newFunc,
-#                                Some => $pi1o1,
-#                                None => $oldFunc
-#                            ),
-#                            case-Maybe($newArg,
-#                                Some => $pi1o1,
-#                                None => $oldArg
-#                            )
-#                        ))}
-#                    )
+                    my $newFunc = &self($oldFunc, $substitutions);
+                    my $newArg  = &self($oldArg,  $substitutions);
+                    # iff both are None then nothing's changed and we return None
+                    # otherwise return a Some AppT with .func/.arg replaced only if the resp. thing really changed (original otherwise)
                     case-Maybe($newFunc,
                         None => {
                             case-Maybe($newArg,
@@ -80,9 +69,8 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                         $tBody,
                         $except( # kick out substitutions for our binder since there
                                  # won't be free occurrances of it in our body
-                          # TODO: fn composition via B is bad for perf...
-                          -> $substPair { $Term-eq($tVar, $fst($substPair)) },    #   $B($Term-eq($tVar), $fst),    #   
-                          $ss
+                          -> $substPair { $Term-eq($tVar, $fst($substPair)) },    #   $B($Term-eq($tVar), $fst), # NOTE: fn composition via B is bad for perf...   #   
+                          $substitutions
                         )
                     );
                     case-Maybe($body,
@@ -114,7 +102,7 @@ ENDOFLAMBDA
     -> Str $name, TList $alpha-convs {
         $Maybe-lift-in($B($Some, $snd))(
             $first(
-                -> TPair $s { convertP6Bool2TBool($name eq $fst($s)) },
+                -> TPair $s { $Str-eq($name, $fst($s)) },
                 $alpha-convs
             )
         )
@@ -184,7 +172,8 @@ ENDOFLAMBDA
                     $None
                 } elsif convertTBool2P6Bool($is-VarT($t)) {
                     #$subst-first_VarT($VarT2name($t), $cons($mainSubst, $alpha-convs))
-                    $_if( convertP6Bool2TBool($VarT2name($t) eq $forVarName),
+                    my $varName = $VarT2name($t);
+                    $_if( $Str-eq($varName, $forVarName),
                         -> $_ { $Some($whatTerm) },
                         -> $_ { $subst-seq($t, $alpha-convs) }
                     );
@@ -209,11 +198,11 @@ ENDOFLAMBDA
                     my $myVar     = $LamT2var($t);
                     my $body      = $LamT2body($t);
                     my $myVarName = $VarT2name($myVar);
-                    my $newConvs  = $filter(
-                        -> $s { convertP6Bool2TBool($fst($s) ne $myVarName) }, # (not (B (eq? myVarName) fst))
+                    my $newConvs  = $except(
+                        -> $s { $Str-eq($myVarName, $fst($s)) }, # (B (eq? myVarName) fst)
                         $alpha-convs
                     );
-                    $_if( convertP6Bool2TBool($forVarName eq $myVarName),
+                    $_if( $Str-eq($myVarName, $forVarName),
                         # bound by the lambda, hence not free, so we only apply alpha-convs
                         -> $_ { $Maybe-lift-in(-> $newBody { $Some($LamT($myVar, $newBody)) })(
                                     $subst-first($body, $newConvs)
@@ -229,9 +218,7 @@ ENDOFLAMBDA
                                 #)
                         },
                         -> $_ { my $needFreshVar = $exists(   # TODO: ... AND only if forVar occurs (free) in body
-                                    -> Str $vName {
-                                        convertP6Bool2TBool($vName eq $myVarName)
-                                    },
+                                    -> Str $vName { $Str-eq($myVarName, $vName) },
                                     $keepfreeNames
                                 );
                                 $_if( $needFreshVar,

@@ -8,8 +8,6 @@ use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
 
-use Lambda::Conversion::Bool-conv;
-
 
 constant $is-free-varName = $Y(-> &self { lambdaFn(
     'free-varName?', 'λself.λvarName.λt.error "NYI"',
