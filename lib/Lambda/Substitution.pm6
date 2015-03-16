@@ -17,14 +17,14 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
     -> TTerm $t, TList $substitutions -->TMaybe{
         case-List($substitutions,
             nil  => $None,
-            cons => -> $head, TList:D $tail { case-Term($t,
+            cons => -> TPair $head, TList:D $tail { case-Term($t,
                 ConstT => $K1None,
                 VarT   => -> Str $tName {
-                    my $forName = $VarT2name($fst($head));
+                    my Str $forName = $fst($head);
                     _if_($Str-eq($forName, $tName),
                         {
-                            my $what = $snd($head);
-                            my $out  = &self($what, $tail);
+                            my TTerm  $what = $snd($head);
+                            my TMaybe $out  = &self($what, $tail);
                             case-Maybe($out,
                                 None => { $Some($what) },
                                 Some => -> Mu { $out }
@@ -60,11 +60,12 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                 },
 
                 LamT   => -> TTerm $tVar, TTerm $tBody {
+                    my $tVarName = $VarT2name($tVar);
                     my $body = &self(
                         $tBody,
                         $except( # kick out substitutions for our binder since there
                                  # won't be free occurrances of it in our body
-                          -> $substPair { $Term-eq($tVar, $fst($substPair)) },    #   $B($Term-eq($tVar), $fst), # NOTE: fn composition via B is bad for perf...   #   
+                          -> $substPair { $Str-eq($tVarName, $fst($substPair)) },    #   $B($Str-eq($tVarName), $fst), # NOTE: fn composition via B is bad for perf...   #   
                           $substitutions
                         )
                     );
@@ -84,8 +85,8 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
 # is that we don't need to compare terms for equality then.
 constant $subst is export = lambdaFn(
     'subst', 'λt.λwhat.λfor.subst-seq t (cons (Pair for what) nil)',
-    -> TTerm $t, TTerm $what, TTerm $for -->TTerm{    # TODO: add types to signature
-        $subst-seq($t, $cons($Pair($for, $what), $nil));
+    -> TTerm $t, TTerm $what, Str $forVarName -->TTerm{    # TODO: add types to signature
+        $subst-seq($t, $cons($Pair($forVarName, $what), $nil));
     }
 );
 
@@ -143,7 +144,7 @@ constant $subst-first = $Y(-> &self { lambdaFn(
             LamT   => -> TTerm $var, TTerm $body {
                 my $varName = $VarT2name($var);
                 $Maybe-lift-in(-> $newBody { $LamT($var, $newBody) })(
-                    &self($body, $except(-> TPair $s { $Str-eq($varName, $fst($s)) }, $alpha-convs))         # <<<<<<<<<<<<<<<<<<<<< !?
+                    &self($body, $except(-> TPair $substPair { $Str-eq($varName, $fst($substPair)) }, $alpha-convs))         # <<<<<<<<<<<<<<<<<<<<< !?
                 )
             }
         )
@@ -191,7 +192,7 @@ constant $subst-with-alpha is export = lambdaFn(
                     LamT   => -> TTerm $myVar, TTerm $body {
                         my $myVarName = $VarT2name($myVar);
                         my $newConvs  = $except(
-                            -> TPair $s { $Str-eq($myVarName, $fst($s)) }, # (B (eq? myVarName) fst)
+                            -> TPair $s { $Str-eq($myVarName, $fst($s)) }, # (B (Str-eq? myVarName) fst)
                             $alpha-convs
                         );
                         _if_($Str-eq($forVarName, $myVarName),
@@ -215,7 +216,7 @@ constant $subst-with-alpha is export = lambdaFn(
                                 );
                                 _if_($needFreshVar,
                                     {   my $freshVar = $fresh-var-for($myVar);
-                                        my $myConvs  = $cons($Pair($myVar, $freshVar), $newConvs);
+                                        my $myConvs  = $cons($Pair($myVarName, $freshVar), $newConvs);
                                         case-Maybe(&self($myConvs, $body),
                                             None => $None,  # neither forVar nor myVar free in body, and no external alpha-convs applicable
                                             Some => -> TTerm $newBody { $Some($LamT($freshVar, $newBody)) }

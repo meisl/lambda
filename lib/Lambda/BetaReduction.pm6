@@ -241,7 +241,7 @@ ENDOFLAMBDA
                                                 $free-vars($arg)
                                             );
                                             case-List($alpha-problematic,
-                                                nil  => { my $substituted-func = $subst($funcBody, $arg, $funcVar);
+                                                nil  => { my $substituted-func = $subst($funcBody, $arg, $funcVarName);
                                                     my $isSame = $is-None($substituted-func);
                                                     $_if( $isSame,   # TODO: use Maybe-or or something like that
                                                         -> $_ { $Some($funcBody) },
@@ -395,7 +395,7 @@ constant $betaContract is export = $Y(-> &self {
                                 die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic)
                             },
                             nil => {
-                                my $substituted-func = $subst($funcBody, $arg, $funcVar);
+                                my $substituted-func = $subst($funcBody, $arg, $funcVarName);
                                 case-Maybe($substituted-func,
                                     None => { $Some($funcBody) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
                                     Some => -> Mu {
