@@ -8,7 +8,7 @@
 #                                      K^2 => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu))
 #     1 (  2):                      findFP => ( 0p,      1f,  0o,    1+ 0i :(Callable -> Callable -> Mu)),
 #                           findFP-inMaybe => ( 0p,      1f,  0o,    1+ 0i :(Callable -> Mu))
-#     0 ( 22):                           I => ( 0p,      0f,  0o,    1+ 0i :(Mu -> Mu)),
+#     0 ( 27):                           I => ( 0p,      0f,  0o,    1+ 0i :(Mu -> Mu)),
 #                                      _if => ( 0p,      0f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu)),
 #                                      _or => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
 #                                      nil => ( 0p,      0f,  0o,    1+ 0i TList:(Mu -> Mu -> Mu)),
@@ -16,6 +16,7 @@
 #                                     AppT => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm)),
 #                                     LamT => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm)),
 #                                     _and => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
+#                                     caar => ( 0p,      0f,  0o,    0+ 1i :(Mu -> Mu)),
 #                                     cons => ( 0p,      0f,  0o,    1+ 0i :(Mu -> TList -> TList)),
 #                                    #true => ( 0p,      0f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu)),
 #                                    subst => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> Str -> TTerm)),
@@ -23,13 +24,17 @@
 #                                   B(1/2) => ( 0p,      0f,  0o,    0+ 0i :(Callable -> Mu)),
 #                                  Str-eq? => ( 0p,      0f,  0o,    1+ 0i :(Str -> Str -> TBool)),
 #                                 Term-eq? => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TBool)),
+#                                 map-iter => ( 0p,      0f,  0o,    0+ 1i :(Callable -> Mu -> Mu)),
 #                                subst-seq => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TList -> TMaybe)),
+#                               BBSomeAppT => ( 0p,      0f,  0o,    0+ 1i :(Mu -> Mu)),
+#                               betaReduce => ( 0p,      0f,  0o,    0+ 1i :(Mu -> Mu)),
 #                              subst-first => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TList -> Mu)),
 #                             Term->source => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> Str)),
 #                            free-varNames => ( 0p,      0f,  0o,    0+ 0i :(TTerm -> TList)),
 #                            free-varNames => ( 0p,      0f,  0o,    0+ 1i :(TTerm -> TList)),
 #                         subst-first_VarT => ( 0p,      0f,  0o,    1+ 0i :(Str -> TList -> Mu)),
-#                         subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu))
+#                         subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu)),
+#                   free-varNames-internal => ( 1p,      0f,  0o,    1+ 0i :(TList -> TList -> TTerm -> TList))
 ok 1 - (x x) reduces to itself (sanity check)
 ok 2 - ((λx.x) x) reduces to x (sanity check)
 ok 3 - $bigTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.((λy.(λ_.y)) ((λg.(λh.((λy.(λ_.y)) (g h)))) ((λg.(λh.((λy.(λ_.y)) (g h)))) (λk.(((λk.(((λk.(((λk.(((λk.(((λx.x) k) f1)) k) f2)) k) f3)) k) f4)) k) f5))))))))))
@@ -46,25 +51,30 @@ ok 4 - $expectedTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_
 #     4 (  3):                           K => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu)),
 #                                      K^2 => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu)),
 #                                   #false => ( 0p,      4f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
-#     2 (  3):                        cons => ( 0p,      2f,  0o,    1+ 0i :(Mu -> TList -> TList)),
+#     2 (  4):                        cons => ( 0p,      2f,  0o,    1+ 0i :(Mu -> TList -> TList)),
 #                                  Str-eq? => ( 0p,      2f,  0o,    1+ 0i :(Str -> Str -> TBool)),
-#                                subst-seq => ( 0p,      2f,  0o,    1+ 0i :(TTerm -> TList -> TMaybe))
+#                                subst-seq => ( 0p,      2f,  0o,    1+ 0i :(TTerm -> TList -> TMaybe)),
+#                               betaReduce => ( 0p,      2f,  0o,    0+ 1i :(Mu -> Mu))
 #     1 (  6):                       #true => ( 0p,      1f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu)),
 #                                    subst => ( 0p,      1f,  0o,    1+ 0i :(TTerm -> TTerm -> Str -> TTerm)),
 #                                   findFP => ( 0p,      1f,  0o,    1+ 0i :(Callable -> Callable -> Mu)),
 #                                 Term-eq? => ( 0p,      1f,  0o,    1+ 0i :(TTerm -> TTerm -> TBool)),
 #                            free-varNames => ( 0p,      1f,  0o,    0+ 1i :(TTerm -> TList)),
 #                           findFP-inMaybe => ( 0p,      1f,  0o,    1+ 0i :(Callable -> Mu))
-#     0 (  9):                         _if => ( 0p,      0f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu)),
+#     0 ( 13):                         _if => ( 0p,      0f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu)),
 #                                      _or => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
 #                                      not => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool)),
 #                                     _and => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
+#                                     caar => ( 0p,      0f,  0o,    0+ 1i :(Mu -> Mu)),
 #                                   B(1/2) => ( 0p,      0f,  0o,    0+ 0i :(Callable -> Mu)),
+#                                 map-iter => ( 0p,      0f,  0o,    0+ 1i :(Callable -> Mu -> Mu)),
+#                               BBSomeAppT => ( 0p,      0f,  0o,    0+ 1i :(Mu -> Mu)),
 #                              subst-first => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TList -> Mu)),
 #                            free-varNames => ( 0p,      0f,  0o,    0+ 0i :(TTerm -> TList)),
 #                         subst-first_VarT => ( 0p,      0f,  0o,    1+ 0i :(Str -> TList -> Mu)),
-#                         subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu))
-# 5.2 sec consumed for β-reduction
+#                         subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu)),
+#                   free-varNames-internal => ( 1p,      0f,  0o,    1+ 0i :(TList -> TList -> TTerm -> TList))
+# 5 sec consumed for β-reduction
 ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((((h f1) f2) f3) f4) f5))))))))))
 # CurryStats: ( 2p,   5251f,  0o,  634+5i)
 #   455 (  1):                      #false => ( 0p,    455f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
@@ -101,16 +111,20 @@ ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((
 #                            free-varNames => ( 0p,     13f,  0o,    0+ 1i :(TTerm -> TList))
 #     4 (  2):                           K => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu)),
 #                                      K^2 => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu))
+#     3 (  1):                  betaReduce => ( 0p,      3f,  0o,    0+ 1i :(Mu -> Mu))
 #     1 (  2):                      findFP => ( 0p,      1f,  0o,    1+ 0i :(Callable -> Callable -> Mu)),
 #                           findFP-inMaybe => ( 0p,      1f,  0o,    1+ 0i :(Callable -> Mu))
-#     0 (  9):                         _if => ( 0p,      0f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu)),
+#     0 ( 12):                         _if => ( 0p,      0f,  0o,    1+ 0i :(TBool -> Callable -> Callable -> Mu)),
 #                                      _or => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
 #                                      not => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool)),
 #                                     _and => ( 0p,      0f,  0o,    1+ 0i :(TBool -> TBool -> TBool)),
+#                                     caar => ( 0p,      0f,  0o,    0+ 1i :(Mu -> Mu)),
 #                                   B(1/2) => ( 0p,      0f,  0o,    0+ 0i :(Callable -> Mu)),
+#                                 map-iter => ( 0p,      0f,  0o,    0+ 1i :(Callable -> Mu -> Mu)),
+#                               BBSomeAppT => ( 0p,      0f,  0o,    0+ 1i :(Mu -> Mu)),
 #                              subst-first => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TList -> Mu)),
 #                            free-varNames => ( 0p,      0f,  0o,    0+ 0i :(TTerm -> TList)),
 #                         subst-first_VarT => ( 0p,      0f,  0o,    1+ 0i :(Str -> TList -> Mu)),
 #                         subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu))
 
-Output completed (33 sec consumed) - Normal Termination
+Output completed (32 sec consumed) - Normal Termination
