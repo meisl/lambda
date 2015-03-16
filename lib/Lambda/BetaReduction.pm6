@@ -269,25 +269,9 @@ ENDOFLAMBDA
 )});
 
 my constant $liftedCtor2 = lambdaFn(
-    Str, 'λctor.λa1.λtransform2nd.λa2.let ((a2-transformed (transform2nd a2))) if (None? a2-transformed) None (Some (ctor a1 (Some->value a2-transformed)))',
-    -> &ctor, TTerm $a1, &transform2nd {
-        #-> TTerm $a2 {
-        #    my $a2transformed = &transform2nd($a2);
-        #    $a2transformed(
-        #        $None,
-        #        -> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) }
-        #    );
-        #    #$bindMaybe(&transform2nd($a2), -> $a2transformedVal { $Some(&ctor($a1, $a2transformedVal)) } );
-        #    #$bindMaybe(&transform2nd($a2), $B($Some, &ctor($a1)) );
-        #    #$B($liftMaybe(&ctor($a1)), &transform2nd)($a2);
-        #};
-        
-        #$B($liftMaybe(&ctor($a1)), &transform2nd);
-    }
-);
-
-my constant $liftedCtor2XX = lambdaFn(
     Str, '',
+    #$B($liftMaybe(&ctor($a1)), &transform2nd);
+    
     #-> &ctor {
     #    my $liftedPartialCtor = $B($liftMaybe, &ctor);
     #    -> &transform2nd {
@@ -318,8 +302,8 @@ my constant $BBSomeAppT = lambdaFn(
 
 # one-step β-simplification (either of $t or any (one) child)
 constant $betaContract is export = $Y(-> &self {
-    #my $LamT_intoMaybe = $liftedCtor2XX($LamT, &self) does name('LamT-into-Maybe');
-    my $AppT_intoMaybe = $liftedCtor2XX($AppT, &self) does name('AppT-into-Maybe');
+    #my $LamT_intoMaybe = $liftedCtor2($LamT, &self) does name('LamT-into-Maybe');
+    #my $AppT_intoMaybe = $liftedCtor2($AppT, &self) does name('AppT-into-Maybe');
     lambdaFn(
         'betaContract', 'λt.error "NYI"',
         -> TTerm $t { case-Term($t,
@@ -341,7 +325,11 @@ constant $betaContract is export = $Y(-> &self {
 
             AppT => -> TTerm $func, TTerm $arg {
                 my $K1AppT_func_contracted_arg = -> Mu {
-                    $AppT_intoMaybe($func, $arg)
+                    #$AppT_intoMaybe($func, $arg)
+                    case-Maybe(&self($arg),
+                        None => $None,
+                        Some => -> TTerm $newArg { $Some($AppT($func, $newArg)) }
+                    )
                 };
                 case-Term($func,
                     #VarT => -> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
