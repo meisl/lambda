@@ -135,7 +135,7 @@ plan 118;
         is match($c2),      '&onConstT called: "two"', 'match on (ConstT "two") passes fields to &onConstT';
     });
 
-    subtest { # test signature checking for callbacks
+    skip { # test signature checking for callbacks
         subtest( {  # test signature checking for &onVarT
             sub match(TTerm:D $t, :VarT(&onVarT)!) {
                 case-Term($t,
