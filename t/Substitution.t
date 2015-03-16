@@ -83,11 +83,7 @@ my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
             my $inTermStr   = $Term2source($inTerm);
 
             my $substs      = $test.key[1];
-            my $substsStr   = '[' ~ $substs.map(
-                -> $pair {
-                    '[' ~ $Term2source($pair[1]) ~ '/' ~ $VarT2name($pair[0]) ~ ']'
-                }
-            ).join(', ') ~ ']';
+            my $substsStr   = '[' ~ $substs.map(-> $pair { "[{$Term2source($pair[1])}/{$pair[0]}]"}).join(', ') ~ ']';
             my $substsListOfPairs = convertP6ArrayToTListOfTPairs($substs);
 
             my $expected   = $test.value;
@@ -112,22 +108,22 @@ my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
     my $l7 = $LamT($u, $LamT($v, $AppT($LamT($w, $LamT($x, $AppT($x, $y))), $u)));   # λu.λv.(λw.λx.x y) u
 
     is_subst-seq(
-        [$c,  [[$y, $x]]]   => $None,       # [x/y]"c"          -> "c"
-        [$z,  [[$y, $x]]]   => $None,       # [x/y]z            -> z
-        [$y,  [[$y, $x]]]   => $Some($x),   # [x/y]y            -> x
-        [$y,  [[$y, $l1]]]  => $Some($l1),  # [λu.λv.z u/y]y    -> λu.λv.z u
-        [$l1, [[$y, $x]]]   => $None,       # [x/y]λu.λv.z u    -> λu.λv.z u    # because y doesn't occur in l1
-        [$l1, [[$u, $x]]]   => $None,       # [x/u]λu.λv.z u    -> λu.λv.z u    # because u is bound
-        [$l1, [[$z, $x]]]   => $Some($l3),  # [x/z]λu.λv.z u    -> λu.λv.x u    # since z is free in l1
-        [$l1, [[$z, $u]]]   => $Some($l4),  # [u/z]λu.λv.z u    -> λu.λv.u u    # since z is free in l1 (accidental capture)
+        [$c,  [['y', $x]]]   => $None,       # [x/y]"c"          -> "c"
+        [$z,  [['y', $x]]]   => $None,       # [x/y]z            -> z
+        [$y,  [['y', $x]]]   => $Some($x),   # [x/y]y            -> x
+        [$y,  [['y', $l1]]]  => $Some($l1),  # [λu.λv.z u/y]y    -> λu.λv.z u
+        [$l1, [['y', $x]]]   => $None,       # [x/y]λu.λv.z u    -> λu.λv.z u    # because y doesn't occur in l1
+        [$l1, [['u', $x]]]   => $None,       # [x/u]λu.λv.z u    -> λu.λv.z u    # because u is bound
+        [$l1, [['z', $x]]]   => $Some($l3),  # [x/z]λu.λv.z u    -> λu.λv.x u    # since z is free in l1
+        [$l1, [['z', $u]]]   => $Some($l4),  # [u/z]λu.λv.z u    -> λu.λv.u u    # since z is free in l1 (accidental capture)
         
-        [$z,  [[$z, $l2], [$z, $y], [$y, $l2]]]     => $Some($l5),  
+        [$z,  [['z', $l2], ['z', $y], ['y', $l2]]]     => $Some($l5),  
             # [λw.λx.x z/y]([y/z]([λw.λx.x z/z]z))  -> λw.λx.x λw.λx.x z
-        [$l1, [[$z, $x], [$x, $y]]]                 => $Some($l6),
+        [$l1, [['z', $x], ['x', $y]]]                 => $Some($l6),
             # [y/x]([x/z]λu.λv.z u)                 -> λu.λv.y u
-        [$l1, [[$z, $x], [$y, $z], [$x, $y]]]       => $Some($l6),
+        [$l1, [['z', $x], ['y', $z], ['x', $y]]]       => $Some($l6),
             # [y/x]([z/y]([x/z]λu.λv.z u))          -> λu.λv.y u        # 2nd subst doesn't change anything
-        [$l1, [[$z, $l2], [$z, $y]]]                => $Some($l7),
+        [$l1, [['z', $l2], ['z', $y]]]                => $Some($l7),
             # [y/z]([λw.λx.x z/z]λu.λv.z u)         -> λu.λv.(λw.λx.x y) u
     );
 }
