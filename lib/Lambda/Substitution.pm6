@@ -125,7 +125,7 @@ constant $subst-first = $Y(-> &self { lambdaFn(
                         #    Some => -> $newArg { $Some($AppT($func, $newArg)) }
                         #)
                     },
-                    Some => -> $newFunc {
+                    Some => -> TTerm $newFunc {
                         $Some($AppT(
                             $newFunc,
                             $Maybe2valueWithDefault($a, $arg)
@@ -193,51 +193,47 @@ constant $subst-with-alpha is export = lambdaFn(
                     LamT   => -> TTerm $myVar, TTerm $body {
                         my $myVarName = $VarT2name($myVar);
                         my $newConvs  = $except(
-                            -> $s { $Str-eq($myVarName, $fst($s)) }, # (B (eq? myVarName) fst)
+                            -> TPair $s { $Str-eq($myVarName, $fst($s)) }, # (B (eq? myVarName) fst)
                             $alpha-convs
                         );
-                        $_if( $Str-eq($forVarName, $myVarName),
+                        _if_($Str-eq($forVarName, $myVarName),
                             # bound by the lambda, hence not free, so we only apply alpha-convs
-                            -> $_ { $Maybe-lift-in(-> $newBody { $Some($LamT($myVar, $newBody)) })(
-                                        $subst-first($body, $newConvs)
-                                    )
+                            {   $Maybe-lift-in(-> $newBody { $Some($LamT($myVar, $newBody)) })(
+                                    $subst-first($body, $newConvs)
+                                )
 
-                                    #$liftMaybe($LamT._($myVar))($subst-first($body, $newConvs))
-                                    ## (liftMaybe (LamT myVar) (subst-first body newConvs))
+                                #$liftMaybe($LamT._($myVar))($subst-first($body, $newConvs))
+                                ## (liftMaybe (LamT myVar) (subst-first body newConvs))
 
-                                    #my $newBody = $subst-seq($body, $newConvs);
-                                    #$_if( $is-None($newBody),
-                                    #    -> $_ { $None },
-                                    #    -> $_ { $Some($LamT($myVar, $Some2value($newBody))) }
-                                    #)
+                                #my $newBody = $subst-seq($body, $newConvs);
+                                #$_if( $is-None($newBody),
+                                #    -> $_ { $None },
+                                #    -> $_ { $Some($LamT($myVar, $Some2value($newBody))) }
+                                #)
                             },
-                            -> $_ { my $needFreshVar = $exists(   # TODO: ... AND only if forVar occurs (free) in body
-                                        -> Str $vName { $Str-eq($myVarName, $vName) },
-                                        $keepfreeNames
-                                    );
-                                    _if_($needFreshVar,
-                                        {   my $freshVar = $fresh-var-for($myVar);
-                                            my $myConvs  = $cons($Pair($myVar, $freshVar), $newConvs);
-                                            my $newBody  = &self($myConvs, $body);
-                                            # if (is-None newBody) then neither forVar nor myVar free in body, and no external alpha-convs applicable
-                                            $_if( $is-None($newBody),
-                                                -> $_ { $None },
-                                                -> $_ { $Some($LamT($freshVar, $Some2value($newBody))) }
-                                            )
-                                        },
-                                        {
-                                            case-Maybe(&self($newConvs, $body),
-                                                None => $None,
-                                                Some => -> $newBody { $Some($LamT($myVar, $newBody)) }
-                                            )
-                                        }
-                                    )
+                            {   my $needFreshVar = $exists(   # TODO: ... AND only if forVar occurs (free) in body
+                                    -> Str $vName { $Str-eq($myVarName, $vName) },
+                                    $keepfreeNames
+                                );
+                                _if_($needFreshVar,
+                                    {   my $freshVar = $fresh-var-for($myVar);
+                                        my $myConvs  = $cons($Pair($myVar, $freshVar), $newConvs);
+                                        case-Maybe(&self($myConvs, $body),
+                                            None => $None,  # neither forVar nor myVar free in body, and no external alpha-convs applicable
+                                            Some => -> TTerm $newBody { $Some($LamT($freshVar, $newBody)) }
+                                        )
+                                    },
+                                    { case-Maybe(&self($newConvs, $body),
+                                        None => $None,
+                                        Some => -> TTerm $newBody { $Some($LamT($myVar, $newBody)) }
+                                    )}
+                                )
                             }
-                        );
+                        )
                     }
                 )
             }
-        )}).($nil, $inTerm);
+        )})($nil, $inTerm);
     }
 );
 
