@@ -84,8 +84,8 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
 # is that we don't need to compare terms for equality then.
 constant $subst is export = lambdaFn(
     'subst', 'λt.λwhat.λfor.subst-seq t (cons (Pair for what) nil)',
-    -> TTerm $t, TTerm $what, TTerm $for -->TTerm{    # TODO: add types to signature
-        $subst-seq($t, $cons($Pair($for, $what), $nil));
+    -> TTerm $t, TTerm $what, Str $forVarName -->TTerm{    # TODO: add types to signature
+        $subst-seq($t, $cons($Pair($VarT($forVarName), $what), $nil));
     }
 );
 

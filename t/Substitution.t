@@ -45,32 +45,32 @@ my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
             my $inTerm      = $test.key[0];
             my $inTermStr   = $Term2source($inTerm);
 
-            my $forVar      = $test.key[1].key;
-            my $forVarStr   = $Term2source($forVar);
-            my $whatTerm    = $test.key[1].value;
-            my $whatTermStr = $Term2source($whatTerm);
+            my $forVarName    = $test.key[1].key;
+            my $forVarNameStr = $forVarName.perl;
+            my $whatTerm      = $test.key[1].value;
+            my $whatTermStr   = $Term2source($whatTerm);
 
-            my $expected   = $test.value;
-            my $itself     = $expected === $None;
-            my $expStr     = $itself
+            my $expected      = $test.value;
+            my $itself        = $expected === $None;
+            my $expStr        = $itself
                                  ?? "the original term"
                                  !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
-            my $desc = "substituting $whatTermStr for $forVarStr in $inTermStr yields $expStr";
+            my $desc = "substituting $whatTermStr for $forVarNameStr in $inTermStr yields $expStr";
 
-            my $actual = $subst($inTerm, $whatTerm, $forVar);
+            my $actual = $subst($inTerm, $whatTerm, $forVarName);
             is($actual, $expected, $desc)
                 or diag($actual.perl) and die;
         }
     }
 
     is_subst(
-        [$c,                        $x => $y] => $None,
-        [$x,                        $x => $c] => $Some($c),
-        [$x,                        $y => $c] => $None,
-        [$x,                        $x => $y] => $Some($y),
-        [$LamT($x, $AppT($x, $y)),  $x => $y] => $None,                              # y for x in (λx.x y) -> (λx.x y)
-        [$LamT($x, $AppT($x, $y)),  $z => $y] => $None,                              # y for z in (λx.x y) -> (λx.x y)
-        [$LamT($x, $AppT($x, $y)),  $y => $z] => $Some($LamT($x, $AppT($x, $z))),    # z for y in (λx.x y) -> (λx.x z)
+        [$c,                        x => $y] => $None,
+        [$x,                        x => $c] => $Some($c),
+        [$x,                        y => $c] => $None,
+        [$x,                        x => $y] => $Some($y),
+        [$LamT($x, $AppT($x, $y)),  x => $y] => $None,                              # y for x in (λx.x y) -> (λx.x y)
+        [$LamT($x, $AppT($x, $y)),  z => $y] => $None,                              # y for z in (λx.x y) -> (λx.x y)
+        [$LamT($x, $AppT($x, $y)),  y => $z] => $Some($LamT($x, $AppT($x, $z))),    # z for y in (λx.x y) -> (λx.x z)
     );
 }
 
