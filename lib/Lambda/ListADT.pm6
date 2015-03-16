@@ -300,7 +300,7 @@ constant $___exists is export = lambdaFn(
         #$is-Some($first(&p, $xs))
         case-Maybe($first(&p, $xs),
             None => $false,
-            Some => $true
+            Some => $K1true
         )
     }
 );
