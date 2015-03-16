@@ -303,7 +303,7 @@ my constant $liftedCtor2XX = lambdaFn(
         -> $a1, $a2 {
             case-Maybe(&transform2nd($a2),
                 None => $None,
-                Some => -> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) }
+                Some => -> $a2transformed { $Some(&ctor($a1, $a2transformed)) }
             );
         }
     }
@@ -318,7 +318,7 @@ my constant $BBSomeAppT = lambdaFn(
 
 # one-step β-simplification (either of $t or any (one) child)
 constant $betaContract is export = $Y(-> &self {
-    my $LamT_intoMaybe = $liftedCtor2XX($LamT, &self) does name('LamT-into-Maybe');
+    #my $LamT_intoMaybe = $liftedCtor2XX($LamT, &self) does name('LamT-into-Maybe');
     my $AppT_intoMaybe = $liftedCtor2XX($AppT, &self) does name('AppT-into-Maybe');
     lambdaFn(
         'betaContract', 'λt.error "NYI"',
@@ -340,13 +340,18 @@ constant $betaContract is export = $Y(-> &self {
             },
 
             AppT => -> TTerm $func, TTerm $arg {
+                my $K1AppT_func_contracted_arg = -> Mu {
+                    $AppT_intoMaybe($func, $arg)
+                };
                 case-Term($func,
                     #VarT => -> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
                     #VarT => -> Mu { $B($liftMaybe($AppT($func)), &self)($arg) },
-                    VarT => -> Mu { $AppT_intoMaybe($func, $arg) },
+                    #VarT => -> Mu { $AppT_intoMaybe($func, $arg) },
+                    VarT => $K1AppT_func_contracted_arg,
                     
                     #ConstT => -> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
-                    ConstT => -> Mu { $AppT_intoMaybe($func, $arg) },
+                    #ConstT => -> Mu { $AppT_intoMaybe($func, $arg) },
+                    ConstT => $K1AppT_func_contracted_arg,
                     
                     # func is AppT
                     AppT => -> Mu, Mu {

@@ -1,6 +1,6 @@
 ---------- run perl6-m ----------
 1..5
-# CurryStats: ( 2p,     74f,  0o,  171+5i)
+# CurryStats: ( 2p,     73f,  0o,  170+5i)
 #    30 (  1):                           B => ( 1p,     30f,  0o,    1+ 0i :(Callable -> Callable -> Mu))
 #    21 (  1):                           Y => ( 0p,     21f,  0o,    2+ 0i :(Callable -> Mu))
 #     9 (  1):                        VarT => ( 0p,      9f,  0o,    1+ 0i :(Str -> TTerm))
@@ -34,7 +34,7 @@ ok 1 - (x x) reduces to itself (sanity check)
 ok 2 - ((λx.x) x) reduces to x (sanity check)
 ok 3 - $bigTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.((λy.(λ_.y)) ((λg.(λh.((λy.(λ_.y)) (g h)))) ((λg.(λh.((λy.(λ_.y)) (g h)))) (λk.(((λk.(((λk.(((λk.(((λk.(((λx.x) k) f1)) k) f2)) k) f3)) k) f4)) k) f5))))))))))
 ok 4 - $expectedTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((((h f1) f2) f3) f4) f5))))))))))
-# CurryStats: ( 2p,    525f,  0o,  236+5i)
+# CurryStats: ( 2p,    524f,  0o,  235+5i)
 #   112 (  1):                Term->source => ( 0p,    112f,  0o,    1+ 0i :(TTerm -> Str))
 #    59 (  1):                           I => ( 0p,     59f,  0o,    1+ 0i :(Mu -> Mu))
 #    31 (  1):                        LamT => ( 0p,     31f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm))
@@ -64,9 +64,9 @@ ok 4 - $expectedTerm.lambda is (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_
 #                            free-varNames => ( 0p,      0f,  0o,    0+ 0i :(TTerm -> TList)),
 #                         subst-first_VarT => ( 0p,      0f,  0o,    1+ 0i :(Str -> TList -> Mu)),
 #                         subst-with-alpha => ( 0p,      0f,  0o,    1+ 0i :(TTerm -> TTerm -> TList -> TTerm -> Mu))
-# 5.4 sec consumed for β-reduction
+# 5.2 sec consumed for β-reduction
 ok 5 - $bigTerm reduces to (λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((((h f1) f2) f3) f4) f5))))))))))
-# CurryStats: ( 2p,   5360f,  0o,  637+5i)
+# CurryStats: ( 2p,   5359f,  0o,  636+5i)
 #   455 (  1):                      #false => ( 0p,    455f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
 #   374 (  1):                     Str-eq? => ( 0p,    374f,  0o,    1+ 0i :(Str -> Str -> TBool))
 #   255 (  1):                      exists => ( 0p,    255f,  0o,    2+ 0i :(Callable -> TList -> Mu))
