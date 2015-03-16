@@ -25,7 +25,33 @@ role TTerm does ADT is export {
 
 # pattern-matching ------------------------------------------------------------
 
-our &case-Term is export = makeMatcher(TTerm);
+#our &case-Term is export = makeMatcher(TTerm);
+
+my sub checkSig(&callback, Str $cbName, *@types) is hidden_from_backtrace {
+    my $s = &callback.signature;
+    my @p = $s.params;
+    die "invalid signature for $cbName callback: {$s.perl}"
+        unless False
+        || (@types == 1) && ( (&callback === $pi1o1) || (&callback === $I    ) )
+        || (@types == 2) && ( (&callback === $pi1o2) || (&callback === $pi2o2) )
+        || (@types == 3) && ( (&callback === $pi1o3) || (&callback === $pi2o3) || (&callback === $pi3o3) )
+        || ($s.arity == +@types)
+            && (@p Z @types).map(
+                -> $p, $t { 
+                    ($p.type.perl eq $t.perl) && ($p.name !~~ Nil)
+                 || ($p.type.perl eq 'Mu'   ) && ($p.name  ~~ Nil)
+                }).all
+    ;
+}
+
+our sub case-Term(TTerm:D $term, :VarT(&onVarT)!, :AppT(&onAppT)!, :LamT(&onLamT)!, :ConstT(&onConstT)!) is hidden_from_backtrace is export {
+    checkSig(&onVarT, 'VarT', Str);
+    checkSig(&onLamT, 'LamT', TTerm, TTerm);
+    checkSig(&onAppT, 'AppT', TTerm, TTerm);
+    checkSig(&onConstT, 'ConstT', Any);
+
+    $term(&onVarT, &onAppT, &onLamT, &onConstT);
+};
 
 
 # constructors ----------------------------------------------------------------
@@ -102,7 +128,7 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
         case-Term($s,
             VarT => -> Str $sName {
                 case-Term($t,
-                    VarT => $Str-eq($sName),
+                    VarT => -> Str $vName { $Str-eq($sName, $vName) },
                     AppT => $K2false,
                     LamT => $K2false,
                     ConstT => $K1false
@@ -327,10 +353,10 @@ ENDOFLAMBDA
         case-Term($t,
             ConstT => $K1nil,
             VarT   => $K1nil,
-            AppT => -> $f, $a {
+            AppT => -> TTerm $f, TTerm $a {
                 $cons($f, $cons($a, $nil))
             },
-            LamT => -> $v, $b {
+            LamT => -> TTerm $v, TTerm $b {
                 $cons($v, $cons($b, $nil))
             }
         )
@@ -352,13 +378,11 @@ constant $Term2size is export = $Y(-> &self { lambdaFn(
 constant $is-selfApp is export = lambdaFn(
     'selfApp?', 'not yet implemented',
     -> TTerm:D $t -->TBool{ case-Term($t,
-        AppT   => -> $func, $arg {
+        AppT   => -> TTerm $func, TTerm $arg {
             case-Term($func,
-                VarT   => -> $funcName {
+                VarT   => -> Str $funcName {
                     case-Term($arg,
-                        VarT   => -> $argName {
-                            $Str-eq($funcName, $argName)
-                        },
+                        VarT   => -> Str $argName { $Str-eq($funcName, $argName) },
                         ConstT => $K1false,
                         LamT   => $K2false,
                         AppT   => $K2false
@@ -381,18 +405,18 @@ constant $is-selfAppOfVar is export = lambdaFn(
     'selfAppOfVar?', 'λs.λt.error "NYI"',
     -> TTerm:D $s, TTerm $t -->TBool{
         case-Term($s,
-            VarT   => -> $sName {
+            VarT   => -> Str $sName {
                 case-Term($t,
-                    AppT   => -> $func, $arg {
+                    AppT   => -> TTerm $func, TTerm $arg {
                         #_if_($Term-eq($s, $func),
                         #    { $Term-eq($s, $arg) },
                         #    $false
                         #)
                         case-Term($func,
-                            VarT   => -> $funcName {
+                            VarT   => -> Str $funcName {
                                 _if_( $Str-eq($sName, $funcName),
                                     { case-Term($arg,
-                                        VarT   => -> $argName { $Str-eq($sName, $argName) },
+                                        VarT   => -> Str $argName { $Str-eq($sName, $argName) },
                                         LamT   => $K2false,
                                         AppT   => $K2false,
                                         ConstT => $K1false
@@ -465,7 +489,7 @@ constant $fresh-var-for is export = {
             my $v = $VarT($vName);
             $v ~~ TTerm or die $v.perl;
             if $for.defined { case-Term($for,
-                VarT => -> $forName {
+                VarT => -> Str $forName {
                     my $forStr = ($for ~~ AlphaVarT)
                         ?? $for.gist
                         !! $forName;

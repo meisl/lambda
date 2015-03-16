@@ -331,7 +331,13 @@ constant $betaContract is export = $Y(-> &self {
             #    $liftedCtor2($LamT, $var, &self, $body)
             #},
             #LamT => $liftedCtor2XX($LamT, &self),
-            LamT => $LamT_intoMaybe,
+            #LamT => $LamT_intoMaybe,
+            LamT => -> TTerm $var, TTerm $body {
+                case-Maybe(&self($body),
+                    None => $None,
+                    Some => -> TTerm $newBody { $Some($LamT($var, $newBody)) }
+                )
+            },
 
             AppT => -> TTerm $func, TTerm $arg {
                 case-Term($func,
@@ -376,12 +382,10 @@ constant $betaContract is export = $Y(-> &self {
                                 #$AppT_intoMaybe($func, $arg)
                                 case-Maybe(&self($arg),
                                     None => $None,
-                                    Some => -> TTerm $reducedArg { $Some($AppT($func, $reducedArg)) }
+                                    Some => -> TTerm $newArg { $Some($AppT($func, $newArg)) }
                                 )
                             },
-                            Some => -> TTerm $reducedFunc {
-                                $Some($AppT($reducedFunc, $arg))
-                            }
+                            Some => -> TTerm $newFunc { $Some($AppT($newFunc, $arg)) }
                         );
                     },
                     

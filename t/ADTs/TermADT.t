@@ -3,6 +3,7 @@ use Test;
 use Test::Util;
 use Test::Util_Lambda;
 
+use Lambda::Base;
 use Lambda::BaseP6;
 use Lambda::Boolean;
 use Lambda::P6Currying;
@@ -11,7 +12,7 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::TermADT;
 
-plan 117;
+plan 118;
 
 
 # Term-eq ---------------------------------------------------------------------
@@ -114,7 +115,7 @@ plan 117;
     my $out;
 
 
-    subtest( {  # when-VarT alone
+    subtest( {
         sub match(TTerm:D $t) {
             case-Term($t,
                 VarT => &onVarT,
@@ -134,6 +135,89 @@ plan 117;
         is match($c2),      '&onConstT called: "two"', 'match on (ConstT "two") passes fields to &onConstT';
     });
 
+    subtest { # test signature checking for callbacks
+        subtest( {  # test signature checking for &onVarT
+            sub match(TTerm:D $t, :VarT(&onVarT)!) {
+                case-Term($t,
+                    VarT   => &onVarT,
+                    AppT   => &onAppT,
+                    LamT   => &onLamT,
+                    ConstT => &onConstT
+                )
+            };
+
+            dies_ok { match($x, VarT => { 'foo' }) }, 'callback must not be a bare block (arity 0)';
+            dies_ok { match($x, VarT => -> $s { 'foo' }) }, 'callback must not expect an "Any" param';
+            dies_ok { match($x, VarT => -> Mu $s { 'foo' }) }, 'callback must not expect a "Mu" param with a name';
+            lives_ok { match($x, VarT => -> Mu { 'foo' }) }, 'callback may expect a "Mu" param without a name';
+            lives_ok { match($x, VarT => $I) }, 'callback may just be the I combinator';
+            lives_ok { match($x, VarT => $pi1o1) }, 'callback may just be a projection ("o1")';
+            lives_ok { match($x, VarT => -> Str $s { 'foo' }) }, 'callback may expect a "Str" param with a name';
+            dies_ok { match($x, VarT => -> Str { 'foo' }) }, 'callback must not expect a "Str" param without a name';
+            dies_ok { match($x, VarT => -> Int { 'foo' }) }, 'callback must not expect an "Int" param without a name';
+            dies_ok { match($x, VarT => -> Int $s { 'foo' }) }, 'callback must not expect an "Int" param with a name';
+
+            dies_ok { match($x, VarT => -> Str $x, Mu { 'foo' }) }, 'callback must not have arity 2';
+        }, 'onVarT signature check') or die;
+
+        subtest( {  # test signature checking for &onLamT
+            sub match(TTerm:D $t, :LamT(&onLamT)!) {
+                case-Term($t,
+                    VarT   => &onVarT,
+                    AppT   => &onAppT,
+                    LamT   => &onLamT,
+                    ConstT => &onConstT
+                )
+            };
+
+            dies_ok { match($x, LamT => { 'foo' }) }, 'callback must not be a bare block (arity 0)';
+            dies_ok { match($x, LamT => -> $s { 'foo' }) }, 'callback must not expect a single "Any" param';
+            dies_ok { match($x, LamT => -> Mu $s { 'foo' }) }, 'callback must not expect a "Mu" param with a name';
+            dies_ok { match($x, LamT => -> Mu { 'foo' }) }, 'callback must not expect a single "Mu" param without a name';
+            dies_ok { match($x, LamT => $I) }, 'callback must not just be the I combinator (arity 1)';
+            dies_ok { match($x, LamT => $pi1o1) }, 'callback must not just be a ("o1") projection';
+            dies_ok { match($x, LamT => -> TTerm $v { 'foo' }) }, 'callback must not expect a single "TTerm" param with a name';
+            dies_ok { match($x, LamT => -> Str { 'foo' }) }, 'callback must not expect a "Str" param without a name';
+
+            lives_ok { match($x, LamT => $pi1o2) }, 'callback may just be a ("o2") projection (1)';
+            lives_ok { match($x, LamT => $pi2o2) }, 'callback may just be a ("o2") projection (2)';
+            lives_ok { match($x, LamT => $K2false) }, 'callback may just be "K1false"';
+            lives_ok { match($x, LamT => $K2true) }, 'callback may just be "K1true"';
+            lives_ok { match($x, LamT => -> Mu, Mu {'foo'}) }, 'callback may expect two "Mu" params without name';
+            dies_ok { match($x, LamT => -> TTerm $v, $b { 'foo' }) }, 'if param has name it must be of type TTerm (1)';
+            dies_ok { match($x, LamT => -> $v, TTerm $b { 'foo' }) }, 'if param has name it must be of type TTerm (2)';
+            lives_ok { match($x, LamT => -> TTerm $v, TTerm $b { 'foo' }) }, 'if param has name it must be of type TTerm (3)';
+        }, 'onLamT signature check') or die;
+
+        subtest( {  # test signature checking for &onAppT
+            sub match(TTerm:D $t, :AppT(&onAppT)!) {
+                case-Term($t,
+                    VarT   => &onVarT,
+                    AppT   => &onAppT,
+                    LamT   => &onLamT,
+                    ConstT => &onConstT
+                )
+            };
+
+            dies_ok { match($x, AppT => { 'foo' }) }, 'callback must not be a bare block (arity 0)';
+            dies_ok { match($x, AppT => -> $s { 'foo' }) }, 'callback must not expect a single "Any" param';
+            dies_ok { match($x, AppT => -> Mu $s { 'foo' }) }, 'callback must not expect a "Mu" param with a name';
+            dies_ok { match($x, AppT => -> Mu { 'foo' }) }, 'callback must not expect a single "Mu" param without a name';
+            dies_ok { match($x, AppT => $I) }, 'callback must not just be the I combinator (arity 1)';
+            dies_ok { match($x, AppT => $pi1o1) }, 'callback must not just be a ("o1") projection';
+            dies_ok { match($x, AppT => -> TTerm $v { 'foo' }) }, 'callback must not expect a single "TTerm" param with a name';
+            dies_ok { match($x, AppT => -> Str { 'foo' }) }, 'callback must not expect a "Str" param without a name';
+
+            lives_ok { match($x, AppT => $pi1o2) }, 'callback may just be a ("o2") projection (1)';
+            lives_ok { match($x, AppT => $pi2o2) }, 'callback may just be a ("o2") projection (2)';
+            lives_ok { match($x, AppT => $K2false) }, 'callback may just be "K1false"';
+            lives_ok { match($x, AppT => $K2true) }, 'callback may just be "K1true"';
+            lives_ok { match($x, AppT => -> Mu, Mu {'foo'}) }, 'callback may expect two "Mu" params without name';
+            dies_ok { match($x, AppT => -> TTerm $v, $b { 'foo' }) }, 'if param has name it must be of type TTerm (1)';
+            dies_ok { match($x, AppT => -> $v, TTerm $b { 'foo' }) }, 'if param has name it must be of type TTerm (2)';
+            lives_ok { match($x, AppT => -> TTerm $v, TTerm $b { 'foo' }) }, 'if param has name it must be of type TTerm (3)';
+        }, 'onAppT signature check') or die;
+    }
 }
 
 

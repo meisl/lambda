@@ -19,7 +19,7 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
             nil  => $None,
             cons => -> $head, TList:D $tail { case-Term($t,
                 ConstT => $K1None,
-                VarT   => -> $tName {
+                VarT   => -> Str $tName {
                     my $forName = $VarT2name($fst($head));
                     _if_($Str-eq($forName, $tName),
                         {
