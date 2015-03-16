@@ -34,26 +34,24 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                     )
                 },
 
-                AppT   => -> $oldFunc, $oldArg {   # TODO
+                AppT   => -> TTerm $oldFunc, TTerm $oldArg {   # TODO
                     my $newFunc = &self($oldFunc, $substitutions);
                     my $newArg  = &self($oldArg,  $substitutions);
-                    # iff both are None then nothing's changed and we return None
+                    # iff applying &self retuns None for both, then nothing's changed and we return None
                     # otherwise return a Some AppT with .func/.arg replaced only if the resp. thing really changed (original otherwise)
                     case-Maybe($newFunc,
                         None => {
                             case-Maybe($newArg,
-                                Some => -> $newArgVal{
-                                    $Some($AppT($oldFunc, $newArgVal))
-                                },
-                                None => $None
+                                None => $None,
+                                Some => -> TTerm $newArgVal{ $Some($AppT($oldFunc, $newArgVal)) }
                             )
                         },
-                        Some => -> $newFuncVal {
+                        Some => -> TTerm $newFuncVal {
                             $Some( $AppT(
                                 $newFuncVal,
                                 case-Maybe($newArg,
-                                    Some => $pi1o1,
-                                    None => $oldArg
+                                    None => $oldArg,
+                                    Some => $I
                                 )
                             ))
                         }
@@ -61,7 +59,7 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
 
                 },
 
-                LamT   => -> $tVar, $tBody {
+                LamT   => -> TTerm $tVar, TTerm $tBody {
                     my $body = &self(
                         $tBody,
                         $except( # kick out substitutions for our binder since there
@@ -72,7 +70,7 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                     );
                     case-Maybe($body,
                         None => $None,
-                        Some => -> $bodyVal { $Some($LamT($tVar, $bodyVal)) }
+                        Some => -> TTerm $bodyVal { $Some($LamT($tVar, $bodyVal)) }
                     )
                 }
             )}

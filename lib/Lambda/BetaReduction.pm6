@@ -302,13 +302,9 @@ my constant $liftedCtor2XX = lambdaFn(
     -> &ctor, &transform2nd {
         -> $a1, $a2 {
             case-Maybe(&transform2nd($a2),
-                :None($None),
-                :Some(-> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) })
+                None => $None,
+                Some => -> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) }
             );
-            #&transform2nd($a2,
-            #    $None,
-            #    -> $a2transformedValue { $Some(&ctor($a1, $a2transformedValue)) }
-            #);
         }
     }
 );
@@ -327,27 +323,27 @@ constant $betaContract is export = $Y(-> &self {
     lambdaFn(
         'betaContract', 'λt.error "NYI"',
         -> TTerm $t { case-Term($t,
-            :VarT( $K1None ),
+            VarT => $K1None,
 
-            :ConstT( $K1None ),
+            ConstT => $K1None,
 
-            #:LamT(-> TTerm $var, TTerm $body {
+            #LamT => -> TTerm $var, TTerm $body {
             #    $liftedCtor2($LamT, $var, &self, $body)
-            #}),
-            #:LamT( $liftedCtor2XX($LamT, &self) ),
-            :LamT( $LamT_intoMaybe ),
+            #},
+            #LamT => $liftedCtor2XX($LamT, &self),
+            LamT => $LamT_intoMaybe,
 
-            :AppT(-> TTerm $func, TTerm $arg {
+            AppT => -> TTerm $func, TTerm $arg {
                 case-Term($func,
-                    #:VarT( -> Mu { $liftedCtor2($AppT, $func, &self, $arg) } ),
-                    #:VarT( -> Mu { $B($liftMaybe($AppT($func)), &self)($arg) } ),
-                    :VarT( -> Mu { $AppT_intoMaybe($func, $arg) } ),
+                    #VarT => -> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
+                    #VarT => -> Mu { $B($liftMaybe($AppT($func)), &self)($arg) },
+                    VarT => -> Mu { $AppT_intoMaybe($func, $arg) },
                     
-                    #:ConstT( -> Mu { $liftedCtor2($AppT, $func, &self, $arg) } ),
-                    :ConstT( -> Mu { $AppT_intoMaybe($func, $arg) } ),
+                    #ConstT => -> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
+                    ConstT => -> Mu { $AppT_intoMaybe($func, $arg) },
                     
                     # func is AppT
-                    :AppT( -> Mu, Mu {
+                    AppT => -> Mu, Mu {
                         #my $func2 = &self($func);
                         #$_if( $is-Some($func2),
                         #    -> Mu { $Some($AppT($Some2value($func2), $arg)) },
@@ -360,18 +356,18 @@ constant $betaContract is export = $Y(-> &self {
                         #    -> Mu { $AppT_intoMaybe($func, $arg) }
                         #)
                         #case-Maybe(&self($func),
-                            #:None( $liftedCtor2($AppT, $func, &self) ),
-                            #:None( $B($liftMaybe($AppT($func)), &self) ),
+                            #None => $liftedCtor2($AppT, $func, &self),
+                            #None => $B($liftMaybe($AppT($func)), &self),
 
-                            #:None( -> $arg { $AppT_intoMaybe($func, $arg) } ),
-                            #:None( $AppT_intoMaybe($func) ),
+                            #None => -> TTerm $arg { $AppT_intoMaybe($func, $arg) },
+                            #None => $AppT_intoMaybe($func),
                         #    None => { $AppT_intoMaybe($func) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
                             
-                            #:Some(-> $reducedFunc {
-                            #    -> $arg { $Some($AppT($reducedFunc, $arg)) }
-                            #})
-                            #:Some(-> $reducedFunc { $B($Some, $AppT($reducedFunc)) } )
-                            #:Some( $B($B($Some), $AppT) )
+                            #Some => -> TTerm $reducedFunc {
+                            #    -> TTerm $arg { $Some($AppT($reducedFunc, $arg)) }
+                            #}
+                            #Some => -> $reducedFunc { $B($Some, $AppT($reducedFunc)) }
+                            #Some => $B($B($Some), $AppT)
                         #    Some => $BBSomeAppT
                         #)($arg);
 
@@ -380,16 +376,16 @@ constant $betaContract is export = $Y(-> &self {
                                 #$AppT_intoMaybe($func, $arg)
                                 case-Maybe(&self($arg),
                                     None => $None,
-                                    Some => -> $reducedArg { $Some($AppT($func, $reducedArg)) }
+                                    Some => -> TTerm $reducedArg { $Some($AppT($func, $reducedArg)) }
                                 )
                             },
-                            Some => -> $reducedFunc {
+                            Some => -> TTerm $reducedFunc {
                                 $Some($AppT($reducedFunc, $arg))
                             }
                         );
-                    } ),
+                    },
                     
-                    :LamT(-> $funcVar, $funcBody {    # so t is a beta-redex
+                    LamT => -> TTerm $funcVar, TTerm $funcBody {    # so t is a beta-redex
                         my $funcVarName = $VarT2name($funcVar);
                         my $alpha-problematic = $filter(
                             # no need to filter out $var itself separately
@@ -398,10 +394,10 @@ constant $betaContract is export = $Y(-> &self {
                             $free-varNames($arg)
                         );
                         case-List($alpha-problematic,
-                            :cons(-> $hd, $tl {
+                            cons => -> Str $hd, TList $tl {
                                 die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic)
-                            }),
-                            :nil({
+                            },
+                            nil => {
                                 my $substituted-func = $subst($funcBody, $arg, $funcVar);
                                 case-Maybe($substituted-func,
                                     None => { $Some($funcBody) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
@@ -409,25 +405,25 @@ constant $betaContract is export = $Y(-> &self {
                                         _if_( $is-selfAppOfVar($funcVar, $funcBody),    # is t (literal Omega?) / pt 1
                                             { my $K1substituted-func = $K($substituted-func);
                                               case-Term($arg,
-                                                :LamT(-> TTerm $argVar, TTerm $argBody {   # is t (literal Omega?) / pt 2
+                                                LamT => -> TTerm $argVar, TTerm $argBody {   # is t (literal Omega?) / pt 2
                                                     _if_( $is-selfAppOfVar($funcVar, $argBody),    # should be *literal* Omega
                                                         $None, # func and arg are both the (literally) same omega
                                                         $substituted-func  # otherwise one more step to make them so
                                                     )
-                                                }),
-                                                :VarT( $K1substituted-func ),
-                                                :AppT( -> Mu, Mu { $substituted-func } ),
-                                                :ConstT( $K1substituted-func )
+                                                },
+                                                VarT => $K1substituted-func,
+                                                AppT => -> Mu, Mu { $substituted-func },
+                                                ConstT => $K1substituted-func
                                             )},
                                             $substituted-func
                                         )
                                     }
                                 )
-                            })
+                            }
                         )
-                    })
+                    }
                 )
-            })
+            }
         )}
     )
 });
