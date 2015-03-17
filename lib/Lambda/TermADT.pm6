@@ -298,7 +298,7 @@ constant $Term2Str is export = lambdaFn(
 # functions on Term -----------------------------------------------------------
 
 constant $Term2source is export = $Y(-> &self { lambdaFn(
-    'Term->source', 'λt.(error "NYI")',
+    'Term->source', 'λt.error "NYI"',
     -> TTerm:D $t -->Str{
         case-Term($t,
             VarT => $I, # just return the name
@@ -320,22 +320,27 @@ constant $Term2source is export = $Y(-> &self { lambdaFn(
 )});
 
 constant $Term2sourceP6 is export = $Y(-> &self { lambdaFn(
-    'Term->sourceP6', 'λt.(error "NYI")',
+    'Term->sourceP6', 'λt.error "NYI"',
     -> TTerm:D $t -->Str{
         case-Term($t,
-            VarT => -> Str $varName { '$VarT(' ~ $varName.perl ~ ')' },
+            VarT => -> Str $varName {
+                my $varNameSrc = $varName.perl;
+                "\$VarT($varNameSrc)"
+            },
             AppT => -> TTerm $func, TTerm$arg -->Str{
                 my $fSrc = &self($func);
                 my $aSrc = &self($arg);
                 "\$AppT($fSrc, $aSrc)"
             },
             LamT => -> Str $binderName, TTerm $body -->Str{
-                my $bodySrc   = &self($body);
-                "\$LamT({$binderName.perl}, $bodySrc)"
+                my $binderNameSrc = $binderName.perl;
+                my $bodySrc       = &self($body);
+                "\$LamT($binderNameSrc, $bodySrc)"
 
             },
             ConstT => -> Any $val -->Str{
-                "\$ConstT({$val.perl})"
+                my $valSrc = $val.perl;
+                "\$ConstT($valSrc)"
             }
         )
     }
