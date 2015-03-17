@@ -45,10 +45,10 @@ my sub checkSig(&callback, Str $cbName, *@types) is hidden_from_backtrace {
 }
 
 our sub case-Term(TTerm:D $term, :VarT(&onVarT)!, :AppT(&onAppT)!, :LamT(&onLamT)!, :ConstT(&onConstT)!) is hidden_from_backtrace is export {
-    #checkSig(&onVarT, 'VarT', Str);
+    checkSig(&onVarT, 'VarT', Str);
     checkSig(&onLamT, 'LamT', Str, TTerm);
-    #checkSig(&onAppT, 'AppT', TTerm, TTerm);
-    #checkSig(&onConstT, 'ConstT', Any);
+    checkSig(&onAppT, 'AppT', TTerm, TTerm);
+    checkSig(&onConstT, 'ConstT', Any);
 
     $term(&onVarT, &onAppT, &onLamT, &onConstT);
 };
@@ -67,7 +67,7 @@ constant $VarT is export = lambdaFn(
         my $out = %names2vars{$name};
         unless $out.defined {
             $out = lambdaFn(
-                Str, { "(VarT {$name.perl})" },
+                Str, { "(VarT {$name.perl})" }, #   "λa.λb.λc.λd.a {$name.perl}",     #       
                 -> &onVarT, &onAppT, &onLamT, &onConstT { &onVarT($name) }
             ) does TTerm;
             %names2vars{$name} = $out;
@@ -309,7 +309,7 @@ constant $Term2source is export = $Y(-> &self { lambdaFn(
             },
             LamT => -> Str $binderName, TTerm $body -->Str{
                 my $bodySrc = &self($body);
-                "(λ{$binderName.perl}.$bodySrc)"
+                "(λ$binderName.$bodySrc)"
 
             },
             ConstT => -> Any $val -->Str{
@@ -432,7 +432,7 @@ constant $is-selfAppOfVar is export = lambdaFn(
 constant $is-omega is export = lambdaFn(
     'ω?', 'λt.error "NYI"',
     -> TTerm:D $t -->TBool{ case-Term($t,
-        LamT   => $is-selfAppOfVar,
+        LamT   => $is-selfAppOf,
         VarT   => $K1false,
         AppT   => $K2false,
         ConstT => $K1false
