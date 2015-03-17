@@ -18,11 +18,68 @@ my $x ::= $VarT('x');
 my $y ::= $VarT('y');
 my $z ::= $VarT('z');
 my $c ::= $ConstT('c');
-my $omegaX  ::= $LamT('x', $AppT($x, $x));  # (λx.x x)              # omega
+my $omegaX  ::= $LamT('x', $AppT($x, $x));  # (λx.x x)              # omega ("in x")
 my $OmegaXX ::= $AppT($omegaX, $omegaX);    # ((λx.x x) (λx.x x))   # Omega = (omega omega)
+my $omegaY  ::= $LamT('y', $AppT($y, $y));  # (λy.y y)              # omega ("in y")
+my $OmegaYY ::= $AppT($omegaY, $omegaY);    # ((λy.y y) (λy.y y))   # Omega (one flavour of...)
+my $OmegaXY ::= $AppT($omegaX, $omegaY);    # ((λy.y y) (λy.y y))   # Omega (one flavour of...)
+my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (one flavour of...)
 
 my $testCount = 0;
-my %terms;
+our %terms is export = %(
+    'x'                        => $VarT("x"),
+    '"c"'                      => $ConstT("c"),
+    '5'                        => $ConstT(5),
+    '(x "c")'                  => $AppT($VarT("x"), $ConstT("c")),
+    '(x x)'                    => $AppT($VarT("x"), $VarT("x")),
+    '(x y)'                    => $AppT($VarT("x"), $VarT("y")),
+    '(λx."c")'                 => $LamT("x", $ConstT("c")),
+    '(λx.x)'                   => $LamT("x", $VarT("x")),
+    '(λx.(x "c"))'             => $LamT("x", $AppT($VarT("x"), $ConstT("c"))),
+    '(λx.(x y))'               => $LamT("x", $AppT($VarT("x"), $VarT("y"))),
+    '(λx.(y x))'               => $LamT("x", $AppT($VarT("y"), $VarT("x"))),
+    '(λx.(x (λy.(x y))))'      => $LamT("x", $AppT($VarT("x"), $LamT("y", $AppT($VarT("x"), $VarT("y"))))),
+    '((λy.(x y)) y)'           => $AppT($LamT("y", $AppT($VarT("x"), $VarT("y"))), $VarT("y")),
+    '((λx.(y x)) (λy.(x y)))'  => $AppT($LamT("x", $AppT($VarT("y"), $VarT("x"))), $LamT("y", $AppT($VarT("x"), $VarT("y")))),
+    '(λx.((λy.(z y)) x))'      => $LamT("x", $AppT($LamT("y", $AppT($VarT("z"), $VarT("y"))), $VarT("x"))),
+    '(λx.((λy.(x y)) x))'      => $LamT("x", $AppT($LamT("y", $AppT($VarT("x"), $VarT("y"))), $VarT("x"))),
+    '(λx.((λx.(x y)) x))'      => $LamT("x", $AppT($LamT("x", $AppT($VarT("x"), $VarT("y"))), $VarT("x"))),
+    '(y y)'                    => $AppT($VarT("y"), $VarT("y")),
+    '((λx.(x x)) (y y))'       => $AppT($omegaX, $AppT($VarT("y"), $VarT("y"))),
+    '((y y) (λx.(x x)))'       => $AppT($AppT($VarT("y"), $VarT("y")), $omegaX),
+    '(x (x y))'                => $AppT($VarT("x"), $AppT($VarT("x"), $VarT("y"))),
+    '(λz.(x (x y)))'           => $LamT("z", $AppT($VarT("x"), $AppT($VarT("x"), $VarT("y")))),
+
+    '(λx.(x x))'               => $omegaX,
+    '(λy.(y y))'               => $omegaY,
+    '((λx.(x x)) (λx.(x x)))'  => $OmegaXX,
+    '((λy.(y y)) (λy.(y y)))'  => $OmegaYY,
+    '((λx.(x x)) (λy.(y y)))'  => $OmegaXY,
+    '((λy.(y y)) (λx.(x x)))'  => $OmegaYX,
+);
+%terms{'omegaX'}  = $omegaX;
+%terms{'omegaY'}  = $omegaY;
+%terms{'OmegaXX'} = $OmegaXX;
+%terms{'OmegaXY'} = $OmegaXY;
+%terms{'OmegaYX'} = $OmegaYX;
+%terms{'omegaYY'} = $OmegaYY;
+
+%terms{'ω'}   = $omegaX;
+%terms{'Ω'}   = $OmegaXX;
+
+%terms{'ωX'}  = $omegaX;
+%terms{'ωY'}  = $omegaY;
+%terms{'ΩXX'} = $OmegaXX;
+%terms{'ΩXY'} = $OmegaXY;
+%terms{'ΩYX'} = $OmegaYX;
+%terms{'ΩYY'} = $OmegaYY;
+
+# for convenience: make stuff available without surrounding parens as well
+for %terms.pairs -> (:$key, :$value) {
+    if $key.substr(0, 1) eq '(' {
+        %terms{$key.substr(1, *-1)} = $value;
+    }
+}
 
 my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     for @tests -> $test {
@@ -36,7 +93,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
         my $desc = "({$f.gist} $termStr)$expectedStr";
         
         $testCount++;
-        %terms{$termSrc} = $term;
+        #%terms{$termSrc} = $term;
 
         is($f($term), $expected, $desc);
     }
@@ -270,8 +327,8 @@ my $maxKeyLen = @(0, %terms.keys).reduce(-> $currentMax, $key { max($currentMax,
 my $termsSrcP6 = %terms.pairs.map(-> (:$key, :$value) {
     sprintf("%-{$maxKeyLen+3}s => %s", "'$key'", $Term2sourceP6($value));
  }).join(",\n    ");
-$termsSrcP6 = '%terms = %(' ~ "\n    " ~ $termsSrcP6 ~ "\n);";
-diag "my \%terms = $termsSrcP6";
+$termsSrcP6 = '%(' ~ "\n    " ~ $termsSrcP6 ~ "\n);";
+diag "our \%terms is export = $termsSrcP6";
 diag "testCount: $testCount";
 diag "termCount: {%terms.elems}";
 diag "maxKeyLen: $maxKeyLen";
@@ -279,7 +336,7 @@ diag "maxKeyLen: $maxKeyLen";
 
 
 
-# my %terms = %terms = %(
+# our %terms is export = %(
 #     'x'                        => $VarT("x"),
 #     '"c"'                      => $ConstT("c"),
 #     '5'                        => $ConstT(5),
@@ -288,7 +345,6 @@ diag "maxKeyLen: $maxKeyLen";
 #     '(x y)'                    => $AppT($VarT("x"), $VarT("y")),
 #     '(λx."c")'                 => $LamT("x", $ConstT("c")),
 #     '(λx.x)'                   => $LamT("x", $VarT("x")),
-#     '(λx.(x x))'               => $LamT("x", $AppT($VarT("x"), $VarT("x"))),
 #     '(λx.(x "c"))'             => $LamT("x", $AppT($VarT("x"), $ConstT("c"))),
 #     '(λx.(x y))'               => $LamT("x", $AppT($VarT("x"), $VarT("y"))),
 #     '(λx.(y x))'               => $LamT("x", $AppT($VarT("y"), $VarT("x"))),
@@ -299,14 +355,56 @@ diag "maxKeyLen: $maxKeyLen";
 #     '(λx.((λy.(x y)) x))'      => $LamT("x", $AppT($LamT("y", $AppT($VarT("x"), $VarT("y"))), $VarT("x"))),
 #     '(λx.((λx.(x y)) x))'      => $LamT("x", $AppT($LamT("x", $AppT($VarT("x"), $VarT("y"))), $VarT("x"))),
 #     '(y y)'                    => $AppT($VarT("y"), $VarT("y")),
-#     '(λy.(y y))'               => $LamT("y", $AppT($VarT("y"), $VarT("y"))),
-#     '((λx.(x x)) (λx.(x x)))'  => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
-#     '((λx.(x x)) (λy.(y y)))'  => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("y", $AppT($VarT("y"), $VarT("y")))),
 #     '((λx.(x x)) (y y))'       => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $AppT($VarT("y"), $VarT("y"))),
 #     '((y y) (λx.(x x)))'       => $AppT($AppT($VarT("y"), $VarT("y")), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
 #     '(x (x y))'                => $AppT($VarT("x"), $AppT($VarT("x"), $VarT("y"))),
-#     '(λz.(x (x y)))'           => $LamT("z", $AppT($VarT("x"), $AppT($VarT("x"), $VarT("y"))))
+#     '(λz.(x (x y)))'           => $LamT("z", $AppT($VarT("x"), $AppT($VarT("x"), $VarT("y")))),
+#     '(λx.(x x))'               => $LamT("x", $AppT($VarT("x"), $VarT("x"))),
+#     '(λy.(y y))'               => $LamT("y", $AppT($VarT("y"), $VarT("y"))),
+#     '((λx.(x x)) (λx.(x x)))'  => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     '((λy.(y y)) (λy.(y y)))'  => $AppT($LamT("y", $AppT($VarT("y"), $VarT("y"))), $LamT("y", $AppT($VarT("y"), $VarT("y")))),
+#     '((λx.(x x)) (λy.(y y)))'  => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("y", $AppT($VarT("y"), $VarT("y")))),
+#     '((λy.(y y)) (λx.(x x)))'  => $AppT($LamT("y", $AppT($VarT("y"), $VarT("y"))), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     'omegaX'                   => $LamT("x", $AppT($VarT("x"), $VarT("x"))),
+#     'omegaY'                   => $LamT("y", $AppT($VarT("y"), $VarT("y"))),
+#     'OmegaXX'                  => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     'OmegaXY'                  => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("y", $AppT($VarT("y"), $VarT("y")))),
+#     'OmegaYX'                  => $AppT($LamT("y", $AppT($VarT("y"), $VarT("y"))), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     'omegaYY'                  => $AppT($LamT("y", $AppT($VarT("y"), $VarT("y"))), $LamT("y", $AppT($VarT("y"), $VarT("y")))),
+#     'ω'                        => $LamT("x", $AppT($VarT("x"), $VarT("x"))),
+#     'Ω'                        => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     'ωX'                       => $LamT("x", $AppT($VarT("x"), $VarT("x"))),
+#     'ωY'                       => $LamT("y", $AppT($VarT("y"), $VarT("y"))),
+#     'ΩXX'                      => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     'ΩXY'                      => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("y", $AppT($VarT("y"), $VarT("y")))),
+#     'ΩYX'                      => $AppT($LamT("y", $AppT($VarT("y"), $VarT("y"))), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     'ΩYY'                      => $AppT($LamT("y", $AppT($VarT("y"), $VarT("y"))), $LamT("y", $AppT($VarT("y"), $VarT("y")))),
+#     'x "c"'                    => $AppT($VarT("x"), $ConstT("c")),
+#     'x x'                      => $AppT($VarT("x"), $VarT("x")),
+#     'x y'                      => $AppT($VarT("x"), $VarT("y")),
+#     'λx."c"'                   => $LamT("x", $ConstT("c")),
+#     'λx.x'                     => $LamT("x", $VarT("x")),
+#     'λx.(x "c")'               => $LamT("x", $AppT($VarT("x"), $ConstT("c"))),
+#     'λx.(x y)'                 => $LamT("x", $AppT($VarT("x"), $VarT("y"))),
+#     'λx.(y x)'                 => $LamT("x", $AppT($VarT("y"), $VarT("x"))),
+#     'λx.(x (λy.(x y)))'        => $LamT("x", $AppT($VarT("x"), $LamT("y", $AppT($VarT("x"), $VarT("y"))))),
+#     '(λy.(x y)) y'             => $AppT($LamT("y", $AppT($VarT("x"), $VarT("y"))), $VarT("y")),
+#     '(λx.(y x)) (λy.(x y))'    => $AppT($LamT("x", $AppT($VarT("y"), $VarT("x"))), $LamT("y", $AppT($VarT("x"), $VarT("y")))),
+#     'λx.((λy.(z y)) x)'        => $LamT("x", $AppT($LamT("y", $AppT($VarT("z"), $VarT("y"))), $VarT("x"))),
+#     'λx.((λy.(x y)) x)'        => $LamT("x", $AppT($LamT("y", $AppT($VarT("x"), $VarT("y"))), $VarT("x"))),
+#     'λx.((λx.(x y)) x)'        => $LamT("x", $AppT($LamT("x", $AppT($VarT("x"), $VarT("y"))), $VarT("x"))),
+#     'y y'                      => $AppT($VarT("y"), $VarT("y")),
+#     '(λx.(x x)) (y y)'         => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $AppT($VarT("y"), $VarT("y"))),
+#     '(y y) (λx.(x x))'         => $AppT($AppT($VarT("y"), $VarT("y")), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     'x (x y)'                  => $AppT($VarT("x"), $AppT($VarT("x"), $VarT("y"))),
+#     'λz.(x (x y))'             => $LamT("z", $AppT($VarT("x"), $AppT($VarT("x"), $VarT("y")))),
+#     'λx.(x x)'                 => $LamT("x", $AppT($VarT("x"), $VarT("x"))),
+#     'λy.(y y)'                 => $LamT("y", $AppT($VarT("y"), $VarT("y"))),
+#     '(λx.(x x)) (λx.(x x))'    => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     '(λy.(y y)) (λy.(y y))'    => $AppT($LamT("y", $AppT($VarT("y"), $VarT("y"))), $LamT("y", $AppT($VarT("y"), $VarT("y")))),
+#     '(λx.(x x)) (λy.(y y))'    => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("y", $AppT($VarT("y"), $VarT("y")))),
+#     '(λy.(y y)) (λx.(x x))'    => $AppT($LamT("y", $AppT($VarT("y"), $VarT("y"))), $LamT("x", $AppT($VarT("x"), $VarT("x"))))
 # );
 # testCount: 127
-# termCount: 26
+# termCount: 67
 # maxKeyLen: 23
