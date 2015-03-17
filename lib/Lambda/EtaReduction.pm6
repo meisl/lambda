@@ -32,14 +32,14 @@ constant $is-etaRedex is export = lambdaFn(
                 case-Term($body,
                     ConstT => $K1false,
                     VarT => $K1false,
-                    LamT => $K1false,
+                    LamT => $K2false,
                     AppT => -> TTerm $func, TTerm $arg {
                         case-Term($arg,
                             ConstT => $K1false,
-                            VarT => $K1false,
+                            LamT => $K2false,
                             AppT => $K2false,
-                            LamT => -> Str $argVarName {   # DONE: LamT_ctor_with_Str_binder
-                                _if_( $Str-eq($argVarName, $varName),   # short-circuit AND
+                            VarT => -> Str $argName {   # DONE: LamT_ctor_with_Str_binder
+                                _if_( $Str-eq($argName, $varName),   # short-circuit AND
                                     { $not($is-free-varName($varName, $func)) },
                                     $false
                                 )

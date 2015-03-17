@@ -13,33 +13,16 @@ use Lambda::Conversion::ListADT-conv;
 
 plan 4;
 
-{ # a term that β-"contracts" to an ever larger term:
-    my $t = parseLambda('(λx.x x y)(λx.x x y)');
-
-    my $s = $Term2size($t);
-    is($s, 15, "(eq? 15 (Term->size {$Term2source($t)}))");
-
-    $t = $Some2value($betaContract($t));
-    $s = $Term2size($t);
-    is($s, 17, "(eq? 17 (Term->size {$Term2source($t)}))");
-
-    $t = $Some2value($betaContract($t));
-    $s = $Term2size($t);
-    is($s, 19, "(eq? 19 (Term->size {$Term2source($t)}))");
-
-    $t = $Some2value($betaContract($t));
-    $s = $Term2size($t);
-    is($s, 21, "(eq? 21 (Term->size {$Term2source($t)}))");
-}
 
 {
     my ($n, $apvs, $apvsP6);
 
     $n = parseLambda('(λx.λz.λv.z x (λx.x) (λz.x z) (λy.x x)) ((z ((λx.λy.x y z) x)) v)');
-    my $func = $AppT2func($n);
-    my $arg  = $AppT2arg($n);
-    my $var  = $LamT2var($func);
-    my $body = $LamT2body($func);
+    my TTerm $func    = $AppT2func($n);
+    my TTerm $arg     = $AppT2arg($n);
+    my Str   $varName = $LamT2var($func);    # DONE: LamT_ctor_with_Str_binder
+    my TTerm $var     = $VarT($varName);
+    my TTerm $body    = $LamT2body($func);
     say $Term2source($n);
     say 'β-redex? '~ $is-betaRedex($n);
     say 'β-reducible? '~ $is-betaReducible($n);
@@ -58,9 +41,9 @@ plan 4;
     say 'β-redex? '~ $is-betaRedex($func);
     say 'β-reducible? '~ $is-betaReducible($func);
     say 'FV: '~ $free-vars($func);
-    say '(free-under? x z ...) ' ~ $is-free-under($var, $VarT('z'), $body);
-    say '(free-under? x x ...) ' ~ $is-free-under($var, $VarT('x'), $body);
-    say '(free-under? x v ...) ' ~ $is-free-under($var, $VarT('v'), $body);
+    say '(freeName-under? x z ...) ' ~ $is-freeName-under($varName, 'z', $body);
+    say '(freeName-under? x x ...) ' ~ $is-freeName-under($varName, 'x', $body);
+    say '(freeName-under? x v ...) ' ~ $is-freeName-under($varName, 'v', $body);
 
     say '';
     say $Term2source($arg);

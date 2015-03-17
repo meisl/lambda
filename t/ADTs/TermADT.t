@@ -129,11 +129,11 @@ plan 118;
         is match($y),       '&onVarT called: "y"', 'match on (VarT y) passes fields to &onVarT';
         is match($app1),    '&onAppT called: (VarT "y"), (VarT "x")', 'match on (AppT y x) passes fields to &onAppT';
         is match($app2),    '&onAppT called: (VarT "x"), (VarT "y")', 'match on (AppT x y) passes fields to &onAppT';
-        is match($lam1),    '&onLamT called: (VarT "y"), (VarT "x")', 'match on (LamT y x) passes fields to &onLamT';
-        is match($lam2),    '&onLamT called: (VarT "x"), (LamT (VarT "y") (VarT "x"))', 'match on (LamT x (LamT y x)) passes fields to &onLamT';
+        is match($lam1),    '&onLamT called: "y", (VarT "x")', 'match on (LamT "y" x) passes fields to &onLamT';
+        is match($lam2),    '&onLamT called: "x", (LamT "y" (VarT "x"))', 'match on (LamT "x" (LamT "y" x)) passes fields to &onLamT';
         is match($c1),      '&onConstT called: "one"', 'match on (ConstT "one") passes fields to &onConstT';
         is match($c2),      '&onConstT called: "two"', 'match on (ConstT "two") passes fields to &onConstT';
-    });
+    }) or die;
 
     skip { # test signature checking for callbacks
         subtest( {  # test signature checking for &onVarT
@@ -373,13 +373,13 @@ plan 118;
     my $v = $VarT('v');
     my $x;
     $x = $LamT('u', $v);
-    is $Term2Str($x), "(LamT $u $v)",
-        "($Term2Str (LamT $u $v)) -> '(LamT $u $v)'";
+    is $Term2Str($x), "(LamT \"u\" $v)",
+        "($Term2Str (LamT \"u\" $v)) -> '(LamT \"u\" $v)'";
     does_ok $x, TTerm, "$x";
     is_validLambda $x;
     doesnt_ok $x, Definition;
 
-    dies_ok({ $LamT('x', $v) }, '$LamT yields an error if 1st arg is not a VarT');
+    dies_ok({ $LamT($x, $v) }, '$LamT yields an error if 1st arg is a VarT (ie: not a Str)');    # DONE: LamT_ctor_with_Str_binder
 }
 
 { # predicate LamT?
@@ -419,7 +419,7 @@ plan 118;
     dies_ok( { $LamT2var($x) }, "($LamT2var $x) yields error");
 
     $x = $LamT('u', $v);
-    is $LamT2var($x), $u, "($LamT2var $x)";
+    cmp_ok $LamT2var($x), '===', 'u', "($LamT2var $x)";
 }
 
 { # projection LamT->body

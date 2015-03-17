@@ -193,12 +193,13 @@ my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
         
         $out = $Some2value($subst-with-alpha($y, $app_xy, $keepfree, $lam2));
         
-        $newVar  = $LamT2var($out);
-        $newBody = $LamT2body($out);
+        $newVarName = $LamT2var($out);    # DONE: LamT_ctor_with_Str_binder
+        $newVar     = $VarT($newVarName);
+        $newBody    = $LamT2body($out);
 
-        isnt($VarT2name($newVar), 'x', "fresh var $newVar is different from var x");
-        isnt($VarT2name($newVar), 'y', "fresh var $newVar is different from var y");
-        isnt($VarT2name($newVar), 'z', "fresh var $newVar is different from var z");
+        isnt($newVarName, 'x', "fresh var $newVar is different from var x");
+        isnt($newVarName, 'y', "fresh var $newVar is different from var y");
+        isnt($newVarName, 'z', "fresh var $newVar is different from var z");
         
         is($newBody, $AppT($AppT($newVar, $app_xy), $z))
             or diag("     got: " ~ $Term2source($out));

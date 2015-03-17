@@ -13,7 +13,7 @@ plan 26;
 my $x   = $VarT('x');
 my $y   = $VarT('y');
 my $app = $AppT($x, $y);
-my $lam = $LamT($x, $x);
+my $lam = $LamT('x', $x);
 my $c   = $ConstT(23);
 
 

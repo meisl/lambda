@@ -33,9 +33,9 @@ my $yz = $AppT($y, $z);
 
 
 # [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
-my $omegaX  = $LamT($x, $AppT($x, $x));  # (λx.x x)
+my $omegaX  = $LamT('x', $AppT($x, $x));  # (λx.x x)
 my $OmegaXX = $AppT($omegaX, $omegaX);   # ((λx.x x) (λx.x x))
-my $omegaY  = $LamT($y, $AppT($y, $y));  # (λy.y y)
+my $omegaY  = $LamT('y', $AppT($y, $y));  # (λy.y y)
 my $OmegaYY = $AppT($omegaY, $omegaY);   # ((λy.y y) (λy.y y))
 my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
 
@@ -59,23 +59,23 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
     is_betaRedex(
         $x                                                          => $false,  # x
         $c                                                          => $false,  # "c"
-        $LamT($x, $c)                                               => $false,  # λx."c"
-        $LamT($x, $x)                                               => $false,  # λx.x
-        $LamT($x, $AppT($x, $c))                                    => $false,  # λx.x "c"
-        $LamT($x, $AppT($x, $y))                                    => $false,  # λx.x y
-        $LamT($x, $AppT($y, $x))                                    => $false,  # λx.y x
-        $LamT($x, $AppT($x, $AppT($LamT($y, $LamT($z, $AppT($y, $x))), $LamT($y, $AppT($x, $y)))))          # not a redex but contractible (twice)
+        $LamT('x', $c)                                              => $false,  # λx."c"
+        $LamT('x', $x)                                              => $false,  # λx.x
+        $LamT('x', $AppT($x, $c))                                   => $false,  # λx.x "c"
+        $LamT('x', $AppT($x, $y))                                   => $false,  # λx.x y
+        $LamT('x', $AppT($y, $x))                                   => $false,  # λx.y x
+        $LamT('x', $AppT($x, $AppT($LamT('y', $LamT('z', $AppT($y, $x))), $LamT('y', $AppT($x, $y)))))          # not a redex but contractible (twice)
             => $false,  # λx.x ((λy.λz.y x) (λy.x y))
         $AppT($x, $c)                                               => $false,  # (x c)
         $AppT($x, $x)                                               => $false,  # (x x)
         $AppT($x, $y)                                               => $false,  # (x y)
-        $AppT($LamT($x, $y), $x)                                    => $true,   # ((λx.y) x)                # a redex
-        $AppT($LamT($x, $AppT($AppT($z, $x), $y)), $c)              => $true,   # ((λx.z x y) "c")          # a redex
-        $AppT($AppT($LamT($y, $AppT($x, $y)), $y), $z)              => $false,  # (((λy.x y) y) z)          # not a redex but reducible
-        $AppT($y, $AppT($LamT($y, $AppT($x, $y)), $z))              => $false,  # (y ((λy.x y) z))          # not a redex but reducible
-        $AppT($LamT($y, $AppT($x, $y)), $z)                         => $true,   # ((λy.x y) z)              # a redex
-        $AppT($AppT($LamT($x, $y), $x), $AppT($LamT($y, $x), $y))   => $false,  # (((λx.y) x) ((λy.x) y))   # not a redex but reducible
-        $LamT($x, $AppT($AppT($LamT($y, $AppT($z, $y)), $x), $x))   => $false,  # (λx.(λy.z y) x x)         # not a redex but reducible
+        $AppT($LamT('x', $y), $x)                                   => $true,   # ((λx.y) x)                # a redex
+        $AppT($LamT('x', $AppT($AppT($z, $x), $y)), $c)             => $true,   # ((λx.z x y) "c")          # a redex
+        $AppT($AppT($LamT('y', $AppT($x, $y)), $y), $z)             => $false,  # (((λy.x y) y) z)          # not a redex but reducible
+        $AppT($y, $AppT($LamT('y', $AppT($x, $y)), $z))             => $false,  # (y ((λy.x y) z))          # not a redex but reducible
+        $AppT($LamT('y', $AppT($x, $y)), $z)                        => $true,   # ((λy.x y) z)              # a redex
+        $AppT($AppT($LamT('x', $y), $x), $AppT($LamT('y', $x), $y)) => $false,  # (((λx.y) x) ((λy.x) y))   # not a redex but reducible
+        $LamT('x', $AppT($AppT($LamT('y', $AppT($z, $y)), $x), $x)) => $false,  # (λx.(λy.z y) x x)         # not a redex but reducible
         $omegaX                                                     => $false,  # (λx.x x)
         $OmegaXX                                                    => $true,   # ((λx.x x) (λx.x x))       # a redex, contracting to itself
         $omegaY                                                     => $false,  # (λy.y y)
@@ -208,6 +208,32 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
         is($bcd2, $expectedBrd,
             "beta-contracting {$Term2source($t)} should yield {$Term2source($expectedBrd)}");
     }, "{$Term2source($t)} can contract twice; NO prescribed order!");
+
+
+    subtest({ # a term that β-"contracts" to an ever larger term: (λx.x x y)(λx.x x y)
+        my $t = {
+            my $lx-xxy  = $LamT('x', $AppT($AppT($x, $x), $y)); # lam(<x>, <x x y>)
+            $AppT($lx-xxy, $lx-xxy);
+        }();
+
+        # size of a LamT is 1 + size of body
+        # size of an AppT is 1 + size of func + size of arg
+        # size of both, a VarT and ConstT is 1
+        my $s = $Term2size($t);
+        is($s, 13, "(eq? 13 (Term->size {$Term2source($t)}))");
+
+        $t = $Some2value($betaContract($t));
+        $s = $Term2size($t);
+        is($s, 15, "(eq? 15 (Term->size {$Term2source($t)}))");
+
+        $t = $Some2value($betaContract($t));
+        $s = $Term2size($t);
+        is($s, 17, "(eq? 17 (Term->size {$Term2source($t)}))");
+
+        $t = $Some2value($betaContract($t));
+        $s = $Term2size($t);
+        is($s, 19, "(eq? 19 (Term->size {$Term2source($t)}))");
+    }, 'a term that β-"contracts" to an ever larger term: (λx.x x y)(λx.x x y)');
 }
 
 

@@ -227,6 +227,10 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 { # Term->size
     is_properLambdaFn($Term2size, 'Term->size');
 
+    # size of a LamT is 1 + size of body
+    # size of an AppT is 1 + size of func + size of arg
+    # size of both, a VarT and ConstT is 1
+
     test( $Term2size, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         $x                                                          =>  1,  # x
         $c                                                          =>  1,  # "c"
@@ -240,4 +244,5 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
         $LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x))              =>  9,  # (λx.((λy.(z y)) x)),
         $AppT($LamT($x, $AppT($x, $x)), $LamT($x, $AppT($x, $x)))   => 11,  # ((λx.x x) (λx.x x))    # Omega = (omega omega)
     );
+
 }

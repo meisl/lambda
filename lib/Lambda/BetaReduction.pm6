@@ -3,6 +3,7 @@ use v6;
 use Lambda::Base;
 use Lambda::BaseP6;
 use Lambda::Boolean;
+use Lambda::String;
 use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
@@ -12,21 +13,11 @@ use Lambda::Substitution;
 use Lambda::Conversion::Bool-conv;
 
 
- # β-redex? - ie of form ((λx.B) z)
+# β-redex?: Term -> Bool
+# is it a Term of form ((λx.B) z)?
 constant $is-betaRedex is export = lambdaFn(
-    'betaRedex?',
-q:to/ENDOFLAMBDA/,
-    λt.case t ; TODO: case -> cascaded if
-          (((ConstT val)    #false)
-           ((VarT name)     #false)
-           ((LamT var body) #false)
-           ((AppT func arg)
-               (LamT? func)
-           )
-          )
-          (error (~ "unknown TTerm" (Term->Str t)))
-ENDOFLAMBDA
-    -> TTerm:D $t {
+    'betaRedex?', 'λt.error "NYI"',
+    -> TTerm:D $t -->TBool{
         case-Term($t,
             VarT   => $K1false,
             ConstT => $K1false,
@@ -44,69 +35,42 @@ ENDOFLAMBDA
 );
 
 
+# betaReducible?: Term -> Bool
 # either t is a β-redex or any child is betaReducible?
 constant $is-betaReducible is export = $Y(-> &self { lambdaFn(
-    'betaReducible?',
-q:to/ENDOFLAMBDA/,
-    λself.λt._if (betaRedex? t)
-                 (K #true)
-                 (λ_.exists self (Term->children t))
-ENDOFLAMBDA
-    -> TTerm $t {
+    'betaReducible?', 'λt.error "NYI"',
+    -> TTerm $t -->TBool{
         _if_( $is-betaRedex($t),       # short-circuit OR
             $true,
             { $exists(&self, $Term2children($t)) }
         )
-        # self.isBetaRedex || ?self.children.map(*.isBetaReducible).any;
     }
 )});
 
 
-constant $alpha-problematic-vars is export = lambdaFn(
-    'alpha-problematic-vars',
-q:to/ENDOFLAMBDA/,
-    λt.case t ; TODO: case -> cascaded if
-            (((ConstT val)    nil)
-             ((VarT name)     nil)
-             ((LamT var body) nil)
-             ((AppT func arg)
-                (_if (betaRedex? t)
-                     (λ_.let ((var   (LamT->var  func))
-                              (body  (LamT->body func))
-                             )
-                           (filter
-                                ; no need to filter out var itself separately
-                                ; since it cannot be free under itself in the body
-                               (λv.free-under? var v body)
-                               (free-vars arg)
-                           )
-                     )
-                     (K nil)
-                )
-             )
-            )
-            (error (~ "unknown TTerm" (Term->Str t)))
-
-ENDOFLAMBDA
-    -> TTerm $t {
+# alpha-problematic-varNames: Term -> List Str
+constant $alpha-problematic-varNames is export = lambdaFn(
+    'alpha-problematic-varNames', 'λt.error "NYI"',
+    -> TTerm $t -->TList{
         case-Term($t,
-            VarT   => $K1nil,
             ConstT => $K1nil,
-            LamT   => $K2nil,
-            AppT   => -> TTerm $func, TTerm $arg {    # t is an AppT
+            VarT => $K1nil,
+            LamT => $K2nil,
+            AppT => -> TTerm $func, TTerm $arg {
                 case-Term($func,
-                    VarT   => $K1nil,
                     ConstT => $K1nil,
-                    AppT   => $K2nil,
-                    LamT   => -> TTerm $var, TTerm $body {    # func is a LamT, so t is a beta-redex...
+                    VarT => $K1nil,
+                    AppT => $K2nil,
+                    LamT => -> Str $varName, TTerm $body {  # DONE: LamT_ctor_with_Str_binder
+                        # func is a LamT, so t is a beta-redex...
                         $filter(
-                            -> $v {
+                            -> $binderName {
                               # no need to filter out $var itself separately
                               # since it cannot be free under itself in the body
-                              $is-free-under($var, $v, $body)
+                              $is-freeName-under($varName, $binderName, $body)
                             },
-                            $free-vars($arg)
-                        );
+                            $free-varNames($arg)
+                        )
                     }
                 )
             }
@@ -114,32 +78,25 @@ ENDOFLAMBDA
     }
 );
 
+# alpha-problematic-var: Term -> List Term
+constant $alpha-problematic-vars is export = lambdaFn(
+    'alpha-problematic-vars', 'λt.error "NYI"',
+    -> TTerm $t -->TList{ $map($VarT, $alpha-problematic-varNames($t)) }
+);
 
+# alpha-problematic-varNames: Term -> List Term
 constant $alpha-needy-terms is export = $Y(-> &self { lambdaFn(
-    'alpha-needy-terms',
-q:to/ENDOFLAMBDA/,
-    λself.λt.λkeepfreevars.
-        case t ; TODO: case -> cascaded if
-             (((ConstT val)    nil)
-              ((VarT name)     nil)
-              ((AppT func arg) 
-                (append (self func keepfreevars) (self arg keepfreevars))
-              )
-              ((LamT var body) nil)
-             )
-             (error (~ "unknown TTerm" (Term->Str t)))
-ENDOFLAMBDA
-    -> TTerm $t, TList $keepfreevars {
+    'alpha-needy-terms', 'λt.λkeepfreevars.error "NYI"',
+    -> TTerm $t, TList $keepfreevars -->TList{
         case-Term($t,
-            VarT   => $K1nil,
             ConstT => $K1nil,
-            AppT   => -> TTerm $func, TTerm $arg {
+            VarT => $K1nil,
+            AppT => -> TTerm $func, TTerm $arg {
                 $append(&self($func, $keepfreevars), &self($arg, $keepfreevars));
             },
-            LamT   => -> TTerm $var, TTerm $body {
-                my $vName = $VarT2name($var);
+            LamT => -> Str $varName, TTerm $body {  # DONE: LamT_ctor_with_Str_binder
                 my $fromBody = &self($body, $keepfreevars);
-                _if_( $exists( -> $v { convertP6Bool2TBool($VarT2name($v) eq $vName) }, $keepfreevars),
+                _if_( $exists( -> $v { $Str-eq($varName, $VarT2name($v)) }, $keepfreevars),
                     { $cons($t, $fromBody) },
                     { $fromBody },
                 );
@@ -149,66 +106,11 @@ ENDOFLAMBDA
 )});
 
 
+# betaContract: Term -> Maybe Term
 # one-step β-simplification (either of $t or any (one) child)
 constant $betaContractXXX is export = $Y(-> &self { lambdaFn(
-    'betaContract',
-q:to/ENDOFLAMBDA/,
-    λself.λt.
-        case t ; TODO: case -> cascaded if
-            (((ConstT val)    None)
-             ((VarT name)     None)
-             ((LamT var body)
-                  (_if (betaReducible? body)
-                       (K None)
-                       (λ_.Some (LamT var (Some->value (self body))))
-                  )
-             )
-             ((AppT func arg)
-                  (_if (betaReducible? t)
-                       (λ_._if (betaRedex t)
-                               (λ_.let ((funcVar     (LamT->var func))
-                                        (funcVarName (VarT->name funcVar))
-                                        (_if (Ω? t)
-                                             (λ_._if (eq? (VarT->name (LamT->var arg)) funcVarName)
-                                                     (K None) ; func and arg are both literally the same ω
-                                                     (λ_.Some (AppT arg arg)) ; otherwise one more step to make them so
-                                             )
-                                             (λ_.let ((funcBody          (LamT->body func))
-                                                      (alpha-problematic (filter
-                                                                             ; no need to filter out var itself separately
-                                                                             ; since it cannot be free under itself in the body
-                                                                             (λv.free-under? funcVar v funcBody)
-                                                                             (free-vars arg)
-                                                                         )
-                                                      )
-                                                     )
-                                                   (_if (nil? alpha-problematic)
-                                                        (λ_.let ((substituted-func (subst funcBody arg funcVar))
-                                                                 (isSame           (None? substituted-func))
-                                                                )
-                                                              (_if isSame            ; TODO: use Maybe-or or something like that
-                                                                   (λ_.Some funcBody)
-                                                                   (K substituted-func)
-                                                              )
-                                                        )
-                                                        (λ_.error (~ "NYI: alpha-convert for " (List->Str alpha-problematic)))
-                                                   )
-                                             )
-                                        )
-                                       )
-                               )
-                               (λ_._if (betaReducible? func)
-                                       (λ_.Some (AppT (Some->value (self func)) arg))
-                                       (λ_.Some (AppT func (Some->value (self arg))))
-                               )
-                       )
-                       (K None)
-                  )
-             )
-            )
-            (error (~ "unknown TTerm" (Term->Str t)))
-ENDOFLAMBDA
-    -> TTerm $t {
+    'betaContract','λt.error "NYI"',
+    -> TTerm $t -->TMaybe{
         case-Term($t,
             ConstT => $K1None,
             VarT => $K1None,
@@ -219,44 +121,40 @@ ENDOFLAMBDA
                 )
             },
             AppT => -> TTerm $func, TTerm $arg {
-                $_if( $is-betaReducible($t),
-                    -> $_ { $_if( $is-betaRedex($t),
-                                -> $_ { my $funcVar  = $LamT2var($func);
-                                    my $funcVarName = $VarT2name($funcVar);
-                                    $_if( $is-Omega($t),
-                                        -> $_ { $_if( convertP6Bool2TBool($VarT2name($LamT2var($arg)) eq $funcVarName),
-                                                    -> $_ { $None }, # func and arg are both the (literally) same omega
-                                                    -> $_ { $Some($AppT($arg, $arg)) }  # otherwise one more step to make them so
-                                                )
-                                        },
-                                        -> $_ { my $funcBody  = $LamT2body($func);
-                                                my $alpha-problematic = $filter(
-                                                    # no need to filter out $var itself separately
-                                                    # since it cannot be free under itself in the body
-                                                    -> $v { $is-free-under($funcVar, $v, $funcBody) },
-                                                    $free-vars($arg)
-                                                );
-                                                case-List($alpha-problematic,
-                                                    nil  => { my $substituted-func = $subst($funcBody, $arg, $funcVarName);
-                                                        my $isSame = $is-None($substituted-func);
-                                                        $_if( $isSame,   # TODO: use Maybe-or or something like that
-                                                            -> $_ { $Some($funcBody) },
-                                                            -> $_ { $substituted-func }
-                                                        )
-                                                    },
-                                                    cons => -> $head, TList:D $tail { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
-                                                )
-                                        }
-                                    );
-                                },
-                                -> $_ { $_if( $is-betaReducible($func),
-                                            -> $_ { $Some($AppT($Some2value(&self($func)), $arg)) },
-                                            -> $_ { $Some($AppT($func, $Some2value(&self($arg)))) }
-                                        )
-                                }
-                            )
-                    },
-                    -> $_ { $None }
+                _if_( $is-betaReducible($t),
+                    { _if_( $is-betaRedex($t),
+                          {   my Str $funcVarName = $LamT2var($func);    # DONE: LamT_ctor_with_Str_binder
+                              _if_( $is-Omega($t),
+                                  { _if_( $Str-eq($funcVarName, $LamT2var($arg)),    # DONE: LamT_ctor_with_Str_binder
+                                        $None, # func and arg are both the (literally) same omega
+                                        { $Some($AppT($arg, $arg)) }  # otherwise one more step to make them so
+                                  )},
+                                  {   my TTerm $funcBody  = $LamT2body($func);
+                                      my TList $alpha-problematic = $filter(
+                                          # no need to filter out $var itself separately
+                                          # since it cannot be free under itself in the body
+                                          -> $binderName { $is-freeName-under($funcVarName, $binderName, $funcBody) },
+                                          $free-varNames($arg)
+                                      );
+                                      case-List($alpha-problematic,
+                                          nil  => {
+                                              my $substituted-func = $subst($funcBody, $arg, $funcVarName);
+                                              case-Maybe($substituted-func,   # TODO: use Maybe-or or something like that
+                                                  None => { $Some($funcBody) },
+                                                  Some => -> Mu { $substituted-func }
+                                              )
+                                          },
+                                          cons => -> $head, TList:D $tail { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
+                                      )
+                                  }
+                              )
+                          },
+                          { _if_( $is-betaReducible($func),
+                                { $Some($AppT($Some2value(&self($func)), $arg)) },
+                                { $Some($AppT($func, $Some2value(&self($arg)))) }
+                          )}
+                    )},
+                    $None
                 )
             }
         )
@@ -295,6 +193,7 @@ my constant $BBSomeAppT = lambdaFn(
     $B($B($Some), $AppT)
 );
 
+# betaContract: Term -> Maybe Term
 # one-step β-simplification (either of $t or any (one) child)
 constant $betaContract is export = $Y(-> &self {
     #my $LamT_intoMaybe = $liftedCtor2($LamT, &self) does name('LamT-into-Maybe');
@@ -377,8 +276,8 @@ constant $betaContract is export = $Y(-> &self {
                         );
                     },
                     
-                    LamT => -> TTerm $funcVar, TTerm $funcBody {    # so t is a beta-redex
-                        my $funcVarName = $VarT2name($funcVar);
+                    LamT => -> Str $funcVarName, TTerm $funcBody {    # DONE: LamT_ctor_with_Str_binder
+                    # so t is a beta-redex
                         my $alpha-problematic = $filter(
                             # no need to filter out $var itself separately
                             # since it cannot be free under itself in the body
@@ -394,11 +293,11 @@ constant $betaContract is export = $Y(-> &self {
                                 case-Maybe($substituted-func,
                                     None => { $Some($funcBody) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
                                     Some => -> Mu {
-                                        _if_( $is-selfAppOfVar($funcVar, $funcBody),    # is t (literal Omega?) / pt 1
+                                        _if_( $is-selfAppOf($funcVarName, $funcBody),    # is t (literal Omega?) / pt 1
                                             { my $K1substituted-func = $K($substituted-func);
                                               case-Term($arg,
                                                 LamT => -> TTerm $argVar, TTerm $argBody {   # is t (literal Omega?) / pt 2
-                                                    _if_( $is-selfAppOfVar($funcVar, $argBody),    # should be *literal* Omega
+                                                    _if_( $is-selfAppOf($funcVarName, $argBody),    # should be *literal* Omega
                                                         $None, # func and arg are both the (literally) same omega
                                                         $substituted-func  # otherwise one more step to make them so
                                                     )
@@ -421,8 +320,8 @@ constant $betaContract is export = $Y(-> &self {
 });
 
 
-# betaReduce: β-contract until fixed-point (Ω is considered a fixed-point, too)
-
+# betaReduce: Term -> Maybe Term
+# β-contract until fixed-point (Ω is considered a fixed-point, too)
 # Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
 # is that we don't need to compare terms for equality then.
 constant $betaReduce is export = lambdaFn(
