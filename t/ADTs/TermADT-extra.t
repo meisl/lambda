@@ -112,7 +112,7 @@ for %terms.pairs -> (:$key, :$value) {
     }
 }
 
-my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
+my sub testTermFn($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     for @tests -> $test {
         my Any   $arg = $test.key;
         
@@ -145,7 +145,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 { # Term->source
     is_properLambdaFn($Term2source, 'Term->source');
 
-    test( $Term2source, :argToStr($Term2Str),
+    testTermFn( $Term2source, :argToStr($Term2Str),
         'x'                         => 'x',
         '"c"'                       => '"c"',
         '5'                         => '5',
@@ -204,7 +204,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 { # predicate selfApp?
     is_properLambdaFn($is-selfApp, 'selfApp?');
 
-    test( $is-selfApp, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn( $is-selfApp, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -229,7 +229,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     my $f;
 
     $f = $is-selfAppOfVar($x) but Definition("{$is-selfAppOfVar.name} $x");
-    test($f, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn($f, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -249,7 +249,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     );
 
     $f = $is-selfAppOfVar($y) but Definition("{$is-selfAppOfVar.name} $y");
-    test($f, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn($f, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -269,7 +269,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     );
 
     $f = $is-selfAppOfVar($c) but Definition("{$is-selfAppOfVar.name} $c");
-    test($f, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn($f, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -293,7 +293,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 { # predicate omega?
     is_properLambdaFn($is-omega, 'ω?');
 
-    test( $is-omega, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn( $is-omega, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -317,7 +317,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 { # predicate Ω? ($is-Omega)
     is_properLambdaFn($is-Omega, 'Ω?');
 
-    test( $is-Omega, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn( $is-Omega, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         'x'                 => $false,
         '"c"'               => $false,
         '5'                 => $false,
@@ -349,7 +349,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     # size of an AppT is 1 + size of func + size of arg
     # size of both, a VarT and ConstT is 1
 
-    test( $Term2size, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn( $Term2size, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
         'x'                         =>  1,
         '"c"'                       =>  1,
         '5'                         =>  1,
