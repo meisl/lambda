@@ -11,7 +11,7 @@ use Lambda::Boolean;
 # module under test:
 use Lambda::TermADT;
 
-plan 153;
+plan 27;
 
 
 my $x  ::= $VarT('x');
@@ -112,33 +112,36 @@ for %terms.pairs -> (:$key, :$value) {
     }
 }
 
-my sub testTermFn($f, :$argToStr = *.Str, :$expToStr, *@tests) {
-    for @tests -> $test {
-        my Any   $arg = $test.key;
-        
-        my TTerm $term;
-        my Str   $termSrc;
-        if $arg ~~ TTerm {
-            $term    = $arg;
-            $termSrc = $Term2source($term);
-            # we got a new one - add it!
-            %terms{$termSrc} = $term;
-        } elsif $arg ~~ Str {
-            $term    = %terms{$arg} // die "unprepared test term: '$arg'";
-            $termSrc = $Term2source($term);
-        } else {
-            die "expected either a TTerm or a Str but got $arg.perl";
+my sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) {
+    my Str $fgist = $f.gist;
+    subtest({
+        for @tests -> $test {
+            my Any   $arg = $test.key;
+            
+            my TTerm $term;
+            my Str   $termSrc;
+            if $arg ~~ TTerm {
+                $term    = $arg;
+                $termSrc = $Term2source($term);
+                # we got a new one - add it!
+                %terms{$termSrc} = $term;
+            } elsif $arg ~~ Str {
+                $term    = %terms{$arg} // die "unprepared test term: '$arg'";
+                $termSrc = $Term2source($term);
+            } else {
+                die "expected either a TTerm or a Str but got $arg.perl";
+            }
+
+            my Str   $termStr       = $argToStr($term);
+            my Any   $expected      = $test.value;
+            my Str   $expectedStr   = $expectedToStr.defined
+                                        ?? ' -> ' ~ $expectedToStr($expected)
+                                        !! '';
+            my $desc = "($fgist $termStr)$expectedStr";
+
+            is($f($term), $expected, $desc);
         }
-
-        my Str   $termStr       = $argToStr($term);
-        my Any   $expected      = $test.value;
-        my Str   $expectedStr   = $expToStr.defined
-                                    ?? ' -> ' ~ $expToStr($expected)
-                                    !! '';
-        my $desc = "({$f.gist} $termStr)$expectedStr";
-
-        is($f($term), $expected, $desc);
-    }
+    }, "$fgist on various inputs");
 }
 
 
@@ -204,7 +207,7 @@ my sub testTermFn($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 { # predicate selfApp?
     is_properLambdaFn($is-selfApp, 'selfApp?');
 
-    testTermFn( $is-selfApp, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn( $is-selfApp, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -229,7 +232,7 @@ my sub testTermFn($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     my $f;
 
     $f = $is-selfAppOfVar($x) but Definition("{$is-selfAppOfVar.name} $x");
-    testTermFn($f, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn($f, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -249,7 +252,7 @@ my sub testTermFn($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     );
 
     $f = $is-selfAppOfVar($y) but Definition("{$is-selfAppOfVar.name} $y");
-    testTermFn($f, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn($f, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -269,7 +272,7 @@ my sub testTermFn($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     );
 
     $f = $is-selfAppOfVar($c) but Definition("{$is-selfAppOfVar.name} $c");
-    testTermFn($f, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn($f, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -293,7 +296,7 @@ my sub testTermFn($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 { # predicate omega?
     is_properLambdaFn($is-omega, 'ω?');
 
-    testTermFn( $is-omega, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn( $is-omega, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -317,7 +320,7 @@ my sub testTermFn($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 { # predicate Ω? ($is-Omega)
     is_properLambdaFn($is-Omega, 'Ω?');
 
-    testTermFn( $is-Omega, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn( $is-Omega, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
         'x'                 => $false,
         '"c"'               => $false,
         '5'                 => $false,
@@ -349,7 +352,7 @@ my sub testTermFn($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     # size of an AppT is 1 + size of func + size of arg
     # size of both, a VarT and ConstT is 1
 
-    testTermFn( $Term2size, :argToStr($Term2source), :expToStr(-> $x {$x.Str}),
+    testTermFn( $Term2size, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
         'x'                         =>  1,
         '"c"'                       =>  1,
         '5'                         =>  1,
