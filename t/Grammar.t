@@ -81,7 +81,7 @@ my sub is_TermType(TTerm $term, $predicate, $msg) {
 }
 
 { # abstraction
-    my ($t, $msg);
+    my ($act, $exp, $msg);
 
     throws_like({ parseLambda('λ') }, X::Lambda::SyntaxError,
         :message('Syntax error: HERE>>>"λ"'),
@@ -98,17 +98,17 @@ my sub is_TermType(TTerm $term, $predicate, $msg) {
         'lambda without body',
     );
 
-    $t = parseLambda('λx.y');
+    $act = parseLambda('λx.y');
     $msg = 'simple lambda';
-    is_TermType($t, $is-LamT, $msg);
-    is_TermType($LamT2var($t),  $is-VarT, "var of $msg");
-    is_TermType($LamT2body($t), $is-VarT, "body of $msg");
+    is_TermType($act, $is-LamT, $msg);
+    isa_ok($LamT2var($act), Str, "var of $msg");
+    is_TermType($LamT2body($act), $is-VarT, "body of $msg");
 
-    $t = parseLambda('λx.λy.x');
+    $act = parseLambda('λx.λy.x');
     $msg = 'two-arg lambda';
-    is_TermType($t, $is-LamT, $msg);
-    is_TermType($LamT2var($t),  $is-VarT, "var of $msg");
-    is_TermType($LamT2body($t), $is-LamT, "body of $msg");
-    is_TermType($LamT2var($LamT2body($t)),  $is-VarT, "var of body of $msg");
-    is_TermType($LamT2body($LamT2body($t)), $is-VarT, "body of body of $msg");
+    is_TermType($act, $is-LamT, $msg);
+    isa_ok($LamT2var($act), Str, "var of $msg");
+    is_TermType($LamT2body($act), $is-LamT, "body of $msg");
+    isa_ok($LamT2var($LamT2body($act)), Str, "var of body of $msg");
+    is_TermType($LamT2body($LamT2body($act)), $is-VarT, "body of body of $msg");
 }

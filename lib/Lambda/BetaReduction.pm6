@@ -209,62 +209,57 @@ q:to/ENDOFLAMBDA/,
             (error (~ "unknown TTerm" (Term->Str t)))
 ENDOFLAMBDA
     -> TTerm $t {
-        if convertTBool2P6Bool($is-ConstT($t)) {
-            $None
-        } elsif convertTBool2P6Bool($is-VarT($t)) {
-            $None
-        } elsif convertTBool2P6Bool($is-LamT($t)) {
-            my $var  = $LamT2var($t);
-            my $body = $LamT2body($t);
-            $_if( $is-betaReducible($body),
-                -> $_ { $Some($LamT($var, $Some2value(&self($body)))) },
-                -> $_ { $None }
-            )
-        } elsif convertTBool2P6Bool($is-AppT($t)) {
-            my $func = $AppT2func($t);
-            my $arg  = $AppT2arg($t);
-            $_if( $is-betaReducible($t),
-                -> $_ { $_if( $is-betaRedex($t),
-                            -> $_ { my $funcVar  = $LamT2var($func);
-                                my $funcVarName = $VarT2name($funcVar);
-                                $_if( $is-Omega($t),
-                                    -> $_ { $_if( convertP6Bool2TBool($VarT2name($LamT2var($arg)) eq $funcVarName),
-                                                -> $_ { $None }, # func and arg are both the (literally) same omega
-                                                -> $_ { $Some($AppT($arg, $arg)) }  # otherwise one more step to make them so
-                                            )
-                                    },
-                                    -> $_ { my $funcBody  = $LamT2body($func);
-                                            my $alpha-problematic = $filter(
-                                                # no need to filter out $var itself separately
-                                                # since it cannot be free under itself in the body
-                                                -> $v { $is-free-under($funcVar, $v, $funcBody) },
-                                                $free-vars($arg)
-                                            );
-                                            case-List($alpha-problematic,
-                                                nil  => { my $substituted-func = $subst($funcBody, $arg, $funcVarName);
-                                                    my $isSame = $is-None($substituted-func);
-                                                    $_if( $isSame,   # TODO: use Maybe-or or something like that
-                                                        -> $_ { $Some($funcBody) },
-                                                        -> $_ { $substituted-func }
-                                                    )
-                                                },
-                                                cons => -> $head, TList:D $tail { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
-                                            )
-                                    }
-                                );
-                            },
-                            -> $_ { $_if( $is-betaReducible($func),
-                                        -> $_ { $Some($AppT($Some2value(&self($func)), $arg)) },
-                                        -> $_ { $Some($AppT($func, $Some2value(&self($arg)))) }
-                                    )
-                            }
-                        )
-                },
-                -> $_ { $None }
-            )
-        } else {
-            die "fell off type-dispatch with type " ~ $t.WHAT.perl
-        }
+        case-Term($t,
+            ConstT => $K1None,
+            VarT => $K1None,
+            LamT => -> Str $varName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
+                _if_( $is-betaReducible($body),
+                    { $Some($LamT($varName, $Some2value(&self($body)))) },    # DONE: LamT_ctor_with_Str_binder
+                    $None
+                )
+            },
+            AppT => -> TTerm $func, TTerm $arg {
+                $_if( $is-betaReducible($t),
+                    -> $_ { $_if( $is-betaRedex($t),
+                                -> $_ { my $funcVar  = $LamT2var($func);
+                                    my $funcVarName = $VarT2name($funcVar);
+                                    $_if( $is-Omega($t),
+                                        -> $_ { $_if( convertP6Bool2TBool($VarT2name($LamT2var($arg)) eq $funcVarName),
+                                                    -> $_ { $None }, # func and arg are both the (literally) same omega
+                                                    -> $_ { $Some($AppT($arg, $arg)) }  # otherwise one more step to make them so
+                                                )
+                                        },
+                                        -> $_ { my $funcBody  = $LamT2body($func);
+                                                my $alpha-problematic = $filter(
+                                                    # no need to filter out $var itself separately
+                                                    # since it cannot be free under itself in the body
+                                                    -> $v { $is-free-under($funcVar, $v, $funcBody) },
+                                                    $free-vars($arg)
+                                                );
+                                                case-List($alpha-problematic,
+                                                    nil  => { my $substituted-func = $subst($funcBody, $arg, $funcVarName);
+                                                        my $isSame = $is-None($substituted-func);
+                                                        $_if( $isSame,   # TODO: use Maybe-or or something like that
+                                                            -> $_ { $Some($funcBody) },
+                                                            -> $_ { $substituted-func }
+                                                        )
+                                                    },
+                                                    cons => -> $head, TList:D $tail { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
+                                                )
+                                        }
+                                    );
+                                },
+                                -> $_ { $_if( $is-betaReducible($func),
+                                            -> $_ { $Some($AppT($Some2value(&self($func)), $arg)) },
+                                            -> $_ { $Some($AppT($func, $Some2value(&self($arg)))) }
+                                        )
+                                }
+                            )
+                    },
+                    -> $_ { $None }
+                )
+            }
+        )
     }
 )});
 
@@ -311,15 +306,15 @@ constant $betaContract is export = $Y(-> &self {
 
             ConstT => $K1None,
 
-            #LamT => -> TTerm $var, TTerm $body {
-            #    $liftedCtor2($LamT, $var, &self, $body)
+            #LamT => -> Str $varName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
+            #    $liftedCtor2($LamT, $varName, &self, $body)
             #},
-            #LamT => $liftedCtor2XX($LamT, &self),
+            #LamT => $liftedCtor2($LamT, &self),
             #LamT => $LamT_intoMaybe,
-            LamT => -> TTerm $var, TTerm $body {
+            LamT => -> Str $varName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
                 case-Maybe(&self($body),
                     None => $None,
-                    Some => -> TTerm $newBody { $Some($LamT($var, $newBody)) }
+                    Some => -> TTerm $newBody { $Some($LamT($varName, $newBody)) }    # DONE: LamT_ctor_with_Str_binder
                 )
             },
 

@@ -17,7 +17,7 @@ role TTerm does ADT is export {
     my $repr = ADTRepr.new(TTerm,
         VarT   => 1,    # name:Str
         AppT   => 2,    # func:Term  arg:Term
-        LamT   => 2,    # var:VarT   body:Term
+        LamT   => 2,    # var:Str   body:Term
         ConstT => 1     # value:_
     );
     method repr { $repr }
@@ -46,7 +46,7 @@ my sub checkSig(&callback, Str $cbName, *@types) is hidden_from_backtrace {
 
 our sub case-Term(TTerm:D $term, :VarT(&onVarT)!, :AppT(&onAppT)!, :LamT(&onLamT)!, :ConstT(&onConstT)!) is hidden_from_backtrace is export {
     #checkSig(&onVarT, 'VarT', Str);
-    #checkSig(&onLamT, 'LamT', TTerm, TTerm);
+    checkSig(&onLamT, 'LamT', Str, TTerm);
     #checkSig(&onAppT, 'AppT', TTerm, TTerm);
     #checkSig(&onConstT, 'ConstT', Any);
 
@@ -94,19 +94,11 @@ my constant $LamT-error = -> $t { die "first arg to LamT ctor must be a VarT - g
 # LamT: Term -> Term -> (Str -> a) -> (Term -> Term -> b) -> (Term -> Term -> c) -> (* -> d) -> c
 constant $LamT is export = lambdaFn(
     'LamT', 'λvar.λbody.λonVarT.λonAppT.λonLamT.λonConstT.onLamT var body',
-    -> TTerm:D $var, TTerm:D $body -->TTerm{
-        case-Term($var,
-            VarT => -> Str $name {
-                lambdaFn(
-                    Str, { "(LamT $var $body)" },
-                    -> &onVarT, &onAppT, &onLamT, &onConstT { &onLamT($var, $body) }
-                ) does TTerm;
-        
-            },
-            AppT   => -> Mu, Mu { $LamT-error($var) },
-            LamT   => -> Mu, Mu { $LamT-error($var) },
-            ConstT => -> Mu     { $LamT-error($var) }
-        )
+    -> Str:D $varName, TTerm:D $body -->TTerm{
+        lambdaFn(
+            Str, { "(LamT $varName $body)" },
+            -> &onVarT, &onAppT, &onLamT, &onConstT { &onLamT($varName, $body) }
+        ) does TTerm;
     }
 );
 
@@ -153,18 +145,18 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
                 )
             },
 
-            LamT => -> TTerm $sVar, TTerm $sBody {
+            LamT => -> Str $sVarName, TTerm $sBody {
                 case-Term($t,
                     VarT => $K1false,
                     AppT => $K2false,
-                    LamT => -> TTerm $tVar, TTerm $tBody {
-                        _if_(&self($sVar, $tVar),
+                    LamT => -> Str $tVarName, TTerm $tBody {
+                        _if_($Str-eq($sVarName, $tVarName),
                             { &self($sBody,  $tBody) },
                             $false
                         )
 
                         #$_and(
-                        #    &self($sVar,  $tVar),
+                        #    $Str-eq($sVarName,  $tVarName),
                         #    &self($sBody, $tBody)
                         #)
                     },
@@ -271,7 +263,7 @@ constant $AppT2arg is export = lambdaFn(
 );
 
 # LamT->var: Term -> Term
-constant $LamT2var is export = lambdaFn(
+constant $LamT2var is export = lambdaFn(    # TODO: rename LamT2var to LamT2binderName
     'LamT->var', 'not yet implemented',
     -> TTerm:D $t -->TTerm{ case-Term($t, 
         VarT   => -> Mu     { $prj-error('LamT->var', $t) },
@@ -324,10 +316,9 @@ constant $Term2source is export = $Y(-> &self { lambdaFn(
                 my $aSrc = &self($arg);
                 "($fSrc $aSrc)"
             },
-            LamT => -> TTerm $var, TTerm $body -->Str{
-                my $vSrc = &self($var);
-                my $bSrc = &self($body);
-                "(λ$vSrc.$bSrc)"
+            LamT => -> Str $binderName, TTerm $body -->Str{
+                my $bodySrc = &self($body);
+                "(λ$binderName.$bodySrc)"
 
             },
             ConstT => -> Any $val -->Str{
@@ -353,11 +344,11 @@ ENDOFLAMBDA
         case-Term($t,
             ConstT => $K1nil,
             VarT   => $K1nil,
-            AppT => -> TTerm $f, TTerm $a {
-                $cons($f, $cons($a, $nil))
+            AppT => -> TTerm $func, TTerm $arg {
+                $cons($func, $cons($arg, $nil))
             },
-            LamT => -> TTerm $v, TTerm $b {
-                $cons($v, $cons($b, $nil))
+            LamT => -> Mu, TTerm $body {
+                $cons($body, $nil)
             }
         )
     }

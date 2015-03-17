@@ -39,8 +39,8 @@ plan 118;
     my $app_x_x = $AppT($x, $x);
     my $app_x_y = $AppT($x, $y);
     my $app_y_x = $AppT($y, $x);
-    my $lam_x_x = $LamT($x, $x);
-    my $lam_y_y = $LamT($y, $y);
+    my $lam_x_x = $LamT('x', $x);
+    my $lam_y_y = $LamT('y', $y);
 
     test-eq($x,         $x,             $true );
     test-eq($x,         $VarT('x'),     $true );
@@ -57,7 +57,7 @@ plan 118;
     test-eq($app_x_y,   $c2,            $false);
 
     test-eq($lam_x_x,   $lam_x_x,       $true );
-    test-eq($lam_x_x,   $LamT($x, $x),  $true );    # another instance
+    test-eq($lam_x_x,   $LamT('x', $x), $true );    # another instance
     test-eq($lam_y_y,   $lam_y_y,       $true );
     test-eq($lam_x_x,   $lam_y_y,       $false);    # this is NOT alpha-equivalence!
     test-eq($lam_x_x,   $app_y_x,       $false);
@@ -110,8 +110,8 @@ plan 118;
     my $c2 = $ConstT('two');
     my $app1 = $AppT($y, $x);
     my $app2 = $AppT($x, $y);
-    my $lam1 = $LamT($y, $x);
-    my $lam2 = $LamT($x, $lam1);
+    my $lam1 = $LamT('y', $x);
+    my $lam2 = $LamT('x', $lam1);
     my $out;
 
 
@@ -254,7 +254,7 @@ plan 118;
     $x = $AppT($u, $v);
     is $is-VarT($x),  $false, "($is-VarT $x)";
     
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     is $is-VarT($x),  $false, "($is-VarT $x)";
 
     $x = $ConstT("foo");
@@ -276,7 +276,7 @@ plan 118;
     $x = $AppT($u, $v);
     dies_ok( { $VarT2name($x) }, "($VarT2name $x) yields error");
 
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     dies_ok( { $VarT2name($x) }, "($VarT2name $x) yields error");
 }
 
@@ -315,7 +315,7 @@ plan 118;
     $x = $AppT($u, $v);
     is $is-AppT($x),  $true,  "($is-AppT $x)";
     
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     is $is-AppT($x),  $false, "($is-AppT $x)";
 
     $x = $ConstT("foo");
@@ -337,7 +337,7 @@ plan 118;
     $x = $AppT($u, $v);
     is $AppT2func($x), $u, "($AppT2func $x)";
 
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     dies_ok( { $AppT2func($x) }, "($AppT2func $x) yields error");
 }
 
@@ -356,7 +356,7 @@ plan 118;
     $x = $AppT($u, $v);
     is $AppT2arg($x), $v, "($AppT2arg $x)";
 
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     dies_ok( { $AppT2arg($x) }, "($AppT2arg $x) yields error");
 }
 
@@ -372,14 +372,14 @@ plan 118;
     my $u = $VarT('u');
     my $v = $VarT('v');
     my $x;
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     is $Term2Str($x), "(LamT $u $v)",
         "($Term2Str (LamT $u $v)) -> '(LamT $u $v)'";
     does_ok $x, TTerm, "$x";
     is_validLambda $x;
     doesnt_ok $x, Definition;
 
-    dies_ok({ $LamT($x, $v) }, '$LamT yields an error if 1st arg is not a VarT');
+    dies_ok({ $LamT('x', $v) }, '$LamT yields an error if 1st arg is not a VarT');
 }
 
 { # predicate LamT?
@@ -391,7 +391,7 @@ plan 118;
     my $u = $VarT('u');
     my $v = $VarT('v');
     my $x;
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     is $is-LamT($x),  $true,  "($is-LamT $x)";
     
     $x = $AppT($u, $v);
@@ -418,7 +418,7 @@ plan 118;
     $x = $AppT($u, $v);
     dies_ok( { $LamT2var($x) }, "($LamT2var $x) yields error");
 
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     is $LamT2var($x), $u, "($LamT2var $x)";
 }
 
@@ -437,7 +437,7 @@ plan 118;
     $x = $AppT($u, $v);
     dies_ok( { $LamT2body($x) }, "($LamT2body $x) yields error");
 
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     is $LamT2body($x), $v, "($LamT2body $x)";
 }
 
@@ -474,7 +474,7 @@ plan 118;
     $x = $AppT($u, $v);
     is $is-ConstT($x),  $false, "($is-ConstT $x)";
     
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     is $is-ConstT($x),  $false, "($is-ConstT $x)";
 
     $x = $ConstT("foo");
@@ -498,7 +498,7 @@ plan 118;
     $x = $AppT($u, $v);
     dies_ok( { $ConstT2value($x) }, "($ConstT2value $x) yields error");
 
-    $x = $LamT($u, $v);
+    $x = $LamT('u', $v);
     dies_ok( { $ConstT2value($x) }, "($ConstT2value $x) yields error");
 }
 

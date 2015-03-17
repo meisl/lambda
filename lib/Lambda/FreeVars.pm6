@@ -9,19 +9,19 @@ use Lambda::ListADT;
 use Lambda::TermADT;
 
 
-constant $is-free-varName = $Y(-> &self { lambdaFn(
+constant $is-free-varName is export = $Y(-> &self { lambdaFn(
     'free-varName?', 'λself.λvarName.λt.error "NYI"',
     -> Str:D $varName, TTerm $t -->TBool{
         case-Term($t,
             ConstT => $K1false,
-            VarT   => -> Str $name { $Str-eq($varName, $name) },
-            AppT   => -> TTerm $func, TTerm $arg {
+            VarT => -> Str $name { $Str-eq($varName, $name) },
+            AppT => -> TTerm $func, TTerm $arg {
                 _if_( &self($varName, $func),       # short-circuit OR
                     $true,
                     { &self($varName, $arg) }
                 )
             },
-            LamT   => -> TTerm $lamVar, TTerm $body {
+            LamT => -> TTerm $lamVar, TTerm $body {
                 _if_( $Str-eq($varName, $VarT2name($lamVar)),
                     $false,
                     { &self($varName, $body) }
@@ -32,10 +32,8 @@ constant $is-free-varName = $Y(-> &self { lambdaFn(
 )});
 
 constant $is-free is export = lambdaFn(
-    'free?', 'λvar.free-varName? (VarT->name var)',  # (B free-varName? VarT->name)
-    -> TTerm $var {
-        $is-free-varName($VarT2name($var));
-    }
+    'free?', 'B free-varName? VarT->name',
+    $B($is-free-varName, $VarT2name)
 );
 
 
@@ -76,8 +74,8 @@ constant $free-var is export = $Y(-> &self { lambdaFn(
     'free-var', 'λname.λterm.error "NYI"',
     -> Str:D $name, TTerm $t -->TMaybe{
         case-Term($t,
-            ConstT   => $K1None,
-            VarT     => -> Str $thisName {
+            ConstT => $K1None,
+            VarT => -> Str $thisName {
                 _if_( $Str-eq($name, $thisName),
                     { $Some($t) },
                     $None

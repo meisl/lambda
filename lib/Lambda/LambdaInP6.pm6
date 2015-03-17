@@ -100,7 +100,7 @@ multi sub lam(@vs, @body) is export returns TermStub {
     my %bindings = @vNms Z @vars;
     return TermStub.new(-> Env:D $env {
         my $body = app(@body).in($env.extend(%bindings));
-        my TTerm $out = ($body, @vars.reverse).reduce(-> $b, $v {$LamT($v, $b)});
+        my TTerm $out = ($body, @vNms.reverse).reduce(-> $b, $v {$LamT($v, $b)});   # DONE: LamT_ctor_with_Str_binder
 
         if False {
             #say 'env: [' ~ %env.map(-> $pair {$pair.key ~ ' => ' ~ $pair.value.lambda}).join(', ') ~ ']';
@@ -125,6 +125,8 @@ multi sub lam($vs, $body) is export returns TermStub {
 
 my $env;
 $env = Env.empty.extend(:x($VarT('foo')), :y($VarT('bar')));
+say "env: {$env.perl}";
+say '';
 
 say $Term2source( lam(<x>, <x>).in($env) );
 say $Term2source( lam(<x>, <x x>).in($env) );
