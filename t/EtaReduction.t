@@ -42,18 +42,18 @@ plan 72;
         $AppT($x, $c)                                               => $false,  # (x "c")
         $AppT($x, $x)                                               => $false,  # (x x)
         $AppT($x, $y)                                               => $false,  # (x y)
-        $LamT($x, $c)                                               => $false,  # (λx."c")
-        $LamT($x, $x)                                               => $false,  # (λx.x)
-        $LamT($x, $AppT($x, $x))                                    => $false,  # (λx.x x)
-        $LamT($x, $AppT($x, $c))                                    => $false,  # (λx.x "c")
-        $LamT($x, $AppT($x, $y))                                    => $false,  # (λx.x y)
-        $LamT($x, $AppT($y, $x))                                    => $true,   # (λx.y x)
-        $LamT($x, $AppT($x, $LamT($y, $AppT($x, $y))))              => $false,  # (λx.x λy.x y)
-        $AppT($LamT($y, $AppT($x, $y)), $y)                         => $false,  # ((λy.x y) y)
-        $AppT($LamT($x, $AppT($y, $x)), $LamT($y, $AppT($x, $y)))   => $false,  # ((λx.y x) (λy.x y))
-        $LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x))              => $true,   # (λx.(λy.z y) x)
-        $LamT($x, $AppT($LamT($y, $AppT($x, $y)), $x))              => $false,  # (λx.(λy.x y) x)
-        $LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x))              => $true,   # (λx.(λx.x y) x)
+        $LamT('x', $c)                                              => $false,  # (λx."c")
+        $LamT('x', $x)                                              => $false,  # (λx.x)
+        $LamT('x', $AppT($x, $x))                                   => $false,  # (λx.x x)
+        $LamT('x', $AppT($x, $c))                                   => $false,  # (λx.x "c")
+        $LamT('x', $AppT($x, $y))                                   => $false,  # (λx.x y)
+        $LamT('x', $AppT($y, $x))                                   => $true,   # (λx.y x)
+        $LamT('x', $AppT($x, $LamT('y', $AppT($x, $y))))            => $false,  # (λx.x λy.x y)
+        $AppT($LamT('y', $AppT($x, $y)), $y)                        => $false,  # ((λy.x y) y)
+        $AppT($LamT('x', $AppT($y, $x)), $LamT('y', $AppT($x, $y))) => $false,  # ((λx.y x) (λy.x y))
+        $LamT('x', $AppT($LamT('y', $AppT($z, $y)), $x))            => $true,   # (λx.(λy.z y) x)
+        $LamT('x', $AppT($LamT('y', $AppT($x, $y)), $x))            => $false,  # (λx.(λy.x y) x)
+        $LamT('x', $AppT($LamT('x', $AppT($x, $y)), $x))            => $true,   # (λx.(λx.x y) x)
     );
 }
 
@@ -85,18 +85,18 @@ plan 72;
         $AppT($x, $c)                                               => $false,  # (x "c")
         $AppT($x, $x)                                               => $false,  # (x x)
         $AppT($x, $y)                                               => $false,  # (x y)
-        $LamT($x, $c)                                               => $false,  # (λx."c")
-        $LamT($x, $x)                                               => $false,  # (λx.x)
-        $LamT($x, $AppT($x, $x))                                    => $false,  # (λx.x x)
-        $LamT($x, $AppT($x, $c))                                    => $false,  # (λx.x "c")
-        $LamT($x, $AppT($x, $y))                                    => $false,  # (λx.x y)
-        $LamT($x, $AppT($y, $x))                                    => $true,   # (λx.y x)              # a redex
-        $LamT($x, $AppT($x, $LamT($y, $AppT($x, $y))))              => $true,   # (λx.x λy.x y)         # not a redex but reducible
-        $AppT($LamT($y, $AppT($x, $y)), $y)                         => $true,   # ((λy.x y) y)          # not a redex but reducible
-        $AppT($LamT($x, $AppT($y, $x)), $LamT($y, $AppT($x, $y)))   => $true,   # ((λx.y x) (λy.x y))   # not a redex but reducible
-        $LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x))              => $true,   # (λx.(λy.z y) x)       # a redex (with inner redex)
-        $LamT($x, $AppT($LamT($y, $AppT($x, $y)), $x))              => $true,   # (λx.(λy.x y) x)       # not a redex but reducible
-        $LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x))              => $true,   # (λx.(λx.x y) x)       # a redex
+        $LamT('x', $c)                                              => $false,  # (λx."c")
+        $LamT('x', $x)                                              => $false,  # (λx.x)
+        $LamT('x', $AppT($x, $x))                                   => $false,  # (λx.x x)
+        $LamT('x', $AppT($x, $c))                                   => $false,  # (λx.x "c")
+        $LamT('x', $AppT($x, $y))                                   => $false,  # (λx.x y)
+        $LamT('x', $AppT($y, $x))                                   => $true,   # (λx.y x)              # a redex
+        $LamT('x', $AppT($x, $LamT('y', $AppT($x, $y))))            => $true,   # (λx.x λy.x y)         # not a redex but reducible
+        $AppT($LamT('y', $AppT($x, $y)), $y)                        => $true,   # ((λy.x y) y)          # not a redex but reducible
+        $AppT($LamT('x', $AppT($y, $x)), $LamT('y', $AppT($x, $y))) => $true,   # ((λx.y x) (λy.x y))   # not a redex but reducible
+        $LamT('x', $AppT($LamT('y', $AppT($z, $y)), $x))            => $true,   # (λx.(λy.z y) x)       # a redex (with inner redex)
+        $LamT('x', $AppT($LamT('y', $AppT($x, $y)), $x))            => $true,   # (λx.(λy.x y) x)       # not a redex but reducible
+        $LamT('x', $AppT($LamT('x', $AppT($x, $y)), $x))            => $true,   # (λx.(λx.x y) x)       # a redex
     );
 }
 
@@ -127,30 +127,30 @@ plan 72;
     my $c = $ConstT('c');
 
     etaContractsTo(
-        $x                                              => $None,    # x
-        $c                                              => $None,    # "c"
-        $AppT($x, $c)                                   => $None,    # (x "c")
-        $AppT($x, $x)                                   => $None,    # (x x)
-        $AppT($x, $y)                                   => $None,    # (x y)
-        $LamT($x, $c)                                   => $None,    # (λx."c")
-        $LamT($x, $x)                                   => $None,    # (λx.x)
-        $LamT($x, $AppT($x, $x))                        => $None,    # (λx.x x)
-        $LamT($x, $AppT($x, $c))                        => $None,    # (λx.x "c")
-        $LamT($x, $AppT($x, $y))                        => $None,    # (λx.x y)
+        $x                                               => $None,    # x
+        $c                                               => $None,    # "c"
+        $AppT($x, $c)                                    => $None,    # (x "c")
+        $AppT($x, $x)                                    => $None,    # (x x)
+        $AppT($x, $y)                                    => $None,    # (x y)
+        $LamT('x', $c)                                   => $None,    # (λx."c")
+        $LamT('x', $x)                                   => $None,    # (λx.x)
+        $LamT('x', $AppT($x, $x))                        => $None,    # (λx.x x)
+        $LamT('x', $AppT($x, $c))                        => $None,    # (λx.x "c")
+        $LamT('x', $AppT($x, $y))                        => $None,    # (λx.x y)
 
-        $LamT($x, $AppT($y, $x))                        => $Some($y),                          # (λx.y x)      # a redex
-        $LamT($x, $AppT($x, $LamT($y, $AppT($x, $y))))  => $Some($LamT($x, $AppT($x, $x))),    # (λx.x λy.x y)         # not a redex but reducible
-        $AppT($LamT($y, $AppT($x, $y)), $y)             => $Some($AppT($x, $y)),               # ((λy.x y) y)          # not a redex but reducible
+        $LamT('x', $AppT($y, $x))                        => $Some($y),                          # (λx.y x)      # a redex
+        $LamT('x', $AppT($x, $LamT('y', $AppT($x, $y)))) => $Some($LamT('x', $AppT($x, $x))),    # (λx.x λy.x y)         # not a redex but reducible
+        $AppT($LamT('y', $AppT($x, $y)), $y)             => $Some($AppT($x, $y)),               # ((λy.x y) y)          # not a redex but reducible
 
-        $LamT($x, $AppT($LamT($y, $AppT($x, $y)), $x))  => $Some($LamT($x, $AppT($x, $x))),    # (λx.(λy.x y) x)       # not a redex but reducible
-        $LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x))  => $Some($LamT($x, $AppT($x, $y))),    # (λx.(λx.x y) x)       # a redex
+        $LamT('x', $AppT($LamT('y', $AppT($x, $y)), $x)) => $Some($LamT('x', $AppT($x, $x))),    # (λx.(λy.x y) x)       # not a redex but reducible
+        $LamT('x', $AppT($LamT('x', $AppT($x, $y)), $x)) => $Some($LamT('x', $AppT($x, $y))),    # (λx.(λx.x y) x)       # a redex
     );
 
 
     my ($t, $ecd1, $ecd2, $expectedErd);
 
     # ((λx.y x) (λy.x y)) can contract twice; NO prescribed order!
-    $t = $AppT($LamT($x, $AppT($y, $x)), $LamT($y, $AppT($x, $y)));  # not a redex but reducible (twice)
+    $t = $AppT($LamT('x', $AppT($y, $x)), $LamT('y', $AppT($x, $y)));  # not a redex but reducible (twice)
     subtest({
         $ecd1 = $etaContract($t);
         is($is-Some($ecd1), $true, "{$Term2source($t)} should eta-contract (at least) once") or die;
@@ -170,7 +170,7 @@ plan 72;
     }, "{$Term2source($t)} can contract twice; NO prescribed order!");
 
     # (λx.(λy.z y) x) can contract twice; prescribe order to outer-then-inner!
-    $t = $LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x));  # a redex (with inner redex)
+    $t = $LamT('x', $AppT($LamT('y', $AppT($z, $y)), $x));  # a redex (with inner redex)
     subtest({
         $ecd1 = $etaContract($t);
         is($is-Some($ecd1), $true, "{$Term2source($t)} should eta-contract (at least) once") or die;
@@ -178,7 +178,7 @@ plan 72;
         is($is-etaReducible($ecd1), $true, "(Some->value (etaContract {$Term2source($t)})) should still be eta-reducible") or die;
         
         # Note: we DO restrict the order here: from outer to inner:
-        my $expectedEcd1 = $LamT($y, $AppT($z, $y));    # (λx.(λy.z y) x) |>_η (λy.z y)
+        my $expectedEcd1 = $LamT('y', $AppT($z, $y));    # (λx.(λy.z y) x) |>_η (λy.z y)
         is($ecd1, $expectedEcd1, "{$Term2source($t)} should eta-contract in one step to {$Term2source($expectedEcd1)}") or die;
         
         $ecd2 = $etaContract($ecd1);
@@ -224,18 +224,18 @@ plan 72;
         $AppT($x, $c)                                               => $None,  # (x "c")
         $AppT($x, $x)                                               => $None,  # (x x)
         $AppT($x, $y)                                               => $None,  # (x y)
-        $LamT($x, $c)                                               => $None,  # (λx."c")
-        $LamT($x, $x)                                               => $None,  # (λx.x)
-        $LamT($x, $AppT($x, $x))                                    => $None,  # (λx.x x)
-        $LamT($x, $AppT($x, $c))                                    => $None,  # (λx.x "c")
-        $LamT($x, $AppT($x, $y))                                    => $None,  # (λx.x y)
-        $LamT($x, $AppT($y, $x))                                    => $Some($y),                       # (λx.y x)              # a redex
-        $LamT($x, $AppT($x, $LamT($y, $AppT($x, $y))))              => $Some($LamT($x, $AppT($x, $x))), # (λx.x λy.x y)         # not a redex but reducible
-        $AppT($LamT($y, $AppT($x, $y)), $y)                         => $Some($AppT($x, $y)),            # ((λy.x y) y)          # not a redex but reducible
-        $AppT($LamT($x, $AppT($y, $x)), $LamT($y, $AppT($x, $y)))   => $Some($AppT($y, $x)),            # ((λx.y x) (λy.x y))   # not a redex but reducible (contractible twice)
-        $LamT($x, $AppT($LamT($y, $AppT($z, $y)), $x))              => $Some($z),                       # (λx.(λy.z y) x)       # a redex (with inner redex) (contractible twice)
-        $LamT($x, $AppT($LamT($y, $AppT($x, $y)), $x))              => $Some($LamT($x, $AppT($x, $x))), # (λx.(λy.x y) x)       # not a redex but reducible
-        $LamT($x, $AppT($LamT($x, $AppT($x, $y)), $x))              => $Some($LamT($x, $AppT($x, $y))), # (λx.(λx.x y) x)       # a redex
+        $LamT('x', $c)                                              => $None,  # (λx."c")
+        $LamT('x', $x)                                              => $None,  # (λx.x)
+        $LamT('x', $AppT($x, $x))                                   => $None,  # (λx.x x)
+        $LamT('x', $AppT($x, $c))                                   => $None,  # (λx.x "c")
+        $LamT('x', $AppT($x, $y))                                   => $None,  # (λx.x y)
+        $LamT('x', $AppT($y, $x))                                   => $Some($y),                       # (λx.y x)              # a redex
+        $LamT('x', $AppT($x, $LamT('y', $AppT($x, $y))))            => $Some($LamT('x', $AppT($x, $x))), # (λx.x λy.x y)         # not a redex but reducible
+        $AppT($LamT('y', $AppT($x, $y)), $y)                        => $Some($AppT($x, $y)),            # ((λy.x y) y)          # not a redex but reducible
+        $AppT($LamT('x', $AppT($y, $x)), $LamT('y', $AppT($x, $y))) => $Some($AppT($y, $x)),            # ((λx.y x) (λy.x y))   # not a redex but reducible (contractible twice)
+        $LamT('x', $AppT($LamT('y', $AppT($z, $y)), $x))            => $Some($z),                       # (λx.(λy.z y) x)       # a redex (with inner redex) (contractible twice)
+        $LamT('x', $AppT($LamT('y', $AppT($x, $y)), $x))            => $Some($LamT('x', $AppT($x, $x))), # (λx.(λy.x y) x)       # not a redex but reducible
+        $LamT('x', $AppT($LamT('x', $AppT($x, $y)), $x))            => $Some($LamT('x', $AppT($x, $y))), # (λx.(λx.x y) x)       # a redex
     );
 
 }

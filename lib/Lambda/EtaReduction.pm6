@@ -25,7 +25,7 @@ constant $is-etaRedex is export = lambdaFn(
         case-Term($t,
             ConstT => $K1false,
             VarT => $K1false,
-            AppT => $K1false,
+            AppT => $K2false,
             LamT => -> Str $varName, TTerm $body {   # DONE: LamT_ctor_with_Str_binder
                 # λx.(B x) is an η-redex if x not free in B.
                 # (if so, it η-contracts to just B)
