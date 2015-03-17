@@ -48,7 +48,7 @@ my sub test-pred($f, *@tests) {
     is_properLambdaFn($is-free, 'free?');
 
     my $app = $AppT($x, $y);    # (x y)
-    my $lam = $LamT($x, $app);  # λx.x y
+    my $lam = $LamT('x', $app); # λx.x y
 
     test-pred( $is-free,
         [$x, $c]    => $false,      # x in c
@@ -71,12 +71,12 @@ my sub test-pred($f, *@tests) {
 { #predicate free-under?
     is_properLambdaFn($is-free-under, 'free-under?');
 
-    my $a1 = $AppT($x,  $y);            # (x y)
-    my $l1 = $LamT($x,  $a1);           # λx.x y
-    my $l2 = $LamT($z,  $AppT($z, $y)); # λz.z y
-    my $a2 = $AppT($l1, $z);            # ((λx.x y) z)
-    my $a3 = $AppT($z,  $l1);           # (z (λx.x y))
-    my $a4 = $AppT($l1, $l2);           # ((λx.x y) (λz.z y))
+    my $a1 = $AppT($x,  $y);             # (x y)
+    my $l1 = $LamT('x',  $a1);           # λx.x y
+    my $l2 = $LamT('z',  $AppT($z, $y)); # λz.z y
+    my $a2 = $AppT($l1, $z);             # ((λx.x y) z)
+    my $a3 = $AppT($z,  $l1);            # (z (λx.x y))
+    my $a4 = $AppT($l1, $l2);            # ((λx.x y) (λz.z y))
 
     test-pred( $is-free-under,
         # never under any binder in a ConstT:
@@ -149,7 +149,7 @@ my sub test-pred($f, *@tests) {
     is_properLambdaFn($free-var, 'free-var');
 
     my $app = $AppT($x, $y);    # '(x y)'
-    my $lam = $LamT($x, $app);  # 'λx.x y'
+    my $lam = $LamT('x', $app); # 'λx.x y'
 
     is($free-var('x', $c),   $None,     "($free-var 'x' $c)");
     is($free-var('x', $x),   $Some($x), "($free-var 'x' $x)");
@@ -168,7 +168,7 @@ my sub test-pred($f, *@tests) {
 
     my $app1 = $AppT($x, $y);       # (x y)
     my $app2 = $AppT($x, $x);       # (x x)
-    my $lam1 = $LamT($x, $app1);    # λx.x y
+    my $lam1 = $LamT('x', $app1);   # λx.x y
     my $app3 = $AppT($x, $lam1);    # (x λx.x y)
     my $app4 = $AppT($app3, $c);    # (x λx.x y) c
     my $app5 = $AppT($c, $app3);    # c (x λx.x y)
