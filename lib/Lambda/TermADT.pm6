@@ -319,6 +319,28 @@ constant $Term2source is export = $Y(-> &self { lambdaFn(
     }
 )});
 
+constant $Term2sourceP6 is export = $Y(-> &self { lambdaFn(
+    'Term->sourceP6', 'λt.(error "NYI")',
+    -> TTerm:D $t -->Str{
+        case-Term($t,
+            VarT => -> Str $varName { '$VarT(' ~ $varName.perl ~ ')' },
+            AppT => -> TTerm $func, TTerm$arg -->Str{
+                my $fSrc = &self($func);
+                my $aSrc = &self($arg);
+                "\$AppT($fSrc, $aSrc)"
+            },
+            LamT => -> Str $binderName, TTerm $body -->Str{
+                my $bodySrc   = &self($body);
+                "\$LamT({$binderName.perl}, $bodySrc)"
+
+            },
+            ConstT => -> Any $val -->Str{
+                "\$ConstT({$val.perl})"
+            }
+        )
+    }
+)});
+
 
 constant $Term2children is export = lambdaFn(
     'Term->children', 

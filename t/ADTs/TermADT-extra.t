@@ -36,7 +36,7 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
         my $desc = "({$f.gist} $termStr)$expectedStr";
         
         $testCount++;
-        %terms{$termSrc} = $term.Str;
+        %terms{$termSrc} = $term;
 
         is($f($term), $expected, $desc);
     }
@@ -266,7 +266,47 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
 }
 
 
+my $maxKeyLen = @(0, %terms.keys).reduce(-> $currentMax, $key { max($currentMax, $key.chars) });
+my $termsSrcP6 = %terms.pairs.map(-> (:$key, :$value) {
+    sprintf("%-{$maxKeyLen+3}s => %s", "'$key'", $Term2sourceP6($value));
+ }).join(",\n    ");
+$termsSrcP6 = '%terms = %(' ~ "\n    " ~ $termsSrcP6 ~ "\n);";
+diag "my \%terms = $termsSrcP6";
 diag "testCount: $testCount";
 diag "termCount: {%terms.elems}";
-my $termsSrc = %terms.pairs.map(-> (:$key, :$value) { 'asdf' });
-diag "terms: {%terms.perl}";
+diag "maxKeyLen: $maxKeyLen";
+
+
+
+
+# my %terms = %terms = %(
+#     'x'                        => $VarT("x"),
+#     '"c"'                      => $ConstT("c"),
+#     '5'                        => $ConstT(5),
+#     '(x "c")'                  => $AppT($VarT("x"), $ConstT("c")),
+#     '(x x)'                    => $AppT($VarT("x"), $VarT("x")),
+#     '(x y)'                    => $AppT($VarT("x"), $VarT("y")),
+#     '(λx."c")'                 => $LamT("x", $ConstT("c")),
+#     '(λx.x)'                   => $LamT("x", $VarT("x")),
+#     '(λx.(x x))'               => $LamT("x", $AppT($VarT("x"), $VarT("x"))),
+#     '(λx.(x "c"))'             => $LamT("x", $AppT($VarT("x"), $ConstT("c"))),
+#     '(λx.(x y))'               => $LamT("x", $AppT($VarT("x"), $VarT("y"))),
+#     '(λx.(y x))'               => $LamT("x", $AppT($VarT("y"), $VarT("x"))),
+#     '(λx.(x (λy.(x y))))'      => $LamT("x", $AppT($VarT("x"), $LamT("y", $AppT($VarT("x"), $VarT("y"))))),
+#     '((λy.(x y)) y)'           => $AppT($LamT("y", $AppT($VarT("x"), $VarT("y"))), $VarT("y")),
+#     '((λx.(y x)) (λy.(x y)))'  => $AppT($LamT("x", $AppT($VarT("y"), $VarT("x"))), $LamT("y", $AppT($VarT("x"), $VarT("y")))),
+#     '(λx.((λy.(z y)) x))'      => $LamT("x", $AppT($LamT("y", $AppT($VarT("z"), $VarT("y"))), $VarT("x"))),
+#     '(λx.((λy.(x y)) x))'      => $LamT("x", $AppT($LamT("y", $AppT($VarT("x"), $VarT("y"))), $VarT("x"))),
+#     '(λx.((λx.(x y)) x))'      => $LamT("x", $AppT($LamT("x", $AppT($VarT("x"), $VarT("y"))), $VarT("x"))),
+#     '(y y)'                    => $AppT($VarT("y"), $VarT("y")),
+#     '(λy.(y y))'               => $LamT("y", $AppT($VarT("y"), $VarT("y"))),
+#     '((λx.(x x)) (λx.(x x)))'  => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     '((λx.(x x)) (λy.(y y)))'  => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $LamT("y", $AppT($VarT("y"), $VarT("y")))),
+#     '((λx.(x x)) (y y))'       => $AppT($LamT("x", $AppT($VarT("x"), $VarT("x"))), $AppT($VarT("y"), $VarT("y"))),
+#     '((y y) (λx.(x x)))'       => $AppT($AppT($VarT("y"), $VarT("y")), $LamT("x", $AppT($VarT("x"), $VarT("x")))),
+#     '(x (x y))'                => $AppT($VarT("x"), $AppT($VarT("x"), $VarT("y"))),
+#     '(λz.(x (x y)))'           => $LamT("z", $AppT($VarT("x"), $AppT($VarT("x"), $VarT("y"))))
+# );
+# testCount: 127
+# termCount: 26
+# maxKeyLen: 23
