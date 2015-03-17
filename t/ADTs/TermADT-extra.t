@@ -41,7 +41,6 @@ my $OmegaYY ::= $AppT($omegaY, $omegaY);    # ((λy.y y) (λy.y y))   # Omega (o
 my $OmegaXY ::= $AppT($omegaX, $omegaY);    # ((λy.y y) (λy.y y))   # Omega (one flavour of...)
 my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (one flavour of...)
 
-my $testCount = 0;
 our %terms is export = %(
     'x'                        => $x,
     'y'                        => $y,
@@ -116,24 +115,27 @@ for %terms.pairs -> (:$key, :$value) {
 my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     for @tests -> $test {
         my Any   $arg = $test.key;
+        
         my TTerm $term;
+        my Str   $termSrc;
         if $arg ~~ TTerm {
-            $term = $arg;
+            $term    = $arg;
+            $termSrc = $Term2source($term);
+            # we got a new one - add it!
+            %terms{$termSrc} = $term;
         } elsif $arg ~~ Str {
-            $term = %terms{$arg} // die "unprepared test term: '$arg'"
+            $term    = %terms{$arg} // die "unprepared test term: '$arg'";
+            $termSrc = $Term2source($term);
         } else {
-            die "expected either a TTerm or a Str but got $arg.perl"
+            die "expected either a TTerm or a Str but got $arg.perl";
         }
+
         my Str   $termStr       = $argToStr($term);
-        my Str   $termSrc       = $Term2source($term);
         my Any   $expected      = $test.value;
         my Str   $expectedStr   = $expToStr.defined
                                     ?? ' -> ' ~ $expToStr($expected)
                                     !! '';
         my $desc = "({$f.gist} $termStr)$expectedStr";
-        
-        $testCount++;
-        #%terms{$termSrc} = $term;
 
         is($f($term), $expected, $desc);
     }
@@ -376,7 +378,6 @@ my sub test($f, :$argToStr = *.Str, :$expToStr, *@tests) {
     $termsSrcP6 = '%(' ~ "\n    " ~ $termsSrcP6 ~ "\n);";
     diag "our \%terms is export = $termsSrcP6";
 
-    diag "testCount: $testCount";
     diag "termCount: {%terms.elems}";
     diag "maxKeyLen: $maxKeyLen";
 }
