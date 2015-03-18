@@ -133,18 +133,18 @@ my $lam3    = $LamT('u', $app_xyz);  # λu.x y z
 
     my sub is_subst-with-alpha(*@tests) {
         for @tests -> $test {
-            my $forVar      = $test.key[0];
-            my $forVarStr   = $Term2source($forVar);
+            my TTerm $forVar      = $test.key[0];
+            my Str   $forVarStr   = $Term2source($forVar);
 
-            my $whatTerm    = $test.key[1];
-            my $whatTermStr = $Term2source($whatTerm);
+            my TTerm $whatTerm    = $test.key[1];
+            my Str   $whatTermStr = $Term2source($whatTerm);
 
-            my $keepfree    = $test.key[2];
-            my $keepfreeStr = '[' ~ $keepfree.map($VarT2name).join(', ') ~ ']';
-            my $keepfreeTList = convertP6Array2TList($keepfree);
+            my Array $keepfreeArr = $test.key[2];
+            my Str   $keepfreeStr = '[' ~ $keepfreeArr.map($VarT2name).join(', ') ~ ']';
+            my TList $keepfree    = convertP6Array2TList($keepfreeArr);
 
-            my $inTerm      = $test.key[3];
-            my $inTermStr   = $Term2source($inTerm);
+            my TTerm $inTerm      = $test.key[3];
+            my Str   $inTermStr   = $Term2source($inTerm);
 
             my $expected   = $test.value;
             my $itself     = $expected === $None;
@@ -153,7 +153,7 @@ my $lam3    = $LamT('u', $app_xyz);  # λu.x y z
                                  !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "(subst-with-alpha $forVarStr $whatTermStr $keepfreeStr $inTermStr) yields $expStr";
 
-            my $actual = $subst-with-alpha($forVar, $whatTerm, $keepfreeTList, $inTerm);
+            my $actual = $subst-with-alpha($forVar, $whatTerm, $keepfree, $inTerm);
             my $actualStr = convertTBool2P6Bool($is-Some($actual))
                 ?? '(Some `' ~ $Term2source($Some2value($actual)) ~ ')'
                 !! 'None';

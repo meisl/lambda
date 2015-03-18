@@ -14,6 +14,8 @@ use Lambda::TermADT;
 plan 53;
 
 
+my $time = now;
+
 my $x  ::= $VarT('x');
 my $y  ::= $VarT('y');
 my $z  ::= $VarT('z');
@@ -113,6 +115,8 @@ for %terms.pairs -> (:$key, :$value) {
         %terms{$key.substr(1, *-1)} = $value;
     }
 }
+$time = (now.Real - $time.Real).round(0.2);
+diag "$time sec consumed for test-terms initialization";
 
 my sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) {
     my Str $fgist = $f.gist;
