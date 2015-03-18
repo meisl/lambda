@@ -45,10 +45,10 @@ my sub checkSig(&callback, Str $cbName, *@types) is hidden_from_backtrace {
 }
 
 our sub case-Term(TTerm:D $term, :VarT(&onVarT)!, :AppT(&onAppT)!, :LamT(&onLamT)!, :ConstT(&onConstT)!) is hidden_from_backtrace is export {
-    checkSig(&onVarT, 'VarT', Str);
-    checkSig(&onLamT, 'LamT', Str, TTerm);
-    checkSig(&onAppT, 'AppT', TTerm, TTerm);
-    checkSig(&onConstT, 'ConstT', Any);
+    #checkSig(&onVarT, 'VarT', Str);
+    #checkSig(&onLamT, 'LamT', Str, TTerm);
+    #checkSig(&onAppT, 'AppT', TTerm, TTerm);
+    #checkSig(&onConstT, 'ConstT', Any);
 
     $term(&onVarT, &onAppT, &onLamT, &onConstT);
 };

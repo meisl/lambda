@@ -1,8 +1,10 @@
 use v6;
 use Test;
 use Test::Util;
+use Test::Util_Lambda;
 
 use Lambda::MaybeADT;
+use Lambda::Boolean;
 use Lambda::TermADT;
 use Lambda::FreeVars;
 use Lambda::EtaReduction;
@@ -11,8 +13,39 @@ use Lambda::BetaReduction;
 use Lambda::LambdaGrammar;
 use Lambda::Conversion::ListADT-conv;
 
-plan 0;
 
+# module(s) under test:
+use Lambda::String;
+
+plan 1;
+
+subtest({ # Str-eq?
+    is_properLambdaFn($Str-eq, 'Str-eq?');
+
+    is $Str-eq("a", "a"), $true;
+    is $Str-eq("the λ calculus", "the λ calculus"), $true;
+    is $Str-eq("The λ calculus", "the λ calculus"), $false;
+
+    is $Str-eq("a", "b"), $false;
+    is $Str-eq("b", "a"), $false;
+    is $Str-eq("a", ""), $false;
+    is $Str-eq("", "b"), $false;
+
+    dies_ok({ $Str-eq(Str, 'x') }, 'cannot call it with 1st arg undefined');
+    dies_ok({ $Str-eq('x', Str) }, 'cannot call it with 2nd arg undefined');
+    dies_ok({ $Str-eq(Str, Str) }, 'cannot call it with both args undefined');
+
+    dies_ok({ $Str-eq(456, 'x') }, 'cannot call it with 1st arg an Int');
+    dies_ok({ $Str-eq('x', 456) }, 'cannot call it with 2nd arg an Int');
+    dies_ok({ $Str-eq(123, 456) }, 'cannot call it with both args Ints');
+
+    my $partial = $Str-eq('foo');
+    is $partial('foo'), $true, 'partial application (1)';
+    is $partial('bar'), $false, 'partial application (2)';
+}, 'Str-eq?');
+
+
+# ------------------------------------------------------------------------------------------------
 
 {
     my ($n, $apvs, $apvsP6);

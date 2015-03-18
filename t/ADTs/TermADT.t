@@ -12,7 +12,7 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::TermADT;
 
-plan 118;
+plan 117;
 
 
 # Term-eq ---------------------------------------------------------------------
@@ -135,7 +135,9 @@ plan 118;
         is match($c2),      '&onConstT called: "two"', 'match on (ConstT "two") passes fields to &onConstT';
     }) or die;
 
-    skip { # test signature checking for callbacks
+
+    #`{   # test signature checking for callbacks
+
         subtest( {  # test signature checking for &onVarT
             sub match(TTerm:D $t, :VarT(&onVarT)!) {
                 case-Term($t,
@@ -217,7 +219,9 @@ plan 118;
             dies_ok { match($x, AppT => -> $v, TTerm $b { 'foo' }) }, 'if param has name it must be of type TTerm (2)';
             lives_ok { match($x, AppT => -> TTerm $v, TTerm $b { 'foo' }) }, 'if param has name it must be of type TTerm (3)';
         }, 'onAppT signature check') or die;
+
     }
+
 }
 
 
