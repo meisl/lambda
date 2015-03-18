@@ -1,8 +1,10 @@
 use v6;
 use Test;
 use Test::Util;
+use Test::Util_Lambda;
 
 use Lambda::MaybeADT;
+use Lambda::Boolean;
 use Lambda::TermADT;
 use Lambda::FreeVars;
 use Lambda::EtaReduction;
@@ -11,35 +13,49 @@ use Lambda::BetaReduction;
 use Lambda::LambdaGrammar;
 use Lambda::Conversion::ListADT-conv;
 
-plan 4;
 
-{ # a term that β-"contracts" to an ever larger term:
-    my $t = parseLambda('(λx.x x y)(λx.x x y)');
+# module(s) under test:
+use Lambda::String;
 
-    my $s = $Term2size($t);
-    is($s, 15, "(eq? 15 (Term->size {$Term2source($t)}))");
+plan 1;
 
-    $t = $Some2value($betaContract($t));
-    $s = $Term2size($t);
-    is($s, 17, "(eq? 17 (Term->size {$Term2source($t)}))");
+subtest({ # Str-eq?
+    is_properLambdaFn($Str-eq, 'Str-eq?');
 
-    $t = $Some2value($betaContract($t));
-    $s = $Term2size($t);
-    is($s, 19, "(eq? 19 (Term->size {$Term2source($t)}))");
+    is $Str-eq("a", "a"), $true;
+    is $Str-eq("the λ calculus", "the λ calculus"), $true;
+    is $Str-eq("The λ calculus", "the λ calculus"), $false;
 
-    $t = $Some2value($betaContract($t));
-    $s = $Term2size($t);
-    is($s, 21, "(eq? 21 (Term->size {$Term2source($t)}))");
-}
+    is $Str-eq("a", "b"), $false;
+    is $Str-eq("b", "a"), $false;
+    is $Str-eq("a", ""), $false;
+    is $Str-eq("", "b"), $false;
+
+    dies_ok({ $Str-eq(Str, 'x') }, 'cannot call it with 1st arg undefined');
+    dies_ok({ $Str-eq('x', Str) }, 'cannot call it with 2nd arg undefined');
+    dies_ok({ $Str-eq(Str, Str) }, 'cannot call it with both args undefined');
+
+    dies_ok({ $Str-eq(456, 'x') }, 'cannot call it with 1st arg an Int');
+    dies_ok({ $Str-eq('x', 456) }, 'cannot call it with 2nd arg an Int');
+    dies_ok({ $Str-eq(123, 456) }, 'cannot call it with both args Ints');
+
+    my $partial = $Str-eq('foo');
+    is $partial('foo'), $true, 'partial application (1)';
+    is $partial('bar'), $false, 'partial application (2)';
+}, 'Str-eq?');
+
+
+# ------------------------------------------------------------------------------------------------
 
 {
     my ($n, $apvs, $apvsP6);
 
     $n = parseLambda('(λx.λz.λv.z x (λx.x) (λz.x z) (λy.x x)) ((z ((λx.λy.x y z) x)) v)');
-    my $func = $AppT2func($n);
-    my $arg  = $AppT2arg($n);
-    my $var  = $LamT2var($func);
-    my $body = $LamT2body($func);
+    my TTerm $func    = $AppT2func($n);
+    my TTerm $arg     = $AppT2arg($n);
+    my Str   $varName = $LamT2var($func);    # DONE: LamT_ctor_with_Str_binder
+    my TTerm $var     = $VarT($varName);
+    my TTerm $body    = $LamT2body($func);
     say $Term2source($n);
     say 'β-redex? '~ $is-betaRedex($n);
     say 'β-reducible? '~ $is-betaReducible($n);
@@ -58,9 +74,9 @@ plan 4;
     say 'β-redex? '~ $is-betaRedex($func);
     say 'β-reducible? '~ $is-betaReducible($func);
     say 'FV: '~ $free-vars($func);
-    say '(free-under? x z ...) ' ~ $is-free-under($var, $VarT('z'), $body);
-    say '(free-under? x x ...) ' ~ $is-free-under($var, $VarT('x'), $body);
-    say '(free-under? x v ...) ' ~ $is-free-under($var, $VarT('v'), $body);
+    say '(freeName-under? x z ...) ' ~ $is-freeName-under($varName, 'z', $body);
+    say '(freeName-under? x x ...) ' ~ $is-freeName-under($varName, 'x', $body);
+    say '(freeName-under? x v ...) ' ~ $is-freeName-under($varName, 'v', $body);
 
     say '';
     say $Term2source($arg);

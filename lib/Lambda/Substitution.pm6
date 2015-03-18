@@ -19,7 +19,7 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
             nil  => $None,
             cons => -> TPair $head, TList:D $tail { case-Term($t,
                 ConstT => $K1None,
-                VarT   => -> Str $tName {
+                VarT => -> Str $tName {
                     my Str $forName = $fst($head);
                     _if_($Str-eq($forName, $tName),
                         {
@@ -34,7 +34,7 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                     )
                 },
 
-                AppT   => -> TTerm $oldFunc, TTerm $oldArg {   # TODO
+                AppT => -> TTerm $oldFunc, TTerm $oldArg {   # TODO
                     my $newFunc = &self($oldFunc, $substitutions);
                     my $newArg  = &self($oldArg,  $substitutions);
                     # iff applying &self retuns None for both, then nothing's changed and we return None
@@ -59,9 +59,8 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
 
                 },
 
-                LamT   => -> TTerm $tVar, TTerm $tBody {
-                    my $tVarName = $VarT2name($tVar);
-                    my $body = &self(
+                LamT => -> Str $tVarName, TTerm $tBody {   # DONE: LamT_ctor_with_Str_binder
+                    my $newBody = &self(
                         $tBody,
                         $except( # kick out substitutions for our binder since there
                                  # won't be free occurrances of it in our body
@@ -69,9 +68,9 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                           $substitutions
                         )
                     );
-                    case-Maybe($body,
+                    case-Maybe($newBody,
                         None => $None,
-                        Some => -> TTerm $bodyVal { $Some($LamT($tVar, $bodyVal)) }
+                        Some => -> TTerm $newBodyVal { $Some($LamT($tVarName, $newBodyVal)) }   # DONE: LamT_ctor_with_Str_binder
                     )
                 }
             )}
@@ -91,17 +90,19 @@ constant $subst is export = lambdaFn(
 );
 
 constant $subst-first_VarT = lambdaFn(
-    'subst-first_VarT',
-q:to/ENDOFLAMBDA/,
-    λname.λalpha-convs.error "NYI"
-ENDOFLAMBDA
+    'subst-first_VarT', 'λname.λalpha-convs.error "NYI"',
     -> Str $name, TList $alpha-convs {
-        $Maybe-lift-in($B($Some, $snd))(
-            $first(
-                -> TPair $s { $Str-eq($name, $fst($s)) },
-                $alpha-convs
-            )
+        my $firstSubst = $first(-> TPair $s { $Str-eq($name, $fst($s)) }, $alpha-convs);
+        
+        #$Maybe-lift-in($B($Some, $snd), $firstSubst);
+        
+        #_liftMaybe($snd, $firstSubst)
+        
+        case-Maybe($firstSubst,
+            None => $None,
+            Some => -> TPair $s { $Some($snd($s)) }
         )
+
     }
 );
 
@@ -110,19 +111,22 @@ constant $subst-first = $Y(-> &self { lambdaFn(
     -> TTerm $t, TList $alpha-convs {
         case-Term($t,
             ConstT => $K1None,
-            VarT   => -> Str $name { $subst-first_VarT($name, $alpha-convs) },
-            AppT   => -> TTerm $func, TTerm $arg {
+            VarT => -> Str $name { $subst-first_VarT($name, $alpha-convs) },
+            AppT => -> TTerm $func, TTerm $arg {
                 my $f = &self($func, $alpha-convs);
                 my $a = &self($arg,  $alpha-convs);
                 case-Maybe($f,
                     None => {
-                        $Maybe-lift-in(-> TTerm $newArg { $Some($AppT($func, $newArg)) })(  # (B Some (B (AppT func)))
-                            $a
-                        )
-                        #case-Maybe($a,
-                        #    None => $None,
-                        #    Some => -> $newArg { $Some($AppT($func, $newArg)) }
+                        #$Maybe-lift-in(-> TTerm $newArg { $Some($AppT($func, $newArg)) })(  # (B Some (B (AppT func)))
+                        #    $a
                         #)
+
+                        #_liftMaybe($AppT, \($func), $a)
+
+                        case-Maybe($a,
+                            None => $None,
+                            Some => -> $newArg { $Some($AppT($func, $newArg)) }
+                        )
                     },
                     Some => -> TTerm $newFunc {
                         $Some($AppT(
@@ -136,14 +140,13 @@ constant $subst-first = $Y(-> &self { lambdaFn(
 
                         #case-Maybe($a,
                         #    None => { $Some($AppT($newFunc), $arg)) },
-                        #    Some => -> $newArg { $Some($AppT($newFunc), $newArg)) }
+                        #    Some => -> $newArg { $Some($AppT($newFunc, $newArg)) }
                         #)
                     }
                 )
             },
-            LamT   => -> TTerm $var, TTerm $body {
-                my $varName = $VarT2name($var);
-                $Maybe-lift-in(-> $newBody { $LamT($var, $newBody) })(
+            LamT => -> Str $varName, TTerm $body {   # DONE: LamT_ctor_with_Str_binder
+                $Maybe-lift-in(-> $newBody { $LamT($varName, $newBody) })(   # DONE: LamT_ctor_with_Str_binder
                     &self($body, $except(-> TPair $substPair { $Str-eq($varName, $fst($substPair)) }, $alpha-convs))         # <<<<<<<<<<<<<<<<<<<<< !?
                 )
             }
@@ -162,14 +165,14 @@ constant $subst-with-alpha is export = lambdaFn(
             -> TList $alpha-convs, TTerm $t {
                 case-Term($t,
                     ConstT => $K1None,
-                    VarT   => -> Str $varName {
+                    VarT => -> Str $varName {
                         #$subst-first_VarT($varName, $cons($mainSubst, $alpha-convs))
                         _if_($Str-eq($forVarName, $varName),
                             { $Some($whatTerm) },
                             { $subst-seq($t, $alpha-convs) }
                         )
                     },
-                    AppT   => -> TTerm $func, TTerm $arg {
+                    AppT => -> TTerm $func, TTerm $arg {
                         my $f = &self($alpha-convs, $func);
                         my $a = &self($alpha-convs, $arg);
                         case-Maybe($f,
@@ -189,43 +192,43 @@ constant $subst-with-alpha is export = lambdaFn(
                             }
                         )
                     },
-                    LamT   => -> TTerm $myVar, TTerm $body {
-                        my $myVarName = $VarT2name($myVar);
+                    LamT => -> Str $myVarName, TTerm $body {   # DONE: LamT_ctor_with_Str_binder
                         my $newConvs  = $except(
                             -> TPair $s { $Str-eq($myVarName, $fst($s)) }, # (B (Str-eq? myVarName) fst)
                             $alpha-convs
                         );
-                        _if_($Str-eq($forVarName, $myVarName),
+                        _if_($Str-eq($myVarName, $forVarName),
                             # bound by the lambda, hence not free, so we only apply alpha-convs
-                            {   $Maybe-lift-in(-> $newBody { $Some($LamT($myVar, $newBody)) })(
-                                    $subst-first($body, $newConvs)
+                            {   #$liftMaybe($LamT($myVarName), $subst-first($body, $newConvs))   # DONE: LamT_ctor_with_Str_binder
+                                case-Maybe($subst-seq($body, $newConvs),
+                                    None => $None,
+                                    Some => -> $newBody { $Some($LamT($myVarName, $newBody)) }   # DONE: LamT_ctor_with_Str_binder
                                 )
-
-                                #$liftMaybe($LamT._($myVar))($subst-first($body, $newConvs))
-                                ## (liftMaybe (LamT myVar) (subst-first body newConvs))
-
-                                #my $newBody = $subst-seq($body, $newConvs);
-                                #$_if( $is-None($newBody),
-                                #    -> $_ { $None },
-                                #    -> $_ { $Some($LamT($myVar, $Some2value($newBody))) }
-                                #)
                             },
                             {   my $needFreshVar = $exists(   # TODO: ... AND only if forVar occurs (free) in body
                                     -> Str $vName { $Str-eq($myVarName, $vName) },
                                     $keepfreeNames
                                 );
                                 _if_($needFreshVar,
-                                    {   my $freshVar = $fresh-var-for($myVar);
+                                    {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                                        my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
                                         my $myConvs  = $cons($Pair($myVarName, $freshVar), $newConvs);
+                                        #$liftMaybe($LamT($freshName), &self($myConvs, $body))   # DONE: LamT_ctor_with_Str_binder
                                         case-Maybe(&self($myConvs, $body),
                                             None => $None,  # neither forVar nor myVar free in body, and no external alpha-convs applicable
-                                            Some => -> TTerm $newBody { $Some($LamT($freshVar, $newBody)) }
+                                            Some => -> TTerm $newBody { $Some($LamT($freshName, $newBody)) }   # DONE: LamT_ctor_with_Str_binder
                                         )
                                     },
-                                    { case-Maybe(&self($newConvs, $body),
-                                        None => $None,
-                                        Some => -> TTerm $newBody { $Some($LamT($myVar, $newBody)) }
-                                    )}
+                                    {   #$liftMaybe($LamT($myVarName), &self($newConvs, $body))   # DONE: LamT_ctor_with_Str_binder
+                                        #_liftMaybe($LamT, \($myVarName), &self($newConvs, $body))   # DONE: LamT_ctor_with_Str_binder
+                                        #$liftMaybe(-> $b { $LamT($myVarName, $b) }, &self($newConvs, $body))   # DONE: LamT_ctor_with_Str_binder
+                                        #$liftMaybe({ $LamT($myVarName, $^body) }, &self($newConvs, $body))   # DONE: LamT_ctor_with_Str_binder
+                                        #$lift2Maybe($LamT, $Some($myVarName), &self($newConvs, $body))   # DONE: LamT_ctor_with_Str_binder
+                                        case-Maybe(&self($newConvs, $body),
+                                            None => $None,
+                                            Some => -> TTerm $newBody { $Some($LamT($myVarName, $newBody)) }   # DONE: LamT_ctor_with_Str_binder
+                                        )
+                                    }
                                 )
                             }
                         )

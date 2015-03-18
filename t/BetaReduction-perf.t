@@ -10,7 +10,7 @@ use Lambda::BetaReduction;
 plan 5;
 
 
-my $dc = $VarT('_');    # don't-care variable
+#my $dc = $VarT('_');    # don't-care variable
 my $g = $VarT('g');
 my $h = $VarT('h');
 my $k = $VarT('k');
@@ -33,7 +33,7 @@ diag curryStats;
     is $actual, 'None', '(x x) reduces to itself (sanity check)'
         or die;
 
-    $app = $AppT($LamT($x, $x), $x);
+    $app = $AppT($LamT('x', $x), $x);
     $actual = $Some2value($betaReduce($app));
     $actualLambda = $Term2source($actual);
     is $Term-eq($actual, $x), '#true', "{$Term2source($app)} reduces to x (sanity check)"
@@ -50,12 +50,12 @@ diag curryStats;
 
     my ( $bigTerm, $bigLambda, $expectedTerm, $expectedLambda, $actualTerm, $actualLambda);
 
-    #$make-Ctor-chi_term:
-    $bigTerm = $LamT($f1, $LamT($f2, $LamT($f3, $LamT($f4, $LamT($f5, $AppT($LamT($y, $LamT($dc, $y)), $AppT($LamT($g, $LamT($h, $AppT($LamT($y, $LamT($dc, $y)), $AppT($g, $h)))), $AppT($LamT($g, $LamT($h, $AppT($LamT($y, $LamT($dc, $y)), $AppT($g, $h)))), $LamT($k, $AppT($AppT($LamT($k, $AppT($AppT($LamT($k, $AppT($AppT($LamT($k, $AppT($AppT($LamT($k, $AppT($AppT($LamT($x, $x), $k), $f1)), $k), $f2)), $k), $f3)), $k), $f4)), $k), $f5))))))))));
+    #$make-Ctor-chi_term: ctor2o4f5 (expects 4 callbacks and applies the 2nd to 5 fields)
+    $bigTerm = $LamT('f1', $LamT('f2', $LamT('f3', $LamT('f4', $LamT('f5', $AppT($LamT('y', $LamT('_', $y)), $AppT($LamT('g', $LamT('h', $AppT($LamT('y', $LamT('_', $y)), $AppT($g, $h)))), $AppT($LamT('g', $LamT('h', $AppT($LamT('y', $LamT('_', $y)), $AppT($g, $h)))), $LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('x', $x), $k), $f1)), $k), $f2)), $k), $f3)), $k), $f4)), $k), $f5))))))))));
     $bigLambda = '(λf1.(λf2.(λf3.(λf4.(λf5.((λy.(λ_.y)) ((λg.(λh.((λy.(λ_.y)) (g h)))) ((λg.(λh.((λy.(λ_.y)) (g h)))) (λk.(((λk.(((λk.(((λk.(((λk.(((λx.x) k) f1)) k) f2)) k) f3)) k) f4)) k) f5))))))))))';
     is $Term2source($bigTerm), $bigLambda, "\$bigTerm.lambda is $bigLambda";
 
-    $expectedTerm = $LamT($f1, $LamT($f2, $LamT($f3, $LamT($f4, $LamT($f5, $LamT($dc, $LamT($h, $LamT($dc, $LamT($dc, $AppT($AppT($AppT($AppT($AppT($h, $f1), $f2), $f3), $f4), $f5))))))))));
+    $expectedTerm = $LamT('f1', $LamT('f2', $LamT('f3', $LamT('f4', $LamT('f5', $LamT('_', $LamT('h', $LamT('_', $LamT('_', $AppT($AppT($AppT($AppT($AppT($h, $f1), $f2), $f3), $f4), $f5))))))))));
     $expectedLambda = '(λf1.(λf2.(λf3.(λf4.(λf5.(λ_.(λh.(λ_.(λ_.(((((h f1) f2) f3) f4) f5))))))))))';
     is $Term2source($expectedTerm), $expectedLambda, "\$expectedTerm.lambda is $expectedLambda";
 

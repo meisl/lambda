@@ -17,7 +17,7 @@ role TTerm does ADT is export {
     my $repr = ADTRepr.new(TTerm,
         VarT   => 1,    # name:Str
         AppT   => 2,    # func:Term  arg:Term
-        LamT   => 2,    # var:VarT   body:Term
+        LamT   => 2,    # var:Str   body:Term
         ConstT => 1     # value:_
     );
     method repr { $repr }
@@ -46,7 +46,7 @@ my sub checkSig(&callback, Str $cbName, *@types) is hidden_from_backtrace {
 
 our sub case-Term(TTerm:D $term, :VarT(&onVarT)!, :AppT(&onAppT)!, :LamT(&onLamT)!, :ConstT(&onConstT)!) is hidden_from_backtrace is export {
     #checkSig(&onVarT, 'VarT', Str);
-    #checkSig(&onLamT, 'LamT', TTerm, TTerm);
+    #checkSig(&onLamT, 'LamT', Str, TTerm);
     #checkSig(&onAppT, 'AppT', TTerm, TTerm);
     #checkSig(&onConstT, 'ConstT', Any);
 
@@ -67,7 +67,7 @@ constant $VarT is export = lambdaFn(
         my $out = %names2vars{$name};
         unless $out.defined {
             $out = lambdaFn(
-                Str, { "(VarT {$name.perl})" },
+                Str, { "(VarT {$name.perl})" }, #   "λa.λb.λc.λd.a {$name.perl}",     #       
                 -> &onVarT, &onAppT, &onLamT, &onConstT { &onVarT($name) }
             ) does TTerm;
             %names2vars{$name} = $out;
@@ -94,19 +94,11 @@ my constant $LamT-error = -> $t { die "first arg to LamT ctor must be a VarT - g
 # LamT: Term -> Term -> (Str -> a) -> (Term -> Term -> b) -> (Term -> Term -> c) -> (* -> d) -> c
 constant $LamT is export = lambdaFn(
     'LamT', 'λvar.λbody.λonVarT.λonAppT.λonLamT.λonConstT.onLamT var body',
-    -> TTerm:D $var, TTerm:D $body -->TTerm{
-        case-Term($var,
-            VarT => -> Str $name {
-                lambdaFn(
-                    Str, { "(LamT $var $body)" },
-                    -> &onVarT, &onAppT, &onLamT, &onConstT { &onLamT($var, $body) }
-                ) does TTerm;
-        
-            },
-            AppT   => -> Mu, Mu { $LamT-error($var) },
-            LamT   => -> Mu, Mu { $LamT-error($var) },
-            ConstT => -> Mu     { $LamT-error($var) }
-        )
+    -> Str:D $varName, TTerm:D $body -->TTerm{
+        lambdaFn(
+            Str, { "(LamT {$varName.perl} $body)" },
+            -> &onVarT, &onAppT, &onLamT, &onConstT { &onLamT($varName, $body) }
+        ) does TTerm;
     }
 );
 
@@ -139,34 +131,25 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
                 case-Term($t,
                     VarT => $K1false,
                     AppT => -> TTerm $tFunc, TTerm $tArg {
-                        _if_(&self($sFunc, $tFunc),
+                        _if_( &self($sFunc, $tFunc), # short-circuit AND
                             { &self($sArg,  $tArg) },
                             $false
                         )
-                        #$_and(
-                        #    &self($sFunc, $tFunc),
-                        #    &self($sArg,  $tArg),
-                        #)
                     },
                     LamT => $K2false,
                     ConstT => $K1false
                 )
             },
 
-            LamT => -> TTerm $sVar, TTerm $sBody {
+            LamT => -> Str $sVarName, TTerm $sBody {
                 case-Term($t,
                     VarT => $K1false,
                     AppT => $K2false,
-                    LamT => -> TTerm $tVar, TTerm $tBody {
-                        _if_(&self($sVar, $tVar),
+                    LamT => -> Str $tVarName, TTerm $tBody {
+                        _if_( $Str-eq($sVarName, $tVarName), # short-circuit AND
                             { &self($sBody,  $tBody) },
                             $false
                         )
-
-                        #$_and(
-                        #    &self($sVar,  $tVar),
-                        #    &self($sBody, $tBody)
-                        #)
                     },
                     ConstT => $K1false
                 )
@@ -271,7 +254,7 @@ constant $AppT2arg is export = lambdaFn(
 );
 
 # LamT->var: Term -> Term
-constant $LamT2var is export = lambdaFn(
+constant $LamT2var is export = lambdaFn(    # TODO: rename LamT2var to LamT2binderName
     'LamT->var', 'not yet implemented',
     -> TTerm:D $t -->TTerm{ case-Term($t, 
         VarT   => -> Mu     { $prj-error('LamT->var', $t) },
@@ -315,7 +298,7 @@ constant $Term2Str is export = lambdaFn(
 # functions on Term -----------------------------------------------------------
 
 constant $Term2source is export = $Y(-> &self { lambdaFn(
-    'Term->source', 'λt.(error "NYI")',
+    'Term->source', 'λt.error "NYI"',
     -> TTerm:D $t -->Str{
         case-Term($t,
             VarT => $I, # just return the name
@@ -324,14 +307,40 @@ constant $Term2source is export = $Y(-> &self { lambdaFn(
                 my $aSrc = &self($arg);
                 "($fSrc $aSrc)"
             },
-            LamT => -> TTerm $var, TTerm $body -->Str{
-                my $vSrc = &self($var);
-                my $bSrc = &self($body);
-                "(λ$vSrc.$bSrc)"
+            LamT => -> Str $binderName, TTerm $body -->Str{
+                my $bodySrc = &self($body);
+                "(λ$binderName.$bodySrc)"
 
             },
             ConstT => -> Any $val -->Str{
                 $val.perl    #   $B($pi1o2, *.perl)
+            }
+        )
+    }
+)});
+
+constant $Term2sourceP6 is export = $Y(-> &self { lambdaFn(
+    'Term->sourceP6', 'λt.error "NYI"',
+    -> TTerm:D $t -->Str{
+        case-Term($t,
+            VarT => -> Str $varName {
+                my $varNameSrc = $varName.perl;
+                "\$VarT($varNameSrc)"
+            },
+            AppT => -> TTerm $func, TTerm$arg -->Str{
+                my $fSrc = &self($func);
+                my $aSrc = &self($arg);
+                "\$AppT($fSrc, $aSrc)"
+            },
+            LamT => -> Str $binderName, TTerm $body -->Str{
+                my $binderNameSrc = $binderName.perl;
+                my $bodySrc       = &self($body);
+                "\$LamT($binderNameSrc, $bodySrc)"
+
+            },
+            ConstT => -> Any $val -->Str{
+                my $valSrc = $val.perl;
+                "\$ConstT($valSrc)"
             }
         )
     }
@@ -353,11 +362,11 @@ ENDOFLAMBDA
         case-Term($t,
             ConstT => $K1nil,
             VarT   => $K1nil,
-            AppT => -> TTerm $f, TTerm $a {
-                $cons($f, $cons($a, $nil))
+            AppT => -> TTerm $func, TTerm $arg {
+                $cons($func, $cons($arg, $nil))
             },
-            LamT => -> TTerm $v, TTerm $b {
-                $cons($v, $cons($b, $nil))
+            LamT => -> Mu, TTerm $body {
+                $cons($body, $nil)
             }
         )
     }
@@ -400,52 +409,57 @@ constant $is-selfApp is export = lambdaFn(
 );
 
 
+# selfAppOf?: Str -> Term -> Bool
+constant $is-selfAppOf is export = lambdaFn(
+    'selfAppOf?', 'λvarName.λt.error "NYI"',
+    -> Str:D $varName, TTerm $t -->TBool{
+        #match-Term($t,
+        #    '(LamT x (AppT (VarT x) (VarT x)))' => Str $x { $Str-eq($varName, $x) },
+        #    otherwise => $false
+        #)
+        case-Term($t,
+            AppT => -> TTerm $func, TTerm $arg {
+                case-Term($func,
+                    VarT => -> Str $funcName {
+                        _if_( $Str-eq($varName, $funcName),
+                            { case-Term($arg,
+                                VarT   => -> Str $argName { $Str-eq($varName, $argName) },
+                                LamT   => $K2false,
+                                AppT   => $K2false,
+                                ConstT => $K1false
+                            ) },
+                            $false
+                        )
+                    },
+                    LamT   => $K2false,
+                    AppT   => $K2false,
+                    ConstT => $K1false
+                )
+            },
+            LamT   => $K2false,
+            VarT   => $K1false,
+            ConstT => $K1false
+        )
+    }
+);
+
 # selfAppOfVar?: Term -> Term -> Bool
 constant $is-selfAppOfVar is export = lambdaFn(
     'selfAppOfVar?', 'λs.λt.error "NYI"',
     -> TTerm:D $s, TTerm $t -->TBool{
         case-Term($s,
-            VarT   => -> Str $sName {
-                case-Term($t,
-                    AppT   => -> TTerm $func, TTerm $arg {
-                        #_if_($Term-eq($s, $func),
-                        #    { $Term-eq($s, $arg) },
-                        #    $false
-                        #)
-                        case-Term($func,
-                            VarT   => -> Str $funcName {
-                                _if_( $Str-eq($sName, $funcName),
-                                    { case-Term($arg,
-                                        VarT   => -> Str $argName { $Str-eq($sName, $argName) },
-                                        LamT   => $K2false,
-                                        AppT   => $K2false,
-                                        ConstT => $K1false
-                                    ) },
-                                    $false
-                                )
-                            },
-                            LamT   => $K2false,
-                            AppT   => $K2false,
-                            ConstT => $K1false
-                        )
-                    },
-                    LamT   => $K2false,
-                    VarT   => $K1false,
-                    ConstT => $K1false
-                );
-            },
+            VarT   => -> Str $sName { $is-selfAppOf($sName, $t) },
             ConstT => $K1false,
             AppT   => $K2false,
             LamT   => $K2false
-        );
+        )
     }
 );
-
 
 constant $is-omega is export = lambdaFn(
     'ω?', 'λt.error "NYI"',
     -> TTerm:D $t -->TBool{ case-Term($t,
-        LamT   => $is-selfAppOfVar,
+        LamT   => $is-selfAppOf,
         VarT   => $K1false,
         AppT   => $K2false,
         ConstT => $K1false

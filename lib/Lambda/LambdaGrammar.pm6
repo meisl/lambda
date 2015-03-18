@@ -53,9 +53,13 @@ grammar LambdaGrammar {
 
     token delta { 'δ' }
 
+    token varName {
+        <-[\\αβδλ.()\s]>+
+    }
+
     token variable {
-        $<name> = <-[\\αβδλ.()\s]>+
-        { make $VarT($<name>.Str) }
+        <varName>
+        { make $VarT($<varName>.Str) }
     }
 
     token constant {
@@ -63,8 +67,8 @@ grammar LambdaGrammar {
     }
 
     token abstraction {
-        \s* <.lambda> \s* <variable> \s* '.'  <body=.termlist1orMore> \s*
-        { make $LamT($<variable>.ast, $<body>.ast) }
+        \s* <.lambda> \s* <varName> \s* '.'  <body=.termlist1orMore> \s*
+        { make $LamT($<varName>.Str, $<body>.ast) }   # DONE: LamT_ctor_with_Str_binder
     }
 
     rule definition {

@@ -4,7 +4,7 @@ use Lambda::Boolean;
 
 use Lambda::Conversion::Bool-conv;
 
-module Lambda::String;
+module Lambda::String;  # tests are in Misc.t
 
 
 constant $Str-eq is export = lambdaFn(
