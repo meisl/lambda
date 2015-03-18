@@ -50,7 +50,7 @@ diag curryStats;
 
     my ( $bigTerm, $bigLambda, $expectedTerm, $expectedLambda, $actualTerm, $actualLambda);
 
-    #$make-Ctor-chi_term:
+    #$make-Ctor-chi_term: ctor2o4f5 (expects 4 callbacks and applies the 2nd to 5 fields)
     $bigTerm = $LamT('f1', $LamT('f2', $LamT('f3', $LamT('f4', $LamT('f5', $AppT($LamT('y', $LamT('_', $y)), $AppT($LamT('g', $LamT('h', $AppT($LamT('y', $LamT('_', $y)), $AppT($g, $h)))), $AppT($LamT('g', $LamT('h', $AppT($LamT('y', $LamT('_', $y)), $AppT($g, $h)))), $LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('x', $x), $k), $f1)), $k), $f2)), $k), $f3)), $k), $f4)), $k), $f5))))))))));
     $bigLambda = '(λf1.(λf2.(λf3.(λf4.(λf5.((λy.(λ_.y)) ((λg.(λh.((λy.(λ_.y)) (g h)))) ((λg.(λh.((λy.(λ_.y)) (g h)))) (λk.(((λk.(((λk.(((λk.(((λk.(((λx.x) k) f1)) k) f2)) k) f3)) k) f4)) k) f5))))))))))';
     is $Term2source($bigTerm), $bigLambda, "\$bigTerm.lambda is $bigLambda";

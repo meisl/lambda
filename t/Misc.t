@@ -11,7 +11,7 @@ use Lambda::BetaReduction;
 use Lambda::LambdaGrammar;
 use Lambda::Conversion::ListADT-conv;
 
-plan 4;
+plan 0;
 
 
 {

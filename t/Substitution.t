@@ -31,10 +31,10 @@ my $c = $ConstT('c');
 my $app_xx  = $AppT($x, $x);        # (x x)
 my $app_xy  = $AppT($x, $y);        # (x y)
 my $app_xyz = $AppT($app_xy, $z);   # ((x y) z)
-my $lam0    = $LamT($x, $y);        # λx.y
-my $lam1    = $LamT($x, $app_xy);   # λx.x y
-my $lam2    = $LamT($x, $app_xyz);  # λx.x y z
-my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
+my $lam0    = $LamT('x', $y);        # λx.y
+my $lam1    = $LamT('x', $app_xy);   # λx.x y
+my $lam2    = $LamT('x', $app_xyz);  # λx.x y z
+my $lam3    = $LamT('u', $app_xyz);  # λu.x y z
 
 
 { # function (subst inTerm whatTerm forVar)
@@ -68,9 +68,9 @@ my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
         [$x,                        x => $c] => $Some($c),
         [$x,                        y => $c] => $None,
         [$x,                        x => $y] => $Some($y),
-        [$LamT($x, $AppT($x, $y)),  x => $y] => $None,                              # y for x in (λx.x y) -> (λx.x y)
-        [$LamT($x, $AppT($x, $y)),  z => $y] => $None,                              # y for z in (λx.x y) -> (λx.x y)
-        [$LamT($x, $AppT($x, $y)),  y => $z] => $Some($LamT($x, $AppT($x, $z))),    # z for y in (λx.x y) -> (λx.x z)
+        [$LamT('x', $AppT($x, $y)),  x => $y] => $None,                              # y for x in (λx.x y) -> (λx.x y)
+        [$LamT('x', $AppT($x, $y)),  z => $y] => $None,                              # y for z in (λx.x y) -> (λx.x y)
+        [$LamT('x', $AppT($x, $y)),  y => $z] => $Some($LamT('x', $AppT($x, $z))),    # z for y in (λx.x y) -> (λx.x z)
     );
 }
 
@@ -99,13 +99,13 @@ my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
         }
     }
 
-    my $l1 = $LamT($u, $LamT($v, $AppT($z, $u)));   # λu.λv.z u
-    my $l2 = $LamT($w, $LamT($x, $AppT($x, $z)));   # λw.λx.x z
-    my $l3 = $LamT($u, $LamT($v, $AppT($x, $u)));   # λu.λv.x u
-    my $l4 = $LamT($u, $LamT($v, $AppT($u, $u)));   # λu.λv.u u
-    my $l5 = $LamT($w, $LamT($x, $AppT($x, $l2)));   # λw.λx.x λw.λx.x z
-    my $l6 = $LamT($u, $LamT($v, $AppT($y, $u)));   # λu.λv.y u
-    my $l7 = $LamT($u, $LamT($v, $AppT($LamT($w, $LamT($x, $AppT($x, $y))), $u)));   # λu.λv.(λw.λx.x y) u
+    my $l1 = $LamT('u', $LamT('v', $AppT($z, $u)));   # λu.λv.z u
+    my $l2 = $LamT('w', $LamT('x', $AppT($x, $z)));   # λw.λx.x z
+    my $l3 = $LamT('u', $LamT('v', $AppT($x, $u)));   # λu.λv.x u
+    my $l4 = $LamT('u', $LamT('v', $AppT($u, $u)));   # λu.λv.u u
+    my $l5 = $LamT('w', $LamT('x', $AppT($x, $l2)));   # λw.λx.x λw.λx.x z
+    my $l6 = $LamT('u', $LamT('v', $AppT($y, $u)));   # λu.λv.y u
+    my $l7 = $LamT('u', $LamT('v', $AppT($LamT('w', $LamT('x', $AppT($x, $y))), $u)));   # λu.λv.(λw.λx.x y) u
 
     is_subst-seq(
         [$c,  [['y', $x]]]   => $None,       # [x/y]"c"          -> "c"
@@ -175,20 +175,20 @@ my $lam3    = $LamT($u, $app_xyz);  # λu.x y z
         [$y, $x,        [$x],         $app_xy ] => $Some($AppT($x, $x)),
                            
         [$z, $y,        [$y],         $lam0   ] => $None,     # λx.y
-        [$y, $z,        [$z],         $lam0   ] => $Some($LamT($x, $z)),
+        [$y, $z,        [$z],         $lam0   ] => $Some($LamT('x', $z)),
 
         # main subst var x NOT free in body:     # λx.x y
         [$x, $z,        [$z],         $lam1   ] => $None,
         
         # main subst var y IS free in body:     # λx.x y
-        [$y, $z,        [$z],         $lam1   ] => $Some($LamT($x, $AppT($x,$z))),  # ...*except* for the lambda's binder!
+        [$y, $z,        [$z],         $lam1   ] => $Some($LamT('x', $AppT($x,$z))),  # ...*except* for the lambda's binder!
 
         # neither forVar nor var free in body, and no external alpha-convs applicable
         [$v, $app_xy,   [$x, $y],     $lam3   ] => $None,
     );
     
     subtest({ # [(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)
-        my ($out, $newVar, $newBody, $keepfree);
+        my ($out, $newVarName, $newVar, $newBody, $keepfree);
         $keepfree = $cons($x, $cons($y, $nil));
         
         $out = $Some2value($subst-with-alpha($y, $app_xy, $keepfree, $lam2));

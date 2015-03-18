@@ -296,7 +296,7 @@ constant $betaContract is export = $Y(-> &self {
                                         _if_( $is-selfAppOf($funcVarName, $funcBody),    # is t (literal Omega?) / pt 1
                                             { my $K1substituted-func = $K($substituted-func);
                                               case-Term($arg,
-                                                LamT => -> TTerm $argVar, TTerm $argBody {   # is t (literal Omega?) / pt 2
+                                                LamT => -> Str $argVarName, TTerm $argBody {   # is t (literal Omega?) / pt 2
                                                     _if_( $is-selfAppOf($funcVarName, $argBody),    # should be *literal* Omega
                                                         $None, # func and arg are both the (literally) same omega
                                                         $substituted-func  # otherwise one more step to make them so
