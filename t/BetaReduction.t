@@ -16,7 +16,7 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::BetaReduction;
 
-plan 120;
+plan 124;
 
 
 my $g = $VarT('g');
@@ -146,7 +146,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
             my $toItself = $expected === $None;
             my $expStr  = $toItself
                 ?? "itself (None)"
-                !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
+                !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "$termStr beta-contracts to $expStr";
 
             my $actual = $betaContract($term);
@@ -187,7 +187,9 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
         $OmegaYY                                                    => $None,               # ((λy.y y) (λy.y y))   # a redex, contracting to itself
         $OmegaXY                                                    => $Some($OmegaYY),     # ((λx.x x) (λy.y y))   # a redex, contracting to itself (module alpha-conv)
         
-        $AppT($omegaX, $yz)                        => $Some($AppT($yz, $yz)),  # ((λx.(x x)) (y z)) # only "half of" Omega
+        $AppT($omegaX, $Ly_xx)                     => $Some($AppT($Ly_xx, $Ly_xx)), # (λx.(x x)) (λy.(x x))  # not Omega (2nd binder y != x)
+        $AppT($Ly_xx, $omegaX)                     => $Some($xx),                   # (λy.(x x)) (λx.(x x))  # not Omega (1st binder y != x)
+        $AppT($omegaX, $yz)                        => $Some($AppT($yz, $yz)),       # ((λx.(x x)) (y z))     # only "half of" Omega
     );
 
     my ($t, $bcd1, $bcd2, $expectedBrd);
@@ -251,7 +253,7 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
             my $toItself = $expected === $None;
             my $expStr = $toItself
                 ?? "itself (None)"
-                !! '(Some ' ~ $Term2source($Some2value($expected)) ~ ')';
+                !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "$termStr beta-reduces to $expStr";
 
             my $actual = $betaReduce($term);
@@ -293,7 +295,9 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
         $OmegaYY                                                    => $None,               # ((λy.y y) (λy.y y))   # a redex, contracting to itself
         $OmegaXY                                                    => $Some($OmegaYY),     # ((λx.x x) (λy.y y))   # a redex, contracting to itself (module alpha-conv)
         
-        $AppT($LamT('x', $AppT($x, $x)), $yz)                        => $Some($AppT($yz, $yz)),  # ((λx.(x x)) (y z)) # only "half of" Omega
+        $AppT($omegaX, $Ly_xx)                     => $Some($xx),                   # (λx.(x x)) (λy.(x x))  # not Omega (2nd binder y != x)
+        $AppT($Ly_xx, $omegaX)                     => $Some($xx),                   # (λy.(x x)) (λx.(x x))  # not Omega (1st binder y != x)
+        $AppT($omegaX, $yz)                        => $Some($AppT($yz, $yz)),       # ((λx.(x x)) (y z))     # only "half of" Omega
     );
 }
 

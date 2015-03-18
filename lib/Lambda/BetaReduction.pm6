@@ -291,15 +291,20 @@ constant $betaContract is export = $Y(-> &self {
                             nil => {
                                 my $substituted-func = $subst($funcBody, $arg, $funcVarName);
                                 case-Maybe($substituted-func,
-                                    None => { $Some($funcBody) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
+                                    None => { $Some($funcBody) },    # binder funcVarName did not occur in funcBody
                                     Some => -> Mu {
-                                        _if_( $is-selfAppOf($funcVarName, $funcBody),    # is t (literal Omega?) / pt 1
+                                        # is t (literal) Omega? / pt 1: (omega? func)
+                                        _if_( $is-selfAppOf($funcVarName, $funcBody),
                                             { my $K1substituted-func = $K($substituted-func);
                                               case-Term($arg,
-                                                LamT => -> Str $argVarName, TTerm $argBody {   # is t (literal Omega?) / pt 2
-                                                    _if_( $is-selfAppOf($funcVarName, $argBody),    # should be *literal* Omega
-                                                        $None, # func and arg are both the (literally) same omega
-                                                        $substituted-func  # otherwise one more step to make them so
+                                                # is t (literal) Omega? / pt 2: (omega? arg)
+                                                LamT => -> Str $argVarName, TTerm $argBody {    # DONE: LamT_ctor_with_Str_binder
+                                                    _if_($Str-eq($funcVarName, $argVarName),  # short-circuit AND
+                                                        { _if_($is-selfAppOf($argVarName, $argBody),
+                                                              $None, # func and arg are both the (literally) same omega (same var used)
+                                                              $substituted-func  # otherwise one more step to make them so
+                                                        )},
+                                                        $substituted-func
                                                     )
                                                 },
                                                 VarT => $K1substituted-func,
