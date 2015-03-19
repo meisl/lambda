@@ -12,13 +12,13 @@ use Lambda::Boolean;
 # module under test:
 use Lambda::TermADT;
 
-plan 51;
+plan 53;
 
 
 { # Term->source
     is_properLambdaFn($Term2source, 'Term->source');
 
-    testTermFn( $Term2source, :argToStr($Term2Str),
+    testTermFn( $Term2source, :argToStr('`\'' ~ * ~ '\''),
         'x'                         => 'x',
         '"c"'                       => '"c"',
         '5'                         => '5',
@@ -37,6 +37,44 @@ plan 51;
         '(λx.((λy.(z y)) x))'       => '(λx.((λy.(z y)) x))',
         '(λx.((λy.(x y)) x))'       => '(λx.((λy.(x y)) x))',
         '(λx.((λx.(x y)) x))'       => '(λx.((λx.(x y)) x))',
+    );
+}
+
+{ # Term->srcLess
+    is_properLambdaFn($Term2srcLess, 'Term->srcLess');
+
+    testTermFn( $Term2srcLess,
+        'x'                         => 'x',
+        '"c"'                       => '"c"',
+        '5'                         => '5',
+        '(x "c")'                   => '(x "c")',
+        '(x x)'                     => '(x x)',
+        '(x y)'                     => '(x y)',
+        '((x y) z)'                 => '(x y z)',
+        '(((x y) z) x)'             => '(x y z x)',
+        '(x (y z))'                 => '(x (y z))',
+        '((x (y z)) x)'             => '(x (y z) x)',
+        '(x (y (z x)))'             => '(x (y (z x)))',
+
+        '(λx."c")'                  => 'λx."c"',
+        '(λx.x)'                    => 'λx.x',
+        '(λx.(x x))'                => 'λx.x x',
+        '(λx.(x "c"))'              => 'λx.x "c"',
+        '(λx.(x y))'                => 'λx.x y',
+        '(λx.(x (λy.(x y))))'       => 'λx.x (λy.x y)',
+        '(λx.((λy.(z y)) x))'       => 'λx.(λy.z y) x',
+        '(λx.((λy.(z y)) (x x)))'   => 'λx.(λy.z y) (x x)',
+        '(λz.(x (λy.(x y))))'       => 'λz.x (λy.x y)',
+
+        '(x (λy.(x y)))'                => '(x (λy.x y))',
+        '((x y) (y z))'                 => '(x y (y z))',
+        '((x y) (λy.(x y)))'            => '(x y (λy.x y))',
+        '((λy.(x y)) y)'                => '(λy.x y) y',
+        '((λx.(y x)) (λy.(x y)))'       => '(λx.y x) (λy.x y)',
+        '((λx.(y x)) (x y))'            => '(λx.y x) (x y)',
+        '(((λx.(y x)) (x y)) x)'        => '(λx.y x) (x y) x',
+        '(((λx.(y x)) (x y)) (λx.x))'   => '(λx.y x) (x y) (λx.x)',
+        '(((λx.(y x)) (λx.x)) (λx.x))'  => '(λx.y x) (λx.x) (λx.x)',
     );
 }
 
@@ -75,7 +113,7 @@ plan 51;
 { # predicate selfApp?
     is_properLambdaFn($is-selfApp, 'selfApp?');
 
-    testTermFn( $is-selfApp, :argToStr($Term2source), :expectedToStr(*.Str),
+    testTermFn( $is-selfApp, :expectedToStr(*.Str),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -85,8 +123,8 @@ plan 51;
         '(x y)'         => $false,
         'λx."c"'        => $false,
         'λx.x'          => $false,
-        'ωX'            => $false,  # 'λx.(x x)
-        'ωY'            => $false,  # 'λy.(y y)
+        'ωX'            => $false,  # 'λx.x x
+        'ωY'            => $false,  # 'λy.y y
         'λx.(x "c")'    => $false,
         'λx.(x y)'      => $false,
         'λx.(y x)'      => $false,
@@ -102,7 +140,7 @@ plan 51;
     my ($x, $y, $c) = `'x', `'y', `'"c"';
     my $f = $is-selfAppOfVar($x) but Definition("{$is-selfAppOfVar.name} $x");
 
-    testTermFn($f, :argToStr($Term2source), :expectedToStr(*.Str),
+    testTermFn($f, :expectedToStr(*.Str),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -122,7 +160,7 @@ plan 51;
     );
 
     $f = $is-selfAppOfVar($y) but Definition("{$is-selfAppOfVar.name} $y");
-    testTermFn($f, :argToStr($Term2source), :expectedToStr(*.Str),
+    testTermFn($f, :expectedToStr(*.Str),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -142,7 +180,7 @@ plan 51;
     );
 
     $f = $is-selfAppOfVar($c) but Definition("{$is-selfAppOfVar.name} $c");
-    testTermFn($f, :argToStr($Term2source), :expectedToStr(*.Str),
+    testTermFn($f, :expectedToStr(*.Str),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -166,7 +204,7 @@ plan 51;
 { # predicate omega?
     is_properLambdaFn($is-omega, 'ω?');
 
-    testTermFn( $is-omega, :argToStr($Term2source), :expectedToStr(*.Str),
+    testTermFn( $is-omega, :expectedToStr(*.Str),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -190,7 +228,7 @@ plan 51;
 { # predicate Ω? ($is-Omega)
     is_properLambdaFn($is-Omega, 'Ω?');
 
-    testTermFn( $is-Omega, :argToStr($Term2source), :expectedToStr(*.Str),
+    testTermFn( $is-Omega, :expectedToStr(*.Str),
         'x'                 => $false,
         '"c"'               => $false,
         '5'                 => $false,
@@ -222,7 +260,7 @@ plan 51;
     # size of an AppT is 1 + size of func + size of arg
     # size of both, a VarT and ConstT is 1
 
-    testTermFn( $Term2size, :argToStr($Term2source), :expectedToStr(*.Str),
+    testTermFn( $Term2size, :expectedToStr(*.Str),
         'x'                         =>  1,
         '"c"'                       =>  1,
         '5'                         =>  1,

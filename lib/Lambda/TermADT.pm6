@@ -4,6 +4,7 @@ use Lambda::Base;
 use Lambda::BaseP6;
 use Lambda::Boolean;
 use Lambda::String;
+use Lambda::PairADT;
 use Lambda::ListADT;
 
 use Lambda::ADT_auto;
@@ -307,27 +308,95 @@ constant $Term2Str is export = lambdaFn(
 
 # functions on Term -----------------------------------------------------------
 
+
+# Term->source: Term -> Str
+# fully parenthesized lambda expr from Term
 constant $Term2source is export = $Y(-> &self { lambdaFn(
     'Term->source', 'λt.error "NYI"',
     -> TTerm:D $t -->Str{
         case-Term($t,
             VarT => $I, # just return the name
-            AppT => -> TTerm $func, TTerm$arg -->Str{
+            AppT => -> TTerm $func, TTerm $arg {
                 my $fSrc = &self($func);
                 my $aSrc = &self($arg);
                 "($fSrc $aSrc)"
             },
-            LamT => -> Str $binderName, TTerm $body -->Str{
+            LamT => -> Str $binderName, TTerm $body {
                 my $bodySrc = &self($body);
                 "(λ$binderName.$bodySrc)"
 
             },
-            ConstT => -> Any $val -->Str{
+            ConstT => -> Any $val {
                 $val.perl    #   $B($pi1o2, *.perl)
             }
         )
     }
 )});
+
+# Term->srcLesser-internal: Term -> Pair Bool Str
+# lambda expr from Term with (reasonably) fewer parentheses;
+# in particular, the outermost parentheses are always omitted
+# --
+# The first component of the returned Pair indicates whether
+# the second (a Str) starts with an opening parenthesis "(".
+constant $Term2srcLesser-internal is export = $Y(-> &self { lambdaFn(
+    'Term->srcLesser-internal', 'λt.error "NYI"',
+    -> TTerm:D $t -->TPair{
+        case-Term($t,
+            ConstT => -> Any $val          { $Pair($false, $val.perl) },
+            VarT   => -> Str $n            { $Pair($false, $n       ) },
+            LamT   => -> Str $vn, TTerm $b { $Pair($false, 'λ' ~ $vn ~ '.' ~ $snd(&self($b))) },
+            AppT   => -> TTerm $f, TTerm $a {
+                my $a2str = $snd(&self($a));
+                my $right = case-Term($a,
+                    LamT   => -> Mu, Mu { '(' ~ $a2str ~ ')' },
+                    AppT   => -> Mu, Mu { '(' ~ $a2str ~ ')' },
+                    VarT   => -> Mu     {       $a2str       },
+                    ConstT => -> Mu     {       $a2str       }
+                );
+                my $f2 = &self($f);
+                my $f2str = $snd($f2);
+                case-Term($f,
+                    LamT   => -> Mu, Mu { $Pair($true,    '(' ~ $f2str ~ ')' ~ ' ' ~ $right) },
+                    AppT   => -> Mu, Mu { $Pair($fst($f2),      $f2str       ~ ' ' ~ $right) },
+                    VarT   => -> Mu     { $Pair($fst($f2),      $f2str       ~ ' ' ~ $right) },
+                    ConstT => -> Mu     { $Pair($fst($f2),      $f2str       ~ ' ' ~ $right) }
+                );
+            }
+        )
+    }
+)});
+
+# Term->srcLesser: Term -> Str
+# lambda expr from Term with (reasonably) fewer parentheses;
+# in particular, the outermost parentheses are always omitted
+constant $Term2srcLesser is export = lambdaFn(
+    'Term->srcLesser', 'λt.error "NYI"',
+    -> TTerm $t -->Str{ $snd($Term2srcLesser-internal($t)) }
+);
+# TODO: save some Pair constructions and destructions by mutual recursive definition of Term->srcLesser and Term->srcLesser-internal
+
+
+# Term->srcLess: Term -> Str
+# lambda expr from Term like Term->srcLesser but with outer parens around some applications
+constant $Term2srcLess is export = lambdaFn(
+    'Term->srcLess', 'λt.error "NYI"',
+    -> TTerm:D $t -->Str{
+        case-Term($t,
+            ConstT => -> Mu     { $Term2srcLesser($t) },
+            VarT   => -> Mu     { $Term2srcLesser($t) },
+            LamT   => -> Mu, Mu { $Term2srcLesser($t) },
+            AppT   => -> Mu, Mu {
+                my TPair $p = $Term2srcLesser-internal($t);
+                my Str   $s = $snd($p);
+                _if_( $fst($p),
+                    { $s },
+                    { '(' ~ $s ~ ')' }
+                );
+            }
+        )
+    }
+);
 
 constant $Term2sourceP6 is export = $Y(-> &self { lambdaFn(
     'Term->sourceP6', 'λt.error "NYI"',
@@ -337,18 +406,18 @@ constant $Term2sourceP6 is export = $Y(-> &self { lambdaFn(
                 my $varNameSrc = $varName.perl;
                 "\$VarT($varNameSrc)"
             },
-            AppT => -> TTerm $func, TTerm$arg -->Str{
+            AppT => -> TTerm $func, TTerm $arg {
                 my $fSrc = &self($func);
                 my $aSrc = &self($arg);
                 "\$AppT($fSrc, $aSrc)"
             },
-            LamT => -> Str $binderName, TTerm $body -->Str{
+            LamT => -> Str $binderName, TTerm $body {
                 my $binderNameSrc = $binderName.perl;
                 my $bodySrc       = &self($body);
                 "\$LamT($binderNameSrc, $bodySrc)"
 
             },
-            ConstT => -> Any $val -->Str{
+            ConstT => -> Any $val {
                 my $valSrc = $val.perl;
                 "\$ConstT($valSrc)"
             }

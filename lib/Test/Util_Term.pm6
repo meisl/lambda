@@ -31,15 +31,25 @@ my $zy ::= $AppT($z, $y);
 my $zz ::= $AppT($z, $z);
 my $zc ::= $AppT($z, $c);
 
+my $xyz ::= $AppT($xy, $z);
 my $xyc ::= $AppT($xy, $c);
 
-my $Lx_x  ::= $LamT('x', $x);
-my $Lx_xy ::= $LamT('x', $xy);
-my $Ly_xy ::= $LamT('y', $xy);
+my $xyzx ::= $AppT($xyz, $x);
 
-my $omegaX  ::= $LamT('x', $xx);  # (λx.x x)              # omega ("in x")
+my $Lx_x  ::= $LamT('x', $x);
+my $Lx_c  ::= $LamT('x', $c);
+my $Lx_xx ::= $LamT('x', $xx);
+my $Lx_xy ::= $LamT('x', $xy);
+my $Lx_xc ::= $LamT('x', $xc);
+my $Lx_yx ::= $LamT('x', $yx);
+
+my $Ly_xy ::= $LamT('y', $xy);
+my $Ly_yy ::= $LamT('y', $yy);
+my $Ly_zy ::= $LamT('y', $zy);
+
+my $omegaX  ::= $Lx_xx;                     # (λx.x x)              # omega ("in x")
 my $OmegaXX ::= $AppT($omegaX, $omegaX);    # ((λx.x x) (λx.x x))   # Omega = (omega omega)
-my $omegaY  ::= $LamT('y', $yy);  # (λy.y y)              # omega ("in y")
+my $omegaY  ::= $Ly_yy;                     # (λy.y y)              # omega ("in y")
 my $OmegaYY ::= $AppT($omegaY, $omegaY);    # ((λy.y y) (λy.y y))   # Omega (one flavour of...)
 my $OmegaXY ::= $AppT($omegaX, $omegaY);    # ((λy.y y) (λy.y y))   # Omega (one flavour of...)
 my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (one flavour of...)
@@ -66,29 +76,44 @@ our %terms is export = %(
     '(z z)'                    => $zz,
     '(z "c")'                  => $zc,
 
-    '((x y) "c")'              => $xyc,
-    
+    '(λx."c")'                 => $Lx_c,
+    '(λx.x)'                   => $Lx_x,
+    '(λx.(x "c"))'             => $Lx_xc,
+    '(λx.(x y))'               => $Lx_xy,
+    '(λx.(y x))'               => $Lx_yx,
     '(λx.((x y) "c"))'         => $LamT("x", $xyc),
 
-    '(λx.x)'                   => $Lx_x,
-    '(λx.(x y))'               => $Lx_xy,
     '(λy.(x y))'               => $Ly_xy,
+    '(λy.(z y))'               => $Ly_zy,
 
-    '(λx."c")'                 => $LamT('x', $c),
-    '(λx.(x "c"))'             => $LamT('x', $xc),
-    '(λx.(x y))'               => $Lx_xy,
-    '(λx.(y x))'               => $LamT('x', $yx),
+    '((x y) z)'                => $xyz,
+    '((x y) "c")'              => $xyc,
+    '(((x y) z) x)'            => $xyzx,
+    '(x (y z))'                => $AppT($x, $yz),
+    '((x (y z)) x)'            => $AppT($AppT($x, $yz), $x),
+    '(x (y (z x)))'            => $AppT($VarT("x"), $AppT($VarT("y"), $zx)),
+    '((x y) (y z))'            => $AppT($xy, $yz),
+    '((x y) (λy.(x y)))'       => $AppT($xy, $Ly_xy),
+
+    '((λx.(y x)) (x y))'            => $AppT($Lx_yx, $xy),
+    '(((λx.(y x)) (x y)) x)'        => $AppT($AppT($Lx_yx, $xy), $x),
+    '(((λx.(y x)) (x y)) (λx.x))'   => $AppT($AppT($Lx_yx, $xy), $Lx_x),
+    '(((λx.(y x)) (λx.x)) (λx.x))'  => $AppT($AppT($Lx_yx, $Lx_x), $Lx_x),
+
+    '((λx.(y x)) (λy.(x y)))'  => $AppT($Lx_yx, $Ly_xy),
     '(λx.(x (λy.(x y))))'      => $LamT('x', $AppT($x, $Ly_xy)),
     '((λy.(x y)) y)'           => $AppT($Ly_xy, $y),
-    '((λx.(y x)) (λy.(x y)))'  => $AppT($LamT('x', $yx), $Ly_xy),
-    '(λx.((λy.(z y)) x))'      => $LamT('x', $AppT($LamT('y', $AppT($z, $y)), $x)),
+    '(λx.((λy.(z y)) x))'      => $LamT('x', $AppT($Ly_zy, $x)),
     '(λx.((λy.(x y)) x))'      => $LamT('x', $AppT($Ly_xy, $x)),
     '(λx.((λx.(x y)) x))'      => $LamT('x', $AppT($Lx_xy, $x)),
-    '(y y)'                    => $yy,
     '((λx.(x x)) (y y))'       => $AppT($omegaX, $yy),
     '((y y) (λx.(x x)))'       => $AppT($yy, $omegaX),
     '(x (x y))'                => $AppT($x, $xy),
+    '(x (λy.(x y)))'           => $AppT($VarT("x"), $Ly_xy),
+
+    '(λx.((λy.(z y)) (x x)))'  => $LamT("x", $AppT($Ly_zy, $xx)),
     '(λz.(x (x y)))'           => $LamT('z', $AppT($x, $xy)),
+    '(λz.(x (λy.(x y))))'      => $LamT("z", $AppT($VarT("x"), $Ly_xy)),
 
     '(λx.(x x))'               => $omegaX,
     '(λy.(y y))'               => $omegaY,
@@ -172,12 +197,12 @@ sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) is export {
                 die "expected either a TTerm or a Str but got $arg.perl";
             }
 
-            my Str   $termStr       = $argToStr($term);
+            my Str   $argStr        = $argToStr($arg);
             my Any   $expected      = $test.value;
             my Str   $expectedStr   = $expectedToStr.defined
                                         ?? ' -> ' ~ $expectedToStr($expected)
                                         !! '';
-            my $desc = "($fgist $termStr)$expectedStr";
+            my $desc = "($fgist $argStr)$expectedStr";
 
             is($f($term), $expected, $desc);
         }
