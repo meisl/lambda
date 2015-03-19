@@ -2,13 +2,17 @@ use v6;
 use Test;
 
 use Lambda::BaseP6;
+use Lambda::Boolean;
+use Lambda::TermADT;
+use Lambda::LambdaGrammar;
 
 
 # modules under test:
 use Test::Util;
 use Test::Util_Lambda;
+use Test::Util_Term;
 
-plan 4;
+plan 10;
 
 
 { # does_ok, is_properLambdaFn
@@ -30,3 +34,37 @@ todo 'doesnt_ok';
 
 todo '$contains_ok';
 todo '$has_length';
+
+{ # is_eq test for TTerms
+    does_ok &is_eq, Callable, 'exports `&is_eq`';
+    lives_ok({ is_eq($VarT('x'), $VarT('x')) }, 'can call &is_eq without msg string');
+    lives_ok({ is_eq($VarT('x'), $VarT('x'), 'var x equals var x') }, 'can call &is_eq with a msg string');
+}
+
+subtest({ # prefix operator ` (for retrieving pre-built test-terms)
+    my $x = $VarT('x');
+    my $omegaX = $LamT('x', $AppT($x, $x));
+    
+    is_eq(`'x', $x, 'simple var x from %terms');
+    
+    is_eq(`'(λx.(x x))', $omegaX, 'omega as fully parenthesized lambda expr');
+    is_eq(`'λx.(x x)',   $omegaX, 'omega as lambda expr without surrounding parens');
+    is_eq(`'ωX',         $omegaX, 'omega as symbol ωX');
+}, 'prefix op ` retrieves...');
+exit;
+
+{ # test the test-terms
+    does_ok &testTermFn, Callable, 'exports `&testTermFn`';
+    does_ok %terms, Associative, 'exports `%terms`';
+
+    subtest({
+        for %terms.pairs -> (:$key, :$value) {
+            subtest({
+                does_ok $value, TTerm;
+                my TTerm $term = parseLambda($key);
+                is_eq($term, $value);
+            });
+        }
+    }, '%terms.keys are Str s and .values are TTerm s');
+}
+

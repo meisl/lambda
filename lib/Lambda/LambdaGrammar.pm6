@@ -40,7 +40,8 @@ grammar LambdaGrammar {
         \s*
         [
         | <t=variable>
-        | <t=constant>
+        | <t=str-constant>
+        | <t=int-constant>
         | <t=definition>
         | <t=abstraction>
         | '(' <t=abstraction> ')'
@@ -54,7 +55,7 @@ grammar LambdaGrammar {
     token delta { 'δ' }
 
     token varName {
-        <-[\\αβδλ.()\s]>+
+        <-[\"\\αβδλ.()\s]>+
     }
 
     token variable {
@@ -62,8 +63,25 @@ grammar LambdaGrammar {
         { make $VarT($<varName>.Str) }
     }
 
-    token constant {
-        <!>     # none for now, ie we're in *pure* lambda calculus
+    token symbol {
+        <varName>
+    }
+
+    my %str-esc = %(b => "\b", r => "\r", n => "\n", f => "\f", t => "\t");
+    token str-constant {
+        '"'
+        [ (<-[\"\n\\]>+)
+        | \\ (<[\"\\]>)
+        | \\ (<-[\"\n\\]>)    { $0[*-1].make(%str-esc{$0[*-1]} // (die 'unknown esc \\' ~ $0[*-1])) }
+        ]*
+        '"'
+        { my $rawStr = $0.map({$_.ast // $_}).list.join;
+          make $ConstT($rawStr);
+        }
+    } 
+
+    token int-constant {
+        <!>     # NYI
     }
 
     token abstraction {
@@ -72,7 +90,7 @@ grammar LambdaGrammar {
     }
 
     rule definition {
-        '(' <.delta> $<symbol> = <.variable> <term> ')'
+        '(' <.delta> <symbol> <term> ')'
         {
             die "DefNode NYI";
             #make DefNode.new(:symbol($<symbol>.ast), :term($<term>.ast))

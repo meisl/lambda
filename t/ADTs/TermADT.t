@@ -12,7 +12,7 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::TermADT;
 
-plan 117;
+plan 129;
 
 
 # Term-eq ---------------------------------------------------------------------
@@ -66,16 +66,22 @@ plan 117;
     test-eq($lam_x_x,   $c1,            $false);
     test-eq($lam_x_x,   $c2,            $false);
 
-    #test-eq($c1,        $c1,            $true );   # TODO: compare two ConstT for equality
-    #test-eq($c1,        $c2,            $false);
-    #test-eq($c1,        $c3,            $false);
-    #test-eq($c1,        $c4,            $false);
-    #test-eq($c2,        $c2,            $true );
-    #test-eq($c2,        $c3,            $false);
-    #test-eq($c2,        $c4,            $false);
-    #test-eq($c3,        $c3,            $true );
-    #test-eq($c3,        $c4,            $false);
-    #test-eq($c4,        $c4,            $true );
+    todo 'compare two Int ConstT for equality'; #   test-eq($c1,        $c1,            $true );
+    test-eq($c1,        $c2,            $false);
+    todo 'compare two Int ConstT for equality'; #   test-eq($c1,        $c3,            $false);
+    test-eq($c1,        $c4,            $false);
+    test-eq($c2,        $c1,            $false);
+    test-eq($c2,        $c2,            $true );
+    test-eq($c2,        $c3,            $false);
+    test-eq($c2,        $c4,            $false);
+    todo 'compare two Int ConstT for equality'; #   test-eq($c3,        $c1,            $false);
+    test-eq($c3,        $c2,            $false);
+    todo 'compare two Int ConstT for equality'; #   test-eq($c3,        $c3,            $true );
+    test-eq($c3,        $c4,            $false);
+    test-eq($c4,        $c1,            $false);
+    test-eq($c4,        $c2,            $false);
+    test-eq($c4,        $c3,            $false);
+    test-eq($c4,        $c4,            $true );
 
 }
 

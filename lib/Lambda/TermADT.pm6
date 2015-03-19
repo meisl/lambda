@@ -159,7 +159,17 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
                     VarT => $K1false,
                     AppT => $K2false,
                     LamT => $K2false,
-                    ConstT => -> Any $tValue { die "NYI: equality test for $sValue, $tValue" }
+                    ConstT => -> Any $tValue {
+                        if $sValue.WHAT === $tValue.WHAT {
+                            if ($sValue ~~ Str) && ($tValue ~~ Str) {
+                                $Str-eq($sValue, $tValue);
+                            } else {
+                                die "NYI: equality test for {$sValue.perl}, {$tValue.perl}";
+                            }
+                        } else {
+                            $false;
+                        }
+                    }
                 )
             },
 
