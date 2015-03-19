@@ -5,6 +5,8 @@ use Lambda::BaseP6;
 use Lambda::Boolean;
 use Lambda::TermADT;
 
+use Lambda::LambdaGrammar;
+
 
 my $time = now;
 
@@ -29,7 +31,11 @@ my $zy ::= $AppT($z, $y);
 my $zz ::= $AppT($z, $z);
 my $zc ::= $AppT($z, $c);
 
-my $Lx_x = $LamT('x', $x);
+my $xyc ::= $AppT($xy, $c);
+
+my $Lx_x  ::= $LamT('x', $x);
+my $Lx_xy ::= $LamT('x', $xy);
+my $Ly_xy ::= $LamT('y', $xy);
 
 my $omegaX  ::= $LamT('x', $xx);  # (λx.x x)              # omega ("in x")
 my $OmegaXX ::= $AppT($omegaX, $omegaX);    # ((λx.x x) (λx.x x))   # Omega = (omega omega)
@@ -60,18 +66,24 @@ our %terms is export = %(
     '(z z)'                    => $zz,
     '(z "c")'                  => $zc,
 
+    '((x y) "c")'              => $xyc,
+    
+    '(λx.((x y) "c"))'         => $LamT("x", $xyc),
+
     '(λx.x)'                   => $Lx_x,
+    '(λx.(x y))'               => $Lx_xy,
+    '(λy.(x y))'               => $Ly_xy,
 
     '(λx."c")'                 => $LamT('x', $c),
     '(λx.(x "c"))'             => $LamT('x', $xc),
-    '(λx.(x y))'               => $LamT('x', $xy),
+    '(λx.(x y))'               => $Lx_xy,
     '(λx.(y x))'               => $LamT('x', $yx),
-    '(λx.(x (λy.(x y))))'      => $LamT('x', $AppT($x, $LamT('y', $xy))),
-    '((λy.(x y)) y)'           => $AppT($LamT('y', $xy), $y),
-    '((λx.(y x)) (λy.(x y)))'  => $AppT($LamT('x', $yx), $LamT('y', $xy)),
+    '(λx.(x (λy.(x y))))'      => $LamT('x', $AppT($x, $Ly_xy)),
+    '((λy.(x y)) y)'           => $AppT($Ly_xy, $y),
+    '((λx.(y x)) (λy.(x y)))'  => $AppT($LamT('x', $yx), $Ly_xy),
     '(λx.((λy.(z y)) x))'      => $LamT('x', $AppT($LamT('y', $AppT($z, $y)), $x)),
-    '(λx.((λy.(x y)) x))'      => $LamT('x', $AppT($LamT('y', $xy), $x)),
-    '(λx.((λx.(x y)) x))'      => $LamT('x', $AppT($LamT('x', $xy), $x)),
+    '(λx.((λy.(x y)) x))'      => $LamT('x', $AppT($Ly_xy, $x)),
+    '(λx.((λx.(x y)) x))'      => $LamT('x', $AppT($Lx_xy, $x)),
     '(y y)'                    => $yy,
     '((λx.(x x)) (y y))'       => $AppT($omegaX, $yy),
     '((y y) (λx.(x x)))'       => $AppT($yy, $omegaX),
@@ -112,6 +124,34 @@ $time = (now.Real - $time.Real).round(0.2);
 diag "$time sec consumed for test-terms initialization";
 
 
+#`{
+    my $maxKeyLen = @(0, %terms.keys).reduce(-> $currentMax, $key { max($currentMax, $key.chars) });
+    my $termsSrcP6 = %terms.pairs.map(-> (:$key, :$value) {
+        sprintf("%-{$maxKeyLen+3}s => %s", "'$key'", $Term2sourceP6($value));
+     }).join(",\n    ");
+    $termsSrcP6 = '%(' ~ "\n    " ~ $termsSrcP6 ~ "\n);";
+    diag "our \%terms is export = $termsSrcP6";
+
+    diag "termCount: {%terms.elems}";
+    diag "maxKeyLen: $maxKeyLen";
+}
+
+
+multi sub prefix:<`>(Str:D $termIdentifier -->TTerm:D) is export {
+    my $term = %terms{$termIdentifier};
+    if not $term.defined {
+        my $msg = "unprepared test term: '$termIdentifier'";
+        try {
+            $term = parseLambda($termIdentifier);
+            $msg ~= " - you may want to add it to %terms in {$?FILE}:\n    '$termIdentifier'         => {$Term2sourceP6($term)},";
+        }
+        $msg ~= " - $!"
+            if $!;
+        die $msg;
+    }
+    return $term;
+}
+
 sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) is export {
     my Str $fgist = $f.gist;
     subtest({
@@ -126,7 +166,7 @@ sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) is export {
                 # we got a new one - add it!
                 %terms{$termSrc} = $term;
             } elsif $arg ~~ Str {
-                $term    = %terms{$arg} // die "unprepared test term: '$arg'";
+                $term    = `$arg;
                 $termSrc = $Term2source($term);
             } else {
                 die "expected either a TTerm or a Str but got $arg.perl";
@@ -164,10 +204,4 @@ my sub is_eq-diag(TTerm:D $actual, TTerm:D $expected) {
 multi sub is_eq(TTerm:D $actual, TTerm:D $expected, Str $msg?) is export {
     ok($Term-eq($actual, $expected) === $true, $msg // is_eq-msg($actual, $expected) )
         or is_eq-diag($actual, $expected);
-}
-
-multi sub prefix:<`>(Str:D $termIdentifier -->TTerm:D) is export {
-    my $out = %terms{$termIdentifier};
-    # TODO: nice message if requested test-term isn't available
-    return $out;
 }

@@ -12,40 +12,7 @@ use Lambda::Boolean;
 # module under test:
 use Lambda::TermADT;
 
-plan 53;
-
-
-my $time = now;
-
-my $x  ::= $VarT('x');
-my $y  ::= $VarT('y');
-my $z  ::= $VarT('z');
-my $c  ::= $ConstT('c');
-
-my $xx ::= $AppT($x, $x);
-my $xy ::= $AppT($x, $y);
-my $xz ::= $AppT($x, $z);
-my $xc ::= $AppT($x, $c);
-
-my $yx ::= $AppT($y, $x);
-my $yy ::= $AppT($y, $y);
-my $yz ::= $AppT($y, $z);
-my $yc ::= $AppT($y, $c);
-
-my $zx ::= $AppT($z, $x);
-my $zy ::= $AppT($z, $y);
-my $zz ::= $AppT($z, $z);
-my $zc ::= $AppT($z, $c);
-
-my $Lx_x = $LamT('x', $x);
-
-my $omegaX  ::= $LamT('x', $xx);  # (λx.x x)              # omega ("in x")
-my $OmegaXX ::= $AppT($omegaX, $omegaX);    # ((λx.x x) (λx.x x))   # Omega = (omega omega)
-my $omegaY  ::= $LamT('y', $yy);  # (λy.y y)              # omega ("in y")
-my $OmegaYY ::= $AppT($omegaY, $omegaY);    # ((λy.y y) (λy.y y))   # Omega (one flavour of...)
-my $OmegaXY ::= $AppT($omegaX, $omegaY);    # ((λy.y y) (λy.y y))   # Omega (one flavour of...)
-my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (one flavour of...)
-
+plan 51;
 
 
 { # Term->source
@@ -77,30 +44,28 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
 { # Term->children
     is_properLambdaFn($Term2children, 'Term->children');
 
-    $has_length($Term2children($x), 0, "(Term->children $x)");
-    $has_length($Term2children($c), 0, "(Term->children $c)");
-
+    my ($x, $y, $c) = `'x', `'y', `'"c"';
     my $cs;
 
-    $cs = $Term2children($x);   # x
+    $cs = $Term2children($x);
     $has_length($cs, 0, "(Term->children $x) / a VarT has no children");
 
-    $cs = $Term2children($c);   # "c"
+    $cs = $Term2children($c);
     $has_length($cs, 0, "(Term->children $c) / a ConstT has no children");
     
-    my $t1 = $xy;     # (x y)
+    my $t1 = `'(x y)';
     $cs = $Term2children($t1);
     $has_length($cs, 2, "(Term->children $t1) / an AppT has two children (func and arg)");
     $contains_ok($x, $cs, "(Term->children $t1)");
     $contains_ok($y, $cs, "(Term->children $t1)");
     
-    my $t2 = $AppT($t1, $c);    # ((x y) "c")
+    my $t2 = `'((x y) "c")';
     $cs = $Term2children($t2);
     $has_length($cs, 2, "(Term->children $t2) / an AppT has two children (func and arg)");
     $contains_ok($t1, $cs, "(Term->children $t2)") or die;
     $contains_ok($c,  $cs, "(Term->children $t2)");
     
-    my $t3 = $LamT('x', $t2);    # (λx.((x y) "c"))
+    my $t3 = `'(λx.((x y) "c"))';
     $cs = $Term2children($t3);
     $has_length($cs, 1, "(Term->children $t3) / a LamT has one child (its body)");
     $contains_ok($t2, $cs, "(Term->children $t3)");
@@ -110,7 +75,7 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
 { # predicate selfApp?
     is_properLambdaFn($is-selfApp, 'selfApp?');
 
-    testTermFn( $is-selfApp, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
+    testTermFn( $is-selfApp, :argToStr($Term2source), :expectedToStr(*.Str),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -130,12 +95,14 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
     );
 }
 
+
 { # predicate selfAppOfVar?
     is_properLambdaFn($is-selfAppOfVar, 'selfAppOfVar?');
-    my $f;
 
-    $f = $is-selfAppOfVar($x) but Definition("{$is-selfAppOfVar.name} $x");
-    testTermFn($f, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
+    my ($x, $y, $c) = `'x', `'y', `'"c"';
+    my $f = $is-selfAppOfVar($x) but Definition("{$is-selfAppOfVar.name} $x");
+
+    testTermFn($f, :argToStr($Term2source), :expectedToStr(*.Str),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -155,7 +122,7 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
     );
 
     $f = $is-selfAppOfVar($y) but Definition("{$is-selfAppOfVar.name} $y");
-    testTermFn($f, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
+    testTermFn($f, :argToStr($Term2source), :expectedToStr(*.Str),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -175,7 +142,7 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
     );
 
     $f = $is-selfAppOfVar($c) but Definition("{$is-selfAppOfVar.name} $c");
-    testTermFn($f, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
+    testTermFn($f, :argToStr($Term2source), :expectedToStr(*.Str),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -199,7 +166,7 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
 { # predicate omega?
     is_properLambdaFn($is-omega, 'ω?');
 
-    testTermFn( $is-omega, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
+    testTermFn( $is-omega, :argToStr($Term2source), :expectedToStr(*.Str),
         'x'             => $false,
         '"c"'           => $false,
         '5'             => $false,
@@ -223,7 +190,7 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
 { # predicate Ω? ($is-Omega)
     is_properLambdaFn($is-Omega, 'Ω?');
 
-    testTermFn( $is-Omega, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
+    testTermFn( $is-Omega, :argToStr($Term2source), :expectedToStr(*.Str),
         'x'                 => $false,
         '"c"'               => $false,
         '5'                 => $false,
@@ -245,8 +212,8 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
         '(λx.(x x)) (y y)'  => $false,
         '(y y) (λx.(x x))'  => $false,
     );
-
 }
+
 
 { # Term->size
     is_properLambdaFn($Term2size, 'Term->size');
@@ -255,7 +222,7 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
     # size of an AppT is 1 + size of func + size of arg
     # size of both, a VarT and ConstT is 1
 
-    testTermFn( $Term2size, :argToStr($Term2source), :expectedToStr(-> $x {$x.Str}),
+    testTermFn( $Term2size, :argToStr($Term2source), :expectedToStr(*.Str),
         'x'                         =>  1,
         '"c"'                       =>  1,
         '5'                         =>  1,
@@ -275,19 +242,6 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
     );
 
 }
-
-#`{
-    my $maxKeyLen = @(0, %terms.keys).reduce(-> $currentMax, $key { max($currentMax, $key.chars) });
-    my $termsSrcP6 = %terms.pairs.map(-> (:$key, :$value) {
-        sprintf("%-{$maxKeyLen+3}s => %s", "'$key'", $Term2sourceP6($value));
-     }).join(",\n    ");
-    $termsSrcP6 = '%(' ~ "\n    " ~ $termsSrcP6 ~ "\n);";
-    diag "our \%terms is export = $termsSrcP6";
-
-    diag "termCount: {%terms.elems}";
-    diag "maxKeyLen: $maxKeyLen";
-}
-
 
 
 # VarT special ----------------------------------------------------------------
@@ -309,25 +263,25 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
 { # fresh-var-for
     is_properLambdaFn($fresh-var-for, 'fresh-var-for');
 
-    dies_ok( { $fresh-var-for($xy)   }, '$fresh-var-for does not accept an AppT arg');
-    dies_ok( { $fresh-var-for($Lx_x) }, '$fresh-var-for does not accept an LamT arg');
-    dies_ok( { $fresh-var-for($c)    }, '$fresh-var-for does not accept an ConstT arg');
+    dies_ok( { $fresh-var-for(`'x y')  }, '$fresh-var-for does not accept an AppT arg');
+    dies_ok( { $fresh-var-for(`'λx.x') }, '$fresh-var-for does not accept a LamT arg');
+    dies_ok( { $fresh-var-for(`'"c"')  }, '$fresh-var-for does not accept a ConstT arg');
 
-    my $fresh1 = $fresh-var-for($x);
-    my $fresh2 = $fresh-var-for($x);
+    my $fresh1 = $fresh-var-for(`'x');
+    my $fresh2 = $fresh-var-for(`'x');
 
-    isnt($VarT2name($fresh1), $VarT2name($x), "fresh var has name different from any other");
-    isnt($VarT2name($fresh1), $VarT2name($y), "fresh var has name different from any other");
+    isnt($VarT2name($fresh1), $VarT2name(`'x'), "fresh var has name different from any other");
+    isnt($VarT2name($fresh1), $VarT2name(`'y'), "fresh var has name different from any other");
     isnt($VarT2name($fresh1), $VarT2name($fresh2), "fresh var has name different from any other");
 
-    my $fresh3 = $fresh-var-for($x);
+    my $fresh3 = $fresh-var-for(`'x');
 
-    isnt($VarT2name($fresh3), $VarT2name($x), "fresh var has name different from any other");
-    isnt($VarT2name($fresh3), $VarT2name($y), "fresh var has name different from any other");
+    isnt($VarT2name($fresh3), $VarT2name(`'x'), "fresh var has name different from any other");
+    isnt($VarT2name($fresh3), $VarT2name(`'y'), "fresh var has name different from any other");
     isnt($VarT2name($fresh3), $VarT2name($fresh1), "fresh var has name different from any other");
     isnt($VarT2name($fresh3), $VarT2name($fresh2), "fresh var has name different from any other");
 
-    my $xname = $VarT2name($x);
+    my $xname = $VarT2name(`'x');
     ok($fresh3.gist ~~ / '/' $xname /, ".fresh(:for).gist contains the given var's gist")
         or diag "# got: {$fresh3.gist}";
     nok($VarT2name($fresh3) ~~ / $xname /, ".fresh(:for).name does NOT contain the given var's name");
@@ -335,8 +289,8 @@ my $OmegaYX ::= $AppT($omegaY, $omegaX);    # ((λy.y y) (λx.x x))   # Omega (o
 
     my $fresh4 = $fresh-var-for($fresh3);
 
-    isnt($VarT2name($fresh4), $VarT2name($x), "fresh var has name different from any other");
-    isnt($VarT2name($fresh4), $VarT2name($y), "fresh var has name different from any other");
+    isnt($VarT2name($fresh4), $VarT2name(`'x'), "fresh var has name different from any other");
+    isnt($VarT2name($fresh4), $VarT2name(`'y'), "fresh var has name different from any other");
     isnt($VarT2name($fresh4), $VarT2name($fresh1), "fresh var has name different from any other");
     isnt($VarT2name($fresh4), $VarT2name($fresh2), "fresh var has name different from any other");
     isnt($VarT2name($fresh4), $VarT2name($fresh3), "fresh var has name different from any other");
