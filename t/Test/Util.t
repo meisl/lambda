@@ -51,11 +51,10 @@ subtest({ # prefix operator ` (for retrieving pre-built test-terms)
     is_eq(`'λx.(x x)',   $omegaX, 'omega as lambda expr without surrounding parens');
     is_eq(`'ωX',         $omegaX, 'omega as symbol ωX');
 }, 'prefix op ` retrieves...');
-exit;
 
-{ # test the test-terms
+
+#`{ # test the test-terms
     does_ok &testTermFn, Callable, 'exports `&testTermFn`';
-    does_ok %terms, Associative, 'exports `%terms`';
 
     subtest({
         for %terms.pairs -> (:$key, :$value) {
