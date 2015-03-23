@@ -149,9 +149,9 @@ our constant $testTerms is export = {
 
         '(λ_.x)'                    => $L__x,
         '(λx."c")'                  => $Lx_c,
-        '(λx.x)'                    => $Lx_x,
+        '(λx.x)'                    => $Lx_x,   # I aka id
 
-        '(λx.(λ_.x))'               => $LamT('x', $L__x),
+        '(λx.(λ_.x))'               => $LamT('x', $L__x),   # K aka const
         '(λx.(x "c"))'              => $Lx_xc,
         '(λx.(x x))'                => $Lx_xx,  # omegaX aka ωX ("omega in x") aka ω aka omega
         '(λx.(x y))'                => $Lx_xy,
@@ -192,18 +192,76 @@ our constant $testTerms is export = {
     });
 
     # some synonyms:
-    $out.aka('(λx.x)', <I id>)\
-        .aka('(λx.(λ_.x))', <K const>)\
-    
-        .aka('(λx.(x x))', <ωX omegaX ω omega>)\
-        .aka('(λy.(y y))', <ωY omegaY>)\
+    $out\
+#        .aka('(λx.x)', <I id>)\
+#        .aka('(λx.(λ_.x))', <K const>)\
+#        
+#        .aka('(λx.(x x))', <ωX omegaX ω omega>)\
+#        .aka('(λy.(y y))', <ωY omegaY>)\
+#        
+#        .aka('((λx.(x x)) (λx.(x x)))', <ΩXX OmegaXX Ω Omega>, '(ωX ωX)', '(omegaX omegaX)', '(ω ω)', '(omega omega)')\
+#        .aka('((λy.(y y)) (λy.(y y)))', <ΩYY OmegaYY>,         '(ωY ωY)', '(omegaY omegaY)')\
+#        .aka('((λx.(x x)) (λy.(y y)))', <ΩXY OmegaXY>,         '(ωX ωY)', '(omegaX omegaY)')\
+#        .aka('((λy.(y y)) (λx.(x x)))', <ΩYX OmegaYX>,         '(ωY ωX)', '(omegaY omegaX)')\
 
-        .aka('((λx.(x x)) (λx.(x x)))', <ΩXX OmegaXX Ω Omega>, '(ωX ωX)', '(omegaX omegaX)', '(ω ω)', '(omega omega)')\
-        .aka('((λy.(y y)) (λy.(y y)))', <ΩYY OmegaYY>,         '(ωY ωY)', '(omegaY omegaY)')\
-        .aka('((λx.(x x)) (λy.(y y)))', <ΩXY OmegaXY>,         '(ωX ωY)', '(omegaX omegaY)')\
-        .aka('((λy.(y y)) (λx.(x x)))', <ΩYX OmegaYX>,         '(ωY ωX)', '(omegaY omegaX)')\
-    ;
+# -----------------------------------------------------------------------------
+        .aka('(x x)', 'x x')\
+        .aka('(x y)', 'x y')\
+        .aka('(x z)', 'x z')\
+        .aka('(x "c")', 'x "c"')\
+        .aka('(y x)', 'y x')\
+        .aka('(y y)', 'y y')\
+        .aka('(y z)', 'y z')\
+        .aka('(y "c")', 'y "c"')\
+        .aka('(z x)', 'z x')\
+        .aka('(z y)', 'z y')\
+        .aka('(z z)', 'z z')\
+        .aka('(z "c")', 'z "c"')\
+        .aka('((x y) z)', '(x y) z', '(x y z)', 'x y z')\
+        .aka('((x y) "c")', '(x y) "c"', '(x y "c")', 'x y "c"')\
+        .aka('(((x y) z) x)', '((x y) z) x', '(x y z x)', 'x y z x')\
+        .aka('(x (y z))', 'x (y z)')\
+        .aka('((x (y z)) x)', '(x (y z)) x', '(x (y z) x)', 'x (y z) x')\
+        .aka('(x (y (z x)))', 'x (y (z x))')\
+        .aka('((x y) (y z))', '(x y) (y z)', '(x y (y z))', 'x y (y z)')\
+        .aka('(λ_.x)', 'λ_.x')\
+        .aka('(λx."c")', 'λx."c"')\
+        .aka('(λx.x)', 'I', 'id', 'λx.x')\
+        .aka('(λx.(λ_.x))', 'K', 'const', 'λx.(λ_.x)', 'λx.λ_.x')\
+        .aka('(λx.(x "c"))', 'λx.(x "c")', 'λx.x "c"')\
+        .aka('(λx.(x x))', 'ωX', 'omegaX', 'ω', 'omega', 'λx.(x x)', 'λx.x x')\
+        .aka('(λx.(x y))', 'λx.(x y)', 'λx.x y')\
+        .aka('(λx.(y x))', 'λx.(y x)', 'λx.y x')\
+        .aka('(λx.((x y) "c"))', 'λx.((x y) "c")', 'λx.x y "c"')\
+        .aka('(λy.(x y))', 'λy.(x y)', 'λy.x y')\
+        .aka('(λy.(y y))', 'ωY', 'omegaY', 'λy.(y y)', 'λy.y y')\
+        .aka('(λy.(z y))', 'λy.(z y)', 'λy.z y')\
+        .aka('((x y) (λy.(x y)))', '(x y) (λy.(x y))', '(x y (λy.x y))', 'x y (λy.x y)')\
+        .aka('((λx.(y x)) (x y))', '(λx.(y x)) (x y)', '(λx.y x) (x y)')\
+        .aka('(((λx.(y x)) (x y)) x)', '((λx.(y x)) (x y)) x', '(λx.y x) (x y) x')\
+        .aka('(((λx.(y x)) (x y)) (λx.x))', '((λx.(y x)) (x y)) (λx.x)', '(λx.y x) (x y) (λx.x)')\
+        .aka('(((λx.(y x)) (λx.x)) (λx.x))', '((λx.(y x)) (λx.x)) (λx.x)', '(λx.y x) (λx.x) (λx.x)')\
+        .aka('((λx.x) x)', '(λx.x) x')\
+        .aka('((λx.(y x)) (λy.(x y)))', '(λx.(y x)) (λy.(x y))', '(λx.y x) (λy.x y)')\
+        .aka('(λx.(x (λy.(x y))))', 'λx.(x (λy.(x y)))', 'λx.x (λy.x y)')\
+        .aka('((λy.(x y)) y)', '(λy.(x y)) y', '(λy.x y) y')\
+        .aka('(λx.((λy.(z y)) x))', 'λx.((λy.(z y)) x)', 'λx.(λy.z y) x')\
+        .aka('(λx.((λy.(x y)) x))', 'λx.((λy.(x y)) x)', 'λx.(λy.x y) x')\
+        .aka('(λx.((λx.(x y)) x))', 'λx.((λx.(x y)) x)', 'λx.(λx.x y) x')\
+        .aka('((λx.(x x)) (y y))', '(λx.(x x)) (y y)', '(λx.x x) (y y)')\
+        .aka('((y y) (λx.(x x)))', '(y y) (λx.(x x))', '(y y (λx.x x))', 'y y (λx.x x)')\
+        .aka('(x (x y))', 'x (x y)')\
+        .aka('(x (λy.(x y)))', 'x (λy.(x y))', '(x (λy.x y))', 'x (λy.x y)')\
+        .aka('(λx.((λy.(z y)) (x x)))', 'λx.((λy.(z y)) (x x))', 'λx.(λy.z y) (x x)')\
+        .aka('(λz.(x (x y)))', 'λz.(x (x y))', 'λz.x (x y)')\
+        .aka('(λz.(x (λy.(x y))))', 'λz.(x (λy.(x y)))', 'λz.x (λy.x y)')\
+        .aka('((λx.(x x)) (λx.(x x)))', 'ΩXX', 'OmegaXX', 'Ω', 'Omega', '(ωX ωX)', '(omegaX omegaX)', '(ω ω)', '(omega omega)', '(λx.(x x)) (λx.(x x))', 'ωX ωX', 'omegaX omegaX', 'ω ω', 'omega omega', '(λx.x x) (λx.x x)')\
+        .aka('((λy.(y y)) (λy.(y y)))', 'ΩYY', 'OmegaYY', '(ωY ωY)', '(omegaY omegaY)', '(λy.(y y)) (λy.(y y))', 'ωY ωY', 'omegaY omegaY', '(λy.y y) (λy.y y)')\
+        .aka('((λx.(x x)) (λy.(y y)))', 'ΩXY', 'OmegaXY', '(ωX ωY)', '(omegaX omegaY)', '(λx.(x x)) (λy.(y y))', 'ωX ωY', 'omegaX omegaY', '(λx.x x) (λy.y y)')\
+        .aka('((λy.(y y)) (λx.(x x)))', 'ΩYX', 'OmegaYX', '(ωY ωX)', '(omegaY omegaX)', '(λy.(y y)) (λx.(x x))', 'ωY ωX', 'omegaY omegaX', '(λy.y y) (λx.x x)')
+;
 
+#`{
     # for convenience: make stuff available without surrounding parens as well
     for $out.keys -> $key {
         if $key.substr(0, 1) eq '(' {
@@ -217,11 +275,12 @@ our constant $testTerms is export = {
         #say "$mainKey => {@synonyms.perl}";
         $out.aka($mainKey, |@synonyms);
     }
+}
 
     $time = (now.Real - $time.Real).round(0.2);
     diag "$time sec consumed for test-terms initialization";
 
-    say '    $out' ~ $out.synonyms;
+#    say '    $out' ~ $out.synonyms;
     $out;
 }();
 
