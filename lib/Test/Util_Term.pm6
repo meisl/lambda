@@ -49,10 +49,16 @@ our constant $testTerms is export = {
             for @names {
                 my $prev = self.get($_);
                 if $prev.defined {
-                    my $synAkas  = ' (aka !TODO!)';
-                    my $mainAkas = "\n    Note: {$Term2srcLess($val)}' is aka !TODO!";
+                    my @prevSyns = $prev.names.grep(* ne $prev.mainKey);
+                    my $prevAkas = @prevSyns.elems == 0
+                        ?? ''
+                        !! ' (aka ' ~ @prevSyns.map(*.perl).join(', ') ~ ')';
+                    my @valSyns = $val.names.grep(* ne $mainKey);
+                    my $valAkas = ($val === $prev) || (@valSyns.elems == 0)
+                        ?? ''
+                        !! "\n    Note: `'{$mainKey}' is aka " ~ @valSyns.map(*.perl).join(', ');
                     die "cannot add synonym {$_.perl} for {$mainKey.perl}"
-                        ~ " - {$_.perl} already maps to `'{$Term2srcLess($prev)}'$synAkas$mainAkas"
+                        ~ " - {$_.perl} already maps to `'{$prev.mainKey}'$prevAkas$valAkas"
                     ;
                 }
                 #say "adding {$_.perl} as synonym for {$mainKey.perl} => {$Term2srcLess($val)}";
@@ -197,7 +203,6 @@ our constant $testTerms is export = {
         .aka('((λx.(x x)) (λy.(y y)))', <ΩXY OmegaXY>,         '(ωX ωY)', '(omegaX omegaY)')\
         .aka('((λy.(y y)) (λx.(x x)))', <ΩYX OmegaYX>,         '(ωY ωX)', '(omegaY omegaX)')\
     ;
-
 
     # for convenience: make stuff available without surrounding parens as well
     for $out.keys -> $key {
