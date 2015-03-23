@@ -333,6 +333,9 @@ constant $Term2source is export = $Y(-> &self { lambdaFn(
     }
 )});
 
+constant $Term2srcFull is export = $Term2source but Definition('Term->srcFull');
+
+
 # Term->srcLesser-internal: Term -> Pair Bool Str
 # lambda expr from Term with (reasonably) fewer parentheses;
 # in particular, the outermost parentheses are always omitted

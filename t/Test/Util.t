@@ -53,17 +53,25 @@ subtest({ # prefix operator ` (for retrieving pre-built test-terms)
 }, 'prefix op ` retrieves...');
 
 
-#`{ # test the test-terms
+{ # test the test-terms
     does_ok &testTermFn, Callable, 'exports `&testTermFn`';
+    does_ok $testTerms, Any, 'exports `$testTerms`';
 
     subtest({
-        for %terms.pairs -> (:$key, :$value) {
+        for $testTerms.values -> $value {
             subtest({
-                does_ok $value, TTerm;
-                my TTerm $term = parseLambda($key);
+                my $mainKey = $value.mainKey;
+                is $mainKey, $Term2srcFull($value), 'main key should be fully parenthesized lambda expr';
+
+                my TTerm $term = parseLambda($mainKey);
                 is_eq($term, $value);
+
+                for $value.synonyms -> $s {
+                    lives_ok({ parseLambda($s) }, "'$s' is valid lambda expr")
+                        or die;
+                }
             });
         }
-    }, '%terms.keys are Str s and .values are TTerm s');
+    }, 'test-terms');
 }
 
