@@ -74,20 +74,6 @@ diag curryStats;
 { # profiling betaReduce
     my ( $bigTerm, $bigLambda, $expectedTerm, $expectedLambda, $actualTerm);
 
-    $time = now;
-    my $g = $VarT('g');
-    my $h = $VarT('h');
-    my $k = $VarT('k');
-    my $x = $VarT('x');
-    my $y = $VarT('y');
-    my $f1 = $VarT('f1');   # field 1
-    my $f2 = $VarT('f2');   # field 2
-    my $f3 = $VarT('f3');   # field 3
-    my $f4 = $VarT('f4');   # field 4
-    my $f5 = $VarT('f5');   # field 5
-    $bigTerm = $LamT('f1', $LamT('f2', $LamT('f3', $LamT('f4', $LamT('f5', $AppT($LamT('y', $LamT('_', $y)), $AppT($LamT('g', $LamT('h', $AppT($LamT('y', $LamT('_', $y)), $AppT($g, $h)))), $AppT($LamT('g', $LamT('h', $AppT($LamT('y', $LamT('_', $y)), $AppT($g, $h)))), $LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('x', $x), $k), $f1)), $k), $f2)), $k), $f3)), $k), $f4)), $k), $f5))))))))));
-    diag (now.Real - $time.Real).round(0.01) ~ " sec consumed for big-term construction";
-
     #$make-Ctor-chi_term: ctor2o4f5 (expects 4 callbacks and applies the 2nd to 5 fields)
     $bigLambda = 'λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))';
     $time = now;
