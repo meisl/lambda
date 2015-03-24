@@ -6,6 +6,7 @@ use Lambda::Boolean;
 use Lambda::String;
 use Lambda::MaybeADT;
 use Lambda::ListADT;
+use Lambda::PairADT;
 use Lambda::TermADT;
 use Lambda::FreeVars;
 use Lambda::Substitution;
@@ -286,7 +287,14 @@ constant $betaContract is export = $Y(-> &self {
                         );
                         case-List($alpha-problematic,
                             cons => -> Str $hd, TList $tl {
-                                die 'NYI: alpha-convert for ' ~ $List2Str($alpha-problematic) ~ ' in β-redex ' ~ $Term2srcLess($t)
+                                my $substitutions = $map($VarT, $alpha-problematic);
+                                my $substituted-func = $subst-with-alpha($VarT($funcVarName), $arg, $substitutions, $funcBody);
+                                #die 'NYI: alpha-convert for ' ~ $List2Str($alpha-problematic) ~ ' in β-redex ' ~ $Term2srcLess($t)
+                                #    ~ "\n     substitutions: {$List2Str($substitutions)}"
+                                #    ~ "\n            result: {$Term2srcLess($Some2value($substituted-func))}"
+                                #;
+                                # Note: t cannot be Omega
+                                $substituted-func;
                             },
                             nil => {
                                 my $substituted-func = $subst($funcBody, $arg, $funcVarName);

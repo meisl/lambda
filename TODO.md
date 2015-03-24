@@ -19,7 +19,7 @@
 - [x] #34 'use ADT Term alone to represent Terms' (branch "switch_to_lambda_repres")
 - [ ] #12 'most simple impl of β-red. avoiding accidental capture (in Perl6 only, efficiency is of NO importance)'
     - [x] implement sequential substitution, ie. instead of just taking *one* "term `t` for var `x`" arg accept a *list* of those `Pair`s (#29), to be applied one after the other, in the order they appear in the list (-> transitively). Use `None` (`Maybe`, #28) as a return value indicating no change and `Some t'` if the result is indeed a different term `t'`; in order to support maximal sharing.
-    - [ ] implement β-reduction in terms of sequential substitution, removing and/or adding particular substitutions to the list as required by certain binders of λs, or, resp., for doing necessary α-conversions. Again, use `Maybe Term` as return type for sharing.
+    - [x] implement β-reduction in terms of sequential substitution, removing and/or adding particular substitutions to the list as required by certain binders of λs, or, resp., for doing necessary α-conversions. Again, use `Maybe Term` as return type for sharing.
 - [ ] #27 'augment syntax tree nodes with src location info'
 - [ ] #11 'implement β/η-red. and α-conv using ADT Term (simple but correct)'
 - [ ] #13 'refine β/η-red. and α-conv using ADT Term: clever & efficient & flexible!'
