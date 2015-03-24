@@ -62,7 +62,7 @@ our constant $testTerms is export = {
                     ;
                 }
                 #say "adding {$_.perl} as synonym for {$mainKey.perl} => {$Term2srcLess($val)}";
-                %!hash{$_} = $val;
+                %!hash{$_} ::= $val;
                 $val.names.push($_);
             }
             return self;
@@ -74,9 +74,6 @@ our constant $testTerms is export = {
             ).map(-> $value {
                 ".aka('{$value.mainKey}', '{$value.synonyms.join('\', \'')}')";
             }).join("\\\n        ");
-
-
-        
         }
     }
 

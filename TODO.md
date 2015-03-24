@@ -40,7 +40,8 @@
   - [x] do it efficiently, ie using as few indirections and as much compile-time binding and type-checking  as possible. -> overload/override `multi invoke (...)` with appropriate signatures (nest actual sig in extra parens `(` and `)`, since we'll be passed a capture); avoid introducing extra "internal" methods like "apply" etc.
 - [ ] #2 'add most simple symbol-lookup using "δ"'
 - [ ] #22 'add comments to syntax'
-- [ ] #30 'add literal string constants to the grammar, using " (double-quotes) and \ (back-slash) for escape'
+- [x] #30 'add literal string constants to the grammar, using " (double-quotes) and \ (back-slash) for escape'
+- [ ] #38 'add integer literals to syntax'
 - [ ] #3 'add hygienic macros using "µ"'
 - [ ] #4 'add "if" as a macro'
 - [ ] #14 'add "cond" (aka "switch") as a macro'
