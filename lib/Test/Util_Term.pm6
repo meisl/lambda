@@ -2,10 +2,10 @@ use v6;
 use Test;
 
 use Lambda::BaseP6;
-use Lambda::Boolean;
 use Lambda::TermADT;
 
 use Lambda::LambdaGrammar;
+use Lambda::Conversion::Bool-conv;
 
 
 our constant $testTerms is export = {
@@ -146,6 +146,7 @@ our constant $testTerms is export = {
     my $Lx_yx ::= $LamT('x', $yx);
 
     my $L__y  ::= $LamT('_', $y);
+    my $Ly_xx ::= $LamT('y', $xx);
     my $Ly_xy ::= $LamT('y', $xy);
     my $Ly_yy ::= $LamT('y', $yy);
     my $Ly_zy ::= $LamT('y', $zy);
@@ -228,6 +229,7 @@ our constant $testTerms is export = {
         '(λx.((x y) "c"))'          => $LamT('x', $xyc),
 
         '(λ_.y)'                    => $L__y,
+        '(λy.(x x))'                => $Ly_xx,
         '(λy.(x y))'                => $Ly_xy,
         '(λy.(y y))'                => $Ly_yy,   # omegaY aka ωY ("omega in y")
         '(λy.(z y))'                => $Ly_zy,
@@ -275,6 +277,7 @@ our constant $testTerms is export = {
         '((λy.(y y)) (λy.(y y)))'       => $AppT($Ly_yy, $Ly_yy), # = (ωY ωY) aka ΩYY ("Omega in y")
         '((λx.(x x)) (λy.(y y)))'       => $AppT($Lx_xx, $Ly_yy), # = (ωX ωY) aka ΩXY (same as Ω modulo α-conversion)
         '((λy.(y y)) (λx.(x x)))'       => $AppT($Ly_yy, $Lx_xx), # = (ωY ωX) aka ΩYX (same as Ω modulo α-conversion)
+        '((λx.(x x)) (λy.(x x)))'       => $AppT($Lx_xx, $Ly_xx), # NOT Ω (wrong binder in 2nd λ)
     });
 
     # some synonyms:
@@ -356,6 +359,7 @@ our constant $testTerms is export = {
         .aka('(λx.(x y))', 'λx.(x y)', 'λx.x y')\
         .aka('(λx.(y x))', 'λx.(y x)', 'λx.y x')\
         .aka('(λx.((x y) "c"))', 'λx.((x y) "c")', 'λx.x y "c"')\
+        .aka('(λy.(x x))', 'λy.(x x)', 'λy.x x')\
         .aka('(λy.(x y))', 'λy.(x y)', 'λy.x y')\
         .aka('(λy.(y y))', 'ωY', 'omegaY', 'λy.(y y)', 'λy.y y')\
         .aka('(λy.(z y))', 'λy.(z y)', 'λy.z y')\
@@ -381,7 +385,8 @@ our constant $testTerms is export = {
         .aka('((λx.(x x)) (λx.(x x)))', 'ΩXX', 'OmegaXX', 'Ω', 'Omega', '(ωX ωX)', '(omegaX omegaX)', '(ω ω)', '(omega omega)', '(λx.(x x)) (λx.(x x))', 'ωX ωX', 'omegaX omegaX', 'ω ω', 'omega omega', '(λx.x x) (λx.x x)')\
         .aka('((λy.(y y)) (λy.(y y)))', 'ΩYY', 'OmegaYY', '(ωY ωY)', '(omegaY omegaY)', '(λy.(y y)) (λy.(y y))', 'ωY ωY', 'omegaY omegaY', '(λy.y y) (λy.y y)')\
         .aka('((λx.(x x)) (λy.(y y)))', 'ΩXY', 'OmegaXY', '(ωX ωY)', '(omegaX omegaY)', '(λx.(x x)) (λy.(y y))', 'ωX ωY', 'omegaX omegaY', '(λx.x x) (λy.y y)')\
-        .aka('((λy.(y y)) (λx.(x x)))', 'ΩYX', 'OmegaYX', '(ωY ωX)', '(omegaY omegaX)', '(λy.(y y)) (λx.(x x))', 'ωY ωX', 'omegaY omegaX', '(λy.y y) (λx.x x)')
+        .aka('((λy.(y y)) (λx.(x x)))', 'ΩYX', 'OmegaYX', '(ωY ωX)', '(omegaY omegaX)', '(λy.(y y)) (λx.(x x))', 'ωY ωX', 'omegaY omegaX', '(λy.y y) (λx.x x)')\
+        .aka('((λx.(x x)) (λy.(x x)))', '(λx.(x x)) (λy.(x x))', '(λx.x x) (λy.x x)', '((λx.x x) (λy.x x))')\
 ;
 
 #`{
@@ -427,7 +432,12 @@ multi sub prefix:<`>(Str:D $termIdentifier -->TTerm:D) is export {
         my $msg = "unprepared test-term: '$termIdentifier'";
         try {
             $term = parseLambda($termIdentifier);
-            $msg ~= " - you may want to add it to in {$?FILE}:\n    '$termIdentifier'         => {$Term2sourceP6($term)},";
+            my $syn = $testTerms.values.first(-> $t { convertTBool2P6Bool($Term-eq($term, $t)) });
+            if $syn.defined {
+                $msg ~= " - but it's a synonym; in {$?FILE}:\n    .aka('{$syn.mainKey}', '$termIdentifier')\\";
+            } else {
+                $msg ~= " - you may want to add it to in {$?FILE}:\n    '$termIdentifier'         => {$Term2sourceP6($term)},";
+            }
         }
         $msg ~= " - $!"
             if $!;
@@ -486,6 +496,6 @@ my sub is_eq-diag(TTerm:D $actual, TTerm:D $expected) {
 }
 
 multi sub is_eq(TTerm:D $actual, TTerm:D $expected, Str $msg?) is export {
-    ok($Term-eq($actual, $expected) === $true, $msg // is_eq-msg($actual, $expected) )
+    ok(convertTBool2P6Bool($Term-eq($actual, $expected)), $msg // is_eq-msg($actual, $expected) )
         or is_eq-diag($actual, $expected);
 }

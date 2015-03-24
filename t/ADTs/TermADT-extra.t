@@ -57,25 +57,25 @@ plan 53;
         'x (y z) x'           => '(x (y z) x)',
         'x (y (z x))'         => '(x (y (z x)))',
 
-        '(λx."c")'                  => 'λx."c"',
-        '(λx.x)'                    => 'λx.x',
-        '(λx.(x x))'                => 'λx.x x',
-        '(λx.(x "c"))'              => 'λx.x "c"',
-        '(λx.(x y))'                => 'λx.x y',
-        '(λx.(x (λy.(x y))))'       => 'λx.x (λy.x y)',
-        '(λx.((λy.(z y)) x))'       => 'λx.(λy.z y) x',
-        '(λx.((λy.(z y)) (x x)))'   => 'λx.(λy.z y) (x x)',
-        '(λz.(x (λy.(x y))))'       => 'λz.x (λy.x y)',
+        'λx."c"'              => 'λx."c"',
+        'λx.x'                => 'λx.x',
+        'λx.x x'              => 'λx.x x',
+        'λx.x "c"'            => 'λx.x "c"',
+        'λx.x y'              => 'λx.x y',
+        'λx.x (λy.x y)'       => 'λx.x (λy.x y)',
+        'λx.(λy.z y) x'       => 'λx.(λy.z y) x',
+        'λx.(λy.z y) (x x)'   => 'λx.(λy.z y) (x x)',
+        'λz.x (λy.x y)'       => 'λz.x (λy.x y)',
 
-        '(x (λy.(x y)))'                => '(x (λy.x y))',
-        '((x y) (y z))'                 => '(x y (y z))',
-        '((x y) (λy.(x y)))'            => '(x y (λy.x y))',
-        '((λy.(x y)) y)'                => '(λy.x y) y',
-        '((λx.(y x)) (λy.(x y)))'       => '(λx.y x) (λy.x y)',
-        '((λx.(y x)) (x y))'            => '(λx.y x) (x y)',
-        '(((λx.(y x)) (x y)) x)'        => '(λx.y x) (x y) x',
-        '(((λx.(y x)) (x y)) (λx.x))'   => '(λx.y x) (x y) (λx.x)',
-        '(((λx.(y x)) (λx.x)) (λx.x))'  => '(λx.y x) (λx.x) (λx.x)',
+        'x (λy.x y)'              => '(x (λy.x y))',
+        'x y (y z)'               => '(x y (y z))',
+        'x y (λy.x y)'            => '(x y (λy.x y))',
+        '(λy.x y) y'              => '(λy.x y) y',
+        '(λx.y x) (λy.x y)'       => '(λx.y x) (λy.x y)',
+        '(λx.y x) (x y)'          => '(λx.y x) (x y)',
+        '(λx.y x) (x y) x'        => '(λx.y x) (x y) x',
+        '(λx.y x) (x y) (λx.x)'   => '(λx.y x) (x y) (λx.x)',
+        '(λx.y x) (λx.x) (λx.x)'  => '(λx.y x) (λx.x) (λx.x)',
     );
 }
 
@@ -115,22 +115,22 @@ plan 53;
     is_properLambdaFn($is-selfApp, 'selfApp?');
 
     testTermFn( $is-selfApp, :expectedToStr(*.Str),
-        'x'             => $false,
-        '"c"'           => $false,
-        '5'             => $false,
-        '(x "c")'       => $false,
-        '(x x)'         => $true, 
-        '(y y)'         => $true, 
-        '(x y)'         => $false,
-        'λx."c"'        => $false,
-        'λx.x'          => $false,
-        'ωX'            => $false,  # 'λx.x x
-        'ωY'            => $false,  # 'λy.y y
-        'λx.(x "c")'    => $false,
-        'λx.(x y)'      => $false,
-        'λx.(y x)'      => $false,
-        'ΩXX'           => $false,  # (ωX ωX)
-        'ΩYY'           => $false,  # (ωY ωY)
+        'x'           => $false,
+        '"c"'         => $false,
+        '5'           => $false,
+        'x "c"'       => $false,
+        'x x'         => $true, 
+        'y y'         => $true, 
+        'x y'         => $false,
+        'λx."c"'      => $false,
+        'λx.x'        => $false,
+        'ωX'          => $false,  # 'λx.x x
+        'ωY'          => $false,  # 'λy.y y
+        'λx.x "c"'    => $false,
+        'λx.x y'      => $false,
+        'λx.y x'      => $false,
+        'ΩXX'         => $false,  # (ωX ωX)
+        'ΩYY'         => $false,  # (ωY ωY)
     );
 }
 
@@ -142,62 +142,62 @@ plan 53;
     my $f = $is-selfAppOfVar($x) but Definition("{$is-selfAppOfVar.name} $x");
 
     testTermFn($f, :expectedToStr(*.Str),
-        'x'             => $false,
-        '"c"'           => $false,
-        '5'             => $false,
-        '(x "c")'       => $false,
-        '(x x)'         => $true, 
-        '(y y)'         => $false,  # [wrong var]
-        '(x y)'         => $false,
-        'λx."c"'        => $false,
-        'λx.x'          => $false,
-        'ωX'            => $false,  # 'λx.(x x)
-        'ωY'            => $false,  # 'λy.(y y)
-        'λx.(x "c")'    => $false,
-        'λx.(x y)'      => $false,
-        'λx.(y x)'      => $false,
-        'ΩXX'           => $false,  # (ωX ωX)
-        'ΩYY'           => $false,  # (ωY ωY)
+        'x'           => $false,
+        '"c"'         => $false,
+        '5'           => $false,
+        'x "c"'       => $false,
+        'x x'         => $true, 
+        'y y'         => $false,  # [wrong var]
+        'x y'         => $false,
+        'λx."c"'      => $false,
+        'λx.x'        => $false,
+        'ωX'          => $false,  # 'λx.(x x)
+        'ωY'          => $false,  # 'λy.(y y)
+        'λx.x "c"'    => $false,
+        'λx.x y'      => $false,
+        'λx.y x'      => $false,
+        'ΩXX'         => $false,  # (ωX ωX)
+        'ΩYY'         => $false,  # (ωY ωY)
     );
 
     $f = $is-selfAppOfVar($y) but Definition("{$is-selfAppOfVar.name} $y");
     testTermFn($f, :expectedToStr(*.Str),
-        'x'             => $false,
-        '"c"'           => $false,
-        '5'             => $false,
-        '(x "c")'       => $false,
-        '(x x)'         => $false,  #   [wrong var]
-        '(y y)'         => $true, 
-        '(x y)'         => $false,
-        'λx."c"'        => $false,
-        'λx.x'          => $false,
-        'ωX'            => $false,  # 'λx.(x x)
-        'ωY'            => $false,  # 'λy.(y y)
-        'λx.(x "c")'    => $false,
-        'λx.(x y)'      => $false,
-        'λx.(y x)'      => $false,
-        'ΩXX'           => $false,  # (ωX ωX)
-        'ΩYY'           => $false,  # (ωY ωY)
+        'x'           => $false,
+        '"c"'         => $false,
+        '5'           => $false,
+        'x "c"'       => $false,
+        'x x'         => $false,  #   [wrong var]
+        'y y'         => $true, 
+        'x y'         => $false,
+        'λx."c"'      => $false,
+        'λx.x'        => $false,
+        'ωX'          => $false,  # λx.x x
+        'ωY'          => $false,  # λy.y y
+        'λx.x "c"'    => $false,
+        'λx.x y'      => $false,
+        'λx.y x'      => $false,
+        'ΩXX'         => $false,  # (ωX ωX)
+        'ΩYY'         => $false,  # (ωY ωY)
     );
 
     $f = $is-selfAppOfVar($c) but Definition("{$is-selfAppOfVar.name} $c");
     testTermFn($f, :expectedToStr(*.Str),
-        'x'             => $false,
-        '"c"'           => $false,
-        '5'             => $false,
-        '(x "c")'       => $false,
-        '(x x)'         => $false,  #   [passed a ConstT as 1st arg]
-        '(y y)'         => $false,  #   [passed a ConstT as 1st arg]
-        '(x y)'         => $false,
-        'λx."c"'        => $false,
-        'λx.x'          => $false,
-        'ωX'            => $false,  # 'λx.(x x)
-        'ωY'            => $false,  # 'λy.(y y)
-        'λx.(x "c")'    => $false,
-        'λx.(x y)'      => $false,
-        'λx.(y x)'      => $false,
-        'ΩXX'           => $false,  # (ωX ωX)
-        'ΩYY'           => $false,  # (ωY ωY)
+        'x'           => $false,
+        '"c"'         => $false,
+        '5'           => $false,
+        'x "c"'       => $false,
+        'x x'         => $false,  #   [passed a ConstT as 1st arg]
+        'y y'         => $false,  #   [passed a ConstT as 1st arg]
+        'x y'         => $false,
+        'λx."c"'      => $false,
+        'λx.x'        => $false,
+        'ωX'          => $false,  # λx.x x
+        'ωY'          => $false,  # λy.y y
+        'λx.x "c"'    => $false,
+        'λx.x y'      => $false,
+        'λx.y x'      => $false,
+        'ΩXX'         => $false,  # (ωX ωX)
+        'ΩYY'         => $false,  # (ωY ωY)
     );
 }
 
@@ -206,22 +206,23 @@ plan 53;
     is_properLambdaFn($is-omega, 'ω?');
 
     testTermFn( $is-omega, :expectedToStr(*.Str),
-        'x'             => $false,
-        '"c"'           => $false,
-        '5'             => $false,
-        '(x "c")'       => $false,
-        '(x x)'         => $false,
-        '(y y)'         => $false,
-        '(x y)'         => $false,
-        'λx."c"'        => $false,
-        'λx.x'          => $false,
-        'ωX'            => $true,   # 'λx.(x x)
-        'ωY'            => $true,   # 'λy.(y y)
-        'λx.(x "c")'    => $false,
-        'λx.(x y)'      => $false,
-        'λx.(y x)'      => $false,
-        'ΩXX'           => $false,  # (ωX ωX)
-        'ΩYY'           => $false,  # (ωY ωY)
+        'x'           => $false,
+        '"c"'         => $false,
+        '5'           => $false,
+        'x "c"'       => $false,
+        'x x'         => $false,
+        'y y'         => $false,
+        'x y'         => $false,
+        'λx."c"'      => $false,
+        'λx.x'        => $false,
+        'ωX'          => $true,   # λx.x x
+        'ωY'          => $true,   # λy.y y
+        'λy.x x'      => $false,  # wrong binder
+        'λx.x y'      => $false,
+        'λx.y x'      => $false,
+        'λx.x "c"'    => $false,
+        'ΩXX'         => $false,  # (ωX ωX)
+        'ΩYY'         => $false,  # (ωY ωY)
     );
 }
 
@@ -233,23 +234,24 @@ plan 53;
         'x'                 => $false,
         '"c"'               => $false,
         '5'                 => $false,
-        '(x "c")'           => $false,
-        '(x x)'             => $false,
-        '(y y)'             => $false,
-        '(x y)'             => $false,
+        'x "c"'             => $false,
+        'x x'               => $false,
+        'y y'               => $false,
+        'x y'               => $false,
         'λx."c"'            => $false,
         'λx.x'              => $false,
-        'ωX'                => $false,  # 'λx.(x x)
-        'ωY'                => $false,  # 'λy.(y y)
-        'λx.(x "c")'        => $false,
-        'λx.(x y)'          => $false,
-        'λx.(y x)'          => $false,
+        'ωX'                => $false,  # λx.x x
+        'ωY'                => $false,  # λy.y y
+        'λx.x "c"'          => $false,
+        'λx.x y'            => $false,
+        'λx.y x'            => $false,
         'ΩXX'               => $true ,  # (ωX ωX)
         'ΩXY'               => $true ,  # (ωX ωY)
         'ΩYX'               => $true ,  # (ωY ωX)
         'ΩYY'               => $true,   # (ωY ωY)
-        '(λx.(x x)) (y y)'  => $false,
-        '(y y) (λx.(x x))'  => $false,
+        '(λx.x x) (λy.x x)' => $false,  # wrong binder in 2nd λ
+        '(λx.x x) (y y)'    => $false,
+        'y y (λx.x x)'      => $false,
     );
 }
 
@@ -262,22 +264,22 @@ plan 53;
     # size of both, a VarT and ConstT is 1
 
     testTermFn( $Term2size, :expectedToStr(*.Str),
-        'x'                         =>  1,
-        '"c"'                       =>  1,
-        '5'                         =>  1,
-        '(x "c")'                   =>  3,
-        '(x (x y))'                 =>  5,
-        'λz.(x (x y))'              =>  6,
-        '(λx.(x (λy.(x y))))'       =>  7,
-        '((λy.(x y)) y)'            =>  6,
-        '((λx.(y x)) (λy.(x y)))'   =>  9,
-        '(λx.((λy.(z y)) x))'       =>  7,
-        'ωX'                        =>  4,  # 'λx.(x x)
-        'ωY'                        =>  4,  # 'λy.(y y)
-        'ΩXX'                       =>  9,  # (ωX ωX)
-        'ΩXY'                       =>  9,  # (ωX ωY)
-        'ΩYX'                       =>  9,  # (ωY ωX)
-        'ΩYY'                       =>  9,  # (ωY ωY)
+        'x'                   =>  1,
+        '"c"'                 =>  1,
+        '5'                   =>  1,
+        'x "c"'               =>  3,
+        'x (x y)'             =>  5,
+        'λz.x (x y)'          =>  6,
+        'λx.x (λy.x y)'       =>  7,
+        '(λy.x y) y'          =>  6,
+        '(λx.y x) (λy.x y)'   =>  9,
+        'λx.(λy.z y) x'       =>  7,
+        'ωX'                  =>  4,  # λx.x x
+        'ωY'                  =>  4,  # λy.y y
+        'ΩXX'                 =>  9,  # (ωX ωX)
+        'ΩXY'                 =>  9,  # (ωX ωY)
+        'ΩYX'                 =>  9,  # (ωY ωX)
+        'ΩYY'                 =>  9,  # (ωY ωY)
     );
 
 }
