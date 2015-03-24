@@ -12,7 +12,7 @@ my sub fn2Str($f) {
     $f.name || $f.Str || $f.gist || $f.perl;
 }
 
-sub is_validLambda(&f) is export {
+sub is_validLambda(&f) is export {  # TODO: rename 'is_validLambda' -> 'is_validP6LambdaFn'
     my $fStr = fn2Str(&f);
     subtest {
         my $failed = False;
@@ -29,7 +29,7 @@ sub is_validLambda(&f) is export {
     }, "$fStr is valid lambda";
 }
 
-sub is_properLambdaFn(&f, Str $expectedName?, :$noWarning) is export {
+sub is_properLambdaFn(&f, Str $expectedName?, :$noWarning) is export {  # TODO: rename 'is_properLambdaFn' -> 'is_properP6LambdaFn'
     my $fStr = fn2Str(&f);
     subtest {
         my $failed = False;

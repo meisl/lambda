@@ -12,7 +12,7 @@ use Test::Util;
 use Test::Util_Lambda;
 use Test::Util_Term;
 
-plan 10;
+plan 13;
 
 
 { # does_ok, is_properLambdaFn
@@ -61,16 +61,19 @@ subtest({ # prefix operator ` (for retrieving pre-built test-terms)
         for $testTerms.values -> $value {
             subtest({
                 my $mainKey = $value.mainKey;
-                is $mainKey, $Term2srcFull($value), 'main key should be fully parenthesized lambda expr';
+                is $mainKey, $Term2srcFull($value), "main key {$mainKey.perl} should be fully parenthesized lambda expr";
 
                 my TTerm $term = parseLambda($mainKey);
                 is_eq($term, $value);
 
                 for $value.synonyms -> $s {
-                    lives_ok({ parseLambda($s) }, "'$s' is valid lambda expr")
+                    my $sValue = $testTerms.get($s);
+                    cmp_ok($sValue, '===', $value, "value for synonym {$s.perl}")
+                        or die;
+                    lives_ok({ parseLambda($s) }, "synonym {$s.perl} is a valid lambda expr")
                         or die;
                 }
-            });
+            }) unless $value.Str eq '(ConstT 5)';   # TODO: add (decimal) number constant literals to grammar
         }
     }, 'test-terms');
 }
