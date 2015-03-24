@@ -2,16 +2,21 @@ use v6;
 
 use Test;
 use Lambda::BaseP6;
-use Lambda::Boolean;
+use Lambda::Conversion::Bool-conv;
+use Lambda::Conversion::ListADT-conv;
 use Lambda::ListADT;
 
 module Test::Util_List;
 
 
+my $tripleEq = -> $a, $b { $a === $b } does role {
+    has $.Str = '===';
+};
+
 constant $contains_ok is export = lambdaFn(
     'contains_ok', 'λy.λxs.λxsDesc.exists (λe.y === e) xs',
     -> $y, TList:D $xs, Str:D $xsDesc {
-        is($exists( -> $e { $e === $y ?? $true !! $false }, $xs), $true, "(contains_ok $y $xsDesc)")
+        ok(convertTBool2P6Bool($exists(-> $e { convertP6Bool2TBool($e === $y) }, $xs)), "(contains_ok $y $xsDesc)")
             or diag("searched: $y\n in list: $xs") and False;
     }
 );
@@ -23,3 +28,57 @@ constant $has_length is export = lambdaFn(
             or diag(" of list: $xs") and False;
     }
 );
+
+
+my sub fail-List_eq-elem(Str $msg, Int $idx, $actualElem, $expectedElem, $cmpStr) {
+    diag sprintf("\nexpected (at index $idx): %s\n     got (at index $idx): %s\n%{20+$idx.Str.chars}s: %s",
+        $actualElem, $expectedElem,
+        'comparison used', $cmpStr
+    );
+    ok(False, $msg);
+}
+
+my sub fail-List_eq-tooFew(Str $msg, @actual, @expected) {
+    die "expected {@actual.perl} to have LESS elems than {@expected.perl}"
+        unless @actual.elems < @expected.elems;
+
+    diag sprintf("\nexpected: %d more, namely %s\n     got: NOTHING after %d elements",
+        @expected.elems - @actual.elems,
+        @expected[@actual.elems .. *-1].join(', '),
+        @actual.elems
+    );
+    ok(False, $msg);
+}
+
+my sub fail-List_eq-tooMany(Str $msg, @actual, @expected) {
+    die "expected {@actual.perl} to have MORE elems than {@expected.perl}"
+        unless @actual.elems > @expected.elems;
+
+    diag sprintf("\nexpected: NOTHING after %d elements\n     got: %d more, nameley %s",
+        @expected.elems,
+        @actual.elems - @expected.elems,
+        @actual[@expected.elems .. *-1].join(', ')
+    );
+    ok(False, $msg);
+}
+
+sub is_eq-List(TList:D $actual, @expected, Str $msg?, :&cmp = $tripleEq) is export {
+    my @actual = convertTList2P6Array($actual);
+    my $m = $msg // "{$List2Str($actual)} equals {$List2Str(convertP6Array2TList(@expected))}";
+
+    my $idx = 0;
+    for @actual Z @expected -> $a, $x {
+        if not &cmp($a, $x) {
+            return fail-List_eq-elem($m, $idx, $a, $x, &cmp);
+        }
+        $idx++;
+    }
+    if @actual.elems < @expected.elems {
+        fail-List_eq-tooFew($m, @actual, @expected);
+    } elsif @actual.elems > @expected.elems {
+        fail-List_eq-tooMany($m, @actual, @expected);
+    } else {
+        ok(True, $m);
+    }
+}
+

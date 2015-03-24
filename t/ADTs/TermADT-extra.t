@@ -12,7 +12,7 @@ use Lambda::Boolean;
 # module under test:
 use Lambda::TermADT;
 
-plan 53;
+plan 48;
 
 
 { # Term->source
@@ -87,27 +87,24 @@ plan 53;
     my $cs;
 
     $cs = $Term2children($x);
-    $has_length($cs, 0, "(Term->children $x) / a VarT has no children");
+    is_eq-List($cs, [], "(Term->children $x) / a VarT has no children");
 
     $cs = $Term2children($c);
-    $has_length($cs, 0, "(Term->children $c) / a ConstT has no children");
+    is_eq-List($cs, [], "(Term->children $c) / a ConstT has no children");
     
-    my $t1 = `'(x y)';
+    my $t1 = `'x y';
     $cs = $Term2children($t1);
-    $has_length($cs, 2, "(Term->children $t1) / an AppT has two children (func and arg)");
-    $contains_ok($x, $cs, "(Term->children $t1)");
-    $contains_ok($y, $cs, "(Term->children $t1)");
+    is_eq-List($cs, [`'x', `'y'], "(Term->children $t1) / an AppT has two children (func and arg)");
+    # TODO: `contains_exactly`, ie is_eq but order should not matter
     
-    my $t2 = `'((x y) "c")';
+    my $t2 = `'x y "c"';
     $cs = $Term2children($t2);
-    $has_length($cs, 2, "(Term->children $t2) / an AppT has two children (func and arg)");
-    $contains_ok($t1, $cs, "(Term->children $t2)") or die;
-    $contains_ok($c,  $cs, "(Term->children $t2)");
+    is_eq-List($cs, [`'x y', `'"c"'], "(Term->children $t2) / an AppT has two children (func and arg)");
     
-    my $t3 = `'(λx.((x y) "c"))';
+    my $t3 = `'λx.x y "c"';
     $cs = $Term2children($t3);
-    $has_length($cs, 1, "(Term->children $t3) / a LamT has one child (its body)");
-    $contains_ok($t2, $cs, "(Term->children $t3)");
+    is_eq-List($cs, [`'x y "c"'], "(Term->children $t3) / a LamT has one child (its body)");
+    # TODO: `contains_exactly`, ie is_eq but order should not matter
 }
 
 

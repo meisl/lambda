@@ -3,6 +3,7 @@ use Test;
 
 use Lambda::BaseP6;
 use Lambda::Boolean;
+use Lambda::ListADT;
 use Lambda::TermADT;
 use Lambda::LambdaGrammar;
 
@@ -10,10 +11,72 @@ use Lambda::LambdaGrammar;
 # modules under test:
 use Test::Util;
 use Test::Util_Lambda;
+use Test::Util_List;
 use Test::Util_Term;
 
-plan 13;
+plan 17;
 
+
+# - Util_List -----------------------------------------------------------------
+
+{
+    is_eq-List($nil, [], "nil equals []");
+    is_eq-List($cons(5, $nil), [5]);
+    is_eq-List($cons(5, $cons(3, $nil)), [5, 3]);
+    
+    ## elems differ:
+    #is_eq-List($cons(5, $nil),                       [3]);       # TODO: should fail (dunno how to test this)
+    
+    ## actual has too few elems:
+    #is_eq-List($cons(5, $cons(3, $nil)),             [5, 4]);    # TODO: should fail (dunno how to test this)
+    #is_eq-List($cons(5, $nil),                       [5, 3, 1]); # TODO: should fail (dunno how to test this)
+    #is_eq-List($cons(5, $nil),                       [5, 3]);    # TODO: should fail (dunno how to test this)
+    
+    ## actual has too many elems:
+    #is_eq-List($cons(5, $cons(3, $nil)),             [5]);       # TODO: should fail (dunno how to test this)
+    #is_eq-List($cons(5, $cons(3, $cons(1, $nil))),   [5]);       # TODO: should fail (dunno how to test this)
+
+    subtest({
+        my $list;
+
+        $list = $nil;
+        $has_length($list, 0, $list.Str);
+
+        $list = $cons(5, $nil);
+        $has_length($list, 1, $list.Str);
+
+        $list = $cons(5, $cons(3, $nil));
+        $has_length($list, 2, $list.Str);
+
+        $list = $cons(5, $cons("foo", $cons(3, $nil)));
+        $has_length($list, 3, $list.Str);
+
+        # now lists containing other lists somewhere inside:
+        my $list_3 = $cons(3, $nil);
+        my $list_foo_3 = $cons("foo", $list_3);
+        $list = $cons(5, $cons($list_foo_3, $nil));
+        $has_length($list, 2, $list.Str);
+
+        my $list_bar_3 = $cons("bar", $list_3);
+        my $list_foo   = $cons("foo", $nil);
+        my $list_list_bar_3 = $cons($list_bar_3, $nil);
+        $list = $cons(5, $cons($list_foo, $cons($list_list_bar_3, $nil)));
+        $has_length($list, 3, $list.Str);
+
+    }, '$has_length');
+
+    todo '$contains_ok';
+}
+
+
+# - Util ----------------------------------------------------------------------
+{
+    todo 'does_ok';
+    todo 'doesnt_ok';
+}
+
+
+# - Util_Lambda ---------------------------------------------------------------
 
 { # does_ok, is_properLambdaFn
     # using ::= to make it immutable
@@ -29,11 +92,8 @@ plan 13;
     # TODO: how to test this: `is_properLambdaFn($bad)`- should fail with X::Lambda::SyntaxError;
 }
 
-todo 'does_ok';
-todo 'doesnt_ok';
 
-todo '$contains_ok';
-todo '$has_length';
+# - Util_Term -----------------------------------------------------------------
 
 { # is_eq test for TTerms
     does_ok &is_eq, Callable, 'exports `&is_eq`';
