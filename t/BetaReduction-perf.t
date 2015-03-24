@@ -81,7 +81,6 @@ diag curryStats;
     diag (now.Real - $time.Real).round(0.01) ~ " sec consumed for big-term construction";
 
     is $Term2srcLess($bigTerm), $bigLambda, "\$bigTerm.lambda is $bigLambda";
-    diag $Term2srcLess($bigTerm);
 
     $expectedTerm = $LamT('f1', $LamT('f2', $LamT('f3', $LamT('f4', $LamT('f5', $LamT('_', $LamT('h', $LamT('_', $LamT('_', `'h f1 f2 f3 f4 f5')))))))));
     $expectedLambda = 'λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 f3 f4 f5';
