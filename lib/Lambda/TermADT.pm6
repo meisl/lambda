@@ -435,8 +435,8 @@ q:to/ENDOFLAMBDA/,
     λt.given-Term t
         (when-ConstT (λ_.λ_.nil)                    ; (K (K nil))  χ2 K nil
         (when-VarT   (λ_.λ_.nil)                    ; (K (K nil))
-        (when-AppT   (λf.λa.cons f (cons a nil))    ; (B (C cons) (C cons nil))
-        (when-LamT   (λv.λb.cons v (cons b nil))    ; (B (C cons) (C cons nil))
+        (when-AppT   (λf.λa.cons f (cons a nil))    ; (C (B (C cons) (C cons nil)))
+        (when-LamT   (λv.λb.cons v (cons b nil))    ; (C (B (C cons) (C cons nil)))
         λ_.λ_.λ_.λ_.error (~ "unknown TTerm" (Term->Str t))
         ))))
 ENDOFLAMBDA

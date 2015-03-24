@@ -77,10 +77,31 @@ our constant $testTerms is export = {
         }
     }
 
+    my $a  ::= $VarT('a');
+    my $b  ::= $VarT('b');
+#    my $c  ::= $VarT('c');     # clashes with c = ConstT("c")
+    my $d  ::= $VarT('d');
+    my $e  ::= $VarT('e');
+    my $f  ::= $VarT('f');
+    my $g  ::= $VarT('g');
+    my $h  ::= $VarT('h');
+    my $k  ::= $VarT('k');
+
+    my $f1 ::= $VarT('f1');
+    my $f2 ::= $VarT('f2');
+    my $f3 ::= $VarT('f3');
+    my $f4 ::= $VarT('f4');
+    my $f5 ::= $VarT('f5');
+
     my $x  ::= $VarT('x');
     my $y  ::= $VarT('y');
     my $z  ::= $VarT('z');
     my $c  ::= $ConstT('c');
+
+    my $fa ::= $AppT($f, $a);
+    my $fb ::= $AppT($f, $b);
+    my $fy ::= $AppT($f, $y);
+    my $gx ::= $AppT($g, $x);
 
     my $xx ::= $AppT($x, $x);
     my $xy ::= $AppT($x, $y);
@@ -97,10 +118,19 @@ our constant $testTerms is export = {
     my $zz ::= $AppT($z, $z);
     my $zc ::= $AppT($z, $c);
 
+    my $fab ::= $AppT($fa, $b);
+    my $fba ::= $AppT($fb, $a);
+    my $fyx ::= $AppT($fy, $x);
     my $xyz ::= $AppT($xy, $z);
     my $xyc ::= $AppT($xy, $c);
 
     my $xyzx ::= $AppT($xyz, $x);
+
+    my $hf1             ::= $AppT($h, $f1);
+    my $hf1f2           ::= $AppT($hf1, $f2);
+    my $hf1f2f3         ::= $AppT($hf1f2, $f3);
+    my $hf1f2f3f4       ::= $AppT($hf1f2f3, $f4);
+    my $hf1f2f3f4f5     ::= $AppT($hf1f2f3f4, $f5);
 
     my $L__x  ::= $LamT('_', $x);
     my $Lx_x  ::= $LamT('x', $x);
@@ -115,11 +145,30 @@ our constant $testTerms is export = {
     my $Ly_zy ::= $LamT('y', $zy);
 
     my $out = TestTerms.new({
+        'f1'                        => $f1,
+        'f2'                        => $f2,
+        'f3'                        => $f3,
+        'f4'                        => $f4,
+        'f5'                        => $f5,
+
+        'a'                         => $a,
+        'b'                         => $b,
+#        'c'                         => $c,     # clashes with c = ConstT("c")
+        'd'                         => $d,
+        'e'                         => $e,
+        'f'                         => $f,
+        'g'                         => $g,
+        'h'                         => $h,
+        'k'                         => $k,
+
         'x'                         => $x,
         'y'                         => $y,
         'z'                         => $z,
         '"c"'                       => $c,
         '5'                         => $ConstT(5),
+
+        '(g x)'                     => $gx,
+        '(f y)'                     => $fy,
 
         '(x x)'                     => $xx,
         '(x y)'                     => $xy,
@@ -136,6 +185,9 @@ our constant $testTerms is export = {
         '(z z)'                     => $zz,
         '(z "c")'                   => $zc,
 
+        '((f a) b)'                 => $fab,
+        '((f b) a)'                 => $fba,
+        '((f y) x)'                 => $fyx,
         '((x y) z)'                 => $xyz,
         '((x y) "c")'               => $xyc,
         '(((x y) z) x)'             => $xyzx,
@@ -147,6 +199,8 @@ our constant $testTerms is export = {
         '(λ_.x)'                    => $L__x,
         '(λx."c")'                  => $Lx_c,
         '(λx.x)'                    => $Lx_x,   # I aka id
+        '(λf.(λg.(λx.(f (g x)))))'  => $LamT('f', $LamT('g', $LamT('x', $AppT($f, $gx)))), #   B aka compose
+        '(λf.(λx.(λy.((f y) x))))'  => $LamT('f', $LamT('x', $LamT('y', $fyx))), #   C aka swap-args
 
         '(λx.(λ_.x))'               => $LamT('x', $L__x),   # K aka const
         '(λx.(x "c"))'              => $Lx_xc,
@@ -158,6 +212,13 @@ our constant $testTerms is export = {
         '(λy.(x y))'                => $Ly_xy,
         '(λy.(y y))'                => $Ly_yy,   # omegaY aka ωY ("omega in y")
         '(λy.(z y))'                => $Ly_zy,
+
+        '(λh.(λ_.h))'                       =>  $LamT('h', $LamT('_', $h)),                                 # ctor1o2f0 (ctor 1 of 2 with 0 fields)
+        '(λ_.(λh.h))'                       =>  $LamT('_', $LamT('h', $h)),                                 # ctor2o2f0 (ctor 2 of 2 with 0 fields)
+        '(λf1.(λh.(λ_.(h f1))))'            =>  $LamT('f1', $LamT('h', $LamT('_', $hf1))),                  # ctor1o2f1 (ctor 1 of 2 with 1 field)
+        '(λf1.(λ_.(λh.(h f1))))'            =>  $LamT('f1', $LamT('_', $LamT('h', $hf1))),                  # ctor2o2f1 (ctor 2 of 2 with 1 field)
+        '(λf1.(λf2.(λh.(λ_.((h f1) f2)))))' =>  $LamT('f1', $LamT('f2', $LamT('h', $LamT('_', $hf1f2)))),   # ctor1o2f2 (ctor 1 of 2 with 2 fields)
+        '(λf1.(λf2.(λ_.(λh.((h f1) f2)))))' =>  $LamT('f1', $LamT('f2', $LamT('_', $LamT('h', $hf1f2)))),   # ctor2o2f2 (ctor 1 of 2 with 2 fields)
 
         '((x y) (λy.(x y)))'        => $AppT($xy, $Ly_xy),
 
@@ -192,6 +253,16 @@ our constant $testTerms is export = {
     $out\
 #        .aka('(λx.x)', <I id>)\
 #        .aka('(λx.(λ_.x))', <K const>)\
+#        .aka('(λf.(λg.(λx.(f (g x)))))', <B compose>, 'λf.λg.λx.f (g x)', 'λf.(λg.(λx.(f (g x))))')\
+#        .aka('(λf.(λx.(λy.((f y) x))))', <C swap-args>, 'λf.λx.λy.f y x', 'λf.(λx.(λy.((f y) x)))')\
+
+#        .aka('(λh.(λ_.h))'                      , <ctor1o2f0 nil None>, 'λh.(λ_.h)'                      , 'λh.λ_.h'              )\
+#        .aka('(λ_.(λh.h))'                      , <ctor2o2f0>,          'λ_.(λh.h)'                      , 'λ_.λh.h'              )\
+#        .aka('(λf1.(λh.(λ_.(h f1))))'           , <ctor1o2f1>,          'λf1.(λh.(λ_.(h f1)))'           , 'λf1.λh.λ_.h f1'       )\
+#        .aka('(λf1.(λ_.(λh.(h f1))))'           , <ctor2o2f1 Some>,     'λf1.(λ_.(λh.(h f1)))'           , 'λf1.λ_.λh.h f1'       )\
+#        .aka('(λf1.(λf2.(λh.(λ_.((h f1) f2)))))', <ctor1o2f2>,          'λf1.(λf2.(λh.(λ_.((h f1) f2))))', 'λf1.λf2.λh.λ_.h f1 f2')\
+#        .aka('(λf1.(λf2.(λ_.(λh.((h f1) f2)))))', <ctor2o2f2 cons>,     'λf1.(λf2.(λ_.(λh.((h f1) f2))))', 'λf1.λf2.λ_.λh.h f1 f2')\
+
 #        
 #        .aka('(λx.(x x))', <ωX omegaX ω omega>)\
 #        .aka('(λy.(y y))', <ωY omegaY>)\
@@ -203,6 +274,16 @@ our constant $testTerms is export = {
 
 # -----------------------------------------------------------------------------
         .aka('(x x)', 'x x')\
+        .aka('(λf.(λg.(λx.(f (g x)))))', <B compose>, 'λf.λg.λx.f (g x)', 'λf.(λg.(λx.(f (g x))))')\
+        .aka('(λf.(λx.(λy.((f y) x))))', <C swap-args>, 'λf.λx.λy.f y x', 'λf.(λx.(λy.((f y) x)))')\
+
+        .aka('(λh.(λ_.h))'                      , <ctor1o2f0 nil None>, 'λh.(λ_.h)'                      , 'λh.λ_.h'              )\
+        .aka('(λ_.(λh.h))'                      , <ctor2o2f0>,          'λ_.(λh.h)'                      , 'λ_.λh.h'              )\
+        .aka('(λf1.(λh.(λ_.(h f1))))'           , <ctor1o2f1>,          'λf1.(λh.(λ_.(h f1)))'           , 'λf1.λh.λ_.h f1'       )\
+        .aka('(λf1.(λ_.(λh.(h f1))))'           , <ctor2o2f1 Some>,     'λf1.(λ_.(λh.(h f1)))'           , 'λf1.λ_.λh.h f1'       )\
+        .aka('(λf1.(λf2.(λh.(λ_.((h f1) f2)))))', <ctor1o2f2>,          'λf1.(λf2.(λh.(λ_.((h f1) f2))))', 'λf1.λf2.λh.λ_.h f1 f2')\
+        .aka('(λf1.(λf2.(λ_.(λh.((h f1) f2)))))', <ctor2o2f2 cons>,     'λf1.(λf2.(λ_.(λh.((h f1) f2))))', 'λf1.λf2.λ_.λh.h f1 f2')\
+
         .aka('(x y)', 'x y')\
         .aka('(x z)', 'x z')\
         .aka('(x "c")', 'x "c"')\
@@ -214,6 +295,9 @@ our constant $testTerms is export = {
         .aka('(z y)', 'z y')\
         .aka('(z z)', 'z z')\
         .aka('(z "c")', 'z "c"')\
+        .aka('((f a) b)', '(f a) b', '(f a b)', 'f a b')\
+        .aka('((f b) a)', '(f b) a', '(f b a)', 'f b a')\
+        .aka('((f y) x)', '(f y) x', '(f y x)', 'f y x')\
         .aka('((x y) z)', '(x y) z', '(x y z)', 'x y z')\
         .aka('((x y) "c")', '(x y) "c"', '(x y "c")', 'x y "c"')\
         .aka('(((x y) z) x)', '((x y) z) x', '(x y z x)', 'x y z x')\

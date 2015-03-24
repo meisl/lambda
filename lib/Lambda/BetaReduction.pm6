@@ -286,7 +286,7 @@ constant $betaContract is export = $Y(-> &self {
                         );
                         case-List($alpha-problematic,
                             cons => -> Str $hd, TList $tl {
-                                die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic)
+                                die 'NYI: alpha-convert for ' ~ $List2Str($alpha-problematic) ~ ' in β-redex ' ~ $Term2srcLess($t)
                             },
                             nil => {
                                 my $substituted-func = $subst($funcBody, $arg, $funcVarName);
