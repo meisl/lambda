@@ -20,11 +20,20 @@ plan 20;
 # - Util_Term -----------------------------------------------------------------
 
 { # test the test-terms
-    does_ok &testTermFn, Callable, 'exports `&testTermFn`';
     does_ok $testTerms, Any, 'exports `$testTerms`';
 
+    my @ks = $testTerms.keys;
+    my @vs = $testTerms.values;
+    my $ct = $testTerms.constructionTime;
+
+    diag sprintf('%d test terms (%d keys ttl, avg: %1.1f) / construction time: %s sec ttl, avg: %s ms',
+        @vs.elems,
+        @ks.elems, @ks.elems.Real / @vs.elems,
+        $ct.round(0.01), ($ct * 1000 / @vs.elems).round(1)
+    );
+
     subtest({
-        for $testTerms.values -> $value {
+        for @vs -> $value {
             my $mainKey = $value.mainKey;
             my $pass = True;
             if $value.Str ne '(ConstT 5)' {   # TODO: add (decimal) number constant literals to grammar
@@ -44,6 +53,10 @@ plan 20;
             }
         }
     }, 'test-terms');
+}
+
+{ # testTermFn
+    does_ok &testTermFn, Callable, 'exports `&testTermFn`';
 }
 
 { # is_eq test for TTerms

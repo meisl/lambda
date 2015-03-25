@@ -20,8 +20,9 @@ our constant $testTerms is export = {
     }
 
     my class TestTerms {
-        has %!hash   = %();
-        has @.values = @();
+        has      %!hash   = %();
+        has      @.values = @();
+        has Real $.constructionTime is rw;
 
         method new(%hash) {
             self.bless(:%hash)
@@ -440,8 +441,7 @@ our constant $testTerms is export = {
     }
 }
 
-    $time = (now.Real - $time.Real).round(0.01);
-    diag "$time sec consumed for test-terms initialization";
+    $out.constructionTime = now.Real - $time.Real;
 
 #    say '    $out' ~ $out.synonyms;
     $out;
