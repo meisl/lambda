@@ -32,7 +32,7 @@ constant $has_length is export = lambdaFn(
 
 my sub fail-List_eq-elem(Str $msg, Int $idx, $actualElem, $expectedElem, $cmpStr) {
     diag sprintf("\nexpected (at index $idx): %s\n     got (at index $idx): %s\n%{20+$idx.Str.chars}s: %s",
-        $actualElem, $expectedElem,
+        $expectedElem, $actualElem,
         'comparison used', $cmpStr
     );
     ok(False, $msg);
