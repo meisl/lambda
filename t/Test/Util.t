@@ -14,7 +14,7 @@ use Test::Util_Lambda;
 use Test::Util_List;
 use Test::Util_Term;
 
-plan 20;
+plan 17;
 
 
 # - Util_Term -----------------------------------------------------------------
