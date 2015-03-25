@@ -3,7 +3,11 @@ use Test;
 use Test::Util_Term;
 use Lambda::MaybeADT;
 use Lambda::TermADT;
+use Lambda::PairADT;
+
+use Lambda::BaseP6;
 use Lambda::P6Currying;
+use Lambda::Conversion::ListADT-conv;
 
 # module under test:
 use Lambda::BetaReduction;
@@ -15,18 +19,48 @@ my $time;
 
 diag curryStats;
 
+
+my $reduce = -> TTerm $start {
+    my $out = $findFP-inMaybe(lambdaFn('betaContract', 'λt.error "NYI"', -> TPair $pair {
+        my $n = $fst($pair);
+        my $term = $snd($pair);
+        diag sprintf('    =_β%-2d  %s', $n, $Term2srcLess($term));
+        case-Maybe($betaContract($term),
+            None => $None,
+            Some => -> $v { $Some($Pair($n+1, $v)) }
+        );
+    }))($Pair(0, $start));
+    case-Maybe($out,
+        None => {
+            diag '0 steps';
+            $None;
+        },
+        Some => -> $pair {
+            diag "{$fst($pair)} steps";
+            $Some($snd($pair));
+        }
+    );
+}
+
+## uncomment to disable debugging info:
+#$reduce = $betaReduce;
+
 { # (C (B (C cons) (C cons nil)))  =  (λa.λb.cons a (cons b nil))   # TODO: move to BetaReduction.t
+
     subtest({ # this one does not need alpha-conversion (first C uses binders a,b instead of x,y)
         my $C = $LamT('f', $LamT('a', $LamT('b', `'f b a')));
         my $s = $AppT($C, $AppT($AppT(`'B', $AppT(`'C', `'cons')), $AppT($AppT(`'C', `'cons'), `'nil')));
         
         my $t = $LamT('a', $LamT('b', $AppT($AppT(`'cons', `'a'), $AppT($AppT(`'cons', `'b'), `'nil'))));
-        diag '`(C (B (C cons) (C cons nil)))  =    ' ~ $Term2srcLess($s);
-        diag '`(λa.λb.cons a (cons b nil))    =    ' ~ $Term2srcLess($t);
+
+        my $sSrc = $Term2srcLess($s);
+        my $tSrc = $Term2srcLess($t);
 
         $time = now;
-        my $s2 = $Some2value($betaReduce($s));
-        my $t2 = $Some2value($betaReduce($t));
+        diag '`(C (B (C cons) (C cons nil)))  =    ' ~ $sSrc;
+        my $s2 = $Some2value($reduce($s));
+        diag '`(λa.λb.cons a (cons b nil))    =    ' ~ $tSrc;
+        my $t2 = $Some2value($reduce($t));
         diag (now.Real - $time.Real).round(0.01) ~ " sec consumed for beta-reduction";
 
         diag '`(C (B (C cons) (C cons nil)))  =_β  ' ~ $Term2srcLess($s2);
@@ -34,17 +68,20 @@ diag curryStats;
 
         is_eq-Term($s2, $t2);
     }, '`(C (B (C cons) (C cons nil)))  =_β  `(λa.λb.cons a (cons b nil))  [no alpha-conv]');
-    
+
     subtest({ # this one does require alpha-conversion
         my $s = $AppT(`'C', $AppT($AppT(`'B', $AppT(`'C', `'cons')), $AppT($AppT(`'C', `'cons'), `'nil')));
         
         my $t = $LamT('x', $LamT('y', $AppT($AppT(`'cons', `'x'), $AppT($AppT(`'cons', `'y'), `'nil'))));
-        diag '`(C (B (C cons) (C cons nil)))  =    ' ~ $Term2srcLess($s);
-        diag '`(λx.λy.cons x (cons y nil))    =    ' ~ $Term2srcLess($t);
+
+        my $sSrc = $Term2srcLess($s);
+        my $tSrc = $Term2srcLess($t);
 
         $time = now;
-        my $s2 = $Some2value($betaReduce($s));
-        my $t2 = $Some2value($betaReduce($t));
+        diag '`(C (B (C cons) (C cons nil)))  =    ' ~ $sSrc;
+        my $s2 = $Some2value($reduce($s));
+        diag '`(λa.λb.cons a (cons b nil))    =    ' ~ $tSrc;
+        my $t2 = $Some2value($reduce($t));
         diag (now.Real - $time.Real).round(0.01) ~ " sec consumed for beta-reduction";
 
         diag '`(C (B (C cons) (C cons nil)))  =_β  ' ~ $Term2srcLess($s2);
@@ -52,7 +89,6 @@ diag curryStats;
 
         is_eq-Term($s2, $t2);
     }, '`(C (B (C cons) (C cons nil)))  =_β  `(λx.λy.cons x (cons y nil))  [needs alpha-conv]');
-
 }
 
 
@@ -60,12 +96,12 @@ diag curryStats;
     my ($t, $actual);
 
     $t =`'x x';
-    $actual = $betaReduce($t);
+    $actual = $reduce($t);
     is $actual, 'None', '`(x x) reduces to itself (sanity check)'
         or die;
 
     $t = `'(λx.x) x';
-    $actual = $Some2value($betaReduce($t));
+    $actual = $Some2value($reduce($t));
     is_eq-Term($actual, `'x', "`({$Term2srcLesser($t)}) reduces to x (sanity check)")
         or die;
 }
@@ -88,8 +124,9 @@ diag curryStats;
 
     diag curryStats;
 
+    diag '         ' ~ $bigLambda;
     $time = now;
-    $actualTerm = $Some2value($betaReduce($bigTerm));
+    $actualTerm = $Some2value($reduce($bigTerm));
     diag (now.Real - $time.Real).round(0.01) ~ " sec consumed for β-reduction";
     is_eq-Term($actualTerm, $expectedTerm, '$bigTerm reduces to $expectedTerm');
 }
