@@ -30,7 +30,7 @@ constant $has_length is export = lambdaFn(
 );
 
 
-my sub fail-List_eq-elem(Str $msg, Int $idx, $actualElem, $expectedElem, $cmpStr) {
+my sub fail_eq-List_elem(Str $msg, Int $idx, $actualElem, $expectedElem, $cmpStr) {
     diag sprintf("\nexpected (at index $idx): %s\n     got (at index $idx): %s\n%{20+$idx.Str.chars}s: %s",
         $expectedElem, $actualElem,
         'comparison used', $cmpStr
@@ -38,7 +38,7 @@ my sub fail-List_eq-elem(Str $msg, Int $idx, $actualElem, $expectedElem, $cmpStr
     ok(False, $msg);
 }
 
-my sub fail-List_eq-tooFew(Str $msg, @actual, @expected) {
+my sub fail_eq-List_tooFew(Str $msg, @actual, @expected) {
     die "expected {@actual.perl} to have LESS elems than {@expected.perl}"
         unless @actual.elems < @expected.elems;
 
@@ -50,7 +50,7 @@ my sub fail-List_eq-tooFew(Str $msg, @actual, @expected) {
     ok(False, $msg);
 }
 
-my sub fail-List_eq-tooMany(Str $msg, @actual, @expected) {
+my sub fail_eq-List_tooMany(Str $msg, @actual, @expected) {
     die "expected {@actual.perl} to have MORE elems than {@expected.perl}"
         unless @actual.elems > @expected.elems;
 
@@ -69,14 +69,14 @@ sub is_eq-List(TList:D $actual, @expected, Str $msg?, :&cmp = $tripleEq) is expo
     my $idx = 0;
     for @actual Z @expected -> $a, $x {
         if not &cmp($a, $x) {
-            return fail-List_eq-elem($m, $idx, $a, $x, &cmp);
+            return fail_eq-List_elem($m, $idx, $a, $x, &cmp);
         }
         $idx++;
     }
     if @actual.elems < @expected.elems {
-        fail-List_eq-tooFew($m, @actual, @expected);
+        fail_eq-List_tooFew($m, @actual, @expected);
     } elsif @actual.elems > @expected.elems {
-        fail-List_eq-tooMany($m, @actual, @expected);
+        fail_eq-List_tooMany($m, @actual, @expected);
     } else {
         ok(True, $m);
     }

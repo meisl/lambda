@@ -524,7 +524,7 @@ sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) is export {
     }, "$fgist on various inputs");
 }
 
-my sub fail-Term_eq(Str:D $msg, TTerm:D $actual, TTerm:D $expected, Bool :$full = False) {
+my sub fail_eq-Term(Str:D $msg, TTerm:D $actual, TTerm:D $expected, Bool :$full = False) {
     my $t2src = ($full ?? $Term2srcLess !! $Term2srcFull);
     my $actualSrc = $t2src($actual);
     my $actualStr = $actual.Str;
@@ -543,6 +543,6 @@ sub is_eq-Term(TTerm:D $actual, TTerm:D $expected, Str $msg?, Bool :$full = Fals
     if convertTBool2P6Bool($Term-eq($actual, $expected)) {
         ok(True, $m);
     } else {
-        fail-Term_eq($m, $actual, $expected, :$full);
+        fail_eq-Term($m, $actual, $expected, :$full);
     }
 }
