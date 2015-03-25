@@ -78,15 +78,20 @@ our constant $testTerms is export = {
         }
     }
 
-    my $a  ::= $VarT('a');
-    my $b  ::= $VarT('b');
-#    my $c  ::= $VarT('c');     # clashes with c = ConstT("c")
-    my $d  ::= $VarT('d');
-    my $e  ::= $VarT('e');
-    my $f  ::= $VarT('f');
-    my $g  ::= $VarT('g');
-    my $h  ::= $VarT('h');
-    my $k  ::= $VarT('k');
+    my $a    ::= $VarT('a');
+    my $b    ::= $VarT('b');
+    my $c    ::= $VarT('c');
+    my $d    ::= $VarT('d');
+    my $e    ::= $VarT('e');
+    my $f    ::= $VarT('f');
+    my $f1   ::= $VarT('f1');
+    my $f2   ::= $VarT('f2');
+    my $f3   ::= $VarT('f3');
+    my $f4   ::= $VarT('f4');
+    my $f5   ::= $VarT('f5');
+    my $g    ::= $VarT('g');
+    my $h    ::= $VarT('h');
+    my $k    ::= $VarT('k');
 
     my $u    ::= $VarT('u');
     my $v    ::= $VarT('v');
@@ -97,12 +102,6 @@ our constant $testTerms is export = {
 
     my $κc   ::= $ConstT('c');
     my $κ5   ::= $ConstT(5);
-
-    my $f1   ::= $VarT('f1');
-    my $f2   ::= $VarT('f2');
-    my $f3   ::= $VarT('f3');
-    my $f4   ::= $VarT('f4');
-    my $f5   ::= $VarT('f5');
 
     my $fa   ::= $AppT($f, $a);
     my $fb   ::= $AppT($f, $b);
@@ -139,47 +138,53 @@ our constant $testTerms is export = {
     my $hf1f2f3f4       ::= $AppT($hf1f2f3, $f4);
     my $hf1f2f3f4f5     ::= $AppT($hf1f2f3f4, $f5);
 
-    my $λ__x   ::= $LamT('_', $x);
-    my $λx_x   ::= $LamT('x', $x);
-    my $λx_κc  ::= $LamT('x', $κc);
-    my $λx_xx  ::= $LamT('x', $xx);
-    my $λx_xy  ::= $LamT('x', $xy);
-    my $λx_xκc ::= $LamT('x', $xκc);
-    my $λx_yx  ::= $LamT('x', $yx);
+    my $λ__x    ::= $LamT('_', $x);
+    my $λx_x    ::= $LamT('x', $x);
+    my $λx_κc   ::= $LamT('x', $κc);
+    my $λx_xx   ::= $LamT('x', $xx);
+    my $λx_xy   ::= $LamT('x', $xy);
+    my $λx_xκc  ::= $LamT('x', $xκc);
+    my $λx_yx   ::= $LamT('x', $yx);
 
-    my $λ__y   ::= $LamT('_', $y);
-    my $λy_xx  ::= $LamT('y', $xx);
-    my $λy_xy  ::= $LamT('y', $xy);
-    my $λy_yy  ::= $LamT('y', $yy);
-    my $λy_zy  ::= $LamT('y', $zy);
-    my $λy_Ky  ::= $LamT('y', $λ__y);
-    
-    my $Ik    ::= $AppT($λx_x, $k);
-    my $Ikf1  ::= $AppT($Ik, $f1);
-    my $λk_Ikf1  ::= $LamT('k', $Ikf1);
+    my $λ__y    ::= $LamT('_', $y);
+    my $λy_xx   ::= $LamT('y', $xx);
+    my $λy_xy   ::= $LamT('y', $xy);
+    my $λy_yy   ::= $LamT('y', $yy);
+    my $λy_zy   ::= $LamT('y', $zy);
 
-    my $θB ::= $LamT('f', $LamT('g', $LamT('x', $AppT($f, $gx))));   #   B aka compose
-    my $θC ::= $LamT('f', $LamT('x', $LamT('y', $fyx)));             #   C aka swap-args
+    my $λy_λ__y ::= $LamT('y', $λ__y);
+    my $λx_λ__x ::= $LamT('x', $λ__x);
 
-    my $θnil  ::= $LamT('h', $LamT('_', $h));
-    my $θcons ::= $LamT('f1', $LamT('f2', $LamT('_', $LamT('h', $hf1f2))));
+    my $λy_θKy  ::= $λy_λ__y;
+    my $λx_θKx  ::= $λx_λ__x;
+
+    my $θI      ::= $λx_x;       #   I aka id
+    my $θK      ::= $λx_θKx;     #   K aka const
+    my $θB      ::= $LamT('f', $LamT('g', $LamT('x', $AppT($f, $gx))));   #   B aka compose
+    my $θC      ::= $LamT('f', $LamT('x', $LamT('y', $fyx)));             #   C aka swap-args
+
+    my $θIk         ::= $AppT($θI, $k);
+    my $θIkf1       ::= $AppT($θIk, $f1);
+    my $λk_θIkf1    ::= $LamT('k', $θIkf1);
+
+    my $θnil        ::= $LamT('h', $LamT('_', $h));
+    my $θcons       ::= $LamT('f1', $LamT('f2', $LamT('_', $LamT('h', $hf1f2))));
 
     my $θCθcons     ::= $AppT($θC, $θcons);
     my $θCθconsθnil ::= $AppT($θCθcons, $θnil);
 
     my $out = TestTerms.new({
+        'a'                         => $a,
+        'b'                         => $b,
+        'c'                         => $c,
+        'd'                         => $d,
+        'e'                         => $e,
+        'f'                         => $f,
         'f1'                        => $f1,
         'f2'                        => $f2,
         'f3'                        => $f3,
         'f4'                        => $f4,
         'f5'                        => $f5,
-
-        'a'                         => $a,
-        'b'                         => $b,
-#        'c'                         => $c,     # clashes with c = ConstT("c")
-        'd'                         => $d,
-        'e'                         => $e,
-        'f'                         => $f,
         'g'                         => $g,
         'h'                         => $h,
         'k'                         => $k,
@@ -226,14 +231,14 @@ our constant $testTerms is export = {
         '(λ_.x)'                    => $λ__x,
         '(λx."c")'                  => $λx_κc,
         '(λx.x)'                    => $λx_x,   # I aka id
-        '((λx.x) k)'                => $Ik,
-        '(((λx.x) k) f1)'           => $Ikf1,
-        '(λk.(((λx.x) k) f1))'      => $λk_Ikf1,
+        '((λx.x) k)'                => $θIk,
+        '(((λx.x) k) f1)'           => $θIkf1,
+        '(λk.(((λx.x) k) f1))'      => $λk_θIkf1,
         '(λf.(λg.(λx.(f (g x)))))'  => $θB,
         '(λf.(λx.(λy.((f y) x))))'  => $θC,
         '(λf.(λa.(λb.((f b) a))))'  => $LamT('f', $LamT('a', $LamT('b', $fba))),    # alpha-converted C
 
-        '(λx.(λ_.x))'               => $LamT('x', $λ__x),   # K aka const
+        '(λx.(λ_.x))'               => $θK,   # K aka const
         '(λx.(x "c"))'              => $λx_xκc,
         '(λx.(x x))'                => $λx_xx,  # omegaX aka ωX ("omega in x") aka ω aka omega
         '(λx.(x y))'                => $λx_xy,
@@ -245,9 +250,9 @@ our constant $testTerms is export = {
         '(λy.(x y))'                => $λy_xy,
         '(λy.(y y))'                => $λy_yy,   # omegaY aka ωY ("omega in y")
         '(λy.(z y))'                => $λy_zy,
-        '(λy.(λ_.y))'               => $λy_Ky,
+        '(λy.(λ_.y))'               => $λy_θKy,
 
-        '(λg.(λh.((λy.(λ_.y)) (g h))))' => $LamT('g', $LamT('h', $AppT($λy_Ky, $gh))),
+        '(λg.(λh.((λy.(λ_.y)) (g h))))' => $LamT('g', $LamT('h', $AppT($λy_θKy, $gh))),
 
         '(h f1)'                        => $hf1,
         '((h f1) f2)'                   => $hf1f2,
