@@ -120,6 +120,22 @@ constant $liftMaybe is export = lambdaFn(
         } )
     }
 );
+multi sub _liftMaybe(&f, TMaybe:D $ma -->TMaybe) is export {
+    #$ma($None, -> $b { $Some(&f($b)) });
+    case-Maybe($ma,
+        None => $None,
+        Some => -> $b { $Some(&f($b)) }
+    )
+}
+multi sub _liftMaybe(&f, Capture:D $fArgs, TMaybe:D $ma -->TMaybe) is export {
+    #$ma($None, -> $b { $Some(&f($fArgs|, $b)) });
+    case-Maybe($ma,
+        None => $None,
+        Some => -> $b { $Some(&f(|$fArgs, $b)) }
+    )
+}
+
+
 
 # lift2Maybe: (a -> b -> c) -> Maybe a -> Maybe b -> Maybe c
 constant $lift2Maybe is export = lambdaFn(
@@ -133,7 +149,6 @@ constant $lift2Maybe is export = lambdaFn(
         } )
     }
 );
-
 
 # Maybe->valueWithDefault
 constant $Maybe2valueWithDefault is export = lambdaFn(
@@ -160,7 +175,7 @@ constant $Maybe-lift-in is export = lambdaFn(
     }
 );
 
-# findFP-inMaybe: (a -> Maybe b) -> Maybe a -> Maybe b
+# findFP-inMaybe: (a -> Maybe a) -> a -> Maybe a
 constant $findFP-inMaybe is export = {
     my $arbiter = lambdaFn(
         Str, 'λv1.λm2.λnextStep.case m2 ((None (Some v1)) ((Some v2) (nextStep v2)))',
@@ -176,7 +191,7 @@ constant $findFP-inMaybe is export = {
         -> &stepFn {
             my $fpSearch = $findFP($arbiter, &stepFn);
             lambdaFn(
-                Str, "λstart.case ({&stepFn} start) ((None None) ((Some v) (findFP $arbiter {&stepFn} v)))",
+                Str, 'λstart.error "NYI"',
                 -> $start {
                     case-Maybe(&stepFn($start),
                         None => $None,  # must return None on 1st step rather than Some(start)
