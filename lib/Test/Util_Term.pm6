@@ -24,14 +24,19 @@ our constant $testTerms is export = {
         has      @.values = @();
         has Real $.constructionTime is rw;
 
-        method new(%hash) {
-            self.bless(:%hash)
+        method new(%h) {
+            self.bless(:%h)
         }
 
-        submethod BUILD(:%!hash) {
-            for %!hash.pairs -> (:$key, :$value) {
+        submethod BUILD(:%h) {
+            for %h.pairs -> (:$key, :$value) {
+                my $prev = %!hash{$key};
+                if $prev.defined {
+                    die "duplicate key $key => {$Term2srcLess($value)}  -  already maps to {$Term2srcLess($prev)}"
+                }
                 $value does Aka($key);  # sets mainKey
                 $value.names.push($key);
+                %!hash{$key} = $value;
                 @!values.push($value);
             }
         }
@@ -520,9 +525,10 @@ sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) is export {
 }
 
 my sub fail-Term_eq(Str:D $msg, TTerm:D $actual, TTerm:D $expected, Bool :$full = False) {
-    my $actualSrc = ($full ?? $Term2srcLess !! $Term2srcFull)($actual);
+    my $t2src = ($full ?? $Term2srcLess !! $Term2srcFull);
+    my $actualSrc = $t2src($actual);
     my $actualStr = $actual.Str;
-    my $expectedSrc = ($full ?? $Term2srcLess !! $Term2srcFull)($expected);
+    my $expectedSrc = $t2src($expected);
     my $expectedStr = $expected.Str;
     my $n = max($actualSrc.chars, $expectedSrc.chars);
     diag sprintf("expected: `%-{$n}s   /   %s\n     got: `%-{$n}s   /   %s",

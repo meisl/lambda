@@ -161,14 +161,24 @@ constant $Term-eq is export = $Y(-> &self { lambdaFn(
                     AppT => $K2false,
                     LamT => $K2false,
                     ConstT => -> Any $tValue {
-                        if $sValue.WHAT === $tValue.WHAT {
-                            if ($sValue ~~ Str) && ($tValue ~~ Str) {
+                        if $sValue ~~ Str {
+                            if $tValue ~~ Str {
                                 $Str-eq($sValue, $tValue);
+                            } elsif $tValue ~~ Int {
+                                $false;
                             } else {
-                                die "NYI: equality test for {$sValue.perl}, {$tValue.perl}";
+                                die "NYI: equality test for ConstT with value of type {$tValue.WHAT.perl}";
                             }
-                        } else {
-                            $false;
+                        } elsif $sValue ~~ Int {
+                            if $tValue ~~ Str {
+                                $false;
+                            } elsif $tValue ~~ Int {
+                                die "NYI: equality test for two Int constants {$sValue.perl}, {$tValue.perl}";
+                            } else {
+                                die "NYI: equality test for ConstT with value of type {$tValue.WHAT.perl}";
+                            }
+                        } else {    # sValue is neither of type Str nor of type Int
+                            die "NYI: equality test for ConstT with value of type {$sValue.WHAT.perl}";
                         }
                     }
                 )

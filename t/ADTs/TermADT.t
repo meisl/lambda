@@ -12,7 +12,7 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::TermADT;
 
-plan 129;
+plan 131;
 
 
 # Term-eq ---------------------------------------------------------------------
@@ -83,6 +83,16 @@ plan 129;
     test-eq($c4,        $c3,            $false);
     test-eq($c4,        $c4,            $true );
 
+
+    # Now: even if the terms have different roles mixed in, this should not affect the actual Test-eq? test
+    my role foo {
+        has $.bar;
+    }
+    my $κc     = $ConstT('c');
+    my $κc_foo = $ConstT('c') does foo('bar');
+
+    test-eq($κc,        $κc but foo('bar'), $true ) or die;
+    test-eq($κc,        $κc_foo,            $true ) or die;
 }
 
 

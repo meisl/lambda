@@ -3,6 +3,7 @@ use Test;
 
 use Lambda::BaseP6;
 use Lambda::Boolean;
+use Lambda::String;
 use Lambda::ListADT;
 use Lambda::TermADT;
 use Lambda::LambdaGrammar;
@@ -14,10 +15,21 @@ use Test::Util_Lambda;
 use Test::Util_List;
 use Test::Util_Term;
 
-plan 17;
+plan 21;
 
 
 # - Util_Term -----------------------------------------------------------------
+
+{ # is_eq test for TTerms
+    does_ok &is_eq-Term, Callable, 'exports `&is_eq-Term`';
+    lives_ok({ is_eq-Term($VarT('x'), $VarT('x')) }, 'can call &is_eq-Term without msg string');
+    lives_ok({ is_eq-Term($VarT('x'), $VarT('x'), 'var x equals var x') }, 'can call &is_eq-Term with a msg string');
+    
+    is_eq-Term($ConstT('c'), $ConstT('c'), '$ConstT("c") equals $ConstT("c")');
+    is_eq-Term(`'"c"', $ConstT('c'), 'test-term `"c" equals $ConstT("x")');
+    is_eq-Term($ConstT('c'), `'"c"', '$ConstT("x") equals test-term `"c"');
+    is_eq-Term(`'"c"', `'"c"', 'test-term `"c" equals test-term `"c"');
+}
 
 { # test the test-terms
     does_ok $testTerms, Any, 'exports `$testTerms`';
@@ -40,7 +52,7 @@ plan 17;
                 subtest({
                     my TTerm $term = parseLambda($mainKey);
                     $pass &&= is $mainKey, $Term2srcFull($term), "main key is fully parenthesized lambda expr";
-                    $pass &&= is_eq-Term($term, $value, 'parsed main key yields same term as value', :!full);
+                    $pass &&= is_eq-Term($term, $value, 'parsed main key yields same term as value');
                     for $value.synonyms -> $s {
                         my $sValue = $testTerms.get($s);
                         subtest({
@@ -57,12 +69,6 @@ plan 17;
 
 { # testTermFn
     does_ok &testTermFn, Callable, 'exports `&testTermFn`';
-}
-
-{ # is_eq test for TTerms
-    does_ok &is_eq-Term, Callable, 'exports `&is_eq-Term`';
-    lives_ok({ is_eq-Term($VarT('x'), $VarT('x')) }, 'can call &is_eq-Term without msg string');
-    lives_ok({ is_eq-Term($VarT('x'), $VarT('x'), 'var x equals var x') }, 'can call &is_eq-Term with a msg string');
 }
 
 subtest({ # prefix operator ` (for retrieving pre-built test-terms)
