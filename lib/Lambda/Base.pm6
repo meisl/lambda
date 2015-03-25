@@ -149,23 +149,19 @@ constant $Y is export = lambdaFn(
 # ie. the first x st. (arbiter x (f x)) == True
 # where "===" is the default end-condition.
 # ...or diverges if there is none...
-constant $findFP is export = {
-    my sub mkLambdaExpr($arbiter, $f) {
-        "λself.λstart.let ((next ($f start)) (done ($arbiter start next))) (if done start (self next))";
+constant $findFP is export = lambdaFn(
+    'findFP', 'λarbiter.λf.error "NYI"',
+    -> &arbiter, &f {
+        $Y(-> &self { lambdaFn(Str, 'λstart.error "NYI"',
+            -> $start {
+                #say "inside findFP: "  ~ $start;
+                my $next = &f($start);
+                &arbiter($start, $next, &self);
+            }
+        )})
     }
-    lambdaFn(
-        'findFP', 'λarbiter.λf.Y ' ~ mkLambdaExpr('arbiter', 'f'),
-        -> &arbiter, &f {
-            $Y(-> &self { lambdaFn(Str, mkLambdaExpr(&arbiter.gist, &f.gist),
-                -> $start {
-                    #say "inside findFP: "  ~ $start;
-                    my $next = &f($start);
-                    &arbiter($start, $next, &self);
-                }
-            )})
-        }
-    );
-}();
+);
+
 
 # projections ---------------------------------------------------------
 
