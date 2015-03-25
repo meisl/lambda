@@ -14,12 +14,12 @@ use Test::Util_Lambda;
 use Test::Util_List;
 use Test::Util_Term;
 
-plan 17;
+plan 20;
 
 
 # - Util_List -----------------------------------------------------------------
 
-{
+{ # is_eq-List
     is_eq-List($nil, [], "nil equals []");
     is_eq-List($cons(5, $nil), [5]);
     is_eq-List($cons(5, $cons(3, $nil)), [5, 3]);
@@ -95,6 +95,7 @@ plan 17;
 
 # - Util_Term -----------------------------------------------------------------
 
+
 { # is_eq test for TTerms
     does_ok &is_eq-Term, Callable, 'exports `&is_eq-Term`';
     lives_ok({ is_eq-Term($VarT('x'), $VarT('x')) }, 'can call &is_eq-Term without msg string');
@@ -112,29 +113,29 @@ subtest({ # prefix operator ` (for retrieving pre-built test-terms)
     is_eq-Term(`'ωX',         $omegaX, 'omega as symbol ωX');
 }, 'prefix op ` retrieves...');
 
-
 { # test the test-terms
     does_ok &testTermFn, Callable, 'exports `&testTermFn`';
     does_ok $testTerms, Any, 'exports `$testTerms`';
 
     subtest({
         for $testTerms.values -> $value {
-            subtest({
-                my $mainKey = $value.mainKey;
-                is $mainKey, $Term2srcFull($value), "main key {$mainKey.perl} should be fully parenthesized lambda expr";
-
-                my TTerm $term = parseLambda($mainKey);
-                is_eq-Term($term, $value);
-
-                for $value.synonyms -> $s {
-                    my $sValue = $testTerms.get($s);
-                    cmp_ok($sValue, '===', $value, "value for synonym {$s.perl}")
-                        or die;
-                    lives_ok({ parseLambda($s) }, "synonym {$s.perl} is a valid lambda expr")
-                        or die;
-                }
-            }) unless $value.Str eq '(ConstT 5)';   # TODO: add (decimal) number constant literals to grammar
+            my $mainKey = $value.mainKey;
+            my $pass = True;
+            if $value.Str ne '(ConstT 5)' {   # TODO: add (decimal) number constant literals to grammar
+                subtest({
+                    my TTerm $term = parseLambda($mainKey);
+                    $pass &&= is $mainKey, $Term2srcFull($term), "main key is fully parenthesized lambda expr";
+                    $pass &&= is_eq-Term($term, $value, 'parsed main key yields same term as value', :!full);
+                    for $value.synonyms -> $s {
+                        my $sValue = $testTerms.get($s);
+                        subtest({
+                            $pass &&= cmp_ok($sValue, '===', $value, "...points to same value as main key");
+                            $pass &&= lives_ok({ parseLambda($s) }, "...is a valid lambda expr");
+                        }, "synonym {$s.perl}");
+                    }
+                }, "test term with main key {$mainKey.perl}");
+                die unless $pass;
+            }
         }
     }, 'test-terms');
 }
-

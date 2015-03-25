@@ -19,18 +19,18 @@ my $time;
 
 diag curryStats;
 
-
+my $fpSearch = $findFP-inMaybe(lambdaFn('betaContract', 'λt.error "NYI"', -> TPair $pair {
+    my $n = $fst($pair);
+    my $term = $snd($pair);
+    diag sprintf('    =_β%-2d  %s', $n, $Term2srcLess($term));
+    case-Maybe($betaContract($term),
+        None => $None,
+        Some => -> $v { $Some($Pair($n+1, $v)) }
+    );
+}));
 my $reduce = -> TTerm $start {
-    my $out = $findFP-inMaybe(lambdaFn('betaContract', 'λt.error "NYI"', -> TPair $pair {
-        my $n = $fst($pair);
-        my $term = $snd($pair);
-        diag sprintf('    =_β%-2d  %s', $n, $Term2srcLess($term));
-        case-Maybe($betaContract($term),
-            None => $None,
-            Some => -> $v { $Some($Pair($n+1, $v)) }
-        );
-    }))($Pair(0, $start));
-    case-Maybe($out,
+    my $startPair = $Pair(0, $start);
+    case-Maybe($fpSearch($startPair),
         None => {
             diag '0 steps';
             $None;
@@ -48,10 +48,8 @@ my $reduce = -> TTerm $start {
 { # (C (B (C cons) (C cons nil)))  =  (λa.λb.cons a (cons b nil))   # TODO: move to BetaReduction.t
 
     subtest({ # this one does not need alpha-conversion (first C uses binders a,b instead of x,y)
-        my $C = $LamT('f', $LamT('a', $LamT('b', `'f b a')));
-        my $s = $AppT($C, $AppT($AppT(`'B', $AppT(`'C', `'cons')), $AppT($AppT(`'C', `'cons'), `'nil')));
-        
-        my $t = $LamT('a', $LamT('b', $AppT($AppT(`'cons', `'a'), $AppT($AppT(`'cons', `'b'), `'nil'))));
+        my $s = $AppT(`'λf.λa.λb.f b a', `'B (C cons) (C cons nil)');
+        my $t = `'λa.λb.cons a (cons b nil)';
 
         my $sSrc = $Term2srcLess($s);
         my $tSrc = $Term2srcLess($t);
@@ -70,9 +68,8 @@ my $reduce = -> TTerm $start {
     }, '`(C (B (C cons) (C cons nil)))  =_β  `(λa.λb.cons a (cons b nil))  [no alpha-conv]');
 
     subtest({ # this one does require alpha-conversion
-        my $s = $AppT(`'C', $AppT($AppT(`'B', $AppT(`'C', `'cons')), $AppT($AppT(`'C', `'cons'), `'nil')));
-        
-        my $t = $LamT('x', $LamT('y', $AppT($AppT(`'cons', `'x'), $AppT($AppT(`'cons', `'y'), `'nil'))));
+        my $s = $AppT(`'C', `'B (C cons) (C cons nil)');
+        my $t = `'λx.λy.cons x (cons y nil)';
 
         my $sSrc = $Term2srcLess($s);
         my $tSrc = $Term2srcLess($t);

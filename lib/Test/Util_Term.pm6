@@ -156,6 +156,15 @@ our constant $testTerms is export = {
     my $Ikf1  ::= $AppT($Ik, $f1);
     my $Lk_Ikf1  ::= $LamT('k', $Ikf1);
 
+    my $θB ::= $LamT('f', $LamT('g', $LamT('x', $AppT($f, $gx))));   #   B aka compose
+    my $θC ::= $LamT('f', $LamT('x', $LamT('y', $fyx)));             #   C aka swap-args
+
+    my $θnil  ::= $LamT('h', $LamT('_', $h));
+    my $θcons ::= $LamT('f1', $LamT('f2', $LamT('_', $LamT('h', $hf1f2))));
+
+    my $θCθcons     ::= $AppT($θC, $θcons);
+    my $θCθconsθnil ::= $AppT($θCθcons, $θnil);
+
     my $out = TestTerms.new({
         'f1'                        => $f1,
         'f2'                        => $f2,
@@ -218,8 +227,9 @@ our constant $testTerms is export = {
         '((λx.x) k)'                => $Ik,
         '(((λx.x) k) f1)'           => $Ikf1,
         '(λk.(((λx.x) k) f1))'      => $Lk_Ikf1,
-        '(λf.(λg.(λx.(f (g x)))))'  => $LamT('f', $LamT('g', $LamT('x', $AppT($f, $gx)))), #   B aka compose
-        '(λf.(λx.(λy.((f y) x))))'  => $LamT('f', $LamT('x', $LamT('y', $fyx))), #   C aka swap-args
+        '(λf.(λg.(λx.(f (g x)))))'  => $θB,
+        '(λf.(λx.(λy.((f y) x))))'  => $θC,
+        '(λf.(λa.(λb.((f b) a))))'  => $LamT('f', $LamT('a', $LamT('b', $fba))),    # alpha-converted C
 
         '(λx.(λ_.x))'               => $LamT('x', $L__x),   # K aka const
         '(λx.(x "c"))'              => $Lx_xc,
@@ -249,6 +259,18 @@ our constant $testTerms is export = {
         '(λf1.(λ_.(λh.(h f1))))'            =>  $LamT('f1', $LamT('_', $LamT('h', $hf1))),                  # ctor2o2f1 (ctor 2 of 2 with 1 field)
         '(λf1.(λf2.(λh.(λ_.((h f1) f2)))))' =>  $LamT('f1', $LamT('f2', $LamT('h', $LamT('_', $hf1f2)))),   # ctor1o2f2 (ctor 1 of 2 with 2 fields)
         '(λf1.(λf2.(λ_.(λh.((h f1) f2)))))' =>  $LamT('f1', $LamT('f2', $LamT('_', $LamT('h', $hf1f2)))),   # ctor2o2f2 (ctor 1 of 2 with 2 fields)
+
+        '(((λf.(λg.(λx.(f (g x))))) ((λf.(λx.(λy.((f y) x)))) (λf1.(λf2.(λ_.(λh.((h f1) f2))))))) (((λf.(λx.(λy.((f y) x)))) (λf1.(λf2.(λ_.(λh.((h f1) f2)))))) (λh.(λ_.h))))'
+            => $AppT($AppT($θB, $θCθcons), $θCθconsθnil),
+        # aka 'B (C cons) (C cons nil)'
+
+        '(λa.(λb.(((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a) (((λf1.(λf2.(λ_.(λh.((h f1) f2))))) b) (λh.(λ_.h))))))'
+            => $LamT('a', $LamT('b', $AppT($AppT($θcons, $a), $AppT($AppT($θcons, $b), $θnil)))),
+        # aka 'λa.λb.cons a (cons b nil)'
+
+        '(λx.(λy.(((λf1.(λf2.(λ_.(λh.((h f1) f2))))) x) (((λf1.(λf2.(λ_.(λh.((h f1) f2))))) y) (λh.(λ_.h))))))'
+            => $LamT('x', $LamT('y', $AppT($AppT($θcons, $x), $AppT($AppT($θcons, $y), $θnil)))),
+        # aka 'λx.λy.cons x (cons y nil)'
 
         '((x y) (λy.(x y)))'        => $AppT($xy, $Ly_xy),
 
@@ -307,6 +329,7 @@ our constant $testTerms is export = {
         .aka('(x x)', 'x x')\
         .aka('(λf.(λg.(λx.(f (g x)))))', <B compose>, 'λf.λg.λx.f (g x)', 'λf.(λg.(λx.(f (g x))))')\
         .aka('(λf.(λx.(λy.((f y) x))))', <C swap-args>, 'λf.λx.λy.f y x', 'λf.(λx.(λy.((f y) x)))')\
+        .aka('(λf.(λa.(λb.((f b) a))))', 'λf.(λa.(λb.((f b) a)))', 'λf.λa.λb.f b a', '(λf.λa.λb.f b a)')\
 
         .aka('(λh.(λ_.h))'                      , <ctor1o2f0 nil None>, 'λh.(λ_.h)'                      , 'λh.λ_.h'              )\
         .aka('(λ_.(λh.h))'                      , <ctor2o2f0>,          'λ_.(λh.h)'                      , 'λ_.λh.h'              )\
@@ -314,6 +337,18 @@ our constant $testTerms is export = {
         .aka('(λf1.(λ_.(λh.(h f1))))'           , <ctor2o2f1 Some>,     'λf1.(λ_.(λh.(h f1)))'           , 'λf1.λ_.λh.h f1'       )\
         .aka('(λf1.(λf2.(λh.(λ_.((h f1) f2)))))', <ctor1o2f2>,          'λf1.(λf2.(λh.(λ_.((h f1) f2))))', 'λf1.λf2.λh.λ_.h f1 f2')\
         .aka('(λf1.(λf2.(λ_.(λh.((h f1) f2)))))', <ctor2o2f2 cons>,     'λf1.(λf2.(λ_.(λh.((h f1) f2))))', 'λf1.λf2.λ_.λh.h f1 f2')\
+
+        .aka('(((λf.(λg.(λx.(f (g x))))) ((λf.(λx.(λy.((f y) x)))) (λf1.(λf2.(λ_.(λh.((h f1) f2))))))) (((λf.(λx.(λy.((f y) x)))) (λf1.(λf2.(λ_.(λh.((h f1) f2)))))) (λh.(λ_.h))))',
+             '(λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h))',
+             'B (C cons) (C cons nil)', '(B (C cons) (C cons nil))', '((B (C cons)) ((C cons) nil))')\
+
+        .aka('(λa.(λb.(((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a) (((λf1.(λf2.(λ_.(λh.((h f1) f2))))) b) (λh.(λ_.h))))))',
+             'λa.λb.(λf1.λf2.λ_.λh.h f1 f2) a ((λf1.λf2.λ_.λh.h f1 f2) b (λh.λ_.h))',
+             'λa.λb.cons a (cons b nil)', '(λa.λb.cons a (cons b nil))', 'λa.(λb.((cons a) ((cons b) nil)))', '(λa.(λb.((cons a) ((cons b) nil))))')\
+
+        .aka('(λx.(λy.(((λf1.(λf2.(λ_.(λh.((h f1) f2))))) x) (((λf1.(λf2.(λ_.(λh.((h f1) f2))))) y) (λh.(λ_.h))))))',
+             'λx.λy.(λf1.λf2.λ_.λh.h f1 f2) x ((λf1.λf2.λ_.λh.h f1 f2) y (λh.λ_.h))',
+             'λx.λy.cons x (cons y nil)', '(λx.λy.cons x (cons y nil))', 'λx.(λy.((cons x) ((cons y) nil)))', '(λx.(λy.((cons x) ((cons y) nil))))')\
 
         .aka('(h f1)', 'h f1')\
         .aka('((h f1) f2)', 'h f1 f2')\
@@ -478,10 +513,10 @@ sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) is export {
     }, "$fgist on various inputs");
 }
 
-my sub fail-Term_eq(Str:D $msg, TTerm:D $actual, TTerm:D $expected) {
-    my $actualSrc = $Term2srcLess($actual);
+my sub fail-Term_eq(Str:D $msg, TTerm:D $actual, TTerm:D $expected, Bool :$full = False) {
+    my $actualSrc = ($full ?? $Term2srcLess !! $Term2srcFull)($actual);
     my $actualStr = $actual.Str;
-    my $expectedSrc = $Term2srcLess($expected);
+    my $expectedSrc = ($full ?? $Term2srcLess !! $Term2srcFull)($expected);
     my $expectedStr = $expected.Str;
     my $n = max($actualSrc.chars, $expectedSrc.chars);
     diag sprintf("expected: `%-{$n}s   /   %s\n     got: `%-{$n}s   /   %s",
@@ -491,11 +526,11 @@ my sub fail-Term_eq(Str:D $msg, TTerm:D $actual, TTerm:D $expected) {
     ok(False, $msg);
 }
 
-sub is_eq-Term(TTerm:D $actual, TTerm:D $expected, Str $msg?) is export {
+sub is_eq-Term(TTerm:D $actual, TTerm:D $expected, Str $msg?, Bool :$full = False) is export {
     my $m = $msg // "`({$Term2srcLesser($actual)})  should equal  `({$Term2srcLesser($expected)})";
     if convertTBool2P6Bool($Term-eq($actual, $expected)) {
         ok(True, $m);
     } else {
-        fail-Term_eq($m, $actual, $expected);
+        fail-Term_eq($m, $actual, $expected, :$full);
     }
 }
