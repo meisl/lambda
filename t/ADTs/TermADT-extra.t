@@ -95,16 +95,17 @@ plan 48;
     my $t1 = `'x y';
     $cs = $Term2children($t1);
     is_eq-List($cs, [`'x', `'y'], "(Term->children $t1) / an AppT has two children (func and arg)");
-    # TODO: `contains_exactly`, ie is_eq but order should not matter
+    # TODO: `contains_exactly`, ie is_eq-List but order should not matter
     
     my $t2 = `'x y "c"';
     $cs = $Term2children($t2);
     is_eq-List($cs, [`'x y', `'"c"'], "(Term->children $t2) / an AppT has two children (func and arg)");
+    # TODO: `contains_exactly`, ie is_eq-List but order should not matter
     
     my $t3 = `'λx.x y "c"';
     $cs = $Term2children($t3);
     is_eq-List($cs, [`'x y "c"'], "(Term->children $t3) / a LamT has one child (its body)");
-    # TODO: `contains_exactly`, ie is_eq but order should not matter
+    # TODO: `contains_exactly`, ie is_eq-List but order should not matter
 }
 
 

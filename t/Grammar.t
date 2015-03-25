@@ -116,7 +116,7 @@ my sub is_TermType(TTerm $term, $predicate, $msg) is hidden_from_backtrace {
     my $arg  = $AppT2arg($t);
     is_TermType($func, $is-LamT, "func of $msg");
     is_TermType($arg,  $is-LamT, "arg of $msg");
-    is_eq($func, $arg);
+    is_eq-Term($func, $arg);
 }
 
 { # abstraction

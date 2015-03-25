@@ -478,11 +478,7 @@ sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) is export {
     }, "$fgist on various inputs");
 }
 
-my sub is_eq-msg(TTerm:D $actual, TTerm:D $expected) {
-    "`({$Term2srcLesser($actual)})  should equal  `({$Term2srcLesser($expected)})"
-}
-
-my sub is_eq-diag(TTerm:D $actual, TTerm:D $expected) {
+my sub fail-Term_eq(Str:D $msg, TTerm:D $actual, TTerm:D $expected) {
     my $actualSrc = $Term2srcLess($actual);
     my $actualStr = $actual.Str;
     my $expectedSrc = $Term2srcLess($expected);
@@ -492,10 +488,14 @@ my sub is_eq-diag(TTerm:D $actual, TTerm:D $expected) {
         $expectedSrc, $expectedStr,
         $actualSrc,   $actualStr
     );
-    False;
+    ok(False, $msg);
 }
 
-multi sub is_eq(TTerm:D $actual, TTerm:D $expected, Str $msg?) is export {
-    ok(convertTBool2P6Bool($Term-eq($actual, $expected)), $msg // is_eq-msg($actual, $expected) )
-        or is_eq-diag($actual, $expected);
+sub is_eq-Term(TTerm:D $actual, TTerm:D $expected, Str $msg?) is export {
+    my $m = $msg // "`({$Term2srcLesser($actual)})  should equal  `({$Term2srcLesser($expected)})";
+    if convertTBool2P6Bool($Term-eq($actual, $expected)) {
+        ok(True, $m);
+    } else {
+        fail-Term_eq($m, $actual, $expected);
+    }
 }

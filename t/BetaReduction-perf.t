@@ -32,7 +32,7 @@ diag curryStats;
         diag '`(C (B (C cons) (C cons nil)))  =_β  ' ~ $Term2srcLess($s2);
         diag '`(λa.λb.cons a (cons b nil))    =_β  ' ~ $Term2srcLess($t2);
 
-        is_eq($s2, $t2);
+        is_eq-Term($s2, $t2);
     }, '`(C (B (C cons) (C cons nil)))  =_β  `(λa.λb.cons a (cons b nil))  [no alpha-conv]');
     
     subtest({ # this one does require alpha-conversion
@@ -50,7 +50,7 @@ diag curryStats;
         diag '`(C (B (C cons) (C cons nil)))  =_β  ' ~ $Term2srcLess($s2);
         diag '`(λx.λy.cons x (cons y nil))    =_β  ' ~ $Term2srcLess($t2);
 
-        is_eq($s2, $t2);
+        is_eq-Term($s2, $t2);
     }, '`(C (B (C cons) (C cons nil)))  =_β  `(λx.λy.cons x (cons y nil))  [needs alpha-conv]');
 
 }
@@ -66,7 +66,7 @@ diag curryStats;
 
     $t = `'(λx.x) x';
     $actual = $Some2value($betaReduce($t));
-    is_eq($actual, `'x', "`({$Term2srcLesser($t)}) reduces to x (sanity check)")
+    is_eq-Term($actual, `'x', "`({$Term2srcLesser($t)}) reduces to x (sanity check)")
         or die;
 }
 
@@ -91,7 +91,7 @@ diag curryStats;
     $time = now;
     $actualTerm = $Some2value($betaReduce($bigTerm));
     diag (now.Real - $time.Real).round(0.01) ~ " sec consumed for β-reduction";
-    is_eq($actualTerm, $expectedTerm, '$bigTerm reduces to $expectedTerm');
+    is_eq-Term($actualTerm, $expectedTerm, '$bigTerm reduces to $expectedTerm');
 }
 
 

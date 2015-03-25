@@ -96,20 +96,20 @@ plan 17;
 # - Util_Term -----------------------------------------------------------------
 
 { # is_eq test for TTerms
-    does_ok &is_eq, Callable, 'exports `&is_eq`';
-    lives_ok({ is_eq($VarT('x'), $VarT('x')) }, 'can call &is_eq without msg string');
-    lives_ok({ is_eq($VarT('x'), $VarT('x'), 'var x equals var x') }, 'can call &is_eq with a msg string');
+    does_ok &is_eq-Term, Callable, 'exports `&is_eq-Term`';
+    lives_ok({ is_eq-Term($VarT('x'), $VarT('x')) }, 'can call &is_eq-Term without msg string');
+    lives_ok({ is_eq-Term($VarT('x'), $VarT('x'), 'var x equals var x') }, 'can call &is_eq-Term with a msg string');
 }
 
 subtest({ # prefix operator ` (for retrieving pre-built test-terms)
     my $x = $VarT('x');
     my $omegaX = $LamT('x', $AppT($x, $x));
     
-    is_eq(`'x', $x, 'simple var x from %terms');
+    is_eq-Term(`'x', $x, 'simple var x from %terms');
     
-    is_eq(`'(λx.(x x))', $omegaX, 'omega as fully parenthesized lambda expr');
-    is_eq(`'λx.(x x)',   $omegaX, 'omega as lambda expr without surrounding parens');
-    is_eq(`'ωX',         $omegaX, 'omega as symbol ωX');
+    is_eq-Term(`'(λx.(x x))', $omegaX, 'omega as fully parenthesized lambda expr');
+    is_eq-Term(`'λx.(x x)',   $omegaX, 'omega as lambda expr without surrounding parens');
+    is_eq-Term(`'ωX',         $omegaX, 'omega as symbol ωX');
 }, 'prefix op ` retrieves...');
 
 
@@ -124,7 +124,7 @@ subtest({ # prefix operator ` (for retrieving pre-built test-terms)
                 is $mainKey, $Term2srcFull($value), "main key {$mainKey.perl} should be fully parenthesized lambda expr";
 
                 my TTerm $term = parseLambda($mainKey);
-                is_eq($term, $value);
+                is_eq-Term($term, $value);
 
                 for $value.synonyms -> $s {
                     my $sValue = $testTerms.get($s);
