@@ -139,24 +139,24 @@ our constant $testTerms is export = {
     my $hf1f2f3f4       ::= $AppT($hf1f2f3, $f4);
     my $hf1f2f3f4f5     ::= $AppT($hf1f2f3f4, $f5);
 
-    my $L__x   ::= $LamT('_', $x);
-    my $Lx_x   ::= $LamT('x', $x);
-    my $Lx_κc  ::= $LamT('x', $κc);
-    my $Lx_xx  ::= $LamT('x', $xx);
-    my $Lx_xy  ::= $LamT('x', $xy);
-    my $Lx_xκc ::= $LamT('x', $xκc);
-    my $Lx_yx  ::= $LamT('x', $yx);
+    my $λ__x   ::= $LamT('_', $x);
+    my $λx_x   ::= $LamT('x', $x);
+    my $λx_κc  ::= $LamT('x', $κc);
+    my $λx_xx  ::= $LamT('x', $xx);
+    my $λx_xy  ::= $LamT('x', $xy);
+    my $λx_xκc ::= $LamT('x', $xκc);
+    my $λx_yx  ::= $LamT('x', $yx);
 
-    my $L__y   ::= $LamT('_', $y);
-    my $Ly_xx  ::= $LamT('y', $xx);
-    my $Ly_xy  ::= $LamT('y', $xy);
-    my $Ly_yy  ::= $LamT('y', $yy);
-    my $Ly_zy  ::= $LamT('y', $zy);
-    my $Ly_Ky  ::= $LamT('y', $L__y);
+    my $λ__y   ::= $LamT('_', $y);
+    my $λy_xx  ::= $LamT('y', $xx);
+    my $λy_xy  ::= $LamT('y', $xy);
+    my $λy_yy  ::= $LamT('y', $yy);
+    my $λy_zy  ::= $LamT('y', $zy);
+    my $λy_Ky  ::= $LamT('y', $λ__y);
     
-    my $Ik    ::= $AppT($Lx_x, $k);
+    my $Ik    ::= $AppT($λx_x, $k);
     my $Ikf1  ::= $AppT($Ik, $f1);
-    my $Lk_Ikf1  ::= $LamT('k', $Ikf1);
+    my $λk_Ikf1  ::= $LamT('k', $Ikf1);
 
     my $θB ::= $LamT('f', $LamT('g', $LamT('x', $AppT($f, $gx))));   #   B aka compose
     my $θC ::= $LamT('f', $LamT('x', $LamT('y', $fyx)));             #   C aka swap-args
@@ -223,31 +223,31 @@ our constant $testTerms is export = {
         '(x (y (z x)))'             => $AppT($x, $AppT($y, $zx)),
         '((x y) (y z))'             => $AppT($xy, $yz),
 
-        '(λ_.x)'                    => $L__x,
-        '(λx."c")'                  => $Lx_κc,
-        '(λx.x)'                    => $Lx_x,   # I aka id
+        '(λ_.x)'                    => $λ__x,
+        '(λx."c")'                  => $λx_κc,
+        '(λx.x)'                    => $λx_x,   # I aka id
         '((λx.x) k)'                => $Ik,
         '(((λx.x) k) f1)'           => $Ikf1,
-        '(λk.(((λx.x) k) f1))'      => $Lk_Ikf1,
+        '(λk.(((λx.x) k) f1))'      => $λk_Ikf1,
         '(λf.(λg.(λx.(f (g x)))))'  => $θB,
         '(λf.(λx.(λy.((f y) x))))'  => $θC,
         '(λf.(λa.(λb.((f b) a))))'  => $LamT('f', $LamT('a', $LamT('b', $fba))),    # alpha-converted C
 
-        '(λx.(λ_.x))'               => $LamT('x', $L__x),   # K aka const
-        '(λx.(x "c"))'              => $Lx_xκc,
-        '(λx.(x x))'                => $Lx_xx,  # omegaX aka ωX ("omega in x") aka ω aka omega
-        '(λx.(x y))'                => $Lx_xy,
-        '(λx.(y x))'                => $Lx_yx,
+        '(λx.(λ_.x))'               => $LamT('x', $λ__x),   # K aka const
+        '(λx.(x "c"))'              => $λx_xκc,
+        '(λx.(x x))'                => $λx_xx,  # omegaX aka ωX ("omega in x") aka ω aka omega
+        '(λx.(x y))'                => $λx_xy,
+        '(λx.(y x))'                => $λx_yx,
         '(λx.((x y) "c"))'          => $LamT('x', $xyκc),
 
-        '(λ_.y)'                    => $L__y,
-        '(λy.(x x))'                => $Ly_xx,
-        '(λy.(x y))'                => $Ly_xy,
-        '(λy.(y y))'                => $Ly_yy,   # omegaY aka ωY ("omega in y")
-        '(λy.(z y))'                => $Ly_zy,
-        '(λy.(λ_.y))'               => $Ly_Ky,
+        '(λ_.y)'                    => $λ__y,
+        '(λy.(x x))'                => $λy_xx,
+        '(λy.(x y))'                => $λy_xy,
+        '(λy.(y y))'                => $λy_yy,   # omegaY aka ωY ("omega in y")
+        '(λy.(z y))'                => $λy_zy,
+        '(λy.(λ_.y))'               => $λy_Ky,
 
-        '(λg.(λh.((λy.(λ_.y)) (g h))))' => $LamT('g', $LamT('h', $AppT($Ly_Ky, $gh))),
+        '(λg.(λh.((λy.(λ_.y)) (g h))))' => $LamT('g', $LamT('h', $AppT($λy_Ky, $gh))),
 
         '(h f1)'                        => $hf1,
         '((h f1) f2)'                   => $hf1f2,
@@ -274,34 +274,34 @@ our constant $testTerms is export = {
             => $LamT('x', $LamT('y', $AppT($AppT($θcons, $x), $AppT($AppT($θcons, $y), $θnil)))),
         # aka 'λx.λy.cons x (cons y nil)'
 
-        '((x y) (λy.(x y)))'        => $AppT($xy, $Ly_xy),
+        '((x y) (λy.(x y)))'        => $AppT($xy, $λy_xy),
 
-        '((λx.(y x)) (x y))'            => $AppT($Lx_yx, $xy),
-        '(((λx.(y x)) (x y)) x)'        => $AppT($AppT($Lx_yx, $xy), $x),
-        '(((λx.(y x)) (x y)) (λx.x))'   => $AppT($AppT($Lx_yx, $xy), $Lx_x),
-        '(((λx.(y x)) (λx.x)) (λx.x))'  => $AppT($AppT($Lx_yx, $Lx_x), $Lx_x),
+        '((λx.(y x)) (x y))'            => $AppT($λx_yx, $xy),
+        '(((λx.(y x)) (x y)) x)'        => $AppT($AppT($λx_yx, $xy), $x),
+        '(((λx.(y x)) (x y)) (λx.x))'   => $AppT($AppT($λx_yx, $xy), $λx_x),
+        '(((λx.(y x)) (λx.x)) (λx.x))'  => $AppT($AppT($λx_yx, $λx_x), $λx_x),
 
-        '((λx.x) x)'                    => $AppT($Lx_x, $x),
-        '((λx.(y x)) (λy.(x y)))'       => $AppT($Lx_yx, $Ly_xy),
-        '(λx.(x (λy.(x y))))'           => $LamT('x', $AppT($x, $Ly_xy)),
-        '((λy.(x y)) y)'                => $AppT($Ly_xy, $y),
-        '(λx.((λy.(z y)) x))'           => $LamT('x', $AppT($Ly_zy, $x)),
-        '(λx.((λy.(x y)) x))'           => $LamT('x', $AppT($Ly_xy, $x)),
-        '(λx.((λx.(x y)) x))'           => $LamT('x', $AppT($Lx_xy, $x)),
-        '((λx.(x x)) (y y))'            => $AppT($Lx_xx, $yy),
-        '((y y) (λx.(x x)))'            => $AppT($yy, $Lx_xx),
+        '((λx.x) x)'                    => $AppT($λx_x, $x),
+        '((λx.(y x)) (λy.(x y)))'       => $AppT($λx_yx, $λy_xy),
+        '(λx.(x (λy.(x y))))'           => $LamT('x', $AppT($x, $λy_xy)),
+        '((λy.(x y)) y)'                => $AppT($λy_xy, $y),
+        '(λx.((λy.(z y)) x))'           => $LamT('x', $AppT($λy_zy, $x)),
+        '(λx.((λy.(x y)) x))'           => $LamT('x', $AppT($λy_xy, $x)),
+        '(λx.((λx.(x y)) x))'           => $LamT('x', $AppT($λx_xy, $x)),
+        '((λx.(x x)) (y y))'            => $AppT($λx_xx, $yy),
+        '((y y) (λx.(x x)))'            => $AppT($yy, $λx_xx),
         '(x (x y))'                     => $AppT($x, $xy),
-        '(x (λy.(x y)))'                => $AppT($VarT("x"), $Ly_xy),
+        '(x (λy.(x y)))'                => $AppT($VarT("x"), $λy_xy),
 
-        '(λx.((λy.(z y)) (x x)))'       => $LamT("x", $AppT($Ly_zy, $xx)),
+        '(λx.((λy.(z y)) (x x)))'       => $LamT("x", $AppT($λy_zy, $xx)),
         '(λz.(x (x y)))'                => $LamT('z', $AppT($x, $xy)),
-        '(λz.(x (λy.(x y))))'           => $LamT("z", $AppT($VarT("x"), $Ly_xy)),
+        '(λz.(x (λy.(x y))))'           => $LamT("z", $AppT($VarT("x"), $λy_xy)),
 
-        '((λx.(x x)) (λx.(x x)))'       => $AppT($Lx_xx, $Lx_xx), # = (ωX ωX) aka ΩXX ("Omega in x") aka Ω aka Omega
-        '((λy.(y y)) (λy.(y y)))'       => $AppT($Ly_yy, $Ly_yy), # = (ωY ωY) aka ΩYY ("Omega in y")
-        '((λx.(x x)) (λy.(y y)))'       => $AppT($Lx_xx, $Ly_yy), # = (ωX ωY) aka ΩXY (same as Ω modulo α-conversion)
-        '((λy.(y y)) (λx.(x x)))'       => $AppT($Ly_yy, $Lx_xx), # = (ωY ωX) aka ΩYX (same as Ω modulo α-conversion)
-        '((λx.(x x)) (λy.(x x)))'       => $AppT($Lx_xx, $Ly_xx), # NOT Ω (wrong binder in 2nd λ)
+        '((λx.(x x)) (λx.(x x)))'       => $AppT($λx_xx, $λx_xx), # = (ωX ωX) aka ΩXX ("Omega in x") aka Ω aka Omega
+        '((λy.(y y)) (λy.(y y)))'       => $AppT($λy_yy, $λy_yy), # = (ωY ωY) aka ΩYY ("Omega in y")
+        '((λx.(x x)) (λy.(y y)))'       => $AppT($λx_xx, $λy_yy), # = (ωX ωY) aka ΩXY (same as Ω modulo α-conversion)
+        '((λy.(y y)) (λx.(x x)))'       => $AppT($λy_yy, $λx_xx), # = (ωY ωX) aka ΩYX (same as Ω modulo α-conversion)
+        '((λx.(x x)) (λy.(x x)))'       => $AppT($λx_xx, $λy_xx), # NOT Ω (wrong binder in 2nd λ)
     });
 
     # some synonyms:
