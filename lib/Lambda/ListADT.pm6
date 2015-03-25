@@ -341,8 +341,8 @@ constant $List2Str is export = lambdaFn(
 
 
 
-# findFP-inMaybe_dbg: (a -> Maybe a) -> List a
-constant $findFP-inMaybe_dbg is export = {
+# findFP-inMaybe_dbgXXX: (a -> Maybe a) -> List a
+constant $findFP-inMaybe_dbgXXX is export = {
     my $arbiter = lambdaFn(
         Str, 'λv1.λm2.λnextStep.case m2 ((None (Some v1)) ((Some v2) (nextStep v2)))',
         -> TList $valuesBefore, TList $valuesAfter, &nextStep {
@@ -353,7 +353,7 @@ constant $findFP-inMaybe_dbg is export = {
         }
     );
     lambdaFn(
-        'findFP-inMaybe_dbg', 'let ((stopCond (K None?))) λstepFn.B (findFP stopCond (λm.m >>= stepFn)) stepFn',
+        'findFP-inMaybe_dbgXXX', 'stepFn.error "NYI"',
         -> &stepFn {
             my &myStepFn = -> TList $valuesSoFar {
                 case-List($valuesSoFar,
@@ -365,7 +365,7 @@ constant $findFP-inMaybe_dbg is export = {
             };
             my $fpSearch = $findFP($arbiter, &myStepFn);
             lambdaFn(
-                Str, 'error "NYI"',
+                Str, 'λstart.error "NYI"',
                 -> $start {
                     # what to return on very 1st step, either nil or (cons start nil):
                     #my $initial = $nil;
@@ -379,3 +379,29 @@ constant $findFP-inMaybe_dbg is export = {
         }
     )
 }();
+
+
+# findFP-inMaybe_dbg: (a -> Maybe a) -> List a
+constant $findFP-inMaybe_dbg is export = lambdaFn(
+    'findFP-inMaybe_dbg', 'stepFn.error "NYI"',
+    -> &stepFn {
+        # fpSearch: List -> Maybe List
+        my $fpSearch = $findFP-inMaybe(-> TList $valuesSoFar {
+            my $v = $car($valuesSoFar);
+            case-Maybe(&stepFn($v),
+                None => $None,
+                Some => -> $next { $Some($cons($next, $valuesSoFar)) }
+            )
+        });
+        lambdaFn(
+            Str, 'λstart.error "NYI"',
+            -> $start {
+                my $startList = $cons($start, $nil);
+                case-Maybe($fpSearch($startList),
+                    None => $startList,
+                    Some => $I
+                )
+            }
+        )
+    }
+);
