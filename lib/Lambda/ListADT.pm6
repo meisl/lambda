@@ -338,3 +338,44 @@ constant $List2Str is export = lambdaFn(
         )
     }
 );
+
+
+
+# findFP-inMaybe_dbg: (a -> Maybe a) -> List a
+constant $findFP-inMaybe_dbg is export = {
+    my $arbiter = lambdaFn(
+        Str, 'λv1.λm2.λnextStep.case m2 ((None (Some v1)) ((Some v2) (nextStep v2)))',
+        -> TList $valuesBefore, TList $valuesAfter, &nextStep {
+            case-Maybe($car($valuesAfter),
+                None => $valuesBefore,
+                Some => -> $nextVal { &nextStep($cons($nextVal, $valuesBefore)) }
+            )
+        }
+    );
+    lambdaFn(
+        'findFP-inMaybe_dbg', 'let ((stopCond (K None?))) λstepFn.B (findFP stopCond (λm.m >>= stepFn)) stepFn',
+        -> &stepFn {
+            my &myStepFn = -> TList $valuesSoFar {
+                case-List($valuesSoFar,
+                    nil  => { die "should not happen" },
+                    cons => -> $v, TList $vs {
+                        $cons(&stepFn($v), $vs);
+                    }
+                );
+            };
+            my $fpSearch = $findFP($arbiter, &myStepFn);
+            lambdaFn(
+                Str, 'error "NYI"',
+                -> $start {
+                    # what to return on very 1st step, either nil or (cons start nil):
+                    #my $initial = $nil;
+                    my $initial = $cons($start, $nil);
+                    case-Maybe(&stepFn($start),
+                        None => $initial,
+                        Some => -> $v1st { $fpSearch($cons($v1st, $initial)) }
+                    )
+                }
+            )
+        }
+    )
+}();

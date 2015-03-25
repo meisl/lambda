@@ -2,6 +2,7 @@ use v6;
 use Test;
 use Test::Util;
 use Test::Util_Lambda;
+use Test::Util_List;
 
 use Lambda::Boolean;
 use Lambda::MaybeADT;
@@ -10,7 +11,17 @@ use Lambda::MaybeADT;
 # module under test:
 use Lambda::ListADT;
 
-plan 167;
+plan 168;
+
+
+subtest({ # findFP-inMaybe_dbg ----------------------------------------------------------
+    my &step = -> Int $n { $n > 0 ?? $Some($n-1) !! $None };
+
+    is_eq-List($findFP-inMaybe_dbg(&step, 0), [0], 'list with only start value if step-fn returns None on 1st step');
+    is_eq-List($findFP-inMaybe_dbg(&step, 1), [0, 1], 'list of values for which step-fn returned a Some (1 step, start value last)');
+    is_eq-List($findFP-inMaybe_dbg(&step, 2), [0, 1, 2], 'list of values for which step-fn returned a Some (2 steps, latest value first and start value last)');
+    is_eq-List($findFP-inMaybe_dbg(&step, 3), [0, 1, 2, 3], 'list of values for which step-fn returned a Some (3 steps, latest value first and start value last)');
+}, 'findFP-inMaybe_dbg');
 
 
 # ->Str -----------------------------------------------------------------------
