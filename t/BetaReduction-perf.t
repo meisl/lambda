@@ -5,6 +5,7 @@ use Lambda::MaybeADT;
 use Lambda::TermADT;
 use Lambda::PairADT;
 
+use Lambda::Base;
 use Lambda::BaseP6;
 use Lambda::P6Currying;
 use Lambda::Conversion::ListADT-conv;
@@ -28,84 +29,72 @@ my $fpSearch = $findFP-inMaybe(lambdaFn('betaContract', 'λt.error "NYI"', -> TP
         Some => -> $v { $Some($Pair($n+1, $v)) }
     );
 }));
+
 my $reduce = -> TTerm $start {
     my $startPair = $Pair(0, $start);
     case-Maybe($fpSearch($startPair),
         None => {
-            diag '0 steps';
+            diag '    (0 steps)';
             $None;
         },
         Some => -> $pair {
-            diag "{$fst($pair)} steps";
+            diag "    ({$fst($pair)} steps)";
             $Some($snd($pair));
         }
     );
 }
 
-## uncomment to disable debugging info:
-#$reduce = $betaReduce;
+## uncomment to disable debug diagnostics:
+$reduce = $betaReduce;
 
-{ # (C (B (C cons) (C cons nil)))  =  (λa.λb.cons a (cons b nil))   # TODO: move to BetaReduction.t
+sub is_confluent(TTerm $s, TTerm $t, Str :$msg = '', Str :$sStr, Str :$tStr) {
+    my $sSrc = $Term2srcLess($s);
+    my $tSrc = $Term2srcLess($t);
+    subtest({
+        diag("$sStr  =  $sSrc") if $sStr.defined;
+        my $timeS = now;
+        my $sr = case-Maybe($reduce($s), None => $s, Some => $I);
+        $timeS = (now - $timeS).Real;
 
-    subtest({ # this one does not need alpha-conversion (first C uses binders a,b instead of x,y)
-        my $s = $AppT(`'λf.λa.λb.f b a', `'B (C cons) (C cons nil)');
-        my $t = `'λa.λb.cons a (cons b nil)';
+        diag("$tStr  =  $tSrc") if $tStr.defined;
+        my $timeT = now;
+        my $tr = case-Maybe($reduce($t), None => $t, Some => $I);
+        $timeT = (now - $timeT).Real;
 
-        my $sSrc = $Term2srcLess($s);
-        my $tSrc = $Term2srcLess($t);
+        my $timeTtl = $timeS + $timeT;
+        diag sprintf('%1.2f = %1.2f + %1.2f sec (%1.0f%% + %1.0f%%) consumed for beta-reduction',
+            $timeTtl, 
+            $timeS,  $timeT,
+            $timeS / $timeTtl * 100, $timeT / $timeTtl * 100
+        );
 
-        $time = now;
-        diag '`(C (B (C cons) (C cons nil)))  =    ' ~ $sSrc;
-        my $s2 = $Some2value($reduce($s));
-        diag '`(λa.λb.cons a (cons b nil))    =    ' ~ $tSrc;
-        my $t2 = $Some2value($reduce($t));
-        diag (now.Real - $time.Real).round(0.01) ~ " sec consumed for beta-reduction";
+        is_eq-Term($sr, $tr);
+    }, "{$sStr // $sSrc}  =_β*  {$tStr // $tSrc}  $msg");
+}
 
-        diag '`(C (B (C cons) (C cons nil)))  =_β  ' ~ $Term2srcLess($s2);
-        diag '`(λa.λb.cons a (cons b nil))    =_β  ' ~ $Term2srcLess($t2);
+{ # TODO: move to BetaReduction.t
+    is_confluent( # this one does not need alpha-conversion (first C uses binders a,b instead of x,y)
+        $AppT(`'λf.λa.λb.f b a', `'B (C cons) (C cons nil)'),   :sStr('(λf.λa.λb.f b a) (B (C cons) (C cons nil))'),
+        `'λa.λb.cons a (cons b nil)',                           :tStr('λa.λb.cons a (cons b nil)'),
+        msg => '[NO alpha-conv needed]'
+    );
 
-        is_eq-Term($s2, $t2);
-    }, '`(C (B (C cons) (C cons nil)))  =_β  `(λa.λb.cons a (cons b nil))  [no alpha-conv]');
-
-    subtest({ # this one does require alpha-conversion
-        my $s = $AppT(`'C', `'B (C cons) (C cons nil)');
-        my $t = `'λx.λy.cons x (cons y nil)';
-
-        my $sSrc = $Term2srcLess($s);
-        my $tSrc = $Term2srcLess($t);
-
-        $time = now;
-        diag '`(C (B (C cons) (C cons nil)))  =    ' ~ $sSrc;
-        my $s2 = $Some2value($reduce($s));
-        diag '`(λa.λb.cons a (cons b nil))    =    ' ~ $tSrc;
-        my $t2 = $Some2value($reduce($t));
-        diag (now.Real - $time.Real).round(0.01) ~ " sec consumed for beta-reduction";
-
-        diag '`(C (B (C cons) (C cons nil)))  =_β  ' ~ $Term2srcLess($s2);
-        diag '`(λx.λy.cons x (cons y nil))    =_β  ' ~ $Term2srcLess($t2);
-
-        is_eq-Term($s2, $t2);
-    }, '`(C (B (C cons) (C cons nil)))  =_β  `(λx.λy.cons x (cons y nil))  [needs alpha-conv]');
+    is_confluent( # this one DOES require alpha-conversion
+        $AppT(`'C', `'B (C cons) (C cons nil)'),    :sStr('(C (B (C cons) (C cons nil)))'),
+        `'λx.λy.cons x (cons y nil)',               :tStr('λx.λy.cons x (cons y nil)'),
+        msg => '[DOES need alpha-conv]'
+    );
 }
 
 
 { # first try with two minimal examples, as a sanity check:
-    my ($t, $actual);
-
-    $t =`'x x';
-    $actual = $reduce($t);
-    is $actual, 'None', '`(x x) reduces to itself (sanity check)'
-        or die;
-
-    $t = `'(λx.x) x';
-    $actual = $Some2value($reduce($t));
-    is_eq-Term($actual, `'x', "`({$Term2srcLesser($t)}) reduces to x (sanity check)")
-        or die;
+    is_confluent(`'x x',      `'x x', msg => '(sanity check)');
+    is_confluent(`'(λx.x) x', `'x',   msg => '(sanity check)');
 }
 
 
 { # profiling betaReduce
-    my ( $bigTerm, $bigLambda, $expectedTerm, $expectedLambda, $actualTerm);
+    my ($bigTerm, $bigLambda, $expectedTerm, $expectedLambda);
 
     #$make-Ctor-chi_term: ctor2o4f5 (expects 4 callbacks and applies the 2nd to 5 fields)
     $bigLambda = 'λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))';
@@ -121,11 +110,7 @@ my $reduce = -> TTerm $start {
 
     diag curryStats;
 
-    diag '         ' ~ $bigLambda;
-    $time = now;
-    $actualTerm = $Some2value($reduce($bigTerm));
-    diag (now.Real - $time.Real).round(0.01) ~ " sec consumed for β-reduction";
-    is_eq-Term($actualTerm, $expectedTerm, '$bigTerm reduces to $expectedTerm');
+    is_confluent($bigTerm, $expectedTerm);
 }
 
 
