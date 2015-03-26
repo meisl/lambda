@@ -6,7 +6,7 @@ use Lambda::Boolean;
 use Lambda::MaybeADT;
 use Lambda::TermADT;
 
-use Lambda::Conversion::Bool-conv;
+use Lambda::Conversion;
 
 
 # module under test:

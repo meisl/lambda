@@ -9,10 +9,31 @@ use Lambda::ListADT;
 
 
 # modules under test:
-use Lambda::Conversion::ListADT-conv;
-use Lambda::Conversion::Bool-conv;
+use Lambda::Conversion;
 
-plan 33;
+plan 41;
+
+
+{ # convert Pairs
+
+    my $tPair1 = $Pair(5, "seven");
+    my $p6Pair1 = convertTPair2P6Pair($tPair1);
+    cmp_ok($p6Pair1.key,    '===', 5,       "$tPair1 converted to {$p6Pair1.perl} (.key)");
+    cmp_ok($p6Pair1.value,  '===', "seven", "$tPair1 converted to {$p6Pair1.perl} (.value)");
+
+    my $tPair2 = convertP6Pair2TPair($p6Pair1);
+    cmp_ok($fst($tPair2),   '===', 5,       "{$p6Pair1.perl} converted back to $tPair2 (fst)");
+    cmp_ok($snd($tPair2),   '===', "seven", "{$p6Pair1.perl} converted back to $tPair2 (snd)");
+
+    my $p6Pair2 = Pair.new(key => 42, value => 'twenty-three');
+    my $tPair3 = convertP6Pair2TPair($p6Pair2);
+    cmp_ok($fst($tPair3),   '===', 42,              "{$p6Pair2.perl} converted to $tPair3 (fst)");
+    cmp_ok($snd($tPair3),   '===', "twenty-three",  "{$p6Pair2.perl} converted to $tPair3 (snd)");
+
+    my $p6Pair3 = convertTPair2P6Pair($tPair3);
+    cmp_ok($p6Pair3.key,    '===', 42,              "$tPair3 converted back to {$p6Pair3.perl} (.key)");
+    cmp_ok($p6Pair3.value,  '===', "twenty-three",  "$tPair3 converted back to {$p6Pair3.perl} (.value)");
+}
 
 
 { # convertTBool2P6Bool

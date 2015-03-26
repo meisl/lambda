@@ -11,7 +11,7 @@ use Lambda::EtaReduction;
 use Lambda::BetaReduction;
 
 use Lambda::LambdaGrammar;
-use Lambda::Conversion::ListADT-conv;
+use Lambda::Conversion;
 
 
 # module(s) under test:

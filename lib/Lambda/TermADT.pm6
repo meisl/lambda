@@ -9,7 +9,7 @@ use Lambda::ListADT;
 
 use Lambda::ADT_auto;
 
-use Lambda::Conversion::Bool-conv;
+use Lambda::Conversion;
 
 module Lambda::TermADT;
 

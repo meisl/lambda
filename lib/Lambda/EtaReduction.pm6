@@ -9,7 +9,7 @@ use Lambda::ListADT;
 use Lambda::TermADT;
 use Lambda::FreeVars;
 
-use Lambda::Conversion::Bool-conv;
+use Lambda::Conversion;
 
 
 # η-redex? - ie of form λx.(B x) where x not free in B

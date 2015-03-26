@@ -2,6 +2,7 @@ use v6;
 use Test;
 use Test::Util;
 use Test::Util_Lambda;
+use Test::Util_Term;
 
 use Lambda::Boolean;
 use Lambda::MaybeADT;
@@ -9,8 +10,7 @@ use Lambda::ListADT;
 use Lambda::PairADT;
 use Lambda::TermADT;
 
-use Lambda::Conversion::Bool-conv;
-use Lambda::Conversion::ListADT-conv;
+use Lambda::Conversion;
 
 
 # module under test:
@@ -18,6 +18,37 @@ use Lambda::Substitution;
 
 plan 35;
 
+#`{
+    sub foo(*@testcases) {
+        for @testcases -> $testcase {
+            my @args   = $testcase.key.list;
+            my $result = $testcase.value;
+            say $testcase.perl;
+            say @args.elems ~ ' args';
+
+            my $arg1 = @args[1];
+            if $arg1 ~~ Array {
+                say $arg1.elems ~ ' elems in arg 1: ' ~ $arg1.map(*.perl).join(', ');
+                my $arg1x = convertP6Array2TList($arg1.map(-> $e {
+                    if $e ~~ Array {
+                        convertP6Array2TList($e);
+                    } elsif $e ~~ Pair {
+                        $Pair($e.key, $e.value);
+                    } else {
+                        $e;
+                    }
+                }));
+                say $arg1x.Str;
+            }
+
+        }
+    }
+
+    foo(['x', [z => `'x', x => `'y'], "bar"] => False,
+        ['y', [('x', 'z'), ('y', 'x')], "baz"] => False,
+    );
+    exit;
+}
 
 my $a = $VarT('a');
 my $u = $VarT('u');
@@ -27,14 +58,6 @@ my $x = $VarT('x');
 my $y = $VarT('y');
 my $z = $VarT('z');
 my $c = $ConstT('c');
-
-my $app_xx  = $AppT($x, $x);        # (x x)
-my $app_xy  = $AppT($x, $y);        # (x y)
-my $app_xyz = $AppT($app_xy, $z);   # ((x y) z)
-my $lam0    = $LamT('x', $y);        # λx.y
-my $lam1    = $LamT('x', $app_xy);   # λx.x y
-my $lam2    = $LamT('x', $app_xyz);  # λx.x y z
-my $lam3    = $LamT('u', $app_xyz);  # λu.x y z
 
 
 { # function (subst inTerm whatTerm forVar)
@@ -64,13 +87,13 @@ my $lam3    = $LamT('u', $app_xyz);  # λu.x y z
     }
 
     is_subst(
-        [$c,                        x => $y] => $None,
-        [$x,                        x => $c] => $Some($c),
-        [$x,                        y => $c] => $None,
-        [$x,                        x => $y] => $Some($y),
-        [$LamT('x', $AppT($x, $y)),  x => $y] => $None,                              # y for x in (λx.x y) -> (λx.x y)
-        [$LamT('x', $AppT($x, $y)),  z => $y] => $None,                              # y for z in (λx.x y) -> (λx.x y)
-        [$LamT('x', $AppT($x, $y)),  y => $z] => $Some($LamT('x', $AppT($x, $z))),    # z for y in (λx.x y) -> (λx.x z)
+        [`'"c"',    x => `'y']   => $None,
+        [`'x',      x => `'"c"'] => $Some(`'"c"'),
+        [`'x',      y => `'"c"'] => $None,
+        [`'x',      x => `'y']   => $Some($y),
+        [`'λx.x y', x => `'y']   => $None,
+        [`'λx.x y', z => `'y']   => $None,
+        [`'λx.x y', y => `'z']   => $Some(`'λx.x z'),
     );
 }
 
@@ -99,31 +122,26 @@ my $lam3    = $LamT('u', $app_xyz);  # λu.x y z
         }
     }
 
-    my $l1 = $LamT('u', $LamT('v', $AppT($z, $u)));   # λu.λv.z u
-    my $l2 = $LamT('w', $LamT('x', $AppT($x, $z)));   # λw.λx.x z
-    my $l3 = $LamT('u', $LamT('v', $AppT($x, $u)));   # λu.λv.x u
-    my $l4 = $LamT('u', $LamT('v', $AppT($u, $u)));   # λu.λv.u u
-    my $l5 = $LamT('w', $LamT('x', $AppT($x, $l2)));   # λw.λx.x λw.λx.x z
-    my $l6 = $LamT('u', $LamT('v', $AppT($y, $u)));   # λu.λv.y u
-    my $l7 = $LamT('u', $LamT('v', $AppT($LamT('w', $LamT('x', $AppT($x, $y))), $u)));   # λu.λv.(λw.λx.x y) u
-
     is_subst-seq(
-        [$c,  [['y', $x]]]   => $None,       # [x/y]"c"          -> "c"
-        [$z,  [['y', $x]]]   => $None,       # [x/y]z            -> z
-        [$y,  [['y', $x]]]   => $Some($x),   # [x/y]y            -> x
-        [$y,  [['y', $l1]]]  => $Some($l1),  # [λu.λv.z u/y]y    -> λu.λv.z u
-        [$l1, [['y', $x]]]   => $None,       # [x/y]λu.λv.z u    -> λu.λv.z u    # because y doesn't occur in l1
-        [$l1, [['u', $x]]]   => $None,       # [x/u]λu.λv.z u    -> λu.λv.z u    # because u is bound
-        [$l1, [['z', $x]]]   => $Some($l3),  # [x/z]λu.λv.z u    -> λu.λv.x u    # since z is free in l1
-        [$l1, [['z', $u]]]   => $Some($l4),  # [u/z]λu.λv.z u    -> λu.λv.u u    # since z is free in l1 (accidental capture)
+        [`'"c"',       [['y', `'x'        ]]]   => $None,
+        [`'z',         [['y', `'x'        ]]]   => $None,
+        [`'y',         [['y', `'x'        ]]]   => $Some(`'x'),
+        [`'y',         [['y', `'λu.λv.z u']]]   => $Some(`'λu.λv.z u'),
+        [`'λu.λv.z u', [['y', `'x'        ]]]   => $None,               # because y doesn't occur in (λu.λv.z u)
+        [`'λu.λv.z u', [['u', `'x'        ]]]   => $None,               # because u is bound
+        [`'λu.λv.z u', [['z', `'x'        ]]]   => $Some(`'λu.λv.x u'), # since z is free in (λu.λv.z u)
+        [`'λu.λv.z u', [['z', `'u'        ]]]   => $Some(`'λu.λv.u u'), # since z is free in (λu.λv.z u) (accidental capture)
         
-        [$z,  [['z', $l2], ['z', $y], ['y', $l2]]]     => $Some($l5),  
-            # [λw.λx.x z/y]([y/z]([λw.λx.x z/z]z))  -> λw.λx.x λw.λx.x z
-        [$l1, [['z', $x], ['x', $y]]]                 => $Some($l6),
+        [`'z',         [['z', `'λw.λx.x z'], ['z', `'y'], ['y', `'λw.λx.x z']]] => $Some(`'λw.λx.x (λw.λx.x z)'),
+            # [λw.λx.x z/y]([y/z]([λw.λx.x z/z]z))
+        
+        [`'λu.λv.z u', [['z', `'x'],         ['x', `'y']]]              => $Some(`'λu.λv.y u'),
             # [y/x]([x/z]λu.λv.z u)                 -> λu.λv.y u
-        [$l1, [['z', $x], ['y', $z], ['x', $y]]]       => $Some($l6),
-            # [y/x]([z/y]([x/z]λu.λv.z u))          -> λu.λv.y u        # 2nd subst doesn't change anything
-        [$l1, [['z', $l2], ['z', $y]]]                => $Some($l7),
+        
+        [`'λu.λv.z u', [['z', `'x'],         ['y', `'z'], ['x', `'y']]] => $Some(`'λu.λv.y u'),  # 2nd subst doesn't change anything
+            # [y/x]([z/y]([x/z]λu.λv.z u))          -> λu.λv.y u        
+        
+        [`'λu.λv.z u', [['z', `'λw.λx.x z'], ['z', `'y']]]              => $Some(`'λu.λv.(λw.λx.x y) u'),
             # [y/z]([λw.λx.x z/z]λu.λv.z u)         -> λu.λv.(λw.λx.x y) u
     );
 }
@@ -163,35 +181,35 @@ my $lam3    = $LamT('u', $app_xyz);  # λu.x y z
     }
 
     is_subst-with-alpha(
-        [$x, $y,        [$y],         $c      ] => $None,
+        [$x, $y,        [$y],         `'"c"' ] => $None,
 
-        [$x, $y,        [$y],         $y      ] => $None,
-        [$x, $y,        [$y],         $x      ] => $Some($y),
+        [$x, $y,        [$y],         `'y'   ] => $None,
+        [$x, $y,        [$y],         `'x'   ] => $Some(`'y'),
 
-        [$x, $y,        [$y],         $app_xx ] => $Some($AppT($y, $y)),
+        [$x, $y,        [$y],         `'x x' ] => $Some(`'y y'),
 
-        [$z, $y,        [$y],         $app_xy ] => $None,
-        [$x, $y,        [$y],         $app_xy ] => $Some($AppT($y, $y)),
-        [$y, $x,        [$x],         $app_xy ] => $Some($AppT($x, $x)),
+        [$z, $y,        [$y],         `'x y' ] => $None,
+        [$x, $y,        [$y],         `'x y' ] => $Some(`'y y'),
+        [$y, $x,        [$x],         `'x y' ] => $Some(`'x x'),
                            
-        [$z, $y,        [$y],         $lam0   ] => $None,     # λx.y
-        [$y, $z,        [$z],         $lam0   ] => $Some($LamT('x', $z)),
+        [$z, $y,        [$y],         `'λx.y'] => $None,
+        [$y, $z,        [$z],         `'λx.y'] => $Some(`'λx.z'),
 
-        # main subst var x NOT free in body:     # λx.x y
-        [$x, $z,        [$z],         $lam1   ] => $None,
+        # main subst var x NOT free in body:
+        [$x, $z,        [$z],         `'λx.x y' ] => $None,
         
-        # main subst var y IS free in body:     # λx.x y
-        [$y, $z,        [$z],         $lam1   ] => $Some($LamT('x', $AppT($x,$z))),  # ...*except* for the lambda's binder!
+        # main subst var y IS free in body:
+        [$y, $z,        [$z],         `'λx.x y' ] => $Some(`'λx.x z'),  # ...*except* for the lambda's binder!
 
         # neither forVar nor var free in body, and no external alpha-convs applicable
-        [$v, $app_xy,   [$x, $y],     $lam3   ] => $None,
+        [$v, `'x y',   [$x, $y],     `'λu.x y z'] => $None,
     );
     
     subtest({ # [(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)
         my ($out, $newVarName, $newVar, $newBody, $keepfree);
-        $keepfree = $cons($x, $cons($y, $nil));
+        $keepfree = $cons(`'x', $cons(`'y', $nil));
         
-        $out = $Some2value($subst-with-alpha($y, $app_xy, $keepfree, $lam2));
+        $out = $Some2value($subst-with-alpha(`'y', `'x y', $keepfree, `'λx.x y z'));
         
         $newVarName = $LamT2var($out);    # DONE: LamT_ctor_with_Str_binder
         $newVar     = $VarT($newVarName);
@@ -201,11 +219,7 @@ my $lam3    = $LamT('u', $app_xyz);  # λu.x y z
         isnt($newVarName, 'y', "fresh var $newVar is different from var y");
         isnt($newVarName, 'z', "fresh var $newVar is different from var z");
         
-        is($newBody, $AppT($AppT($newVar, $app_xy), $z))
+        is($newBody, $AppT($AppT($newVar, `'x y'), `'z'))
             or diag("     got: " ~ $Term2source($out));
-        # (λx.((x y) z))
-        # should have been turned into
-        # (λα1.((α1 (x y)) z))
-
     }, 'plus additional alpha-conversion (fresh var for x)');
 }

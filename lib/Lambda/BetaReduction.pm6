@@ -11,7 +11,7 @@ use Lambda::TermADT;
 use Lambda::FreeVars;
 use Lambda::Substitution;
 
-use Lambda::Conversion::Bool-conv;
+use Lambda::Conversion;
 
 
 # β-redex?: Term -> Bool

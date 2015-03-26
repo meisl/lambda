@@ -2,8 +2,7 @@ use v6;
 
 use Test;
 use Lambda::BaseP6;
-use Lambda::Conversion::Bool-conv;
-use Lambda::Conversion::ListADT-conv;
+use Lambda::Conversion;
 use Lambda::ListADT;
 
 module Test::Util_List;

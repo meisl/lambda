@@ -1,9 +1,31 @@
 use v6;
 
+use Lambda::Boolean;
 use Lambda::PairADT;
 use Lambda::ListADT;
 
-module Lambda::Conversion::ListADT-conv;
+module Lambda::Conversion;
+
+
+
+sub convertTBool2P6Bool(TBool:D $p) is export {
+    $p(True, False);
+}
+
+sub convertP6Bool2TBool(Bool:D $p) is export {
+    $p ?? $true !! $false;
+}
+
+
+
+sub convertTPair2P6Pair(TPair:D $pair) is export {
+    Pair.new(:key($fst($pair)), :value($snd($pair)));
+}
+
+sub convertP6Pair2TPair(Pair:D (:$key, :$value)) is export {
+    $Pair($key, $value);
+}
+
 
 
 sub convertTList2P6Array(TList:D $xs) is export {
@@ -23,3 +45,5 @@ sub convertP6ArrayToTListOfTPairs($arrayOfarrays) is export {
         $Pair($_[0], $_[1]);
     }) );
 }
+
+

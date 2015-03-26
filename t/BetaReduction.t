@@ -9,7 +9,7 @@ use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
 
-use Lambda::Conversion::Bool-conv;
+use Lambda::Conversion;
 
 use Lambda::P6Currying;
 

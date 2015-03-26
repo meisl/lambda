@@ -8,7 +8,7 @@ use Lambda::PairADT;
 use Lambda::Base;
 use Lambda::BaseP6;
 use Lambda::P6Currying;
-use Lambda::Conversion::ListADT-conv;
+use Lambda::Conversion;
 
 # module under test:
 use Lambda::BetaReduction;
@@ -74,7 +74,7 @@ sub is_confluent(TTerm $s, TTerm $t, Str :$msg = '', Str :$sStr, Str :$tStr) {
 #    });
 }
 
-{ # TODO: move to BetaReduction.t
+#`{ # TODO: move to BetaReduction.t
     is_confluent( # this one does not need alpha-conversion (first C uses binders a,b instead of x,y)
         $AppT(`'λf.λa.λb.f b a', `'B (C cons) (C cons nil)'),   :sStr('(λf.λa.λb.f b a) (B (C cons) (C cons nil))'),
         `'λa.λb.cons a (cons b nil)',                           :tStr('λa.λb.cons a (cons b nil)'),

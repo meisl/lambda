@@ -2,7 +2,7 @@ use v6;
 use Lambda::BaseP6;
 use Lambda::Boolean;
 
-use Lambda::Conversion::Bool-conv;
+use Lambda::Conversion;
 
 module Lambda::String;  # tests are in Misc.t
 
