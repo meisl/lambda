@@ -80,6 +80,7 @@ my $c = $ConstT('c');
     );
 }
 
+
 { # function (subst-seq inTerm substitutions)
     is_properLambdaFn $subst-seq, 'subst-seq';
 
@@ -89,8 +90,8 @@ my $c = $ConstT('c');
             my $inTermStr   = $Term2source($inTerm);
 
             my $substs      = $test.key[1];
-            my $substsStr   = '[' ~ $substs.map(-> $pair { "[{$Term2source($pair[1])}/{$pair[0]}]"}).join(', ') ~ ']';
-            my $substsListOfPairs = convertP6ArrayToTListOfTPairs($substs);
+            my $substsStr   = '[' ~ $substs.map(-> $pair { "[{$Term2source($pair.value)}/{$pair.key}]"}).join(', ') ~ ']';
+            my $substsListOfPairs = convert2Lambda($substs);
 
             my $expected   = $test.value;
             my $itself     = $expected === $None;
@@ -106,28 +107,29 @@ my $c = $ConstT('c');
     }
 
     is_subst-seq(
-        [`'"c"',       [['y', `'x'        ]]]   => $None,
-        [`'z',         [['y', `'x'        ]]]   => $None,
-        [`'y',         [['y', `'x'        ]]]   => $Some(`'x'),
-        [`'y',         [['y', `'λu.λv.z u']]]   => $Some(`'λu.λv.z u'),
-        [`'λu.λv.z u', [['y', `'x'        ]]]   => $None,               # because y doesn't occur in (λu.λv.z u)
-        [`'λu.λv.z u', [['u', `'x'        ]]]   => $None,               # because u is bound
-        [`'λu.λv.z u', [['z', `'x'        ]]]   => $Some(`'λu.λv.x u'), # since z is free in (λu.λv.z u)
-        [`'λu.λv.z u', [['z', `'u'        ]]]   => $Some(`'λu.λv.u u'), # since z is free in (λu.λv.z u) (accidental capture)
+        [`'"c"',       [y => `'x'        ]]   => $None,
+        [`'z',         [y => `'x'        ]]   => $None,
+        [`'y',         [y => `'x'        ]]   => $Some(`'x'),
+        [`'y',         [y => `'λu.λv.z u']]   => $Some(`'λu.λv.z u'),
+        [`'λu.λv.z u', [y => `'x'        ]]   => $None,               # because y doesn't occur in (λu.λv.z u)
+        [`'λu.λv.z u', [u => `'x'        ]]   => $None,               # because u is bound
+        [`'λu.λv.z u', [z => `'x'        ]]   => $Some(`'λu.λv.x u'), # since z is free in (λu.λv.z u)
+        [`'λu.λv.z u', [z => `'u'        ]]   => $Some(`'λu.λv.u u'), # since z is free in (λu.λv.z u) (accidental capture)
         
-        [`'z',         [['z', `'λw.λx.x z'], ['z', `'y'], ['y', `'λw.λx.x z']]] => $Some(`'λw.λx.x (λw.λx.x z)'),
+        [`'z',         [z => `'λw.λx.x z', z => `'y', y => `'λw.λx.x z']  ] => $Some(`'λw.λx.x (λw.λx.x z)'),
             # [λw.λx.x z/y]([y/z]([λw.λx.x z/z]z))
         
-        [`'λu.λv.z u', [['z', `'x'],         ['x', `'y']]]              => $Some(`'λu.λv.y u'),
+        [`'λu.λv.z u', [z => `'x',         x => `'y']                     ] => $Some(`'λu.λv.y u'),
             # [y/x]([x/z]λu.λv.z u)                 -> λu.λv.y u
         
-        [`'λu.λv.z u', [['z', `'x'],         ['y', `'z'], ['x', `'y']]] => $Some(`'λu.λv.y u'),  # 2nd subst doesn't change anything
-            # [y/x]([z/y]([x/z]λu.λv.z u))          -> λu.λv.y u        
+        [`'λu.λv.z u', [z => `'x',         y => `'z', x => `'y']          ] => $Some(`'λu.λv.y u'),  # 2nd subst doesn't change anything
+            # [y/x]([z/y]([x/z]λu.λv.z u))          -> λu.λv.y u
         
-        [`'λu.λv.z u', [['z', `'λw.λx.x z'], ['z', `'y']]]              => $Some(`'λu.λv.(λw.λx.x y) u'),
+        [`'λu.λv.z u', [z => `'λw.λx.x z', z => `'y']                     ] => $Some(`'λu.λv.(λw.λx.x y) u'),
             # [y/z]([λw.λx.x z/z]λu.λv.z u)         -> λu.λv.(λw.λx.x y) u
     );
 }
+
 
 { # function (subst-with-alpha forVar whatTerm keepfree alpha-convs inTerm)
     is_properLambdaFn $subst-with-alpha, 'subst-with-alpha';

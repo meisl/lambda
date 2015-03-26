@@ -50,11 +50,14 @@ sub convertP6ArrayToTListOfTPairs(Array $arrayOfarrays) is export {
 
 proto sub convert2Lambda(|) is export {*};
 
-multi sub convert2Lambda(|args) {
-    die "cannot convert to Lambda: {args.perl}";
-}
-multi sub convert2Lambda(Any:D $x) { $x }
-
 multi sub convert2Lambda(Bool:D  $x) { convertP6Bool2TBool($x) }
 multi sub convert2Lambda(Pair:D  $x) { $Pair(convert2Lambda($x.key), convert2Lambda($x.value)) }
 multi sub convert2Lambda(        @x) { convertP6Array2TList(@x.map(&convert2Lambda)) }
+
+# any other *single* arg is returned as is (including Lambda values like TBool, TPair, TList)
+multi sub convert2Lambda(Any:D $x) { $x }
+
+# anything else gives an error:
+multi sub convert2Lambda(|args) {
+    die "cannot convert to Lambda: {args.perl}";
+}
