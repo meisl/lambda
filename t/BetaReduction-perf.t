@@ -50,7 +50,8 @@ $reduce = $betaReduce;
 sub is_confluent(TTerm $s, TTerm $t, Str :$msg = '', Str :$sStr, Str :$tStr) {
     my $sSrc = $Term2srcLess($s);
     my $tSrc = $Term2srcLess($t);
-    subtest({
+    my $timeStr;
+#    subtest({
         diag("$sStr  =  $sSrc") if $sStr.defined;
         my $timeS = now;
         my $sr = case-Maybe($reduce($s), None => $s, Some => $I);
@@ -61,15 +62,16 @@ sub is_confluent(TTerm $s, TTerm $t, Str :$msg = '', Str :$sStr, Str :$tStr) {
         my $tr = case-Maybe($reduce($t), None => $t, Some => $I);
         $timeT = (now - $timeT).Real;
 
-        my $timeTtl = $timeS + $timeT;
-        diag sprintf('%1.2f = %1.2f + %1.2f sec (%1.0f%% + %1.0f%%) consumed for beta-reduction',
+        my $timeTtl = max($timeS + $timeT, 0.001);
+        $timeStr = sprintf('%1.2f = %1.2f + %1.2f sec (%1.0f%% + %1.0f%%) consumed for beta-reduction',
             $timeTtl, 
             $timeS,  $timeT,
             $timeS / $timeTtl * 100, $timeT / $timeTtl * 100
         );
+        diag $timeStr;
 
-        is_eq-Term($sr, $tr);
-    }, "{$sStr // $sSrc}  =_β*  {$tStr // $tSrc}  $msg");
+        is_eq-Term($sr, $tr, "{$sStr // $sSrc}  =_β*  {$tStr // $tSrc}  $msg");
+#    });
 }
 
 { # TODO: move to BetaReduction.t
