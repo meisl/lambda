@@ -1,11 +1,12 @@
 use v6;
 use Test;
 use Test::Util;
-use Test::Util_List;
+use Test::Util_List;    # Note: DO NOT use is_eq-List here since this in turn uses Conversion...!
 
 use Lambda::Boolean;
 use Lambda::PairADT;
 use Lambda::ListADT;
+use Lambda::TermADT;
 
 
 # modules under test:
@@ -17,16 +18,18 @@ plan 41;
 { # convert Pairs
 
     my $tPair1 = $Pair(5, "seven");
+    cmp_ok(convert2Lambda($tPair1), '===', $tPair1, '"converting" a TPair to a TPair returns the very same thing');
     my $p6Pair1 = convertTPair2P6Pair($tPair1);
     cmp_ok($p6Pair1.key,    '===', 5,       "$tPair1 converted to {$p6Pair1.perl} (.key)");
     cmp_ok($p6Pair1.value,  '===', "seven", "$tPair1 converted to {$p6Pair1.perl} (.value)");
 
-    my $tPair2 = convertP6Pair2TPair($p6Pair1);
+
+    my $tPair2 = convert2Lambda($p6Pair1);
     cmp_ok($fst($tPair2),   '===', 5,       "{$p6Pair1.perl} converted back to $tPair2 (fst)");
     cmp_ok($snd($tPair2),   '===', "seven", "{$p6Pair1.perl} converted back to $tPair2 (snd)");
 
     my $p6Pair2 = Pair.new(key => 42, value => 'twenty-three');
-    my $tPair3 = convertP6Pair2TPair($p6Pair2);
+    my $tPair3 = convert2Lambda($p6Pair2);
     cmp_ok($fst($tPair3),   '===', 42,              "{$p6Pair2.perl} converted to $tPair3 (fst)");
     cmp_ok($snd($tPair3),   '===', "twenty-three",  "{$p6Pair2.perl} converted to $tPair3 (snd)");
 
@@ -36,14 +39,12 @@ plan 41;
 }
 
 
-{ # convertTBool2P6Bool
+{ # convert Bools
     cmp_ok(convertTBool2P6Bool($false), '===', False, 'convertTBool2P6Bool($false)');
     cmp_ok(convertTBool2P6Bool($true),  '===', True,  'convertTBool2P6Bool($true)');
-}
 
-{ # convertP6Bool2TBool
-    cmp_ok(convertP6Bool2TBool(False), '===', $false, 'convertP6Bool2TBool(False)');
-    cmp_ok(convertP6Bool2TBool(True),  '===', $true,  'convertP6Bool2TBool(True)');
+    cmp_ok(convert2Lambda(False), '===', $false, 'convert2Lambda(False)');
+    cmp_ok(convert2Lambda(True),  '===', $true,  'convert2Lambda(True)');
 }
 
 { # convertP6ArrayToTListOfTPairs
@@ -123,21 +124,55 @@ plan 41;
         or diag(" in: $xs\nout: {$a.perl}");
 }
 
-{ # convertP6Array2TList
-    my ($a, $xs);
+{ # converting P6 Arrays/Lists to TLists - Note: DO NOT use is_eq-List here since this in turn uses Conversion...!
+    subtest({
+        my $xs = convert2Lambda([]);
+        $has_length($xs, 0);
+    }, 'conversion of an empty array to a TList');
 
-    $a = [];
-    $xs = convertP6Array2TList($a);
-    does_ok($xs, TList, "convertP6Array2TList($a)");
-    is_eq-List($xs, $a, "convertP6Array2TList($a) equals $a");
+    subtest({
+        my $xs = convert2Lambda(["foo"]);
+        $has_length($xs, 1);
+        my $e0 = $car($xs);
+        cmp_ok($e0, '===', "foo", '1st elem');
+    }, 'conversion of an array of simple types to a TList (1 elem)');
 
-    $a = ["foo"];
-    $xs = convertP6Array2TList($a);
-    does_ok($xs, TList, "convertP6Array2TList($a)");
-    is_eq-List($xs, $a, "convertP6Array2TList($a) equals $a");
+    subtest({
+        my $xs = convert2Lambda(["foo", 5]);
+        $has_length($xs, 2);
+        my $e0 = $car($xs);
+        cmp_ok($e0, '===', "foo", '1st elem');
+        my $e1 = $cadr($xs);
+        cmp_ok($e1, '===', 5, '2nd elem');
+    }, 'conversion of an array of simple types to a TList (2 elems)');
 
-    $a = ["foo", 5];
-    $xs = convertP6Array2TList($a);
-    does_ok($xs, TList, "convertP6Array2TList($a)");
-    is_eq-List($xs, $a, "convertP6Array2TList($a) equals $a");
+    subtest({
+        my $x = $VarT('x');
+        my $y = $VarT('y');
+        my $xs = convert2Lambda([z => $x, x => $y]);
+        $has_length($xs, 2);
+        my $e0 = $car($xs);
+        does_ok $e0, TPair, '1st elem';
+        cmp_ok($fst($e0), '===', "z", 'fst of 1st elem');
+        cmp_ok($snd($e0), '===', $x,  'snd of 1st elem');
+        my $e1 = $cadr($xs);
+        does_ok $e1, TPair, '2nd elem';
+        cmp_ok($fst($e1), '===', "x", 'fst of 2nd elem');
+        cmp_ok($snd($e1), '===', $y,  'snd of 2nd elem');
+    }, 'deep conversion of an array of pairs to a TList of TPair s (2 elems)');
+
+    subtest({
+        my $x = $VarT('x');
+        my $y = $VarT('y');
+        my $xs = convert2Lambda([['z', $x], x => $y]);
+        $has_length($xs, 2);
+        my $e0 = $car($xs);
+        does_ok $e0, TList, '1st elem';
+        cmp_ok($car($e0), '===', "z", 'car of 1st elem');
+        cmp_ok($cadr($e0), '===', $x,  'cadr of 1st elem');
+        my $e1 = $cadr($xs);
+        does_ok $e1, TPair, '2nd elem';
+        cmp_ok($fst($e1), '===', "x", 'fst of 2nd elem');
+        cmp_ok($snd($e1), '===', $y,  'snd of 2nd elem');
+    }, 'deep conversion of an array of an array and a pair to a TList (2 elems)');
 }

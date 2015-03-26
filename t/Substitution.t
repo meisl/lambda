@@ -21,31 +21,14 @@ plan 35;
 #`{
     sub foo(*@testcases) {
         for @testcases -> $testcase {
-            my @args   = $testcase.key.list;
-            my $result = $testcase.value;
-            say $testcase.perl;
-            say @args.elems ~ ' args';
-
-            my $arg1 = @args[1];
-            if $arg1 ~~ Array {
-                say $arg1.elems ~ ' elems in arg 1: ' ~ $arg1.map(*.perl).join(', ');
-                my $arg1x = convertP6Array2TList($arg1.map(-> $e {
-                    if $e ~~ Array {
-                        convertP6Array2TList($e);
-                    } elsif $e ~~ Pair {
-                        $Pair($e.key, $e.value);
-                    } else {
-                        $e;
-                    }
-                }));
-                say $arg1x.Str;
-            }
-
+            my @args   = $testcase.key.list.map(&convert2Lambda);
+            my $result = convert2Lambda($testcase.value);
+            say @args.elems ~ ' args: (' ~ @args.map({ $_ ~~ Str ?? $_.perl !! $_.Str}).join(', ') ~ ')';
         }
     }
 
     foo(['x', [z => `'x', x => `'y'], "bar"] => False,
-        ['y', [('x', 'z'), ('y', 'x')], "baz"] => False,
+        ['y', [x => `'z', y => `'x'], "baz"] => False,
     );
     exit;
 }
@@ -159,7 +142,7 @@ my $c = $ConstT('c');
 
             my Array $keepfreeArr = $test.key[2];
             my Str   $keepfreeStr = '[' ~ $keepfreeArr.map($VarT2name).join(', ') ~ ']';
-            my TList $keepfree    = convertP6Array2TList($keepfreeArr);
+            my TList $keepfree    = convert2Lambda($keepfreeArr);
 
             my TTerm $inTerm      = $test.key[3];
             my Str   $inTermStr   = $Term2source($inTerm);

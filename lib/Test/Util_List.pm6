@@ -15,7 +15,7 @@ my $tripleEq = -> $a, $b { $a === $b } does role {
 constant $contains_ok is export = lambdaFn(
     'contains_ok', 'λy.λxs.λxsDesc.exists (λe.y === e) xs',
     -> $y, TList:D $xs, Str:D $xsDesc {
-        ok(convertTBool2P6Bool($exists(-> $e { convertP6Bool2TBool($e === $y) }, $xs)), "(contains_ok $y $xsDesc)")
+        ok(convertTBool2P6Bool($exists(-> $e { convert2Lambda($e === $y) }, $xs)), "(contains_ok $y $xsDesc)")
             or diag("searched: $y\n in list: $xs") and False;
     }
 );
@@ -63,7 +63,7 @@ my sub fail_eq-List_tooMany(Str $msg, @actual, @expected) {
 
 sub is_eq-List(TList:D $actual, @expected, Str $msg?, :&cmp = $tripleEq) is export {
     my @actual = convertTList2P6Array($actual);
-    my $m = $msg // "{$List2Str($actual)} equals {$List2Str(convertP6Array2TList(@expected))}";
+    my $m = $msg // "{$List2Str($actual)} equals {$List2Str(convert2Lambda(@expected))}";
 
     my $idx = 0;
     for @actual Z @expected -> $a, $x {
