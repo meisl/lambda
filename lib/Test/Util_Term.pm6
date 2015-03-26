@@ -271,12 +271,12 @@ our constant $testTerms is export = {
         '(λf.(λx.(λy.((f y) x))))'  => $θC,
         '(λf.(λa.(λb.((f b) a))))'  => $LamT('f', $LamT('a', $LamT('b', $fba))),    # alpha-converted C
 
-        '(λu.(λv.(u u))'            => $λu_λv_uu,
-        '(λu.(λv.(x u))'            => $λu_λv_xu,
-        '(λu.(λv.(y u))'            => $λu_λv_yu,
-        '(λu.(λv.(z u))'            => $λu_λv_zu,
-        '(λw.(λx.(x y))'            => $λw_λx_xy,
-        '(λw.(λx.(x z))'            => $λw_λx_xz,
+        '(λu.(λv.(u u)))'           => $λu_λv_uu,
+        '(λu.(λv.(x u)))'           => $λu_λv_xu,
+        '(λu.(λv.(y u)))'           => $λu_λv_yu,
+        '(λu.(λv.(z u)))'           => $λu_λv_zu,
+        '(λw.(λx.(x y)))'           => $λw_λx_xy,
+        '(λw.(λx.(x z)))'           => $λw_λx_xz,
         '(λw.(λx.(x (λw.(λx.(x z))))))' => $LamT('w', $LamT('x', $AppT($x, $λw_λx_xz))),
         '(λu.(λv.((λw.(λx.(x y))) u)))' => $LamT('u', $LamT('v', $AppT($λw_λx_xy, $u))),
 
@@ -466,12 +466,12 @@ our constant $testTerms is export = {
         .aka('(((λx.(y x)) (λx.x)) (λx.x))', '((λx.(y x)) (λx.x)) (λx.x)', '(λx.y x) (λx.x) (λx.x)')\
         .aka('((λx.x) x)', '(λx.x) x')\
 
-        .aka('(λu.(λv.(u u))', 'λu.(λv.(u u)', 'λu.λv.u u', '(λu.λv.u u)')\
-        .aka('(λu.(λv.(x u))', 'λu.(λv.(x u)', 'λu.λv.x u', '(λu.λv.x u)')\
-        .aka('(λu.(λv.(y u))', 'λu.(λv.(y u)', 'λu.λv.y u', '(λu.λv.y u)')\
-        .aka('(λu.(λv.(z u))', 'λu.(λv.(z u)', 'λu.λv.z u', '(λu.λv.z u)')\
-        .aka('(λw.(λx.(x y))', 'λw.(λx.(x y)', 'λw.λx.x y', '(λw.λx.x y)')\
-        .aka('(λw.(λx.(x z))', 'λw.(λx.(x z)', 'λw.λx.x z', '(λw.λx.x z)')\
+        .aka('(λu.(λv.(u u)))', 'λu.(λv.(u u))', 'λu.λv.u u', '(λu.λv.u u)')\
+        .aka('(λu.(λv.(x u)))', 'λu.(λv.(x u))', 'λu.λv.x u', '(λu.λv.x u)')\
+        .aka('(λu.(λv.(y u)))', 'λu.(λv.(y u))', 'λu.λv.y u', '(λu.λv.y u)')\
+        .aka('(λu.(λv.(z u)))', 'λu.(λv.(z u))', 'λu.λv.z u', '(λu.λv.z u)')\
+        .aka('(λw.(λx.(x y)))', 'λw.(λx.(x y))', 'λw.λx.x y', '(λw.λx.x y)')\
+        .aka('(λw.(λx.(x z)))', 'λw.(λx.(x z))', 'λw.λx.x z', '(λw.λx.x z)')\
         .aka('(λw.(λx.(x (λw.(λx.(x z))))))', 'λw.(λx.(x (λw.(λx.(x z)))))', 'λw.λx.x λw.λx.x z', '(λw.λx.x λw.λx.x z)', 'λw.λx.x (λw.λx.x z)', '(λw.λx.x (λw.λx.x z))')\
         .aka('(λu.(λv.((λw.(λx.(x y))) u)))', 'λu.(λv.((λw.(λx.(x y))) u))', 'λu.λv.(λw.λx.x y) u', '(λu.λv.(λw.λx.x y) u)', 'λu.λv.((λw.λx.x y) u)', '(λu.λv.((λw.λx.x y) u))')\
 
