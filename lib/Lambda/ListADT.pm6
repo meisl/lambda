@@ -387,8 +387,7 @@ constant $findFP-inMaybe_dbg is export = lambdaFn(
     -> &stepFn {
         # fpSearch: List -> Maybe List
         my $fpSearch = $findFP-inMaybe(-> TList $valuesSoFar {
-            my $v = $car($valuesSoFar);
-            case-Maybe(&stepFn($v),
+            case-Maybe(&stepFn($car($valuesSoFar)),
                 None => $None,
                 Some => -> $next { $Some($cons($next, $valuesSoFar)) }
             )

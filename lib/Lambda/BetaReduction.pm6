@@ -107,164 +107,32 @@ constant $alpha-needy-terms is export = $Y(-> &self { lambdaFn(
 )});
 
 
-# betaContract: Term -> Maybe Term
-# one-step β-simplification (either of $t or any (one) child)
-constant $betaContractXXX is export = $Y(-> &self { lambdaFn(
-    'betaContract','λt.error "NYI"',
-    -> TTerm $t -->TMaybe{
-        case-Term($t,
-            ConstT => $K1None,
-            VarT => $K1None,
-            LamT => -> Str $varName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
-                _if_( $is-betaReducible($body),
-                    { $Some($LamT($varName, $Some2value(&self($body)))) },    # DONE: LamT_ctor_with_Str_binder
-                    $None
-                )
-            },
-            AppT => -> TTerm $func, TTerm $arg {
-                _if_( $is-betaReducible($t),
-                    { _if_( $is-betaRedex($t),
-                          {   my Str $funcVarName = $LamT2var($func);    # DONE: LamT_ctor_with_Str_binder
-                              _if_( $is-Omega($t),
-                                  { _if_( $Str-eq($funcVarName, $LamT2var($arg)),    # DONE: LamT_ctor_with_Str_binder
-                                        $None, # func and arg are both the (literally) same omega
-                                        { $Some($AppT($arg, $arg)) }  # otherwise one more step to make them so
-                                  )},
-                                  {   my TTerm $funcBody  = $LamT2body($func);
-                                      my TList $alpha-problematic = $filter(
-                                          # no need to filter out $var itself separately
-                                          # since it cannot be free under itself in the body
-                                          -> $binderName { $is-freeName-under($funcVarName, $binderName, $funcBody) },
-                                          $free-varNames($arg)
-                                      );
-                                      case-List($alpha-problematic,
-                                          nil  => {
-                                              my $substituted-func = $subst($funcBody, $arg, $funcVarName);
-                                              case-Maybe($substituted-func,   # TODO: use Maybe-or or something like that
-                                                  None => { $Some($funcBody) },
-                                                  Some => -> Mu { $substituted-func }
-                                              )
-                                          },
-                                          cons => -> $head, TList:D $tail { die "NYI: alpha-convert for " ~ $List2Str($alpha-problematic) }
-                                      )
-                                  }
-                              )
-                          },
-                          { _if_( $is-betaReducible($func),
-                                { $Some($AppT($Some2value(&self($func)), $arg)) },
-                                { $Some($AppT($func, $Some2value(&self($arg)))) }
-                          )}
-                    )},
-                    $None
-                )
-            }
-        )
-    }
-)});
-
-my constant $liftedCtor2 = lambdaFn(
-    Str, '',
-    #$B($liftMaybe(&ctor($a1)), &transform2nd);
-    
-    #-> &ctor {
-    #    my $liftedPartialCtor = $B($liftMaybe, &ctor);
-    #    -> &transform2nd {
-    #        $B($C($B, &transform2nd), $liftedPartialCtor );
-    #    }
-    #}
-    
-    #-> &ctor, &transform2nd {
-    #    $B($C($B, &transform2nd), $B($liftMaybe, &ctor) );
-    #}
-    
-    -> &ctor, &transform2nd {
-        -> $a1, $a2 {
-            case-Maybe(&transform2nd($a2),
-                None => $None,
-                Some => -> $a2transformed { $Some(&ctor($a1, $a2transformed)) }
-            );
-        }
-    }
-);
-
-
-my constant $BBSomeAppT = lambdaFn(
-    'BBSomeAppT', '(B Some) ° AppT',
-    #-> $f, $a { $Some($AppT($f, $a)); }
-    $B($B($Some), $AppT)
-);
 
 # betaContract: Term -> Maybe Term
 # one-step β-simplification (either of $t or any (one) child)
 constant $betaContract is export = $Y(-> &self {
-    #my $LamT_intoMaybe = $liftedCtor2($LamT, &self) does name('LamT-into-Maybe');
-    #my $AppT_intoMaybe = $liftedCtor2($AppT, &self) does name('AppT-into-Maybe');
     lambdaFn(
         'betaContract', 'λt.error "NYI"',
         -> TTerm $t { case-Term($t,
-            VarT => $K1None,
-
+            VarT   => $K1None,
             ConstT => $K1None,
-
-            #LamT => -> Str $varName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
-            #    $liftedCtor2($LamT, $varName, &self, $body)
-            #},
-            #LamT => $liftedCtor2($LamT, &self),
-            #LamT => $LamT_intoMaybe,
-            LamT => -> Str $varName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
+            LamT   => -> Str $varName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
                 case-Maybe(&self($body),
                     None => $None,
                     Some => -> TTerm $newBody { $Some($LamT($varName, $newBody)) }    # DONE: LamT_ctor_with_Str_binder
                 )
             },
-
             AppT => -> TTerm $func, TTerm $arg {
                 my $K1AppT_func_contracted_arg = -> Mu {
-                    #$AppT_intoMaybe($func, $arg)
                     case-Maybe(&self($arg),
                         None => $None,
                         Some => -> TTerm $newArg { $Some($AppT($func, $newArg)) }
                     )
                 };
                 case-Term($func,
-                    #VarT => -> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
-                    #VarT => -> Mu { $B($liftMaybe($AppT($func)), &self)($arg) },
-                    #VarT => -> Mu { $AppT_intoMaybe($func, $arg) },
-                    VarT => $K1AppT_func_contracted_arg,
-                    
-                    #ConstT => -> Mu { $liftedCtor2($AppT, $func, &self, $arg) },
-                    #ConstT => -> Mu { $AppT_intoMaybe($func, $arg) },
+                    VarT   => $K1AppT_func_contracted_arg,
                     ConstT => $K1AppT_func_contracted_arg,
-                    
-                    # func is AppT
-                    AppT => -> Mu, Mu {
-                        #my $func2 = &self($func);
-                        #$_if( $is-Some($func2),
-                        #    -> Mu { $Some($AppT($Some2value($func2), $arg)) },
-                        #    #-> Mu { $bindMaybe($func2, $B($Some, -> $func2val { $AppT($func2val, $arg) })) },
-                        #    #-> Mu { $bindMaybe($func2, $B($Some, $C($AppT, $arg))) },
-                        #    #-> Mu { $liftMaybe($C($AppT, $arg), $func2) },
-                        #
-                        #    #-> Mu { $liftedCtor2($AppT, $func, &self, $arg) }
-                        #    -> Mu { $B($liftMaybe($AppT($func)), &self)($arg) }
-                        #    -> Mu { $AppT_intoMaybe($func, $arg) }
-                        #)
-                        #case-Maybe(&self($func),
-                            #None => $liftedCtor2($AppT, $func, &self),
-                            #None => $B($liftMaybe($AppT($func)), &self),
-
-                            #None => -> TTerm $arg { $AppT_intoMaybe($func, $arg) },
-                            #None => $AppT_intoMaybe($func),
-                        #    None => { $AppT_intoMaybe($func) },    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
-                            
-                            #Some => -> TTerm $reducedFunc {
-                            #    -> TTerm $arg { $Some($AppT($reducedFunc, $arg)) }
-                            #}
-                            #Some => -> $reducedFunc { $B($Some, $AppT($reducedFunc)) }
-                            #Some => $B($B($Some), $AppT)
-                        #    Some => $BBSomeAppT
-                        #)($arg);
-
+                    AppT   => -> Mu, Mu {
                         case-Maybe(&self($func),
                             None => {    # simulate lazy evaluation by passing a thunk (the block; needed only for ctors of arity 0)
                                 #$AppT_intoMaybe($func, $arg)
@@ -289,11 +157,7 @@ constant $betaContract is export = $Y(-> &self {
                             cons => -> Str $hd, TList $tl {
                                 my $substitutions = $map($VarT, $alpha-problematic);
                                 my $substituted-func = $subst-with-alpha($VarT($funcVarName), $arg, $substitutions, $funcBody);
-                                #die 'NYI: alpha-convert for ' ~ $List2Str($alpha-problematic) ~ ' in β-redex ' ~ $Term2srcLess($t)
-                                #    ~ "\n     substitutions: {$List2Str($substitutions)}"
-                                #    ~ "\n            result: {$Term2srcLess($Some2value($substituted-func))}"
-                                #;
-                                # Note: t cannot be Omega
+                                # Note: t cannot be Omega if we have alpha-problematic vars
                                 $substituted-func;
                             },
                             nil => {
