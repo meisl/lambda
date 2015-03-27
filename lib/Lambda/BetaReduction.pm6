@@ -148,15 +148,15 @@ constant $betaContract is export = $Y(-> &self {
                     LamT => -> Str $funcVarName, TTerm $funcBody {    # DONE: LamT_ctor_with_Str_binder
                     # so t is a beta-redex
                         my $alpha-problematic = $filter(
-                            # no need to filter out $var itself separately
+                            # no need to filter out $funcVarName itself separately
                             # since it cannot be free under itself in the body
                             -> Str $vName { $is-freeName-under($funcVarName, $vName, $funcBody) },
                             $free-varNames($arg)
                         );
                         case-List($alpha-problematic,
                             cons => -> Str $hd, TList $tl {
-                                my $substitutions = $map($VarT, $alpha-problematic);
-                                my $substituted-func = $subst-with-alpha($VarT($funcVarName), $arg, $substitutions, $funcBody);
+                                my $keepfreeVars = $map($VarT, $alpha-problematic);
+                                my $substituted-func = $subst-with-alpha($VarT($funcVarName), $arg, $keepfreeVars, $funcBody);
                                 # Note: t cannot be Omega if we have alpha-problematic vars
                                 $substituted-func;
                             },
