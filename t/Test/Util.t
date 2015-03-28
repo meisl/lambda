@@ -4,6 +4,7 @@ use Test;
 use Lambda::BaseP6;
 use Lambda::Boolean;
 use Lambda::String;
+use Lambda::PairADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
 use Lambda::LambdaGrammar;
@@ -19,6 +20,56 @@ plan 21;
 
 
 # - Util_Term -----------------------------------------------------------------
+
+subtest({ # testTermFn
+    does_ok &testTermFn, Callable, 'is exported';
+
+    my @receivedArgs;
+    my sub makeF(*@expectedResults) {
+        return -> |args {
+            @receivedArgs.push(args);
+            die "too few expectedResults: {@expectedResults.elems}"
+                if @expectedResults.elems < @receivedArgs.elems;
+            @expectedResults[@receivedArgs.elems -1];
+        }
+    }
+    
+    testTermFn(makeF("foo", "bar", "baz", 23, 42),
+        'x' => "foo",
+        `'y' => "bar",
+        [`'z', `'x'] => "baz",
+        [`'z', y => `'x'] => 23,
+        [[y => `'x', 'x' => `'z']] => 42,
+    );
+
+    is(@receivedArgs.elems, 5, 'calls the term-fn as many times as there are test-cases');
+    is(@receivedArgs[0].perl, \(`'x').perl, 'turns Str key into prepared test-term and applies term-fn to it');
+    is(@receivedArgs[1].perl, \(`'y').perl, 'passes TTerm key to term-fn as arg');
+    
+    subtest({
+        is(@receivedArgs[2].perl, \(`'z', `'x').perl, 'passes TTerm elems of Array key to the term-fn as is (1)');
+
+        is(@receivedArgs[3][0].perl, (`'z').perl, 'passes TTerm elems of Array key to the term-fn as is (2)');
+        does_ok(@receivedArgs[3][1], TPair, 'passes Pair elems of Array key as TPair Str convert2Lambda(*) to the term-fn / 2nd elem')
+            or die;
+        is($fst(@receivedArgs[3][1]).perl, '"y"', 'passes Pair elems of Array key as TPair Str convert2Lambda(*) to the term-fn (fst of 2nd elem)');
+        is($snd(@receivedArgs[3][1]).perl, (`'x').perl, 'passes Pair elems of Array key as TPair Str convert2Lambda(*) to the term-fn (snd of 2nd elem)');
+        
+        does_ok(@receivedArgs[4][0], TList, 'passes Array elems of Array key as TList convert2Lambda(*) to the term-fn')
+            or die;
+        my $e0 = $car(@receivedArgs[4][0]);
+        does_ok($e0, TPair, 'passes Array elems of Array key as TList convert2Lambda(*) to the term-fn (1st elem of List)')
+            or die;
+        is($fst($e0).perl, '"y"',  'passes Array elems of Array key as TList convert2Lambda(*) to the term-fn (fst of 1st elem of List)');
+        is($snd($e0).perl, (`'x').perl,  'passes Array elems of Array key as TList convert2Lambda(*) to the term-fn (snd of 1st elem of List)');
+        my $e1 = $cadr(@receivedArgs[4][0]);
+        does_ok($e1, TPair, 'passes Array elems of Array key as TList convert2Lambda(*) to the term-fn (2nd elem of List)')
+            or die;
+        is($fst($e1).perl, '"x"',  'passes Array elems of Array key as TList convert2Lambda(*) to the term-fn (fst of 2nd elem of List)');
+        is($snd($e1).perl, (`'z').perl,  'passes Array elems of Array key as TList convert2Lambda(*) to the term-fn (snd of 2nd elem of List)');
+    }, 'passes elems of an Array key to the term-fn as args');
+
+}, '`&testTermFn` ');
 
 { # is_eq test for TTerms
     does_ok &is_eq-Term, Callable, 'exports `&is_eq-Term`';
@@ -65,10 +116,6 @@ plan 21;
             }
         }
     }, 'test-terms');
-}
-
-{ # testTermFn
-    does_ok &testTermFn, Callable, 'exports `&testTermFn`';
 }
 
 subtest({ # prefix operator ` (for retrieving pre-built test-terms)

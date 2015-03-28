@@ -555,30 +555,28 @@ sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) is export {
     my Str $fgist = $f.gist;
     subtest({
         for @tests -> $test {
-            my Any   $arg = $test.key;
-            
-            my TTerm $term;
-            my Str   $termSrc;
-            if $arg ~~ Str {
-                $term    = `$arg;
-                $termSrc = $Term2source($term);
-            } elsif $arg ~~ TTerm {
-                $term    = $arg;
-                $termSrc = $Term2source($term);
-                # we got a new one - add it!        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                $testTerms{$termSrc} = $term;      # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            my Any   $args = $test.key;
+            my @args;
+            my @argStrs;
+
+            if $args ~~ Str {
+                @args    = `$args;
+            } elsif $args ~~ TTerm {
+                @args    = $args;
+            } elsif $args ~~ Array {
+                @args = $args.list.map(&convert2Lambda);
             } else {
-                die "expected either a TTerm or a Str but got $arg.perl";
+                die "expected either a TTerm or a Str or an Array but got {$args.perl}";
             }
 
-            my Str   $argStr        = $argToStr($arg);
+            my Str   $argStr        = @args.map($argToStr).join(' ');
             my Any   $expected      = $test.value;
             my Str   $expectedStr   = $expectedToStr.defined
                                         ?? ' -> ' ~ $expectedToStr($expected)
                                         !! '';
             my $desc = "($fgist $argStr)$expectedStr";
 
-            is($f($term), $expected, $desc);
+            is($f(|@args), $expected, $desc);
         }
     }, "$fgist on various inputs");
 }
