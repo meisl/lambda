@@ -158,7 +158,7 @@ plan 10;
             '[(x y)/z](λy.λx.x y z)  =  (λα1.λα2.α2 α1 (x y))');
     }, 'plus additional alpha-conversions (fresh var for x and y)');
     
-    subtest({ # [(x y)/z](λy.λx.x y (z (λx.y x)))  =  (λα1.λα2.α2 α1 (x y) ((λz.λx.x α1 z) (λx.α1 x)))
+    subtest({ # [(x y)/z](λy.λx.x y z ((λz.λx.x y z) (λx.y x)))  =  (λα1.λα2.α2 α1 (x y) ((λz.λx.x α1 z) (λx.α1 x)))
         my ($out, $α1, $α2, $t, $l, $keepfree);
         $keepfree = $cons('x', $cons('y', $nil));
 
@@ -186,7 +186,7 @@ plan 10;
 
         
         is_eq-Term($t, $LamT($α1, $LamT($α2, $AppT($α2α1_xy, $AppT($λz_λx_xα1z, $λx_α1x)))),
-            '[(x y)/z](λy.λx.x y (z (λx.y x)))  =  (λα1.λα2.α2 α1 (x y) ((λz.λx.x α1 z) (λx.α1 x)))');
+            '[(x y)/z](λy.λx.x y z ((λz.λx.x y z) (λx.y x)))  =  (λα1.λα2.α2 α1 (x y) ((λz.λx.x α1 z) (λx.α1 x)))');
     }, 'plus additional alpha-conversions (fresh var for x and y, but omitting unnecessary alpha-conversions)');
 }
 
