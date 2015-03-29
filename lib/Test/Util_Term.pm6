@@ -2,6 +2,8 @@ use v6;
 use Test;
 
 use Lambda::BaseP6;
+use Lambda::PairADT;
+use Lambda::ListADT;
 use Lambda::TermADT;
 
 use Lambda::LambdaGrammar;
@@ -551,11 +553,21 @@ multi sub prefix:<`>(Str:D $termIdentifier -->TTerm:D) is export {
     return $term;
 }
 
-sub testTermFn($f, 
-    :$argToStr = -> $a { $a ~~ Str ?? $a.perl !! $a.Str }, 
-    :$expectedToStr, 
-    *@tests
-) is export {
+sub lambdaArgToStr($a) {
+    if $a ~~ Str {
+        $a.perl;
+    } elsif $a ~~ TTerm {
+        '`\'' ~ $Term2srcLess($a) ~ '\''
+    } elsif $a ~~ TPair {
+        '<' ~ lambdaArgToStr($fst($a)) ~ ' ' ~ lambdaArgToStr($snd($a)) ~ '>'
+    } elsif $a ~~ TList {
+        '[' ~ $foldl(-> $acc, $e { $acc.defined ?? $acc ~ ', ' ~ $e !! $e }, Str, $map(&lambdaArgToStr, $a)) ~ ']';
+    } else {
+        $a.Str;
+    }
+}
+
+sub testTermFn($f, :$argToStr = &lambdaArgToStr, :$expectedToStr, *@tests) is export {
     my Str $fgist = $f.gist;
     subtest({
         for @tests -> $test {

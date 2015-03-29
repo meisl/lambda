@@ -16,7 +16,7 @@ use Lambda::Conversion;
 # module under test:
 use Lambda::Substitution;
 
-plan 29;
+plan 18;
 
 
 { # function (subst inTerm whatTerm forVar)
@@ -37,29 +37,7 @@ plan 29;
 { # function (subst-seq inTerm substitutions)
     is_properLambdaFn $subst-seq, 'subst-seq';
 
-    my sub is_subst-seq(*@tests) {
-        for @tests -> $test {
-            my $inTerm      = $test.key[0];
-            my $inTermStr   = $Term2source($inTerm);
-
-            my $substs      = $test.key[1];
-            my $substsStr   = '[' ~ $substs.map(-> $pair { "[{$Term2source($pair.value)}/{$pair.key}]"}).join(', ') ~ ']';
-            my $substsListOfPairs = convert2Lambda($substs);
-
-            my $expected   = $test.value;
-            my $itself     = $expected === $None;
-            my $expStr     = $itself
-                                 ?? "the original term"
-                                 !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
-            my $desc = "applying substitutions $substsStr in $inTermStr yields $expStr";
-
-            my $actual = $subst-seq($inTerm, $substsListOfPairs);
-            is($actual, $expected, $desc)
-                or diag($actual.Str ~ ' / ' ~ $actual.perl) and die;
-        }
-    }
-
-    is_subst-seq(
+    testTermFn($subst-seq, 
         [`'"c"',       [y => `'x'        ]]   => $None,
         [`'z',         [y => `'x'        ]]   => $None,
         [`'y',         [y => `'x'        ]]   => $Some(`'x'),

@@ -30,7 +30,8 @@ sub convertP6Pair2TPair(Pair:D (:$key, :$value)) {
 
 
 sub convertTList2P6Array($xs) is export {
-    $foldr(-> $x, $acc { $acc.unshift($x) }, [], $xs);
+    #$foldr(-> $x, $acc { $acc.unshift($x) }, [], $xs);
+    $foldl(-> $acc, $x { $acc.push($x) }, [], $xs);
 }
 
 sub convertP6Array2TList($array) {
