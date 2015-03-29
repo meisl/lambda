@@ -156,9 +156,7 @@ constant $subst-first = $Y(-> &self { lambdaFn(
 
 constant $subst-with-alpha is export = lambdaFn(
     'subst-with-alpha', 'λforVar.λwhatTerm.λkeepfree.λinTerm.error "NYI"',
-    -> TTerm $forVar, TTerm $whatTerm, TList $keepfree, TTerm $inTerm {
-        my $forVarName    = $VarT2name($forVar);
-        my $keepfreeNames = $map($VarT2name, $keepfree);
+    -> Str $forVarName, TTerm $whatTerm, TList $keepfreeNames, TTerm $inTerm {
         my $mainSubst     = $Pair($forVarName, $whatTerm);
         $Y(-> &self { lambdaFn(
             Str, 'λself.λalpha-convs.λt.error "NYI"',

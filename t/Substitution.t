@@ -66,35 +66,35 @@ plan 7;
     is_properLambdaFn $subst-with-alpha, 'subst-with-alpha';
 
     testTermFn($subst-with-alpha,
-        [`'x', `'y',        [`'y'],         `'"c"' ] => $None,
+        ['x', `'y',    ['y'],      `'"c"' ] => $None,
 
-        [`'x', `'y',        [`'y'],         `'y'   ] => $None,
-        [`'x', `'y',        [`'y'],         `'x'   ] => $Some(`'y'),
+        ['x', `'y',    ['y'],      `'y'   ] => $None,
+        ['x', `'y',    ['y'],      `'x'   ] => $Some(`'y'),
 
-        [`'x', `'y',        [`'y'],         `'x x' ] => $Some(`'y y'),
+        ['x', `'y',    ['y'],      `'x x' ] => $Some(`'y y'),
 
-        [`'z', `'y',        [`'y'],         `'x y' ] => $None,
-        [`'x', `'y',        [`'y'],         `'x y' ] => $Some(`'y y'),
-        [`'y', `'x',        [`'x'],         `'x y' ] => $Some(`'x x'),
-                           
-        [`'z', `'y',        [`'y'],         `'λx.y'] => $None,
-        [`'y', `'z',        [`'z'],         `'λx.y'] => $Some(`'λx.z'),
+        ['z', `'y',    ['y'],      `'x y' ] => $None,
+        ['x', `'y',    ['y'],      `'x y' ] => $Some(`'y y'),
+        ['y', `'x',    ['x'],      `'x y' ] => $Some(`'x x'),
+                          
+        ['z', `'y',    ['y'],      `'λx.y'] => $None,
+        ['y', `'z',    ['z'],      `'λx.y'] => $Some(`'λx.z'),
 
         # main subst var x NOT free in body:
-        [`'x', `'z',        [`'z'],         `'λx.x y' ] => $None,
+        ['x', `'z',    ['z'],      `'λx.x y' ] => $None,
         
         # main subst var y IS free in body:
-        [`'y', `'z',        [`'z'],         `'λx.x y' ] => $Some(`'λx.x z'),  # ...*except* for the lambda's binder!
+        ['y', `'z',    ['z'],      `'λx.x y' ] => $Some(`'λx.x z'),  # ...*except* for the lambda's binder!
 
         # neither forVar nor var free in body, and no external alpha-convs applicable
-        [`'v', `'x y',   [`'x', `'y'],     `'λu.x y z'] => $None,
+        ['v', `'x y',  ['x', 'y'], `'λu.x y z'] => $None,
     );
     
     subtest({ # [(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)
         my ($out, $newVarName, $newVar, $newBody, $keepfree);
-        $keepfree = $cons(`'x', $cons(`'y', $nil));
+        $keepfree = $cons('x', $cons('y', $nil));
         
-        $out = $Some2value($subst-with-alpha(`'y', `'x y', $keepfree, `'λx.x y z'));
+        $out = $Some2value($subst-with-alpha('y', `'x y', $keepfree, `'λx.x y z'));
         
         $newVarName = $LamT2var($out);    # DONE: LamT_ctor_with_Str_binder
         $newVar     = $VarT($newVarName);
