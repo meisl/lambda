@@ -570,7 +570,7 @@ sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) is export {
             }
 
             my Str   $argStr        = @args.map($argToStr).join(' ');
-            my Any   $expected      = $test.value;
+            my Any   $expected      = &convert2Lambda($test.value);
             my Str   $expectedStr   = $expectedToStr.defined
                                         ?? ' -> ' ~ $expectedToStr($expected)
                                         !! '';

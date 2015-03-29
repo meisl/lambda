@@ -34,15 +34,16 @@ subtest({ # testTermFn
         }
     }
     
-    testTermFn(makeF("foo", "bar", "baz", 23, 42),
+    testTermFn(makeF("foo", "bar", "baz", 23, 42, $Pair("foo", "bar")),
         'x' => "foo",
         `'y' => "bar",
         [`'z', `'x'] => "baz",
         [`'z', y => `'x'] => 23,
         [[y => `'x', 'x' => `'z']] => 42,
-    );
+        ["foo", "bar"] => Pair.new(:key("foo"), :value("bar")),
+    ) or die "maybe &testTermFn doesn't properly convert args/exptected value to Lambda?";
 
-    is(@receivedArgs.elems, 5, 'calls the term-fn as many times as there are test-cases');
+    is(@receivedArgs.elems, 6, 'calls the term-fn as many times as there are test-cases');
     is(@receivedArgs[0].perl, \(`'x').perl, 'turns Str key into prepared test-term and applies term-fn to it');
     is(@receivedArgs[1].perl, \(`'y').perl, 'passes TTerm key to term-fn as arg');
     
@@ -67,9 +68,14 @@ subtest({ # testTermFn
             or die;
         is($fst($e1).perl, '"x"',  'passes Array elems of Array key as TList convert2Lambda(*) to the term-fn (fst of 2nd elem of List)');
         is($snd($e1).perl, (`'z').perl,  'passes Array elems of Array key as TList convert2Lambda(*) to the term-fn (snd of 2nd elem of List)');
+        
+        is(@receivedArgs[5][0], "foo", '6th call, 1st arg');
+        is(@receivedArgs[5][1], "bar", '6th call, 2nd arg');
+
     }, 'passes elems of an Array key to the term-fn as args');
 
 }, '`&testTermFn` ');
+
 
 { # is_eq test for TTerms
     does_ok &is_eq-Term, Callable, 'exports `&is_eq-Term`';
