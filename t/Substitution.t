@@ -63,43 +63,38 @@ plan 10;
 { # function (subst-with-alpha forVarName whatTerm keepfreeNames alpha-convs inTerm)
     is_properLambdaFn $subst-with-alpha, 'subst-with-alpha';
 
-    my $PairNoneNil = $Pair($None, $nil);
-
     testTermFn($subst-with-alpha,
-        ['x', `'y',    ['y'],      `'"c"' ] => $PairNoneNil,
+        ['x', `'y',    ['y'],      `'"c"' ] => $None,
 
-        ['x', `'y',    ['y'],      `'y'   ] => $PairNoneNil,
-        ['x', `'y',    ['y'],      `'x'   ] => $Pair($Some(`'y'), $nil),
+        ['x', `'y',    ['y'],      `'y'   ] => $None,
+        ['x', `'y',    ['y'],      `'x'   ] => $Some(`'y'),
 
-        ['x', `'y',    ['y'],      `'x x' ] => $Pair($Some(`'y y'), $nil),
+        ['x', `'y',    ['y'],      `'x x' ] => $Some(`'y y'),
 
-        ['z', `'y',    ['y'],      `'x y' ] => $PairNoneNil,
-        ['x', `'y',    ['y'],      `'x y' ] => $Pair($Some(`'y y'), $nil),
-        ['y', `'x',    ['x'],      `'x y' ] => $Pair($Some(`'x x'), $nil),
+        ['z', `'y',    ['y'],      `'x y' ] => $None,
+        ['x', `'y',    ['y'],      `'x y' ] => $Some(`'y y'),
+        ['y', `'x',    ['x'],      `'x y' ] => $Some(`'x x'),
                           
-        ['z', `'y',    ['y'],      `'λx.y'] => $PairNoneNil,
-        ['y', `'z',    ['z'],      `'λx.y'] => $Pair($Some(`'λx.z'), $nil),
+        ['z', `'y',    ['y'],      `'λx.y'] => $None,
+        ['y', `'z',    ['z'],      `'λx.y'] => $Some(`'λx.z'),
 
         # main subst var x NOT free in body:
-        ['x', `'z',    ['z'],      `'λx.x y' ] => $PairNoneNil,
+        ['x', `'z',    ['z'],      `'λx.x y' ] => $None,
         
         # main subst var y IS free in body:
-        ['y', `'z',    ['z'],      `'λx.x y' ] => $Pair($Some(`'λx.x z'), $nil),  # ...*except* for the lambda's binder!
+        ['y', `'z',    ['z'],      `'λx.x y' ] => $Some(`'λx.x z'),  # ...*except* for the lambda's binder!
 
         # neither forVar nor var free in body, and no external alpha-convs applicable
-        ['v', `'x y',  ['x', 'y'], `'λu.x y z'] => $PairNoneNil,
+        ['v', `'x y',  ['x', 'y'], `'λu.x y z'] => $None,
     );
     
     subtest({ # [(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)
-        my ($out, $newVarName, $t, $l, $keepfree);
+        my ($out, $newVarName, $t, $keepfree);
         $keepfree = $cons('x', $cons('y', $nil));
         
         $out = $subst-with-alpha('y', `'x y', $keepfree, `'λx.x y z');
         diag lambdaArgToStr($out);
-        $t = $Some2value($fst($out));
-        $l = $snd($out);
-
-        $has_length($l, 1, 'alpha-convs');
+        $t = $Some2value($out);
 
         $newVarName = $LamT2var($t);
 
@@ -112,15 +107,12 @@ plan 10;
     }, 'plus additional alpha-conversion (fresh var for x)');
     
     subtest({ # [(x y)/y](λz.λx.x y z)  =  (λz.λα1.α1 (x y) z)
-        my ($out, $newVarName, $t, $l, $keepfree);
+        my ($out, $newVarName, $t, $keepfree);
         $keepfree = $cons('x', $cons('y', $nil));
         
         $out = $subst-with-alpha('y', `'x y', $keepfree, `'λz.λx.x y z');
         diag lambdaArgToStr($out);
-        $t = $Some2value($fst($out));
-        $l = $snd($out);
-
-        $has_length($l, 1, 'alpha-convs');
+        $t = $Some2value($out);
 
         $newVarName = $LamT2var($LamT2body($t));
 
@@ -133,15 +125,12 @@ plan 10;
     }, 'plus additional alpha-conversion (fresh var for x) under binder z');
     
     subtest({ # [(x y)/z](λy.λx.x y z)  =  (λα1.λα2.α2 α1 (x y))
-        my ($out, $newVarName1, $newVarName2, $t, $l, $keepfree);
+        my ($out, $newVarName1, $newVarName2, $t, $keepfree);
         $keepfree = $cons('x', $cons('y', $nil));
         
         $out = $subst-with-alpha('z', `'x y', $keepfree, `'λy.λx.x y z');
         diag lambdaArgToStr($out);
-        $t = $Some2value($fst($out));
-        $l = $snd($out);
-
-        $has_length($l, 2, 'alpha-convs');
+        $t = $Some2value($out);
 
         $newVarName1 = $LamT2var($t);
         $newVarName2 = $LamT2var($LamT2body($t));
@@ -159,15 +148,12 @@ plan 10;
     }, 'plus additional alpha-conversions (fresh var for x and y)');
     
     subtest({ # [(x y)/z](λy.λx.x y z ((λz.λx.x y z) (λx.y x)))  =  (λα1.λα2.α2 α1 (x y) ((λz.λx.x α1 z) (λx.α1 x)))
-        my ($out, $α1, $α2, $t, $l, $keepfree);
+        my ($out, $α1, $α2, $t, $keepfree);
         $keepfree = $cons('x', $cons('y', $nil));
 
         $out = $subst-with-alpha('z', `'x y', $keepfree, `'λy.λx.x y z ((λz.λx.x y z) (λx.y x))');
         diag lambdaArgToStr($out);
-        $t = $Some2value($fst($out));
-        $l = $snd($out);
-
-        $has_length($l, 2, 'alpha-convs');
+        $t = $Some2value($out);
 
         $α1 = $LamT2var($t);
         $α2 = $LamT2var($LamT2body($t));

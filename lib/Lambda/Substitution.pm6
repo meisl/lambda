@@ -96,60 +96,34 @@ constant $subst-with-alpha is export = lambdaFn(
     -> Str $forVarName, TTerm $whatTerm, TList $keepfreeNames, TTerm $inTerm {
         $Y(-> &self { lambdaFn(
             Str, 'λself.λalpha-convs.λt.error "NYI"',
-            -> TList $alpha-convs, TTerm $t {
+            -> TList $alpha-convs, TTerm $t -->TMaybe{
                 case-Term($t,
-                    ConstT => -> Mu { $Pair($None, $nil) },
+                    ConstT => $K1None,
                     VarT => -> Str $varName {
                         _if_($Str-eq($forVarName, $varName),
-                            { $Pair($Some($whatTerm), $nil) },  # it's the main substitution (ie. no alpha-convs applicable)
+                            { $Some($whatTerm) },  # it's the main substitution (ie. no alpha-convs applicable)
                             { # otherwise (possibly an alpha-conv is applicable):
                                 case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $alpha-convs),
-                                    None => { $Pair($None, $nil) }, # no alpha-conv applicable ~> nothing to change
-                                    Some => -> $sPair {
-                                        $Pair($Some($snd($sPair)), $cons($sPair, $nil))
-                                    }
+                                    None => $None, # no alpha-conv applicable ~> nothing to change
+                                    Some => -> $sPair { $Some($snd($sPair)) }
                                 )
                             }
                         )
                     },
                     AppT => -> TTerm $func, TTerm $arg {
-                        my $fp = &self($alpha-convs, $func);
-                        my $f = $fst($fp);
-                        my $ap = &self($alpha-convs, $arg);
-                        my $a = $fst($ap);
+                        my $f = &self($alpha-convs, $func);
+                        my $a = &self($alpha-convs, $arg);
                         case-Maybe($f,
                             None => {
                                 case-Maybe($a,
-                                    None => $Pair($None, $nil),
-                                    Some => -> TTerm $newArg { $Pair($Some($AppT($func, $newArg)), $snd($ap)) }
+                                    None => $None,
+                                    Some => -> TTerm $newArg { $Some($AppT($func, $newArg)) }
                                 )
                             },
                             Some => -> TTerm $newFunc {
                                 case-Maybe($a,
-                                    None => {
-                                        $Pair(
-                                            $Some($AppT($newFunc, $arg)),
-                                            $snd($fp)
-                                        )
-                                    },
-                                    Some => -> $newArg {
-                                        my $fpConvs = $snd($fp);
-                                        my $apConvs = $snd($ap);
-                                        my $existsInApConvs = -> $p { 
-                                            $exists(
-                                                -> $q {
-                                                    _if_($Str-eq($fst($p), $fst($q)), # short-circuit AND
-                                                        { $Term-eq($snd($p), $snd($q)) },
-                                                        $false
-                                                    )
-                                                },
-                                                $apConvs) 
-                                        };
-                                        $Pair(
-                                            $Some($AppT($newFunc, $newArg)),
-                                            $append($except($existsInApConvs, $fpConvs), $apConvs)
-                                        )
-                                    }
+                                    None =>            { $Some($AppT($newFunc, $arg   )) },
+                                    Some => -> $newArg { $Some($AppT($newFunc, $newArg)) }
                                 )
                             }
                         )
@@ -162,12 +136,8 @@ constant $subst-with-alpha is export = lambdaFn(
                         _if_($Str-eq($myVarName, $forVarName),
                             # bound by the lambda, hence not free, so we only apply alpha-convs
                             {   case-Maybe($subst-seq($body, $newConvs),
-                                    None => { $Pair($None, $nil) },
-                                    Some => -> $newBody {
-                                        $Pair(
-                                            $Some($LamT($myVarName, $newBody)),
-                                            $newConvs)
-                                        }
+                                    None => $None,
+                                    Some => -> $newBody { $Some($LamT($myVarName, $newBody)) }
                                 )
                             },
                             {   my $needFreshVar = _if_(    # short-circuit AND
@@ -182,28 +152,15 @@ constant $subst-with-alpha is export = lambdaFn(
                                     {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
                                         my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
                                         my $myAlpha  = $Pair($myVarName, $freshVar);
-                                        my $p = &self($cons($myAlpha, $newConvs), $body);
-                                        case-Maybe($fst($p),
-                                            None => { $Pair($None, $nil) },  # neither forVar nor myVar free in body, and no external alpha-convs applicable
-                                            Some => -> TTerm $newBody {
-                                                $Pair(
-                                                    $Some($LamT($freshName, $newBody)),
-                                                    $snd($p)
-                                                )
-                                            }
+                                        case-Maybe(&self($cons($myAlpha, $newConvs), $body),
+                                            None => $None,  # neither forVar nor myVar free in body, and no external alpha-convs applicable
+                                            Some => -> TTerm $newBody { $Some($LamT($freshName, $newBody)) }
                                         )
                                     },
-                                    {   my $p = &self($newConvs, $body);
-                                        case-Maybe($fst($p),
-                                            None => { $Pair($None, $nil) },
-                                            Some => -> TTerm $newBody {
-                                                $Pair(
-                                                    $Some($LamT($myVarName, $newBody)),
-                                                    $snd($p)
-                                                )
-                                            }
-                                        )
-                                    }
+                                    { case-Maybe(&self($newConvs, $body),
+                                        None => $None,
+                                        Some => -> TTerm $newBody { $Some($LamT($myVarName, $newBody)) }
+                                    )}
                                 )
                             }
                         )
