@@ -92,8 +92,8 @@ constant $subst is export = lambdaFn(
 
 
 constant $subst-with-alpha is export = lambdaFn(
-    'subst-with-alpha', 'λforVar.λwhatTerm.λkeepfree.λinTerm.error "NYI"',
-    -> Str $forVarName, TTerm $whatTerm, TList $keepfreeNames, TTerm $inTerm {
+    'subst-with-alpha', 'λforVar.λwhatTerm.λinTerm.error "NYI"',
+    -> Str $forVarName, TTerm $whatTerm, TTerm $inTerm {
         $Y(-> &self { lambdaFn(
             Str, 'λself.λsubstitutions.λt.error "NYI"',
             -> TList $substitutions, TTerm $t -->TMaybe{
