@@ -90,82 +90,16 @@ constant $subst is export = lambdaFn(
     }
 );
 
-constant $subst-first_VarT = lambdaFn(
-    'subst-first_VarT', 'λname.λalpha-convs.error "NYI"',
-    -> Str $name, TList $alpha-convs {
-        my $firstSubst = $first(-> TPair $s { $Str-eq($name, $fst($s)) }, $alpha-convs);
-        
-        #$Maybe-lift-in($B($Some, $snd), $firstSubst);
-        
-        #_liftMaybe($snd, $firstSubst)
-        
-        case-Maybe($firstSubst,
-            None => $None,
-            Some => -> TPair $s { $Some($snd($s)) }
-        )
-
-    }
-);
-
-constant $subst-first = $Y(-> &self { lambdaFn(
-    'subst-first', 'λself.λterm.λalpha-convs.error "NYI"',
-    -> TTerm $t, TList $alpha-convs {
-        case-Term($t,
-            ConstT => $K1None,
-            VarT => -> Str $name { $subst-first_VarT($name, $alpha-convs) },
-            AppT => -> TTerm $func, TTerm $arg {
-                my $f = &self($func, $alpha-convs);
-                my $a = &self($arg,  $alpha-convs);
-                case-Maybe($f,
-                    None => {
-                        #$Maybe-lift-in(-> TTerm $newArg { $Some($AppT($func, $newArg)) })(  # (B Some (B (AppT func)))
-                        #    $a
-                        #)
-
-                        #_liftMaybe($AppT, \($func), $a)
-
-                        case-Maybe($a,
-                            None => $None,
-                            Some => -> $newArg { $Some($AppT($func, $newArg)) }
-                        )
-                    },
-                    Some => -> TTerm $newFunc {
-                        $Some($AppT(
-                            $newFunc,
-                            $Maybe2valueWithDefault($a, $arg)
-                            #case-Maybe($a,
-                            #    None => $arg,
-                            #    Some => $I
-                            #)
-                        ))
-
-                        #case-Maybe($a,
-                        #    None => { $Some($AppT($newFunc), $arg)) },
-                        #    Some => -> $newArg { $Some($AppT($newFunc, $newArg)) }
-                        #)
-                    }
-                )
-            },
-            LamT => -> Str $varName, TTerm $body {   # DONE: LamT_ctor_with_Str_binder
-                $Maybe-lift-in(-> $newBody { $LamT($varName, $newBody) })(   # DONE: LamT_ctor_with_Str_binder
-                    &self($body, $except(-> TPair $substPair { $Str-eq($varName, $fst($substPair)) }, $alpha-convs))         # <<<<<<<<<<<<<<<<<<<<< !?
-                )
-            }
-        )
-    }
-)});
 
 constant $subst-with-alpha is export = lambdaFn(
     'subst-with-alpha', 'λforVar.λwhatTerm.λkeepfree.λinTerm.error "NYI"',
     -> Str $forVarName, TTerm $whatTerm, TList $keepfreeNames, TTerm $inTerm {
-        my $mainSubst     = $Pair($forVarName, $whatTerm);
         $Y(-> &self { lambdaFn(
             Str, 'λself.λalpha-convs.λt.error "NYI"',
             -> TList $alpha-convs, TTerm $t {
                 case-Term($t,
                     ConstT => -> Mu { $Pair($None, $nil) },
                     VarT => -> Str $varName {
-                        #$subst-first_VarT($varName, $cons($mainSubst, $alpha-convs))
                         _if_($Str-eq($forVarName, $varName),
                             { $Pair($Some($whatTerm), $nil) },  # it's the main substitution (ie. no alpha-convs applicable)
                             { # otherwise (possibly an alpha-conv is applicable):
@@ -175,11 +109,6 @@ constant $subst-with-alpha is export = lambdaFn(
                                         $Pair($Some($snd($sPair)), $cons($sPair, $nil))
                                     }
                                 )
-                                #my $ts = $subst-seq($t, $alpha-convs);
-                                #case-Maybe($ts,
-                                #    None => 
-                                #    Some => -> $newVar { $Pair($ts, $alpha-convs) }
-                                #)
                             }
                         )
                     },
