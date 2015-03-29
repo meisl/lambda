@@ -161,7 +161,7 @@ constant $betaContract is export = $Y(-> &self {
                                 $substituted-func;
                             },
                             nil => {
-                                my $substituted-func = $subst($funcBody, $arg, $funcVarName);
+                                my $substituted-func = $subst($funcVarName, $arg, $funcBody);
                                 case-Maybe($substituted-func,
                                     None => { $Some($funcBody) },    # binder funcVarName did not occur in funcBody
                                     Some => -> Mu {

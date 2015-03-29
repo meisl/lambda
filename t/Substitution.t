@@ -16,7 +16,7 @@ use Lambda::Conversion;
 # module under test:
 use Lambda::Substitution;
 
-plan 35;
+plan 29;
 
 #`{
     sub foo(*@testcases) {
@@ -46,37 +46,14 @@ my $c = $ConstT('c');
 { # function (subst inTerm whatTerm forVar)
     is_properLambdaFn $subst, 'subst';
 
-    my sub is_subst(*@tests) {
-        for @tests -> $test {
-            my $inTerm      = $test.key[0];
-            my $inTermStr   = $Term2source($inTerm);
-
-            my $forVarName    = $test.key[1].key;
-            my $forVarNameStr = $forVarName.perl;
-            my $whatTerm      = $test.key[1].value;
-            my $whatTermStr   = $Term2source($whatTerm);
-
-            my $expected      = $test.value;
-            my $itself        = $expected === $None;
-            my $expStr        = $itself
-                                 ?? "the original term"
-                                 !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
-            my $desc = "substituting $whatTermStr for $forVarNameStr in $inTermStr yields $expStr";
-
-            my $actual = $subst($inTerm, $whatTerm, $forVarName);
-            is($actual, $expected, $desc)
-                or diag($actual.perl) and die;
-        }
-    }
-
-    is_subst(
-        [`'"c"',    x => `'y']   => $None,
-        [`'x',      x => `'"c"'] => $Some(`'"c"'),
-        [`'x',      y => `'"c"'] => $None,
-        [`'x',      x => `'y']   => $Some($y),
-        [`'λx.x y', x => `'y']   => $None,
-        [`'λx.x y', z => `'y']   => $None,
-        [`'λx.x y', y => `'z']   => $Some(`'λx.x z'),
+    testTermFn($subst, 
+        ['x', `'y'  , `'"c"'   ] => $None,
+        ['x', `'"c"', `'x'     ] => $Some(`'"c"'),
+        ['y', `'"c"', `'x'     ] => $None,
+        ['x', `'y'  , `'x'     ] => $Some($y),
+        ['x', `'y'  , `'λx.x y'] => $None,
+        ['z', `'y'  , `'λx.x y'] => $None,
+        ['y', `'z'  , `'λx.x y'] => $Some(`'λx.x z'),
     );
 }
 

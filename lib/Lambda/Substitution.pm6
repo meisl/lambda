@@ -83,8 +83,8 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
 # Main reason for returning a Maybe (rather than eg the same Term if nothing changes)
 # is that we don't need to compare terms for equality then.
 constant $subst is export = lambdaFn(
-    'subst', 'λt.λwhat.λfor.subst-seq t (cons (Pair for what) nil)',
-    -> TTerm $t, TTerm $what, Str $forVarName -->TTerm{    # TODO: add types to signature
+    'subst', 'λfor.λwhat.λt.subst-seq t (cons (Pair for what) nil)',
+    -> Str $forVarName, TTerm $what, TTerm $t -->TMaybe{
         $subst-seq($t, $cons($Pair($forVarName, $what), $nil));
     }
 );

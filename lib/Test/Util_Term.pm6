@@ -551,7 +551,11 @@ multi sub prefix:<`>(Str:D $termIdentifier -->TTerm:D) is export {
     return $term;
 }
 
-sub testTermFn($f, :$argToStr = *.Str, :$expectedToStr, *@tests) is export {
+sub testTermFn($f, 
+    :$argToStr = -> $a { $a ~~ Str ?? $a.perl !! $a.Str }, 
+    :$expectedToStr, 
+    *@tests
+) is export {
     my Str $fgist = $f.gist;
     subtest({
         for @tests -> $test {
