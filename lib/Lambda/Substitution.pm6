@@ -95,24 +95,19 @@ constant $subst-with-alpha is export = lambdaFn(
     'subst-with-alpha', 'λforVar.λwhatTerm.λkeepfree.λinTerm.error "NYI"',
     -> Str $forVarName, TTerm $whatTerm, TList $keepfreeNames, TTerm $inTerm {
         $Y(-> &self { lambdaFn(
-            Str, 'λself.λalpha-convs.λt.error "NYI"',
-            -> TList $alpha-convs, TTerm $t -->TMaybe{
+            Str, 'λself.λsubstitutions.λt.error "NYI"',
+            -> TList $substitutions, TTerm $t -->TMaybe{
                 case-Term($t,
                     ConstT => $K1None,
                     VarT => -> Str $varName {
-                        _if_($Str-eq($forVarName, $varName),
-                            { $Some($whatTerm) },  # it's the main substitution (ie. no alpha-convs applicable)
-                            { # otherwise (possibly an alpha-conv is applicable):
-                                case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $alpha-convs),
-                                    None => $None, # no alpha-conv applicable ~> nothing to change
-                                    Some => -> $sPair { $Some($snd($sPair)) }
-                                )
-                            }
+                        case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
+                            None => $None, # no alpha-conv applicable ~> nothing to change
+                            Some => -> $sPair { $Some($snd($sPair)) }
                         )
                     },
                     AppT => -> TTerm $func, TTerm $arg {
-                        my $f = &self($alpha-convs, $func);
-                        my $a = &self($alpha-convs, $arg);
+                        my $f = &self($substitutions, $func);
+                        my $a = &self($substitutions, $arg);
                         case-Maybe($f,
                             None => {
                                 case-Maybe($a,
@@ -131,10 +126,10 @@ constant $subst-with-alpha is export = lambdaFn(
                     LamT => -> Str $myVarName, TTerm $body {
                         my $newConvs  = $except(
                             -> TPair $s { $Str-eq($myVarName, $fst($s)) }, # (B (Str-eq? myVarName) fst)
-                            $alpha-convs
+                            $substitutions
                         );
                         _if_($Str-eq($myVarName, $forVarName),
-                            # bound by the lambda, hence not free, so we only apply alpha-convs
+                            # bound by the lambda, hence not free, so we only apply substitutions
                             {   case-Maybe($subst-seq($body, $newConvs),
                                     None => $None,
                                     Some => -> $newBody { $Some($LamT($myVarName, $newBody)) }
@@ -167,7 +162,7 @@ constant $subst-with-alpha is export = lambdaFn(
                     }
                 )
             }
-        )})($nil, $inTerm);
+        )})($cons($Pair($forVarName, $whatTerm), $nil), $inTerm);
     }
 );
 
