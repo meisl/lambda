@@ -16,7 +16,7 @@ use Lambda::Conversion;
 # module under test:
 use Lambda::Substitution;
 
-plan 18;
+plan 7;
 
 
 { # function (subst inTerm whatTerm forVar)
@@ -65,38 +65,7 @@ plan 18;
 { # function (subst-with-alpha forVar whatTerm keepfree alpha-convs inTerm)
     is_properLambdaFn $subst-with-alpha, 'subst-with-alpha';
 
-    my sub is_subst-with-alpha(*@tests) {
-        for @tests -> $test {
-            my TTerm $forVar      = $test.key[0];
-            my Str   $forVarStr   = $Term2source($forVar);
-
-            my TTerm $whatTerm    = $test.key[1];
-            my Str   $whatTermStr = $Term2source($whatTerm);
-
-            my Array $keepfreeArr = $test.key[2];
-            my Str   $keepfreeStr = '[' ~ $keepfreeArr.map($VarT2name).join(', ') ~ ']';
-            my TList $keepfree    = convert2Lambda($keepfreeArr);
-
-            my TTerm $inTerm      = $test.key[3];
-            my Str   $inTermStr   = $Term2source($inTerm);
-
-            my $expected   = $test.value;
-            my $itself     = $expected === $None;
-            my $expStr     = $itself
-                                 ?? "the original term"
-                                 !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
-            my $desc = "(subst-with-alpha $forVarStr $whatTermStr $keepfreeStr $inTermStr) yields $expStr";
-
-            my $actual = $subst-with-alpha($forVar, $whatTerm, $keepfree, $inTerm);
-            my $actualStr = convertTBool2P6Bool($is-Some($actual))
-                ?? '(Some `' ~ $Term2source($Some2value($actual)) ~ ')'
-                !! 'None';
-            is($actual, $expected, $desc)
-                or diag("     got: $actualStr  /  {$actual.perl})") and die;
-        }
-    }
-
-    is_subst-with-alpha(
+    testTermFn($subst-with-alpha,
         [`'x', `'y',        [`'y'],         `'"c"' ] => $None,
 
         [`'x', `'y',        [`'y'],         `'y'   ] => $None,
@@ -135,7 +104,7 @@ plan 18;
         isnt($newVarName, 'y', "fresh var $newVar is different from var y");
         isnt($newVarName, 'z', "fresh var $newVar is different from var z");
         
-        is($newBody, $AppT($AppT($newVar, `'x y'), `'z'))
+        is($newBody, $AppT($AppT($newVar, `'x y'), `'z'), '[(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)')
             or diag("     got: " ~ $Term2source($out));
     }, 'plus additional alpha-conversion (fresh var for x)');
 }
