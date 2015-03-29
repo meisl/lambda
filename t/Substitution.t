@@ -18,30 +18,6 @@ use Lambda::Substitution;
 
 plan 29;
 
-#`{
-    sub foo(*@testcases) {
-        for @testcases -> $testcase {
-            my @args   = $testcase.key.list.map(&convert2Lambda);
-            my $result = convert2Lambda($testcase.value);
-            say @args.elems ~ ' args: (' ~ @args.map({ $_ ~~ Str ?? $_.perl !! $_.Str}).join(', ') ~ ')';
-        }
-    }
-
-    foo(['x', [z => `'x', x => `'y'], "bar"] => False,
-        ['y', [x => `'z', y => `'x'], "baz"] => False,
-    );
-    exit;
-}
-
-my $a = $VarT('a');
-my $u = $VarT('u');
-my $v = $VarT('v');
-my $w = $VarT('w');
-my $x = $VarT('x');
-my $y = $VarT('y');
-my $z = $VarT('z');
-my $c = $ConstT('c');
-
 
 { # function (subst inTerm whatTerm forVar)
     is_properLambdaFn $subst, 'subst';
@@ -50,7 +26,7 @@ my $c = $ConstT('c');
         ['x', `'y'  , `'"c"'   ] => $None,
         ['x', `'"c"', `'x'     ] => $Some(`'"c"'),
         ['y', `'"c"', `'x'     ] => $None,
-        ['x', `'y'  , `'x'     ] => $Some($y),
+        ['x', `'y'  , `'x'     ] => $Some(`'y'),
         ['x', `'y'  , `'λx.x y'] => $None,
         ['z', `'y'  , `'λx.x y'] => $None,
         ['y', `'z'  , `'λx.x y'] => $Some(`'λx.x z'),
@@ -143,28 +119,28 @@ my $c = $ConstT('c');
     }
 
     is_subst-with-alpha(
-        [$x, $y,        [$y],         `'"c"' ] => $None,
+        [`'x', `'y',        [`'y'],         `'"c"' ] => $None,
 
-        [$x, $y,        [$y],         `'y'   ] => $None,
-        [$x, $y,        [$y],         `'x'   ] => $Some(`'y'),
+        [`'x', `'y',        [`'y'],         `'y'   ] => $None,
+        [`'x', `'y',        [`'y'],         `'x'   ] => $Some(`'y'),
 
-        [$x, $y,        [$y],         `'x x' ] => $Some(`'y y'),
+        [`'x', `'y',        [`'y'],         `'x x' ] => $Some(`'y y'),
 
-        [$z, $y,        [$y],         `'x y' ] => $None,
-        [$x, $y,        [$y],         `'x y' ] => $Some(`'y y'),
-        [$y, $x,        [$x],         `'x y' ] => $Some(`'x x'),
+        [`'z', `'y',        [`'y'],         `'x y' ] => $None,
+        [`'x', `'y',        [`'y'],         `'x y' ] => $Some(`'y y'),
+        [`'y', `'x',        [`'x'],         `'x y' ] => $Some(`'x x'),
                            
-        [$z, $y,        [$y],         `'λx.y'] => $None,
-        [$y, $z,        [$z],         `'λx.y'] => $Some(`'λx.z'),
+        [`'z', `'y',        [`'y'],         `'λx.y'] => $None,
+        [`'y', `'z',        [`'z'],         `'λx.y'] => $Some(`'λx.z'),
 
         # main subst var x NOT free in body:
-        [$x, $z,        [$z],         `'λx.x y' ] => $None,
+        [`'x', `'z',        [`'z'],         `'λx.x y' ] => $None,
         
         # main subst var y IS free in body:
-        [$y, $z,        [$z],         `'λx.x y' ] => $Some(`'λx.x z'),  # ...*except* for the lambda's binder!
+        [`'y', `'z',        [`'z'],         `'λx.x y' ] => $Some(`'λx.x z'),  # ...*except* for the lambda's binder!
 
         # neither forVar nor var free in body, and no external alpha-convs applicable
-        [$v, `'x y',   [$x, $y],     `'λu.x y z'] => $None,
+        [`'v', `'x y',   [`'x', `'y'],     `'λu.x y z'] => $None,
     );
     
     subtest({ # [(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)
