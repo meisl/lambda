@@ -339,8 +339,12 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
     $contains_ok($x, $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
     $contains_ok($z, $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
 
-    #$t = $betaReduce($app);
-    #diag $Term2source($t);
+    my $m = $betaReduce($app);
+    #diag lambdaArgToStr($m);
+    $t = $Some2value($m);
+    diag $Term2srcFull($app) ~ '  =_β  ' ~ $Term2srcFull($t);
+    diag $Term2srcLess($app) ~ '  =_β  ' ~ $Term2srcLess($t);
+    #is_eq-Term($t, ...
 }
 
 

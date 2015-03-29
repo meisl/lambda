@@ -3,6 +3,7 @@ use Test;
 
 use Lambda::BaseP6;
 use Lambda::PairADT;
+use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
 
@@ -165,14 +166,16 @@ our constant $testTerms is export = {
     my $λx_xκc  ::= $LamT('x', $xκc);
     my $λx_yx   ::= $LamT('x', $yx);
 
-    my $λu_xyz  ::= $LamT('u', $xyz);
-    my $λx_xyz  ::= $LamT('x', $xyz);
+    my $λu_xyz      ::= $LamT('u', $xyz);
+    my $λx_xyz      ::= $LamT('x', $xyz);
+    my $λy_λx_xyz   ::= $LamT('y', $λx_xyz);
+    my $λz_λx_xyz   ::= $LamT('z', $λx_xyz);
 
-    my $λ__y    ::= $LamT('_', $y);
-    my $λy_xx   ::= $LamT('y', $xx);
-    my $λy_xy   ::= $LamT('y', $xy);
-    my $λy_yy   ::= $LamT('y', $yy);
-    my $λy_zy   ::= $LamT('y', $zy);
+    my $λ__y        ::= $LamT('_', $y);
+    my $λy_xx       ::= $LamT('y', $xx);
+    my $λy_xy       ::= $LamT('y', $xy);
+    my $λy_yy       ::= $LamT('y', $yy);
+    my $λy_zy       ::= $LamT('y', $zy);
 
     my $λu_λv_uu    ::= $LamT('u', $λv_uu);
     my $λu_λv_xu    ::= $LamT('u', $λv_xu);
@@ -290,6 +293,8 @@ our constant $testTerms is export = {
         '(λx.(y x))'                => $λx_yx,
         '(λu.((x y) z))'            => $λu_xyz,
         '(λx.((x y) z))'            => $λx_xyz,
+        '(λy.(λx.((x y) z)))'       => $λy_λx_xyz,
+        '(λz.(λx.((x y) z)))'       => $λz_λx_xyz,
         '(λx.((x y) "c"))'          => $LamT('x', $xyκc),
 
         '(λ_.y)'                    => $λ__y,
@@ -456,6 +461,8 @@ our constant $testTerms is export = {
         .aka('(λx.(y x))', 'λx.(y x)', 'λx.y x')\
         .aka('(λu.((x y) z))', 'λu.((x y) z)', 'λu.x y z', '(λu.x y z)')\
         .aka('(λx.((x y) z))', 'λx.((x y) z)', 'λx.x y z', '(λx.x y z)')\
+        .aka('(λy.(λx.((x y) z)))', 'λy.(λx.((x y) z))', 'λy.λx.x y z', '(λy.λx.x y z)')\
+        .aka('(λz.(λx.((x y) z)))', 'λz.(λx.((x y) z))', 'λz.λx.x y z', '(λz.λx.x y z)')\
         .aka('(λx.((x y) "c"))', 'λx.((x y) "c")', 'λx.x y "c"', '(λx.x y "c")')\
         .aka('(λy.(x x))', 'λy.(x x)', 'λy.x x')\
         .aka('(λy.(x y))', 'λy.(x y)', 'λy.x y')\
@@ -553,13 +560,18 @@ multi sub prefix:<`>(Str:D $termIdentifier -->TTerm:D) is export {
     return $term;
 }
 
-sub lambdaArgToStr($a) {
+sub lambdaArgToStr($a) is export {
     if $a ~~ Str {
         $a.perl;
     } elsif $a ~~ TTerm {
         '`\'' ~ $Term2srcLess($a) ~ '\''
+    } elsif $a ~~ TMaybe {
+        case-Maybe($a,
+            None => 'None',
+            Some => -> $v { '(Some ' ~ lambdaArgToStr($v) ~ ')' }
+        );
     } elsif $a ~~ TPair {
-        '<' ~ lambdaArgToStr($fst($a)) ~ ' ' ~ lambdaArgToStr($snd($a)) ~ '>'
+        '<' ~ lambdaArgToStr($fst($a)) ~ ', ' ~ lambdaArgToStr($snd($a)) ~ '>';
     } elsif $a ~~ TList {
         '[' ~ $foldl(-> $acc, $e { $acc.defined ?? $acc ~ ', ' ~ $e !! $e }, Str, $map(&lambdaArgToStr, $a)) ~ ']';
     } else {
