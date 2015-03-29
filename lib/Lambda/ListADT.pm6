@@ -246,7 +246,7 @@ constant $length is export = lambdaFn(
 constant $append is export = lambdaFn(
     'append', 'λxs.λys.foldr cons ys xs',   # equiv to (foldr cons)
     -> TList:D $xs,  TList:D $ys {
-        $foldr($cons, $ys, $xs)
+        $foldr($cons, $ys, $xs) # using foldr because of the order of cons' parameters (and to maintain order of elems of xs)
     }
 );
 

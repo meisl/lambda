@@ -14,7 +14,7 @@ use Lambda::ListADT;
 # module under test:
 use Lambda::Substitution;
 
-plan 9;
+plan 10;
 
 
 { # function (subst forVar whatTerm inTerm)
@@ -91,7 +91,7 @@ plan 9;
     );
     
     subtest({ # [(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)
-        my ($out, $newVarName, $newVar, $t, $l, $keepfree);
+        my ($out, $newVarName, $t, $l, $keepfree);
         $keepfree = $cons('x', $cons('y', $nil));
         
         $out = $subst-with-alpha('y', `'x y', $keepfree, `'λx.x y z');
@@ -112,7 +112,7 @@ plan 9;
     }, 'plus additional alpha-conversion (fresh var for x)');
     
     subtest({ # [(x y)/y](λz.λx.x y z)  =  (λz.λα1.α1 (x y) z)
-        my ($out, $newVarName, $newVar, $t, $l, $keepfree);
+        my ($out, $newVarName, $t, $l, $keepfree);
         $keepfree = $cons('x', $cons('y', $nil));
         
         $out = $subst-with-alpha('y', `'x y', $keepfree, `'λz.λx.x y z');
@@ -133,7 +133,7 @@ plan 9;
     }, 'plus additional alpha-conversion (fresh var for x) under binder z');
     
     subtest({ # [(x y)/z](λy.λx.x y z)  =  (λα1.λα2.α2 α1 (x y))
-        my ($out, $newVarName1, $newVarName2, $newVar, $t, $l, $keepfree);
+        my ($out, $newVarName1, $newVarName2, $t, $l, $keepfree);
         $keepfree = $cons('x', $cons('y', $nil));
         
         $out = $subst-with-alpha('z', `'x y', $keepfree, `'λy.λx.x y z');
@@ -157,4 +157,36 @@ plan 9;
         is_eq-Term($t, $LamT($newVarName1, $LamT($newVarName2, $AppT($AppT($VarT($newVarName2), $VarT($newVarName1)), `'x y'))), 
             '[(x y)/z](λy.λx.x y z)  =  (λα1.λα2.α2 α1 (x y))');
     }, 'plus additional alpha-conversions (fresh var for x and y)');
+    
+    subtest({ # [(x y)/z](λy.λx.x y (z (λx.y x)))  =  (λα1.λα2.α2 α1 (x y) ((λz.λx.x α1 z) (λx.α1 x)))
+        my ($out, $α1, $α2, $t, $l, $keepfree);
+        $keepfree = $cons('x', $cons('y', $nil));
+
+        $out = $subst-with-alpha('z', `'x y', $keepfree, `'λy.λx.x y z ((λz.λx.x y z) (λx.y x))');
+        diag lambdaArgToStr($out);
+        $t = $Some2value($fst($out));
+        $l = $snd($out);
+
+        $has_length($l, 2, 'alpha-convs');
+
+        $α1 = $LamT2var($t);
+        $α2 = $LamT2var($LamT2body($t));
+
+        isnt($α1, 'x', "fresh var $α1 is different from var x");
+        isnt($α1, 'y', "fresh var $α1 is different from var y");
+        isnt($α1, 'z', "fresh var $α1 is different from var z");
+
+        isnt($α2, 'x', "fresh var $α2 is different from var x");
+        isnt($α2, 'y', "fresh var $α2 is different from var y");
+        isnt($α2, 'z', "fresh var $α2 is different from var z");
+
+        my $λx_α1x = $LamT('x', $AppT($VarT($α1), `'x'));
+        my $λz_λx_xα1z = $LamT('z', $LamT('x', $AppT($AppT(`'x', $VarT($α1)), `'z')));
+        my $α2α1_xy = $AppT($AppT($VarT($α2), $VarT($α1)), `'(x y)');
+
+        
+        is_eq-Term($t, $LamT($α1, $LamT($α2, $AppT($α2α1_xy, $AppT($λz_λx_xα1z, $λx_α1x)))),
+            '[(x y)/z](λy.λx.x y (z (λx.y x)))  =  (λα1.λα2.α2 α1 (x y) ((λz.λx.x α1 z) (λx.α1 x)))');
+    }, 'plus additional alpha-conversions (fresh var for x and y, but omitting unnecessary alpha-conversions)');
 }
+

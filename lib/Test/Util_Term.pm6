@@ -295,6 +295,8 @@ our constant $testTerms is export = {
         '(λx.((x y) z))'            => $λx_xyz,
         '(λy.(λx.((x y) z)))'       => $λy_λx_xyz,
         '(λz.(λx.((x y) z)))'       => $λz_λx_xyz,
+        '(λy.(λx.(((x y) z) ((λz.(λx.((x y) z))) (λx.(y x))))))'  => $LamT('y', $LamT('x', $AppT($xyz, $AppT($λz_λx_xyz, $λx_yx)))),
+
         '(λx.((x y) "c"))'          => $LamT('x', $xyκc),
 
         '(λ_.y)'                    => $λ__y,
@@ -463,6 +465,8 @@ our constant $testTerms is export = {
         .aka('(λx.((x y) z))', 'λx.((x y) z)', 'λx.x y z', '(λx.x y z)')\
         .aka('(λy.(λx.((x y) z)))', 'λy.(λx.((x y) z))', 'λy.λx.x y z', '(λy.λx.x y z)')\
         .aka('(λz.(λx.((x y) z)))', 'λz.(λx.((x y) z))', 'λz.λx.x y z', '(λz.λx.x y z)')\
+        .aka('(λy.(λx.(((x y) z) ((λz.(λx.((x y) z))) (λx.(y x))))))', 'λy.λx.x y z ((λz.λx.x y z) (λx.y x))', 'λy.λx.x y z ((λz.λx.x y z) λx.y x)', '(λy.λx.x y z ((λz.λx.x y z) (λx.y x)))', '(λy.λx.x y z ((λz.λx.x y z) λx.y x))')\
+        
         .aka('(λx.((x y) "c"))', 'λx.((x y) "c")', 'λx.x y "c"', '(λx.x y "c")')\
         .aka('(λy.(x x))', 'λy.(x x)', 'λy.x x')\
         .aka('(λy.(x y))', 'λy.(x y)', 'λy.x y')\

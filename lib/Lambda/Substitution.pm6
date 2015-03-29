@@ -6,6 +6,7 @@ use Lambda::String;
 use Lambda::Boolean;
 use Lambda::MaybeADT;
 use Lambda::TermADT;
+use Lambda::FreeVars;
 use Lambda::ListADT;
 use Lambda::PairADT;
 
@@ -196,13 +197,35 @@ constant $subst-with-alpha is export = lambdaFn(
                             },
                             Some => -> TTerm $newFunc {
                                 case-Maybe($a,
-                                    None =>            { $Pair($Some($AppT($newFunc, $arg)),    $snd($fp)) },
-                                    Some => -> $newArg { $Pair($Some($AppT($newFunc, $newArg)), $append($snd($fp), $snd($ap))) }
+                                    None => {
+                                        $Pair(
+                                            $Some($AppT($newFunc, $arg)),
+                                            $snd($fp)
+                                        )
+                                    },
+                                    Some => -> $newArg {
+                                        my $fpConvs = $snd($fp);
+                                        my $apConvs = $snd($ap);
+                                        my $existsInApConvs = -> $p { 
+                                            $exists(
+                                                -> $q {
+                                                    _if_($Str-eq($fst($p), $fst($q)), # short-circuit AND
+                                                        { $Term-eq($snd($p), $snd($q)) },
+                                                        $false
+                                                    )
+                                                },
+                                                $apConvs) 
+                                        };
+                                        $Pair(
+                                            $Some($AppT($newFunc, $newArg)),
+                                            $append($except($existsInApConvs, $fpConvs), $apConvs)
+                                        )
+                                    }
                                 )
                             }
                         )
                     },
-                    LamT => -> Str $myVarName, TTerm $body {   # DONE: LamT_ctor_with_Str_binder
+                    LamT => -> Str $myVarName, TTerm $body {
                         my $newConvs  = $except(
                             -> TPair $s { $Str-eq($myVarName, $fst($s)) }, # (B (Str-eq? myVarName) fst)
                             $alpha-convs
@@ -218,9 +241,13 @@ constant $subst-with-alpha is export = lambdaFn(
                                         }
                                 )
                             },
-                            {   my $needFreshVar = $exists(   # TODO: ... AND only if forVar occurs (free) in body
-                                    -> Str $vName { $Str-eq($myVarName, $vName) },
-                                    $keepfreeNames
+                            {   my $needFreshVar = _if_(    # short-circuit AND
+                                    $exists(
+                                        -> Str $vName { $Str-eq($myVarName, $vName) },
+                                        $keepfreeNames
+                                    ),
+                                    { $is-free-varName($forVarName, $body) },
+                                    $false
                                 );
                                 _if_($needFreshVar,
                                     {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
