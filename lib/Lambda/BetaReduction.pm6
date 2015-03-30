@@ -156,7 +156,7 @@ constant $betaContract is export = $Y(-> &self {
                         case-List($alpha-problematic,
                             cons => -> Mu, Mu {
                                 # Note: t cannot be Omega if we have alpha-problematic vars
-                                $subst-with-alpha($funcVarName, $arg, $funcBody);
+                                $subst-with-alpha($cons($Pair($funcVarName, $arg), $nil), $funcBody);
                             },
                             nil => {
                                 my $substituted-func = $subst($funcVarName, $arg, $funcBody);
