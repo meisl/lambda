@@ -26,3 +26,18 @@ constant $iterate is export = $Y(-> &self { lambdaFn(
         ) does TList
     }
 )});
+
+constant $map-lazy is export = $Y(-> &self { lambdaFn(
+    'map-lazy', 'λf.λxs.error "NYI"',
+    -> $f, TList $xs -->TList{
+        lambdaFn(
+            Str, 'error "NYI"',
+            -> $onNil, $onCons {
+                case-List($xs,
+                    nil => $onNil,
+                    cons => -> $hd, $tl { $onCons($f($hd), &self($f, $tl)) }
+                );
+            }
+        ) does TList
+    }
+)});
