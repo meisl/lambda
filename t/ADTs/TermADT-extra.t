@@ -7,12 +7,14 @@ use Test::Util_Term;
 
 use Lambda::BaseP6;
 use Lambda::Boolean;
+use Lambda::ListADT;
+use Lambda::Streams;
 
 
 # module under test:
 use Lambda::TermADT;
 
-plan 48;
+plan 40;
 
 
 { # Term->source
@@ -306,37 +308,30 @@ plan 48;
     dies_ok( { $fresh-var-for(`'λx.x') }, '$fresh-var-for does not accept a LamT arg');
     dies_ok( { $fresh-var-for(`'"c"')  }, '$fresh-var-for does not accept a ConstT arg');
 
+    my $xname = $VarT2name(`'x');
     my $fresh1 = $fresh-var-for(`'x');
-    my $fresh2 = $fresh-var-for(`'x');
+    my $α1 = $VarT2name($fresh1);
+    my $fresh2 = $fresh-var-for(`'x');  # again - should return another fresh one
+    my $α2 = $VarT2name($fresh2);
 
-    isnt($VarT2name($fresh1), $VarT2name(`'x'), "fresh var has name different from any other");
-    isnt($VarT2name($fresh1), $VarT2name(`'y'), "fresh var has name different from any other");
-    isnt($VarT2name($fresh1), $VarT2name($fresh2), "fresh var has name different from any other");
+    isnt_in($α1, [$xname, 'y', $α2]);
+    isnt_in($α2, [$xname, 'y', $α1]);
 
     my $fresh3 = $fresh-var-for(`'x');
+    my $α3 = $VarT2name($fresh3);
+    isnt_in($α3, [$xname, 'y', $α1, $α2]);
 
-    isnt($VarT2name($fresh3), $VarT2name(`'x'), "fresh var has name different from any other");
-    isnt($VarT2name($fresh3), $VarT2name(`'y'), "fresh var has name different from any other");
-    isnt($VarT2name($fresh3), $VarT2name($fresh1), "fresh var has name different from any other");
-    isnt($VarT2name($fresh3), $VarT2name($fresh2), "fresh var has name different from any other");
-
-    my $xname = $VarT2name(`'x');
     ok($fresh3.gist ~~ / '/' $xname /, ".fresh(:for).gist contains the given var's gist")
         or diag "# got: {$fresh3.gist}";
-    nok($VarT2name($fresh3) ~~ / $xname /, ".fresh(:for).name does NOT contain the given var's name");
-    cmp_ok $fresh3, '===', $VarT($VarT2name($fresh3)), "can get back same instance of fresh var via VarT.get";
+    nok($α3 ~~ / $xname /, ".fresh(:for).name does NOT contain the given var's name");
+    cmp_ok $fresh3, '===', $VarT($α3), "can get back same instance of fresh var via VarT.get";
 
     my $fresh4 = $fresh-var-for($fresh3);
+    my $α4 = $VarT2name($fresh4);
+    isnt_in($α4, [$xname, 'y', $α1, $α2, $α3]);
 
-    isnt($VarT2name($fresh4), $VarT2name(`'x'), "fresh var has name different from any other");
-    isnt($VarT2name($fresh4), $VarT2name(`'y'), "fresh var has name different from any other");
-    isnt($VarT2name($fresh4), $VarT2name($fresh1), "fresh var has name different from any other");
-    isnt($VarT2name($fresh4), $VarT2name($fresh2), "fresh var has name different from any other");
-    isnt($VarT2name($fresh4), $VarT2name($fresh3), "fresh var has name different from any other");
-
-    my $f3name = $VarT2name($fresh3);
-    ok($fresh4.gist ~~ / $f3name /, ".fresh(:for).gist contains the given var's gist")
+    ok($fresh4.gist ~~ / $α3 /, ".fresh(:for).gist contains the given var's gist")
         or diag "# got: {$fresh4.gist}";
-    nok($VarT2name($fresh4) ~~ / $f3name /, ".fresh(:for).name does NOT contain the given var's name");
-    cmp_ok $fresh3, '===', $VarT($VarT2name($fresh3)), "can get back same instance of fresh var via VarT.get";
+    nok($α4 ~~ / $α3 /, ".fresh(:for).name does NOT contain the given var's name");
+    cmp_ok $fresh3, '===', $VarT($α3), "can get back same instance of fresh var via VarT.get";
 }

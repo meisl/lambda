@@ -6,6 +6,7 @@ use Lambda::Boolean;
 use Lambda::String;
 use Lambda::PairADT;
 use Lambda::ListADT;
+use Lambda::Streams;
 
 use Lambda::ADT_auto;
 
@@ -575,6 +576,13 @@ constant $is-Omega is export = lambdaFn(
 );
 
 
+# Stream of the positive inegers: 1, 2, 3, 4, ...
+my constant $pInts = $iterate(* + 1, 1);
+
+constant $alpha-names is export = $map-lazy(-> Int $n { "α$n" }, $pInts);
+
+constant $alpha-vars is export = $map-lazy($VarT, $alpha-names);
+
 
 constant $fresh-var-for is export = {
     my $nextAlphaNr = 1;
@@ -610,3 +618,6 @@ constant $fresh-var-for is export = {
         }
     );
 }();
+
+
+
