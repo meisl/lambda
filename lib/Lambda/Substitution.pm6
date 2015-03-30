@@ -97,63 +97,68 @@ constant $subst-with-alpha is export = lambdaFn(
         $Y(-> &self { lambdaFn(
             Str, 'λself.λsubstitutions.λt.error "NYI"',
             -> TList $substitutions, TTerm $t -->TMaybe{
-                case-Term($t,
-                    ConstT => $K1None,
-                    VarT => -> Str $varName {
-                        case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
-                            None => $None, # no alpha-conv applicable ~> nothing to change
-                            Some => -> $sPair { $Some($snd($sPair)) }
-                        )
-                    },
-                    AppT => -> TTerm $func, TTerm $arg {
-                        my $f = &self($substitutions, $func);
-                        my $a = &self($substitutions, $arg);
-                        case-Maybe($f,
-                            None => {
-                                case-Maybe($a,
-                                    None => $None,
-                                    Some => -> TTerm $newArg { $Some($AppT($func, $newArg)) }
+                case-List($substitutions,
+                    nil => $None,
+                    cons => -> Mu, Mu {
+                        case-Term($t,
+                            ConstT => $K1None,
+                            VarT => -> Str $varName {
+                                case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
+                                    None => $None, # no alpha-conv applicable ~> nothing to change
+                                    Some => -> $sPair { $Some($snd($sPair)) }
                                 )
                             },
-                            Some => -> TTerm $newFunc {
-                                case-Maybe($a,
-                                    None =>            { $Some($AppT($newFunc, $arg   )) },
-                                    Some => -> $newArg { $Some($AppT($newFunc, $newArg)) }
+                            AppT => -> TTerm $func, TTerm $arg {
+                                my $f = &self($substitutions, $func);
+                                my $a = &self($substitutions, $arg);
+                                case-Maybe($f,
+                                    None => {
+                                        case-Maybe($a,
+                                            None => $None,
+                                            Some => -> TTerm $newArg { $Some($AppT($func, $newArg)) }
+                                        )
+                                    },
+                                    Some => -> TTerm $newFunc {
+                                        case-Maybe($a,
+                                            None =>            { $Some($AppT($newFunc, $arg   )) },
+                                            Some => -> $newArg { $Some($AppT($newFunc, $newArg)) }
+                                        )
+                                    }
+                                )
+                            },
+                            LamT => -> Str $myVarName, TTerm $body {
+                                # kick out irrelevant substitutions...
+                                my $myFreeNames = $free-varNames($t);   #...which include ones *for* this λ's binder (Note: apply to $t, NOT to $body!)
+                                my $newSubsts  = $filter(
+                                    -> TPair $sPair {   # (C exists myFreeNames) ° (Str-eq? ° fst)
+                                        $exists(-> $iName { $Str-eq($fst($sPair), $iName) }, $myFreeNames);
+                                    },
+                                    $substitutions
+                                );
+                                my $needFreshVar = $exists(
+                                    -> $sPair {
+                                        $exists(
+                                            -> Str $vName { $Str-eq($myVarName, $vName) },
+                                            $free-varNames($snd($sPair))
+                                        )
+                                    }, 
+                                    $newSubsts
+                                );
+                                _if_($needFreshVar,
+                                    {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                                        my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
+                                        my $myAlpha  = $Pair($myVarName, $freshVar);
+                                        case-Maybe(&self($cons($myAlpha, $newSubsts), $body),
+                                            None => $None,  # neither forVar nor myVar free in body, and no external alpha-convs applicable
+                                            Some => -> TTerm $newBody { $Some($LamT($freshName, $newBody)) }
+                                        )
+                                    },
+                                    { case-Maybe(&self($newSubsts, $body),
+                                        None => $None,
+                                        Some => -> TTerm $newBody { $Some($LamT($myVarName, $newBody)) }
+                                    )}
                                 )
                             }
-                        )
-                    },
-                    LamT => -> Str $myVarName, TTerm $body {
-                        # kick out irrelevant substitutions...
-                        my $myFreeNames = $free-varNames($t);   #...which include ones *for* this λ's binder (Note: apply to $t, NOT to $body!)
-                        my $newSubsts  = $filter(
-                            -> TPair $sPair {   # (C exists myFreeNames) ° (Str-eq? ° fst)
-                                $exists(-> $iName { $Str-eq($fst($sPair), $iName) }, $myFreeNames);
-                            },
-                            $substitutions
-                        );
-                        my $needFreshVar = $exists(
-                            -> $sPair {
-                                $exists(
-                                    -> Str $vName { $Str-eq($myVarName, $vName) },
-                                    $free-varNames($snd($sPair))
-                                )
-                            }, 
-                            $newSubsts
-                        );
-                        _if_($needFreshVar,
-                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
-                                my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
-                                my $myAlpha  = $Pair($myVarName, $freshVar);
-                                case-Maybe(&self($cons($myAlpha, $newSubsts), $body),
-                                    None => $None,  # neither forVar nor myVar free in body, and no external alpha-convs applicable
-                                    Some => -> TTerm $newBody { $Some($LamT($freshName, $newBody)) }
-                                )
-                            },
-                            { case-Maybe(&self($newSubsts, $body),
-                                None => $None,
-                                Some => -> TTerm $newBody { $Some($LamT($myVarName, $newBody)) }
-                            )}
                         )
                     }
                 )
