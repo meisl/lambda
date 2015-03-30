@@ -128,7 +128,7 @@ constant $subst-with-alpha is export = $Y(-> &self { lambdaFn(
                         my $myFreeNames = $free-varNames($t);   #...which include ones *for* this λ's binder (Note: apply to $t, NOT to $body!)
                         my $newSubsts  = $filter(
                             -> TPair $sPair {   # (C exists myFreeNames) ° (Str-eq? ° fst)
-                                $exists(-> $iName { $Str-eq($fst($sPair), $iName) }, $myFreeNames);
+                                $exists(-> $iName { $Str-eq($fst($sPair), $iName) }, $myFreeNames); # TODO: specialize for 0, 1, ... elems in myFreeNames
                             },
                             $substitutions
                         );

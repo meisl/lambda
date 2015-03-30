@@ -2,6 +2,7 @@ use v6;
 use Test;
 use Test::Util;
 use Test::Util_Lambda;
+use Test::Util_Term;
 use Test::Util_List;
 
 use Lambda::Boolean;
@@ -16,31 +17,31 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::BetaReduction;
 
-plan 124;
+plan 125;
 
 
-my $g = $VarT('g');
-my $h = $VarT('h');
-my $k = $VarT('k');
-my $u = $VarT('u');
-my $v = $VarT('v');
-my $x = $VarT('x');
-my $y = $VarT('y');
-my $z = $VarT('z');
-my $c = $ConstT('c');
+my $g = `'g';
+my $h = `'h';
+my $k = `'k';
+my $u = `'u';
+my $v = `'v';
+my $x = `'x';
+my $y = `'y';
+my $z = `'z';
+my $c = `'"c"';
 
-my $xx = $AppT($x, $x);
-my $yy = $AppT($y, $y);
-my $yz = $AppT($y, $z);
+my $xx = `'x x';
+my $yy = `'y y';
+my $yz = `'y z';
 
-my $Ly_xx = $LamT('y', $xx);
+my $Ly_xx = `'λy.x x';
 
 # [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
-my $omegaX  = $LamT('x', $xx);  # (λx.x x)
-my $OmegaXX = $AppT($omegaX, $omegaX);   # ((λx.x x) (λx.x x))
-my $omegaY  = $LamT('y', $yy);  # (λy.y y)
-my $OmegaYY = $AppT($omegaY, $omegaY);   # ((λy.y y) (λy.y y))
-my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
+my $omegaX  = `'(λx.x x)';
+my $OmegaXX = `'((λx.x x) (λx.x x))';
+my $omegaY  = `'(λy.y y)';
+my $OmegaYY = `'((λy.y y) (λy.y y))';
+my $OmegaXY = `'((λx.x x) (λy.y y))';
 
 
 { # predicate betaRedex?
@@ -155,16 +156,19 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
         }
     }
 
+    # TODO: (λx.λy.x) (x y)
+
+    # without the need for α-conversion
     betaContractsTo(
-        $x                                                          => $None,  # x
-        $c                                                          => $None,  # "c"
-        $LamT('x', $c)                                               => $None,  # λx."c"
-        $LamT('x', $x)                                               => $None,  # λx.x
-        $LamT('x', $AppT($x, $c))                                    => $None,  # λx.x "c"
-        $LamT('x', $AppT($x, $y))                                    => $None,  # λx.x y
-        $LamT('x', $AppT($y, $x))                                    => $None,  # λx.y x
+        `'x'                                           => $None,
+        `'"c"'                                         => $None,
+        `'λx."c"'                                      => $None,
+        `'λx.x'                                        => $None,
+        `'λx.x "c"'                                    => $None,
+        `'λx.x y'                                      => $None,
+        `'λx.y x'                                      => $None,
         $LamT('x', $AppT($x, $AppT($LamT('y', $LamT('z', $AppT($y, $x))), $LamT('y', $AppT($x, $y)))))   # not a redex but contractible (twice)
-            => $Some($LamT('x', $AppT($x, $LamT('z', $AppT($LamT('y', $AppT($x, $y)), $x))))),  # λx.x ((λy.λz.y x) (λy.x y)) -> λx.x (λz.(λy.x y) x)
+            => $Some($LamT('x', $AppT($x, $LamT('z', $AppT($LamT('y', $AppT($x, $y)), $x))))),  # `'λx.x ((λy.λz.y x) (λy.x y))' -> `'λx.x (λz.(λy.x y) x)'
         $AppT($x, $c)                                               => $None,  # (x c)
         $AppT($x, $x)                                               => $None,  # (x x)
         $AppT($x, $y)                                               => $None,  # (x y)
@@ -187,10 +191,20 @@ my $OmegaXY = $AppT($omegaX, $omegaY);   # ((λx.x x) (λy.y y))
         $OmegaYY                                                    => $None,               # ((λy.y y) (λy.y y))   # a redex, contracting to itself
         $OmegaXY                                                    => $Some($OmegaYY),     # ((λx.x x) (λy.y y))   # a redex, contracting to itself (module alpha-conv)
         
-        $AppT($omegaX, $Ly_xx)                     => $Some($AppT($Ly_xx, $Ly_xx)), # (λx.(x x)) (λy.(x x))  # not Omega (2nd binder y != x)
-        $AppT($Ly_xx, $omegaX)                     => $Some($xx),                   # (λy.(x x)) (λx.(x x))  # not Omega (1st binder y != x)
-        $AppT($omegaX, $yz)                        => $Some($AppT($yz, $yz)),       # ((λx.(x x)) (y z))     # only "half of" Omega
+        $AppT($omegaX, $Ly_xx)                     => $Some($AppT($Ly_xx, $Ly_xx)), # (λx.x x) (λy.x x)  # not Omega (2nd binder y != x)
+        $AppT($Ly_xx, $omegaX)                     => $Some($xx),                   # (λy.x x) (λx.x x)  # not Omega (1st binder y != x)
+        $AppT($omegaX, $yz)                        => $Some($AppT($yz, $yz)),       # (λx.x x) (y z)     # only "half of" Omega
     );
+
+    subtest({ # with necessary α-conversion:
+        my $t = `'(λx.λy.x) (x y)'; # contracts to (λα1.x y)
+        my $actual = $Some2value($betaContract($t));
+        my $α1 = $LamT2var($actual);
+        isnt($α1, 'x', 'fresh var is different from var x');
+        isnt($α1, 'y', 'fresh var is different from var y');
+        my $expected = $LamT($α1, `'x y');
+        is_eq-Term($actual, $LamT($α1, `'x y'), "`({$Term2srcLess($t)}) beta-contracts to `({$Term2srcLess($expected)})");
+    });
 
     my ($t, $bcd1, $bcd2, $expectedBrd);
 
