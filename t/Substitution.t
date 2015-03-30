@@ -60,10 +60,10 @@ plan 10;
 }
 
 
-{ # function (subst-with-alpha forVarName whatTerm keepfreeNames alpha-convs inTerm)
-    is_properLambdaFn $subst-with-alpha, 'subst-with-alpha';
+{ # function (subst-par-alpha forVarName whatTerm keepfreeNames alpha-convs inTerm)
+    is_properLambdaFn $subst-par-alpha, 'subst-par-alpha';
 
-    testTermFn($subst-with-alpha,
+    testTermFn($subst-par-alpha,
         [[x => `'y'],   `'"c"' ] => $None,
 
         [[x => `'y'],   `'y'   ] => $None,
@@ -90,65 +90,65 @@ plan 10;
     );
 
     subtest({ # [(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)
-        my ($out, $newVarName, $t);
+        my ($out, $α1, $t);
         
-        $out = $subst-with-alpha($cons($Pair('y', `'x y'), $nil), `'λx.x y z');
+        $out = $subst-par-alpha($cons($Pair('y', `'x y'), $nil), `'λx.x y z');
         diag lambdaArgToStr($out);
         $t = $Some2value($out);
 
-        $newVarName = $LamT2var($t);
+        $α1 = $LamT2var($t);
 
-        isnt($newVarName, 'x', "fresh var $newVarName is different from var x");
-        isnt($newVarName, 'y', "fresh var $newVarName is different from var y");
-        isnt($newVarName, 'z', "fresh var $newVarName is different from var z");
+        isnt($α1, 'x', "fresh var $α1 is different from var x");
+        isnt($α1, 'y', "fresh var $α1 is different from var y");
+        isnt($α1, 'z', "fresh var $α1 is different from var z");
         
-        is_eq-Term($t, $LamT($newVarName, $AppT($AppT($VarT($newVarName), `'x y'), `'z')), 
+        is_eq-Term($t, $LamT($α1, $AppT($AppT($VarT($α1), `'x y'), `'z')), 
             '[(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)');
     }, 'plus additional alpha-conversion (fresh var for x)');
     
     subtest({ # [(x y)/y](λz.λx.x y z)  =  (λz.λα1.α1 (x y) z)
-        my ($out, $newVarName, $t);
+        my ($out, $α1, $t);
         
-        $out = $subst-with-alpha($cons($Pair('y', `'x y'), $nil), `'λz.λx.x y z');
+        $out = $subst-par-alpha($cons($Pair('y', `'x y'), $nil), `'λz.λx.x y z');
         diag lambdaArgToStr($out);
         $t = $Some2value($out);
 
-        $newVarName = $LamT2var($LamT2body($t));
+        $α1 = $LamT2var($LamT2body($t));
 
-        isnt($newVarName, 'x', "fresh var $newVarName is different from var x");
-        isnt($newVarName, 'y', "fresh var $newVarName is different from var y");
-        isnt($newVarName, 'z', "fresh var $newVarName is different from var z");
+        isnt($α1, 'x', "fresh var $α1 is different from var x");
+        isnt($α1, 'y', "fresh var $α1 is different from var y");
+        isnt($α1, 'z', "fresh var $α1 is different from var z");
         
-        is_eq-Term($t, $LamT('z', $LamT($newVarName, $AppT($AppT($VarT($newVarName), `'x y'), `'z'))), 
+        is_eq-Term($t, $LamT('z', $LamT($α1, $AppT($AppT($VarT($α1), `'x y'), `'z'))), 
             '[(x y)/y](λz.λx.x y z)  =  (λz.λα1.α1 (x y) z)');
     }, 'plus additional alpha-conversion (fresh var for x) under binder z');
     
     subtest({ # [(x y)/z](λy.λx.x y z)  =  (λα1.λα2.α2 α1 (x y))
-        my ($out, $newVarName1, $newVarName2, $t);
+        my ($out, $α1, $α2, $t);
         
-        $out = $subst-with-alpha($cons($Pair('z', `'x y'), $nil), `'λy.λx.x y z');
+        $out = $subst-par-alpha($cons($Pair('z', `'x y'), $nil), `'λy.λx.x y z');
         diag lambdaArgToStr($out);
         $t = $Some2value($out);
 
-        $newVarName1 = $LamT2var($t);
-        $newVarName2 = $LamT2var($LamT2body($t));
+        $α1 = $LamT2var($t);
+        $α2 = $LamT2var($LamT2body($t));
 
-        isnt($newVarName1, 'x', "fresh var $newVarName1 is different from var x");
-        isnt($newVarName1, 'y', "fresh var $newVarName1 is different from var y");
-        isnt($newVarName1, 'z', "fresh var $newVarName1 is different from var z");
+        isnt($α1, 'x', "fresh var $α1 is different from var x");
+        isnt($α1, 'y', "fresh var $α1 is different from var y");
+        isnt($α1, 'z', "fresh var $α1 is different from var z");
 
-        isnt($newVarName2, 'x', "fresh var $newVarName2 is different from var x");
-        isnt($newVarName2, 'y', "fresh var $newVarName2 is different from var y");
-        isnt($newVarName2, 'z', "fresh var $newVarName2 is different from var z");
+        isnt($α2, 'x', "fresh var $α2 is different from var x");
+        isnt($α2, 'y', "fresh var $α2 is different from var y");
+        isnt($α2, 'z', "fresh var $α2 is different from var z");
         
-        is_eq-Term($t, $LamT($newVarName1, $LamT($newVarName2, $AppT($AppT($VarT($newVarName2), $VarT($newVarName1)), `'x y'))), 
+        is_eq-Term($t, $LamT($α1, $LamT($α2, $AppT($AppT($VarT($α2), $VarT($α1)), `'x y'))), 
             '[(x y)/z](λy.λx.x y z)  =  (λα1.λα2.α2 α1 (x y))');
     }, 'plus additional alpha-conversions (fresh var for x and y)');
     
     subtest({ # [(x y)/z](λy.λx.x y z ((λz.λx.x y z) (λx.y x)))  =  (λα1.λα2.α2 α1 (x y) ((λz.λx.x α1 z) (λx.α1 x)))
         my ($out, $α1, $α2, $t);
         
-        $out = $subst-with-alpha($cons($Pair('z', `'x y'), $nil), `'λy.λx.x y z ((λz.λx.x y z) (λx.y x))');
+        $out = $subst-par-alpha($cons($Pair('z', `'x y'), $nil), `'λy.λx.x y z ((λz.λx.x y z) (λx.y x))');
         diag lambdaArgToStr($out);
         $t = $Some2value($out);
 

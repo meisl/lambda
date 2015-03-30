@@ -91,8 +91,8 @@ constant $subst is export = lambdaFn(
 );
 
 
-constant $subst-with-alpha is export = $Y(-> &self { lambdaFn(
-    'subst-with-alpha', 'λself.λsubstitutions.λt.error "NYI"',
+constant $subst-par-alpha is export = $Y(-> &self { lambdaFn(
+    'subst-par-alpha', 'λself.λsubstitutions.λt.error "NYI"',
     -> TList $substitutions, TTerm $t -->TMaybe{
         case-List($substitutions,
             nil => $None,

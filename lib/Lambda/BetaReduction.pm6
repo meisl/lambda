@@ -156,7 +156,7 @@ constant $betaContract is export = $Y(-> &self {
                         _if_($need-alpha-conv,
                             {   # Note: t cannot be Omega if we do need alpha-conversion
                                 # Also: since we know that it'll change we don't need to check the returned value is None (and return $Some($funcBody))
-                                $subst-with-alpha($cons($Pair($funcVarName, $arg), $nil), $funcBody);
+                                $subst-par-alpha($cons($Pair($funcVarName, $arg), $nil), $funcBody);
                             },
                             {
                                 my $substituted-func = $subst($funcVarName, $arg, $funcBody);
