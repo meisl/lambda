@@ -91,8 +91,8 @@ constant $subst is export = lambdaFn(
 );
 
 
-constant $subst-par-alpha is export = $Y(-> &self { lambdaFn(
-    'subst-par-alpha', 'λself.λsubstitutions.λt.error "NYI"',
+constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
+    'subst-par-alpha_Maybe', 'λself.λsubstitutions.λt.error "NYI"',
     -> TList $substitutions, TTerm $t -->TMaybe{
         case-List($substitutions,
             nil => $None,
@@ -162,3 +162,60 @@ constant $subst-par-alpha is export = $Y(-> &self { lambdaFn(
     }
 )});
 
+
+constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
+    'subst-par-alpha_direct', 'λself.λsubstitutions.λt.error "NYI"',
+    -> TList $substitutions, TTerm $t -->TTerm{
+        case-List($substitutions,
+            nil => $t,
+            cons => -> Mu, Mu {
+                case-Term($t,
+                    ConstT => -> Mu { $t },
+                    VarT => -> Str $varName {
+                        case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
+                            None => $t, # no alpha-conv applicable ~> nothing to change
+                            Some => -> $sPair { $snd($sPair) }
+                        )
+                    },
+                    AppT => -> TTerm $func, TTerm $arg {
+                        $AppT(
+                            &self($substitutions, $func),
+                            &self($substitutions, $arg)
+                        );
+                    },
+                    LamT => -> Str $myVarName, TTerm $body {
+                        # kick out irrelevant substitutions...
+                        my $myFreeNames = $free-varNames($t);   #...which include ones *for* this λ's binder (Note: apply to $t, NOT to $body!)
+                        my $newSubsts  = $filter(
+                            -> TPair $sPair {   # (C exists myFreeNames) ° (Str-eq? ° fst)
+                                $exists(-> $iName { $Str-eq($fst($sPair), $iName) }, $myFreeNames); # TODO: specialize for 0, 1, ... elems in myFreeNames
+                            },
+                            $substitutions
+                        );
+                        my $needFreshVar = $exists(
+                            -> $sPair {
+                                $exists(
+                                    -> Str $vName { $Str-eq($myVarName, $vName) },
+                                    $free-varNames($snd($sPair))
+                                )
+                            }, 
+                            $newSubsts
+                        );
+                        _if_($needFreshVar,
+                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                                my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
+                                my $myAlpha  = $Pair($myVarName, $freshVar);
+                                $LamT($freshName, &self($cons($myAlpha, $newSubsts), $body));
+                            },
+                            { $LamT($myVarName, &self($newSubsts, $body)) }
+                        )
+                    }
+                )
+            }
+        )
+    }
+)});
+
+
+constant $subst-par-alpha is export = $subst-par-alpha_Maybe but name('subst-par-alpha');
+#constant $subst-par-alpha is export = $subst-par-alpha_direct but name('subst-par-alpha');
