@@ -29,6 +29,47 @@ constant $has_length is export = lambdaFn(
 );
 
 
+my sub fail_is_in(Str $msg, $elem, @list, $cmpStr) {
+    diag sprintf("\nexpected (as elem): %s\n     got this list: (%s)\n%18s: %s",
+        $elem,
+        @list.map(*.Str).join(', '),
+        'comparison used', $cmpStr
+    );
+    ok(False, $msg);
+}
+
+my multi sub is_in($elem, @list, Str $msg?, :&cmp = $tripleEq) is export {
+    my $m = $msg // "$elem occurs in ({@list.join(', ')})";
+    for @list -> $e {
+        if &cmp($e, $elem) {
+            return ok(True, $m);
+        }
+        fail_is_in($m, $elem, @list, &cmp);
+    }
+}
+
+my sub fail_isnt_in(Str $msg, $elem, @list, $idx, $cmpStr) {
+    diag sprintf("\nexpected to NOT occur: %s\n     got this list: (%s)\n:         found at idx: %d\n%21s: %s",
+        $elem,
+        @list.map(*.Str).join(', '),
+        $idx,
+        'comparison used', $cmpStr
+    );
+    ok(False, $msg);
+}
+
+my multi sub isnt_in($elem, @list, Str $msg?, :&cmp = $tripleEq) is export {
+    my $m = $msg // "$elem does NOT occur in ({@list.join(', ')})";
+    my $idx = 0;
+    for @list -> $e {
+        if &cmp($e, $elem) {
+            fail_isnt_in($m, $elem, @list, $idx, &cmp);
+        }
+        $idx++;
+    }
+    ok(True, $m);
+}
+
 my sub fail_eq-List_elem(Str $msg, Int $idx, $actualElem, $expectedElem, $cmpStr) {
     diag sprintf("\nexpected (at index $idx): %s\n     got (at index $idx): %s\n%{20+$idx.Str.chars}s: %s",
         $expectedElem, $actualElem,

@@ -185,6 +185,8 @@ subtest({ # prefix operator ` (for retrieving pre-built test-terms)
     }, '$has_length');
 
     todo '$contains_ok';
+    todo 'is_in';
+    todo 'isnt_in';
 }
 
 

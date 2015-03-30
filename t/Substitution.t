@@ -97,15 +97,12 @@ plan 10;
         $t = $Some2value($out);
 
         $α1 = $LamT2var($t);
-
-        isnt($α1, 'x', "fresh var $α1 is different from var x");
-        isnt($α1, 'y', "fresh var $α1 is different from var y");
-        isnt($α1, 'z', "fresh var $α1 is different from var z");
+        isnt_in($α1, <x y z>, "fresh var $α1 is different from x, y and z");
         
         is_eq-Term($t, $LamT($α1, $AppT($AppT($VarT($α1), `'x y'), `'z')), 
             '[(x y)/y](λx.x y z)  =  (λα1.α1 (x y) z)');
     }, 'plus additional alpha-conversion (fresh var for x)');
-    
+
     subtest({ # [(x y)/y](λz.λx.x y z)  =  (λz.λα1.α1 (x y) z)
         my ($out, $α1, $t);
         
@@ -114,10 +111,7 @@ plan 10;
         $t = $Some2value($out);
 
         $α1 = $LamT2var($LamT2body($t));
-
-        isnt($α1, 'x', "fresh var $α1 is different from var x");
-        isnt($α1, 'y', "fresh var $α1 is different from var y");
-        isnt($α1, 'z', "fresh var $α1 is different from var z");
+        isnt_in($α1, <x y z>, "fresh var $α1 is different from x, y and z");
         
         is_eq-Term($t, $LamT('z', $LamT($α1, $AppT($AppT($VarT($α1), `'x y'), `'z'))), 
             '[(x y)/y](λz.λx.x y z)  =  (λz.λα1.α1 (x y) z)');
@@ -133,13 +127,8 @@ plan 10;
         $α1 = $LamT2var($t);
         $α2 = $LamT2var($LamT2body($t));
 
-        isnt($α1, 'x', "fresh var $α1 is different from var x");
-        isnt($α1, 'y', "fresh var $α1 is different from var y");
-        isnt($α1, 'z', "fresh var $α1 is different from var z");
-
-        isnt($α2, 'x', "fresh var $α2 is different from var x");
-        isnt($α2, 'y', "fresh var $α2 is different from var y");
-        isnt($α2, 'z', "fresh var $α2 is different from var z");
+        isnt_in($α1, <x y z>, "fresh var $α1 is different from x, y and z");
+        isnt_in($α2, <x y z>, "fresh var $α2 is different from x, y and z");
         
         is_eq-Term($t, $LamT($α1, $LamT($α2, $AppT($AppT($VarT($α2), $VarT($α1)), `'x y'))), 
             '[(x y)/z](λy.λx.x y z)  =  (λα1.λα2.α2 α1 (x y))');
@@ -155,19 +144,13 @@ plan 10;
         $α1 = $LamT2var($t);
         $α2 = $LamT2var($LamT2body($t));
 
-        isnt($α1, 'x', "fresh var $α1 is different from var x");
-        isnt($α1, 'y', "fresh var $α1 is different from var y");
-        isnt($α1, 'z', "fresh var $α1 is different from var z");
-
-        isnt($α2, 'x', "fresh var $α2 is different from var x");
-        isnt($α2, 'y', "fresh var $α2 is different from var y");
-        isnt($α2, 'z', "fresh var $α2 is different from var z");
+        isnt_in($α1, <x y z>, "fresh var $α1 is different from x, y and z");
+        isnt_in($α2, <x y z>, "fresh var $α2 is different from x, y and z");
 
         my $λx_α1x = $LamT('x', $AppT($VarT($α1), `'x'));
         my $λz_λx_xα1z = $LamT('z', $LamT('x', $AppT($AppT(`'x', $VarT($α1)), `'z')));
         my $α2α1_xy = $AppT($AppT($VarT($α2), $VarT($α1)), `'(x y)');
 
-        
         is_eq-Term($t, $LamT($α1, $LamT($α2, $AppT($α2α1_xy, $AppT($λz_λx_xα1z, $λx_α1x)))),
             '[(x y)/z](λy.λx.x y z ((λz.λx.x y z) (λx.y x)))  =  (λα1.λα2.α2 α1 (x y) ((λz.λx.x α1 z) (λx.α1 x)))');
     }, 'plus additional alpha-conversions (fresh var for x and y, but omitting unnecessary alpha-conversions)');
