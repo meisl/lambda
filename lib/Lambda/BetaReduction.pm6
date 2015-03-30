@@ -147,18 +147,18 @@ constant $betaContract is export = $Y(-> &self {
                     
                     LamT => -> Str $funcVarName, TTerm $funcBody {    # DONE: LamT_ctor_with_Str_binder
                     # so t is a beta-redex
-                        my $alpha-problematic = $filter(
+                        my $need-alpha-conv = $exists(
                             # no need to filter out $funcVarName itself separately
                             # since it cannot be free under itself in the body
                             -> Str $vName { $is-freeName-under($funcVarName, $vName, $funcBody) },
                             $free-varNames($arg)
                         );
-                        case-List($alpha-problematic,
-                            cons => -> Mu, Mu {
-                                # Note: t cannot be Omega if we have alpha-problematic vars
+                        _if_($need-alpha-conv,
+                            {   # Note: t cannot be Omega if we do need alpha-conversion
+                                # Also: since we know that it'll change we don't need to check the returned value is None (and return $Some($funcBody))
                                 $subst-with-alpha($cons($Pair($funcVarName, $arg), $nil), $funcBody);
                             },
-                            nil => {
+                            {
                                 my $substituted-func = $subst($funcVarName, $arg, $funcBody);
                                 case-Maybe($substituted-func,
                                     None => { $Some($funcBody) },    # binder funcVarName did not occur in funcBody
