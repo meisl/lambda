@@ -94,14 +94,14 @@ constant $subst is export = lambdaFn(
 constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
     'subst-par-alpha_Maybe', 'λself.λsubstitutions.λt.error "NYI"',
     -> TList $substitutions, TTerm $t -->TMaybe{
-        case-List($substitutions,
+        case-List($substitutions, # no substitutions at all ~> nothing to change
             nil => $None,
             cons => -> Mu, Mu {
                 case-Term($t,
                     ConstT => $K1None,
                     VarT => -> Str $varName {
                         case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
-                            None => $None, # no alpha-conv applicable ~> nothing to change
+                            None => $None, # no substitutions applicable ~> nothing to change
                             Some => -> $sPair { $Some($snd($sPair)) }
                         )
                     },
