@@ -122,10 +122,11 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
             },
             LamT => -> Str $myVarName, TTerm $body {
                 # kick out irrelevant substitutions...
-                my $myFreeNames = $free-varNames($t);   #...which include ones *for* this λ's binder (Note: apply to $t, NOT to $body!)
+                #my $myFreeNames = $free-varNames($t);   #...which include ones *for* this λ's binder (Note: apply to $t, NOT to $body!)
                 my $newSubsts  = $filter(
                     -> TPair $sPair {   # (C exists myFreeNames) ° (Str-eq? ° fst)
-                        $exists(-> $iName { $Str-eq($fst($sPair), $iName) }, $myFreeNames); # TODO: specialize for 0, 1, ... elems in myFreeNames
+                        #$exists(-> $iName { $Str-eq($fst($sPair), $iName) }, $myFreeNames); # TODO: specialize for 0, 1, ... elems in myFreeNames
+                        $is-free-varName($fst($sPair), $t)
                     },
                     $substitutions
                 );
