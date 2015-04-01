@@ -134,10 +134,7 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
                         );
                         my $needFreshVar = $exists(
                             -> $sPair {
-                                $exists(
-                                    -> Str $vName { $Str-eq($myVarName, $vName) },
-                                    $free-varNames($snd($sPair))
-                                )
+                                $is-free-varName($myVarName, $snd($sPair))
                             }, 
                             $newSubsts
                         );
