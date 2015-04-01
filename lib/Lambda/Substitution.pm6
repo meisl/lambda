@@ -132,25 +132,30 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
                             },
                             $substitutions
                         );
-                        my $needFreshVar = $exists(
-                            -> $sPair {
-                                $is-free-varName($myVarName, $snd($sPair))
-                            }, 
-                            $newSubsts
-                        );
-                        _if_($needFreshVar,
-                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
-                                my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
-                                my $myAlpha  = $Pair($myVarName, $freshVar);
-                                case-Maybe(&self($cons($myAlpha, $newSubsts), $body),
-                                    None => $None,  # neither forVar nor myVar free in body, and no external alpha-convs applicable
-                                    Some => -> TTerm $newBody { $Some($LamT($freshName, $newBody)) }
+                        case-List($newSubsts,
+                            nil => $None,
+                            cons => -> Mu, Mu {
+                                my $needFreshVar = $exists(
+                                    -> $sPair {
+                                        $is-free-varName($myVarName, $snd($sPair))
+                                    }, 
+                                    $newSubsts
+                                );
+                                _if_($needFreshVar,
+                                    {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                                        my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
+                                        my $myAlpha  = $Pair($myVarName, $freshVar);
+                                        case-Maybe(&self($cons($myAlpha, $newSubsts), $body),
+                                            None => $None,  # neither forVar nor myVar free in body, and no external alpha-convs applicable
+                                            Some => -> TTerm $newBody { $Some($LamT($freshName, $newBody)) }
+                                        )
+                                    },
+                                    { case-Maybe(&self($newSubsts, $body),
+                                        None => $None,
+                                        Some => -> TTerm $newBody { $Some($LamT($myVarName, $newBody)) }
+                                    )}
                                 )
-                            },
-                            { case-Maybe(&self($newSubsts, $body),
-                                None => $None,
-                                Some => -> TTerm $newBody { $Some($LamT($myVarName, $newBody)) }
-                            )}
+                            }
                         )
                     }
                 )
