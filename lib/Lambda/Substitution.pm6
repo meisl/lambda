@@ -99,7 +99,7 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
             VarT => -> Str $varName {
                 case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
                     None => $None, # no substitutions applicable ~> nothing to change
-                    Some => -> $sPair { $Some($snd($sPair)) }
+                    Some => -> $sPair { $Some($snd($sPair)) }   # Some ° snd
                 )
             },
             AppT => -> TTerm $func, TTerm $arg {
@@ -121,12 +121,11 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
                 )
             },
             LamT => -> Str $myVarName, TTerm $body {
-                # kick out irrelevant substitutions...
-                #my $myFreeNames = $free-varNames($t);   #...which include ones *for* this λ's binder (Note: apply to $t, NOT to $body!)
+                # kick out irrelevant substitutions:
+                #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
                 my $newSubsts  = $filter(
-                    -> TPair $sPair {   # (C exists myFreeNames) ° (Str-eq? ° fst)
-                        #$exists(-> $iName { $Str-eq($fst($sPair), $iName) }, $myFreeNames); # TODO: specialize for 0, 1, ... elems in myFreeNames
-                        $is-free-varName($fst($sPair), $t)
+                    -> TPair $sPair {
+                        $is-free-varName($fst($sPair), $t)  # more efficient than (exists (λiName.Str-eq (fst sPair) iName) myFreeNames)
                     },
                     $substitutions
                 );
@@ -156,7 +155,7 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
                     }
                 )
             }
-                )
+        )
     }
 )});
 
@@ -164,38 +163,35 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
 constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
     'subst-par-alpha_direct', 'λself.λsubstitutions.λt.error "NYI"',
     -> TList $substitutions, TTerm $t -->TTerm{
-        case-List($substitutions,
-            nil => $t,
-            cons => -> Mu, Mu {
-                case-Term($t,
-                    ConstT => -> Mu { $t },
-                    VarT => -> Str $varName {
-                        case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
-                            None => $t, # no alpha-conv applicable ~> nothing to change
-                            Some => -> $sPair { $snd($sPair) }
-                        )
+        case-Term($t,
+            ConstT => -> Mu { $t },
+            VarT => -> Str $varName {
+                case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
+                    None => $t, # no alpha-conv applicable ~> nothing to change
+                    Some => $snd
+                )
+            },
+            AppT => -> TTerm $func, TTerm $arg {
+                $AppT(
+                    &self($substitutions, $func),
+                    &self($substitutions, $arg)
+                );
+            },
+            LamT => -> Str $myVarName, TTerm $body {
+                # kick out irrelevant substitutions:
+                #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
+                my $newSubsts  = $filter(
+                    -> TPair $sPair {
+                        $is-free-varName($fst($sPair), $t)  # more efficient than (exists (λiName.Str-eq (fst sPair) iName) myFreeNames)
                     },
-                    AppT => -> TTerm $func, TTerm $arg {
-                        $AppT(
-                            &self($substitutions, $func),
-                            &self($substitutions, $arg)
-                        );
-                    },
-                    LamT => -> Str $myVarName, TTerm $body {
-                        # kick out irrelevant substitutions...
-                        my $myFreeNames = $free-varNames($t);   #...which include ones *for* this λ's binder (Note: apply to $t, NOT to $body!)
-                        my $newSubsts  = $filter(
-                            -> TPair $sPair {   # (C exists myFreeNames) ° (Str-eq? ° fst)
-                                $exists(-> $iName { $Str-eq($fst($sPair), $iName) }, $myFreeNames); # TODO: specialize for 0, 1, ... elems in myFreeNames
-                            },
-                            $substitutions
-                        );
+                    $substitutions
+                );
+                case-List($newSubsts,
+                    nil => $t,
+                    cons => -> Mu, Mu {
                         my $needFreshVar = $exists(
                             -> $sPair {
-                                $exists(
-                                    -> Str $vName { $Str-eq($myVarName, $vName) },
-                                    $free-varNames($snd($sPair))
-                                )
+                                $is-free-varName($myVarName, $snd($sPair))
                             }, 
                             $newSubsts
                         );
