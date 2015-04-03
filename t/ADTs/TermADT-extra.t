@@ -14,7 +14,7 @@ use Lambda::Streams;
 # module under test:
 use Lambda::TermADT;
 
-plan 40;
+plan 42;
 
 
 { # Term->source
@@ -206,23 +206,57 @@ plan 40;
     is_properLambdaFn($is-omega, 'ω?');
 
     testTermFn( $is-omega, :expectedToStr(*.Str),
-        'x'           => $false,
-        '"c"'         => $false,
-        '5'           => $false,
-        'x "c"'       => $false,
-        'x x'         => $false,
-        'y y'         => $false,
-        'x y'         => $false,
-        'λx."c"'      => $false,
-        'λx.x'        => $false,
-        'ωX'          => $true,   # λx.x x
-        'ωY'          => $true,   # λy.y y
-        'λy.x x'      => $false,  # wrong binder
-        'λx.x y'      => $false,
-        'λx.y x'      => $false,
-        'λx.x "c"'    => $false,
-        'ΩXX'         => $false,  # (ωX ωX)
-        'ΩYY'         => $false,  # (ωY ωY)
+        [`'x'        ]  => $false,
+        [`'"c"'      ]  => $false,
+        [`'5'        ]  => $false,
+        [`'x "c"'    ]  => $false,
+        [`'x x'      ]  => $false,
+        [`'y y'      ]  => $false,
+        [`'x y'      ]  => $false,
+        [`'λx."c"'   ]  => $false,
+        [`'λx.x'     ]  => $false,
+        [`'ωX'       ]  => $true,   # λx.x x
+        [`'ωY'       ]  => $true,   # λy.y y
+        [`'λy.x x'   ]  => $false,  # wrong binder
+        [`'λx.x y'   ]  => $false,
+        [`'λx.y x'   ]  => $false,
+        [`'λx.x "c"' ]  => $false,
+        [`'ΩXX'      ]  => $false,  # (ωX ωX)
+        [`'ΩYY'      ]  => $false,  # (ωY ωY)
+    );
+}
+
+
+{ # predicate omegaOf?
+    is_properLambdaFn($is-omegaOf, 'ωOf?');
+
+    testTermFn( $is-omegaOf, :expectedToStr(*.Str),
+        ['x', `'x'       ]  => $false,
+        ['x', `'"c"'     ]  => $false,
+        ['x', `'5'       ]  => $false,
+        ['x', `'x "c"'   ]  => $false,
+        ['x', `'x x'     ]  => $false,
+        ['x', `'y y'     ]  => $false,
+        ['x', `'x y'     ]  => $false,
+        ['x', `'λx."c"'  ]  => $false,
+        ['x', `'λx.x'    ]  => $false,
+        ['x', `'ωX'      ]  => $true,   # λx.x x
+        ['y', `'ωY'      ]  => $true,   # λx.x x    [different var]
+        ['x', `'ωY'      ]  => $false,  # λy.y y    [different var]
+        ['y', `'ωY'      ]  => $true,   # λy.y y
+        ['x', `'λy.x x'  ]  => $false,  # wrong binder
+        ['y', `'λy.x x'  ]  => $false,  # wrong binder
+        ['x', `'λx.x y'  ]  => $false,
+        ['x', `'λx.y x'  ]  => $false,
+        ['x', `'λx.x "c"']  => $false,
+        ['x', `'ΩXX'     ]  => $false,  # (ωX ωX)
+        ['x', `'ΩYY'     ]  => $false,  # (ωY ωY)
+        ['x', `'ΩXY'     ]  => $false,  # (ωX ωX)
+        ['x', `'ΩYX'     ]  => $false,  # (ωY ωY)
+        ['y', `'ΩXX'     ]  => $false,  # (ωX ωX)
+        ['y', `'ΩYY'     ]  => $false,  # (ωY ωY)
+        ['y', `'ΩXY'     ]  => $false,  # (ωX ωX)
+        ['y', `'ΩYX'     ]  => $false,  # (ωY ωY)
     );
 }
 
