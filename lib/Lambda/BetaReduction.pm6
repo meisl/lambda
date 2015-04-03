@@ -147,7 +147,7 @@ constant $betaContract is export = $Y(-> &self {
                     
                     LamT => -> Str $funcVarName, TTerm $funcBody {    # DONE: LamT_ctor_with_Str_binder
                     # so t is a beta-redex
-                        my $newFuncBody-M = $subst-par-alpha_Maybe($cons($Pair($funcVarName, $arg), $nil), $funcBody);
+                        my $newFuncBody-M = $subst-alpha_Maybe($funcVarName, $arg, $funcBody);
                         case-Maybe($newFuncBody-M,
                             None => { $Some($funcBody) },   # Note: t cannot be Omega if subst didn't change anything
                             Some => -> $newFuncBody {
