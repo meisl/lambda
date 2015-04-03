@@ -1,6 +1,6 @@
 ---------- run perl6-m ----------
 1..7
-# CurryStats: ( 1p,    266f,  0o,  363+5i)
+# CurryStats: ( 1p,    266f,  0o,  364+5i)
 #    87 (  1):                        LamT => ( 0p,     87f,  0o,    1+ 0i :(Str -> TTerm -> TTerm))
 #    86 (  1):                        AppT => ( 0p,     86f,  0o,    1+ 0i :(TTerm -> TTerm -> TTerm))
 #    30 (  1):                           B => ( 0p,     30f,  0o,    1+ 0i :(Callable -> Callable -> Mu))
@@ -37,20 +37,20 @@
 #                   subst-par-alpha_direct => ( 0p,      0f,  0o,    1+ 0i :(TList -> TTerm -> TTerm))
 # (λf.λa.λb.f b a) (B (C cons) (C cons nil))  =  (λf.λa.λb.f b a) ((λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h)))
 # λa.λb.cons a (cons b nil)  =  λa.λb.(λf1.λf2.λ_.λh.h f1 f2) a ((λf1.λf2.λ_.λh.h f1 f2) b (λh.λ_.h))
-# 4.33 = 3.30 + 1.03 sec (76% + 24%) consumed for beta-reduction
+# 4.61 = 3.42 + 1.19 sec (74% + 26%) consumed for beta-reduction
 ok 1 - (λf.λa.λb.f b a) (B (C cons) (C cons nil))  =_β*  λa.λb.cons a (cons b nil)  [NO alpha-conv needed]
 # (C (B (C cons) (C cons nil)))  =  (λf.λx.λy.f y x) ((λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h)))
 # λx.λy.cons x (cons y nil)  =  λx.λy.(λf1.λf2.λ_.λh.h f1 f2) x ((λf1.λf2.λ_.λh.h f1 f2) y (λh.λ_.h))
-# 4.95 = 3.77 + 1.19 sec (76% + 24%) consumed for beta-reduction
+# 4.92 = 3.80 + 1.13 sec (77% + 23%) consumed for beta-reduction
 ok 2 - (C (B (C cons) (C cons nil)))  =_β*  λx.λy.cons x (cons y nil)  [DOES need alpha-conv]
-# 0.03 = 0.02 + 0.02 sec (50% + 50%) consumed for beta-reduction
+# 0.02 = 0.02 + 0.00 sec (100% + 0%) consumed for beta-reduction
 ok 3 - (x x)  =_β*  (x x)  (sanity check)
-# 0.09 = 0.09 + 0.00 sec (100% + 0%) consumed for beta-reduction
+# 0.05 = 0.05 + 0.00 sec (100% + 0%) consumed for beta-reduction
 ok 4 - (λx.x) x  =_β*  x  (sanity check)
-# 0.3 sec consumed for big-term construction
+# 0.27 sec consumed for big-term construction
 ok 5 - $bigTerm.lambda is λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))
 ok 6 - $expectedTerm.lambda is λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 f3 f4 f5
-# CurryStats: ( 1p,  11529f,  0o, 1406+5i)
+# CurryStats: ( 1p,  11529f,  0o, 1407+5i)
 #  1139 (  1):               free-varName? => ( 0p,   1139f,  0o,    1+ 0i :(Str -> TTerm -> TBool))
 #   956 (  1):                     Str-eq? => ( 0p,    956f,  0o,    1+ 0i :(Str -> Str -> TBool))
 #   926 (  1):                      #false => ( 0p,    926f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
@@ -115,9 +115,9 @@ ok 6 - $expectedTerm.lambda is λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 
 #                    findFP-inMaybe_dbgXXX => ( 0p,      0f,  0o,    1+ 0i :(Callable -> Mu)),
 #                   free-varNames-internal => ( 1p,      0f,  0o,    1+ 0i :(TList -> TList -> TTerm -> TList)),
 #                   subst-par-alpha_direct => ( 0p,      0f,  0o,    1+ 0i :(TList -> TTerm -> TTerm))
-# 3.94 = 3.92 + 0.02 sec (100% + 0%) consumed for beta-reduction
+# 4.08 = 4.05 + 0.03 sec (99% + 1%) consumed for beta-reduction
 ok 7 - λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))  =_β*  λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 f3 f4 f5  
-# CurryStats: ( 1p,  14395f,  0o, 1802+5i)
+# CurryStats: ( 1p,  14395f,  0o, 1803+5i)
 #  1370 (  1):               free-varName? => ( 0p,   1370f,  0o,    1+ 0i :(Str -> TTerm -> TBool))
 #  1145 (  1):                     Str-eq? => ( 0p,   1145f,  0o,    1+ 0i :(Str -> Str -> TBool))
 #  1100 (  1):                      #false => ( 0p,   1100f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
@@ -184,4 +184,4 @@ ok 7 - λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.�
 #                   free-varNames-internal => ( 1p,      0f,  0o,    1+ 0i :(TList -> TList -> TTerm -> TList)),
 #                   subst-par-alpha_direct => ( 0p,      0f,  0o,    1+ 0i :(TList -> TTerm -> TTerm))
 
-Output completed (59 sec consumed) - Normal Termination
+Output completed (1 min 0 sec consumed) - Normal Termination
