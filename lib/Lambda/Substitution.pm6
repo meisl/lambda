@@ -91,6 +91,57 @@ constant $subst is export = lambdaFn(
 );
 
 
+constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
+    'subst-par-alpha_direct', 'λself.λsubstitutions.λt.error "NYI"',
+    -> TList $substitutions, TTerm $t -->TTerm{
+        case-Term($t,
+            ConstT => -> Mu { $t },
+            VarT => -> Str $varName {
+                case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
+                    None => $t, # no alpha-conv applicable ~> nothing to change
+                    Some => $snd
+                )
+            },
+            AppT => -> TTerm $func, TTerm $arg {
+                $AppT(
+                    &self($substitutions, $func),
+                    &self($substitutions, $arg)
+                );
+            },
+            LamT => -> Str $myVarName, TTerm $body {
+                # kick out irrelevant substitutions:
+                #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
+                my $newSubsts  = $filter(
+                    -> TPair $sPair {
+                        $is-free-varName($fst($sPair), $t)  # more efficient than (exists (λiName.Str-eq (fst sPair) iName) myFreeNames)
+                    },
+                    $substitutions
+                );
+                case-List($newSubsts,
+                    nil => $t,
+                    cons => -> Mu, Mu {
+                        my $needFreshVar = $exists(
+                            -> $sPair {
+                                $is-free-varName($myVarName, $snd($sPair))
+                            }, 
+                            $newSubsts
+                        );
+                        _if_($needFreshVar,
+                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                                my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
+                                my $myAlpha  = $Pair($myVarName, $freshVar);
+                                $LamT($freshName, &self($cons($myAlpha, $newSubsts), $body));
+                            },
+                            { $LamT($myVarName, &self($newSubsts, $body)) }
+                        )
+                    }
+                )
+            }
+        )
+    }
+)});
+
+
 constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
     'subst-par-alpha_Maybe', 'λself.λsubstitutions.λt.error "NYI"',
     -> TList $substitutions, TTerm $t -->TMaybe{
@@ -142,66 +193,13 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
                             {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
                                 my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
                                 my $myAlpha  = $Pair($myVarName, $freshVar);
-                                case-Maybe(&self($cons($myAlpha, $newSubsts), $body),
-                                    None => $None,  # neither forVar nor myVar free in body, and no external alpha-convs applicable
-                                    Some => -> TTerm $newBody { $Some($LamT($freshName, $newBody)) }
-                                )
+                                # Here we use the fact that we *know* that body will change:
+                                $Some($LamT($freshName, $subst-par-alpha_direct($cons($myAlpha, $newSubsts), $body)));
                             },
                             { case-Maybe(&self($newSubsts, $body),
                                 None => $None,
                                 Some => -> TTerm $newBody { $Some($LamT($myVarName, $newBody)) }
                             )}
-                        )
-                    }
-                )
-            }
-        )
-    }
-)});
-
-
-constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
-    'subst-par-alpha_direct', 'λself.λsubstitutions.λt.error "NYI"',
-    -> TList $substitutions, TTerm $t -->TTerm{
-        case-Term($t,
-            ConstT => -> Mu { $t },
-            VarT => -> Str $varName {
-                case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
-                    None => $t, # no alpha-conv applicable ~> nothing to change
-                    Some => $snd
-                )
-            },
-            AppT => -> TTerm $func, TTerm $arg {
-                $AppT(
-                    &self($substitutions, $func),
-                    &self($substitutions, $arg)
-                );
-            },
-            LamT => -> Str $myVarName, TTerm $body {
-                # kick out irrelevant substitutions:
-                #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
-                my $newSubsts  = $filter(
-                    -> TPair $sPair {
-                        $is-free-varName($fst($sPair), $t)  # more efficient than (exists (λiName.Str-eq (fst sPair) iName) myFreeNames)
-                    },
-                    $substitutions
-                );
-                case-List($newSubsts,
-                    nil => $t,
-                    cons => -> Mu, Mu {
-                        my $needFreshVar = $exists(
-                            -> $sPair {
-                                $is-free-varName($myVarName, $snd($sPair))
-                            }, 
-                            $newSubsts
-                        );
-                        _if_($needFreshVar,
-                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
-                                my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
-                                my $myAlpha  = $Pair($myVarName, $freshVar);
-                                $LamT($freshName, &self($cons($myAlpha, $newSubsts), $body));
-                            },
-                            { $LamT($myVarName, &self($newSubsts, $body)) }
                         )
                     }
                 )

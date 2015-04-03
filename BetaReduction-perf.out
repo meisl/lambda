@@ -39,17 +39,17 @@
 #                   subst-par-alpha_direct => ( 0p,      0f,  0o,    1+ 0i :(TList -> TTerm -> TTerm))
 # (λf.λa.λb.f b a) (B (C cons) (C cons nil))  =  (λf.λa.λb.f b a) ((λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h)))
 # λa.λb.cons a (cons b nil)  =  λa.λb.(λf1.λf2.λ_.λh.h f1 f2) a ((λf1.λf2.λ_.λh.h f1 f2) b (λh.λ_.h))
-# 3.11 = 2.41 + 0.70 sec (77% + 23%) consumed for beta-reduction
+# 3.09 = 2.39 + 0.70 sec (77% + 23%) consumed for beta-reduction
 ok 1 - (λf.λa.λb.f b a) (B (C cons) (C cons nil))  =_β*  λa.λb.cons a (cons b nil)  [NO alpha-conv needed]
 # (C (B (C cons) (C cons nil)))  =  (λf.λx.λy.f y x) ((λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h)))
 # λx.λy.cons x (cons y nil)  =  λx.λy.(λf1.λf2.λ_.λh.h f1 f2) x ((λf1.λf2.λ_.λh.h f1 f2) y (λh.λ_.h))
-# 3.36 = 2.59 + 0.77 sec (77% + 23%) consumed for beta-reduction
+# 3.41 = 2.63 + 0.78 sec (77% + 23%) consumed for beta-reduction
 ok 2 - (C (B (C cons) (C cons nil)))  =_β*  λx.λy.cons x (cons y nil)  [DOES need alpha-conv]
-# 0.00 = 0.00 + 0.00 sec (0% + 0%) consumed for beta-reduction
+# 0.02 = 0.02 + 0.00 sec (100% + 0%) consumed for beta-reduction
 ok 3 - (x x)  =_β*  (x x)  (sanity check)
 # 0.02 = 0.02 + 0.00 sec (100% + 0%) consumed for beta-reduction
 ok 4 - (λx.x) x  =_β*  x  (sanity check)
-# 0.3 sec consumed for big-term construction
+# 0.25 sec consumed for big-term construction
 ok 5 - $bigTerm.lambda is λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))
 ok 6 - $expectedTerm.lambda is λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 f3 f4 f5
 # CurryStats: ( 1p,   8826f,  0o, 1150+5i)
@@ -111,7 +111,7 @@ ok 6 - $expectedTerm.lambda is λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 
 #                    findFP-inMaybe_dbgXXX => ( 0p,      0f,  0o,    1+ 0i :(Callable -> Mu)),
 #                    subst-par-alpha_Maybe => ( 0p,      0f,  0o,    1+ 0i :(TList -> TTerm -> TMaybe)),
 #                   free-varNames-internal => ( 1p,      0f,  0o,    1+ 0i :(TList -> TList -> TTerm -> TList))
-# 3.61 = 3.59 + 0.02 sec (100% + 0%) consumed for beta-reduction
+# 3.63 = 3.61 + 0.02 sec (100% + 0%) consumed for beta-reduction
 ok 7 - λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))  =_β*  λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 f3 f4 f5  
 # CurryStats: ( 1p,  11267f,  0o, 1496+5i)
 #  1265 (  1):               free-varName? => ( 0p,   1265f,  0o,    1+ 0i :(Str -> TTerm -> TBool))
@@ -174,4 +174,4 @@ ok 7 - λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.�
 #                    subst-par-alpha_Maybe => ( 0p,      0f,  0o,    1+ 0i :(TList -> TTerm -> TMaybe)),
 #                   free-varNames-internal => ( 1p,      0f,  0o,    1+ 0i :(TList -> TList -> TTerm -> TList))
 
-Output completed (55 sec consumed) - Normal Termination
+Output completed (56 sec consumed) - Normal Termination
