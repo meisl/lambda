@@ -211,8 +211,8 @@ constant $apply-args is export = $Y(-> &self { lambdaFn(
 )});
 
 # Variant of apply-args specialized for the LamT case *where we have a non-empty list of rest-args*
-constant $apply-args_direct is export = $Y(-> &self { lambdaFn(
-    'apply-args_direct', 'λsubstitutions.λrest-args.λbinderName.λbody.error "NYI"',
+constant $apply-args_special is export = $Y(-> &self { lambdaFn(
+    'apply-args_special', 'λsubstitutions.λrest-args.λbinderName.λbody.error "NYI"',
     -> TList $substitutions, $arg, TList $rest-args, Str $binderName, TTerm $body -->TPair{
         case-Term($body,
             LamT => -> $bodyVarName, $bodyBody {
@@ -222,10 +222,11 @@ constant $apply-args_direct is export = $Y(-> &self { lambdaFn(
                             -> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, 
                             $substitutions
                         );
-                        _if_($Str-eq($bodyVarName, $binderName),
-                            { $Pair($subst-par-alpha_direct(                                $newSubsts,  $bodyBody), $nil) },
-                            { $Pair($subst-par-alpha_direct($cons($Pair($binderName, $arg), $newSubsts), $bodyBody), $nil) }
-                        )
+                        my $newBody = _if_($Str-eq($bodyVarName, $binderName),    # does body (also a lambda) mask our own binder?
+                            { $subst-par-alpha_direct(                                $newSubsts,  $bodyBody) },
+                            { $subst-par-alpha_direct($cons($Pair($binderName, $arg), $newSubsts), $bodyBody) }
+                        );
+                        $Pair($LamT($bodyVarName, $newBody), $nil);
                     },
                     cons => -> $a, $as {
                         my $newSubsts = $cons($Pair($binderName, $arg), $substitutions);

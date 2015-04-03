@@ -6,6 +6,7 @@ use Test::Util_Term;
 use Test::Util_List;
 
 use Lambda::Boolean;
+use Lambda::PairADT;
 use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
@@ -17,7 +18,7 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::BetaReduction;
 
-plan 125;
+plan 129;
 
 
 my $g = `'g';
@@ -45,45 +46,73 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
 
 
 { # apply-args
+
+    my sub test_variant_apply-args($fut) {
+        testTermFn($fut, :expectedToStr(&lambdaArgToStr),
+            [[],            [],             `'x']   => ($None       => []),
+            [[z => `'y'],   [],             `'x']   => ($None       => []),
+            [[x => `'y'],   [],             `'x']   => ($Some(`'y') => []),
+            [[],            [`'a', `'b'],   `'x']   => ($None       => [`'a', `'b']),
+            [[z => `'y'],   [`'a', `'b'],   `'x']   => ($None       => [`'a', `'b']),
+            [[x => `'y'],   [`'a', `'b'],   `'x']   => ($Some(`'y') => [`'a', `'b']),
+
+            [[],            [],             `'"c"']   => ($None => []),
+            [[z => `'y'],   [],             `'"c"']   => ($None => []),
+            [[x => `'y'],   [],             `'"c"']   => ($None => []),
+            [[],            [`'a', `'b'],   `'"c"']   => ($None => [`'a', `'b']),
+            [[z => `'y'],   [`'a', `'b'],   `'"c"']   => ($None => [`'a', `'b']),
+            [[x => `'y'],   [`'a', `'b'],   `'"c"']   => ($None => [`'a', `'b']),
+
+            [[],            [],             `'λx.y x']  => ($None               => []),
+            [[x => `'y'],   [],             `'λx.y x']  => ($None               => []),
+            [[y => `'z'],   [],             `'λx.y x']  => ($Some(`'λx.z x')    => []),
+            #[[y => `'x'],   [],             `'λx.y x']  => ($Some(`'λα1.x α1')  => []), # requires alpha-conversion
+            [[],            [`'a', `'b'],   `'λx.y x']  => ($Some(`'y a')       => [`'b']),
+            [[],            [`'a', `'b'],   `'λx.y z']  => ($Some(`'y z')       => [`'b']),
+            [[x => `'y'],   [`'a', `'b'],   `'λx.y x']  => ($Some(`'y a')       => [`'b']),
+            [[y => `'z'],   [`'a', `'b'],   `'λx.y x']  => ($Some(`'z a')       => [`'b']),
+            [[y => `'x'],   [`'a', `'b'],   `'λx.y x']  => ($Some(`'x a')       => [`'b']),
+
+            [[],            [],                 `'λx.λy.x y z']   => ($None                     => []),
+            [[z => `'u'],   [],                 `'λx.λy.x y z']   => ($Some(`'λx.λy.x y u')     => []),
+            #[[z => `'y'],   [],                 `'λx.λy.x y z']   => ($Some(`'λx.λα1.x α1 y')   => []), # requires alpha-conversion
+            [[],            [`'a'],             `'λx.λy.x y z']   => ($Some(`'λy.a y z')        => []),
+            [[z => `'u'],   [`'a'],             `'λx.λy.x y z']   => ($Some(`'λy.a y u')        => []),
+            #[[z => `'y'],   [`'a'],             `'λx.λy.x y z']   => ($Some(`'λα2.a α2 y')      => []), # requires alpha-conversion
+            [[],            [`'a', `'b'],       `'λx.λy.x y z']   => ($Some(`'a b z')           => []),
+            [[z => `'u'],   [`'a', `'b'],       `'λx.λy.x y z']   => ($Some(`'a b u')           => []),
+            [[z => `'y'],   [`'a', `'b'],       `'λx.λy.x y z']   => ($Some(`'a b y')           => []),
+            [[],            [`'a', `'b', `'c'], `'λx.λy.x y z']   => ($Some(`'a b z')           => [`'c']),
+            [[z => `'u'],   [`'a', `'b', `'c'], `'λx.λy.x y z']   => ($Some(`'a b u')           => [`'c']),
+            [[z => `'y'],   [`'a', `'b', `'c'], `'λx.λy.x y z']   => ($Some(`'a b y')           => [`'c']),
+        );
+    }
+
     is_properLambdaFn $apply-args, 'apply-args';
+    test_variant_apply-args($apply-args);
 
-    testTermFn($apply-args, :expectedToStr(&lambdaArgToStr),
-        [[],            [],             `'x']   => ($None       => []),
-        [[z => `'y'],   [],             `'x']   => ($None       => []),
-        [[x => `'y'],   [],             `'x']   => ($Some(`'y') => []),
-        [[],            [`'a', `'b'],   `'x']   => ($None       => [`'a', `'b']),
-        [[z => `'y'],   [`'a', `'b'],   `'x']   => ($None       => [`'a', `'b']),
-        [[x => `'y'],   [`'a', `'b'],   `'x']   => ($Some(`'y') => [`'a', `'b']),
-
-        [[],            [],             `'"c"']   => ($None => []),
-        [[z => `'y'],   [],             `'"c"']   => ($None => []),
-        [[x => `'y'],   [],             `'"c"']   => ($None => []),
-        [[],            [`'a', `'b'],   `'"c"']   => ($None => [`'a', `'b']),
-        [[z => `'y'],   [`'a', `'b'],   `'"c"']   => ($None => [`'a', `'b']),
-        [[x => `'y'],   [`'a', `'b'],   `'"c"']   => ($None => [`'a', `'b']),
-
-        [[],            [],             `'λx.y x']  => ($None               => []),
-        [[x => `'y'],   [],             `'λx.y x']  => ($None               => []),
-        [[y => `'z'],   [],             `'λx.y x']  => ($Some(`'λx.z x')    => []),
-        #[[y => `'x'],   [],             `'λx.y x']  => ($Some(`'λα1.x α1')  => []), # requires alpha-conversion
-        [[],            [`'a', `'b'],   `'λx.y x']  => ($Some(`'y a')       => [`'b']),
-        [[],            [`'a', `'b'],   `'λx.y z']  => ($Some(`'y z')       => [`'b']),
-        [[x => `'y'],   [`'a', `'b'],   `'λx.y x']  => ($Some(`'y a')       => [`'b']),
-        [[y => `'z'],   [`'a', `'b'],   `'λx.y x']  => ($Some(`'z a')       => [`'b']),
-        [[y => `'x'],   [`'a', `'b'],   `'λx.y x']  => ($Some(`'x a')       => [`'b']),
-
-        [[],            [],                 `'λx.λy.x y z']   => ($None                     => []),
-        [[z => `'u'],   [],                 `'λx.λy.x y z']   => ($Some(`'λx.λy.x y u')     => []),
-        [[z => `'y'],   [],                 `'λx.λy.x y z']   => ($Some(`'λx.λα1.x α1 y')   => []), # requires alpha-conversion
-        [[],            [`'a'],             `'λx.λy.x y z']   => ($Some(`'λy.a y z')        => []),
-        [[z => `'u'],   [`'a'],             `'λx.λy.x y z']   => ($Some(`'λy.a y u')        => []),
-        [[z => `'y'],   [`'a'],             `'λx.λy.x y z']   => ($Some(`'λα2.a α2 y')      => []), # requires alpha-conversion
-        [[],            [`'a', `'b'],       `'λx.λy.x y z']   => ($Some(`'a b z')           => []),
-        [[z => `'u'],   [`'a', `'b'],       `'λx.λy.x y z']   => ($Some(`'a b u')           => []),
-        [[z => `'y'],   [`'a', `'b'],       `'λx.λy.x y z']   => ($Some(`'a b y')           => []),
-        [[],            [`'a', `'b', `'c'], `'λx.λy.x y z']   => ($Some(`'a b z')           => [`'c']),
-        [[z => `'u'],   [`'a', `'b', `'c'], `'λx.λy.x y z']   => ($Some(`'a b u')           => [`'c']),
-        [[z => `'y'],   [`'a', `'b', `'c'], `'λx.λy.x y z']   => ($Some(`'a b y')           => [`'c']),
+    is_properLambdaFn $apply-args_special, 'apply-args_special';
+    test_variant_apply-args(
+        -> $substitutions, $rest-args, $inTerm {
+            case-Term($inTerm,
+                ConstT => -> Mu     { $apply-args($substitutions, $rest-args, $inTerm) },
+                VarT   => -> Mu     { $apply-args($substitutions, $rest-args, $inTerm) },
+                AppT   => -> Mu, Mu { $apply-args($substitutions, $rest-args, $inTerm) },
+                LamT   => -> $v, $b {
+                    case-List($rest-args, 
+                        nil => { $apply-args($substitutions, $rest-args, $inTerm) },
+                        cons => -> $a, $as {
+                            my $out = $apply-args_special($substitutions, $a, $as, $v, $b);
+                            my $t = $fst($out);
+                            _if_($Term-eq($t, $inTerm),
+                                { $Pair($None, $snd($out)) },
+                                { $Pair($Some($t), $snd($out)) }
+                            )
+                        }
+                    )
+                }
+            )
+        }
     );
 }
 
