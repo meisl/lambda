@@ -178,6 +178,7 @@ our constant $testTerms is export = {
     my $fab  ::= $AppT($fa, $b);
     my $fba  ::= $AppT($fb, $a);
     my $fyx  ::= $AppT($fy, $x);
+    my $uuf  ::= $AppT($uu, $f);
     
     my $xα1y ::= $AppT($xα1, $y);
     my $xα2y ::= $AppT($xα2, $y);
@@ -254,6 +255,8 @@ our constant $testTerms is export = {
     my $θK          ::= $λx_θKx;     #   K aka const
     my $θB          ::= $LamT('f', $LamT('g', $LamT('x', $AppT($f, $gx))));   #   B aka compose
     my $θC          ::= $LamT('f', $LamT('x', $LamT('y', $fyx)));             #   C aka swap-args
+    my $θU          ::= $LamT('u', $LamT('f', $AppT($f, $uuf)));    # 'λu.λf.f (u u f)',
+    my $θY          ::= $AppT($θU, $θU);
 
     my $θIk         ::= $AppT($θI, $k);
     my $θIkf1       ::= $AppT($θIk, $f1);
@@ -355,6 +358,7 @@ our constant $testTerms is export = {
         '((f a) b)'                 => $fab,
         '((f b) a)'                 => $fba,
         '((f y) x)'                 => $fyx,
+        '((u u) f)'                 => $uuf,
         '((x α1) y)'                => $xα1y,
         '((x α2) y)'                => $xα2y,
         '((x y) u)'                 => $xyu,
@@ -377,6 +381,8 @@ our constant $testTerms is export = {
         '(λf.(λg.(λx.(f (g x)))))'  => $θB,
         '(λf.(λx.(λy.((f y) x))))'  => $θC,
         '(λf.(λa.(λb.((f b) a))))'  => $LamT('f', $LamT('a', $LamT('b', $fba))),    # alpha-converted C
+        '(λu.(λf.(f ((u u) f))))'   => $θU,
+        '((λu.(λf.(f ((u u) f)))) (λu.(λf.(f ((u u) f)))))' => $θY, # (U U)
 
         '(λu.(λv.(u u)))'           => $λu_λv_uu,
         '(λu.(λv.(x u)))'           => $λu_λv_xu,
@@ -402,7 +408,7 @@ our constant $testTerms is export = {
         '(λx.(λα1.((x α1) y)))'     => $λx_λα1_xα1y,
         '(λx.((x α1) y))'           => $λx_xα1y,
         '(λx.((x y) z))'            => $λx_xyz,
-        '(λx.λy.x) (x y)'           => $AppT($λx_λy_x, $xy),
+        '((λx.(λy.x)) (x y))'       => $AppT($λx_λy_x, $xy),
         '(λy.(λx.((x y) z)))'       => $λy_λx_xyz,
         '(λz.(λx.((x y) z)))'       => $λz_λx_xyz,
         '(λy.(λx.(((x y) z) ((λz.(λx.((x y) z))) (λx.(y x))))))'  => $LamT('y', $LamT('x', $AppT($xyz, $AppT($λz_λx_xyz, $λx_yx)))),
@@ -556,6 +562,8 @@ our constant $testTerms is export = {
         .aka('(λf.(λg.(λx.(f (g x)))))', <B compose>, 'λf.λg.λx.f (g x)', 'λf.(λg.(λx.(f (g x))))')\
         .aka('(λf.(λx.(λy.((f y) x))))', <C swap-args>, 'λf.λx.λy.f y x', 'λf.(λx.(λy.((f y) x)))')\
         .aka('(λf.(λa.(λb.((f b) a))))', 'λf.(λa.(λb.((f b) a)))', 'λf.λa.λb.f b a', '(λf.λa.λb.f b a)')\
+        .aka('(λu.(λf.(f ((u u) f))))', <U>, 'λu.(λf.(f ((u u) f)))', 'λu.λf.f (u u f)', '(λu.λf.f (u u f))')\
+        .aka('((λu.(λf.(f ((u u) f)))) (λu.(λf.(f ((u u) f)))))', <Y>, 'U U', '(U U)', '(λu.(λf.(f ((u u) f)))) (λu.(λf.(f ((u u) f))))', '(λu.λf.f (u u f)) (λu.λf.f (u u f))', '((λu.λf.f (u u f)) (λu.λf.f (u u f)))')\
 
         .aka('(λh.(λ_.h))'                      , <ctor1o2f0 nil None>, 'λh.(λ_.h)'                      , 'λh.λ_.h'              )\
         .aka('(λ_.(λh.h))'                      , <ctor2o2f0>,          'λ_.(λh.h)'                      , 'λ_.λh.h'              )\
@@ -584,6 +592,7 @@ our constant $testTerms is export = {
         .aka('((f a) b)', '(f a) b', '(f a b)', 'f a b')\
         .aka('((f b) a)', '(f b) a', '(f b a)', 'f b a')\
         .aka('((f y) x)', '(f y) x', '(f y x)', 'f y x')\
+        .aka('((u u) f)', '(u u) f', '(u u f)', 'u u f')\
         .aka('((x α1) y)', '(x α1) y', '(x α1 y)', 'x α1 y')\
         .aka('((x α2) y)', '(x α2) y', '(x α2 y)', 'x α2 y')\
         .aka('((x y) u)', '(x y) u', '(x y u)', 'x y u')\
@@ -633,6 +642,7 @@ our constant $testTerms is export = {
         .aka('(λx.((x α1) y))', 'λx.((x α1) y)', 'λx.x α1 y', '(λx.x α1 y)')\
         .aka('(λx.(λα1.((x α1) y)))', 'λx.(λα1.((x α1) y))', 'λx.λα1.x α1 y', '(λx.λα1.x α1 y)')\
         .aka('(λx.((x y) z))', 'λx.((x y) z)', 'λx.x y z', '(λx.x y z)')\
+        .aka('((λx.(λy.x)) (x y))', '(λx.(λy.x)) (x y)', '(λx.λy.x) (x y)', '((λx.λy.x) (x y))')\
         .aka('(λy.(λx.((x y) z)))', 'λy.(λx.((x y) z))', 'λy.λx.x y z', '(λy.λx.x y z)')\
         .aka('(λz.(λx.((x y) z)))', 'λz.(λx.((x y) z))', 'λz.λx.x y z', '(λz.λx.x y z)')\
         .aka('(λy.(λx.(((x y) z) ((λz.(λx.((x y) z))) (λx.(y x))))))', 'λy.λx.x y z ((λz.λx.x y z) (λx.y x))', 'λy.λx.x y z ((λz.λx.x y z) λx.y x)', '(λy.λx.x y z ((λz.λx.x y z) (λx.y x)))', '(λy.λx.x y z ((λz.λx.x y z) λx.y x))')\

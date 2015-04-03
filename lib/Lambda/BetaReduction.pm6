@@ -147,29 +147,15 @@ constant $betaContract is export = $Y(-> &self {
                     
                     LamT => -> Str $funcVarName, TTerm $funcBody {    # DONE: LamT_ctor_with_Str_binder
                     # so t is a beta-redex
-                        my $newFuncBody-M = $subst-par-alpha_Maybe($cons($Pair($funcVarName, $arg), $nil), $funcBody);
+                        my $newFuncBody-M = $subst-alpha_Maybe($funcVarName, $arg, $funcBody);
                         case-Maybe($newFuncBody-M,
                             None => { $Some($funcBody) },   # Note: t cannot be Omega if subst didn't change anything
                             Some => -> $newFuncBody {
                                 # Here we have to check if t is (literal) Omega:
                                 _if_( $is-selfAppOf($funcVarName, $funcBody),   # pt 1: (omega? func)   / short-circuit AND
-                                    #{ _if_( $Term-eq($func, $arg),  # pt 2: is arg (literally) the same omega as func?
-                                    #    $None, # ...if so then t is Omega and nothing really changes
-                                    #    $newFuncBody-M
-                                    #)},
-                                    { case-Term($arg,  # pt 2: is arg (literally) the same omega as func?
-                                        ConstT => -> Mu { $newFuncBody-M },
-                                        VarT => -> Mu { $newFuncBody-M },
-                                        AppT => -> Mu, Mu { $newFuncBody-M },
-                                        LamT => -> $argVarName, $argBody {
-                                            _if_( $Str-eq($funcVarName, $argVarName),   # short-circuit AND
-                                                { _if_($is-selfAppOf($argVarName, $argBody),    #  (omega? arg)
-                                                    $None,
-                                                    $newFuncBody-M
-                                                )},
-                                                $newFuncBody-M
-                                            )
-                                        }
+                                    { _if_($is-omegaOf($funcVarName, $arg),     # pt 2: is arg (literally) the same omega as func?
+                                        $None, # ...if so then t is Omega and nothing really changes
+                                        $newFuncBody-M
                                     )},
                                     $newFuncBody-M
                                 )

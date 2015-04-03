@@ -91,75 +91,6 @@ constant $subst is export = lambdaFn(
 );
 
 
-constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
-    'subst-par-alpha_Maybe', 'λself.λsubstitutions.λt.error "NYI"',
-    -> TList $substitutions, TTerm $t -->TMaybe{
-        case-Term($t,
-            ConstT => $K1None,
-            VarT => -> Str $varName {
-                case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
-                    None => $None, # no substitutions applicable ~> nothing to change
-                    Some => -> $sPair { $Some($snd($sPair)) }   # Some ° snd
-                )
-            },
-            AppT => -> TTerm $func, TTerm $arg {
-                my $f = &self($substitutions, $func);
-                my $a = &self($substitutions, $arg);
-                case-Maybe($f,
-                    None => {
-                        case-Maybe($a,
-                            None => $None,
-                            Some => -> TTerm $newArg { $Some($AppT($func, $newArg)) }
-                        )
-                    },
-                    Some => -> TTerm $newFunc {
-                        case-Maybe($a,
-                            None =>            { $Some($AppT($newFunc, $arg   )) },
-                            Some => -> $newArg { $Some($AppT($newFunc, $newArg)) }
-                        )
-                    }
-                )
-            },
-            LamT => -> Str $myVarName, TTerm $body {
-                # kick out irrelevant substitutions:
-                #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
-                my $newSubsts  = $filter(
-                    -> TPair $sPair {
-                        $is-free-varName($fst($sPair), $t)  # more efficient than (exists (λiName.Str-eq (fst sPair) iName) myFreeNames)
-                    },
-                    $substitutions
-                );
-                case-List($newSubsts,
-                    nil => $None,
-                    cons => -> Mu, Mu {
-                        my $needFreshVar = $exists(
-                            -> $sPair {
-                                $is-free-varName($myVarName, $snd($sPair))
-                            }, 
-                            $newSubsts
-                        );
-                        _if_($needFreshVar,
-                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
-                                my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
-                                my $myAlpha  = $Pair($myVarName, $freshVar);
-                                case-Maybe(&self($cons($myAlpha, $newSubsts), $body),
-                                    None => $None,  # neither forVar nor myVar free in body, and no external alpha-convs applicable
-                                    Some => -> TTerm $newBody { $Some($LamT($freshName, $newBody)) }
-                                )
-                            },
-                            { case-Maybe(&self($newSubsts, $body),
-                                None => $None,
-                                Some => -> TTerm $newBody { $Some($LamT($myVarName, $newBody)) }
-                            )}
-                        )
-                    }
-                )
-            }
-        )
-    }
-)});
-
-
 constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
     'subst-par-alpha_direct', 'λself.λsubstitutions.λt.error "NYI"',
     -> TList $substitutions, TTerm $t -->TTerm{
@@ -211,5 +142,168 @@ constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
 )});
 
 
+constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
+    'subst-par-alpha_Maybe', 'λself.λsubstitutions.λt.error "NYI"',
+    -> TList $substitutions, TTerm $t -->TMaybe{
+        case-Term($t,
+            ConstT => $K1None,
+            VarT => -> Str $varName {
+                case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $substitutions),
+                    None => $None, # no substitutions applicable ~> nothing to change
+                    Some => -> $sPair { $Some($snd($sPair)) }   # Some ° snd
+                )
+            },
+            AppT => -> TTerm $func, TTerm $arg {
+                my $f = &self($substitutions, $func);
+                my $a = &self($substitutions, $arg);
+                case-Maybe($f,
+                    None => {
+                        case-Maybe($a,
+                            None => $None,
+                            Some => -> TTerm $newArg { $Some($AppT($func, $newArg)) }
+                        )
+                    },
+                    Some => -> TTerm $newFunc {
+                        case-Maybe($a,
+                            None =>            { $Some($AppT($newFunc, $arg   )) },
+                            Some => -> $newArg { $Some($AppT($newFunc, $newArg)) }
+                        )
+                    }
+                )
+            },
+            LamT => -> Str $myVarName, TTerm $body {
+                # kick out irrelevant substitutions:
+                #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
+                my $newSubsts  = $filter(
+                    -> TPair $sPair {
+                        $is-free-varName($fst($sPair), $t)  # more efficient than (exists (λiName.Str-eq (fst sPair) iName) myFreeNames)
+                    },
+                    $substitutions
+                );
+                case-List($newSubsts,
+                    nil => $None,
+                    cons => -> Mu, Mu {
+                        my $needFreshVar = $exists(
+                            -> $sPair {
+                                $is-free-varName($myVarName, $snd($sPair))
+                            }, 
+                            $newSubsts
+                        );
+                        _if_($needFreshVar,
+                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                                my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
+                                my $myAlpha  = $Pair($myVarName, $freshVar);
+                                # Here we use the fact that we *know* that body will change:
+                                $Some($LamT($freshName, $subst-par-alpha_direct($cons($myAlpha, $newSubsts), $body)));
+                            },
+                            { case-Maybe(&self($newSubsts, $body),
+                                None => $None,
+                                Some => -> TTerm $newBody { $Some($LamT($myVarName, $newBody)) }
+                            )}
+                        )
+                    }
+                )
+            }
+        )
+    }
+)});
+
+
 constant $subst-par-alpha is export = $subst-par-alpha_Maybe but name('subst-par-alpha');
 #constant $subst-par-alpha is export = $subst-par-alpha_direct but name('subst-par-alpha');
+
+
+# specialized variant of subst-par-alpha_direct: if there's exactly one substitution
+constant $subst-alpha_direct is export = $Y(-> &self { lambdaFn(
+    'subst-alpha_direct', 'λself.λforName.λreplacement.λinTerm.error "NYI"',
+    -> Str $forName, TTerm $replacement, TTerm $inTerm -->TTerm{
+        case-Term($inTerm,
+            ConstT => -> Mu { $inTerm },
+            VarT => -> Str $varName {
+                _if_($Str-eq($forName, $varName),
+                    $replacement,
+                    $inTerm
+                )
+            },
+            AppT => -> TTerm $func, TTerm $arg {
+                my $f = &self($forName, $replacement, $func);
+                my $a = &self($forName, $replacement, $arg);
+                $AppT($f, $a);
+            },
+            LamT => -> Str $myVarName, TTerm $body {
+                _if_($Str-eq($forName, $myVarName), # do we bind the substitution var?
+                    $inTerm,  # ...if so, nothing to do
+                    {_if_($is-free-varName($forName, $body),    # is substitution var occuring in our body, after all?
+                        {_if_($is-free-varName($myVarName, $replacement),   # need alpha-conv?
+                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                                my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
+                                my $mainSubst = $Pair($forName, $replacement);
+                                my $myAlpha   = $Pair($myVarName, $freshVar);
+                                my $substitutions = $cons($myAlpha, $cons($mainSubst, $nil));
+                                
+                                $LamT($freshName, $subst-par-alpha_direct($substitutions, $body));
+                            },
+                            { $LamT($myVarName, &self($forName, $replacement, $body)) }
+                        )},
+                        $inTerm   # substitution var not occuring in body ~> nothing to do
+                    )}
+                )
+            }
+        )
+    }
+)});
+
+
+# specialized variant of subst-par-alpha_Maybe: if there's exactly one substitution
+constant $subst-alpha_Maybe is export = $Y(-> &self { lambdaFn(
+    'subst-alpha_Maybe', 'λself.λforName.λreplacement.λinTerm.error "NYI"',
+    -> Str $forName, TTerm $replacement, TTerm $inTerm -->TMaybe{
+        case-Term($inTerm,
+            ConstT => $K1None,
+            VarT => -> Str $varName {
+                _if_($Str-eq($forName, $varName),
+                    { $Some($replacement) },
+                    $None
+                )
+            },
+            AppT => -> TTerm $func, TTerm $arg {
+                my $f = &self($forName, $replacement, $func);
+                my $a = &self($forName, $replacement, $arg);
+                case-Maybe($f,
+                    None => {
+                        case-Maybe($a,
+                            None => $None,
+                            Some => -> TTerm $newArg { $Some($AppT($func, $newArg)) }
+                        )
+                    },
+                    Some => -> TTerm $newFunc {
+                        case-Maybe($a,
+                            None =>            { $Some($AppT($newFunc, $arg   )) },
+                            Some => -> $newArg { $Some($AppT($newFunc, $newArg)) }
+                        )
+                    }
+                )
+            },
+            LamT => -> Str $myVarName, TTerm $body {
+                _if_($Str-eq($forName, $myVarName), # do we bind the substitution var?
+                    $None,  # ...if so, nothing to do
+                    {_if_($is-free-varName($forName, $body),    # is substitution var occuring in our body, after all?
+                        {_if_($is-free-varName($myVarName, $replacement),   # need alpha-conv?
+                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                                my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
+                                my $mainSubst = $Pair($forName, $replacement);
+                                my $myAlpha   = $Pair($myVarName, $freshVar);
+                                my $substitutions = $cons($myAlpha, $cons($mainSubst, $nil));
+                                
+                                $Some($LamT($freshName, $subst-par-alpha_direct($substitutions, $body)));
+                            },
+                            # TODO: use the fact that we *know* that body will change
+                            { $Some($LamT($myVarName, $subst-alpha_direct($forName, $replacement, $body))) }
+                        )},
+                        $None   # substitution var not occuring in body ~> nothing to do
+                    )}
+                )
+            }
+        )
+    }
+)});

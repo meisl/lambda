@@ -44,6 +44,13 @@ my $reduce = -> TTerm $start {
     );
 }
 
+
+## will diverge:
+#$reduce(`'Y');
+#diag curryStats;
+#exit;
+
+
 ## uncomment to disable debug diagnostics:
 $reduce = $betaReduce;
 
