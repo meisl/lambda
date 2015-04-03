@@ -147,47 +147,35 @@ constant $betaContract is export = $Y(-> &self {
                     
                     LamT => -> Str $funcVarName, TTerm $funcBody {    # DONE: LamT_ctor_with_Str_binder
                     # so t is a beta-redex
-                        my $need-alpha-conv = $exists(
-                            # no need to filter out $funcVarName itself separately
-                            # since it cannot be free under itself in the body
-                            -> Str $vName { $is-freeName-under($funcVarName, $vName, $funcBody) },
-                            $free-varNames($arg)
-                        );
-                        _if_($need-alpha-conv,
-                            {   # Note: t cannot be Omega if we do need alpha-conversion
-                                # Also: since we know that it'll change we can wrap it in a Some directly
-                                $Some($subst-par-alpha_direct($cons($Pair($funcVarName, $arg), $nil), $funcBody));
-                            },
-                            {
-                                my $substituted-func = $subst($funcVarName, $arg, $funcBody);
-                                case-Maybe($substituted-func,
-                                    None => { $Some($funcBody) },    # binder funcVarName did not occur in funcBody
-                                    Some => -> Mu {
-                                        # is t (literal) Omega? / pt 1: (omega? func)
-                                        _if_( $is-selfAppOf($funcVarName, $funcBody),
-                                            { my $K1substituted-func = $K($substituted-func);
-                                              case-Term($arg,
-                                                # is t (literal) Omega? / pt 2: (omega? arg)
-                                                LamT => -> Str $argVarName, TTerm $argBody {    # DONE: LamT_ctor_with_Str_binder
-                                                    _if_($Str-eq($funcVarName, $argVarName),  # short-circuit AND
-                                                        { _if_($is-selfAppOf($argVarName, $argBody),
-                                                              $None, # func and arg are both the (literally) same omega (same var used)
-                                                              $substituted-func  # otherwise one more step to make them so
-                                                        )},
-                                                        $substituted-func
-                                                    )
-                                                },
-                                                VarT => $K1substituted-func,
-                                                AppT => -> Mu, Mu { $substituted-func },
-                                                ConstT => $K1substituted-func
-                                            )},
-                                            $substituted-func
-                                        )
-                                    }
+                        my $newFuncBody-M = $subst-par-alpha_Maybe($cons($Pair($funcVarName, $arg), $nil), $funcBody);
+                        case-Maybe($newFuncBody-M,
+                            None => { $Some($funcBody) },   # Note: t cannot be Omega if subst didn't change anything
+                            Some => -> $newFuncBody {
+                                # Here we have to check if t is (literal) Omega:
+                                _if_( $is-selfAppOf($funcVarName, $funcBody),   # pt 1: (omega? func)   / short-circuit AND
+                                    #{ _if_( $Term-eq($func, $arg),  # pt 2: is arg (literally) the same omega as func?
+                                    #    $None, # ...if so then t is Omega and nothing really changes
+                                    #    $newFuncBody-M
+                                    #)},
+                                    { case-Term($arg,  # pt 2: is arg (literally) the same omega as func?
+                                        ConstT => -> Mu { $newFuncBody-M },
+                                        VarT => -> Mu { $newFuncBody-M },
+                                        AppT => -> Mu, Mu { $newFuncBody-M },
+                                        LamT => -> $argVarName, $argBody {
+                                            _if_( $Str-eq($funcVarName, $argVarName),   # short-circuit AND
+                                                { _if_($is-selfAppOf($argVarName, $argBody),    #  (omega? arg)
+                                                    $None,
+                                                    $newFuncBody-M
+                                                )},
+                                                $newFuncBody-M
+                                            )
+                                        }
+                                    )},
+                                    $newFuncBody-M
                                 )
                             }
                         )
-                    }
+                    },
                 )
             }
         )}
