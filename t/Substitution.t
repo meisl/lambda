@@ -15,7 +15,7 @@ use Lambda::ListADT;
 # module under test:
 use Lambda::Substitution;
 
-plan 16;
+plan 28;
 
 
 { # function (subst forVar whatTerm inTerm)
@@ -160,6 +160,17 @@ plan 16;
     is_properLambdaFn $subst-par-alpha, 'subst-par-alpha';
     test_variant_subst-par-alpha($subst-par-alpha);
 
+    is_properLambdaFn $subst-par-alpha_direct, 'subst-par-alpha_direct';
+    test_variant_subst-par-alpha(
+        -> TList $substitutions, TTerm $t {
+            my $out = $subst-par-alpha_direct($substitutions, $t);
+            _if_($Term-eq($out, $t),
+                $None,
+                { $Some($out) }
+            )
+        }
+    );
+
     is_properLambdaFn $subst-alpha_Maybe, 'subst-alpha_Maybe';
     test_variant_subst-par-alpha(   # since subst-alpha_Maybe is a variant of subst-par-alpha_Maybe that is
         -> TList $substitutions, TTerm $t { # specialized to one-elem substitution lists, we simply delegate
@@ -175,13 +186,23 @@ plan 16;
         }
     );
 
-    is_properLambdaFn $subst-par-alpha_direct, 'subst-par-alpha_direct';
-    test_variant_subst-par-alpha(
-        -> TList $substitutions, TTerm $t {
-            my $out = $subst-par-alpha_direct($substitutions, $t);
-            _if_($Term-eq($out, $t),
-                $None,
-                { $Some($out) }
+    is_properLambdaFn $subst-alpha_direct, 'subst-alpha_direct';
+    test_variant_subst-par-alpha(   # since subst-alpha_direct is a variant of subst-par-alpha_direct that is
+        -> TList $substitutions, TTerm $t { # specialized to one-elem substitution lists, we simply delegate
+            case-List($substitutions,       # all other cases to subst-par-alpha_Maybe (test cases expect a Maybe result)
+                nil => { $subst-par-alpha_Maybe($substitutions, $t) },
+                cons => -> $s, $ss {
+                    case-List($ss,
+                        nil => { $subst-alpha_Maybe($fst($s), $snd($s), $t) },
+                        cons => -> Mu, Mu {
+                            my $out = $subst-par-alpha_direct($substitutions, $t);
+                            _if_($Term-eq($out, $t),
+                                $None,
+                                { $Some($out) }
+                            )
+                        }
+                    )
+                }
             )
         }
     );
