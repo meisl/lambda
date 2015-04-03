@@ -191,3 +191,82 @@ constant $betaReduce is export = lambdaFn(
     'betaReduce', 'findFP-inMaybe betaContract',
     $findFP-inMaybe($betaContract)
 );
+
+
+# apply-args: List (Pair Str Term) -> List Term -> Pair (Maybe Term) (List Term)
+# Descend chains of LamT s as long as there are rest-args, while
+# turning them into appropriate substitution pairs.
+# Stop and apply substitutions if either there are no more rest-args
+# or the term is non-LamT.
+# Return a Pair in which the fst (Maybe Term) indicates whether term has changed
+# and the snd contains the still unapplied rest-args.
+# Note: when called with non-empty list of rest-args on a LamT *always* returns a Some.
+constant $apply-args is export = $Y(-> &self { lambdaFn(
+    'apply-args', 'λsubstitutions.λrest-args.λterm.error "NYI"',
+    -> TList $substitutions, TList $rest-args, TTerm $t -->TPair{
+        case-Term($t,
+            ConstT => -> Mu   { $Pair($None, $rest-args) },
+            VarT => -> Mu     { $Pair($subst-par-alpha($substitutions, $t), $rest-args) },
+            AppT => -> Mu, Mu { $Pair($subst-par-alpha($substitutions, $t), $rest-args) },
+            LamT => -> $vName, $body {
+                case-List($rest-args,
+                    nil => { $Pair($subst-par-alpha($substitutions, $t), $rest-args) },
+                    cons => -> $a, $as {
+                        my $out = &self($cons($Pair($vName, $a), $substitutions), $as, $body);
+                        case-Maybe($fst($out),
+                            None => { $Pair($Some($body), $snd($out)) },
+                            Some => -> Mu { $out }
+                        )
+                    }
+                )
+            }
+        )
+    }
+)});
+
+# Variant of apply-args specialized for the LamT case *where we have a non-empty list of rest-args*
+constant $apply-args_direct is export = $Y(-> &self { lambdaFn(
+    'apply-args_direct', 'λsubstitutions.λrest-args.λbinderName.λbody.error "NYI"',
+    -> TList $substitutions, $arg, TList $rest-args, Str $binderName, TTerm $body -->TPair{
+        case-Term($body,
+            LamT => -> $bodyVarName, $bodyBody {
+                case-List($rest-args,
+                    nil => {    # ran out of args - none left for body (which is also a LamT)
+                        my $newSubsts = $except(
+                            -> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, 
+                            $substitutions
+                        );
+                        _if_($Str-eq($bodyVarName, $binderName),
+                            { $Pair($subst-par-alpha_direct(                                $newSubsts,  $bodyBody), $nil) },
+                            { $Pair($subst-par-alpha_direct($cons($Pair($binderName, $arg), $newSubsts), $bodyBody), $nil) }
+                        )
+                    },
+                    cons => -> $a, $as {
+                        my $newSubsts = $cons($Pair($binderName, $arg), $substitutions);
+                        &self($newSubsts, $a, $as, $bodyVarName, $bodyBody);
+                    }
+                );
+                
+            },
+            ConstT => -> Mu { $Pair($body, $rest-args) },
+            VarT   => -> $bodyVarName {
+                _if_($Str-eq($binderName, $bodyVarName),
+                    { $Pair($arg, $rest-args) },
+                    { $Pair(case-Maybe($first(-> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, $substitutions),
+                                None => $body,
+                                Some => $snd    # return value of Some as is
+                            ),
+                            $rest-args
+                    ) }
+                )
+            },
+            AppT   => -> Mu, Mu {
+                $Pair(
+                    $subst-par-alpha_direct($cons($Pair($binderName, $arg), $substitutions), $body), 
+                    $rest-args
+                )
+            },
+        )
+    }
+)});
+
