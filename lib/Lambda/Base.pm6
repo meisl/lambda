@@ -121,9 +121,9 @@ my sub ensureItsLambda(&f, &g) {
 
 # Turing's Y combinator:
 constant $Y_Turing is export = -> $U { lambdaFn(
-    'Y', '((λU.U U) λu.λf.f(u u f))',
-    #'Y', 'let (U λu.λf.f(u u f)) (U U)',
-    #'Y', 'let (U λu.λf.f(u u f)) (λf.f(U U f))',
+    'Y', '((λU.U U) λu.λf.f (u u f))',
+    #'Y', 'let (U λu.λf.f (u u f)) (U U)',
+    #'Y', 'let (U λu.λf.f (u u f)) (λf.f (U U f))',
     -> &f {
         ensureItsLambda(  &f,  &f( $U($U, &f) )  );
     }

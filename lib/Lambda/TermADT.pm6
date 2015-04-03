@@ -579,8 +579,23 @@ constant $is-Omega is export = lambdaFn(
     'Ω?', 'λt.error "NYI"',
     -> TTerm:D $t -->TBool{ case-Term($t,
         AppT => -> TTerm $func, TTerm $arg {
-            _if_( $is-omega($func),
+            _if_( $is-omega($func), # short-circuit AND
                 { $is-omega($arg) },
+                $false
+            )
+        },
+        LamT   => $K2false,
+        VarT   => $K1false,
+        ConstT => $K1false
+    ) }
+);
+
+constant $is-OmegaOf is export = lambdaFn(
+    'ΩOf?', 'λt.error "NYI"',
+    -> Str $varName, TTerm:D $t -->TBool{ case-Term($t,
+        AppT => -> TTerm $func, TTerm $arg {
+            _if_( $is-omegaOf($varName, $func), # short-circuit AND
+                { $is-omegaOf($varName, $arg) },
                 $false
             )
         },
