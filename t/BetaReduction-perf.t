@@ -52,7 +52,7 @@ my $reduce = -> TTerm $start {
 
 
 ## uncomment to disable debug diagnostics:
-$reduce = $betaReduce;
+#$reduce = $betaReduce;
 
 sub is_confluent(TTerm $s, TTerm $t, Str :$msg = '', Str :$sStr, Str :$tStr) {
     my $sSrc = $Term2srcLess($s);
