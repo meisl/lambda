@@ -212,7 +212,7 @@ constant $apply-args is export = $Y(-> &self { lambdaFn(
 
 # Variant of apply-args specialized for the LamT case *where we have a non-empty list of rest-args*
 constant $apply-args_special is export = $Y(-> &self { lambdaFn(
-    'apply-args_special', 'λsubstitutions.λrest-args.λbinderName.λbody.error "NYI"',
+    'apply-args_special', 'λsubstitutions.λarg.λrest-args.λbinderName.λbody.error "NYI"',
     -> TList $substitutions, $arg, TList $rest-args, Str $binderName, TTerm $body -->TPair{
         case-Term($body,
             LamT => -> $bodyVarName, $bodyBody {
@@ -257,3 +257,17 @@ constant $apply-args_special is export = $Y(-> &self { lambdaFn(
     }
 )});
 
+
+# Descend chains of AppT, collecting arguments to be applied via apply-args
+# once a LamT is encountered.
+constant $collect-then-apply-args is export = $Y(-> &self { lambdaFn(
+    'collect-then-apply-args', 'λarg.λrest-args.λinTerm.error "NYI"',
+    -> TTerm $arg, TList $rest-args, TTerm $inTerm -->TMaybe{
+        case-Term($inTerm,
+            ConstT => $K1None,
+            VarT   => $K1None,
+            AppT   => -> $f, $a { &self($a, $cons($arg, $rest-args), $f) },
+            LamT   => -> $v, $b { $Some($apply-args_special($nil, $arg, $rest-args, $v, $b)) }
+        )
+    }
+)});

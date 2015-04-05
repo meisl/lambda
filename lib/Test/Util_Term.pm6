@@ -189,7 +189,11 @@ our constant $testTerms is export = {
     my $xyzx ::= $AppT($xyz, $x);
 
     my $hf1             ::= $AppT($h, $f1);
+    my $ha              ::= $AppT($h, $a);
+    my $λh_ha           ::= $LamT('h', $ha);
     my $hf1f2           ::= $AppT($hf1, $f2);
+    my $hab             ::= $AppT($ha, $b);
+    my $λh_hab          ::= $LamT('h', $hab);
     my $hf1f2f3         ::= $AppT($hf1f2, $f3);
     my $hf1f2f3f4       ::= $AppT($hf1f2f3, $f4);
     my $hf1f2f3f4f5     ::= $AppT($hf1f2f3f4, $f5);
@@ -436,7 +440,11 @@ our constant $testTerms is export = {
         '(λg.(λh.((λy.(λ_.y)) (g h))))' => $LamT('g', $LamT('h', $AppT($λy_θKy, $gh))),
 
         '(h f1)'                        => $hf1,
+        '(h a)'                         => $ha,
+        '(λh.(h a))'                    => $λh_ha,
         '((h f1) f2)'                   => $hf1f2,
+        '((h a) b)'                     => $hab,
+        '(λh.((h a) b))'                => $λh_hab,
         '(((h f1) f2) f3)'              => $hf1f2f3,
         '((((h f1) f2) f3) f4)'         => $hf1f2f3f4,
         '(((((h f1) f2) f3) f4) f5)'    => $hf1f2f3f4f5,
@@ -477,11 +485,12 @@ our constant $testTerms is export = {
         '((λx.(x x)) (y y))'            => $AppT($λx_xx, $yy),
         '((y y) (λx.(x x)))'            => $AppT($yy, $λx_xx),
         '(x (x y))'                     => $AppT($x, $xy),
-        '(x (λy.(x y)))'                => $AppT($VarT("x"), $λy_xy),
+        '(x (λy.(x y)))'                => $AppT($x, $λy_xy),
+        '("c" (λy.(x y)))'              => $AppT($κc, $λy_xy),
 
         '(λx.((λy.(z y)) (x x)))'       => $LamT("x", $AppT($λy_zy, $xx)),
         '(λz.(x (x y)))'                => $LamT('z', $AppT($x, $xy)),
-        '(λz.(x (λy.(x y))))'           => $LamT("z", $AppT($VarT("x"), $λy_xy)),
+        '(λz.(x (λy.(x y))))'           => $LamT("z", $AppT($x, $λy_xy)),
 
         '((λx.(x x)) (λx.(x x)))'       => $AppT($λx_xx, $λx_xx), # = (ωX ωX) aka ΩXX ("Omega in x") aka Ω aka Omega
         '((λy.(y y)) (λy.(y y)))'       => $AppT($λy_yy, $λy_yy), # = (ωY ωY) aka ΩYY ("Omega in y")
@@ -585,7 +594,11 @@ our constant $testTerms is export = {
              'λx.λy.cons x (cons y nil)', '(λx.λy.cons x (cons y nil))', 'λx.(λy.((cons x) ((cons y) nil)))', '(λx.(λy.((cons x) ((cons y) nil))))')\
 
         .aka('(h f1)', 'h f1')\
+        .aka('(h a)', 'h a')\
+        .aka('(λh.(h a))', 'λh.(h a)', 'λh.h a', '(λh.h a)')\
         .aka('((h f1) f2)', 'h f1 f2')\
+        .aka('((h a) b)', 'h a b')\
+        .aka('(λh.((h a) b))', 'λh.((h a) b)', 'λh.h a b', '(λh.h a b)')\
         .aka('(((h f1) f2) f3)', 'h f1 f2 f3')\
         .aka('((((h f1) f2) f3) f4)', 'h f1 f2 f3 f4')\
         .aka('(((((h f1) f2) f3) f4) f5)', 'h f1 f2 f3 f4 f5')\
@@ -678,6 +691,7 @@ our constant $testTerms is export = {
         .aka('((y y) (λx.(x x)))', '(y y) (λx.(x x))', '(y y (λx.x x))', 'y y (λx.x x)')\
         .aka('(x (x y))', 'x (x y)')\
         .aka('(x (λy.(x y)))', 'x (λy.(x y))', '(x (λy.x y))', 'x (λy.x y)')\
+        .aka('("c" (λy.(x y)))', '"c" (λy.(x y))', '("c" (λy.x y))', '"c" (λy.x y)')\
         .aka('(λx.((λy.(z y)) (x x)))', 'λx.((λy.(z y)) (x x))', 'λx.(λy.z y) (x x)')\
         .aka('(λz.(x (x y)))', 'λz.(x (x y))', 'λz.x (x y)')\
         .aka('(λz.(x (λy.(x y))))', 'λz.(x (λy.(x y)))', 'λz.x (λy.x y)')\

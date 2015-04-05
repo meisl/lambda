@@ -18,7 +18,7 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::BetaReduction;
 
-plan 129;
+plan 131;
 
 
 my $g = `'g';
@@ -43,6 +43,32 @@ my $OmegaXX = `'((λx.x x) (λx.x x))';
 my $omegaY  = `'(λy.y y)';
 my $OmegaYY = `'((λy.y y) (λy.y y))';
 my $OmegaXY = `'((λx.x x) (λy.y y))';
+
+
+{ # collect-then-apply-args
+    is_properLambdaFn $collect-then-apply-args, 'collect-then-apply-args';
+
+    testTermFn($collect-then-apply-args, :expectedToStr(&lambdaArgToStr),
+        [`'a', [],             `'x']               => $None,
+        [`'a', [`'b'],         `'x']               => $None,
+        [`'a', [],             `'"c"']             => $None,
+        [`'a', [`'b'],         `'"c"']             => $None,
+        [`'a', [],             `'(x (λy.x y))']    => $None,
+        [`'a', [`'b'],         `'(x (λy.x y))']    => $None,
+        [`'a', [],             `'("c" (λy.x y))']  => $None,
+        [`'a', [`'b'],         `'("c" (λy.x y))']  => $None,
+        [`'a', [],             `'λy.x y']          => $Some(`'x a' => []),
+        [`'a', [`'b'],         `'λy.x y']          => $Some(`'x a' => [`'b']),
+
+        [`'a', [],             `'(λx.λy.x) (x y)'] => $Some(`'x y' => []),
+        [`'a', [`'b'],         `'(λx.λy.x) (x y)'] => $Some(`'x y' => [`'b']),
+
+        [`'g', [],      $AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b')] => $Some(`'λh.h a b' => []),
+        [`'g', [`'h'],  $AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b')] => $Some(`'h a b' => []),
+        [`'h', [],      $AppT($AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b'), `'g')] => $Some(`'h a b' => []),
+        [`'h', [`'k'],  $AppT($AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b'), `'g')] => $Some(`'h a b' => [`'k']),
+    );
+}
 
 
 { # apply-args
@@ -76,8 +102,9 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
             [[],            [],                 `'λx.λy.x y z']   => ($None                     => []),
             [[z => `'u'],   [],                 `'λx.λy.x y z']   => ($Some(`'λx.λy.x y u')     => []),
             #[[z => `'y'],   [],                 `'λx.λy.x y z']   => ($Some(`'λx.λα1.x α1 y')   => []), # requires alpha-conversion
-            [[],            [`'a'],             `'λx.λy.x y z']   => ($Some(`'λy.a y z')        => []),
-            [[z => `'u'],   [`'a'],             `'λx.λy.x y z']   => ($Some(`'λy.a y u')        => []),
+            [[],                        [`'a'],             `'λx.λy.x y z']   => ($Some(`'λy.a y z')        => []),
+            [[z => `'u'],               [`'a'],             `'λx.λy.x y z']   => ($Some(`'λy.a y u')        => []),
+            [[z => `'u', y => `'v'],    [`'a'],             `'λx.λy.x y z']   => ($Some(`'λy.a y u')        => []),     # one more subst (unapplicable)
             #[[z => `'y'],   [`'a'],             `'λx.λy.x y z']   => ($Some(`'λα2.a α2 y')      => []), # requires alpha-conversion
             [[],            [`'a', `'b'],       `'λx.λy.x y z']   => ($Some(`'a b z')           => []),
             [[z => `'u'],   [`'a', `'b'],       `'λx.λy.x y z']   => ($Some(`'a b u')           => []),
