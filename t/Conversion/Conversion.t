@@ -5,6 +5,7 @@ use Test::Util_List;    # Note: DO NOT use is_eq-List here since this in turn us
 
 use Lambda::Boolean;
 use Lambda::PairADT;
+use Lambda::MaybeADT;
 use Lambda::ListADT;
 use Lambda::TermADT;
 
@@ -12,11 +13,10 @@ use Lambda::TermADT;
 # modules under test:
 use Lambda::Conversion;
 
-plan 41;
+plan 48;
 
 
 { # convert Pairs
-
     my $tPair1 = $Pair(5, "seven");
     cmp_ok(convert2Lambda($tPair1), '===', $tPair1, '"converting" a TPair to a TPair returns the very same thing');
     my $p6Pair1 = convertTPair2P6Pair($tPair1);
@@ -175,4 +175,38 @@ plan 41;
         cmp_ok($fst($e1), '===', "x", 'fst of 2nd elem');
         cmp_ok($snd($e1), '===', $y,  'snd of 2nd elem');
     }, 'deep conversion of an array of an array and a pair to a TList (2 elems)');
+}
+
+
+{ # (deep) conversion of TMaybe s
+    my TMaybe $m;
+    
+    $m = $None;
+    cmp_ok(convert2Lambda($m), '===', $m, 'None -> None');
+
+    $m = $Some($None);
+    is(convert2Lambda($m), $m, '(Some None) -> (Some None)');
+
+    my $x = $VarT('x');
+    $m = $Some($x => [5, 'seven']);
+    my $actual = convert2Lambda($m);
+    my $expectedStr = '(Some (Pair (VarT "x") (cons 5 (cons "seven" nil))))';
+    my $msg = "(Some (`'x' => [5, \"seven\"]) -> $expectedStr";
+    my sub fail {
+        diag("expected: $expectedStr\n     got: $actual") and False;
+    }
+    case-Maybe($actual,
+        None => { ok(False, $msg) or fail },
+        Some => -> $actualV {
+            does_ok($actualV, TPair) or fail;
+            cmp_ok($fst($actualV), '===', $x, $msg) or fail;
+            my $list = $snd($actualV);
+            does_ok($list, TList) or fail;
+            $has_length($list, 2);
+            my $e0 = $car($list);
+            cmp_ok($e0, '===', 5, $msg) or fail;
+            my $e1 = $cadr($list);
+            cmp_ok($e1, '===', "seven", $msg) or fail;
+        }
+    );
 }
