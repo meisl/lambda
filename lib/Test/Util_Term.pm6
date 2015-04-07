@@ -215,40 +215,43 @@ our constant $testTerms is export = {
     my $λf1_λf2_λ__λh_hf1   ::=  $LamT('f1', $LamT('f2', $LamT('_', $LamT('h', $hf1f2))));   # ctor2o2f2 (ctor 1 of 2 with 2 fields)
 
 
-    my $λv_uu   ::= $LamT('v', $uu);
-    my $λv_xu   ::= $LamT('v', $xu);
-    my $λv_yu   ::= $LamT('v', $yu);
-    my $λv_zu   ::= $LamT('v', $zu);
-    my $λ__x    ::= $LamT('_', $x);
-    my $λx_x    ::= $LamT('x', $x);
-    my $λx_y    ::= $LamT('x', $y);
-    my $λx_z    ::= $LamT('x', $z);
-    my $λx_κc   ::= $LamT('x', $κc);
-    my $λx_xx   ::= $LamT('x', $xx);
-    my $λz_xx   ::= $LamT('z', $xx);
-    my $λz_yx   ::= $LamT('z', $yx);
+    my $λv_uu       ::= $LamT('v', $uu);
+    my $λv_xu       ::= $LamT('v', $xu);
+    my $λv_yu       ::= $LamT('v', $yu);
+    my $λv_zu       ::= $LamT('v', $zu);
+    my $λ__x        ::= $LamT('_', $x);
+    my $λx_x        ::= $LamT('x', $x);
+    my $λx_y        ::= $LamT('x', $y);
+    my $λx_z        ::= $LamT('x', $z);
+    my $λx_κc       ::= $LamT('x', $κc);
+    my $λx_xx       ::= $LamT('x', $xx);
+    my $λz_xx       ::= $LamT('z', $xx);
+    my $xλz_xx      ::= $AppT($x, $λz_xx);
+    my $λx_xλz_xx   ::= $LamT('x', $xλz_xx);
+    my $λz_yx       ::= $LamT('z', $yx);
     my $λy_λz_yx    ::= $LamT('y', $λz_yx);
-    my $λx_xy   ::= $LamT('x', $xy);
-    my $λx_xz   ::= $LamT('x', $xz);
-    my $λx_zx   ::= $LamT('x', $zx);
-    my $λx_zxx  ::= $LamT('x', $zxx);
-    my $λx_xκc  ::= $LamT('x', $xκc);
-    my $λx_yx   ::= $LamT('x', $yx);
-    my $λx_yz   ::= $LamT('x', $yz);
+    my $λx_xy       ::= $LamT('x', $xy);
+    my $λx_xz       ::= $LamT('x', $xz);
+    my $λx_zx       ::= $LamT('x', $zx);
+    my $λx_zxx      ::= $LamT('x', $zxx);
+    my $xλx_zxx     ::= $AppT($x, $λx_zxx);
+    my $λx_xκc      ::= $LamT('x', $xκc);
+    my $λx_yx       ::= $LamT('x', $yx);
+    my $λx_yz       ::= $LamT('x', $yz);
 
-    my $λu_xyz      ::= $LamT('u', $xyz);
-    my $λα1_xα1y    ::= $LamT('α1', $xα1y);
-    my $λα2_xα2y    ::= $LamT('α2', $xα2y);
-    my $λx_λα1_xα1y ::= $LamT('x', $λα1_xα1y);
-    my $λx_xα1y     ::= $LamT('x', $xα1y);
-    my $λx_xyz      ::= $LamT('x', $xyz);
-    my $λx_zxy      ::= $LamT('x', $zxy);
-    my $λx_zyx      ::= $LamT('x', $zyx);
-    my $λy_λx_zyx   ::= $LamT('y', $λx_zyx);
-    my $λz_λx_zyx   ::= $LamT('z', $λx_zyx);
+    my $λu_xyz          ::= $LamT('u', $xyz);
+    my $λα1_xα1y        ::= $LamT('α1', $xα1y);
+    my $λα2_xα2y        ::= $LamT('α2', $xα2y);
+    my $λx_λα1_xα1y     ::= $LamT('x', $λα1_xα1y);
+    my $λx_xα1y         ::= $LamT('x', $xα1y);
+    my $λx_xyz          ::= $LamT('x', $xyz);
+    my $λx_zxy          ::= $LamT('x', $zxy);
+    my $λx_zyx          ::= $LamT('x', $zyx);
+    my $λy_λx_zyx       ::= $LamT('y', $λx_zyx);
+    my $λz_λx_zyx       ::= $LamT('z', $λx_zyx);
     my $λy_λz_λx_zyx    ::= $LamT('y', $λz_λx_zyx);
     my $λz_λy_λx_zyx    ::= $LamT('z', $λy_λx_zyx);
-    my $λx_xyκc     ::= $LamT('x', $xyκc);
+    my $λx_xyκc         ::= $LamT('x', $xyκc);
 
     my $λ__y        ::= $LamT('_', $y);
     my $λy_x        ::= $LamT('y', $x);
@@ -447,12 +450,18 @@ our constant $testTerms is export = {
         '(λx.(x "c"))'              => $λx_xκc,
         '(λx.(x x))'                => $λx_xx,  # omegaX aka ωX ("omega in x") aka ω aka omega
         '(λz.(x x))'                => $λz_xx,
+        '(x (λz.(x x)))'            => $xλz_xx,
+        '(λx.(x (λz.(x x))))'       => $λx_xλz_xx,
         '(λz.(y x))'                => $λz_yx,
         '(λy.(λz.(y x)))'           => $λy_λz_yx,
+        '((λy.(λz.(y x))) (λy.(x y)))'          => $AppT($λy_λz_yx, $λy_xy),
+        '(x ((λy.(λz.(y x))) (λy.(x y))))'      => $AppT($x, $AppT($λy_λz_yx, $λy_xy)),
+        '(λx.(x ((λy.(λz.(y x))) (λy.(x y)))))' => $LamT('x', $AppT($x, $AppT($λy_λz_yx, $λy_xy))),
         '(λx.(x y))'                => $λx_xy,
         '(λx.(x z))'                => $λx_xz,
         '(λx.(z x))'                => $λx_zx,
         '(λx.((z x) x))'            => $λx_zxx,
+        '(x (λx.((z x) x)))'        => $xλx_zxx,
         '(λx.(y x))'                => $λx_yx,
         '(λx.(y z))'                => $λx_yz,
         '(λu.((x y) z))'            => $λu_xyz,
@@ -737,12 +746,18 @@ our constant $testTerms is export = {
         .aka('(λx.(x "c"))', 'λx.(x "c")', 'λx.x "c"', '(λx.x "c")')\
         .aka('(λx.(x x))', 'ωX', 'omegaX', 'ω', 'omega', 'λx.(x x)', 'λx.x x', '(λx.x x)')\
         .aka('(λz.(x x))', 'λz.(x x)', 'λz.x x', '(λz.x x)')\
+        .aka('(x (λz.(x x)))', 'x (λz.x x)', 'x λz.x x', '(x (λz.x x))', '(x λz.x x)')\
+        .aka('(λx.(x (λz.(x x))))', 'λx.x (λz.x x)', 'λx.x λz.x x', '(λx.x (λz.x x))', '(λx.x λz.x x)')\
         .aka('(λz.(y x))', 'λz.(y x)', 'λz.y x', '(λz.y x)')\
         .aka('(λy.(λz.(y x)))', 'λy.(λz.(y x))', 'λy.λz.y x', '(λy.λz.y x)')\
+        .aka('((λy.(λz.(y x))) (λy.(x y)))', '(λy.λz.y x) (λy.x y)', '((λy.λz.y x) (λy.x y))')\
+        .aka('(x ((λy.(λz.(y x))) (λy.(x y))))', 'x ((λy.λz.y x) (λy.x y))', '(x ((λy.λz.y x) (λy.x y)))')\
+        .aka('(λx.(x ((λy.(λz.(y x))) (λy.(x y)))))', 'λx.x ((λy.λz.y x) (λy.x y))', '(λx.x ((λy.λz.y x) (λy.x y)))')\
         .aka('(λx.(x y))', 'λx.(x y)', 'λx.x y', '(λx.x y)')\
         .aka('(λx.(x z))', 'λx.(x z)', 'λx.x z', '(λx.x z)')\
         .aka('(λx.(z x))', 'λx.(z x)', 'λx.z x', '(λx.z x)')\
         .aka('(λx.((z x) x))', 'λx.((z x) x)', 'λx.z x x', '(λx.z x x)')\
+        .aka('(x (λx.((z x) x)))', 'x λx.z x x', 'x (λx.z x x)', '(x λx.z x x)', '(x (λx.z x x))')\
         .aka('(λx.(y x))', 'λx.(y x)', 'λx.y x', '(λx.y x)')\
         .aka('(λx.(y z))', 'λx.(y z)', 'λx.y z', '(λx.y z)')\
         .aka('(λu.((x y) z))', 'λu.((x y) z)', 'λu.x y z', '(λu.x y z)')\
