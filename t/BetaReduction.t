@@ -18,31 +18,7 @@ use Lambda::P6Currying;
 # module under test:
 use Lambda::BetaReduction;
 
-plan 131;
-
-
-my $g = `'g';
-my $h = `'h';
-my $k = `'k';
-my $u = `'u';
-my $v = `'v';
-my $x = `'x';
-my $y = `'y';
-my $z = `'z';
-my $c = `'"c"';
-
-my $xx = `'x x';
-my $yy = `'y y';
-my $yz = `'y z';
-
-my $Ly_xx = `'λy.x x';
-
-# [O|o]mega: Omega (with capital O) is a (the) lambda term that beta-contracts to itself (modulo alpha-conversion).
-my $omegaX  = `'(λx.x x)';
-my $OmegaXX = `'((λx.x x) (λx.x x))';
-my $omegaY  = `'(λy.y y)';
-my $OmegaYY = `'((λy.y y) (λy.y y))';
-my $OmegaXY = `'((λx.x x) (λy.y y))';
+plan 134;
 
 
 { # collect-then-apply-args
@@ -63,10 +39,10 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
         [`'a', [],             `'(λx.λy.x) (x y)'] => $Some(`'x y' => []),
         [`'a', [`'b'],         `'(λx.λy.x) (x y)'] => $Some(`'x y' => [`'b']),
 
-        [`'g', [],      $AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b')] => $Some(`'λh.h a b' => []),
-        [`'g', [`'h'],  $AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b')] => $Some(`'h a b' => []),
-        [`'h', [],      $AppT($AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b'), `'g')] => $Some(`'h a b' => []),
-        [`'h', [`'k'],  $AppT($AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b'), `'g')] => $Some(`'h a b' => [`'k']),
+        [`'g', [],            $AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b')]           => $Some(`'λh.h a b' => []),
+        [`'g', [`'h'],        $AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b')]           => $Some(`'h a b' => []),
+        [`'h', [],      $AppT($AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b'), `'g')]    => $Some(`'h a b' => []),
+        [`'h', [`'k'],  $AppT($AppT($AppT(`'λf1.λf2.λ_.λh.h f1 f2', `'a'), `'b'), `'g')]    => $Some(`'h a b' => [`'k']),
     );
 }
 
@@ -75,19 +51,19 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
 
     my sub test_variant_apply-args($fut) {
         testTermFn($fut, :expectedToStr(&lambdaArgToStr),
-            [[],            [],             `'x']   => ($None       => []),
-            [[z => `'y'],   [],             `'x']   => ($None       => []),
-            [[x => `'y'],   [],             `'x']   => ($Some(`'y') => []),
-            [[],            [`'a', `'b'],   `'x']   => ($None       => [`'a', `'b']),
-            [[z => `'y'],   [`'a', `'b'],   `'x']   => ($None       => [`'a', `'b']),
-            [[x => `'y'],   [`'a', `'b'],   `'x']   => ($Some(`'y') => [`'a', `'b']),
+            [[],            [],             `'x']       => ($None       => []),
+            [[z => `'y'],   [],             `'x']       => ($None       => []),
+            [[x => `'y'],   [],             `'x']       => ($Some(`'y') => []),
+            [[],            [`'a', `'b'],   `'x']       => ($None       => [`'a', `'b']),
+            [[z => `'y'],   [`'a', `'b'],   `'x']       => ($None       => [`'a', `'b']),
+            [[x => `'y'],   [`'a', `'b'],   `'x']       => ($Some(`'y') => [`'a', `'b']),
 
-            [[],            [],             `'"c"']   => ($None => []),
-            [[z => `'y'],   [],             `'"c"']   => ($None => []),
-            [[x => `'y'],   [],             `'"c"']   => ($None => []),
-            [[],            [`'a', `'b'],   `'"c"']   => ($None => [`'a', `'b']),
-            [[z => `'y'],   [`'a', `'b'],   `'"c"']   => ($None => [`'a', `'b']),
-            [[x => `'y'],   [`'a', `'b'],   `'"c"']   => ($None => [`'a', `'b']),
+            [[],            [],             `'"c"']     => ($None => []),
+            [[z => `'y'],   [],             `'"c"']     => ($None => []),
+            [[x => `'y'],   [],             `'"c"']     => ($None => []),
+            [[],            [`'a', `'b'],   `'"c"']     => ($None => [`'a', `'b']),
+            [[z => `'y'],   [`'a', `'b'],   `'"c"']     => ($None => [`'a', `'b']),
+            [[x => `'y'],   [`'a', `'b'],   `'"c"']     => ($None => [`'a', `'b']),
 
             [[],            [],             `'λx.y x']  => ($None               => []),
             [[x => `'y'],   [],             `'λx.y x']  => ($None               => []),
@@ -161,30 +137,33 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
     }
 
     is_betaRedex(
-        $x                                                          => $false,  # x
-        $c                                                          => $false,  # "c"
-        $LamT('x', $c)                                              => $false,  # λx."c"
-        $LamT('x', $x)                                              => $false,  # λx.x
-        $LamT('x', $AppT($x, $c))                                   => $false,  # λx.x "c"
-        $LamT('x', $AppT($x, $y))                                   => $false,  # λx.x y
-        $LamT('x', $AppT($y, $x))                                   => $false,  # λx.y x
-        $LamT('x', $AppT($x, $AppT($LamT('y', $LamT('z', $AppT($y, $x))), $LamT('y', $AppT($x, $y)))))          # not a redex but contractible (twice)
+        `'x'                                        => $false,
+        `'"c"'                                      => $false,
+        `'λx."c"'                                   => $false,
+        `'λx.x'                                     => $false,
+        `'λx.x "c"'                                 => $false,
+        `'λx.x y'                                   => $false,
+        `'λx.y x'                                   => $false,
+        $LamT('x', $AppT(`'x', $AppT(`'λy.λz.y x', `'λy.x y')))          # not a redex but contractible (twice)
             => $false,  # λx.x ((λy.λz.y x) (λy.x y))
-        $AppT($x, $c)                                               => $false,  # (x c)
-        $AppT($x, $x)                                               => $false,  # (x x)
-        $AppT($x, $y)                                               => $false,  # (x y)
-        $AppT($LamT('x', $y), $x)                                   => $true,   # ((λx.y) x)                # a redex
-        $AppT($LamT('x', $AppT($AppT($z, $x), $y)), $c)             => $true,   # ((λx.z x y) "c")          # a redex
-        $AppT($AppT($LamT('y', $AppT($x, $y)), $y), $z)             => $false,  # (((λy.x y) y) z)          # not a redex but reducible
-        $AppT($y, $AppT($LamT('y', $AppT($x, $y)), $z))             => $false,  # (y ((λy.x y) z))          # not a redex but reducible
-        $AppT($LamT('y', $AppT($x, $y)), $z)                        => $true,   # ((λy.x y) z)              # a redex
-        $AppT($AppT($LamT('x', $y), $x), $AppT($LamT('y', $x), $y)) => $false,  # (((λx.y) x) ((λy.x) y))   # not a redex but reducible
-        $LamT('x', $AppT($AppT($LamT('y', $AppT($z, $y)), $x), $x)) => $false,  # (λx.(λy.z y) x x)         # not a redex but reducible
-        $omegaX                                                     => $false,  # (λx.x x)
-        $OmegaXX                                                    => $true,   # ((λx.x x) (λx.x x))       # a redex, contracting to itself
-        $omegaY                                                     => $false,  # (λy.y y)
-        $OmegaYY                                                    => $true,   # ((λy.y y) (λy.y y))       # a redex, contracting to itself
-        $OmegaXY                                                    => $true,   # ((λx.x x) (λy.y y))       # a redex, contracting to itself (modulo alpha-conv)
+        `'x "c"'                                    => $false,
+        `'x x'                                      => $false,
+        `'x y'                                      => $false,
+        `'(λx.y) x'                                 => $true,   # a redex
+        $AppT(`'λx.z x y', `'"c"')                  => $true,   # ((λx.z x y) "c")          # a redex
+        $AppT(`'(λy.x y) y', `'z')                  => $false,  # (((λy.x y) y) z)          # not a redex but reducible
+        $AppT(`'y', `'(λy.x y) z')                  => $false,  # (y ((λy.x y) z))          # not a redex but reducible
+        `'(λy.x y) z'                               => $true,   # ((λy.x y) z)              # a redex
+        $AppT(`'(λx.y) x', `'(λy.x) y')             => $false,  # (((λx.y) x) ((λy.x) y))   # not a redex but reducible
+        $LamT('x', $AppT(`'(λy.z y) x', `'x'))      => $false,  # (λx.(λy.z y) x x)         # not a redex but reducible
+        
+        `'(λx.x x)'                                 => $false,  # omegaX
+        `'(λx.x x) (λx.x x)'                        => $true,   # OmegaXX: a redex, contracting to itself
+        `'(λy.y y)'                                 => $false,  # omegaY
+        `'(λy.y y) (λy.y y)'                        => $true,   # OmegaYY: a redex, contracting to itself
+        `'(λx.x x) (λy.y y)'                        => $true,   # OmegaXY: a redex, contracting to itself (module alpha-conv)
+        
+        `'(λx.x x) (y z)'                           => $true,   # only "half of" Omega
     );
 }
 
@@ -205,32 +184,33 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
     }
 
     is_betaReducible(
-        $x                                                          => $false,  # x
-        $c                                                          => $false,  # "c"
-        $LamT('x', $c)                                               => $false,  # λx."c"
-        $LamT('x', $x)                                               => $false,  # λx.x
-        $LamT('x', $AppT($x, $c))                                    => $false,  # λx.x "c"
-        $LamT('x', $AppT($x, $y))                                    => $false,  # λx.x y
-        $LamT('x', $AppT($y, $x))                                    => $false,  # λx.y x
-        $LamT('x', $AppT($x, $AppT($LamT('y', $LamT('z', $AppT($y, $x))), $LamT('y', $AppT($x, $y)))))          # not a redex but contractible (twice)
+        `'x'                                        => $false,
+        `'"c"'                                      => $false,
+        `'λx."c"'                                   => $false,
+        `'λx.x'                                     => $false,
+        `'λx.x "c"'                                 => $false,
+        `'λx.x y'                                   => $false,
+        `'λx.y x'                                   => $false,
+        $LamT('x', $AppT(`'x', $AppT(`'λy.λz.y x', `'λy.x y')))          # not a redex but contractible (twice)
             => $true,  # λx.x ((λy.λz.y x) (λy.x y))
-        $AppT($x, $c)                                               => $false,  # (x c)
-        $AppT($x, $x)                                               => $false,  # (x x)
-        $AppT($x, $y)                                               => $false,  # (x y)
-        $AppT($LamT('x', $y), $x)                                    => $true,   # ((λx.y) x)                # a redex
-        $AppT($LamT('x', $AppT($AppT($z, $x), $y)), $c)              => $true,   # ((λx.z x y) "c")          # a redex
-        $AppT($AppT($LamT('y', $AppT($x, $y)), $y), $z)              => $true,   # (((λy.x y) y) z)          # not a redex but reducible
-        $AppT($y, $AppT($LamT('y', $AppT($x, $y)), $z))              => $true,   # (y ((λy.x y) z))          # not a redex but reducible
-        $AppT($LamT('y', $AppT($x, $y)), $z)                         => $true,   # ((λy.x y) z)              # a redex
-        $AppT($AppT($LamT('x', $y), $x), $AppT($LamT('y', $x), $y))   => $true,   # (((λx.y) x) ((λy.x) y))   # not a redex but reducible
-        $LamT('x', $AppT($AppT($LamT('y', $AppT($z, $y)), $x), $x))   => $true,   # (λx.(λy.z y) x x)         # not a redex but reducible
-        $omegaX                                                     => $false,  # (λx.x x)
-        $OmegaXX                                                    => $true,   # ((λx.x x) (λx.x x))       # a redex, contracting to itself
-        $omegaY                                                     => $false,  # (λy.y y)
-        $OmegaYY                                                    => $true,   # ((λy.y y) (λy.y y))       # a redex, contracting to itself
-        $OmegaXY                                                    => $true,   # ((λx.x x) (λy.y y))       # a redex, contracting to itself (module alpha-conv)
+        `'x "c"'                                    => $false,
+        `'x x'                                      => $false,
+        `'x y'                                      => $false,
+        `'(λx.y) x'                                 => $true,   # a redex
+        $AppT(`'λx.z x y', `'"c"')                  => $true,   # ((λx.z x y) "c")          # a redex
+        $AppT(`'(λy.x y) y', `'z')                  => $true,   # (((λy.x y) y) z)          # not a redex but reducible
+        $AppT(`'y', `'(λy.x y) z')                  => $true,   # (y ((λy.x y) z))          # not a redex but reducible
+        `'(λy.x y) z'                               => $true,   # ((λy.x y) z)              # a redex
+        $AppT(`'(λx.y) x', `'(λy.x) y')             => $true,   # (((λx.y) x) ((λy.x) y))   # not a redex but reducible
+        $LamT('x', $AppT(`'(λy.z y) x', `'x'))      => $true,   # (λx.(λy.z y) x x)         # not a redex but reducible
         
-        $AppT($omegaX, $yz)                        => $true,   # ((λx.(x x)) (y z)) # only "half of" Omega
+        `'(λx.x x)'                                 => $false,  # omegaX
+        `'(λx.x x) (λx.x x)'                        => $true,   # OmegaXX: a redex, contracting to itself
+        `'(λy.y y)'                                 => $false,  # omegaY
+        `'(λy.y y) (λy.y y)'                        => $true,   # OmegaYY: a redex, contracting to itself
+        `'(λx.x x) (λy.y y)'                        => $true,   # OmegaXY: a redex, contracting to itself (module alpha-conv)
+        
+        `'(λx.x x) (y z)'                           => $true,   # only "half of" Omega
     );
 
 }
@@ -260,40 +240,42 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
 
     # without the need for α-conversion
     betaContractsTo(
-        `'x'                                           => $None,
-        `'"c"'                                         => $None,
-        `'λx."c"'                                      => $None,
-        `'λx.x'                                        => $None,
-        `'λx.x "c"'                                    => $None,
-        `'λx.x y'                                      => $None,
-        `'λx.y x'                                      => $None,
-        $LamT('x', $AppT($x, $AppT($LamT('y', $LamT('z', $AppT($y, $x))), $LamT('y', $AppT($x, $y)))))   # not a redex but contractible (twice)
-            => $Some($LamT('x', $AppT($x, $LamT('z', $AppT($LamT('y', $AppT($x, $y)), $x))))),  # `'λx.x ((λy.λz.y x) (λy.x y))' -> `'λx.x (λz.(λy.x y) x)'
-        $AppT($x, $c)                                               => $None,  # (x c)
-        $AppT($x, $x)                                               => $None,  # (x x)
-        $AppT($x, $y)                                               => $None,  # (x y)
-        $AppT($LamT('x', $y), $x)                                    => $Some($y),                       # a redex
-            # ((λx.y) x) -> y
-        $AppT($LamT('x', $AppT($AppT($z, $x), $y)), $c)              => $Some($AppT($AppT($z, $c), $y)), # a redex
+        `'x'                                    => $None,
+        `'"c"'                                  => $None,
+        `'λx."c"'                               => $None,
+        `'λx.x'                                 => $None,
+        `'λx.x "c"'                             => $None,
+        `'λx.x y'                               => $None,
+        `'λx.y x'                               => $None,
+        $LamT('x', $AppT(`'x', $AppT(`'λy.λz.y x', `'λy.x y')))   # not a redex but contractible (twice)
+            => $Some($LamT('x', $AppT(`'x', $LamT('z', `'(λy.x y) x')))),  # `'λx.x ((λy.λz.y x) (λy.x y))' -> `'λx.x (λz.(λy.x y) x)'
+        `'x "c"'                                => $None,
+        `'x x'                                  => $None,
+        `'x y'                                  => $None,
+        `'(λx.y) x'                             => $Some(`'y'),         # a redex
+        $AppT(`'λx.z x y', `'"c"')              => $Some(`'z "c" y'),   # a redex
             # ((λx.z x y) "c") -> (z "c" y)
-        $AppT($AppT($LamT('y', $AppT($x, $y)), $y), $z)              => $Some($AppT($AppT($x, $y), $z)), # not a redex but reducible
-            # (((λy.x y) y) z) -> (x y z)
-        $AppT($y, $AppT($LamT('y', $AppT($x, $y)), $z))              => $Some($AppT($y, $AppT($x, $z))), # not a redex but reducible
+        $AppT(`'(λy.x y) y', `'z')              => $Some(`'x y z'), # not a redex but reducible
+            # ((λy.x y) y z) -> (x y z)
+        $AppT(`'y', `'(λy.x y) z')              => $Some(`'y (x z)'), # not a redex but reducible
             # (y ((λy.x y) z)) -> (y (x z))
         
         # see below for (((λx.y) x) ((λy.x) y))   # not a redex but contractible (twice)
 
-        $LamT('x', $AppT($AppT($LamT('y', $AppT($z, $y)), $x), $x))   => $Some($LamT('x', $AppT($AppT($z, $x), $x))),  # not a redex but reducible
+        $LamT('x', $AppT(`'(λy.z y) x', `'x'))          => $Some(`'λx.z x x'),  # not a redex but reducible
             # (λx.(λy.z y) x x) -> (λx.z x x)
-        $omegaX                                                     => $None,               # (λx.x x)
-        $OmegaXX                                                    => $None,               # ((λx.x x) (λx.x x))   # a redex, contracting to itself
-        $omegaY                                                     => $None,               # (λy.y y)
-        $OmegaYY                                                    => $None,               # ((λy.y y) (λy.y y))   # a redex, contracting to itself
-        $OmegaXY                                                    => $Some($OmegaYY),     # ((λx.x x) (λy.y y))   # a redex, contracting to itself (module alpha-conv)
+
+        `'z ((λx.x) y) b a'     => $Some(`'z y b a'), # not a redex but reducible
+
+        `'(λx.x x)'             => $None,                           # omegaX
+        `'((λx.x x) (λx.x x))'  => $None,                           # OmegaXX: a redex, contracting to itself
+        `'(λy.y y)'             => $None,                           # omegaY
+        `'((λy.y y) (λy.y y))'  => $None,                           # OmegaYY: a redex, contracting to itself
+        `'((λx.x x) (λy.y y))'  => $Some(`'(λy.y y) (λy.y y)'),     # OmegaXY: a redex, contracting to itself (module alpha-conv)
         
-        $AppT($omegaX, $Ly_xx)                     => $Some($AppT($Ly_xx, $Ly_xx)), # (λx.x x) (λy.x x)  # not Omega (2nd binder y != x)
-        $AppT($Ly_xx, $omegaX)                     => $Some($xx),                   # (λy.x x) (λx.x x)  # not Omega (1st binder y != x)
-        $AppT($omegaX, $yz)                        => $Some($AppT($yz, $yz)),       # (λx.x x) (y z)     # only "half of" Omega
+        `'(λx.x x) (λy.x x)'    => $Some(`'(λy.x x) (λy.x x)'),     # not Omega (2nd binder y != x)
+        `'(λy.x x) (λx.x x)'    => $Some(`'x x'),                   # not Omega (1st binder y != x)
+        `'(λx.x x) (y z)'       => $Some(`'(y z) (y z)'),           # only "half of" Omega
     );
 
     subtest({ # with necessary α-conversion:
@@ -308,8 +290,8 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
 
     my ($t, $bcd1, $bcd2, $expectedBrd);
 
-    # (((λx.y) x) ((λy.x) y)) can contract twice; NO prescribed order!
-    $t = $AppT($AppT($LamT('x', $y), $x), $AppT($LamT('y', $x), $y));
+
+    $t = `'((λx.y) x) ((λy.x) y)';  # can contract twice; NO prescribed order!
     subtest({
         $bcd1 = $betaContract($t);
         is($is-Some($bcd1), $true, "{$Term2source($t)} should beta-contract (at least) once") or die;
@@ -323,15 +305,15 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
         is($is-betaReducible($bcd2), $false,
             "(Some->value (betaContract {$Term2source($bcd1)})) should not be beta-reducible any further") or die;
 
-        $expectedBrd = $AppT($y, $x);
+        $expectedBrd = `'y x';
         is($bcd2, $expectedBrd,
             "beta-contracting {$Term2source($t)} should yield {$Term2source($expectedBrd)}");
     }, "{$Term2source($t)} can contract twice; NO prescribed order!");
 
 
-    subtest({ # a term that β-"contracts" to an ever larger term: (λx.x x y)(λx.x x y)
+    subtest({ # a term that β-"contracts" to an ever larger term: (λx.x x y) (λx.x x y)
         my $t = {
-            my $lx-xxy  = $LamT('x', $AppT($AppT($x, $x), $y)); # lam(<x>, <x x y>)
+            my $lx-xxy  = $LamT('x', $AppT(`'x x', `'y')); # lam(<x>, <x x y>)
             $AppT($lx-xxy, $lx-xxy);
         }();
 
@@ -352,7 +334,7 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
         $t = $Some2value($betaContract($t));
         $s = $Term2size($t);
         is($s, 19, "(eq? 19 (Term->size {$Term2source($t)}))");
-    }, 'a term that β-"contracts" to an ever larger term: (λx.x x y)(λx.x x y)');
+    }, 'a term that β-"contracts" to an ever larger term: (λx.x x y) (λx.x x y)');
 }
 
 
@@ -378,40 +360,41 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
 
 
     betaReducesTo(
-        $x                                                          => $None,  # x
-        $c                                                          => $None,  # "c"
-        $LamT('x', $c)                                               => $None,  # λx."c"
-        $LamT('x', $x)                                               => $None,  # λx.x
-        $LamT('x', $AppT($x, $c))                                    => $None,  # λx.x "c"
-        $LamT('x', $AppT($x, $y))                                    => $None,  # λx.x y
-        $LamT('x', $AppT($y, $x))                                    => $None,  # λx.y x
-        $LamT('x', $AppT($x, $AppT($LamT('y', $LamT('z', $AppT($y, $x))), $LamT('y', $AppT($x, $y)))))   # not a redex but contractible (twice)
-            => $Some($LamT('x', $AppT($x, $LamT('z', $AppT($x, $x))))),  # λx.x ((λy.λz.y x) (λy.x y)) -> λx.x (λz.x x)
-        $AppT($x, $c)                                               => $None,  # (x c)
-        $AppT($x, $x)                                               => $None,  # (x x)
-        $AppT($x, $y)                                               => $None,  # (x y)
-        $AppT($LamT('x', $y), $x)                                    => $Some($y),                       # a redex
-            # ((λx.y) x) -> y
-        $AppT($LamT('x', $AppT($AppT($z, $x), $y)), $c)              => $Some($AppT($AppT($z, $c), $y)), # a redex
+        `'x'                                        => $None,
+        `'"c"'                                      => $None,
+        `'λx."c"'                                   => $None,
+        `'λx.x'                                     => $None,
+        `'λx.x "c"'                                 => $None,
+        `'λx.x y'                                   => $None,
+        `'λx.y x'                                   => $None,
+        $LamT('x', $AppT(`'x', $AppT(`'λy.λz.y x', `'λy.x y')))   # not a redex but contractible (twice)
+            => $Some($LamT('x', $AppT(`'x', `'λz.x x'))),  # λx.x ((λy.λz.y x) (λy.x y)) -> λx.x (λz.x x)
+        `'x "c"'                                    => $None,
+        `'x x'                                      => $None,
+        `'x y'                                      => $None,
+        `'(λx.y) x'                                 => $Some(`'y'), # a redex
+        $AppT(`'λx.z x y', `'"c"')              => $Some(`'z "c" y'),      # a redex
             # ((λx.z x y) "c") -> (z "c" y)
-        $AppT($AppT($LamT('y', $AppT($x, $y)), $y), $z)              => $Some($AppT($AppT($x, $y), $z)), # not a redex but reducible
+        $AppT(`'(λy.x y) y', `'z')               => $Some(`'x y z'),        # not a redex but reducible
             # (((λy.x y) y) z) -> (x y z)
-        $AppT($y, $AppT($LamT('y', $AppT($x, $y)), $z))              => $Some($AppT($y, $AppT($x, $z))), # not a redex but reducible
+        $AppT(`'y', `'(λy.x y) z')               => $Some(`'y (x z)'),      # not a redex but reducible
             # (y ((λy.x y) z)) -> (y (x z))
-        $AppT($AppT($LamT('x', $y), $x), $AppT($LamT('y', $x), $y))   => $Some($AppT($y, $x)),            # not a redex but contractible (twice)
+        $AppT(`'(λx.y) x', `'(λy.x) y')   => $Some(`'y x'),         # not a redex but contractible (twice)
             # (((λx.y) x) ((λy.x) y))  ->  (y x)
-        $LamT('x', $AppT($AppT($LamT('y', $AppT($z, $y)), $x), $x))   => $Some($LamT('x', $AppT($AppT($z, $x), $x))),  # not a redex but reducible
-            # (λx.(λy.z y) x x) -> (λx.z x x)        # TODO: use as example for beta-eta reduction
+        $LamT('x', $AppT(`'(λy.z y) x', `'x'))   => $Some(`'λx.z x x'),    # not a redex but reducible
+            # (λx.(λy.z y) x x) -> (λx.z x x)        # TODO: use as example for beta-eta reduction': λx.z x x
 
-        $omegaX                                                     => $None,               # (λx.x x)
-        $OmegaXX                                                    => $None,               # ((λx.x x) (λx.x x))   # a redex, contracting to itself
-        $omegaY                                                     => $None,               # (λy.y y)
-        $OmegaYY                                                    => $None,               # ((λy.y y) (λy.y y))   # a redex, contracting to itself
-        $OmegaXY                                                    => $Some($OmegaYY),     # ((λx.x x) (λy.y y))   # a redex, contracting to itself (module alpha-conv)
+        `'z ((λx.x) y) b a'     => $Some(`'z y b a'), # not a redex but reducible
+
+        `'(λx.x x)'             => $None,                           # omegaX
+        `'((λx.x x) (λx.x x))'  => $None,                           # OmegaXX: a redex, contracting to itself
+        `'(λy.y y)'             => $None,                           # omegaY
+        `'((λy.y y) (λy.y y))'  => $None,                           # OmegaYY: a redex, contracting to itself
+        `'((λx.x x) (λy.y y))'  => $Some(`'(λy.y y) (λy.y y)'),     # OmegaXY: a redex, contracting to itself (module alpha-conv)
         
-        $AppT($omegaX, $Ly_xx)                     => $Some($xx),                   # (λx.(x x)) (λy.(x x))  # not Omega (2nd binder y != x)
-        $AppT($Ly_xx, $omegaX)                     => $Some($xx),                   # (λy.(x x)) (λx.(x x))  # not Omega (1st binder y != x)
-        $AppT($omegaX, $yz)                        => $Some($AppT($yz, $yz)),       # ((λx.(x x)) (y z))     # only "half of" Omega
+        `'(λx.x x) (λy.x x)'    => $Some(`'x x'),                   # not Omega (2nd binder y != x)
+        `'(λy.x x) (λx.x x)'    => $Some(`'x x'),                   # not Omega (1st binder y != x)
+        `'(λx.x x) (y z)'       => $Some(`'(y z) (y z)'),           # only "half of" Omega
     );
 }
 
@@ -419,20 +402,20 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
 { #alpha-problematic-vars
     is_properLambdaFn($alpha-problematic-vars, 'alpha-problematic-vars');
 
-    my $arg  = $AppT($AppT($AppT($x, $y), $z), $AppT($u, $v));  # (x y z (u v))
-    my $lamX = $LamT('x', $AppT($AppT($z, $y), $x));             # λx.z y x
-    my $lamZ = $LamT('z', $lamX);                                # λz.λx.z y x
-    my $func = $LamT('y', $lamZ);                                # λy.λz.λx.z y x
+    my $arg  = `'x y z (u v)';
+    my $lamX = `'λx.z y x';
+    my $lamZ = `'λz.λx.z y x';
+    my $func = `'λy.λz.λx.z y x';
     my $app  = $AppT($func, $arg);                              # (λy.λz.λx.z y x) (x y z (u v))
     my $lam  = $LamT('x', $app);                                 # λx.((λy.λz.λx.z y x) (x y z (u v)))
 
     my ($t, $apvs);
 
-    $t = $x;    # not a beta-redex
+    $t = `'x';    # not a beta-redex
     $apvs = $alpha-problematic-vars($t);
     $has_length($apvs, 0, "(alpha-problematic-vars '{$Term2source($t)})");
 
-    $t = $c;    # not a beta-redex
+    $t = `'"c"';    # not a beta-redex
     $apvs = $alpha-problematic-vars($t);
     $has_length($apvs, 0, "(alpha-problematic-vars '{$Term2source($t)})");
 
@@ -450,13 +433,12 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
     #   a) y is the substitution var (hence not free under a binder y) 
     #   b) there are no binders u and v (in the body of func)
     $has_length($apvs, 2,    "(alpha-problematic-vars '{$Term2source($t)})");
-    $contains_ok($x, $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
-    $contains_ok($z, $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
+    $contains_ok(`'x', $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
+    $contains_ok(`'z', $apvs,  "(alpha-problematic-vars '{$Term2source($t)})");
 
     my $m = $betaReduce($app);
     #diag lambdaArgToStr($m);
     $t = $Some2value($m);
-    diag $Term2srcFull($app) ~ '  =_β  ' ~ $Term2srcFull($t);
     diag $Term2srcLess($app) ~ '  =_β  ' ~ $Term2srcLess($t);
     #is_eq-Term($t, ...
 }
@@ -465,10 +447,10 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
 { #alpha-needy-terms
     is_properLambdaFn($alpha-needy-terms, 'alpha-needy-terms');
 
-    my $arg  = $AppT($AppT($AppT($x, $y), $z), $AppT($u, $v));  # (x y z (u v))
-    my $lamX = $LamT('x', $AppT($AppT($z, $y), $x));             # λx.z y x
-    my $lamZ = $LamT('z', $lamX);                                # λz.λx.z y x
-    my $func = $LamT('y', $lamZ);                                # λy.λz.λx.z y x
+    my $arg  = `'x y z (u v)';
+    my $lamX = `'λx.z y x';
+    my $lamZ = `'λz.λx.z y x';
+    my $func = `'λy.λz.λx.z y x';
     my $app  = $AppT($func, $arg);                              # ((λy.λz.λx.z y x) (x y z (u v)))
     my $lam  = $LamT('x', $app);                                 # λx.x ((λy.λz.λx.z y x) (x y z (u v)))
 
@@ -476,11 +458,11 @@ my $OmegaXY = `'((λx.x x) (λy.y y))';
     my $apvsStr = $foldl(-> $acc, $v { $acc ~ ' ' ~ $Term2source($v) }, '[', $apvs) ~ ' ]';
     my ($t, $ants);
 
-    $t = $x;
+    $t = `'x';
     $ants = $alpha-needy-terms($t, $apvs);
     $has_length($ants, 0, "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
 
-    $t = $c;
+    $t = `'"c"';
     $ants = $alpha-needy-terms($t, $apvs);
     $has_length($ants, 0, "(alpha-needy-terms '{$Term2source($t)} $apvsStr)");
 
