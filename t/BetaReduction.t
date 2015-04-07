@@ -141,32 +141,32 @@ plan 134;
     }
 
     is_betaRedex(
-        `'x'                                        => $false,
-        `'"c"'                                      => $false,
-        `'λx."c"'                                   => $false,
-        `'λx.x'                                     => $false,
-        `'λx.x "c"'                                 => $false,
-        `'λx.x y'                                   => $false,
-        `'λx.y x'                                   => $false,
-        `'λx.x ((λy.λz.y x) (λy.x y))'              => $false,  # not a redex but contractible (twice)
-        `'x "c"'                                    => $false,
-        `'x x'                                      => $false,
-        `'x y'                                      => $false,
-        `'(λx.y) x'                                 => $true,   # a redex
-        $AppT(`'λx.z x y', `'"c"')                  => $true,   # ((λx.z x y) "c")          # a redex
-        $AppT(`'(λy.x y) y', `'z')                  => $false,  # (((λy.x y) y) z)          # not a redex but reducible
-        $AppT(`'y', `'(λy.x y) z')                  => $false,  # (y ((λy.x y) z))          # not a redex but reducible
-        `'(λy.x y) z'                               => $true,   # a redex
-        `'(λx.y) x ((λy.x) y)'                      => $false,  # not a redex but reducible
-        $LamT('x', $AppT(`'(λy.z y) x', `'x'))      => $false,  # (λx.(λy.z y) x x)         # not a redex but reducible
+        `'x'                           => $false,
+        `'"c"'                         => $false,
+        `'λx."c"'                      => $false,
+        `'λx.x'                        => $false,
+        `'λx.x "c"'                    => $false,
+        `'λx.x y'                      => $false,
+        `'λx.y x'                      => $false,
+        `'λx.x ((λy.λz.y x) (λy.x y))' => $false,  # not a redex but contractible (twice)
+        `'x "c"'                       => $false,
+        `'x x'                         => $false,
+        `'x y'                         => $false,
+        `'(λx.y) x'                    => $true,   # a redex
+        `'(λx.z x y) "c"'              => $true,   # a redex
+        `'(λy.x y) y z'                => $false,  # not a redex but reducible
+        $AppT(`'y', `'(λy.x y) z')     => $false,  # (y ((λy.x y) z))          # not a redex but reducible
+        `'(λy.x y) z'                  => $true,   # a redex
+        `'(λx.y) x ((λy.x) y)'         => $false,  # not a redex but reducible
+        $LamT('x', `'(λy.z y) x x')    => $false,  # (λx.(λy.z y) x x)         # not a redex but reducible
         
-        `'(λx.x x)'                                 => $false,  # omegaX
-        `'(λx.x x) (λx.x x)'                        => $true,   # OmegaXX: a redex, contracting to itself
-        `'(λy.y y)'                                 => $false,  # omegaY
-        `'(λy.y y) (λy.y y)'                        => $true,   # OmegaYY: a redex, contracting to itself
-        `'(λx.x x) (λy.y y)'                        => $true,   # OmegaXY: a redex, contracting to itself (module alpha-conv)
+        `'(λx.x x)'                    => $false,  # omegaX
+        `'(λx.x x) (λx.x x)'           => $true,   # OmegaXX: a redex, contracting to itself
+        `'(λy.y y)'                    => $false,  # omegaY
+        `'(λy.y y) (λy.y y)'           => $true,   # OmegaYY: a redex, contracting to itself
+        `'(λx.x x) (λy.y y)'           => $true,   # OmegaXY: a redex, contracting to itself (module alpha-conv)
         
-        `'(λx.x x) (y z)'                           => $true,   # only "half of" Omega
+        `'(λx.x x) (y z)'              => $true,   # only "half of" Omega
     );
 }
 
@@ -187,32 +187,32 @@ plan 134;
     }
 
     is_betaReducible(
-        `'x'                                        => $false,
-        `'"c"'                                      => $false,
-        `'λx."c"'                                   => $false,
-        `'λx.x'                                     => $false,
-        `'λx.x "c"'                                 => $false,
-        `'λx.x y'                                   => $false,
-        `'λx.y x'                                   => $false,
-        `'λx.x ((λy.λz.y x) (λy.x y))'              => $true,   # not a redex but contractible (twice)
-        `'x "c"'                                    => $false,
-        `'x x'                                      => $false,
-        `'x y'                                      => $false,
-        `'(λx.y) x'                                 => $true,   # a redex
-        $AppT(`'λx.z x y', `'"c"')                  => $true,   # ((λx.z x y) "c")          # a redex
-        $AppT(`'(λy.x y) y', `'z')                  => $true,   # (((λy.x y) y) z)          # not a redex but reducible
-        $AppT(`'y', `'(λy.x y) z')                  => $true,   # (y ((λy.x y) z))          # not a redex but reducible
-        `'(λy.x y) z'                               => $true,   # a redex
-        `'(λx.y) x ((λy.x) y)'                      => $true,   # not a redex but reducible
-        $LamT('x', $AppT(`'(λy.z y) x', `'x'))      => $true,   # (λx.(λy.z y) x x)         # not a redex but reducible
+        `'x'                           => $false,
+        `'"c"'                         => $false,
+        `'λx."c"'                      => $false,
+        `'λx.x'                        => $false,
+        `'λx.x "c"'                    => $false,
+        `'λx.x y'                      => $false,
+        `'λx.y x'                      => $false,
+        `'λx.x ((λy.λz.y x) (λy.x y))' => $true,   # not a redex but contractible (twice)
+        `'x "c"'                       => $false,
+        `'x x'                         => $false,
+        `'x y'                         => $false,
+        `'(λx.y) x'                    => $true,   # a redex
+        `'(λx.z x y) "c"'              => $true,   # a redex
+        `'(λy.x y) y z'                => $true,   # not a redex but reducible
+        $AppT(`'y', `'(λy.x y) z')     => $true,   # (y ((λy.x y) z))          # not a redex but reducible
+        `'(λy.x y) z'                  => $true,   # a redex
+        `'(λx.y) x ((λy.x) y)'         => $true,   # not a redex but reducible
+        $LamT('x', `'(λy.z y) x x')    => $true,   # (λx.(λy.z y) x x)         # not a redex but reducible
         
-        `'(λx.x x)'                                 => $false,  # omegaX
-        `'(λx.x x) (λx.x x)'                        => $true,   # OmegaXX: a redex, contracting to itself
-        `'(λy.y y)'                                 => $false,  # omegaY
-        `'(λy.y y) (λy.y y)'                        => $true,   # OmegaYY: a redex, contracting to itself
-        `'(λx.x x) (λy.y y)'                        => $true,   # OmegaXY: a redex, contracting to itself (module alpha-conv)
+        `'(λx.x x)'                    => $false,  # omegaX
+        `'(λx.x x) (λx.x x)'           => $true,   # OmegaXX: a redex, contracting to itself
+        `'(λy.y y)'                    => $false,  # omegaY
+        `'(λy.y y) (λy.y y)'           => $true,   # OmegaYY: a redex, contracting to itself
+        `'(λx.x x) (λy.y y)'           => $true,   # OmegaXY: a redex, contracting to itself (module alpha-conv)
         
-        `'(λx.x x) (y z)'                           => $true,   # only "half of" Omega
+        `'(λx.x x) (y z)'              => $true,   # only "half of" Omega
     );
 
 }
@@ -255,16 +255,14 @@ plan 134;
         `'x x'                                  => $None,
         `'x y'                                  => $None,
         `'(λx.y) x'                             => $Some(`'y'),         # a redex
-        $AppT(`'λx.z x y', `'"c"')              => $Some(`'z "c" y'),   # a redex
-            # ((λx.z x y) "c") -> (z "c" y)
-        $AppT(`'(λy.x y) y', `'z')              => $Some(`'x y z'), # not a redex but reducible
-            # ((λy.x y) y z) -> (x y z)
+        `'(λx.z x y) "c"'                       => $Some(`'z "c" y'),   # a redex
+        `'(λy.x y) y z'                         => $Some(`'x y z'),     # not a redex but reducible
         $AppT(`'y', `'(λy.x y) z')              => $Some(`'y (x z)'), # not a redex but reducible
             # (y ((λy.x y) z)) -> (y (x z))
         
         # see below for (((λx.y) x) ((λy.x) y))   # not a redex but contractible (twice)
 
-        $LamT('x', $AppT(`'(λy.z y) x', `'x'))  => $Some(`'λx.z x x'),  # not a redex but reducible
+        $LamT('x', `'(λy.z y) x x')             => $Some(`'λx.z x x'),  # not a redex but reducible
             # (λx.(λy.z y) x x) -> (λx.z x x)
 
         `'z ((λx.x) y) b a'     => $Some(`'z y b a'), # not a redex but reducible
@@ -362,39 +360,37 @@ plan 134;
 
 
     betaReducesTo(
-        `'x'                                        => $None,
-        `'"c"'                                      => $None,
-        `'λx."c"'                                   => $None,
-        `'λx.x'                                     => $None,
-        `'λx.x "c"'                                 => $None,
-        `'λx.x y'                                   => $None,
-        `'λx.y x'                                   => $None,
-        `'λx.x ((λy.λz.y x) (λy.x y))'              => $Some(`'λx.x (λz.x x)'),  # not a redex but contractible (twice)
-        `'x "c"'                                    => $None,
-        `'x x'                                      => $None,
-        `'x y'                                      => $None,
-        `'(λx.y) x'                                 => $Some(`'y'), # a redex
-        $AppT(`'λx.z x y', `'"c"')                  => $Some(`'z "c" y'),      # a redex
-            # ((λx.z x y) "c") -> (z "c" y)
-        $AppT(`'(λy.x y) y', `'z')                  => $Some(`'x y z'),        # not a redex but reducible
-            # (((λy.x y) y) z) -> (x y z)
-        $AppT(`'y', `'(λy.x y) z')                  => $Some(`'y (x z)'),      # not a redex but reducible
+        `'x'                                    => $None,
+        `'"c"'                                  => $None,
+        `'λx."c"'                               => $None,
+        `'λx.x'                                 => $None,
+        `'λx.x "c"'                             => $None,
+        `'λx.x y'                               => $None,
+        `'λx.y x'                               => $None,
+        `'λx.x ((λy.λz.y x) (λy.x y))'          => $Some(`'λx.x (λz.x x)'), # not a redex but contractible (twice)
+        `'x "c"'                                => $None,
+        `'x x'                                  => $None,
+        `'x y'                                  => $None,
+        `'(λx.y) x'                             => $Some(`'y'),             # a redex
+        `'(λx.z x y) "c"'                       => $Some(`'z "c" y'),       # a redex
+        `'(λy.x y) y z'                         => $Some(`'x y z'),         # not a redex but reducible
+        $AppT(`'y', `'(λy.x y) z')              => $Some(`'y (x z)'),       # not a redex but reducible
             # (y ((λy.x y) z)) -> (y (x z))
-        `'(λx.y) x ((λy.x) y)'                      => $Some(`'y x'),         # not a redex but contractible (twice)
-        $LamT('x', $AppT(`'(λy.z y) x', `'x'))      => $Some(`'λx.z x x'),    # not a redex but reducible
-            # (λx.(λy.z y) x x) -> (λx.z x x)        # TODO: use as example for beta-eta reduction': λx.z x x
+        `'(λx.y) x ((λy.x) y)'                  => $Some(`'y x'),           # not a redex but contractible (twice)
+        $LamT('x', `'(λy.z y) x x')             => $Some(`'λx.z x x'),      # not a redex but reducible
+            # (λx.(λy.z y) x x) -> (λx.z x x)    # TODO: use as example for beta-eta reduction': λx.z x x
 
-        `'z ((λx.x) y) b a'     => $Some(`'z y b a'), # not a redex but reducible
+        `'z ((λx.x) y) b a'                     => $Some(`'z y b a'), # not a redex but reducible
 
-        `'(λx.x x)'             => $None,                           # omegaX
-        `'((λx.x x) (λx.x x))'  => $None,                           # OmegaXX: a redex, contracting to itself
-        `'(λy.y y)'             => $None,                           # omegaY
-        `'((λy.y y) (λy.y y))'  => $None,                           # OmegaYY: a redex, contracting to itself
-        `'((λx.x x) (λy.y y))'  => $Some(`'(λy.y y) (λy.y y)'),     # OmegaXY: a redex, contracting to itself (module alpha-conv)
+        `'(λx.x x)'                             => $None,                           # omegaX
+        `'((λx.x x) (λx.x x))'                  => $None,                           # OmegaXX: a redex, contracting to itself
+        `'(λy.y y)'                             => $None,                           # omegaY
+        `'((λy.y y) (λy.y y))'                  => $None,                           # OmegaYY: a redex, contracting to itself
+        `'((λx.x x) (λy.y y))'                  => $Some(`'(λy.y y) (λy.y y)'),     # OmegaXY: a redex, contracting to itself (module alpha-conv)
         
-        `'(λx.x x) (λy.x x)'    => $Some(`'x x'),                   # not Omega (2nd binder y != x)
-        `'(λy.x x) (λx.x x)'    => $Some(`'x x'),                   # not Omega (1st binder y != x)
-        `'(λx.x x) (y z)'       => $Some(`'(y z) (y z)'),           # only "half of" Omega
+        `'(λx.x x) (λy.x x)'                    => $Some(`'x x'),                   # not Omega (2nd binder y != x)
+        `'(λy.x x) (λx.x x)'                    => $Some(`'x x'),                   # not Omega (1st binder y != x)
+        `'(λx.x x) (y z)'                       => $Some(`'(y z) (y z)'),           # only "half of" Omega
     );
 }
 
@@ -406,8 +402,8 @@ plan 134;
     my $lamX = `'λx.z y x';
     my $lamZ = `'λz.λx.z y x';
     my $func = `'λy.λz.λx.z y x';
-    my $app  = $AppT($func, $arg);                              # (λy.λz.λx.z y x) (x y z (u v))
-    my $lam  = $LamT('x', $app);                                 # λx.((λy.λz.λx.z y x) (x y z (u v)))
+    my $app  = $AppT($func, $arg);  # (λy.λz.λx.z y x) (x y z (u v))
+    my $lam  = $LamT('x', $app);    # λx.((λy.λz.λx.z y x) (x y z (u v)))
 
     my ($t, $apvs);
 
@@ -451,8 +447,8 @@ plan 134;
     my $lamX = `'λx.z y x';
     my $lamZ = `'λz.λx.z y x';
     my $func = `'λy.λz.λx.z y x';
-    my $app  = $AppT($func, $arg);                              # ((λy.λz.λx.z y x) (x y z (u v)))
-    my $lam  = $LamT('x', $app);                                 # λx.x ((λy.λz.λx.z y x) (x y z (u v)))
+    my $app  = $AppT($func, $arg);  # ((λy.λz.λx.z y x) (x y z (u v)))
+    my $lam  = $LamT('x', $app);    # λx.x ((λy.λz.λx.z y x) (x y z (u v)))
 
     my $apvs = $alpha-problematic-vars($app);
     my $apvsStr = $foldl(-> $acc, $v { $acc ~ ' ' ~ $Term2source($v) }, '[', $apvs) ~ ' ]';
