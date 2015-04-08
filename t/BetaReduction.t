@@ -312,10 +312,7 @@ plan 134;
 
 
     subtest({ # a term that β-"contracts" to an ever larger term: (λx.x x y) (λx.x x y)
-        my $t = {
-            my $lx-xxy  = $LamT('x', $AppT(`'x x', `'y')); # lam(<x>, <x x y>)
-            $AppT($lx-xxy, $lx-xxy);
-        }();
+        my $t = $AppT(`'λx.x x y', `'λx.x x y');
 
         # size of a LamT is 1 + size of body
         # size of an AppT is 1 + size of func + size of arg

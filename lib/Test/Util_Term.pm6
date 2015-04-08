@@ -186,6 +186,7 @@ our constant $testTerms is export = {
     
     my $xα1y ::= $AppT($xα1, $y);
     my $xα2y ::= $AppT($xα2, $y);
+    my $xxy  ::= $AppT($xx, $y);
     my $xyu  ::= $AppT($xy, $u);
     my $xyz  ::= $AppT($xy, $z);
     my $xyκc ::= $AppT($xy, $κc);
@@ -233,6 +234,7 @@ our constant $testTerms is export = {
     my $λx_xy       ::= $LamT('x', $xy);
     my $λx_xz       ::= $LamT('x', $xz);
     my $λx_zx       ::= $LamT('x', $zx);
+    my $λx_xxy      ::= $LamT('x', $xxy);
     my $λx_zxx      ::= $LamT('x', $zxx);
     my $xλx_zxx     ::= $AppT($x, $λx_zxx);
     my $λx_xκc      ::= $LamT('x', $xκc);
@@ -401,6 +403,7 @@ our constant $testTerms is export = {
         '((u u) f)'                 => $uuf,
         '((x α1) y)'                => $xα1y,
         '((x α2) y)'                => $xα2y,
+        '((x x) y)'                 => $xxy,
         '((x y) u)'                 => $xyu,
         '((x y) z)'                 => $xyz,
         '((x y) "c")'               => $xyκc,
@@ -460,6 +463,7 @@ our constant $testTerms is export = {
         '(λx.(x y))'                => $λx_xy,
         '(λx.(x z))'                => $λx_xz,
         '(λx.(z x))'                => $λx_zx,
+        '(λx.((x x) y))'            => $λx_xxy,
         '(λx.((z x) x))'            => $λx_zxx,
         '(x (λx.((z x) x)))'        => $xλx_zxx,
         '(λx.(y x))'                => $λx_yx,
@@ -694,6 +698,7 @@ our constant $testTerms is export = {
         .aka('((u u) f)', '(u u) f', '(u u f)', 'u u f')\
         .aka('((x α1) y)', '(x α1) y', '(x α1 y)', 'x α1 y')\
         .aka('((x α2) y)', '(x α2) y', '(x α2 y)', 'x α2 y')\
+        .aka('((x x) y)', '(x x) y', '(x x y)', 'x x y')\
         .aka('((x y) u)', '(x y) u', '(x y u)', 'x y u')\
         .aka('((x y) z)', '(x y) z', '(x y z)', 'x y z')\
         .aka('((x y) "c")', '(x y) "c"', '(x y "c")', 'x y "c"')\
@@ -760,6 +765,7 @@ our constant $testTerms is export = {
         .aka('(λx.(x y))', 'λx.(x y)', 'λx.x y', '(λx.x y)')\
         .aka('(λx.(x z))', 'λx.(x z)', 'λx.x z', '(λx.x z)')\
         .aka('(λx.(z x))', 'λx.(z x)', 'λx.z x', '(λx.z x)')\
+        .aka('(λx.((x x) y))', 'λx.((x x) y)', 'λx.x x y', '(λx.x x y)')\
         .aka('(λx.((z x) x))', 'λx.((z x) x)', 'λx.z x x', '(λx.z x x)')\
         .aka('(x (λx.((z x) x)))', 'x λx.z x x', 'x (λx.z x x)', '(x λx.z x x)', '(x (λx.z x x))')\
         .aka('(λx.(y x))', 'λx.(y x)', 'λx.y x', '(λx.y x)')\
