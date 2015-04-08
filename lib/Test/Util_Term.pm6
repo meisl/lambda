@@ -422,6 +422,7 @@ our constant $testTerms is export = {
         '(x (y (z x)))'             => $AppT($x, $AppT($y, $zx)),
         '((x y) (y z))'             => $AppT($xy, $yz),
         
+        '((z ((λx.x) y)) b)'        =>       $AppT($AppT($z, $AppT($λx_x, $y)), $b),
         '(((z ((λx.x) y)) b) a)'    => $AppT($AppT($AppT($z, $AppT($λx_x, $y)), $b), $a),
 
         '(λ_.x)'                    => $λ__x,
@@ -723,6 +724,7 @@ our constant $testTerms is export = {
         .aka('((x (y z)) x)', '(x (y z)) x', '(x (y z) x)', 'x (y z) x')\
         .aka('(x (y (z x)))', 'x (y (z x))')\
         .aka('((x y) (y z))', '(x y) (y z)', '(x y (y z))', 'x y (y z)')\
+        .aka('((z ((λx.x) y)) b)', '(z ((λx.x) y)) b', 'z ((λx.x) y) b', '(z ((λx.x) y) b)')\
         .aka('(((z ((λx.x) y)) b) a)', '((z ((λx.x) y)) b) a', 'z ((λx.x) y) b a', '(z ((λx.x) y) b a)')\
         .aka('(λ_.x)', 'λ_.x')\
         .aka('(λ_.y)', 'λ_.y')\

@@ -47,6 +47,8 @@ plan 134;
         [`'g', [`'h'],              `'(λf1.λf2.λ_.λh.h f1 f2) a b']     => $Some(`'h a b'    => []),
         [`'h', [],                  `'(λf1.λf2.λ_.λh.h f1 f2) a b g']   => $Some(`'h a b'    => []),
         [`'h', [`'k'],              `'(λf1.λf2.λ_.λh.h f1 f2) a b g']   => $Some(`'h a b'    => [`'k']),
+
+        [`'a', [],                  `'z ((λx.x) y) b']     => $Some(`'z y b a'),
     );
 }
 
@@ -101,6 +103,12 @@ plan 134;
     is_properLambdaFn $apply-args_special, 'apply-args_special';
     test_variant_apply-args(
         -> $substitutions, $rest-args, $inTerm {
+            my $finalize = -> TTerm $t, TList $rest-args {
+                _if_($Term-eq($t, $inTerm),
+                    { $Pair($None, $rest-args) },
+                    { $Pair($Some($t), $rest-args) }
+                )
+            };
             case-Term($inTerm,
                 ConstT => -> Mu     { $apply-args($substitutions, $rest-args, $inTerm) },
                 VarT   => -> Mu     { $apply-args($substitutions, $rest-args, $inTerm) },
@@ -109,12 +117,7 @@ plan 134;
                     case-List($rest-args, 
                         nil => { $apply-args($substitutions, $rest-args, $inTerm) },
                         cons => -> $a, $as {
-                            my $out = $apply-args_special($substitutions, $a, $as, $v, $b);
-                            my $t = $fst($out);
-                            _if_($Term-eq($t, $inTerm),
-                                { $Pair($None, $snd($out)) },
-                                { $Pair($Some($t), $snd($out)) }
-                            )
+                            $apply-args_special($finalize, $substitutions, $a, $as, $v, $b);
                         }
                     )
                 }
@@ -122,6 +125,7 @@ plan 134;
         }
     );
 }
+exit;
 
 
 { # predicate betaRedex?
@@ -232,7 +236,7 @@ plan 134;
                 !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
             my $desc = "$termStr beta-contracts to $expStr";
 
-            my $actual = $betaContract($term);
+            my $actual = $betaContract_multi($term);
             is($actual, $expected, $desc)
                 or diag($actual.perl) and die;
         }
@@ -333,6 +337,7 @@ plan 134;
         is($s, 19, "(eq? 19 (Term->size {$Term2source($t)}))");
     }, 'a term that β-"contracts" to an ever larger term: (λx.x x y) (λx.x x y)');
 }
+exit;
 
 
 { # function betaReduce

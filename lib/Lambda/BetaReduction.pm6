@@ -210,10 +210,11 @@ constant $apply-args is export = $Y(-> &self { lambdaFn(
     }
 )});
 
-# Variant of apply-args specialized for the LamT case *where we have a non-empty list of rest-args*
+# Variant of apply-args specialized for the LamT case *where we have at least one arg*
 constant $apply-args_special is export = $Y(-> &self { lambdaFn(
-    'apply-args_special', 'λsubstitutions.λarg.λrest-args.λbinderName.λbody.error "NYI"',
-    -> TList $substitutions, $arg, TList $rest-args, Str $binderName, TTerm $body -->TPair{
+    'apply-args_special', # : (Term -> [Term]-> a) -> [<Str, Term>] -> Term -> [Term] -> Str -> Term -> a
+    'λfinalize.λsubstitutions.λarg.λrest-args.λbinderName.λbody.error "NYI"',
+    -> $finalize, TList $substitutions, $arg, TList $rest-args, Str $binderName, TTerm $body {
         case-Term($body,
             LamT => -> $bodyVarName, $bodyBody {
                 case-List($rest-args,
@@ -226,20 +227,20 @@ constant $apply-args_special is export = $Y(-> &self { lambdaFn(
                             { $subst-par-alpha_direct(                                $newSubsts,  $bodyBody) },
                             { $subst-par-alpha_direct($cons($Pair($binderName, $arg), $newSubsts), $bodyBody) }
                         );
-                        $Pair($LamT($bodyVarName, $newBody), $nil);
+                        $finalize($LamT($bodyVarName, $newBody), $nil);
                     },
                     cons => -> $a, $as {
                         my $newSubsts = $cons($Pair($binderName, $arg), $substitutions);
-                        &self($newSubsts, $a, $as, $bodyVarName, $bodyBody);
+                        &self($finalize, $newSubsts, $a, $as, $bodyVarName, $bodyBody);
                     }
                 );
                 
             },
-            ConstT => -> Mu { $Pair($body, $rest-args) },
+            ConstT => -> Mu { $finalize($body, $rest-args) },
             VarT   => -> $bodyVarName {
                 _if_($Str-eq($binderName, $bodyVarName),
-                    { $Pair($arg, $rest-args) },
-                    { $Pair(case-Maybe($first(-> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, $substitutions),
+                    { $finalize($arg, $rest-args) },
+                    { $finalize(case-Maybe($first(-> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, $substitutions),
                                 None => $body,
                                 Some => $snd    # return value of Some as is
                             ),
@@ -248,7 +249,7 @@ constant $apply-args_special is export = $Y(-> &self { lambdaFn(
                 )
             },
             AppT   => -> Mu, Mu {
-                $Pair(
+                $finalize(
                     $subst-par-alpha_direct($cons($Pair($binderName, $arg), $substitutions), $body), 
                     $rest-args
                 )
@@ -264,10 +265,14 @@ constant $collect-then-apply-args is export = $Y(-> &self { lambdaFn(
     'collect-then-apply-args', 'λarg.λrest-args.λinTerm.error "NYI"',
     -> TTerm $arg, TList $rest-args, TTerm $inTerm -->TMaybe{
         case-Term($inTerm,
-            ConstT => $K1None,
-            VarT   => $K1None,
+            ConstT => $K1None,  # -> Mu { $onNoneApplied($inTerm, $cons($arg, $rest-args)) }
+            VarT   => $K1None,  # -> Mu { $onNoneApplied($inTerm, $cons($arg, $rest-args)) }
             AppT   => -> $f, $a { &self($a, $cons($arg, $rest-args), $f) },
-            LamT   => -> $v, $b { $Some($apply-args_special($nil, $arg, $rest-args, $v, $b)) }
+            LamT   => -> $v, $b {
+                $Some($apply-args_special($Pair, $nil, $arg, $rest-args, $v, $b))
+                # my $p = $apply-args_special($nil, $arg, $rest-args, $v, $b);
+                # $onSomeApplied($fst($p), $snd($p))
+            }
         )
     }
 )});
