@@ -21,36 +21,84 @@ use Lambda::BetaReduction;
 plan 134;
 
 
-{ # collect-then-apply-args
-    is_properLambdaFn $collect-then-apply-args, 'collect-then-apply-args';
+{ # collect-args
+    is_properLambdaFn $collect-args, 'collect-args';
 
-    testTermFn($collect-then-apply-args, :expectedToStr(&lambdaArgToStr),
-        [`'a', [],             `'x']               => $None,
-        [`'a', [`'b'],         `'x']               => $None,
-        [`'a', [],             `'"c"']             => $None,
-        [`'a', [`'b'],         `'"c"']             => $None,
-        [`'a', [],             `'(x (λy.x y))']    => $None,
-        [`'a', [`'b'],         `'(x (λy.x y))']    => $None,
-        [`'a', [],             `'("c" (λy.x y))']  => $None,
-        [`'a', [`'b'],         `'("c" (λy.x y))']  => $None,
-        [`'a', [],             `'λy.x y']          => $Some(`'x a' => []),
-        [`'a', [`'b'],         `'λy.x y']          => $Some(`'x a' => [`'b']),
+    my $onU = -> TTerm $func, TTerm $arg, TList $rest-args {
+        $Some($cons('onUnapp', $cons($func, $cons($arg, $rest-args))));
+    };
+    my $onL = -> Str $binderName, TTerm $body, TTerm $arg, TList $rest-args {
+        $Some($cons('onLambda', $cons($binderName, $cons($body, $cons($arg, $rest-args)))));
+    };
 
-        [`'a', [],             `'(λx.λy.x) (x y)'] => $Some(`'x y' => []),
-        [`'a', [`'b'],         `'(λx.λy.x) (x y)'] => $Some(`'x y' => [`'b']),
+    testTermFn($collect-args($onU, $onL), :expectedToStr(&lambdaArgToStr),
+        [`'a', [],             `'x']               => $Some(['onUnapp', `'x',      `'a']),
+        [`'a', [`'b'],         `'x']               => $Some(['onUnapp', `'x',      `'a', `'b']),
+        [`'a', [],             `'"c"']             => $Some(['onUnapp', `'"c"',    `'a']),
+        [`'a', [`'b'],         `'"c"']             => $Some(['onUnapp', `'"c"',    `'a', `'b']),
+        [`'a', [],             `'(x (λy.x y))']    => $Some(['onUnapp', `'x',      `'λy.x y', `'a']),
+        [`'a', [`'b'],         `'(x (λy.x y))']    => $Some(['onUnapp', `'x',      `'λy.x y', `'a', `'b']),
+        [`'a', [],             `'("c" (λy.x y))']  => $Some(['onUnapp', `'"c"',    `'λy.x y', `'a']),      
+        [`'a', [`'b'],         `'("c" (λy.x y))']  => $Some(['onUnapp', `'"c"',    `'λy.x y', `'a', `'b']),
+        [`'a', [],             `'λy.x y']          => $Some(['onLambda', 'y', `'x y', `'a']),     # $Some(`'x a' => []),
+        [`'a', [`'b'],         `'λy.x y']          => $Some(['onLambda', 'y', `'x y', `'a', `'b']),   # $Some(`'x a' => [`'b']),
 
-        [`'a', [`'b',`'g'],         `'(λf1.λf2.λ_.λh.h f1 f2)']         => $Some(`'λh.h a b' => []),
-        [`'a', [`'b',`'g', `'h'],   `'(λf1.λf2.λ_.λh.h f1 f2)']         => $Some(`'h a b'    => []),
-        [`'b', [`'g'],              `'(λf1.λf2.λ_.λh.h f1 f2) a']       => $Some(`'λh.h a b' => []),
-        [`'b', [`'g', `'h'],        `'(λf1.λf2.λ_.λh.h f1 f2) a']       => $Some(`'h a b'    => []),
-        [`'g', [],                  `'(λf1.λf2.λ_.λh.h f1 f2) a b']     => $Some(`'λh.h a b' => []),
-        [`'g', [`'h'],              `'(λf1.λf2.λ_.λh.h f1 f2) a b']     => $Some(`'h a b'    => []),
-        [`'h', [],                  `'(λf1.λf2.λ_.λh.h f1 f2) a b g']   => $Some(`'h a b'    => []),
-        [`'h', [`'k'],              `'(λf1.λf2.λ_.λh.h f1 f2) a b g']   => $Some(`'h a b'    => [`'k']),
+        [`'a', [],             `'(λx.λy.x) (x y)'] => $Some(['onLambda', 'x', `'λy.x', `'x y', `'a']),    # $Some(`'x y' => []),
+        [`'a', [`'b'],         `'(λx.λy.x) (x y)'] => $Some(['onLambda', 'x', `'λy.x', `'x y', `'a', `'b']),    # $Some(`'x y' => [`'b']),
 
-        [`'a', [],                  `'z ((λx.x) y) b']     => $Some(`'z y b a'),
+        [`'a', [],             `'z ((λx.x) y) b']  => $Some(['onUnapp', `'z', `'(λx.x) y', `'b', `'a']), # $Some(`'z y b a'),
+
+        [`'a', [`'b',`'g'],         `'(λf1.λf2.λ_.λh.h f1 f2)']         => $Some(['onLambda', 'f1', `'λf2.λ_.λh.h f1 f2', `'a', `'b', `'g']),         #   $Some(`'λh.h a b' => []),
+        [`'a', [`'b',`'g', `'h'],   `'(λf1.λf2.λ_.λh.h f1 f2)']         => $Some(['onLambda', 'f1', `'λf2.λ_.λh.h f1 f2', `'a', `'b', `'g', `'h']),   #   $Some(`'h a b'    => []),
+        [`'b', [`'g'],              `'(λf1.λf2.λ_.λh.h f1 f2) a']       => $Some(['onLambda', 'f1', `'λf2.λ_.λh.h f1 f2', `'a', `'b', `'g']),         #   $Some(`'λh.h a b' => []),
+        [`'b', [`'g', `'h'],        `'(λf1.λf2.λ_.λh.h f1 f2) a']       => $Some(['onLambda', 'f1', `'λf2.λ_.λh.h f1 f2', `'a', `'b', `'g', `'h']),   #   $Some(`'h a b'    => []),
+        [`'g', [],                  `'(λf1.λf2.λ_.λh.h f1 f2) a b']     => $Some(['onLambda', 'f1', `'λf2.λ_.λh.h f1 f2', `'a', `'b', `'g']),         #   $Some(`'λh.h a b' => []),
+        [`'g', [`'h'],              `'(λf1.λf2.λ_.λh.h f1 f2) a b']     => $Some(['onLambda', 'f1', `'λf2.λ_.λh.h f1 f2', `'a', `'b', `'g', `'h']),   #   $Some(`'h a b'    => []),
+        [`'h', [],                  `'(λf1.λf2.λ_.λh.h f1 f2) a b g']   => $Some(['onLambda', 'f1', `'λf2.λ_.λh.h f1 f2', `'a', `'b', `'g', `'h']),         #   $Some(`'h a b'    => []),
+        [`'h', [`'k'],              `'(λf1.λf2.λ_.λh.h f1 f2) a b g']   => $Some(['onLambda', 'f1', `'λf2.λ_.λh.h f1 f2', `'a', `'b', `'g', `'h', `'k']),   #   $Some(`'h a b'    => [`'k']),
     );
 }
+
+
+
+{ # collect-args-and-lambdas
+    is_properLambdaFn $collect-args-and-lambdas, 'collect-args-and-lambdas';
+
+    my $onU = -> TTerm $func, TTerm $arg, TList $rest-args {
+        $Some($cons('onUnapp', $cons($func, $cons($arg, $cons($rest-args, $nil)))));
+    };
+    my $onIL = -> TList $bindings, TTerm $body, TList $rest-args {
+        $cons('onInsideLambda', $cons($bindings, $cons($body, $cons($rest-args, $nil))));
+    };
+
+    testTermFn($collect-args-and-lambdas($onU, $onIL), :expectedToStr(&lambdaArgToStr),
+        [`'a', [],             `'x']               => $Some(['onUnapp', `'x',      `'a', []]),
+        [`'a', [`'b'],         `'x']               => $Some(['onUnapp', `'x',      `'a', [`'b']]),
+        [`'a', [],             `'"c"']             => $Some(['onUnapp', `'"c"',    `'a', []]),
+        [`'a', [`'b'],         `'"c"']             => $Some(['onUnapp', `'"c"',    `'a', [`'b']]),
+        [`'a', [],             `'(x (λy.x y))']    => $Some(['onUnapp', `'x',      `'λy.x y', [`'a']]),
+        [`'a', [`'b'],         `'(x (λy.x y))']    => $Some(['onUnapp', `'x',      `'λy.x y', [`'a', `'b']]),
+        [`'a', [],             `'("c" (λy.x y))']  => $Some(['onUnapp', `'"c"',    `'λy.x y', [`'a']]),      
+        [`'a', [`'b'],         `'("c" (λy.x y))']  => $Some(['onUnapp', `'"c"',    `'λy.x y', [`'a', `'b']]),
+        [`'a', [],             `'λy.x y']          => $Some(['onInsideLambda', ['y' => `'a'], `'x y', []]),     # $Some(`'x a' => []),
+        [`'a', [`'b'],         `'λy.x y']          => $Some(['onInsideLambda', ['y' => `'a'], `'x y', [`'b']]), # $Some(`'x a' => [`'b']),
+
+        [`'a', [],             `'(λx.λy.x) (x y)'] => $Some(['onInsideLambda', ['y' => `'a', 'x' => `'x y'], `'x', []]),        # $Some(`'x y' => []),
+        [`'a', [`'b'],         `'(λx.λy.x) (x y)'] => $Some(['onInsideLambda', ['y' => `'a', 'x' => `'x y'], `'x', [`'b']]),    # $Some(`'x y' => [`'b']),
+
+        [`'a', [],             `'z ((λx.x) y) b']  => $Some(['onUnapp', `'z', `'(λx.x) y', [`'b', `'a']]), # $Some(`'z y b a'),
+
+        [`'a', [`'b',`'g'],         `'(λf1.λf2.λ_.λh.h f1 f2)']         => $Some(['onInsideLambda',              ['_' => `'g', 'f2' => `'b', 'f1' => `'a'], `'λh.h f1 f2', []]),        #   $Some(`'λh.h a b' => []),
+        [`'a', [`'b',`'g', `'h'],   `'(λf1.λf2.λ_.λh.h f1 f2)']         => $Some(['onInsideLambda', ['h' => `'h', '_' => `'g', 'f2' => `'b', 'f1' => `'a'],    `'h f1 f2', []]),        #   $Some(`'h a b'    => []),
+        [`'b', [`'g'],              `'(λf1.λf2.λ_.λh.h f1 f2) a']       => $Some(['onInsideLambda',              ['_' => `'g', 'f2' => `'b', 'f1' => `'a'], `'λh.h f1 f2', []]),        #   $Some(`'λh.h a b' => []),
+        [`'b', [`'g', `'h'],        `'(λf1.λf2.λ_.λh.h f1 f2) a']       => $Some(['onInsideLambda', ['h' => `'h', '_' => `'g', 'f2' => `'b', 'f1' => `'a'],    `'h f1 f2', []]),        #   $Some(`'h a b'    => []),
+        [`'g', [],                  `'(λf1.λf2.λ_.λh.h f1 f2) a b']     => $Some(['onInsideLambda',              ['_' => `'g', 'f2' => `'b', 'f1' => `'a'], `'λh.h f1 f2', []]),        #   $Some(`'λh.h a b' => []),
+        [`'g', [`'h'],              `'(λf1.λf2.λ_.λh.h f1 f2) a b']     => $Some(['onInsideLambda', ['h' => `'h', '_' => `'g', 'f2' => `'b', 'f1' => `'a'],    `'h f1 f2', []]),        #   $Some(`'h a b'    => []),
+        [`'h', [],                  `'(λf1.λf2.λ_.λh.h f1 f2) a b g']   => $Some(['onInsideLambda', ['h' => `'h', '_' => `'g', 'f2' => `'b', 'f1' => `'a'],    `'h f1 f2', []]),        #   $Some(`'h a b'    => []),
+        [`'h', [`'k'],              `'(λf1.λf2.λ_.λh.h f1 f2) a b g']   => $Some(['onInsideLambda', ['h' => `'h', '_' => `'g', 'f2' => `'b', 'f1' => `'a'],    `'h f1 f2', [`'k']]),    #   $Some(`'h a b'    => [`'k']),
+    );
+}
+exit;
 
 
 { # apply-args
@@ -98,9 +146,6 @@ plan 134;
     }
 
     is_properLambdaFn $apply-args, 'apply-args';
-    test_variant_apply-args($apply-args);
-
-    is_properLambdaFn $apply-args_special, 'apply-args_special';
     test_variant_apply-args(
         -> $substitutions, $rest-args, $inTerm {
             my $finalize = -> TTerm $t, TList $rest-args {
@@ -117,7 +162,7 @@ plan 134;
                     case-List($rest-args, 
                         nil => { $apply-args($substitutions, $rest-args, $inTerm) },
                         cons => -> $a, $as {
-                            $apply-args_special($finalize, $substitutions, $a, $as, $v, $b);
+                            $apply-args($finalize, $substitutions, $a, $as, $v, $b);
                         }
                     )
                 }

@@ -201,19 +201,23 @@ our constant $testTerms is export = {
     my $hf1             ::= $AppT($h, $f1);
     my $ha              ::= $AppT($h, $a);
     my $λh_ha           ::= $LamT('h', $ha);
-    my $hf1f2           ::= $AppT($hf1, $f2);
     my $hab             ::= $AppT($ha, $b);
     my $λh_hab          ::= $LamT('h', $hab);
+    my $hf1f2           ::= $AppT($hf1, $f2);
+    my $λh_hf1f2        ::= $LamT('h', $hf1f2);
+    my $λ__hf1f2        ::= $LamT('_', $hf1f2);
     my $hf1f2f3         ::= $AppT($hf1f2, $f3);
     my $hf1f2f3f4       ::= $AppT($hf1f2f3, $f4);
     my $hf1f2f3f4f5     ::= $AppT($hf1f2f3f4, $f5);
 
-    my $λh_λ__h             ::=  $LamT('h', $LamT('_', $h));                                 # ctor1o2f0 (ctor 1 of 2 with 0 fields)
-    my $λ__λh_h             ::=  $LamT('_', $LamT('h', $h));                                 # ctor2o2f0 (ctor 2 of 2 with 0 fields)
-    my $λf1_λh_λ__hf1       ::=  $LamT('f1', $LamT('h', $LamT('_', $hf1)));                  # ctor1o2f1 (ctor 1 of 2 with 1 field)
-    my $λf1_λ__λh_hf1       ::=  $LamT('f1', $LamT('_', $LamT('h', $hf1)));                  # ctor2o2f1 (ctor 2 of 2 with 1 field)
-    my $λf1_λf2_λh_λ__hf1   ::=  $LamT('f1', $LamT('f2', $LamT('h', $LamT('_', $hf1f2))));   # ctor1o2f2 (ctor 1 of 2 with 2 fields)
-    my $λf1_λf2_λ__λh_hf1   ::=  $LamT('f1', $LamT('f2', $LamT('_', $LamT('h', $hf1f2))));   # ctor2o2f2 (ctor 1 of 2 with 2 fields)
+    my $λh_λ__h             ::=  $LamT('h', $LamT('_', $h));                                # ctor1o2f0 (ctor 1 of 2 with 0 fields)
+    my $λ__λh_h             ::=  $LamT('_', $LamT('h', $h));                                # ctor2o2f0 (ctor 2 of 2 with 0 fields)
+    my $λf1_λh_λ__hf1       ::=  $LamT('f1', $LamT('h', $LamT('_', $hf1)));                 # ctor1o2f1 (ctor 1 of 2 with 1 field)
+    my $λf1_λ__λh_hf1       ::=  $LamT('f1', $LamT('_', $LamT('h', $hf1)));                 # ctor2o2f1 (ctor 2 of 2 with 1 field)
+    my $λf2_λh_λ__hf1f2     ::=  $LamT('f2', $LamT('h', $λ__hf1f2));
+    my $λf1_λf2_λh_λ__hf1f2 ::=  $LamT('f1', $λf2_λh_λ__hf1f2);                             # ctor1o2f2 (ctor 1 of 2 with 2 fields)
+    my $λf2_λ__λh_hf1f2     ::=  $LamT('f2', $LamT('_', $λh_hf1f2));
+    my $λf1_λf2_λ__λh_hf1f2 ::=  $LamT('f1', $λf2_λ__λh_hf1f2);                             # ctor2o2f2 (ctor 1 of 2 with 2 fields)
 
 
     my $λv_uu       ::= $LamT('v', $uu);
@@ -296,11 +300,12 @@ our constant $testTerms is export = {
     my $θY          ::= $AppT($θU, $θU);
 
     my $θIk         ::= $AppT($θI, $k);
+    my $θIy         ::= $AppT($θI, $y);
     my $θIkf1       ::= $AppT($θIk, $f1);
     my $λk_θIkf1    ::= $LamT('k', $θIkf1);
 
     my $θnil        ::= $λh_λ__h;
-    my $θcons       ::= $λf1_λf2_λ__λh_hf1;
+    my $θcons       ::= $λf1_λf2_λ__λh_hf1f2;
 
     my $θCθcons     ::= $AppT($θC, $θcons);
     my $θCθconsθnil ::= $AppT($θCθcons, $θnil);
@@ -432,6 +437,7 @@ our constant $testTerms is export = {
         '((λx.y) x)'                => $AppT($λx_y, $x),
         '(λx.z)'                    => $λx_z,
         '((λx.x) k)'                => $θIk,
+        '((λx.x) y)'                => $θIy,
         '(((λx.x) k) f1)'           => $θIkf1,
         '(λk.(((λx.x) k) f1))'      => $λk_θIkf1,
         '(λf.(λg.(λx.(f (g x)))))'  => $θB,
@@ -506,23 +512,27 @@ our constant $testTerms is export = {
         '(h f1)'                        => $hf1,
         '(h a)'                         => $ha,
         '(λh.(h a))'                    => $λh_ha,
-        '((h f1) f2)'                   => $hf1f2,
         '((h a) b)'                     => $hab,
         '(λh.((h a) b))'                => $λh_hab,
+        '((h f1) f2)'                   => $hf1f2,
+        '(λh.((h f1) f2))'              => $λh_hf1f2,
+        '(λ_.((h f1) f2))'              => $λ__hf1f2,
         '(((h f1) f2) f3)'              => $hf1f2f3,
         '((((h f1) f2) f3) f4)'         => $hf1f2f3f4,
         '(((((h f1) f2) f3) f4) f5)'    => $hf1f2f3f4f5,
 
-        '(λh.(λ_.h))'                       =>  $λh_λ__h,             # ctor1o2f0 (ctor 1 of 2 with 0 fields)
-        '(λ_.(λh.h))'                       =>  $λ__λh_h,             # ctor2o2f0 (ctor 2 of 2 with 0 fields)
-        '(λf1.(λh.(λ_.(h f1))))'            =>  $λf1_λh_λ__hf1,       # ctor1o2f1 (ctor 1 of 2 with 1 field)
-        '(λf1.(λ_.(λh.(h f1))))'            =>  $λf1_λ__λh_hf1,       # ctor2o2f1 (ctor 2 of 2 with 1 field)
-        '(λf1.(λf2.(λh.(λ_.((h f1) f2)))))' =>  $λf1_λf2_λh_λ__hf1,   # ctor1o2f2 (ctor 1 of 2 with 2 fields)
-        '(λf1.(λf2.(λ_.(λh.((h f1) f2)))))' =>  $λf1_λf2_λ__λh_hf1,   # ctor2o2f2 (ctor 1 of 2 with 2 fields)
+        '(λh.(λ_.h))'                       =>  $λh_λ__h,               # ctor1o2f0 (ctor 1 of 2 with 0 fields)
+        '(λ_.(λh.h))'                       =>  $λ__λh_h,               # ctor2o2f0 (ctor 2 of 2 with 0 fields)
+        '(λf1.(λh.(λ_.(h f1))))'            =>  $λf1_λh_λ__hf1,         # ctor1o2f1 (ctor 1 of 2 with 1 field)
+        '(λf1.(λ_.(λh.(h f1))))'            =>  $λf1_λ__λh_hf1,         # ctor2o2f1 (ctor 2 of 2 with 1 field)
+        '(λf2.(λh.(λ_.((h f1) f2))))'       =>      $λf2_λh_λ__hf1f2,
+        '(λf1.(λf2.(λh.(λ_.((h f1) f2)))))' =>  $λf1_λf2_λh_λ__hf1f2,   # ctor1o2f2 (ctor 1 of 2 with 2 fields)
+        '(λf2.(λ_.(λh.((h f1) f2))))'       =>      $λf2_λ__λh_hf1f2,
+        '(λf1.(λf2.(λ_.(λh.((h f1) f2)))))' =>  $λf1_λf2_λ__λh_hf1f2,   # ctor2o2f2 (ctor 1 of 2 with 2 fields)
         
-        '((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a)'         =>              $AppT($λf1_λf2_λ__λh_hf1, $a),
-        '(((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a) b)'     =>        $AppT($AppT($λf1_λf2_λ__λh_hf1, $a), $b),
-        '((((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a) b) g)' =>  $AppT($AppT($AppT($λf1_λf2_λ__λh_hf1, $a), $b), $g),
+        '((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a)'         =>              $AppT($λf1_λf2_λ__λh_hf1f2, $a),
+        '(((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a) b)'     =>        $AppT($AppT($λf1_λf2_λ__λh_hf1f2, $a), $b),
+        '((((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a) b) g)' =>  $AppT($AppT($AppT($λf1_λf2_λ__λh_hf1f2, $a), $b), $g),
 
         '(((λf.(λg.(λx.(f (g x))))) ((λf.(λx.(λy.((f y) x)))) (λf1.(λf2.(λ_.(λh.((h f1) f2))))))) (((λf.(λx.(λy.((f y) x)))) (λf1.(λf2.(λ_.(λh.((h f1) f2)))))) (λh.(λ_.h))))'
             => $AppT($AppT($θB, $θCθcons), $θCθconsθnil),
@@ -668,6 +678,9 @@ our constant $testTerms is export = {
         .aka('(λf1.(λf2.(λh.(λ_.((h f1) f2)))))', <ctor1o2f2>,          'λf1.(λf2.(λh.(λ_.((h f1) f2))))', 'λf1.λf2.λh.λ_.h f1 f2', '(λf1.λf2.λh.λ_.h f1 f2)')\
         .aka('(λf1.(λf2.(λ_.(λh.((h f1) f2)))))', <ctor2o2f2 cons>,     'λf1.(λf2.(λ_.(λh.((h f1) f2))))', 'λf1.λf2.λ_.λh.h f1 f2', '(λf1.λf2.λ_.λh.h f1 f2)')\
 
+        .aka('(λf2.(λh.(λ_.((h f1) f2))))', 'λf2.(λh.(λ_.((h f1) f2)))', 'λf2.λh.λ_.h f1 f2', '(λf2.λh.λ_.h f1 f2)')\
+        .aka('(λf2.(λ_.(λh.((h f1) f2))))', 'λf2.(λ_.(λh.((h f1) f2)))', 'λf2.λ_.λh.h f1 f2', '(λf2.λ_.λh.h f1 f2)')\
+
         .aka('((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a)', '(λf1.λf2.λ_.λh.h f1 f2) a', '((λf1.λf2.λ_.λh.h f1 f2) a)')\
         .aka('(((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a) b)', '(λf1.λf2.λ_.λh.h f1 f2) a b', '((λf1.λf2.λ_.λh.h f1 f2) a b)')\
         .aka('((((λf1.(λf2.(λ_.(λh.((h f1) f2))))) a) b) g)', '(λf1.λf2.λ_.λh.h f1 f2) a b g', '((λf1.λf2.λ_.λh.h f1 f2) a b g)')\
@@ -690,6 +703,8 @@ our constant $testTerms is export = {
         .aka('((h f1) f2)', 'h f1 f2')\
         .aka('((h a) b)', 'h a b')\
         .aka('(λh.((h a) b))', 'λh.((h a) b)', 'λh.h a b', '(λh.h a b)')\
+        .aka('(λh.((h f1) f2))', 'λh.((h f1) f2)', 'λh.h f1 f2', '(λh.h f1 f2)')\
+        .aka('(λ_.((h f1) f2))', 'λ_.((h f1) f2)', 'λ_.h f1 f2', '(λ_.h f1 f2)')\
         .aka('(((h f1) f2) f3)', 'h f1 f2 f3')\
         .aka('((((h f1) f2) f3) f4)', 'h f1 f2 f3 f4')\
         .aka('(((((h f1) f2) f3) f4) f5)', 'h f1 f2 f3 f4 f5')\
@@ -735,6 +750,7 @@ our constant $testTerms is export = {
         .aka('(λx.y)', 'λx.y')\
         .aka('((λx.y) x)', '(λx.y) x')\
         .aka('(λx.z)', 'λx.z')\
+        .aka('((λx.x) y)', '(λx.x) y')\
         .aka('((λx.x) k)', '(λx.x) k')\
         .aka('(((λx.x) k) f1)', '((λx.x) k) f1', '(λx.x) k f1')\
         .aka('(λk.(((λx.x) k) f1))', 'λk.(((λx.x) k) f1)', 'λk.(λx.x) k f1')\
@@ -933,9 +949,11 @@ sub testTermFn($f, :$argToStr = &lambdaArgToStr, :$expectedToStr, *@tests) is ex
             my Str   $expectedStr   = $expectedToStr.defined
                                         ?? ' -> ' ~ $expectedToStr($expected)
                                         !! '';
-            my $desc = "($fgist $argStr)$expectedStr";
-
-            is($f(|@args), $expected, $desc);
+            my $desc   = "($fgist $argStr)$expectedStr";
+            my $actual = $f(|@args);
+            #is($f(|@args), $expected, $desc);
+            ok($actual.Str eq $expected.Str, $desc)
+                or diag(sprintf("expected: %s\n         got: %s", lambdaArgToStr($expected), lambdaArgToStr($actual))) and False;
         }
     }, "$fgist on various inputs");
 }

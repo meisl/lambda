@@ -179,40 +179,15 @@ constant $betaReduce is export = lambdaFn(
 );
 
 
-# apply-args: List (Pair Str Term) -> List Term -> Pair (Maybe Term) (List Term)
-# Descend chains of LamT s as long as there are rest-args, while
+# Given (at least) one `arg`, and a LamT (determined by `binderName` and `body`):
+# descend further any chain of LamT s as long as there are rest-args, while
 # turning them into appropriate substitution pairs.
-# Stop and apply substitutions if either there are no more rest-args
+# Stop and apply substitutions (in parallel) if either there are no more `rest-args`
 # or the term is non-LamT.
-# Return a Pair in which the fst (Maybe Term) indicates whether term has changed
-# and the snd contains the still unapplied rest-args.
-# Note: when called with non-empty list of rest-args on a LamT *always* returns a Some.
+# Then call `finalize` with the result of this parallel substitution and a list of the
+# still-unapplied rest args.
 constant $apply-args is export = $Y(-> &self { lambdaFn(
-    'apply-args', 'λsubstitutions.λrest-args.λterm.error "NYI"',
-    -> TList $substitutions, TList $rest-args, TTerm $t -->TPair{
-        case-Term($t,
-            ConstT => -> Mu   { $Pair($None, $rest-args) },
-            VarT => -> Mu     { $Pair($subst-par-alpha($substitutions, $t), $rest-args) },
-            AppT => -> Mu, Mu { $Pair($subst-par-alpha($substitutions, $t), $rest-args) },
-            LamT => -> $vName, $body {
-                case-List($rest-args,
-                    nil => { $Pair($subst-par-alpha($substitutions, $t), $rest-args) },
-                    cons => -> $a, $as {
-                        my $out = &self($cons($Pair($vName, $a), $substitutions), $as, $body);
-                        case-Maybe($fst($out),
-                            None => { $Pair($Some($body), $snd($out)) },
-                            Some => -> Mu { $out }
-                        )
-                    }
-                )
-            }
-        )
-    }
-)});
-
-# Variant of apply-args specialized for the LamT case *where we have at least one arg*
-constant $apply-args_special is export = $Y(-> &self { lambdaFn(
-    'apply-args_special', # : (Term -> [Term]-> a) -> [<Str, Term>] -> Term -> [Term] -> Str -> Term -> a
+    'apply-args', # : (Term -> [Term]-> a) -> [<Str, Term>] -> Term -> [Term] -> Str -> Term -> a
     'λfinalize.λsubstitutions.λarg.λrest-args.λbinderName.λbody.error "NYI"',
     -> $finalize, TList $substitutions, $arg, TList $rest-args, Str $binderName, TTerm $body {
         case-Term($body,
@@ -259,20 +234,154 @@ constant $apply-args_special is export = $Y(-> &self { lambdaFn(
 )});
 
 
-# Descend chains of AppT, collecting arguments to be applied via apply-args
-# once a LamT is encountered.
-constant $collect-then-apply-args is export = $Y(-> &self { lambdaFn(
-    'collect-then-apply-args', 'λarg.λrest-args.λinTerm.error "NYI"',
-    -> TTerm $arg, TList $rest-args, TTerm $inTerm -->TMaybe{
+# Descend chains of AppT, collecting arguments to be applied once a LamT is encountered.
+# If indeed a LamT is encountered in an AppT's func position, onLambda is called with the
+# LamT's binder (name), the LamT's body, the last arg encountered so far and a list of 
+# all the args above (in bottom-up order, ie in the order they're to be fed to the LamT).
+# Otherwise onUnapplicable is called with the unapplicable term, the last arg encountered
+# so far and a list of all the args above; again in bottom-up order.
+# Both callbacks, onUnapplicable and onLambda must return a TMaybe, which is taken to mean this:
+# - a Some indicates a final result, and is returned from collect-args as is (no further call to
+#   any of the two callbacks)
+# - a None indicates that the callback did not change the term at hand, given it plus the current
+#   arg and the rest-args (at the current level in the chain of AppTs).
+#   onUnapplicable will be called with the term and arg(s) one level up, or, respectively, if the
+#   call-stack has been unwound completely, the None will be returned from collect-args.
+constant $collect-args is export = $Y(-> &self { lambdaFn(
+    'collect-args', # : (Term -> [Term]-> a) -> (Str -> Term -> [Term]-> a) -> [Term] -> Term -> a
+    'λonUnapplicable.λonLambda.λarg.λrest-args.λinTerm.error "NYI"',
+    -> $onUnapplicable, $onLambda, TTerm $arg, TList $rest-args, TTerm $inTerm {
         case-Term($inTerm,
-            ConstT => $K1None,  # -> Mu { $onNoneApplied($inTerm, $cons($arg, $rest-args)) }
-            VarT   => $K1None,  # -> Mu { $onNoneApplied($inTerm, $cons($arg, $rest-args)) }
-            AppT   => -> $f, $a { &self($a, $cons($arg, $rest-args), $f) },
-            LamT   => -> $v, $b {
-                $Some($apply-args_special($Pair, $nil, $arg, $rest-args, $v, $b))
-                # my $p = $apply-args_special($nil, $arg, $rest-args, $v, $b);
-                # $onSomeApplied($fst($p), $snd($p))
-            }
+            ConstT => -> Mu { $onUnapplicable($inTerm, $arg, $rest-args) },
+            VarT   => -> Mu { $onUnapplicable($inTerm, $arg, $rest-args) },
+            AppT   => -> $f, $a {
+                my $newRest-args = $cons($arg, $rest-args);
+                my $newFm = &self($onUnapplicable, $onLambda, $a, $newRest-args, $f);
+                case-Maybe($newFm,
+                    None => { $onUnapplicable($f, $a, $newRest-args) },
+                    Some => -> Mu { $newFm }
+                )
+            },
+            LamT   => -> $v, $b { $onLambda($v, $b, $arg, $rest-args) }
         )
     }
 )});
+
+
+constant $collect-args-and-lambdas is export = lambdaFn(
+    'collect-args-and-lambdas', # : (Term -> [Term]-> a) -> (Str -> Term -> [Term]-> a) -> [Term] -> Term -> a
+    'λonUnapplicable.λonInsideLambda.λarg.λrest-args.λinTerm.error "NYI"',
+    -> $onUnapplicable, $onInsideLambda, TTerm $arg, TList $rest-args, TTerm $inTerm {
+        $collect-args(
+            $onUnapplicable,
+            $Y(-> &self { lambdaFn(Str, 'λss.λv.λb.λa.λas.error "NYI"', -> TList $bindings, Str $binderName, TTerm $body, TTerm $arg, TList $rest-args {
+                my $newBindings = $cons($Pair($binderName, $arg), $bindings);
+                case-Term($body,
+                    LamT => -> Str $bv, TTerm $bb {
+                        case-List($rest-args,
+                            cons => -> TTerm $a, TList $as {
+                                &self($newBindings, $bv, $bb, $a, $as)
+                            },
+                            nil => {    # ran out of args - none left for body (which is also a LamT)
+                                $Some($onInsideLambda($newBindings, $body, $nil))
+                            }
+                        )
+                    },
+                    AppT   => -> Mu, Mu { $Some($onInsideLambda($newBindings, $body, $rest-args)) },
+                    VarT   => -> Mu     { $Some($onInsideLambda($newBindings, $body, $rest-args)) },
+                    ConstT => -> Mu     { $Some($onInsideLambda($newBindings, $body, $rest-args)) },
+                );
+            })})($nil),
+            $arg, $rest-args, $inTerm
+        );
+    }
+);
+
+
+# betaContract_multi: Term -> Maybe Term
+# β-simplification (either of $t or any (one) child), reducing AppT s of multiple args in one step if possible
+constant $betaContract_multi is export = $Y(-> &self { lambdaFn(
+    'betaContract_multi', 'λt.error "NYI"',
+    -> TTerm $t { case-Term($t,
+        VarT   => $K1None,
+        ConstT => $K1None,
+        LamT   => -> Str $varName, TTerm $body {
+            case-Maybe(&self($body),
+                None => $None,
+                Some => -> TTerm $newBody { $Some($LamT($varName, $newBody)) }
+            )
+        },
+        AppT   => -> TTerm $f, TTerm $a {
+            my $onLamT = -> Str $binderName, TTerm $body, TTerm $arg, TList $rest-args {
+                $Some($apply-args(
+                    $foldl($AppT),  # "finalize"
+                    $nil,           # "substitutions"
+                    $arg, $rest-args,
+                    $binderName, $body
+                ));
+            };
+            my $onUnapplicable = -> TTerm $func, TTerm $arg, TList $rest-args {
+                case-Maybe(&self($arg),
+                    None => $None,
+                    Some => -> $newArg { $Some($foldl($AppT, $AppT($func, $newArg), $rest-args)) }
+                );
+            };
+
+            $collect-args($onUnapplicable, $onLamT, $a, $nil, $f);
+
+            #case-Term($f,
+            #    ConstT => -> Mu {
+            #        case-Maybe(&self($a),
+            #            None => $None,
+            #            Some => -> $newA { $Some($AppT($f, $newA)) }
+            #        )
+            #    },
+            #    VarT => -> Mu {
+            #        case-Maybe(&self($a),
+            #            None => $None,
+            #            Some => -> $newA { $Some($AppT($f, $newA)) }
+            #        )
+            #    },
+            #    LamT => -> $fv, $fb {
+            #        $Some($subst-alpha_direct($fv, $a, $fb))
+            #    },
+            #    AppT => -> $ff, $fa {
+            #        # $collect-then-apply-args(
+            #        #    -> $t, $rest-args { # onNoneApplied
+            #        #        
+            #        #    },
+            #        #    -> $t, $rest-args { # onSomeApplied
+            #        #        $Some($foldl($AppT, $t, $rest-args))
+            #        #    },
+            #        #    $fa, $cons($a, $nil), $ff
+            #        #);
+            #        case-Maybe($collect-args($fa, $cons($a, $nil), $ff),
+            #            None => {
+            #                case-Maybe(&self($fa),   # TODO: try beta-contracting ff (but consider that it's got no LamT "on the left")
+            #                    None => {
+            #                        case-Maybe(&self($a),
+            #                            None => $None,
+            #                            Some => -> $newA {
+            #                                $Some($AppT($f, $newA))
+            #                            }
+            #                        )
+            #                    },
+            #                    Some => -> $newFa {
+            #                        $Some($AppT($AppT($ff, $newFa), $a))
+            #                    }
+            #                )
+            #            },
+            #            Some => -> TPair $p {
+            #                my $t = $fst($p);   # TODO: extract fields from Pair directly
+            #                my $rest-args = $snd($p);
+            #                $Some($foldl($AppT, $t, $rest-args));
+            #            }
+            #        )
+            #    }
+            #)
+
+
+        }
+    )}
+)});
+
