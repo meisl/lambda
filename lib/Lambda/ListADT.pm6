@@ -4,6 +4,7 @@ use Lambda::Base;
 use Lambda::BaseP6;
 use Lambda::Boolean;
 use Lambda::MaybeADT;
+use Lambda::PairADT;
 
 module Lambda::ListADT;
 # data List = nil
@@ -404,3 +405,135 @@ constant $findFP-inMaybe_dbg is export = lambdaFn(
         )
     }
 );
+
+
+
+
+constant $nil_R is export = lambdaFn(
+    'nil_R', '',
+    -> $onNil, $onCons {
+        ($onNil ~~ Block) && ($onNil.arity == 0) 
+        ?? $onNil()    # simulate lazy evaluation by passing a thunk (needed only for ctors of arity 0)
+        !! $onNil
+    }
+);
+
+constant $cons_R is export = lambdaFn(
+    'cons_R', '',
+    -> $x, $xs, $onNil, $onCons {
+        $onCons(
+            $x, $xs, 
+            lambdaFn(Str, '', -> $ys, $accFn { $ys({ $accFn(($onNil ~~ Block) && ($onNil.arity == 0) ?? $onNil() !! $onNil) }, $onCons) })
+        );
+    }
+);
+
+
+constant $List2Str_R is export = lambdaFn(
+    'List->Str', '',
+    -> $xs {
+        $xs('nil_R',
+            -> $x, $xs, $next {
+                my $xStr = $x.?symbol // $x.?lambda // $x.perl;
+                "(cons_R $xStr {$next($xs, $I)})"
+            }
+        )
+    }
+);
+
+constant $reverse_R is export = lambdaFn(
+    'reverse_R', '',
+    -> $xs {
+        $xs($nil_R,
+            -> $y, $ys, $next {
+                $next($ys, $cons_R($y));
+            }
+        );
+    }
+);
+
+constant $zip_R is export = lambdaFn(
+    'zip_R', '',
+    -> $xs {    # take only first list here
+        $xs(
+            $K($nil_R), # must return a fn that takes 2nd list
+            -> $xsHd, $xsTl, $nextXs {
+
+#                -> $ys {
+#                    $ys(
+#                        $nil_R, # we've taken the 2nd list ys
+#                        -> $ysHd, $ysTl, $nextYs {  # don't need nextYs; recursion into ys is triggered by passing ysTl to (nextXs xsTl I)
+#                            $cons_R($Pair($xsHd, $ysHd), $nextXs($xsTl, $I)($ysTl));    # zip is a *right* fold
+#                        }
+#                    )
+#                }
+
+
+#                -> $ys {   # this is how a *left* fold looks like
+#                    $ys(
+#                        #$nil_R, # we've taken the 2nd list ys
+#                        { $nextXs($xsTl, -> $acc { $acc('qumbl') }) },  # only to retrieve results accumulated so far
+#                        -> $ysHd, $ysTl, $nextYs {
+#                            my $pair = $Pair($xsHd, $ysHd);
+#                            $nextXs($xsTl, -> $acc {
+#                                $K1($cons_R($pair, $acc('qumbl')));
+#                            })($ysTl)
+#                        }
+#                    )
+#                }
+
+
+#                $nextXs($xsTl, -> $acc {   # xs folded right but ys folded left
+#                    -> $ys {
+#                        $ys(
+#                            $nil_R, # we've taken the 2nd list ys
+#                            -> $ysHd, $ysTl, $nextYs {
+#                                my $list = $cons_R($Pair($xsHd, $ysHd), $acc($ysTl));
+#                                say "list: {$List2Str_R($list)}";
+#                                $list;
+#                            }
+#                        )
+#                    }
+#                })
+
+
+            }
+        )
+    }
+);
+
+
+my $as = $cons_R('a1', $nil_R);
+my $bs = $cons_R('b1', $cons_R('b2', $nil_R));
+my $cs = $cons_R('c1', $cons_R('c2', $cons_R('c3', $nil_R)));
+
+say $List2Str_R($nil_R);
+say $List2Str_R($as);
+say $List2Str_R($bs);
+say $List2Str_R($cs);
+say '';
+
+say $List2Str_R($reverse_R($nil_R));
+say $List2Str_R($reverse_R($as));
+say $List2Str_R($reverse_R($bs));
+say $List2Str_R($reverse_R($cs));
+say '';
+
+#my $zs = $zip_R($as, $bs);
+#say $zs;
+#say $List2Str_R($zs);
+
+my $zs = $zip_R($bs, $cs);
+say $zs;
+say $List2Str_R($zs);
+say '';
+
+$zs = $zip_R($cs, $bs);
+say $zs;
+say $List2Str_R($zs);
+say '';
+
+$zs = $zip_R($cs, $cs);
+say $zs;
+say $List2Str_R($zs);
+say '';
