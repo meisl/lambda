@@ -423,7 +423,7 @@ constant $cons_R is export = lambdaFn(
     -> $x, $xs, $onNil, $onCons {
         $onCons(
             $x, $xs,
-            $onNil,
+            ($onNil ~~ Block) && ($onNil.arity == 0) ?? $onNil() !! $onNil,
             lambdaFn(Str, '', -> $ys, $acc { $ys($acc, $onCons) })
         );
     }
@@ -511,13 +511,14 @@ constant $walk_R2_topDown is export = lambdaFn(
             $K1($start),
             -> $xsHd, $xsTl, $accXs, $nextXs {
                 -> $ys {
+                    my $commonAcc = $accXs($ys);   # retrieve results accumulated so far
                     $ys(
-                        $start,
+                        $commonAcc,
                         -> $ysHd, $ysTl, $accYs, $nextYs {
                             my $fNext = -> $acc {
-                                $nextXs($xsTl, $K1($acc))($ysTl);
+                                $nextXs( $xsTl, $K1($acc) )($ysTl);
                             };
-                            $f($xsHd, $ysHd, $accXs($nil_R), $fNext);
+                            $f($xsHd, $ysHd, $commonAcc, $fNext);
                         }
                     )
                 }
@@ -530,6 +531,7 @@ constant $walk_R2_topDown is export = lambdaFn(
 my $as = $cons_R('a1', $nil_R);
 my $bs = $cons_R('b1', $cons_R('b2', $nil_R));
 my $cs = $cons_R('c1', $cons_R('c2', $cons_R('c3', $nil_R)));
+my $ds = $cons_R('d1', $cons_R('d2', $cons_R('d3', $nil_R)));
 
 say $List2Str_R($nil_R);
 say $List2Str_R($as);
@@ -552,7 +554,7 @@ say $zs;
 say $List2Str_R($zs);
 say '';
 say 'walk_R2_topDown:';
-say $walk_R2_topDown(-> $x, $y, $acc, $next { my $p = $Pair($x, $y); say "(f $p $acc)"; $next($acc ~ '#' ~ $p); }, 'noop', $bs, $cs);
+say $walk_R2_topDown(-> $x, $y, $acc, $next { my $p = $Pair($x, $y); say "(f $p $acc)"; $next($acc ~ '#' ~ $p); }, 'noop', $ds, $cs);
 say '';
 
 $zs = $zip_R($cs, $bs);
