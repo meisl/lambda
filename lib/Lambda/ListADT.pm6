@@ -422,31 +422,32 @@ constant $cons_R is export = lambdaFn(
     'cons_R', '',
     -> $x, $xs, $onNil, $onCons {
         $onCons(
-            $x, $xs, 
-            lambdaFn(Str, '', -> $ys, $accFn { $ys({ $accFn(($onNil ~~ Block) && ($onNil.arity == 0) ?? $onNil() !! $onNil) }, $onCons) })
+            $x, $xs,
+            $onNil,
+            lambdaFn(Str, '', -> $ys, $acc { $ys($acc, $onCons) })
         );
     }
 );
 
 
 constant $List2Str_R is export = lambdaFn(
-    'List->Str', '',
+    'List->Str', '',    # a right fold
     -> $xs {
         $xs('nil_R',
-            -> $x, $xs, $next {
+            -> $x, $xs, $acc, $next {
                 my $xStr = $x.?symbol // $x.?lambda // $x.perl;
-                "(cons_R $xStr {$next($xs, $I)})"
+                "(cons_R $xStr {$next($xs, $acc)})"
             }
         )
     }
 );
 
 constant $reverse_R is export = lambdaFn(
-    'reverse_R', '',
+    'reverse_R', '',    # a left fold
     -> $xs {
         $xs($nil_R,
-            -> $y, $ys, $next {
-                $next($ys, $cons_R($y));
+            -> $y, $ys, $acc, $next {
+                $next($ys, $cons_R($y, $acc));
             }
         );
     }
@@ -457,30 +458,30 @@ constant $zip_R is export = lambdaFn(
     -> $xs {    # take only first list here
         $xs(
             $K($nil_R), # must return a fn that takes 2nd list
-            -> $xsHd, $xsTl, $nextXs {
+            -> $xsHd, $xsTl, $accXs, $nextXs {
 
 #                -> $ys {
 #                    $ys(
 #                        $nil_R, # we've taken the 2nd list ys
-#                        -> $ysHd, $ysTl, $nextYs {  # don't need nextYs; recursion into ys is triggered by passing ysTl to (nextXs xsTl I)
-#                            $cons_R($Pair($xsHd, $ysHd), $nextXs($xsTl, $I)($ysTl));    # zip is a *right* fold
+#                        -> $ysHd, $ysTl, $accYs, $nextYs {  # don't need nextYs; recursion into ys is triggered by passing ysTl to (nextXs xsTl I)
+#                            $cons_R($Pair($xsHd, $ysHd), $nextXs($xsTl, $accXs)($ysTl));    # zip is a *right* fold
 #                        }
 #                    )
 #                }
 
 
-#                -> $ys {   # this is how a *left* fold looks like
-#                    $ys(
-#                        #$nil_R, # we've taken the 2nd list ys
-#                        { $nextXs($xsTl, -> $acc { $acc('qumbl') }) },  # only to retrieve results accumulated so far
-#                        -> $ysHd, $ysTl, $nextYs {
-#                            my $pair = $Pair($xsHd, $ysHd);
-#                            $nextXs($xsTl, -> $acc {
-#                                $K1($cons_R($pair, $acc('qumbl')));
-#                            })($ysTl)
-#                        }
-#                    )
-#                }
+                -> $ys {   # this is how a *left* fold looks like
+                    my $accCommon = $accXs($ys);  # retrieve results accumulated so far
+                    $ys(
+                        $accCommon,
+                        -> $ysHd, $ysTl, $accYs, $nextYs {   # neither accYs nor nextYs needed
+                            my $pair = $Pair($xsHd, $ysHd);
+                            $nextXs($xsTl, 
+                                $K1($cons_R($pair, $accCommon))
+                            )($ysTl)
+                        }
+                    )
+                }
 
 
 #                $nextXs($xsTl, -> $acc {   # xs folded right but ys folded left
