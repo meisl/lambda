@@ -470,8 +470,8 @@ constant $zip_R is export = lambdaFn(
 #                }
 
 
-                -> $ys {   # this is how a *left* fold looks like
-                    my $accCommon = $accXs($ys);  # retrieve results accumulated so far
+                -> $ys {   # this is how a *left* fold looks like:
+                    my $accCommon = $accXs($nil_R);  # retrieve results accumulated so far
                     $ys(
                         $accCommon,
                         -> $ysHd, $ysTl, $accYs, $nextYs {   # neither accYs nor nextYs needed
@@ -482,6 +482,7 @@ constant $zip_R is export = lambdaFn(
                         }
                     )
                 }
+
 
 
 #                $nextXs($xsTl, -> $acc {   # xs folded right but ys folded left
@@ -498,6 +499,28 @@ constant $zip_R is export = lambdaFn(
 #                })
 
 
+            }
+        )
+    }
+);
+
+constant $walk_R2_topDown is export = lambdaFn(
+    'walk_R2_topDown', '',
+    -> $f, $start, $xs {
+        $xs(
+            $K1($start),
+            -> $xsHd, $xsTl, $accXs, $nextXs {
+                -> $ys {
+                    $ys(
+                        $start,
+                        -> $ysHd, $ysTl, $accYs, $nextYs {
+                            my $fNext = -> $acc {
+                                $nextXs($xsTl, $K1($acc))($ysTl);
+                            };
+                            $f($xsHd, $ysHd, $accXs($nil_R), $fNext);
+                        }
+                    )
+                }
             }
         )
     }
@@ -527,6 +550,9 @@ say '';
 my $zs = $zip_R($bs, $cs);
 say $zs;
 say $List2Str_R($zs);
+say '';
+say 'walk_R2_topDown:';
+say $walk_R2_topDown(-> $x, $y, $acc, $next { my $p = $Pair($x, $y); say "(f $p $acc)"; $next($acc ~ '#' ~ $p); }, 'noop', $bs, $cs);
 say '';
 
 $zs = $zip_R($cs, $bs);
