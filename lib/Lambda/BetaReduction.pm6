@@ -194,15 +194,11 @@ constant $apply-args is export = $Y(-> &self { lambdaFn(
             LamT => -> $bodyVarName, $bodyBody {
                 case-List($rest-args,
                     nil => {    # ran out of args - none left for body (which is also a LamT)
-                        my $newSubsts = $except(
-                            -> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, # <<<<<< !!!!!!!!!! ATTENTION: this might break auto-alpha-conv!!!!!!
-                            $substitutions
-                        );
                         my $newBody = _if_($Str-eq($bodyVarName, $binderName),    # does body (also a lambda) mask our own binder?
-                            { $subst-par-alpha_direct(                                $newSubsts,  $bodyBody) },
-                            { $subst-par-alpha_direct($cons($Pair($binderName, $arg), $newSubsts), $bodyBody) }
+                            { $subst-par-alpha_direct(                                $substitutions,  $body) },
+                            { $subst-par-alpha_direct($cons($Pair($binderName, $arg), $substitutions), $body) }
                         );
-                        $finalize($LamT($bodyVarName, $newBody), $nil);
+                        $finalize($newBody, $nil);
                     },
                     cons => -> $a, $as {
                         my $newSubsts = $cons($Pair($binderName, $arg), $substitutions);
