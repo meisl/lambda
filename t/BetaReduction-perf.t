@@ -24,7 +24,7 @@ my $fpSearch = $findFP-inMaybe(lambdaFn('betaContract', 'λt.error "NYI"', -> TP
     my $n = $fst($pair);
     my $term = $snd($pair);
     diag sprintf('    =_β%-2d  %s', $n, $Term2srcLess($term));
-    case-Maybe($betaContract($term),
+    case-Maybe($betaContract_multi($term),
         None => $None,
         Some => -> $v { $Some($Pair($n+1, $v)) }
     );

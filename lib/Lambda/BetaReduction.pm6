@@ -258,7 +258,7 @@ constant $collect-args is export = $Y(-> &self { lambdaFn(
                 my $newRest-args = $cons($arg, $rest-args);
                 my $newFm = &self($onUnapplicable, $onLambda, $a, $newRest-args, $f);
                 case-Maybe($newFm,
-                    None => { $onUnapplicable($f, $a, $newRest-args) },
+                    None => { $onUnapplicable($inTerm, $arg, $rest-args) },  # (onUnapplicable f a newRest-args) already done in recursive call
                     Some => -> Mu { $newFm }
                 )
             },

@@ -21,6 +21,25 @@ use Lambda::BetaReduction;
 plan 134;
 
 
+{ # betaContract_multi
+    testTermFn($betaContract_multi, :expectedToStr(&lambdaArgToStr),
+        `'z ((λx.x) y) b a'  => $Some(`'z y b a'),
+        `'z b ((λx.x) y) a'  => $Some(`'z b y a'),
+        # λa.λb.λ_.λh.h a ((λf1.λf2.λ_.λh.h f1 f2) b (λh.λ_.h))
+
+        `'(λf1.λf2.λ_.λh.h f1 f2)'      => $None,
+        `'(λf1.λf2.λ_.λh.h f1 f2) a'    => $Some(`'λf2.λ_.λh.h a f2'),
+        `'(λf1.λf2.λ_.λh.h f1 f2) a b'  => $Some(`'λ_.λh.h a b'),
+
+        $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2)')      => $None,
+        $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2) a')    => $Some($AppT(`'h a', `'λf2.λ_.λh.h a f2')),
+        $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2) a b')  => $Some($AppT(`'h a', `'λ_.λh.h a b')),
+
+    );
+}
+exit;
+
+
 { # collect-args
     is_properLambdaFn $collect-args, 'collect-args';
 
