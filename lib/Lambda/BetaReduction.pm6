@@ -309,6 +309,15 @@ constant $betaContract_multi is export = $Y(-> &self {
         );
     };
 
+    my $onLamT = -> Str $binderName, TTerm $body, TTerm $arg, TList $rest-args {
+        $Some($apply-args(
+            $foldl($AppT),  # "finalize"
+            $nil,           # "substitutions"
+            $arg, $rest-args,
+            $binderName, $body
+        ));
+    };
+
     my $onInsideLambda = -> TList $bindings, TTerm $body, TList $rest-args {
         #my $newBody = $subst-par-alpha_direct($bindings, $body);
         #$foldl($AppT, $newBody, $rest-args);
@@ -345,18 +354,10 @@ constant $betaContract_multi is export = $Y(-> &self {
                 )
             },
             AppT   => -> TTerm $f, TTerm $a {
-    #            my $onLamT = -> Str $binderName, TTerm $body, TTerm $arg, TList $rest-args {
-    #                $Some($apply-args(
-    #                    $foldl($AppT),  # "finalize"
-    #                    $nil,           # "substitutions"
-    #                    $arg, $rest-args,
-    #                    $binderName, $body
-    #                ));
-    #            };
 
-    #            $collect-args($onUnapplicable, $onLamT, $a, $nil, $f);
+                $collect-args($onUnapplicable, $onLamT, $a, $nil, $f);
 
-                $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $a, $nil, $f);
+#                $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $a, $nil, $f);
 
                 #case-Term($f,
                 #    ConstT => -> Mu {
