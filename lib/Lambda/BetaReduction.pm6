@@ -195,7 +195,7 @@ constant $apply-args is export = $Y(-> &self { lambdaFn(
                 case-List($rest-args,
                     nil => {    # ran out of args - none left for body (which is also a LamT)
                         my $newSubsts = $except(
-                            -> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, 
+                            -> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, # <<<<<< !!!!!!!!!! ATTENTION: this might break auto-alpha-conv!!!!!!
                             $substitutions
                         );
                         my $newBody = _if_($Str-eq($bodyVarName, $binderName),    # does body (also a lambda) mask our own binder?
@@ -314,8 +314,27 @@ constant $betaContract_multi is export = $Y(-> &self {
     };
 
     my $onInsideLambda = -> TList $bindings, TTerm $body, TList $rest-args {
-        my $newBody = $subst-par-alpha_direct($bindings, $body);
-        $foldl($AppT, $newBody, $rest-args);
+        #my $newBody = $subst-par-alpha_direct($bindings, $body);
+        #$foldl($AppT, $newBody, $rest-args);
+        
+        case-Term($body,
+            VarT   => -> $bodyVarName {
+                $foldl(
+                    $AppT, 
+                    case-Maybe($first(-> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, $bindings),
+                        None => $body,
+                        Some => $snd    # return value of Some as is
+                    ),
+                    $rest-args
+                )
+            },
+            ConstT => -> Mu { $foldl($AppT, $body, $rest-args) },
+            AppT   => -> Mu, Mu { $foldl($AppT, $subst-par-alpha_direct($bindings, $body), $rest-args) },
+            LamT   => -> Mu, Mu {
+                # we know there cannot be any rest-args, so no need to foldl 'em
+                $subst-par-alpha_direct($bindings,  $body);
+            },
+        );
     };
     
     lambdaFn(
