@@ -328,7 +328,13 @@ constant $betaContract_multi is export = $Y(-> &self {
                     $AppT, 
                     case-Maybe($first(-> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, $bindings),
                         None => $body,
-                        Some => $snd    # return value of Some as is
+                        Some => -> TPair $sPair {
+                            my $arg = $snd($sPair);
+                            case-Maybe(&self($arg),
+                                None => $arg,
+                                Some => $I
+                            )
+                        }
                     ),
                     $rest-args
                 )
