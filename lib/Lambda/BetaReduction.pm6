@@ -337,7 +337,7 @@ constant $betaContract_multi is export = $Y(-> &self {
             AppT   => -> Mu, Mu { $foldl($AppT, $subst-par-alpha_direct($bindings, $body), $rest-args) },
             LamT   => -> Mu, Mu {
                 # we know there cannot be any rest-args, so no need to foldl 'em
-                $subst-par-alpha_direct($bindings,  $body);
+                $subst-par-alpha_direct($bindings, $body);
             },
         );
     };
@@ -355,9 +355,9 @@ constant $betaContract_multi is export = $Y(-> &self {
             },
             AppT   => -> TTerm $f, TTerm $a {
 
-                $collect-args($onUnapplicable, $onLamT, $a, $nil, $f);
+#                $collect-args($onUnapplicable, $onLamT, $a, $nil, $f);
 
-#                $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $a, $nil, $f);
+                $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $a, $nil, $f);
 
                 #case-Term($f,
                 #    ConstT => -> Mu {

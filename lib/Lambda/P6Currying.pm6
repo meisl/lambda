@@ -16,7 +16,7 @@ sub EXPORT is cached {   # do some re-exporting
     return %out;
 }
 
-constant $STATS_ENABLED = False;  #   True;   #   
+constant $STATS_ENABLED = True;   #   False;  #   
 
 
 role Curried {...}
