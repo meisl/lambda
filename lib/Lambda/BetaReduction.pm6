@@ -318,6 +318,37 @@ constant $betaContract_multi is export = $Y(-> &self {
         ));
     };
 
+    my $filter-substs-and-contract = $Y(-> &self2 { lambdaFn(
+        'filter-substs-and-contract', '',
+        -> $skip, TList $substs {
+            case-List($substs,
+                nil => $nil,
+                cons => -> $sPair, $rest {
+                    my $vName = $fst($sPair);
+                    my $newSkip = -> $vn {
+                        _if_($Str-eq($vName, $vn),
+                            $true,  # short-circuit OR
+                            { $skip($vn) }
+                        );
+                    };
+                    _if_($skip($vName),
+                        { &self2($newSkip, $rest) },
+                        { my $arg = $snd($sPair);
+                          my $newArg = case-Maybe(&self($arg),
+                              None => $arg,
+                              Some => -> $newArgVal {
+                                  say "# >>>>> sub-redex (arg) contracted: {$Term2srcLess($arg)}  -->  {$Term2srcLess($newArgVal)}";
+                                  $newArgVal;
+                              }
+                          );
+                          $cons($Pair($vName, $newArg), &self2($newSkip, $rest));
+                        }
+                    )
+                }
+            )
+        }
+    )});
+
     my $onInsideLambda = -> TList $bindings, TTerm $body, TList $rest-args {
         #my $newBody = $subst-par-alpha_direct($bindings, $body);
         #$foldl($AppT, $newBody, $rest-args);
@@ -350,7 +381,11 @@ constant $betaContract_multi is export = $Y(-> &self {
                         $newBodyVal;
                     }
                 );
-                $subst-par-alpha_direct($bindings, $newBody);
+                my $newBindings = $filter-substs-and-contract(
+                    -> Str $vName { $not($is-free-varName($vName, $newBody)) },
+                    $bindings
+                );
+                $subst-par-alpha_direct($newBindings, $newBody);
             },
         );
     };
