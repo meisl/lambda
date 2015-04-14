@@ -371,13 +371,30 @@ constant $betaContract_multi is export = $Y(-> &self {
                 )
             },
             ConstT => -> Mu { $foldl($AppT, $body, $rest-args) },
-            AppT   => -> Mu, Mu { $foldl($AppT, $subst-par-alpha_direct($bindings, $body), $rest-args) },
+            AppT   => -> Mu, Mu {
+                my $newBody = case-Maybe(&self($body),
+                    None => $body,
+                    Some => -> $newBodyVal {
+                        say "# >>>>> sub-redex contracted (AppT): {$Term2srcLess($body)}  -->  {$Term2srcLess($newBodyVal)}";
+                        $newBodyVal;
+                    }
+                );
+                my $newBindings = $filter-substs-and-contract(
+                    -> Str $vName { $not($is-free-varName($vName, $newBody)) },
+                    $bindings
+                );
+                $foldl(
+                    $AppT,
+                    $subst-par-alpha_direct($newBindings, $newBody),
+                    $rest-args
+                )
+            },
             LamT   => -> Mu, Mu {
                 # we know there cannot be any rest-args, so no need to foldl 'em
                 my $newBody = case-Maybe(&self($body),
                     None => $body,
                     Some => -> $newBodyVal {
-                        say "# >>>>> sub-redex contracted: {$Term2srcLess($body)}  -->  {$Term2srcLess($newBodyVal)}";
+                        say "# >>>>> sub-redex contracted (LamT): {$Term2srcLess($body)}  -->  {$Term2srcLess($newBodyVal)}";
                         $newBodyVal;
                     }
                 );
