@@ -336,10 +336,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                         { my $arg = $snd($sPair);
                           my $newArg = case-Maybe(&self($arg),
                               None => $arg,
-                              Some => -> $newArgVal {
-                                  say "# >>>>> sub-redex (arg) contracted: {$Term2srcLess($arg)}  -->  {$Term2srcLess($newArgVal)}";
-                                  $newArgVal;
-                              }
+                              Some => $I
                           );
                           $cons($Pair($vName, $newArg), &self2($newSkip, $rest));
                         }
@@ -374,10 +371,7 @@ constant $betaContract_multi is export = $Y(-> &self {
             AppT   => -> Mu, Mu {
                 my $newBody = case-Maybe(&self($body),
                     None => $body,
-                    Some => -> $newBodyVal {
-                        say "# >>>>> sub-redex contracted (AppT): {$Term2srcLess($body)}  -->  {$Term2srcLess($newBodyVal)}";
-                        $newBodyVal;
-                    }
+                    Some => $I
                 );
                 my $newBindings = $filter-substs-and-contract(
                     -> Str $vName { $not($is-free-varName($vName, $newBody)) },
@@ -393,10 +387,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                 # we know there cannot be any rest-args, so no need to foldl 'em
                 my $newBody = case-Maybe(&self($body),
                     None => $body,
-                    Some => -> $newBodyVal {
-                        say "# >>>>> sub-redex contracted (LamT): {$Term2srcLess($body)}  -->  {$Term2srcLess($newBodyVal)}";
-                        $newBodyVal;
-                    }
+                    Some => $I
                 );
                 my $newBindings = $filter-substs-and-contract(
                     -> Str $vName { $not($is-free-varName($vName, $newBody)) },
