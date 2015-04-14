@@ -42,20 +42,20 @@
 #                   subst-par-alpha_direct => ( 0p,      0f,  0o,    1+ 0i :(TList -> TTerm -> TTerm))
 # (λf.λa.λb.f b a) (B (C cons) (C cons nil))  =  (λf.λa.λb.f b a) ((λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h)))
 # λa.λb.cons a (cons b nil)  =  λa.λb.(λf1.λf2.λ_.λh.h f1 f2) a ((λf1.λf2.λ_.λh.h f1 f2) b (λh.λ_.h))
-# 3.56 = 2.84 + 0.72 sec (80% + 20%) consumed for beta-reduction
+# 3.23 = 2.52 + 0.72 sec (78% + 22%) consumed for beta-reduction
 ok 1 - (λf.λa.λb.f b a) (B (C cons) (C cons nil))  =_β*  λa.λb.cons a (cons b nil)  [NO alpha-conv needed]
 # (C (B (C cons) (C cons nil)))  =  (λf.λx.λy.f y x) ((λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h)))
 # λx.λy.cons x (cons y nil)  =  λx.λy.(λf1.λf2.λ_.λh.h f1 f2) x ((λf1.λf2.λ_.λh.h f1 f2) y (λh.λ_.h))
-# 4.06 = 3.20 + 0.86 sec (79% + 21%) consumed for beta-reduction
+# 3.58 = 2.84 + 0.73 sec (79% + 21%) consumed for beta-reduction
 ok 2 - (C (B (C cons) (C cons nil)))  =_β*  λx.λy.cons x (cons y nil)  [DOES need alpha-conv]
-# 0.06 = 0.03 + 0.03 sec (50% + 50%) consumed for beta-reduction
+# 0.02 = 0.00 + 0.02 sec (0% + 100%) consumed for beta-reduction
 ok 3 - (x x)  =_β*  (x x)  (sanity check)
-# 0.06 = 0.06 + 0.00 sec (100% + 0%) consumed for beta-reduction
+# 0.03 = 0.03 + 0.00 sec (100% + 0%) consumed for beta-reduction
 ok 4 - (λx.x) x  =_β*  x  (sanity check)
-# 0.28 sec consumed for big-term construction
+# 0.33 sec consumed for big-term construction
 ok 5 - $bigTerm.lambda is λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))
 ok 6 - $expectedTerm.lambda is λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 f3 f4 f5
-# CurryStats: (62p,  10716f,  0o, 1275+5i)
+# CurryStats: ( 1p,  10716f,  0o, 1275+5i)
 #   974 (  1):               free-varName? => ( 0p,    974f,  0o,    1+ 0i :(Str -> TTerm -> TBool))
 #   827 (  1):                     Str-eq? => ( 0p,    827f,  0o,    1+ 0i :(Str -> Str -> TBool))
 #   738 (  1):                      #false => ( 0p,    738f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
@@ -99,9 +99,7 @@ ok 6 - $expectedTerm.lambda is λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 
 #    34 (  1):                           Y => ( 0p,     34f,  0o,    2+ 0i :(Callable -> Mu))
 #    31 (  1):                        VarT => ( 0p,     31f,  0o,    1+ 0i :(Str -> TTerm))
 #    30 (  1):                           B => ( 0p,     30f,  0o,    1+ 0i :(Callable -> Callable -> Mu))
-#    25 (  1):        collect-lambdas(2/6) => ( 0p,     25f,  0o,    0+ 0i :(Str -> TTerm -> TTerm -> TList -> Mu))
 #    21 (  1):                           I => ( 0p,     21f,  0o,    1+ 0i :(Mu -> Mu))
-#    12 (  1):             collect-lambdas => (61p,     12f,  0o,    1+ 0i :(TList -> Mu -> Str -> TTerm -> TTerm -> TList -> Mu))
 #     7 (  1):                       foldl => ( 0p,      7f,  0o,    2+ 0i :(Callable -> Mu -> TList -> Mu))
 #     4 (  2):                           K => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu)),
 #                                      K^2 => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu))
@@ -127,9 +125,9 @@ ok 6 - $expectedTerm.lambda is λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 
 #                    findFP-inMaybe_dbgXXX => ( 0p,      0f,  0o,    1+ 0i :(Callable -> Mu)),
 #                    subst-par-alpha_Maybe => ( 0p,      0f,  0o,    1+ 0i :(TList -> TTerm -> TMaybe)),
 #                   free-varNames-internal => ( 1p,      0f,  0o,    1+ 0i :(TList -> TList -> TTerm -> TList))
-# 2.55 = 2.48 + 0.06 sec (98% + 2%) consumed for beta-reduction
+# 2.48 = 2.44 + 0.05 sec (98% + 2%) consumed for beta-reduction
 ok 7 - λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))  =_β*  λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 f3 f4 f5  
-# CurryStats: (79p,  13081f,  0o, 1516+5i)
+# CurryStats: ( 1p,  13081f,  0o, 1516+5i)
 #  1078 (  1):               free-varName? => ( 0p,   1078f,  0o,    1+ 0i :(Str -> TTerm -> TBool))
 #   937 (  1):                     Str-eq? => ( 0p,    937f,  0o,    1+ 0i :(Str -> Str -> TBool))
 #   821 (  1):                      #false => ( 0p,    821f,  0o,    1+ 0i TBool:(Mu -> Mu -> Mu))
@@ -170,13 +168,11 @@ ok 7 - λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.�
 #    58 (  1):                    Term-eq? => ( 0p,     58f,  0o,    1+ 0i :(TTerm -> TTerm -> TBool))
 #    51 (  1):               <<Aka+TTerm>> => ( 0p,     51f,  0o,    1+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
 #    47 (  1):                         not => ( 0p,     47f,  0o,    1+ 0i :(TBool -> TBool))
-#    37 (  1):        collect-lambdas(2/6) => ( 0p,     37f,  0o,    0+ 0i :(Str -> TTerm -> TTerm -> TList -> Mu))
 #    34 (  1):                           Y => ( 0p,     34f,  0o,    2+ 0i :(Callable -> Mu))
 #    32 (  1):                           I => ( 0p,     32f,  0o,    1+ 0i :(Mu -> Mu))
 #    31 (  1):                        VarT => ( 0p,     31f,  0o,    1+ 0i :(Str -> TTerm))
 #    30 (  1):                           B => ( 0p,     30f,  0o,    1+ 0i :(Callable -> Callable -> Mu))
 #    18 (  1):                       foldl => ( 0p,     18f,  0o,    2+ 0i :(Callable -> Mu -> TList -> Mu))
-#    12 (  1):             collect-lambdas => (78p,     12f,  0o,    1+ 0i :(TList -> Mu -> Str -> TTerm -> TTerm -> TList -> Mu))
 #     4 (  2):                           K => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu)),
 #                                      K^2 => ( 0p,      4f,  0o,    1+ 0i :(Mu -> Mu))
 #     3 (  2):                      findFP => ( 0p,      3f,  0o,    1+ 0i :(Callable -> Callable -> Mu)),
@@ -202,4 +198,4 @@ ok 7 - λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.�
 #                    subst-par-alpha_Maybe => ( 0p,      0f,  0o,    1+ 0i :(TList -> TTerm -> TMaybe)),
 #                   free-varNames-internal => ( 1p,      0f,  0o,    1+ 0i :(TList -> TList -> TTerm -> TList))
 
-Output completed (1 min 1 sec consumed) - Normal Termination
+Output completed (1 min 3 sec consumed) - Normal Termination

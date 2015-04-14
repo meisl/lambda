@@ -267,22 +267,22 @@ constant $collect-args is export = $Y(-> &self { lambdaFn(
 constant $collect-args-and-lambdas is export = {
     my $onLambda = $Y(-> &self { lambdaFn(
         'collect-lambdas', 'λss.λv.λb.λa.λas.error "NYI"', 
-        -> TList $bindings, $onInsideLambda, Str $binderName, TTerm $body, TTerm $arg, TList $rest-args {
-            my $newBindings = $cons($Pair($binderName, $arg), $bindings);
+        -> $onInsideLambda, TList $bindings, TTerm $body, TList $rest-args {
             case-Term($body,
                 LamT => -> Str $bv, TTerm $bb {
                     case-List($rest-args,
                         cons => -> TTerm $a, TList $as {
-                            &self($newBindings, $onInsideLambda, $bv, $bb, $a, $as)
+                            my $newBindings = $cons($Pair($bv, $a), $bindings);
+                            &self($onInsideLambda, $newBindings, $bb, $as)
                         },
                         nil => {    # ran out of args - none left for body (which is also a LamT)
-                            $Some($onInsideLambda($newBindings, $body, $nil))
+                            $Some($onInsideLambda($bindings, $body, $nil))
                         }
                     )
                 },
-                AppT   => -> Mu, Mu { $Some($onInsideLambda($newBindings, $body, $rest-args)) },
-                VarT   => -> Mu     { $Some($onInsideLambda($newBindings, $body, $rest-args)) },
-                ConstT => -> Mu     { $Some($onInsideLambda($newBindings, $body, $rest-args)) },
+                AppT   => -> Mu, Mu { $Some($onInsideLambda($bindings, $body, $rest-args)) },
+                VarT   => -> Mu     { $Some($onInsideLambda($bindings, $body, $rest-args)) },
+                ConstT => -> Mu     { $Some($onInsideLambda($bindings, $body, $rest-args)) },
             );
         }
     )});
@@ -292,7 +292,7 @@ constant $collect-args-and-lambdas is export = {
         -> $onUnapplicable, $onInsideLambda, TTerm $arg, TList $rest-args, TTerm $inTerm {
             $collect-args(
                 $onUnapplicable,
-                $onLambda($nil, $onInsideLambda),
+                -> $v, $b, $arg, $rest-args { $onLambda($onInsideLambda, $cons($Pair($v, $arg), $nil), $b, $rest-args) },
                 $arg, $rest-args, $inTerm
             );
         }
@@ -334,7 +334,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                     _if_($skip($vName),
                         { &self2($newSkip, $rest) },
                         { my $arg = $snd($sPair);
-                          my $newArg = case-Maybe(&self($arg),
+                          my $newArg = case-Maybe(&self($arg), # could use _direct variant of &self
                               None => $arg,
                               Some => $I
                           );
@@ -358,7 +358,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                         None => $body,
                         Some => -> TPair $sPair {
                             my $arg = $snd($sPair);
-                            case-Maybe(&self($arg),
+                            case-Maybe(&self($arg), # could use _direct variant of &self
                                 None => $arg,
                                 Some => $I
                             )
@@ -369,7 +369,7 @@ constant $betaContract_multi is export = $Y(-> &self {
             },
             ConstT => -> Mu { $foldl($AppT, $body, $rest-args) },
             AppT   => -> Mu, Mu {
-                my $newBody = case-Maybe(&self($body),
+                my $newBody = case-Maybe(&self($body), # could use _direct variant of &self
                     None => $body,
                     Some => $I
                 );
@@ -385,7 +385,7 @@ constant $betaContract_multi is export = $Y(-> &self {
             },
             LamT   => -> Mu, Mu {
                 # we know there cannot be any rest-args, so no need to foldl 'em
-                my $newBody = case-Maybe(&self($body),
+                my $newBody = case-Maybe(&self($body), # could use _direct variant of &self
                     None => $body,
                     Some => $I
                 );
