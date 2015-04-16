@@ -14,7 +14,7 @@ use Lambda::Streams;
 # module under test:
 use Lambda::TermADT;
 
-plan 44;
+plan 45;
 
 
 { # Term->source
@@ -368,31 +368,32 @@ plan 44;
 { # fresh-var-for
     is_properLambdaFn($fresh-var-for, 'fresh-var-for');
 
+    dies_ok( { $fresh-var-for(`'x')  }, '$fresh-var-for does not accept a VarT arg');
     dies_ok( { $fresh-var-for(`'x y')  }, '$fresh-var-for does not accept an AppT arg');
     dies_ok( { $fresh-var-for(`'λx.x') }, '$fresh-var-for does not accept a LamT arg');
     dies_ok( { $fresh-var-for(`'"c"')  }, '$fresh-var-for does not accept a ConstT arg');
 
-    my $xname = $VarT2name(`'x');
-    my $fresh1 = $fresh-var-for(`'x');
+    my $xName = 'x';
+    my $fresh1 = $fresh-var-for($xName);
     my $α1 = $VarT2name($fresh1);
-    my $fresh2 = $fresh-var-for(`'x');  # again - should return another fresh one
+    my $fresh2 = $fresh-var-for($xName);  # again - should return another fresh one
     my $α2 = $VarT2name($fresh2);
 
-    isnt_in($α1, [$xname, 'y', $α2]);
-    isnt_in($α2, [$xname, 'y', $α1]);
+    isnt_in($α1, [$xName, 'y', $α2]);
+    isnt_in($α2, [$xName, 'y', $α1]);
 
-    my $fresh3 = $fresh-var-for(`'x');
+    my $fresh3 = $fresh-var-for($xName);
     my $α3 = $VarT2name($fresh3);
-    isnt_in($α3, [$xname, 'y', $α1, $α2]);
+    isnt_in($α3, [$xName, 'y', $α1, $α2]);
 
-    ok($fresh3.gist ~~ / '/' $xname /, ".fresh(:for).gist contains the given var's gist")
+    ok($fresh3.gist ~~ / '/' $xName /, ".fresh(:for).gist contains the given var's gist")
         or diag "# got: {$fresh3.gist}";
-    nok($α3 ~~ / $xname /, ".fresh(:for).name does NOT contain the given var's name");
+    nok($α3 ~~ / $xName /, ".fresh(:for).name does NOT contain the given var's name");
     cmp_ok $fresh3, '===', $VarT($α3), "can get back same instance of fresh var via VarT.get";
 
-    my $fresh4 = $fresh-var-for($fresh3);
+    my $fresh4 = $fresh-var-for($α3);
     my $α4 = $VarT2name($fresh4);
-    isnt_in($α4, [$xname, 'y', $α1, $α2, $α3]);
+    isnt_in($α4, [$xName, 'y', $α1, $α2, $α3]);
 
     ok($fresh4.gist ~~ / $α3 /, ".fresh(:for).gist contains the given var's gist")
         or diag "# got: {$fresh4.gist}";

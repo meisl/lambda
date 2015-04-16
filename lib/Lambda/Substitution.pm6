@@ -127,7 +127,7 @@ constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
                             $newSubsts
                         );
                         _if_($needFreshVar,
-                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                            {   my $freshVar  = $fresh-var-for($myVarName);
                                 my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
                                 my $myAlpha  = $Pair($myVarName, $freshVar);
                                 $LamT($freshName, &self($cons($myAlpha, $newSubsts), $body));
@@ -190,7 +190,7 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
                             $newSubsts
                         );
                         _if_($needFreshVar,
-                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                            {   my $freshVar  = $fresh-var-for($myVarName);
                                 my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
                                 my $myAlpha  = $Pair($myVarName, $freshVar);
                                 # Here we use the fact that we *know* that body will change:
@@ -235,7 +235,7 @@ constant $subst-alpha_direct is export = $Y(-> &self { lambdaFn(
                     $inTerm,  # ...if so, nothing to do
                     {_if_($is-free-varName($forName, $body),    # is substitution var occuring in our body, after all?
                         {_if_($is-free-varName($myVarName, $replacement),   # need alpha-conv?
-                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                            {   my $freshVar  = $fresh-var-for($myVarName);
                                 my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
                                 my $mainSubst = $Pair($forName, $replacement);
                                 my $myAlpha   = $Pair($myVarName, $freshVar);
@@ -289,7 +289,7 @@ constant $subst-alpha_Maybe is export = $Y(-> &self { lambdaFn(
                     $None,  # ...if so, nothing to do
                     {_if_($is-free-varName($forName, $body),    # is substitution var occuring in our body, after all?
                         {_if_($is-free-varName($myVarName, $replacement),   # need alpha-conv?
-                            {   my $freshVar  = $fresh-var-for($VarT($myVarName));  # TODO: $fresh-var-for-name
+                            {   my $freshVar  = $fresh-var-for($myVarName);
                                 my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
                                 my $mainSubst = $Pair($forName, $replacement);
                                 my $myAlpha   = $Pair($myVarName, $freshVar);
