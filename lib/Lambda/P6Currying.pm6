@@ -16,8 +16,6 @@ sub EXPORT is cached {   # do some re-exporting
     return %out;
 }
 
-constant $STATS_ENABLED = True;   #   False;  #   
-
 
 role Curried {...}
 role Partial {...}
@@ -207,9 +205,9 @@ sub curry(&f -->Callable) is export {
     die $err;   # whatever it was
 }
 
+Lambda::P6Currying_Stats::init(Curried, Partial, curry => &curry, part => &apply_part, full => &apply_comp, over => &apply_more);
 
-if $STATS_ENABLED {
-    wrapCurry(&curry, Curried, Partial);
-    wrapApp(part => &apply_part, full => &apply_comp, over => &apply_more);
 
+our sub set_stats_enabled(Bool $enabled) {
+    Lambda::P6Currying_Stats::set_enabled($enabled);
 }

@@ -4,10 +4,22 @@ use Lambda::P6Currying_common;
 module Lambda::P6Currying_Stats;
 
 
-# `wrapCurry` below will set this to the type of roles Curried/Partial from P6Currying
+# `init` will set this to the type of roles Curried/Partial from P6Currying
 my $CurriedType;
 my $PartialType;
+my (&currySub, &partSub, &fullSub, &overSub);
+my &unwrapAll;
 my $isStatsEnabled = False;
+
+our sub init($curriedType, $partialType, :&curry!, :&part!, :&full!, :&over!) {
+    $CurriedType = $curriedType;
+    $PartialType = $partialType;
+    &currySub = &curry;
+    &partSub  = &part;
+    &fullSub  = &full;
+    &overSub  = &over;
+}
+
 
 my class StatsEntry {
     has Int:D $.init-bogus is rw = 0;
@@ -88,8 +100,8 @@ my sub btFrame2Str ($frame) {
 our sub curryStats is export {
     my $result = 'CurryStats: ';
     
-    return $result ~ 'n/a'
-        unless $isStatsEnabled;
+#    return $result ~ 'n/a'
+#        unless $isStatsEnabled;
     
     $result ~= $globalStats;
     
@@ -190,16 +202,28 @@ my sub statsWrapper_curry(&f, |rest) {
 }
 
 
-my sub wrapCurry(&curry, $curriedType, $partialType) is export {
-    &curry.wrap(&statsWrapper_curry);
-    $CurriedType = $curriedType;
-    $PartialType = $partialType;
-    $isStatsEnabled = True;
+our sub is_enabled() {
+    $isStatsEnabled;
 }
 
-my sub wrapApp(:&part!, :&full!, :&over!) is export {
-    &part.wrap(&statsWrapper_part);
-    &full.wrap(&statsWrapper_full);
-    &over.wrap(&statsWrapper_over);
+our sub set_enabled(Bool $enabled) {
+    if $isStatsEnabled !== $enabled {
+        $isStatsEnabled = $enabled;
+        if $enabled {
+            #say "stats off -> on";
+            my $curryHandle = &currySub.wrap(&statsWrapper_curry);
+            my $partHandle  = &partSub.wrap(&statsWrapper_part);
+            my $fullHandle  = &fullSub.wrap(&statsWrapper_full);
+            my $overHandle  = &overSub.wrap(&statsWrapper_over);
+            &unwrapAll = -> {
+                 &currySub.unwrap($curryHandle);
+                 &partSub.unwrap($partHandle);
+                 &fullSub.unwrap($fullHandle);
+                 &overSub.unwrap($overHandle);
+            };
+        } else {
+            #say "stats on -> off";
+            &unwrapAll();
+        }
+    }
 }
-

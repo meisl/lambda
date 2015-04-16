@@ -18,15 +18,25 @@ plan 7;
 
 my $time;
 
+
 diag curryStats;
 
 my $fpSearch = $findFP-inMaybe(lambdaFn('betaContract', 'λt.error "NYI"', -> TPair $pair {
     my $n = $fst($pair);
     my $term = $snd($pair);
     diag sprintf('    =_β%-2d  %s', $n, $Term2srcLess($term));
-    case-Maybe($betaContract_multi($term),
+    Lambda::P6Currying::set_stats_enabled(True);
+    my $newTermM = $betaContract($term);
+    Lambda::P6Currying::set_stats_enabled(False);
+    case-Maybe($newTermM,
         None => $None,
-        Some => -> $v { $Some($Pair($n+1, $v)) }
+        Some => -> $v {
+            my $pair = $Pair($n+1, $v);
+            Lambda::P6Currying::set_stats_enabled(True);
+            my $out = $Some($pair);
+            Lambda::P6Currying::set_stats_enabled(False);
+            $out;
+        }
     );
 }));
 
@@ -53,7 +63,6 @@ my $reduce = -> TTerm $start {
 
 ## uncomment to disable debug diagnostics:
 #$reduce = $betaReduce;
-$reduce = $findFP-inMaybe($betaContract_multi);
 
 
 sub is_confluent(TTerm $s, TTerm $t, Str :$msg = '', Str :$sStr, Str :$tStr) {
