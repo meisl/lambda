@@ -93,7 +93,6 @@ plan 134;
         }
     );
 }
-exit;
 
 
 { # betaContract_multi
@@ -112,6 +111,7 @@ exit;
 
     );
 }
+exit;
 
 
 { # collect-args
