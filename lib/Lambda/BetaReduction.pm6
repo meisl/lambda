@@ -398,23 +398,38 @@ constant $betaContract_multi is export = $Y(-> &self {
                 ##$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I);
                 #$substitutedBody;
 
-                my $contractedBb = case-Maybe(&self($bb), # could use _direct variant of &self
-                    None => $bb,
-                    Some => $I
+                my $substitutedBody = case-Maybe(&self($bb),
+                    None => {
+                        my $contractedBb = $bb;
+                        my $contractedBody = $body;
+                        my $newBindings = $filter-substs-and-contract(
+                            -> Str $vName {
+                                _if_($Str-eq($bv, $vName),   # short-circuit OR
+                                    $true,
+                                    { $not($is-free-varName($vName, $contractedBb)) }
+                                )
+                            },
+                            $bindings
+                        );
+                        # ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
+                        $subst-par-alpha_direct($newBindings, $contractedBody);
+                    },
+                    Some => -> $contractedBb {
+                        my $contractedBody = $LamT($bv, $contractedBb);
+                        my $newBindings = $filter-substs-and-contract(
+                            -> Str $vName {
+                                _if_($Str-eq($bv, $vName),   # short-circuit OR
+                                    $true,
+                                    { $not($is-free-varName($vName, $contractedBb)) }
+                                )
+                            },
+                            $bindings
+                        );
+                        # ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
+                        $subst-par-alpha_direct($newBindings, $contractedBody);
+                    }
                 );
 
-                my $contractedBody = $LamT($bv, $contractedBb);
-                my $newBindings = $filter-substs-and-contract(
-                    -> Str $vName {
-                        _if_($Str-eq($bv, $vName),   # short-circuit OR
-                            $true,
-                            { $not($is-free-varName($vName, $contractedBb)) }
-                        )
-                    },
-                    $bindings
-                );
-                # cannot just operate on contractedBb, as this might bright prevention of accidential capture (by bv)
-                my $substitutedBody = $subst-par-alpha_direct($newBindings, $contractedBody);
                 #$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I); # could use _direct variant of &self
                 $substitutedBody;
             },
