@@ -617,33 +617,22 @@ constant $alpha-vars is export = $map-lazy($VarT, $alpha-names);
 constant $fresh-var-for is export = {
     my $nextAlphaNr = 1;
 
-    my role AlphaVarT[TTerm:D $for, Str:D $gist] {
-        method for  { $for  }
+    my role AlphaVarT[Str:D $forName, Str:D $gist] {
+        method for  { $VarT($forName) }
         method gist { $gist }
     }
 
-    my &fresh-var-error = -> $term { die "can make fresh var for another var but not for $term" };
-
     lambdaFn(
         'fresh-var-for', 'λfor.error "NYI"',
-        -> TTerm $for -->TTerm{
-            #say $nextAlphaNr;
+        -> Str $forName -->TTerm{
             my $vName = 'α' ~ $nextAlphaNr;
             $nextAlphaNr++;
             my $v = $VarT($vName);
             $v ~~ TTerm or die $v.perl;
-            if $for.defined { case-Term($for,
-                VarT => -> Str $forName {
-                    my $forStr = ($for ~~ AlphaVarT)
-                        ?? $for.gist
-                        !! $forName;
-                    my $gistStr = $vName ~ "[/$forStr]";
-                    $v does AlphaVarT[$for, $gistStr];
-                },
-                ConstT => -> Mu     { &fresh-var-error($for) },
-                AppT   => -> Mu, Mu { &fresh-var-error($for) },
-                LamT   => -> Mu, Mu { &fresh-var-error($for) }
-            ) }
+            if $forName.defined { 
+                my $gistStr = $vName ~ "[/$forName]";
+                $v does AlphaVarT[$forName, $gistStr];
+            }
             $v;
         }
     );
