@@ -413,6 +413,8 @@ constant $betaContract_multi is export = $Y(-> &self {
                         );
                         # ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
                         $subst-par-alpha_direct($newBindings, $contractedBody);
+                        #my $freshVar = $fresh-var-for($bv);
+                        #$LamT($VarT2name($freshVar), $subst-par-alpha_direct($cons($Pair($bv, $freshVar), $newBindings), $contractedBb));
                     },
                     Some => -> $contractedBb {
                         my $contractedBody = $LamT($bv, $contractedBb);
@@ -427,6 +429,8 @@ constant $betaContract_multi is export = $Y(-> &self {
                         );
                         # ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
                         $subst-par-alpha_direct($newBindings, $contractedBody);
+                        #my $freshVar = $fresh-var-for($bv);
+                        #$LamT($VarT2name($freshVar), $subst-par-alpha_direct($cons($Pair($bv, $freshVar), $newBindings), $contractedBb));
                     }
                 );
 

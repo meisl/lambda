@@ -106,14 +106,18 @@ constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
                 $AppT(
                     &self($substitutions, $func),
                     &self($substitutions, $arg)
-                );
+                )
             },
             LamT => -> Str $myVarName, TTerm $body {
                 # kick out irrelevant substitutions:
                 #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
                 my $newSubsts  = $filter(
                     -> TPair $sPair {
-                        $is-free-varName($fst($sPair), $t)  # more efficient than (exists (λiName.Str-eq (fst sPair) iName) myFreeNames)
+                        my $forName = $fst($sPair);
+                        _if_($Str-eq($myVarName, $forName), # short-circuit OR
+                            $false,
+                            { $is-free-varName($forName, $body) }
+                        )
                     },
                     $substitutions
                 );
@@ -176,7 +180,11 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
                 #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
                 my $newSubsts  = $filter(
                     -> TPair $sPair {
-                        $is-free-varName($fst($sPair), $t)  # more efficient than (exists (λiName.Str-eq (fst sPair) iName) myFreeNames)
+                        my $forName = $fst($sPair);
+                        _if_($Str-eq($myVarName, $forName), # short-circuit OR
+                            $false,
+                            { $is-free-varName($forName, $body) }
+                        )
                     },
                     $substitutions
                 );
