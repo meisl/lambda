@@ -402,7 +402,6 @@ constant $betaContract_multi is export = $Y(-> &self {
                 my $substitutedBody = case-Maybe(&self($bb),
                     None => {
                         my $contractedBb = $bb;
-                        my $contractedBody = $body;
                         my $newBindings = $filter-substs-and-contract(
                             -> Str $forName {
                                 _if_($Str-eq($bv, $forName),   # short-circuit OR
@@ -413,9 +412,15 @@ constant $betaContract_multi is export = $Y(-> &self {
                             $bindings
                         );
                         # ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
-                        $subst-par-alpha_direct($newBindings, $contractedBody);
-                        #my $freshVar = $fresh-var-for($bv);
-                        #$LamT($VarT2name($freshVar), $subst-par-alpha_direct($cons($Pair($bv, $freshVar), $newBindings), $contractedBb));
+                        #$subst-par-alpha_direct($newBindings, $body);
+                        
+                        _if_($exists(-> $sPair { $is-free-varName($bv, $snd($sPair)) }, $newBindings),
+                            {   # need fresh binder for bv
+                                my $freshVar = $fresh-var-for($bv);
+                                $LamT($VarT2name($freshVar), $subst-par-alpha_direct($cons($Pair($bv, $freshVar), $newBindings), $contractedBb));
+                            },
+                            { $LamT($bv, $subst-par-alpha_direct($newBindings, $contractedBb)) }
+                        )
                     },
                     Some => -> $contractedBb {
                         my $contractedBody = $LamT($bv, $contractedBb);
@@ -435,7 +440,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                     }
                 );
 
-                $substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I); # could use _direct variant of &self
+                #$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I); # could use _direct variant of &self
                 $substitutedBody;   # we *know* there are no rest-args, so no need to foldl them
             },
         );
