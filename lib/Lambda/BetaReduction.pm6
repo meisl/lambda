@@ -435,8 +435,8 @@ constant $betaContract_multi is export = $Y(-> &self {
                     }
                 );
 
-                #$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I); # could use _direct variant of &self
-                $substitutedBody;
+                $substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I); # could use _direct variant of &self
+                $substitutedBody;   # we *know* there are no rest-args, so no need to foldl them
             },
         );
     };
