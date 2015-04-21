@@ -90,35 +90,37 @@ constant $subst is export = lambdaFn(
     }
 );
 
+constant $checkSubsts = $Y(-> &self { lambdaFn(
+    'checkSubsts', '',
+    -> TList $substsIn, Str $binderName, TTerm $body, TBool $needFreshBinder, $mkSubstsOut {
+        case-List($substsIn,
+            nil => $mkSubstsOut($nil, $needFreshBinder),
+            cons => -> TPair $sPair, TList $rest {
+                my $forName = $fst($sPair);
+                _if_($Str-eq($binderName, $forName), # short-circuit OR
+                    { &self($rest, $binderName, $body, $needFreshBinder, $mkSubstsOut) },
+                    { 
+                        _if_($is-free-varName($forName, $body),
+                            {   my $needFreshBinderNow = _if_($needFreshBinder, # short-circuit OR
+                                    $true,
+                                    { $is-free-varName($binderName, $snd($sPair)) }
+                                );
+                                &self($rest, $binderName, $body, $needFreshBinderNow, 
+                                    -> TList $newBindings, TBool $needFreshBinder {
+                                        $mkSubstsOut($cons($sPair, $newBindings), $needFreshBinder)
+                                    }
+                                );
+                            },
+                            { &self($rest, $binderName, $body, $needFreshBinder, $mkSubstsOut) }
+                        )
+                    }
+                )
+            }
+        )
+    }
+)});
 
 constant $subst-par-alpha_direct is export = $Y(-> &self { 
-    my $checkSubsts = $Y(-> &self2 { lambdaFn(
-        Str, '',
-        -> TList $substitutions, Str $binderName, TTerm $body, TBool $needFreshBinder {
-            case-List($substitutions,
-                nil => $Pair($nil, $needFreshBinder),
-                cons => -> TPair $sPair, TList $rest {
-                    my $forName = $fst($sPair);
-                    _if_($Str-eq($binderName, $forName), # short-circuit OR
-                        { &self2($rest, $binderName, $body, $needFreshBinder) },
-                        { 
-                            _if_($is-free-varName($forName, $body),
-                                {   my $myNeedFreshBinder = _if_($needFreshBinder, # short-circuit OR
-                                        $true,
-                                        { $is-free-varName($binderName, $snd($sPair)) }
-                                    );
-                                    my $out = &self2($rest, $binderName, $body, $myNeedFreshBinder);
-                                    $Pair($cons($sPair, $fst($out)), $myNeedFreshBinder);
-                                },
-                                { &self2($rest, $binderName, $body, $needFreshBinder) }
-                            )
-                        }
-                    )
-
-                }
-            )
-        }
-    )});
     lambdaFn(
         'subst-par-alpha_direct', 'λself.λsubstitutions.λt.error "NYI"',
         -> TList $substitutions, TTerm $t -->TTerm{
@@ -136,19 +138,19 @@ constant $subst-par-alpha_direct is export = $Y(-> &self {
                         &self($substitutions, $arg)
                     )
                 },
-                LamT => -> Str $myVarName, TTerm $body {
-                    $checkSubsts($substitutions, $myVarName, $body, $false)(
+                LamT => -> Str $binderName, TTerm $body {
+                    $checkSubsts($substitutions, $binderName, $body, $false,
                         -> $newSubsts, $needFreshVar {
                             case-List($newSubsts,
                                 nil => $t,
                                 cons => -> Mu, Mu {
                                     _if_($needFreshVar,
-                                        {   my $freshVar  = $fresh-var-for($myVarName);
+                                        {   my $freshVar  = $fresh-var-for($binderName);
                                             my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
-                                            my $myAlpha  = $Pair($myVarName, $freshVar);
+                                            my $myAlpha  = $Pair($binderName, $freshVar);
                                             $LamT($freshName, &self($cons($myAlpha, $newSubsts), $body));
                                         },
-                                        { $LamT($myVarName, &self($newSubsts, $body)) }
+                                        { $LamT($binderName, &self($newSubsts, $body)) }
                                     )
                                 }
                             )
