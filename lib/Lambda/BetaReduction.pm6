@@ -324,22 +324,22 @@ constant $betaContract_multi is export = $Y(-> &self {
             case-List($substs,
                 nil => $nil,
                 cons => -> $sPair, $rest {
-                    my $vName = $fst($sPair);
+                    my $forName = $fst($sPair);
                     my $newSkip = -> $vn {
-                        _if_($Str-eq($vName, $vn),
+                        _if_($Str-eq($forName, $vn),
                             $true,  # short-circuit OR
                             { $skip($vn) }
                         );
                     };
-                    _if_($skip($vName),
-                        { &self2($newSkip, $rest) },
-                        { my $arg = $snd($sPair);
-                          my $newArg = case-Maybe(&self($arg), # could use _direct variant of &self
-                              None => $arg,
-                              Some => $I
-                          );
-                          $cons($Pair($vName, $newArg), &self2($newSkip, $rest));
-                        }
+                    my $newRest = &self2($newSkip, $rest);
+                    _if_($skip($forName),
+                        $newRest,
+                        { $cons(case-Maybe(&self($snd($sPair)),
+                                    None => $sPair,
+                                    Some => -> $newArg { $Pair($forName, $newArg) },
+                                ),
+                                $newRest
+                        ) }
                     )
                 }
             )
