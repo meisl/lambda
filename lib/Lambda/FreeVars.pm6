@@ -21,9 +21,32 @@ constant $is-free-varName is export = $Y(-> &self { lambdaFn(
                     { &self($varName, $arg) }
                 )
             },
-            LamT => -> Str $lamVarName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
-                _if_( $Str-eq($varName, $lamVarName),
+            LamT => -> Str $binderName, TTerm $body {
+                _if_( $Str-eq($varName, $binderName),
                     $false,
+                    { &self($varName, $body) }
+                )
+            }
+        );
+    }
+)});
+
+
+constant $is-not-free-varName is export = $Y(-> &self { lambdaFn(
+    'not-free-varName?', 'λself.λvarName.λt.error "NYI"',
+    -> Str:D $varName, TTerm $t -->TBool{
+        case-Term($t,
+            ConstT => $K1true,
+            VarT => -> Str $name { $not($Str-eq($varName, $name)) },
+            AppT => -> TTerm $func, TTerm $arg {
+                _if_( &self($varName, $func),       # short-circuit AND
+                    { &self($varName, $arg) },
+                    $false
+                )
+            },
+            LamT => -> Str $binderName, TTerm $body {
+                _if_( $Str-eq($varName, $binderName),   # short-circuit OR
+                    $true,
                     { &self($varName, $body) }
                 )
             }

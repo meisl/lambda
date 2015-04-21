@@ -138,7 +138,7 @@ constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
                     -> $forName {
                         _if_($Str-eq($binderName, $forName), # short-circuit OR
                             $true,
-                            { $not($is-free-varName($forName, $body)) }
+                            { $is-not-free-varName($forName, $body) }
                         )
                     },
                     $substitutions
@@ -197,7 +197,7 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
                     -> $forName {
                         _if_($Str-eq($binderName, $forName), # short-circuit OR
                             $true,
-                            { $not($is-free-varName($forName, $body)) }
+                            { $is-not-free-varName($forName, $body) }
                         )
                     },
                     $substitutions

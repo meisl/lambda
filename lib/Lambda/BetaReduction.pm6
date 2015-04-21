@@ -375,7 +375,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                     Some => $I
                 );
                 my $newBindings = $filter-substs-and-contract(
-                    -> Str $vName { $not($is-free-varName($vName, $contractedBody)) },
+                    -> Str $forName { $is-not-free-varName($forName, $contractedBody) },
                     $bindings
                 );
                 my $substitutedBody = $subst-par-alpha_direct($newBindings, $contractedBody);
@@ -392,7 +392,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                 #    Some => $I
                 #);
                 #my $newBindings = $filter-substs-and-contract(
-                #    -> Str $vName { $not($is-free-varName($vName, $contractedBody)) },
+                #    -> Str $forName { $is-not-free-varName($forName, $contractedBody) },
                 #    $bindings
                 #);
                 #my $substitutedBody = $subst-par-alpha_direct($newBindings, $contractedBody);
@@ -404,10 +404,10 @@ constant $betaContract_multi is export = $Y(-> &self {
                         my $contractedBb = $bb;
                         my $contractedBody = $body;
                         my $newBindings = $filter-substs-and-contract(
-                            -> Str $vName {
-                                _if_($Str-eq($bv, $vName),   # short-circuit OR
+                            -> Str $forName {
+                                _if_($Str-eq($bv, $forName),   # short-circuit OR
                                     $true,
-                                    { $not($is-free-varName($vName, $contractedBb)) }
+                                    { $is-not-free-varName($forName, $contractedBb) }
                                 )
                             },
                             $bindings
@@ -420,10 +420,10 @@ constant $betaContract_multi is export = $Y(-> &self {
                     Some => -> $contractedBb {
                         my $contractedBody = $LamT($bv, $contractedBb);
                         my $newBindings = $filter-substs-and-contract(
-                            -> Str $vName {
-                                _if_($Str-eq($bv, $vName),   # short-circuit OR
+                            -> Str $forName {
+                                _if_($Str-eq($bv, $forName),   # short-circuit OR
                                     $true,
-                                    { $not($is-free-varName($vName, $contractedBb)) }
+                                    { $is-not-free-varName($forName, $contractedBb) }
                                 )
                             },
                             $bindings
