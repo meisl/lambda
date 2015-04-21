@@ -411,7 +411,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                             },
                             $bindings
                         );
-                        # ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
+                        ## ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
                         #$subst-par-alpha_direct($newBindings, $body);
                         
                         _if_($exists(-> $sPair { $is-free-varName($bv, $snd($sPair)) }, $newBindings),
@@ -423,7 +423,6 @@ constant $betaContract_multi is export = $Y(-> &self {
                         )
                     },
                     Some => -> $contractedBb {
-                        my $contractedBody = $LamT($bv, $contractedBb);
                         my $newBindings = $filter-substs-and-contract(
                             -> Str $forName {
                                 _if_($Str-eq($bv, $forName),   # short-circuit OR
@@ -433,10 +432,16 @@ constant $betaContract_multi is export = $Y(-> &self {
                             },
                             $bindings
                         );
-                        # ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
-                        $subst-par-alpha_direct($newBindings, $contractedBody);
-                        #my $freshVar = $fresh-var-for($bv);
-                        #$LamT($VarT2name($freshVar), $subst-par-alpha_direct($cons($Pair($bv, $freshVar), $newBindings), $contractedBb));
+                        ## ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
+                        #$subst-par-alpha_direct($newBindings, $LamT($bv, $contractedBb));
+                        
+                        _if_($exists(-> $sPair { $is-free-varName($bv, $snd($sPair)) }, $newBindings),
+                            {   # need fresh binder for bv
+                                my $freshVar = $fresh-var-for($bv);
+                                $LamT($VarT2name($freshVar), $subst-par-alpha_direct($cons($Pair($bv, $freshVar), $newBindings), $contractedBb));
+                            },
+                            { $LamT($bv, $subst-par-alpha_direct($newBindings, $contractedBb)) }
+                        )
                     }
                 );
 
