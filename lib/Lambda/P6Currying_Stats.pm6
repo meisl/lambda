@@ -111,7 +111,7 @@ our sub curryStats is export {
         || ($_.full >= 50)
         || ($_.part + $_.over + $_.init-bogus >=  1)
         || ($_.fn ~~ $PartialType)
-        || ($_.fn.name // '') eq any('Term->source', 'Term-eq?', 'Str-eq?', '#true', '#false', <LamT AppT VarT [LamT] [AppT] [VarT] id I M const K K^2 Y B cons nil car cdr foldl foldr _if _and _or not>)
+        || ($_.fn.name // '') eq any('Term->source', 'Term-eq?', 'Str-eq?', '#true', '#false', <LamT AppT VarT [LamT] [AppT] [VarT] id I M const K K^2 Y B cons nil car cdr foldl foldr first exists _if _and _or not>)
         || ($_.fn.name // '').substr(0, 5) eq 'subst'
         || ($_.fn.name // '').substr(0, 6) eq 'findFP'
     });

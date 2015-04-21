@@ -108,13 +108,13 @@ constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
                     &self($substitutions, $arg)
                 )
             },
-            LamT => -> Str $myVarName, TTerm $body {
+            LamT => -> Str $binderName, TTerm $body {
                 # kick out irrelevant substitutions:
                 #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
                 my $newSubsts  = $filter(
                     -> TPair $sPair {
                         my $forName = $fst($sPair);
-                        _if_($Str-eq($myVarName, $forName), # short-circuit
+                        _if_($Str-eq($binderName, $forName), # short-circuit
                             $false,
                             { $is-free-varName($forName, $body) }
                         )
@@ -124,19 +124,13 @@ constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
                 case-List($newSubsts,
                     nil => $t,
                     cons => -> Mu, Mu {
-                        my $needFreshVar = $exists(
-                            -> $sPair {
-                                $is-free-varName($myVarName, $snd($sPair))
-                            }, 
-                            $newSubsts
-                        );
-                        _if_($needFreshVar,
-                            {   my $freshVar  = $fresh-var-for($myVarName);
+                        _if_($exists(-> $sPair { $is-free-varName($binderName, $snd($sPair)) }, $newSubsts),
+                            {   my $freshVar  = $fresh-var-for($binderName);
                                 my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
-                                my $myAlpha  = $Pair($myVarName, $freshVar);
+                                my $myAlpha  = $Pair($binderName, $freshVar);
                                 $LamT($freshName, &self($cons($myAlpha, $newSubsts), $body));
                             },
-                            { $LamT($myVarName, &self($newSubsts, $body)) }
+                            { $LamT($binderName, &self($newSubsts, $body)) }
                         )
                     }
                 )
