@@ -326,8 +326,8 @@ constant $betaContract_multi is export = $Y(-> &self {
                 cons => -> $sPair, $rest {
                     $sPair(-> $forName, $replacement {
                         my $newSkip = -> $vn {
-                            _if_($Str-eq($forName, $vn),
-                                $true,  # short-circuit OR
+                            _if_($Str-eq($forName, $vn),  # short-circuit OR
+                                $true,
                                 { $skip($vn) }
                             );
                         };

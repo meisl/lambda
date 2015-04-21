@@ -22,9 +22,9 @@ constant $is-free-varName is export = $Y(-> &self { lambdaFn(
                 )
             },
             LamT => -> Str $binderName, TTerm $body {
-                _if_( $Str-eq($varName, $binderName),
+                _if_( $Str-ne($varName, $binderName),   # short-circuit AND
+                    { &self($varName, $body) },
                     $false,
-                    { &self($varName, $body) }
                 )
             }
         );
@@ -37,7 +37,7 @@ constant $is-not-free-varName is export = $Y(-> &self { lambdaFn(
     -> Str:D $varName, TTerm $t -->TBool{
         case-Term($t,
             ConstT => $K1true,
-            VarT => -> Str $name { $not($Str-eq($varName, $name)) },
+            VarT => -> Str $name { $Str-ne($varName, $name) },
             AppT => -> TTerm $func, TTerm $arg {
                 _if_( &self($varName, $func),       # short-circuit AND
                     { &self($varName, $arg) },
@@ -73,13 +73,13 @@ constant $is-freeName-under is export = $Y(-> &self { lambdaFn(
                 )
             },
             LamT => -> Str $lamVarName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
-                _if_($Str-eq($varName, $lamVarName),
-                    $false, # if the λ binds the var then it's not free anywhere in the λ's body
+                _if_($Str-ne($varName, $lamVarName),    # short-circuit AND
                     {   _if_( $Str-eq($binderName, $lamVarName),        # or else, if the binder is the λ's var then...
                             { $is-free-varName($varName, $body) },      # $var is free under $binder if $var is free in the λ's body
                             { &self($varName, $binderName, $body) }     # otherwise it depends on the λ's body
                         )
                     },
+                    $false, # if the λ binds the var then it's not free anywhere in the λ's body
                 );
             }
         )

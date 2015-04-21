@@ -17,7 +17,8 @@ use Lambda::Conversion;
 # module(s) under test:
 use Lambda::String;
 
-plan 1;
+plan 2;
+
 
 subtest({ # Str-eq?
     is_properLambdaFn($Str-eq, 'Str-eq?');
@@ -30,6 +31,7 @@ subtest({ # Str-eq?
     is $Str-eq("b", "a"), $false;
     is $Str-eq("a", ""), $false;
     is $Str-eq("", "b"), $false;
+    is $Str-eq("", ""), $true;
 
     dies_ok({ $Str-eq(Str, 'x') }, 'cannot call it with 1st arg undefined');
     dies_ok({ $Str-eq('x', Str) }, 'cannot call it with 2nd arg undefined');
@@ -43,6 +45,33 @@ subtest({ # Str-eq?
     is $partial('foo'), $true, 'partial application (1)';
     is $partial('bar'), $false, 'partial application (2)';
 }, 'Str-eq?');
+
+
+subtest({ # Str-ne?
+    is_properLambdaFn($Str-ne, 'Str-ne?');
+
+    is $Str-ne("a", "a"), $false;
+    is $Str-ne("the λ calculus", "the λ calculus"), $false;
+    is $Str-ne("The λ calculus", "the λ calculus"), $true;
+
+    is $Str-ne("a", "b"), $true;
+    is $Str-ne("b", "a"), $true;
+    is $Str-ne("a", ""), $true;
+    is $Str-ne("", "b"), $true;
+    is $Str-ne("", ""), $false;
+
+    dies_ok({ $Str-ne(Str, 'x') }, 'cannot call it with 1st arg undefined');
+    dies_ok({ $Str-ne('x', Str) }, 'cannot call it with 2nd arg undefined');
+    dies_ok({ $Str-ne(Str, Str) }, 'cannot call it with both args undefined');
+
+    dies_ok({ $Str-ne(456, 'x') }, 'cannot call it with 1st arg an Int');
+    dies_ok({ $Str-ne('x', 456) }, 'cannot call it with 2nd arg an Int');
+    dies_ok({ $Str-ne(123, 456) }, 'cannot call it with both args Ints');
+
+    my $partial = $Str-ne('foo');
+    is $partial('foo'), $false, 'partial application (1)';
+    is $partial('bar'), $true, 'partial application (2)';
+}, 'Str-ne?');
 
 
 # ------------------------------------------------------------------------------------------------

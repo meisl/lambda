@@ -23,13 +23,12 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                 VarT => -> Str $tName {
                     my Str $forName = $fst($head);
                     _if_($Str-eq($forName, $tName),
-                        {
-                            my TTerm  $what = $snd($head);
-                            my TMaybe $out  = &self($what, $tail);
-                            case-Maybe($out,
-                                None => { $Some($what) },
-                                Some => -> Mu { $out }
-                            )
+                        { my TTerm  $what = $snd($head);
+                          my TMaybe $out  = &self($what, $tail);
+                          case-Maybe($out,
+                              None => { $Some($what) },
+                              Some => -> Mu { $out }
+                          )
                         },
                         { &self($t, $tail) }
                     )
@@ -99,8 +98,8 @@ constant $except-substs_noDupes = $Y(-> &self { lambdaFn(
             cons => -> $sPair, $rest {
                 $sPair(-> $forName, $replacement {
                     my $newSkip = -> $vn {
-                        _if_($Str-eq($forName, $vn),
-                            $true,  # short-circuit OR
+                        _if_($Str-eq($forName, $vn),  # short-circuit OR
+                            $true,
                             { $skip($vn) }
                         );
                     };
