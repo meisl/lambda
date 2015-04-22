@@ -347,7 +347,7 @@ constant $betaContract_multi is export = $Y(-> &self {
         }
     )});
 
-    my $onInsideLambda = -> TList $bindings, TTerm $body, TList $rest-args {
+    my $onInsideLambda = $Y(-> &onInsideLambda { lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
         #my $newBody = $subst-par-alpha_direct($bindings, $body);
         #$foldl($AppT, $newBody, $rest-args);
         
@@ -449,7 +449,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                 $substitutedBody;   # we *know* there are no rest-args, so no need to foldl them
             },
         );
-    };
+    })});
     
     lambdaFn(
         'betaContract_multi', 'λt.error "NYI"',
