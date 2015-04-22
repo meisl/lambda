@@ -377,27 +377,27 @@ constant $betaContract_multi is export = $Y(-> &self {
         );
     });
 
+    my $doSubsts-var = lambdaFn('doSubsts-var', '', -> TList $bindings, TTerm $varTerm, TList $rest-args, Str $varName {
+        case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $bindings),
+            None => { $foldl($AppT, $varTerm, $rest-args) },
+            Some => -> TPair $sPair {
+                my $arg = $snd($sPair);
+                case-Maybe(&self($arg), # could use _direct variant of &self
+                    None => { $foldl($AppT, $arg, $rest-args) },
+                    Some => -> TTerm $contractedArg {
+                        $foldl($AppT, $contractedArg, $rest-args)
+                    }
+                )
+            }
+        )
+    });
+
     my $onInsideLambda = $Y(-> &onInsideLambda { lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
         #my $newBody = $subst-par-alpha_direct($bindings, $body);
         #$foldl($AppT, $newBody, $rest-args);
         
         case-Term($body,
-            VarT   => -> $bodyVarName {
-                $foldl(
-                    $AppT, 
-                    case-Maybe($first(-> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, $bindings),
-                        None => $body,
-                        Some => -> TPair $sPair {
-                            my $arg = $snd($sPair);
-                            case-Maybe(&self($arg), # could use _direct variant of &self
-                                None => $arg,
-                                Some => $I
-                            )
-                        }
-                    ),
-                    $rest-args
-                )
-            },
+            VarT   => -> $bodyVarName { $doSubsts-var($bindings, $body, $rest-args, $bodyVarName) },
             ConstT => -> Mu { $foldl($AppT, $body, $rest-args) },
             AppT   => -> Mu, Mu {
                 case-Maybe(&self($body),
@@ -412,10 +412,15 @@ constant $betaContract_multi is export = $Y(-> &self {
                             },
                             cons => -> TTerm $arg, TList $more-args {
                                 case-Term($contractedBody,
-                                    ConstT => -> Mu     { $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args) },
-                                    VarT   => -> Mu     { $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args) },
-                                    AppT   => -> Mu, Mu { $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args) },
-                                    LamT   => -> $cbv, $cbb {
+                                    ConstT => -> Mu {   # nothing to substitute (in)
+                                        $foldl($AppT, $contractedBody, $rest-args)
+                                    },
+                                    VarT => -> $varName { # TODO: avoid subst-par-alpha, inline the (simple) substitution here
+                                        my $substitutedBody = $doSubsts($bindings, $contractedBody);
+                                        $foldl($AppT, $substitutedBody, $rest-args);
+                                    },
+                                    AppT => -> Mu, Mu { $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args) },
+                                    LamT => -> $cbv, $cbb {
                                         #$collect-lambdas(&onInsideLambda, $cons($Pair($cbv, $arg), $bindings), $cbb, $more-args);
                                         
                                         #$collect-lambdas(
