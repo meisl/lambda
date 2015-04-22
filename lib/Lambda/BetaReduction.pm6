@@ -390,12 +390,12 @@ constant $betaContract_multi is export = $Y(-> &self {
         )
     });
 
-    my $onInsideLambda = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+    my $onInsideLambdaZZZZ = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
         my $newBody = $subst-par-alpha_direct($bindings, $body);
         $foldl($AppT, $newBody, $rest-args);
     });
 
-    my $onInsideLambdaZZZZ = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+    my $onInsideLambda = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
         my $newBody = $doSubsts($bindings, $body);
         $foldl($AppT, $newBody, $rest-args);
     });
