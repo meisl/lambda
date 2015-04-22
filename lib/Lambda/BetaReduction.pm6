@@ -370,16 +370,35 @@ constant $betaContract_multi is export = $Y(-> &self {
             },
             ConstT => -> Mu { $foldl($AppT, $body, $rest-args) },
             AppT   => -> Mu, Mu {
-                my $contractedBody = case-Maybe(&self($body), # could use _direct variant of &self
-                    None => $body,
-                    Some => $I
+                
+                my $substitutedBody = case-Maybe(&self($body), # could use _direct variant of &self
+                    None => {
+                        my $newBindings = $filter-substs-and-contract(
+                            -> Str $forName { $is-not-free-varName($forName, $body) },
+                            $bindings
+                        );
+                        $subst-par-alpha_direct($newBindings, $body);
+                    },
+                    Some => -> $contractedBody {
+                        my $newBindings = $filter-substs-and-contract(
+                            -> Str $forName { $is-not-free-varName($forName, $contractedBody) },
+                            $bindings
+                        );
+                        $subst-par-alpha_direct($newBindings, $contractedBody);
+                    }
                 );
-                my $newBindings = $filter-substs-and-contract(
-                    -> Str $forName { $is-not-free-varName($forName, $contractedBody) },
-                    $bindings
-                );
-                my $substitutedBody = $subst-par-alpha_direct($newBindings, $contractedBody);
-                #$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I);
+
+                #my $contractedBody = case-Maybe(&self($body), # could use _direct variant of &self
+                #    None => $body,
+                #    Some => $I
+                #);
+                #my $newBindings = $filter-substs-and-contract(
+                #    -> Str $forName { $is-not-free-varName($forName, $contractedBody) },
+                #    $bindings
+                #);
+                #my $substitutedBody = $subst-par-alpha_direct($newBindings, $contractedBody);
+                ##$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I);
+                
                 $foldl(
                     $AppT,
                     $substitutedBody,
