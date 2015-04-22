@@ -400,32 +400,38 @@ constant $betaContract_multi is export = $Y(-> &self {
             },
             ConstT => -> Mu { $foldl($AppT, $body, $rest-args) },
             AppT   => -> Mu, Mu {
-                my $substitutedBody = case-Maybe(&self($body), # could use _direct variant of &self
-                    None => {
-                        $doSubsts($bindings, $body);
+                case-Maybe(&self($body),
+                    None => {   # still an AppT, so we cannot apply more of rest-args
+                        my $substitutedBody = $doSubsts($bindings, $body);
+                        $foldl($AppT, $substitutedBody, $rest-args);
                     },
                     Some => -> $contractedBody {
                         case-List($rest-args,
-                            nil => { $doSubsts($bindings, $contractedBody) },
+                            nil => {
+                                $doSubsts($bindings, $contractedBody);
+                            },
                             cons => -> TTerm $arg, TList $more-args {
                                 case-Term($contractedBody,
-                                    ConstT => -> Mu     { $doSubsts($bindings, $contractedBody) },
-                                    VarT   => -> Mu     { $doSubsts($bindings, $contractedBody) },
-                                    AppT   => -> Mu, Mu { $doSubsts($bindings, $contractedBody) },
+                                    ConstT => -> Mu     { $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args) },
+                                    VarT   => -> Mu     { $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args) },
+                                    AppT   => -> Mu, Mu { $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args) },
                                     LamT   => -> $cbv, $cbb {
                                         #$collect-lambdas(&onInsideLambda, $cons($Pair($cbv, $arg), $bindings), $cbb, $more-args);
-                                        $collect-lambdas(
-                                            -> TList $bindings2, TTerm $innerBody, TList $rest-args2 {
-                                                say ">>>bindings>>> {$List2StrDense($bindings2)}  ++  {$List2StrDense($bindings)}";
-                                                say ">>>rest-args>> {$rest-args}  ~>  {$rest-args2}";
-                                                say ">>>old body>>> " ~ $Term2srcLess($body);
-                                                say ">>>ct'd body>> " ~ $Term2srcLess($contractedBody);
-                                                say ">>>inner body> " ~ $Term2srcLess($innerBody);
-                                                say ">>>result>>>>> " ~ $Term2srcLess($doSubsts($append($bindings, $bindings2), $innerBody));
-                                            },
-                                            $nil, $contractedBody, $rest-args
-                                        );
-                                        $doSubsts($bindings, $contractedBody);
+                                        
+                                        #$collect-lambdas(
+                                        #    -> TList $bindings2, TTerm $innerBody, TList $rest-args2 {
+                                        #        say ">>>bindings>>> {$List2StrDense($bindings2)}  ++  {$List2StrDense($bindings)}";
+                                        #        say ">>>rest-args>> {$rest-args}  ~>  {$rest-args2}";
+                                        #        say ">>>old body>>> " ~ $Term2srcLess($body);
+                                        #        say ">>>ct'd body>> " ~ $Term2srcLess($contractedBody);
+                                        #        say ">>>inner body> " ~ $Term2srcLess($innerBody);
+                                        #        say ">>>result>>>>> " ~ $Term2srcLess($doSubsts($append($bindings, $bindings2), $innerBody));
+                                        #    },
+                                        #    $nil, $contractedBody, $rest-args
+                                        #);
+                                        
+                                        my $substitutedBody = $doSubsts($bindings, $contractedBody);
+                                        $foldl($AppT, $substitutedBody, $rest-args);
                                     },
                                 );
                             }
@@ -435,11 +441,6 @@ constant $betaContract_multi is export = $Y(-> &self {
                 
                 #$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I);
                 
-                $foldl(
-                    $AppT,
-                    $substitutedBody,
-                    $rest-args
-                )
             },
             LamT   => -> Str $bv, TTerm $bb {
                 #my $contractedBody = case-Maybe(&self($body), # could use _direct variant of &self

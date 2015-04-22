@@ -5,12 +5,6 @@
 # (λf.λa.λb.f b a) (B (C cons) (C cons nil))  =  (λf.λa.λb.f b a) ((λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h)))
 #     =_β0   (λf.λa.λb.f b a) ((λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h)))
 #     =_β1   λa.λb.(λx.(λx.λy.(λf1.λf2.λ_.λh.h f1 f2) y x) ((λy.(λf1.λf2.λ_.λh.h f1 f2) y (λh.λ_.h)) x)) b a
->>>bindings>>> [(Pair "y" (VarT "a"))]  ++  [(Pair "x" (VarT "b"))]
->>>rest-args>> (cons (VarT "a") nil)  ~>  nil
->>>old body>>> (λx.λy.(λf1.λf2.λ_.λh.h f1 f2) y x) ((λy.(λf1.λf2.λ_.λh.h f1 f2) y (λh.λ_.h)) x)
->>>ct'd body>> λy.λ_.λh.h y (λ_.λh.h x (λh.λ_.h))
->>>inner body> λ_.λh.h y (λ_.λh.h x (λh.λ_.h))
->>>result>>>>> λ_.λh.h a (λ_.λh.h b (λh.λ_.h))
 #     =_β2   λa.λb.(λy.λ_.λh.h y (λ_.λh.h b (λh.λ_.h))) a
 #     =_β3   λa.λb.λ_.λh.h a (λ_.λh.h b (λh.λ_.h))
 #     (3 steps)
@@ -18,17 +12,11 @@
 #     =_β0   λa.λb.(λf1.λf2.λ_.λh.h f1 f2) a ((λf1.λf2.λ_.λh.h f1 f2) b (λh.λ_.h))
 #     =_β1   λa.λb.λ_.λh.h a (λ_.λh.h b (λh.λ_.h))
 #     (1 steps)
-# 6.09 = 5.02 + 1.08 sec (82% + 18%) consumed for beta-reduction
+# 4.63 = 3.55 + 1.08 sec (77% + 23%) consumed for beta-reduction
 ok 1 - (λf.λa.λb.f b a) (B (C cons) (C cons nil))  =_β*  λa.λb.cons a (cons b nil)  [NO alpha-conv needed]
 # (C (B (C cons) (C cons nil)))  =  (λf.λx.λy.f y x) ((λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h)))
 #     =_β0   (λf.λx.λy.f y x) ((λf.λg.λx.f (g x)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2)) ((λf.λx.λy.f y x) (λf1.λf2.λ_.λh.h f1 f2) (λh.λ_.h)))
 #     =_β1   λx.λy.(λx.(λx.λy.(λf1.λf2.λ_.λh.h f1 f2) y x) ((λy.(λf1.λf2.λ_.λh.h f1 f2) y (λh.λ_.h)) x)) y x
->>>bindings>>> [(Pair "y" (VarT "x"))]  ++  [(Pair "x" (VarT "y"))]
->>>rest-args>> (cons (VarT "x") nil)  ~>  nil
->>>old body>>> (λx.λy.(λf1.λf2.λ_.λh.h f1 f2) y x) ((λy.(λf1.λf2.λ_.λh.h f1 f2) y (λh.λ_.h)) x)
->>>ct'd body>> λy.λ_.λh.h y (λ_.λh.h x (λh.λ_.h))
->>>inner body> λ_.λh.h y (λ_.λh.h x (λh.λ_.h))
->>>result>>>>> λ_.λh.h x (λ_.λh.h y (λh.λ_.h))
 #     =_β2   λx.λy.(λα1.λ_.λh.h α1 (λ_.λh.h y (λh.λ_.h))) x
 #     =_β3   λx.λy.λ_.λh.h x (λ_.λh.h y (λh.λ_.h))
 #     (3 steps)
@@ -36,65 +24,60 @@ ok 1 - (λf.λa.λb.f b a) (B (C cons) (C cons nil))  =_β*  λa.λb.cons a (con
 #     =_β0   λx.λy.(λf1.λf2.λ_.λh.h f1 f2) x ((λf1.λf2.λ_.λh.h f1 f2) y (λh.λ_.h))
 #     =_β1   λx.λy.λ_.λh.h x (λ_.λh.h y (λh.λ_.h))
 #     (1 steps)
-# 6.59 = 5.42 + 1.17 sec (82% + 18%) consumed for beta-reduction
+# 5.11 = 3.92 + 1.19 sec (77% + 23%) consumed for beta-reduction
 ok 2 - (C (B (C cons) (C cons nil)))  =_β*  λx.λy.cons x (cons y nil)  [DOES need alpha-conv]
 #     =_β0   (x x)
 #     (0 steps)
 #     =_β0   (x x)
 #     (0 steps)
-# 0.11 = 0.05 + 0.06 sec (43% + 57%) consumed for beta-reduction
+# 0.16 = 0.05 + 0.11 sec (30% + 70%) consumed for beta-reduction
 ok 3 - (x x)  =_β*  (x x)  (sanity check)
 #     =_β0   (λx.x) x
 #     =_β1   x
 #     (1 steps)
 #     =_β0   x
 #     (0 steps)
-# 0.17 = 0.14 + 0.03 sec (82% + 18%) consumed for beta-reduction
+# 0.22 = 0.13 + 0.09 sec (57% + 43%) consumed for beta-reduction
 ok 4 - (λx.x) x  =_β*  x  (sanity check)
-# 0.22 sec consumed for big-term construction
+# 0.2 sec consumed for big-term construction
 ok 5 - $bigTerm.lambda is λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))
 ok 6 - $expectedTerm.lambda is λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 f3 f4 f5
-# CurryStats: ( 0p,   8749f,  0o,  612+0i)
-#   691 (  1):                     #false => ( 0p,    691f,  0o,    0+ 0i TBool:(Mu -> Mu -> Mu))
-#   585 (  1):          not-free-varName? => ( 0p,    585f,  0o,    0+ 0i :(Str -> TTerm -> TBool))
-#   459 (  1):                    Str-eq? => ( 0p,    459f,  0o,    0+ 0i :(Str -> Str -> TBool))
-#   358 (  1):                    Str-ne? => ( 0p,    358f,  0o,    0+ 0i :(Str -> Str -> TBool))
-#   293 (  1):                      #true => ( 0p,    293f,  0o,    0+ 0i TBool:(Mu -> Mu -> Mu))
-#   288 (  2):                      π2->2 => ( 0p,    288f,  0o,    0+ 0i :(Mu -> Mu -> Mu)),
-#                               Pair->snd => ( 0p,    288f,  0o,    0+ 0i :(TPair -> Mu))
-#   266 (  1):              free-varName? => ( 0p,    266f,  0o,    0+ 0i :(Str -> TTerm -> TBool))
-#   264 (  1):                       None => ( 0p,    264f,  0o,    0+ 0i TMaybe:(Mu -> Mu -> Mu))
-#   242 (  1):         betaContract_multi => ( 0p,    242f,  0o,    0+ 0i :(TTerm -> Mu))
-#   228 (  1):              <<Aka+TTerm>> => ( 0p,    228f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#   213 (  1):                        nil => ( 0p,    213f,  0o,    0+ 0i TList:(Mu -> Mu -> Mu))
-#   210 (  1):                       Pair => ( 0p,    210f,  0o,    0+ 0i :(Mu -> Mu -> Mu))
-#   186 (  1):     subst-par-alpha_direct => ( 0p,    186f,  0o,    0+ 0i :(TList -> TTerm -> TTerm))
-#   180 (  1):                       cons => ( 0p,    180f,  0o,    0+ 0i :(Mu -> TList -> TList))
-#   160 (  1):   Term->srcLesser-internal => ( 0p,    160f,  0o,    0+ 0i :(TTerm -> TPair))
-#   146 (  2):                      π2->1 => ( 0p,    146f,  0o,    0+ 0i :(Mu -> Mu -> Mu)),
-#                               Pair->fst => ( 0p,    146f,  0o,    0+ 0i :(TPair -> Mu))
-#   145 (  2):                      first => ( 0p,    145f,  0o,    0+ 0i :(Callable -> TList -> Mu)),
-#                                  exists => ( 0p,    145f,  0o,    0+ 0i :(Callable -> TList -> TBool))
-#   113 (  1):      except-substs_noDupes => ( 0p,    113f,  0o,    0+ 0i :(Mu -> TList -> Mu))
-#   112 (  1):              <<Aka+TTerm>> => ( 0p,    112f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#   110 (  1):              <<Aka+TTerm>> => ( 0p,    110f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+# CurryStats: ( 0p,   6559f,  0o,  410+0i)
+#   573 (  1):                     #false => ( 0p,    573f,  0o,    0+ 0i TBool:(Mu -> Mu -> Mu))
+#   451 (  1):          not-free-varName? => ( 0p,    451f,  0o,    0+ 0i :(Str -> TTerm -> TBool))
+#   377 (  1):                    Str-eq? => ( 0p,    377f,  0o,    0+ 0i :(Str -> Str -> TBool))
+#   306 (  1):                    Str-ne? => ( 0p,    306f,  0o,    0+ 0i :(Str -> Str -> TBool))
+#   256 (  1):                       None => ( 0p,    256f,  0o,    0+ 0i TMaybe:(Mu -> Mu -> Mu))
+#   254 (  1):              free-varName? => ( 0p,    254f,  0o,    0+ 0i :(Str -> TTerm -> TBool))
+#   247 (  1):                      #true => ( 0p,    247f,  0o,    0+ 0i TBool:(Mu -> Mu -> Mu))
+#   238 (  1):         betaContract_multi => ( 0p,    238f,  0o,    0+ 0i :(TTerm -> Mu))
+#   177 (  1):                        nil => ( 0p,    177f,  0o,    0+ 0i TList:(Mu -> Mu -> Mu))
+#   160 (  2):                       cons => ( 0p,    160f,  0o,    0+ 0i :(Mu -> TList -> TList)),
+#                  subst-par-alpha_direct => ( 0p,    160f,  0o,    0+ 0i :(TList -> TTerm -> TTerm))
+#   156 (  1):              <<Aka+TTerm>> => ( 0p,    156f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#   129 (  1):                      first => ( 0p,    129f,  0o,    0+ 0i :(Callable -> TList -> Mu))
+#   125 (  1):                     exists => ( 0p,    125f,  0o,    0+ 0i :(Callable -> TList -> TBool))
+#   112 (  2):                      π2->2 => ( 0p,    112f,  0o,    0+ 0i :(Mu -> Mu -> Mu)),
+#                               Pair->snd => ( 0p,    112f,  0o,    0+ 0i :(TPair -> Mu))
 #   105 (  1):               collect-args => ( 0p,    105f,  0o,    0+ 0i :(Mu -> Mu -> TTerm -> TList -> TTerm -> Mu))
-#    88 (  1):                       Some => ( 0p,     88f,  0o,    0+ 0i :(Mu -> Mu))
-#    87 (  1):                     K1None => ( 0p,     87f,  0o,    0+ 0i :(Mu -> Mu))
-#    72 (  3):                       LamT => ( 0p,     72f,  0o,    0+ 0i :(Str -> TTerm -> TTerm)),
-#                           <<Aka+TTerm>> => ( 0p,     72f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu)),
-#                           <<Aka+TTerm>> => ( 0p,     72f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    68 (  1):              <<Aka+TTerm>> => ( 0p,     68f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    66 (  1): filter-substs-and-contract => ( 0p,     66f,  0o,    0+ 0i :(Mu -> TList -> Mu))
-#    62 (  1):                       AppT => ( 0p,     62f,  0o,    0+ 0i :(TTerm -> TTerm -> TTerm))
+#    96 (  2):                      π2->1 => ( 0p,     96f,  0o,    0+ 0i :(Mu -> Mu -> Mu)),
+#                               Pair->fst => ( 0p,     96f,  0o,    0+ 0i :(TPair -> Mu))
+#    87 (  1):      except-substs_noDupes => ( 0p,     87f,  0o,    0+ 0i :(Mu -> TList -> Mu))
+#    84 (  1):                       Some => ( 0p,     84f,  0o,    0+ 0i :(Mu -> Mu))
+#    83 (  1):                     K1None => ( 0p,     83f,  0o,    0+ 0i :(Mu -> Mu))
+#    75 (  2):              <<Aka+TTerm>> => ( 0p,     75f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu)),
+#                           <<Aka+TTerm>> => ( 0p,     75f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#    64 (  4):                       LamT => ( 0p,     64f,  0o,    0+ 0i :(Str -> TTerm -> TTerm)),
+#                           <<Aka+TTerm>> => ( 0p,     64f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu)),
+#                           <<Aka+TTerm>> => ( 0p,     64f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu)),
+#                           <<Aka+TTerm>> => ( 0p,     64f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
 #    61 (  1):   collect-args-and-lambdas => ( 0p,     61f,  0o,    0+ 0i :(Mu -> Mu -> TTerm -> TList -> TTerm -> Mu))
-#    56 (  1):              <<Aka+TTerm>> => ( 0p,     56f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    55 (  1):              <<Aka+TTerm>> => ( 0p,     55f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    52 (  1):              <<Aka+TTerm>> => ( 0p,     52f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    43 (  1):                  <<TTerm>> => ( 0p,     43f,  0o,    0+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    41 (  1):            collect-lambdas => ( 0p,     41f,  0o,    0+ 0i :(Mu -> TList -> TTerm -> TList -> Mu))
-#    15 (  1):                      foldl => ( 0p,     15f,  0o,    0+ 0i :(Callable -> Mu -> TList -> Mu))
-#     2 (  1):                      foldr => ( 0p,      2f,  0o,    0+ 0i name:(Callable -> Mu -> TList -> Mu))
+#    60 (  1): filter-substs-and-contract => ( 0p,     60f,  0o,    0+ 0i :(Mu -> TList -> Mu))
+#    54 (  1):                       AppT => ( 0p,     54f,  0o,    0+ 0i :(TTerm -> TTerm -> TTerm))
+#    48 (  3):                       Pair => ( 0p,     48f,  0o,    0+ 0i :(Mu -> Mu -> Mu)),
+#                           <<Aka+TTerm>> => ( 0p,     48f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu)),
+#                           <<Aka+TTerm>> => ( 0p,     48f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#     5 (  1):                      foldl => ( 0p,      5f,  0o,    0+ 0i :(Callable -> Mu -> TList -> Mu))
 #     1 (  1):                       VarT => ( 0p,      1f,  0o,    0+ 0i :(Str -> TTerm))
 #     =_β0   λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))
 #     =_β1   λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.(λh.λ_.(λk.k f1 f2 f3 f4 f5) h) h
@@ -102,49 +85,45 @@ ok 6 - $expectedTerm.lambda is λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 
 #     (2 steps)
 #     =_β0   λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 f3 f4 f5
 #     (0 steps)
-# 3.05 = 2.78 + 0.27 sec (91% + 9%) consumed for beta-reduction
+# 2.97 = 2.70 + 0.27 sec (91% + 9%) consumed for beta-reduction
 ok 7 - λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))  =_β*  λf1.λf2.λf3.λf4.λf5.λ_.λh.λ_.λ_.h f1 f2 f3 f4 f5  
-# CurryStats: ( 0p,  10211f,  0o,  758+0i)
-#   791 (  1):                     #false => ( 0p,    791f,  0o,    0+ 0i TBool:(Mu -> Mu -> Mu))
-#   624 (  1):          not-free-varName? => ( 0p,    624f,  0o,    0+ 0i :(Str -> TTerm -> TBool))
-#   520 (  1):                    Str-eq? => ( 0p,    520f,  0o,    0+ 0i :(Str -> Str -> TBool))
-#   378 (  1):                    Str-ne? => ( 0p,    378f,  0o,    0+ 0i :(Str -> Str -> TBool))
-#   346 (  1):                       None => ( 0p,    346f,  0o,    0+ 0i TMaybe:(Mu -> Mu -> Mu))
-#   318 (  1):         betaContract_multi => ( 0p,    318f,  0o,    0+ 0i :(TTerm -> Mu))
-#   309 (  1):                      #true => ( 0p,    309f,  0o,    0+ 0i TBool:(Mu -> Mu -> Mu))
-#   308 (  2):                      π2->2 => ( 0p,    308f,  0o,    0+ 0i :(Mu -> Mu -> Mu)),
-#                               Pair->snd => ( 0p,    308f,  0o,    0+ 0i :(TPair -> Mu))
-#   302 (  1):              free-varName? => ( 0p,    302f,  0o,    0+ 0i :(Str -> TTerm -> TBool))
-#   268 (  1):                        nil => ( 0p,    268f,  0o,    0+ 0i TList:(Mu -> Mu -> Mu))
-#   243 (  1):     subst-par-alpha_direct => ( 0p,    243f,  0o,    0+ 0i :(TList -> TTerm -> TTerm))
-#   241 (  1):              <<Aka+TTerm>> => ( 0p,    241f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#   225 (  1):                       Pair => ( 0p,    225f,  0o,    0+ 0i :(Mu -> Mu -> Mu))
-#   222 (  1):                       cons => ( 0p,    222f,  0o,    0+ 0i :(Mu -> TList -> TList))
-#   201 (  1):                      first => ( 0p,    201f,  0o,    0+ 0i :(Callable -> TList -> Mu))
-#   180 (  2):                      π2->1 => ( 0p,    180f,  0o,    0+ 0i :(Mu -> Mu -> Mu)),
-#                               Pair->fst => ( 0p,    180f,  0o,    0+ 0i :(TPair -> Mu))
-#   161 (  1):                     exists => ( 0p,    161f,  0o,    0+ 0i :(Callable -> TList -> TBool))
-#   160 (  1):   Term->srcLesser-internal => ( 0p,    160f,  0o,    0+ 0i :(TTerm -> TPair))
+# CurryStats: ( 0p,   8021f,  0o,  556+0i)
+#   673 (  1):                     #false => ( 0p,    673f,  0o,    0+ 0i TBool:(Mu -> Mu -> Mu))
+#   490 (  1):          not-free-varName? => ( 0p,    490f,  0o,    0+ 0i :(Str -> TTerm -> TBool))
+#   438 (  1):                    Str-eq? => ( 0p,    438f,  0o,    0+ 0i :(Str -> Str -> TBool))
+#   338 (  1):                       None => ( 0p,    338f,  0o,    0+ 0i TMaybe:(Mu -> Mu -> Mu))
+#   326 (  1):                    Str-ne? => ( 0p,    326f,  0o,    0+ 0i :(Str -> Str -> TBool))
+#   314 (  1):         betaContract_multi => ( 0p,    314f,  0o,    0+ 0i :(TTerm -> Mu))
+#   290 (  1):              free-varName? => ( 0p,    290f,  0o,    0+ 0i :(Str -> TTerm -> TBool))
+#   263 (  1):                      #true => ( 0p,    263f,  0o,    0+ 0i TBool:(Mu -> Mu -> Mu))
+#   232 (  1):                        nil => ( 0p,    232f,  0o,    0+ 0i TList:(Mu -> Mu -> Mu))
+#   217 (  1):     subst-par-alpha_direct => ( 0p,    217f,  0o,    0+ 0i :(TList -> TTerm -> TTerm))
+#   202 (  1):                       cons => ( 0p,    202f,  0o,    0+ 0i :(Mu -> TList -> TList))
+#   185 (  1):                      first => ( 0p,    185f,  0o,    0+ 0i :(Callable -> TList -> Mu))
+#   169 (  1):              <<Aka+TTerm>> => ( 0p,    169f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#   141 (  1):                     exists => ( 0p,    141f,  0o,    0+ 0i :(Callable -> TList -> TBool))
 #   139 (  1):               collect-args => ( 0p,    139f,  0o,    0+ 0i :(Mu -> Mu -> TTerm -> TList -> TTerm -> Mu))
-#   128 (  1):                       Some => ( 0p,    128f,  0o,    0+ 0i :(Mu -> Mu))
-#   121 (  1):              <<Aka+TTerm>> => ( 0p,    121f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#   117 (  1):      except-substs_noDupes => ( 0p,    117f,  0o,    0+ 0i :(Mu -> TList -> Mu))
-#   114 (  1):                     K1None => ( 0p,    114f,  0o,    0+ 0i :(Mu -> Mu))
-#   112 (  1):              <<Aka+TTerm>> => ( 0p,    112f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    94 (  1):                       LamT => ( 0p,     94f,  0o,    0+ 0i :(Str -> TTerm -> TTerm))
-#    89 (  1):                       AppT => ( 0p,     89f,  0o,    0+ 0i :(TTerm -> TTerm -> TTerm))
-#    88 (  1): filter-substs-and-contract => ( 0p,     88f,  0o,    0+ 0i :(Mu -> TList -> Mu))
-#    83 (  1):              <<Aka+TTerm>> => ( 0p,     83f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#   132 (  2):                      π2->2 => ( 0p,    132f,  0o,    0+ 0i :(Mu -> Mu -> Mu)),
+#                               Pair->snd => ( 0p,    132f,  0o,    0+ 0i :(TPair -> Mu))
+#   130 (  2):                      π2->1 => ( 0p,    130f,  0o,    0+ 0i :(Mu -> Mu -> Mu)),
+#                               Pair->fst => ( 0p,    130f,  0o,    0+ 0i :(TPair -> Mu))
+#   124 (  1):                       Some => ( 0p,    124f,  0o,    0+ 0i :(Mu -> Mu))
+#   110 (  1):                     K1None => ( 0p,    110f,  0o,    0+ 0i :(Mu -> Mu))
+#    91 (  1):      except-substs_noDupes => ( 0p,     91f,  0o,    0+ 0i :(Mu -> TList -> Mu))
+#    86 (  1):                       LamT => ( 0p,     86f,  0o,    0+ 0i :(Str -> TTerm -> TTerm))
+#    84 (  1):              <<Aka+TTerm>> => ( 0p,     84f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#    82 (  1): filter-substs-and-contract => ( 0p,     82f,  0o,    0+ 0i :(Mu -> TList -> Mu))
+#    81 (  1):                       AppT => ( 0p,     81f,  0o,    0+ 0i :(TTerm -> TTerm -> TTerm))
 #    78 (  1):   collect-args-and-lambdas => ( 0p,     78f,  0o,    0+ 0i :(Mu -> Mu -> TTerm -> TList -> TTerm -> Mu))
-#    73 (  1):              <<Aka+TTerm>> => ( 0p,     73f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    69 (  1):              <<Aka+TTerm>> => ( 0p,     69f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    66 (  1):              <<Aka+TTerm>> => ( 0p,     66f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    55 (  1):              <<Aka+TTerm>> => ( 0p,     55f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    53 (  1):            collect-lambdas => ( 0p,     53f,  0o,    0+ 0i :(Mu -> TList -> TTerm -> TList -> Mu))
-#    52 (  1):              <<Aka+TTerm>> => ( 0p,     52f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    43 (  1):                  <<TTerm>> => ( 0p,     43f,  0o,    0+ 0i TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
-#    26 (  1):                      foldl => ( 0p,     26f,  0o,    0+ 0i :(Callable -> Mu -> TList -> Mu))
-#     2 (  1):                      foldr => ( 0p,      2f,  0o,    0+ 0i name:(Callable -> Mu -> TList -> Mu))
+#    77 (  1):              <<Aka+TTerm>> => ( 0p,     77f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#    75 (  1):              <<Aka+TTerm>> => ( 0p,     75f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#    65 (  2):              <<Aka+TTerm>> => ( 0p,     65f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu)),
+#                           <<Aka+TTerm>> => ( 0p,     65f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#    63 (  1):                       Pair => ( 0p,     63f,  0o,    0+ 0i :(Mu -> Mu -> Mu))
+#    58 (  1):              <<Aka+TTerm>> => ( 0p,     58f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#    49 (  1):            collect-lambdas => ( 0p,     49f,  0o,    0+ 0i :(Mu -> TList -> TTerm -> TList -> Mu))
+#    48 (  1):              <<Aka+TTerm>> => ( 0p,     48f,  0o,    0+ 0i Aka+TTerm:(Callable -> Callable -> Callable -> Callable -> Mu))
+#    16 (  1):                      foldl => ( 0p,     16f,  0o,    0+ 0i :(Callable -> Mu -> TList -> Mu))
 #     1 (  1):                       VarT => ( 0p,      1f,  0o,    0+ 0i :(Str -> TTerm))
 
-Output completed (1 min 1 sec consumed) - Normal Termination
+Output completed (58 sec consumed) - Normal Termination
