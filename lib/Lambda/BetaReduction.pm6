@@ -358,6 +358,25 @@ constant $betaContract_multi is export = $Y(-> &self {
         $subst-par-alpha_direct($newBindings, $inTerm);
     });
 
+    my $doSubsts-lambda = lambdaFn('doSubsts-lambda', '', -> TList $bindings, Str $binderName, TTerm $body {
+        my $newBindings = $filter-substs-and-contract(
+            -> Str $forName {
+                _if_($Str-eq($binderName, $forName),   # short-circuit OR
+                    $true,
+                    { $is-not-free-varName($forName, $body) }
+                )
+            },
+            $bindings
+        );
+        _if_($exists(-> $sPair { $is-free-varName($binderName, $snd($sPair)) }, $newBindings),
+            {   # need fresh binder for binder
+                my $freshVar = $fresh-var-for($binderName);
+                $LamT($VarT2name($freshVar), $subst-par-alpha_direct($cons($Pair($binderName, $freshVar), $newBindings), $body));
+            },
+            { $LamT($binderName, $subst-par-alpha_direct($newBindings, $body)) }
+        );
+    });
+
     my $onInsideLambda = $Y(-> &onInsideLambda { lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
         #my $newBody = $subst-par-alpha_direct($bindings, $body);
         #$foldl($AppT, $newBody, $rest-args);
@@ -412,48 +431,9 @@ constant $betaContract_multi is export = $Y(-> &self {
                 #$substitutedBody;
 
                 my $substitutedBody = case-Maybe(&self($bb),
-                    None => {
-                        my $contractedBb = $bb;
-                        my $newBindings = $filter-substs-and-contract(
-                            -> Str $forName {
-                                _if_($Str-eq($bv, $forName),   # short-circuit OR
-                                    $true,
-                                    { $is-not-free-varName($forName, $contractedBb) }
-                                )
-                            },
-                            $bindings
-                        );
-                        ## ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
-                        #$subst-par-alpha_direct($newBindings, $body);
-                        
-                        _if_($exists(-> $sPair { $is-free-varName($bv, $snd($sPair)) }, $newBindings),
-                            {   # need fresh binder for bv
-                                my $freshVar = $fresh-var-for($bv);
-                                $LamT($VarT2name($freshVar), $subst-par-alpha_direct($cons($Pair($bv, $freshVar), $newBindings), $contractedBb));
-                            },
-                            { $LamT($bv, $subst-par-alpha_direct($newBindings, $contractedBb)) }
-                        )
-                    },
+                    None => { $doSubsts-lambda($bindings, $bv, $bb) },
                     Some => -> $contractedBb {
-                        my $newBindings = $filter-substs-and-contract(
-                            -> Str $forName {
-                                _if_($Str-eq($bv, $forName),   # short-circuit OR
-                                    $true,
-                                    { $is-not-free-varName($forName, $contractedBb) }
-                                )
-                            },
-                            $bindings
-                        );
-                        ## ATTENTION: cannot just substitute in contractedBb, as this might bright prevention of accidential capture (by bv)
-                        #$subst-par-alpha_direct($newBindings, $LamT($bv, $contractedBb));
-                        
-                        _if_($exists(-> $sPair { $is-free-varName($bv, $snd($sPair)) }, $newBindings),
-                            {   # need fresh binder for bv
-                                my $freshVar = $fresh-var-for($bv);
-                                $LamT($VarT2name($freshVar), $subst-par-alpha_direct($cons($Pair($bv, $freshVar), $newBindings), $contractedBb));
-                            },
-                            { $LamT($bv, $subst-par-alpha_direct($newBindings, $contractedBb)) }
-                        )
+                        $doSubsts-lambda($bindings, $bv, $contractedBb);
                     }
                 );
 
