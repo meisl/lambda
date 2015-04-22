@@ -416,26 +416,13 @@ constant $betaContract_multi is export = $Y(-> &self {
                                         $foldl($AppT, $contractedBody, $rest-args)
                                     },
                                     VarT => -> $varName { # we can avoid subst-par-alpha, and do the (simple) substitution right here
-                                        $doSubsts-var($bindings, $contractedBody, $rest-args, $varName);
+                                        $doSubsts-var($bindings, $contractedBody, $rest-args, $varName)
                                     },
-                                    AppT => -> Mu, Mu { $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args) },
+                                    AppT => -> Mu, Mu {
+                                        $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args)
+                                    },
                                     LamT => -> $cbv, $cbb {
-                                        #$collect-lambdas(&onInsideLambda, $cons($Pair($cbv, $arg), $bindings), $cbb, $more-args);
-                                        
-                                        #$collect-lambdas(
-                                        #    -> TList $bindings2, TTerm $innerBody, TList $rest-args2 {
-                                        #        say ">>>bindings>>> {$List2StrDense($bindings2)}  ++  {$List2StrDense($bindings)}";
-                                        #        say ">>>rest-args>> {$rest-args}  ~>  {$rest-args2}";
-                                        #        say ">>>old body>>> " ~ $Term2srcLess($body);
-                                        #        say ">>>ct'd body>> " ~ $Term2srcLess($contractedBody);
-                                        #        say ">>>inner body> " ~ $Term2srcLess($innerBody);
-                                        #        say ">>>result>>>>> " ~ $Term2srcLess($doSubsts($append($bindings, $bindings2), $innerBody));
-                                        #    },
-                                        #    $nil, $contractedBody, $rest-args
-                                        #);
-                                        
-                                        my $substitutedBody = $doSubsts($bindings, $contractedBody);
-                                        $foldl($AppT, $substitutedBody, $rest-args);
+                                        $collect-lambdas(&onInsideLambda, $cons($Pair($cbv, $arg), $bindings), $cbb, $more-args)
                                     },
                                 );
                             }
