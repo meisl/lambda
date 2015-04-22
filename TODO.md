@@ -11,18 +11,19 @@
 
 ### To be done in the order given (within each branch):
 ##### branch 1 (make it self-hosting)
-- [x] #28 'add ADT Maybe (Church-encoded by hand, everything in λ, too)'
-- [x] #29 'add ADT Pair (Church-encoded by hand, everything in λ, too)'
+- [x] #28 'add ADT `Maybe` (Church-encoded by hand, everything in λ, too)'
+- [x] #29 'add ADT `Pair` (Church-encoded by hand, everything in λ, too)'
 - [x] #32 'add Y combinator for (one-way) recursion'
-- [x] #9 'finish ADT List (Church-encoding by hand, everything in λ, too)'
-- [x] #10 'add ADT Term for syntax tree / AST entities (Church-encoded by hand)'
-- [x] #34 'use ADT Term alone to represent Terms' (branch "switch_to_lambda_repres")
+- [x] #9 'finish ADT `List` (Church-encoding by hand, everything in λ, too)'
+- [x] #10 'add ADT `Term` for syntax tree / AST entities (Church-encoded by hand)'
+- [x] #34 'use ADT `Term` alone to represent Terms' (branch "switch_to_lambda_repres")
+- [ ] #41 'add ADT `Either`'
 - [ ] #12 'most simple impl of β-red. avoiding accidental capture (in Perl6 only, efficiency is of NO importance)'
     - [x] implement sequential substitution, ie. instead of just taking *one* "term `t` for var `x`" arg accept a *list* of those `Pair`s (#29), to be applied one after the other, in the order they appear in the list (-> transitively). Use `None` (`Maybe`, #28) as a return value indicating no change and `Some t'` if the result is indeed a different term `t'`; in order to support maximal sharing.
-    - [x] implement β-reduction in terms of sequential substitution, removing and/or adding particular substitutions to the list as required by certain binders of λs, or, resp., for doing necessary α-conversions. Again, use `Maybe Term` as return type for sharing.
+    - [ ] implement β-reduction in terms of sequential substitution, removing and/or adding particular substitutions to the list as required by certain binders of λs, or, resp., for doing necessary α-conversions. Again, use `Maybe Term` as return type for sharing.
 - [ ] #27 'augment syntax tree nodes with src location info'
-- [ ] #11 'implement β/η-red. and α-conv using ADT Term (simple but correct)'
-- [ ] #13 'refine β/η-red. and α-conv using ADT Term: clever & efficient & flexible!'
+- [ ] #11 'implement β/η-red. and α-conv using ADT `Term` (simple but correct)'
+- [ ] #13 'refine β/η-red. and α-conv using ADT `Term`: clever & efficient & flexible!'
 - ...
 - [ ] #33 'add Y_2, Y_3, ...Y_n fixed-point combinators for multi-way mutual recursion' [TODO: maybe this belongs somewhere else?]
 - [ ] #19 'make a functional parser (like the parser combinators in [Hutt07])'
@@ -32,16 +33,17 @@
 - [ ] #25 'compile to Perl6'
 
 ##### branch 2 (make it do *something*)
-- [ ] #37 'λ-like function application in Perl6 (auto-currying & "over-application")':
+- [ ] #40 'add facility to switch on/off stats for P6Currying'
+- [ ] #22 'add comments to syntax'
+- [ ] #38 'add integer literals to syntax'
+- [x] #30 'add literal string constants to the grammar, using " (double-quotes) and \ (back-slash) for escape'
+- [x] #37 'λ-like function application in Perl6 (auto-currying & "over-application")':
   - [x] partial application simply by providing *fewer* arguments (yielding another applicable thing)
   - [x] "over-applying": since every application in λ yields something that can be applied again (except for constants and fns that return constants): providing *more* than the nomimal nr of args should simply apply the rest-args to the result of the first fn application
-  - [x] do it via a role (rather than via an extra class), or 
-  - [ ] maybe use Perl6's wrap mechanism (trickier!; and only works with `Routine`s, not `Block`s)
-  - [x] do it efficiently, ie using as few indirections and as much compile-time binding and type-checking  as possible. -> overload/override `multi invoke (...)` with appropriate signatures (nest actual sig in extra parens `(` and `)`, since we'll be passed a capture); avoid introducing extra "internal" methods like "apply" etc.
+  - [x] do it via a role (rather than via an extra class)
+  - [x] ~~maybe use Perl6's wrap mechanism (trickier!; and only works with Routines, not Blocks)~~
+  - [x] do it efficiently, ie using as few indirections and as much compile-time binding and type-checking  as possible. -> overload/override `multi postcircumfix:<( )> (...)` with appropriate signatures (nest actual sig in extra parens `(` and `)`, since we'll be passed a capture); avoid introducing extra "internal" methods like "apply" etc.
 - [ ] #2 'add most simple symbol-lookup using "δ"'
-- [ ] #22 'add comments to syntax'
-- [x] #30 'add literal string constants to the grammar, using " (double-quotes) and \ (back-slash) for escape'
-- [ ] #38 'add integer literals to syntax'
 - [ ] #3 'add hygienic macros using "µ"'
 - [ ] #4 'add "if" as a macro'
 - [ ] #14 'add "cond" (aka "switch") as a macro'
