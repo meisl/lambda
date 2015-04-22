@@ -263,36 +263,39 @@ constant $collect-args is export = $Y(-> &self { lambdaFn(
     }
 )});
 
+constant $collect-lambdas = $Y(-> &self { lambdaFn(
+    'collect-lambdas', 'λss.λv.λb.λa.λas.error "NYI"', 
+    -> $onInsideLambda, TList $bindings, TTerm $body, TList $rest-args {
+        case-Term($body,
+            LamT => -> Str $bv, TTerm $bb {
+                case-List($rest-args,
+                    cons => -> TTerm $a, TList $as {
+                        my $newBindings = $cons($Pair($bv, $a), $bindings);
+                        &self($onInsideLambda, $newBindings, $bb, $as)
+                    },
+                    nil => {    # ran out of args - none left for body (which is also a LamT)
+                        $onInsideLambda($bindings, $body, $nil)
+                    }
+                )
+            },
+            AppT   => -> Mu, Mu { $onInsideLambda($bindings, $body, $rest-args) },
+            VarT   => -> Mu     { $onInsideLambda($bindings, $body, $rest-args) },
+            ConstT => -> Mu     { $onInsideLambda($bindings, $body, $rest-args) },
+        );
+    }
+)});
 
 constant $collect-args-and-lambdas is export = {
-    my $onLambda = $Y(-> &self { lambdaFn(
-        'collect-lambdas', 'λss.λv.λb.λa.λas.error "NYI"', 
-        -> $onInsideLambda, TList $bindings, TTerm $body, TList $rest-args {
-            case-Term($body,
-                LamT => -> Str $bv, TTerm $bb {
-                    case-List($rest-args,
-                        cons => -> TTerm $a, TList $as {
-                            my $newBindings = $cons($Pair($bv, $a), $bindings);
-                            &self($onInsideLambda, $newBindings, $bb, $as)
-                        },
-                        nil => {    # ran out of args - none left for body (which is also a LamT)
-                            $Some($onInsideLambda($bindings, $body, $nil))
-                        }
-                    )
-                },
-                AppT   => -> Mu, Mu { $Some($onInsideLambda($bindings, $body, $rest-args)) },
-                VarT   => -> Mu     { $Some($onInsideLambda($bindings, $body, $rest-args)) },
-                ConstT => -> Mu     { $Some($onInsideLambda($bindings, $body, $rest-args)) },
-            );
-        }
-    )});
     lambdaFn(
         'collect-args-and-lambdas', # : (Term -> [Term]-> a) -> (Str -> Term -> [Term]-> a) -> [Term] -> Term -> a
         'λonUnapplicable.λonInsideLambda.λarg.λrest-args.λinTerm.error "NYI"',
         -> $onUnapplicable, $onInsideLambda, TTerm $arg, TList $rest-args, TTerm $inTerm {
             $collect-args(
                 $onUnapplicable,
-                -> $v, $b, $arg, $rest-args { $onLambda($onInsideLambda, $cons($Pair($v, $arg), $nil), $b, $rest-args) },
+                -> $v, $b, $arg, $rest-args {
+                    my $bindings = $cons($Pair($v, $arg), $nil);
+                    $Some($collect-lambdas($onInsideLambda, $bindings, $b, $rest-args))
+                },
                 $arg, $rest-args, $inTerm
             );
         }
@@ -380,6 +383,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                         $subst-par-alpha_direct($newBindings, $body);
                     },
                     Some => -> $contractedBody {
+
                         my $newBindings = $filter-substs-and-contract(
                             -> Str $forName { $is-not-free-varName($forName, $contractedBody) },
                             $bindings
