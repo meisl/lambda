@@ -415,9 +415,8 @@ constant $betaContract_multi is export = $Y(-> &self {
                                     ConstT => -> Mu {   # nothing to substitute (in)
                                         $foldl($AppT, $contractedBody, $rest-args)
                                     },
-                                    VarT => -> $varName { # TODO: avoid subst-par-alpha, inline the (simple) substitution here
-                                        my $substitutedBody = $doSubsts($bindings, $contractedBody);
-                                        $foldl($AppT, $substitutedBody, $rest-args);
+                                    VarT => -> $varName { # we can avoid subst-par-alpha, and do the (simple) substitution right here
+                                        $doSubsts-var($bindings, $contractedBody, $rest-args, $varName);
                                     },
                                     AppT => -> Mu, Mu { $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args) },
                                     LamT => -> $cbv, $cbb {
