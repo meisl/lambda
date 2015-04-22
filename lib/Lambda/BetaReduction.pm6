@@ -377,61 +377,55 @@ constant $betaContract_multi is export = $Y(-> &self {
         );
     });
 
-    my $doSubsts-var = lambdaFn('doSubsts-var', '', -> TList $bindings, TTerm $varTerm, TList $rest-args, Str $varName {
+    my $doSubsts-var = lambdaFn('doSubsts-var', '', -> TList $bindings, TTerm $varTerm, Str $varName {
         case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $bindings),
-            None => { $foldl($AppT, $varTerm, $rest-args) },
+            None => $varTerm,
             Some => -> TPair $sPair {
                 my $arg = $snd($sPair);
                 case-Maybe(&self($arg), # could use _direct variant of &self
-                    None => { $foldl($AppT, $arg, $rest-args) },
-                    Some => -> TTerm $contractedArg {
-                        $foldl($AppT, $contractedArg, $rest-args)
-                    }
+                    None => $arg,
+                    Some => $I
                 )
             }
         )
     });
 
+    my $onInsideLambdaXXXX = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+        my $newBody = $subst-par-alpha_direct($bindings, $body);
+        $foldl($AppT, $newBody, $rest-args);
+    });
+
     my $onInsideLambda = $Y(-> &onInsideLambda { lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
-        #my $newBody = $subst-par-alpha_direct($bindings, $body);
-        #$foldl($AppT, $newBody, $rest-args);
-        
         case-Term($body,
-            VarT   => -> $bodyVarName { $doSubsts-var($bindings, $body, $rest-args, $bodyVarName) },
-            ConstT => -> Mu { $foldl($AppT, $body, $rest-args) },
+            VarT   => -> $bodyVarName { $foldl($AppT, $doSubsts-var($bindings, $body, $bodyVarName), $rest-args) },
+            ConstT => -> Mu { $foldl($AppT, $body, $rest-args) },   # nothing to substitute (in)
             AppT   => -> Mu, Mu {
                 case-Maybe(&self($body),
                     None => {   # still an AppT, so we cannot apply more of rest-args
-                        my $substitutedBody = $doSubsts($bindings, $body);
-                        $foldl($AppT, $substitutedBody, $rest-args);
+                        $foldl($AppT, $doSubsts($bindings, $body), $rest-args)
                     },
                     Some => -> $contractedBody {
                         case-List($rest-args,
-                            nil => {
-                                $doSubsts($bindings, $contractedBody);
-                            },
+                            nil => { $doSubsts($bindings, $contractedBody) },   # nothing to foldl on top
                             cons => -> TTerm $arg, TList $more-args {
                                 case-Term($contractedBody,
                                     ConstT => -> Mu {   # nothing to substitute (in)
                                         $foldl($AppT, $contractedBody, $rest-args)
                                     },
                                     VarT => -> $varName { # we can avoid subst-par-alpha, and do the (simple) substitution right here
-                                        $doSubsts-var($bindings, $contractedBody, $rest-args, $varName)
+                                        $foldl($AppT, $doSubsts-var($bindings, $contractedBody, $varName), $rest-args)
                                     },
                                     AppT => -> Mu, Mu {
                                         $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args)
                                     },
-                                    LamT => -> $cbv, $cbb {
+                                    LamT => -> $cbv, $cbb { # we can apply more of the rest-args ~> recurse
                                         $collect-lambdas(&onInsideLambda, $cons($Pair($cbv, $arg), $bindings), $cbb, $more-args)
                                     },
                                 );
                             }
                         )
                     }
-                );
-                
-                #$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I);
-                
+                )
             },
             LamT   => -> Str $bv, TTerm $bb {
                 #my $contractedBody = case-Maybe(&self($body), # could use _direct variant of &self
