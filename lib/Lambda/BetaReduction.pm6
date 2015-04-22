@@ -390,17 +390,35 @@ constant $betaContract_multi is export = $Y(-> &self {
         )
     });
 
-    my $onInsideLambdaZZZZ = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+    my $onInsideLambdaZZZ = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
         my $newBody = $subst-par-alpha_direct($bindings, $body);
         $foldl($AppT, $newBody, $rest-args);
     });
 
-    my $onInsideLambda = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+    my $onInsideLambdaYYY = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
         my $newBody = $doSubsts($bindings, $body);
         $foldl($AppT, $newBody, $rest-args);
     });
 
-    my $onInsideLambdaXXXX = $Y(-> &onInsideLambda { lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+    my $onInsideLambda = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+        case-Term($body,
+            VarT => -> $bodyVarName {
+                $foldl($AppT, $doSubsts-var($bindings, $body, $bodyVarName), $rest-args)
+            },
+            ConstT => -> Mu {
+                $foldl($AppT, $body, $rest-args)   # nothing to substitute (in)
+            },
+            AppT => -> Mu, Mu {
+                $foldl($AppT, $doSubsts($bindings, $body), $rest-args)
+            },
+            LamT => -> Str $bv, TTerm $bb {
+                $doSubsts-lambda($bindings, $bv, $bb)
+                # Note: we *know* there cannot be any rest-args, so no need to foldl 'em up in the end
+            },
+        )
+    });
+
+    my $onInsideLambdaXXX = $Y(-> &onInsideLambda { lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
         case-Term($body,
             VarT   => -> $bodyVarName { $foldl($AppT, $doSubsts-var($bindings, $body, $bodyVarName), $rest-args) },
             ConstT => -> Mu { $foldl($AppT, $body, $rest-args) },   # nothing to substitute (in)
