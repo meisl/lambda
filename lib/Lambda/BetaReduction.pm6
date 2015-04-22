@@ -400,7 +400,7 @@ constant $betaContract_multi is export = $Y(-> &self {
         $foldl($AppT, $newBody, $rest-args);
     });
 
-    my $onInsideLambda = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+    my $onInsideLambdaWWW = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
         case-Term($body,
             VarT => -> $bodyVarName {
                 $foldl($AppT, $doSubsts-var($bindings, $body, $bodyVarName), $rest-args)
@@ -413,6 +413,24 @@ constant $betaContract_multi is export = $Y(-> &self {
             },
             LamT => -> Str $bv, TTerm $bb {
                 $doSubsts-lambda($bindings, $bv, $bb)
+                # Note: we *know* there cannot be any rest-args, so no need to foldl 'em up in the end
+            },
+        )
+    });
+
+    my $onInsideLambda = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+        case-Term($body,
+            VarT => -> $bodyVarName {
+                $foldl($AppT, $doSubsts-var($bindings, $body, $bodyVarName), $rest-args)
+            },
+            ConstT => -> Mu {
+                $foldl($AppT, $body, $rest-args)   # nothing to substitute (in)
+            },
+            AppT => -> Mu, Mu {
+                $foldl($AppT, $doSubsts($bindings, case-Maybe(&self($body), None => $body, Some => $I)), $rest-args)
+            },
+            LamT => -> Str $bv, TTerm $bb {
+                $doSubsts-lambda($bindings, $bv, case-Maybe(&self($bb), None => $bb, Some => $I))
                 # Note: we *know* there cannot be any rest-args, so no need to foldl 'em up in the end
             },
         )
