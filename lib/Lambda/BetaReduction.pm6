@@ -350,6 +350,14 @@ constant $betaContract_multi is export = $Y(-> &self {
         }
     )});
 
+    my $doSubsts = lambdaFn('doSubsts', '', -> TList $bindings, TTerm $inTerm {
+        my $newBindings = $filter-substs-and-contract(
+            -> Str $forName { $is-not-free-varName($forName, $inTerm) },
+            $bindings
+        );
+        $subst-par-alpha_direct($newBindings, $inTerm);
+    });
+
     my $onInsideLambda = $Y(-> &onInsideLambda { lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
         #my $newBody = $subst-par-alpha_direct($bindings, $body);
         #$foldl($AppT, $newBody, $rest-args);
@@ -375,20 +383,9 @@ constant $betaContract_multi is export = $Y(-> &self {
             AppT   => -> Mu, Mu {
                 
                 my $substitutedBody = case-Maybe(&self($body), # could use _direct variant of &self
-                    None => {
-                        my $newBindings = $filter-substs-and-contract(
-                            -> Str $forName { $is-not-free-varName($forName, $body) },
-                            $bindings
-                        );
-                        $subst-par-alpha_direct($newBindings, $body);
-                    },
+                    None => { $doSubsts($bindings, $body) },
                     Some => -> $contractedBody {
-
-                        my $newBindings = $filter-substs-and-contract(
-                            -> Str $forName { $is-not-free-varName($forName, $contractedBody) },
-                            $bindings
-                        );
-                        $subst-par-alpha_direct($newBindings, $contractedBody);
+                        $doSubsts($bindings, $contractedBody);
                     }
                 );
 
@@ -396,11 +393,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                 #    None => $body,
                 #    Some => $I
                 #);
-                #my $newBindings = $filter-substs-and-contract(
-                #    -> Str $forName { $is-not-free-varName($forName, $contractedBody) },
-                #    $bindings
-                #);
-                #my $substitutedBody = $subst-par-alpha_direct($newBindings, $contractedBody);
+                #my $substitutedBody = $doSubsts($bindings, $contractedBody);
                 ##$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I);
                 
                 $foldl(
@@ -414,11 +407,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                 #    None => $body,
                 #    Some => $I
                 #);
-                #my $newBindings = $filter-substs-and-contract(
-                #    -> Str $forName { $is-not-free-varName($forName, $contractedBody) },
-                #    $bindings
-                #);
-                #my $substitutedBody = $subst-par-alpha_direct($newBindings, $contractedBody);
+                #my $substitutedBody = $doSubsts($bindings, $contractedBody);
                 ##$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I);
                 #$substitutedBody;
 
