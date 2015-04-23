@@ -150,7 +150,11 @@ constant $free-varNames-internal = $Y(-> &self { lambdaFn(
     }
 )});
 
-constant $free-varNames is export = lambdaFn('free-varNames', 'free-varNames-internal nil nil', $free-varNames-internal($nil, $nil));
+constant $free-varNames is export = lambdaFn(
+    'free-varNames', 
+    'free-varNames-internal nil nil', 
+    -> TTerm $t { $free-varNames-internal($nil, $nil, $t) }
+);
 
 
 constant $free-vars-internal = $Y(-> &self { lambdaFn(
