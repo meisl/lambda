@@ -502,14 +502,58 @@ constant $betaContract_multi is export = $Y(-> &self {
 
 #                $collect-args($onUnapplicable, $onLamT, $a, $nil, $f);
 
-                my $resultM = $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $a, $nil, $f);
-                case-Maybe($resultM,
-                    None => $None,
-                    Some => -> $result {
-                        _if_($Term-eq($t, $result),
-                            $None,
-                            $resultM
+                #my $resultM = $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $a, $nil, $f);
+                #case-Maybe($resultM,
+                #    None => $None,
+                #    Some => -> $result {
+                #        _if_($Term-eq($t, $result),
+                #            $None,
+                #            $resultM
+                #        )
+                #    }
+                #);
+
+                case-Term($f,
+                    ConstT => -> Mu {
+                        case-Maybe(&self($a),
+                            None => $None,
+                            Some => -> $newA { $Some($AppT($f, $newA)) }
                         )
+                    },
+                    VarT => -> Mu {
+                        case-Maybe(&self($a),
+                            None => $None,
+                            Some => -> $newA { $Some($AppT($f, $newA)) }
+                        )
+                    },
+                    LamT => -> $fv, $fb {
+                        my $doSubst = { # simulate lazy evaluation 
+                            $Some($subst-alpha_direct($fv, $a, $fb)) 
+                        };
+                        _if_($is-selfAppOf($fv, $fb),   # short-circuit AND
+                            { _if_($is-omegaOf($fv, $a),
+                                $None,
+                                $doSubst
+                            ) },
+                            $doSubst
+                        )
+                    },
+                    AppT => -> $ff, $fa {
+                        my $resultM = $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $fa, $cons($a, $nil), $ff);
+                        case-Maybe($resultM,
+                            None => { # try to contract a (collect-args-and-lambdas tried it only up to, but excluding this)
+                                case-Maybe(&self($a),
+                                    None => $None,
+                                    Some => -> $newA { $Some($AppT($f, $newA)) }
+                                )
+                            },
+                            Some => -> $result {
+                                _if_($Term-eq($t, $result),
+                                    $None,
+                                    $resultM
+                                )
+                            }
+                        );
                     }
                 );
 

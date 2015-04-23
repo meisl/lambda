@@ -138,6 +138,9 @@ plan 134;
         $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2) a')    => $Some($AppT(`'h a', `'λf2.λ_.λh.h a f2')),
         $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2) a b')  => $Some($AppT(`'h a', `'λ_.λh.h a b')),
 
+        $AppT(`'(λf1.λf2.λ_.λh.h f1 f2)', `'(λx.x) a')    => $Some(`'λf2.λ_.λh.h a f2'),    # arg should be contracted, too
+        $AppT($AppT(`'(λf1.λf2.λ_.λh.h f1 f2)', `'(λx.x) a'), `'(λx.x) b')  => $Some(`'λ_.λh.h a b'),    # both args should be contracted, too
+
         `'z ((λx.x) y) b a'     => $Some(`'z y b a'), # not a redex but reducible
 
         `'(λx.x x)'             => $None,                           # omegaX

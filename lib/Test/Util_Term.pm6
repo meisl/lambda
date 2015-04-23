@@ -118,6 +118,8 @@ our constant $testTerms is export = {
     my $y    ::= $VarT('y');
     my $z    ::= $VarT('z');
 
+    my $κa   ::= $ConstT('a');
+    my $κb   ::= $ConstT('b');
     my $κc   ::= $ConstT('c');
     my $κ5   ::= $ConstT(5);
 
@@ -310,6 +312,9 @@ our constant $testTerms is export = {
     my $θU          ::= $LamT('u', $LamT('f', $AppT($f, $uuf)));    # 'λu.λf.f (u u f)',
     my $θY          ::= $AppT($θU, $θU);
 
+    my $θIa         ::= $AppT($θI, $a);
+    my $θIb         ::= $AppT($θI, $b);
+    my $θIc         ::= $AppT($θI, $c);
     my $θIk         ::= $AppT($θI, $k);
     my $θIy         ::= $AppT($θI, $y);
     my $θIkf1       ::= $AppT($θIk, $f1);
@@ -353,6 +358,8 @@ our constant $testTerms is export = {
         'x'                         => $x,
         'y'                         => $y,
         'z'                         => $z,
+        '"a"'                       => $κa,
+        '"b"'                       => $κb,
         '"c"'                       => $κc,
         '5'                         => $κ5,
 
@@ -434,6 +441,8 @@ our constant $testTerms is export = {
         '(((z y) b) a)'             => $zyba,
         '(x (y z))'                 => $AppT($x, $yz),
         '((y z) (y z))'             => $AppT($yz, $yz),
+        '((λx.x) "a")'              => $AppT($λx_x, $κa),
+        '((λx.x) "b")'              => $AppT($λx_x, $κb),
         '((λx.x) (y z))'            => $AppT($λx_x, $yz),
         '((λx.(x x)) (y z))'        => $AppT($λx_xx, $yz),
         '(y (x z))'                 => $AppT($y, $xz),
@@ -451,6 +460,9 @@ our constant $testTerms is export = {
         '(λx.y)'                    => $λx_y,
         '((λx.y) x)'                => $AppT($λx_y, $x),
         '(λx.z)'                    => $λx_z,
+        '((λx.x) a)'                => $θIa,
+        '((λx.x) b)'                => $θIb,
+        '((λx.x) c)'                => $θIc,
         '((λx.x) k)'                => $θIk,
         '((λx.x) y)'                => $θIy,
         '(((λx.x) k) f1)'           => $θIkf1,
@@ -760,6 +772,8 @@ our constant $testTerms is export = {
         .aka('(x (y z))', 'x (y z)')\
         .aka('((y z) (y z))', '(y z) (y z)')\
         .aka('((λx.x) (y z))', '(λx.x) (y z)')\
+        .aka('((λx.x) "a")', '(λx.x) "a"')\
+        .aka('((λx.x) "b")', '(λx.x) "b"')\
         .aka('((λx.(x x)) (y z))', '(λx.(x x)) (y z)', '(λx.x x) (y z)', '((λx.x x) (y z))')\
         .aka('(y (x z))', 'y (x z)')\
         .aka('((x (y z)) x)', '(x (y z)) x', '(x (y z) x)', 'x (y z) x')\
@@ -777,8 +791,11 @@ our constant $testTerms is export = {
         .aka('(λx.y)', 'λx.y')\
         .aka('((λx.y) x)', '(λx.y) x')\
         .aka('(λx.z)', 'λx.z')\
-        .aka('((λx.x) y)', '(λx.x) y')\
+        .aka('((λx.x) a)', '(λx.x) a')\
+        .aka('((λx.x) b)', '(λx.x) b')\
+        .aka('((λx.x) c)', '(λx.x) c')\
         .aka('((λx.x) k)', '(λx.x) k')\
+        .aka('((λx.x) y)', '(λx.x) y')\
         .aka('(((λx.x) k) f1)', '((λx.x) k) f1', '(λx.x) k f1')\
         .aka('(λk.(((λx.x) k) f1))', 'λk.(((λx.x) k) f1)', 'λk.(λx.x) k f1')\
         .aka('(λx.(λ_.x))', 'K', 'const', 'λx.(λ_.x)', 'λx.λ_.x', '(λx.λ_.x)')\
