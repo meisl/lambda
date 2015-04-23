@@ -63,7 +63,8 @@ my $reduce = -> TTerm $start {
 
 
 ## uncomment to disable debug diagnostics:
-#$reduce = $betaReduce;
+#$reduce = $findFP-inMaybe($betaContract);
+#$reduce = $findFP-inMaybe($betaContract_multi);
 
 
 sub is_confluent(TTerm $s, TTerm $t, Str :$msg = '', Str :$sStr, Str :$tStr) {

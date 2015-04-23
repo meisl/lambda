@@ -99,7 +99,6 @@ plan 134;
     testTermFn($betaContract_multi, :expectedToStr(&lambdaArgToStr),
         `'z ((λx.x) y) b a'  => $Some(`'z y b a'),
         `'z b ((λx.x) y) a'  => $Some(`'z b y a'),
-        # λa.λb.λ_.λh.h a ((λf1.λf2.λ_.λh.h f1 f2) b (λh.λ_.h))
 
         `'(λf1.λf2.λ_.λh.h f1 f2)'      => $None,
         `'(λf1.λf2.λ_.λh.h f1 f2) a'    => $Some(`'λf2.λ_.λh.h a f2'),
@@ -108,6 +107,18 @@ plan 134;
         $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2)')      => $None,
         $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2) a')    => $Some($AppT(`'h a', `'λf2.λ_.λh.h a f2')),
         $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2) a b')  => $Some($AppT(`'h a', `'λ_.λh.h a b')),
+
+        `'z ((λx.x) y) b a'     => $Some(`'z y b a'), # not a redex but reducible
+
+        `'(λx.x x)'             => $None,                           # omegaX
+        `'((λx.x x) (λx.x x))'  => $None,                           # OmegaXX: a redex, contracting to itself
+        `'(λy.y y)'             => $None,                           # omegaY
+        `'((λy.y y) (λy.y y))'  => $None,                           # OmegaYY: a redex, contracting to itself
+        `'((λx.x x) (λy.y y))'  => $Some(`'(λy.y y) (λy.y y)'),     # OmegaXY: a redex, contracting to itself (module alpha-conv)
+        
+        `'(λx.x x) (λy.x x)'    => $Some(`'(λy.x x) (λy.x x)'),     # not Omega (2nd binder y != x)
+        `'(λy.x x) (λx.x x)'    => $Some(`'x x'),                   # not Omega (1st binder y != x)
+        `'(λx.x x) (y z)'       => $Some(`'(y z) (y z)'),           # only "half of" Omega
 
     );
 }
