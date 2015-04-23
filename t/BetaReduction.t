@@ -23,6 +23,139 @@ plan 134;
 
 
 
+{ # function betaContract
+    is_properLambdaFn($betaContract, 'betaContract');
+
+    # TODO: (λx.λy.x) (x y)
+
+    # without the need for α-conversion
+    testTermFn($betaContract, :expectedToStr(&lambdaArgToStr),
+        `'x'                                    => $None,
+        `'"c"'                                  => $None,
+        `'λx."c"'                               => $None,
+        `'λx.x'                                 => $None,
+        `'λx.x "c"'                             => $None,
+        `'λx.x y'                               => $None,
+        `'λx.y x'                               => $None,
+        `'λx.x ((λy.λz.y x) (λy.x y))'          => $Some($LamT('x', $AppT(`'x', $LamT('z', `'(λy.x y) x')))),   # not a redex but contractible (twice)
+              # `'λx.x ((λy.λz.y x) (λy.x y))' -> `'λx.x (λz.(λy.x y) x)'
+        `'x "c"'                                => $None,
+        `'x x'                                  => $None,
+        `'x y'                                  => $None,
+        `'(λx.y) x'                             => $Some(`'y'),         # a redex
+        `'(λx.z x y) "c"'                       => $Some(`'z "c" y'),   # a redex
+        `'(λy.x y) y z'                         => $Some(`'x y z'),     # not a redex but reducible
+        $AppT(`'y', `'(λy.x y) z')              => $Some(`'y (x z)'), # not a redex but reducible
+            # (y ((λy.x y) z)) -> (y (x z))
+        
+        # see below for (((λx.y) x) ((λy.x) y))   # not a redex but contractible (twice)
+
+        $LamT('x', `'(λy.z y) x x')             => $Some(`'λx.z x x'),  # not a redex but reducible
+            # (λx.(λy.z y) x x) -> (λx.z x x)
+
+        `'z ((λx.x) y) b a'     => $Some(`'z y b a'), # not a redex but reducible
+
+        `'(λx.x x)'             => $None,                           # omegaX
+        `'((λx.x x) (λx.x x))'  => $None,                           # OmegaXX: a redex, contracting to itself
+        `'(λy.y y)'             => $None,                           # omegaY
+        `'((λy.y y) (λy.y y))'  => $None,                           # OmegaYY: a redex, contracting to itself
+        `'((λx.x x) (λy.y y))'  => $Some(`'(λy.y y) (λy.y y)'),     # OmegaXY: a redex, contracting to itself (module alpha-conv)
+        
+        `'(λx.x x) (λy.x x)'    => $Some(`'(λy.x x) (λy.x x)'),     # not Omega (2nd binder y != x)
+        `'(λy.x x) (λx.x x)'    => $Some(`'x x'),                   # not Omega (1st binder y != x)
+        `'(λx.x x) (y z)'       => $Some(`'(y z) (y z)'),           # only "half of" Omega
+
+        $AppT(`'((λx.x x) (λx.x x))', `'y')   => $None,
+    );
+
+    subtest({ # with necessary α-conversion:
+        my $t = `'(λx.λy.x) (x y)'; # contracts to (λα1.x y)
+        my $actual = $Some2value($betaContract($t));
+        my $α1 = $LamT2var($actual);
+        isnt($α1, 'x', 'fresh var is different from var x');
+        isnt($α1, 'y', 'fresh var is different from var y');
+        my $expected = $LamT($α1, `'x y');
+        is_eq-Term($actual, $LamT($α1, `'x y'), "`({$Term2srcLess($t)}) beta-contracts to `({$Term2srcLess($expected)})");
+    });
+
+    my ($t, $bcd1, $bcd2, $expectedBrd);
+
+
+    $t = `'((λx.y) x) ((λy.x) y)';  # can contract twice; NO prescribed order!
+    subtest({
+        $bcd1 = $betaContract($t);
+        is($is-Some($bcd1), $true, "{$Term2source($t)} should beta-contract (at least) once") or die;
+        $bcd1 = $Some2value($bcd1);
+        # Note: we don't restrict the order in which parts are being contracted
+        is($is-betaReducible($bcd1), $true, "(Some->value (betaContract {$Term2source($t)})) should still be beta-reducible") or die;
+        
+        $bcd2 = $betaContract($bcd1);
+        is($is-Some($bcd2), $true, "{$Term2source($bcd1)} should beta-contract once more") or die;
+        $bcd2 = $Some2value($bcd2);
+        is($is-betaReducible($bcd2), $false,
+            "(Some->value (betaContract {$Term2source($bcd1)})) should not be beta-reducible any further") or die;
+
+        $expectedBrd = `'y x';
+        is($bcd2, $expectedBrd,
+            "beta-contracting {$Term2source($t)} should yield {$Term2source($expectedBrd)}");
+    }, "{$Term2source($t)} can contract twice; NO prescribed order!");
+
+
+    subtest({ # a term that β-"contracts" to an ever larger term: (λx.x x y) (λx.x x y)
+        my $t = $AppT(`'λx.x x y', `'λx.x x y');
+
+        # size of a LamT is 1 + size of body
+        # size of an AppT is 1 + size of func + size of arg
+        # size of both, a VarT and ConstT is 1
+        my $s = $Term2size($t);
+        is($s, 13, "(eq? 13 (Term->size {$Term2source($t)}))");
+
+        $t = $Some2value($betaContract($t));
+        $s = $Term2size($t);
+        is($s, 15, "(eq? 15 (Term->size {$Term2source($t)}))");
+
+        $t = $Some2value($betaContract($t));
+        $s = $Term2size($t);
+        is($s, 17, "(eq? 17 (Term->size {$Term2source($t)}))");
+
+        $t = $Some2value($betaContract($t));
+        $s = $Term2size($t);
+        is($s, 19, "(eq? 19 (Term->size {$Term2source($t)}))");
+    }, 'a term that β-"contracts" to an ever larger term: (λx.x x y) (λx.x x y)');
+}
+
+
+{ # betaContract_multi
+    testTermFn($betaContract_multi, :expectedToStr(&lambdaArgToStr),
+        `'z ((λx.x) y) b a'  => $Some(`'z y b a'),
+        `'z b ((λx.x) y) a'  => $Some(`'z b y a'),
+
+        `'(λf1.λf2.λ_.λh.h f1 f2)'      => $None,
+        `'(λf1.λf2.λ_.λh.h f1 f2) a'    => $Some(`'λf2.λ_.λh.h a f2'),
+        `'(λf1.λf2.λ_.λh.h f1 f2) a b'  => $Some(`'λ_.λh.h a b'),
+
+        $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2)')      => $None,
+        $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2) a')    => $Some($AppT(`'h a', `'λf2.λ_.λh.h a f2')),
+        $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2) a b')  => $Some($AppT(`'h a', `'λ_.λh.h a b')),
+
+        `'z ((λx.x) y) b a'     => $Some(`'z y b a'), # not a redex but reducible
+
+        `'(λx.x x)'             => $None,                           # omegaX
+        `'((λx.x x) (λx.x x))'  => $None,                           # OmegaXX: a redex, contracting to itself
+        `'(λy.y y)'             => $None,                           # omegaY
+        `'((λy.y y) (λy.y y))'  => $None,                           # OmegaYY: a redex, contracting to itself
+        `'((λx.x x) (λy.y y))'  => $Some(`'(λy.y y) (λy.y y)'),     # OmegaXY: a redex, contracting to itself (module alpha-conv)
+        
+        `'(λx.x x) (λy.x x)'    => $Some(`'(λy.x x) (λy.x x)'),     # not Omega (2nd binder y != x)
+        `'(λy.x x) (λx.x x)'    => $Some(`'x x'),                   # not Omega (1st binder y != x)
+        `'(λx.x x) (y z)'       => $Some(`'(y z) (y z)'),           # only "half of" Omega
+
+        $AppT(`'((λx.x x) (λx.x x))', `'y')   => $None,
+    );
+}
+exit;
+
+
 { # apply-args
 
     my sub test_variant_apply-args($fut) {
@@ -93,36 +226,6 @@ plan 134;
         }
     );
 }
-
-
-{ # betaContract_multi
-    testTermFn($betaContract_multi, :expectedToStr(&lambdaArgToStr),
-        `'z ((λx.x) y) b a'  => $Some(`'z y b a'),
-        `'z b ((λx.x) y) a'  => $Some(`'z b y a'),
-
-        `'(λf1.λf2.λ_.λh.h f1 f2)'      => $None,
-        `'(λf1.λf2.λ_.λh.h f1 f2) a'    => $Some(`'λf2.λ_.λh.h a f2'),
-        `'(λf1.λf2.λ_.λh.h f1 f2) a b'  => $Some(`'λ_.λh.h a b'),
-
-        $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2)')      => $None,
-        $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2) a')    => $Some($AppT(`'h a', `'λf2.λ_.λh.h a f2')),
-        $AppT(`'h a', `'(λf1.λf2.λ_.λh.h f1 f2) a b')  => $Some($AppT(`'h a', `'λ_.λh.h a b')),
-
-        `'z ((λx.x) y) b a'     => $Some(`'z y b a'), # not a redex but reducible
-
-        `'(λx.x x)'             => $None,                           # omegaX
-        `'((λx.x x) (λx.x x))'  => $None,                           # OmegaXX: a redex, contracting to itself
-        `'(λy.y y)'             => $None,                           # omegaY
-        `'((λy.y y) (λy.y y))'  => $None,                           # OmegaYY: a redex, contracting to itself
-        `'((λx.x x) (λy.y y))'  => $Some(`'(λy.y y) (λy.y y)'),     # OmegaXY: a redex, contracting to itself (module alpha-conv)
-        
-        `'(λx.x x) (λy.x x)'    => $Some(`'(λy.x x) (λy.x x)'),     # not Omega (2nd binder y != x)
-        `'(λy.x x) (λx.x x)'    => $Some(`'x x'),                   # not Omega (1st binder y != x)
-        `'(λx.x x) (y z)'       => $Some(`'(y z) (y z)'),           # only "half of" Omega
-
-    );
-}
-exit;
 
 
 { # collect-args
@@ -300,122 +403,6 @@ exit;
 }
 
 
-{ # function betaContract
-    is_properLambdaFn($betaContract, 'betaContract');
-
-    my sub betaContractsTo(*@tests) {
-        for @tests -> $test {
-            my $term     = $test.key;
-            my $termStr  = $Term2source($term);
-            my $expected = $test.value;
-            my $toItself = $expected === $None;
-            my $expStr  = $toItself
-                ?? "itself (None)"
-                !! '(Some `' ~ $Term2source($Some2value($expected)) ~ ')';
-            my $desc = "$termStr beta-contracts to $expStr";
-
-            my $actual = $betaContract_multi($term);
-            is($actual, $expected, $desc)
-                or diag($actual.perl) and die;
-        }
-    }
-
-    # TODO: (λx.λy.x) (x y)
-
-    # without the need for α-conversion
-    betaContractsTo(
-        `'x'                                    => $None,
-        `'"c"'                                  => $None,
-        `'λx."c"'                               => $None,
-        `'λx.x'                                 => $None,
-        `'λx.x "c"'                             => $None,
-        `'λx.x y'                               => $None,
-        `'λx.y x'                               => $None,
-        `'λx.x ((λy.λz.y x) (λy.x y))'          => $Some($LamT('x', $AppT(`'x', $LamT('z', `'(λy.x y) x')))),   # not a redex but contractible (twice)
-              # `'λx.x ((λy.λz.y x) (λy.x y))' -> `'λx.x (λz.(λy.x y) x)'
-        `'x "c"'                                => $None,
-        `'x x'                                  => $None,
-        `'x y'                                  => $None,
-        `'(λx.y) x'                             => $Some(`'y'),         # a redex
-        `'(λx.z x y) "c"'                       => $Some(`'z "c" y'),   # a redex
-        `'(λy.x y) y z'                         => $Some(`'x y z'),     # not a redex but reducible
-        $AppT(`'y', `'(λy.x y) z')              => $Some(`'y (x z)'), # not a redex but reducible
-            # (y ((λy.x y) z)) -> (y (x z))
-        
-        # see below for (((λx.y) x) ((λy.x) y))   # not a redex but contractible (twice)
-
-        $LamT('x', `'(λy.z y) x x')             => $Some(`'λx.z x x'),  # not a redex but reducible
-            # (λx.(λy.z y) x x) -> (λx.z x x)
-
-        `'z ((λx.x) y) b a'     => $Some(`'z y b a'), # not a redex but reducible
-
-        `'(λx.x x)'             => $None,                           # omegaX
-        `'((λx.x x) (λx.x x))'  => $None,                           # OmegaXX: a redex, contracting to itself
-        `'(λy.y y)'             => $None,                           # omegaY
-        `'((λy.y y) (λy.y y))'  => $None,                           # OmegaYY: a redex, contracting to itself
-        `'((λx.x x) (λy.y y))'  => $Some(`'(λy.y y) (λy.y y)'),     # OmegaXY: a redex, contracting to itself (module alpha-conv)
-        
-        `'(λx.x x) (λy.x x)'    => $Some(`'(λy.x x) (λy.x x)'),     # not Omega (2nd binder y != x)
-        `'(λy.x x) (λx.x x)'    => $Some(`'x x'),                   # not Omega (1st binder y != x)
-        `'(λx.x x) (y z)'       => $Some(`'(y z) (y z)'),           # only "half of" Omega
-    );
-
-    subtest({ # with necessary α-conversion:
-        my $t = `'(λx.λy.x) (x y)'; # contracts to (λα1.x y)
-        my $actual = $Some2value($betaContract($t));
-        my $α1 = $LamT2var($actual);
-        isnt($α1, 'x', 'fresh var is different from var x');
-        isnt($α1, 'y', 'fresh var is different from var y');
-        my $expected = $LamT($α1, `'x y');
-        is_eq-Term($actual, $LamT($α1, `'x y'), "`({$Term2srcLess($t)}) beta-contracts to `({$Term2srcLess($expected)})");
-    });
-
-    my ($t, $bcd1, $bcd2, $expectedBrd);
-
-
-    $t = `'((λx.y) x) ((λy.x) y)';  # can contract twice; NO prescribed order!
-    subtest({
-        $bcd1 = $betaContract($t);
-        is($is-Some($bcd1), $true, "{$Term2source($t)} should beta-contract (at least) once") or die;
-        $bcd1 = $Some2value($bcd1);
-        # Note: we don't restrict the order in which parts are being contracted
-        is($is-betaReducible($bcd1), $true, "(Some->value (betaContract {$Term2source($t)})) should still be beta-reducible") or die;
-        
-        $bcd2 = $betaContract($bcd1);
-        is($is-Some($bcd2), $true, "{$Term2source($bcd1)} should beta-contract once more") or die;
-        $bcd2 = $Some2value($bcd2);
-        is($is-betaReducible($bcd2), $false,
-            "(Some->value (betaContract {$Term2source($bcd1)})) should not be beta-reducible any further") or die;
-
-        $expectedBrd = `'y x';
-        is($bcd2, $expectedBrd,
-            "beta-contracting {$Term2source($t)} should yield {$Term2source($expectedBrd)}");
-    }, "{$Term2source($t)} can contract twice; NO prescribed order!");
-
-
-    subtest({ # a term that β-"contracts" to an ever larger term: (λx.x x y) (λx.x x y)
-        my $t = $AppT(`'λx.x x y', `'λx.x x y');
-
-        # size of a LamT is 1 + size of body
-        # size of an AppT is 1 + size of func + size of arg
-        # size of both, a VarT and ConstT is 1
-        my $s = $Term2size($t);
-        is($s, 13, "(eq? 13 (Term->size {$Term2source($t)}))");
-
-        $t = $Some2value($betaContract($t));
-        $s = $Term2size($t);
-        is($s, 15, "(eq? 15 (Term->size {$Term2source($t)}))");
-
-        $t = $Some2value($betaContract($t));
-        $s = $Term2size($t);
-        is($s, 17, "(eq? 17 (Term->size {$Term2source($t)}))");
-
-        $t = $Some2value($betaContract($t));
-        $s = $Term2size($t);
-        is($s, 19, "(eq? 19 (Term->size {$Term2source($t)}))");
-    }, 'a term that β-"contracts" to an ever larger term: (λx.x x y) (λx.x x y)');
-}
-exit;
 
 
 { # function betaReduce

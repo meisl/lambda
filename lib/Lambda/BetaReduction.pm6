@@ -502,14 +502,15 @@ constant $betaContract_multi is export = $Y(-> &self {
 
 #                $collect-args($onUnapplicable, $onLamT, $a, $nil, $f);
 
-                my $doCollect = { $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $a, $nil, $f) };
-                _if_($is-omega($f), # short-circuit AND
-                    { _if_($Term-eq($f, $a),
-                        $None,
-                        $doCollect
-                      )
-                    },
-                    $doCollect
+                my $resultM = $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $a, $nil, $f);
+                case-Maybe($resultM,
+                    None => $None,
+                    Some => -> $result {
+                        _if_($Term-eq($t, $result),
+                            $None,
+                            $resultM
+                        )
+                    }
                 );
 
                 #case-Term($f,
