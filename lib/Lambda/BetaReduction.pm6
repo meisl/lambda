@@ -527,16 +527,23 @@ constant $betaContract_multi is export = $Y(-> &self {
                         )
                     },
                     LamT => -> $fv, $fb {
-                        my $doSubst = { # simulate lazy evaluation 
-                            $Some($subst-alpha_direct($fv, $a, $fb)) 
-                        };
-                        _if_($is-selfAppOf($fv, $fb),   # short-circuit AND
-                            { _if_($is-omegaOf($fv, $a),
-                                $None,
-                                $doSubst
-                            ) },
-                            $doSubst
-                        )
+                        _if_($is-not-free-varName($fv, $fb),
+                            {   $Some($fb)   },
+                            {   my $doSubst = { # simulate lazy evaluation 
+                                    case-Maybe(&self($a),
+                                        None =>          { $Some($subst-alpha_direct($fv, $a,    $fb)) },
+                                        Some => -> $newA { $Some($subst-alpha_direct($fv, $newA, $fb)) }
+                                    );
+                                };
+                                _if_($is-selfAppOf($fv, $fb),   # short-circuit AND
+                                    { _if_($is-omegaOf($fv, $a),
+                                        $None,
+                                        $doSubst
+                                    ) },
+                                    $doSubst
+                                )
+                            }
+                        );
                     },
                     AppT => -> $ff, $fa {
                         my $resultM = $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $fa, $cons($a, $nil), $ff);
