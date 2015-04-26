@@ -500,10 +500,10 @@ constant $betaContract_multi is export = $Y(-> &self {
             },
             AppT   => -> TTerm $f, TTerm $a {
 
-#                $collect-args($onUnapplicable, $onLamT, $a, $nil, $f);
+#                my $outM = $collect-args($onUnapplicable, $onLamT, $a, $nil, $f);
 
                 #my $resultM = $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $a, $nil, $f);
-                #case-Maybe($resultM,
+                #my $outM = case-Maybe($resultM,
                 #    None => $None,
                 #    Some => -> $result {
                 #        _if_($Term-eq($t, $result),
@@ -513,7 +513,7 @@ constant $betaContract_multi is export = $Y(-> &self {
                 #    }
                 #);
 
-                case-Term($f,
+                my $outM = case-Term($f,
                     ConstT => -> Mu {
                         case-Maybe(&self($a),
                             None => $None,
@@ -564,57 +564,19 @@ constant $betaContract_multi is export = $Y(-> &self {
                     }
                 );
 
-                #case-Term($f,
-                #    ConstT => -> Mu {
-                #        case-Maybe(&self($a),
-                #            None => $None,
-                #            Some => -> $newA { $Some($AppT($f, $newA)) }
-                #        )
-                #    },
-                #    VarT => -> Mu {
-                #        case-Maybe(&self($a),
-                #            None => $None,
-                #            Some => -> $newA { $Some($AppT($f, $newA)) }
-                #        )
-                #    },
-                #    LamT => -> $fv, $fb {
-                #        $Some($subst-alpha_direct($fv, $a, $fb))
-                #    },
-                #    AppT => -> $ff, $fa {
-                #        # $collect-then-apply-args(
-                #        #    -> $t, $rest-args { # onNoneApplied
-                #        #        
-                #        #    },
-                #        #    -> $t, $rest-args { # onSomeApplied
-                #        #        $Some($foldl($AppT, $t, $rest-args))
-                #        #    },
-                #        #    $fa, $cons($a, $nil), $ff
-                #        #);
-                #        case-Maybe($collect-args($fa, $cons($a, $nil), $ff),
-                #            None => {
-                #                case-Maybe(&self($fa),   # TODO: try beta-contracting ff (but consider that it's got no LamT "on the left")
-                #                    None => {
-                #                        case-Maybe(&self($a),
-                #                            None => $None,
-                #                            Some => -> $newA {
-                #                                $Some($AppT($f, $newA))
-                #                            }
-                #                        )
-                #                    },
-                #                    Some => -> $newFa {
-                #                        $Some($AppT($AppT($ff, $newFa), $a))
-                #                    }
-                #                )
-                #            },
-                #            Some => -> TPair $p {
-                #                my $t = $fst($p);   # TODO: extract fields from Pair directly
-                #                my $rest-args = $snd($p);
-                #                $Some($foldl($AppT, $t, $rest-args));
-                #            }
+                $outM;
+
+                ## This should effectively find the fixed point:
+                #case-Maybe($outM,
+                #    None => $None,
+                #    Some => -> $outTerm {
+                #        my $outM2 = &self($outTerm);
+                #        case-Maybe($outM2,
+                #            None => $outM,  # 2nd round didn't change it but 1st did ~> return the Some from 1st round
+                #            Some => -> Mu { $outM2 }
                 #        )
                 #    }
-                #)
-
+                #);
 
             }
         )}
