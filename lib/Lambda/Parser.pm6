@@ -56,7 +56,7 @@ constant $seq_P is export = lambdaFn(   # this is bind for the Parser Monad
 
 # alt_P (aka choice_Parser): Parser a -> Parser a -> Parser a
 constant $alt_P is export = lambdaFn(
-    'alt_P', 'λp.λq.NYI',
+    'alt_P', 'λp.λq.λs.(λpOut.case pOut (None (q s)) (Some _ pOut)) (p s)',
     -> $p, $q {
         lambdaFn(Str, '',
             -> Str:D $s {
@@ -92,13 +92,13 @@ constant $chr_P is export = lambdaFn(
 );
 
 constant $str_P is export = $Y(-> &self { lambdaFn(
-    'str_P', 'Y λself.λs.case s (ε (return_P "")) (λc.λcs.(self c) >>= λ_.(self cs) >>= λ_.return_P s)',
+    'str_P', 'Y λself.λs.(λreturn-s.case s (ε return-s) (λc.λcs.(self c) >>= λ_.(self cs) >>= λ_.return-s)) (return_P s)',
     -> Str:D $s {
         my $return-s = $return_P($s);
         case-Str($s,
             ε => $return-s,
             -> $c, $cs {
-                $seq_P($chr_P($c), -> Mu {
+                $seq_P($chr_P($c),  -> Mu {
                 $seq_P(&self($cs),  -> Mu {
                      $return-s
                 })})
@@ -111,7 +111,7 @@ constant $str_P is export = $Y(-> &self { lambdaFn(
 # parser combinators many + many1 ---------------------------------------------
 
 constant $many_P is export = $Y(-> &self { lambdaFn(
-    'many_P', 'λp.NYI',
+    'many_P', 'Y λself.λp.λs.case (p s) (None (return_P nil s)) (Some <v, rest> ((self p >>= λvs.return_P v vs) rest))',
     -> $p {
         lambdaFn(Str, '',
             -> Str:D $s {
@@ -131,7 +131,7 @@ constant $many_P is export = $Y(-> &self { lambdaFn(
 )});
 
 constant $many1_P is export = lambdaFn(
-    'many1_P', 'λp.NYI',
+    'many1_P', 'λp.p >>= λv.(many_P p) >>= λvs.return_P (cons v vs)',
     -> $p {
         $seq_P($p,          -> $v {
         $seq_P($many_P($p), -> $vs {
