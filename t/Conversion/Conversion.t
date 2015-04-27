@@ -13,12 +13,12 @@ use Lambda::TermADT;
 # modules under test:
 use Lambda::Conversion;
 
-plan 48;
+plan 50;
 
 
 { # convert Pairs
     my $tPair1 = $Pair(5, "seven");
-    cmp_ok(convert2Lambda($tPair1), '===', $tPair1, '"converting" a TPair to a TPair returns the very same thing');
+    is(convert2Lambda($tPair1), $tPair1);
     my $p6Pair1 = convertTPair2P6Pair($tPair1);
     cmp_ok($p6Pair1.key,    '===', 5,       "$tPair1 converted to {$p6Pair1.perl} (.key)");
     cmp_ok($p6Pair1.value,  '===', "seven", "$tPair1 converted to {$p6Pair1.perl} (.value)");
@@ -209,4 +209,18 @@ plan 48;
             cmp_ok($e1, '===', "seven", $msg) or fail;
         }
     );
+}
+
+{ # (deep) conversion of TPair s (and TLists)
+    my $p;
+
+    $p = $Pair(["foo", "bar"], $Some('x' => 5));
+    is convert2Lambda($p), '(Pair (cons "foo" (cons "bar" nil)) (Some (Pair "x" 5)))';
+
+    $p = $Pair(["foo", "bar"], $Some($Pair('x', 5)));
+    is convert2Lambda($p), '(Pair (cons "foo" (cons "bar" nil)) (Some (Pair "x" 5)))';
+
+    $p = $Pair($cons(["foo", "bar"], $nil), $Some($Pair('x', 5)));
+    is convert2Lambda($p), '(Pair (cons (cons "foo" (cons "bar" nil)) nil) (Some (Pair "x" 5)))';
+
 }

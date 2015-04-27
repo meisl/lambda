@@ -54,10 +54,14 @@ proto sub convert2Lambda(|) is export {*};
 
 multi sub convert2Lambda(Bool:D   $x) { convertP6Bool2TBool($x) }
 multi sub convert2Lambda(Pair:D   $x) { $Pair(convert2Lambda($x.key), convert2Lambda($x.value)) }
-multi sub convert2Lambda(TMaybe:D $x) { case-Maybe($x, None => $None, Some => -> $v { $Some(&convert2Lambda($v)) } ) }
 multi sub convert2Lambda(         @x) { convertP6Array2TList(@x.map(&convert2Lambda)) }
 
-# any other *single* arg is returned as is (including Lambda values like TBool, TPair, TList)
+# deep conversion of Lambda values:
+multi sub convert2Lambda(TMaybe:D $x) { case-Maybe($x, None => $None, Some => -> $v { $Some(&convert2Lambda($v)) } ) }
+multi sub convert2Lambda(TPair:D  $x) { $Pair(&convert2Lambda($fst($x)), &convert2Lambda($snd($x))) }
+multi sub convert2Lambda(TList:D  $x) { $map(&convert2Lambda, $x) }
+
+# any other *non-compound* arg is returned as is
 multi sub convert2Lambda(Any:D $x) { $x }
 
 # anything else gives an error:
