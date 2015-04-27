@@ -17,8 +17,21 @@ use Lambda::Conversion;
 # module(s) under test:
 use Lambda::String;
 
-plan 2;
+plan 3;
 
+
+subtest({ # Str-concat
+    is_properLambdaFn($Str-concat, 'Str-concat');
+
+    is $Str-concat("a", "a"), "aa";
+    is $Str-concat("a", "b"), "ab";
+    is $Str-concat("b", "a"), "ba";
+
+    is $Str-concat("", "a"), "a";
+    is $Str-concat("a", ""), "a";
+
+    is $Str-concat("foo", "bar"), "foobar";
+}, 'Str-concat');
 
 subtest({ # Str-eq?
     is_properLambdaFn($Str-eq, 'Str-eq?');
