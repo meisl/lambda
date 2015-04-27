@@ -339,6 +339,23 @@ constant $List2Str is export = lambdaFn(
     }
 );
 
+constant $List2StrDense is export = $Y(-> &self { lambdaFn(
+    'List->StrDense', '',   # TODO: η-reduce list->str
+    -> TList:D $xs {
+        my $inner = $foldl(
+            -> $acc, $x {
+                my $xStr = $x ~~ TList ?? &self($x) !! $x.?symbol // $x.?lambda // $x.perl;
+                _if_(($acc eq '' ?? $true !! $false), # TODO: use $Str-eq('', $acc)
+                    $xStr,
+                    { $acc ~ ', ' ~ $xStr }
+                );
+            },
+            '',
+            $xs
+        );
+        '[' ~ $inner ~ ']';
+    }
+)});
 
 
 # findFP-inMaybe_dbgXXX: (a -> Maybe a) -> List a

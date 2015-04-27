@@ -177,3 +177,409 @@ constant $betaReduce is export = lambdaFn(
     'betaReduce', 'findFP-inMaybe betaContract',
     $findFP-inMaybe($betaContract)
 );
+
+
+# Given (at least) one `arg`, and a LamT (determined by `binderName` and `body`):
+# descend further any chain of LamT s as long as there are rest-args, while
+# turning them into appropriate substitution pairs.
+# Stop and apply substitutions (in parallel) if either there are no more `rest-args`
+# or the term is non-LamT.
+# Then call `finalize` with the result of this parallel substitution and a list of the
+# still-unapplied rest args.
+constant $apply-args is export = $Y(-> &self { lambdaFn(
+    'apply-args', # : (Term -> [Term]-> a) -> [<Str, Term>] -> Term -> [Term] -> Str -> Term -> a
+    'λfinalize.λsubstitutions.λarg.λrest-args.λbinderName.λbody.error "NYI"',
+    -> $finalize, TList $substitutions, $arg, TList $rest-args, Str $binderName, TTerm $body {
+        case-Term($body,
+            LamT => -> $bodyVarName, $bodyBody {
+                case-List($rest-args,
+                    nil => {    # ran out of args - none left for body (which is also a LamT)
+                        my $newBody = _if_($Str-eq($bodyVarName, $binderName),    # does body (also a lambda) mask our own binder?
+                            { $subst-par-alpha_direct(                                $substitutions,  $body) },
+                            { $subst-par-alpha_direct($cons($Pair($binderName, $arg), $substitutions), $body) }
+                        );
+                        $finalize($newBody, $nil);
+                    },
+                    cons => -> $a, $as {
+                        my $newSubsts = $cons($Pair($binderName, $arg), $substitutions);
+                        &self($finalize, $newSubsts, $a, $as, $bodyVarName, $bodyBody);
+                    }
+                );
+                
+            },
+            ConstT => -> Mu { $finalize($body, $rest-args) },
+            VarT   => -> $bodyVarName {
+                _if_($Str-eq($binderName, $bodyVarName),
+                    { $finalize($arg, $rest-args) },
+                    { $finalize(case-Maybe($first(-> $sPair { $Str-eq($bodyVarName, $fst($sPair)) }, $substitutions),
+                                None => $body,
+                                Some => $snd    # return value of Some as is
+                            ),
+                            $rest-args
+                    ) }
+                )
+            },
+            AppT   => -> Mu, Mu {
+                $finalize(
+                    $subst-par-alpha_direct($cons($Pair($binderName, $arg), $substitutions), $body), 
+                    $rest-args
+                )
+            },
+        )
+    }
+)});
+
+
+# Descend chains of AppT, collecting arguments to be applied once a LamT is encountered.
+# If indeed a LamT is encountered in an AppT's func position, onLambda is called with the
+# LamT's binder (name), the LamT's body, the last arg encountered so far and a list of 
+# all the args above (in bottom-up order, ie in the order they're to be fed to the LamT).
+# Otherwise onUnapplicable is called with the unapplicable term, the last arg encountered
+# so far and a list of all the args above; again in bottom-up order.
+# Both callbacks, onUnapplicable and onLambda must return a TMaybe, which is taken to mean this:
+# - a Some indicates a final result, and is returned from collect-args as is (no further call to
+#   any of the two callbacks)
+# - a None indicates that the callback did not change the term at hand, given it plus the current
+#   arg and the rest-args (at the current level in the chain of AppTs).
+#   onUnapplicable will be called with the term and arg(s) one level up, or, respectively, if the
+#   call-stack has been unwound completely, the None will be returned from collect-args.
+constant $collect-args is export = $Y(-> &self { lambdaFn(
+    'collect-args', # : (Term -> [Term]-> a) -> (Str -> Term -> [Term]-> a) -> [Term] -> Term -> a
+    'λonUnapplicable.λonLambda.λarg.λrest-args.λinTerm.error "NYI"',
+    -> $onUnapplicable, $onLambda, TTerm $arg, TList $rest-args, TTerm $inTerm {
+        case-Term($inTerm,
+            ConstT => -> Mu { $onUnapplicable($inTerm, $arg, $rest-args) },
+            VarT   => -> Mu { $onUnapplicable($inTerm, $arg, $rest-args) },
+            AppT   => -> $f, $a {
+                my $newRest-args = $cons($arg, $rest-args);
+                my $newFm = &self($onUnapplicable, $onLambda, $a, $newRest-args, $f);
+                case-Maybe($newFm,
+                    None => { $onUnapplicable($inTerm, $arg, $rest-args) },  # (onUnapplicable f a newRest-args) already done in recursive call
+                    Some => -> Mu { $newFm }
+                )
+            },
+            LamT   => -> $v, $b { $onLambda($v, $b, $arg, $rest-args) }
+        )
+    }
+)});
+
+constant $collect-lambdas = $Y(-> &self { lambdaFn(
+    'collect-lambdas', 'λss.λv.λb.λa.λas.error "NYI"', 
+    -> $onInsideLambda, TList $bindings, TTerm $body, TList $rest-args {
+        case-Term($body,
+            LamT => -> Str $bv, TTerm $bb {
+                case-List($rest-args,
+                    cons => -> TTerm $a, TList $as {
+                        my $newBindings = $cons($Pair($bv, $a), $bindings);
+                        &self($onInsideLambda, $newBindings, $bb, $as)
+                    },
+                    nil => {    # ran out of args - none left for body (which is also a LamT)
+                        $onInsideLambda($bindings, $body, $nil)
+                    }
+                )
+            },
+            AppT   => -> Mu, Mu { $onInsideLambda($bindings, $body, $rest-args) },
+            VarT   => -> Mu     { $onInsideLambda($bindings, $body, $rest-args) },
+            ConstT => -> Mu     { $onInsideLambda($bindings, $body, $rest-args) },
+        );
+    }
+)});
+
+constant $collect-args-and-lambdas is export = {
+    lambdaFn(
+        'collect-args-and-lambdas', # : (Term -> [Term]-> a) -> (Str -> Term -> [Term]-> a) -> [Term] -> Term -> a
+        'λonUnapplicable.λonInsideLambda.λarg.λrest-args.λinTerm.error "NYI"',
+        -> $onUnapplicable, $onInsideLambda, TTerm $arg, TList $rest-args, TTerm $inTerm {
+            $collect-args(
+                $onUnapplicable,
+                -> $v, $b, $arg, $rest-args {
+                    my $bindings = $cons($Pair($v, $arg), $nil);
+                    $Some($collect-lambdas($onInsideLambda, $bindings, $b, $rest-args))
+                },
+                $arg, $rest-args, $inTerm
+            );
+        }
+    );
+}();
+
+# betaContract_multi: Term -> Maybe Term
+# β-simplification (either of $t or any (one) child), reducing AppT s of multiple args in one step if possible
+constant $betaContract_multi is export = $Y(-> &self { 
+    my $onUnapplicable = -> TTerm $func, TTerm $arg, TList $rest-args {
+        case-Maybe(&self($arg),
+            None => $None,
+            Some => -> $newArg { $Some($foldl($AppT, $AppT($func, $newArg), $rest-args)) }
+        );
+    };
+
+    my $onLamT = -> Str $binderName, TTerm $body, TTerm $arg, TList $rest-args {
+        $Some($apply-args(
+            $foldl($AppT),  # "finalize"
+            $nil,           # "substitutions"
+            $arg, $rest-args,
+            $binderName, $body
+        ));
+    };
+
+    my $filter-substs-and-contract = $Y(-> &self2 { lambdaFn(
+        'filter-substs-and-contract', '',
+        -> $skip, TList $substs {
+            case-List($substs,
+                nil => $nil,
+                cons => -> $sPair, $rest {
+                    $sPair(-> $forName, $replacement {
+                        my $newSkip = -> $vn {
+                            _if_($Str-eq($forName, $vn),  # short-circuit OR
+                                $true,
+                                { $skip($vn) }
+                            );
+                        };
+                        my $newRest = &self2($newSkip, $rest);
+                        _if_($skip($forName),
+                            $newRest,
+                            { $cons(case-Maybe(&self($replacement),
+                                        None => $sPair,
+                                        Some => -> $newArg { $Pair($forName, $newArg) },
+                                    ),
+                                    $newRest
+                            ) }
+                        )
+                    })
+                }
+            )
+        }
+    )});
+
+    my $doSubsts = lambdaFn('doSubsts', '', -> TList $bindings, TTerm $inTerm {
+        my $newBindings = $filter-substs-and-contract(
+            -> Str $forName { $is-not-free-varName($forName, $inTerm) },
+            $bindings
+        );
+        $subst-par-alpha_direct($newBindings, $inTerm);
+    });
+
+    my $doSubsts-lambda = lambdaFn('doSubsts-lambda', '', -> TList $bindings, Str $binderName, TTerm $body {
+        my $newBindings = $filter-substs-and-contract(
+            -> Str $forName {
+                _if_($Str-eq($binderName, $forName),   # short-circuit OR
+                    $true,
+                    { $is-not-free-varName($forName, $body) }
+                )
+            },
+            $bindings
+        );
+        _if_($exists(-> $sPair { $is-free-varName($binderName, $snd($sPair)) }, $newBindings),
+            {   # need fresh binder for binder
+                my $freshVar = $fresh-var-for($binderName);
+                $LamT($VarT2name($freshVar), $subst-par-alpha_direct($cons($Pair($binderName, $freshVar), $newBindings), $body));
+            },
+            { $LamT($binderName, $subst-par-alpha_direct($newBindings, $body)) }
+        );
+    });
+
+    my $doSubsts-var = lambdaFn('doSubsts-var', '', -> TList $bindings, TTerm $varTerm, Str $varName {
+        case-Maybe($first(-> $sPair { $Str-eq($varName, $fst($sPair)) }, $bindings),
+            None => $varTerm,
+            Some => -> TPair $sPair {
+                my $arg = $snd($sPair);
+                case-Maybe(&self($arg), # could use _direct variant of &self
+                    None => $arg,
+                    Some => $I
+                )
+            }
+        )
+    });
+
+    my $onInsideLambdaWWW = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+        my $newBody = $subst-par-alpha_direct($bindings, $body);
+        $foldl($AppT, $newBody, $rest-args);
+    });
+
+    my $onInsideLambdaXXX = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+        my $newBody = $doSubsts($bindings, $body);
+        $foldl($AppT, $newBody, $rest-args);
+    });
+
+    my $onInsideLambdaYYY = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+        case-Term($body,
+            VarT => -> $bodyVarName {
+                $foldl($AppT, $doSubsts-var($bindings, $body, $bodyVarName), $rest-args)
+            },
+            ConstT => -> Mu {
+                $foldl($AppT, $body, $rest-args)   # nothing to substitute (in)
+            },
+            AppT => -> Mu, Mu {
+                $foldl($AppT, $doSubsts($bindings, $body), $rest-args)
+            },
+            LamT => -> Str $bv, TTerm $bb {
+                $doSubsts-lambda($bindings, $bv, $bb)
+                # Note: we *know* there cannot be any rest-args, so no need to foldl 'em up in the end
+            },
+        )
+    });
+
+    my $onInsideLambdaZZZ = lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+        case-Term($body,
+            VarT => -> $bodyVarName {
+                $foldl($AppT, $doSubsts-var($bindings, $body, $bodyVarName), $rest-args)
+            },
+            ConstT => -> Mu {
+                $foldl($AppT, $body, $rest-args)   # nothing to substitute (in)
+            },
+            AppT => -> Mu, Mu {
+                $foldl($AppT, $doSubsts($bindings, case-Maybe(&self($body), None => $body, Some => $I)), $rest-args)
+            },
+            LamT => -> Str $bv, TTerm $bb {
+                $doSubsts-lambda($bindings, $bv, case-Maybe(&self($bb), None => $bb, Some => $I))
+                # Note: we *know* there cannot be any rest-args, so no need to foldl 'em up in the end
+            },
+        )
+    });
+
+    my $onInsideLambda = $Y(-> &onInsideLambda { lambdaFn(Str, 'onInsideLambda', -> TList $bindings, TTerm $body, TList $rest-args {
+        case-Term($body,
+            VarT => -> $bodyVarName {
+                $foldl($AppT, $doSubsts-var($bindings, $body, $bodyVarName), $rest-args)
+            },
+            ConstT => -> Mu {
+                $foldl($AppT, $body, $rest-args)   # nothing to substitute (in)
+            },
+            AppT   => -> Mu, Mu {
+                case-Maybe(&self($body),
+                    None => {   # still an AppT, so we cannot apply more of rest-args
+                        $foldl($AppT, $doSubsts($bindings, $body), $rest-args)
+                    },
+                    Some => -> $contractedBody {
+                        case-List($rest-args,
+                            nil => { $doSubsts($bindings, $contractedBody) },   # nothing to foldl on top
+                            cons => -> TTerm $arg, TList $more-args {
+                                case-Term($contractedBody,
+                                    ConstT => -> Mu {   # nothing to substitute (in)
+                                        $foldl($AppT, $contractedBody, $rest-args)
+                                    },
+                                    VarT => -> $varName { # we can avoid subst-par-alpha, and do the (simple) substitution right here
+                                        $foldl($AppT, $doSubsts-var($bindings, $contractedBody, $varName), $rest-args)
+                                    },
+                                    AppT => -> Mu, Mu {
+                                        $foldl($AppT, $doSubsts($bindings, $contractedBody), $rest-args)
+                                    },
+                                    LamT => -> $cbv, $cbb { # we can apply more of the rest-args ~> recurse
+                                        $collect-lambdas(&onInsideLambda, $cons($Pair($cbv, $arg), $bindings), $cbb, $more-args)
+                                    },
+                                );
+                            }
+                        )
+                    }
+                )
+            },
+            LamT   => -> Str $bv, TTerm $bb {
+                my $substitutedBody = case-Maybe(&self($bb),
+                    None => { $doSubsts-lambda($bindings, $bv, $bb) },
+                    Some => -> $contractedBb {
+                        $doSubsts-lambda($bindings, $bv, $contractedBb);
+                    }
+                );
+
+                #$substitutedBody = case-Maybe(&self($substitutedBody), None => $substitutedBody, Some => $I); # could use _direct variant of &self
+                $substitutedBody;
+                # Note: we *know* there cannot be any rest-args, so no need to foldl 'em up in the end
+            },
+        );
+    })});
+    
+    lambdaFn(
+        'betaContract_multi', 'λt.error "NYI"',
+        -> TTerm $t { case-Term($t,
+            VarT   => $K1None,
+            ConstT => $K1None,
+            LamT   => -> Str $varName, TTerm $body {
+                case-Maybe(&self($body),
+                    None => $None,
+                    Some => -> TTerm $newBody { $Some($LamT($varName, $newBody)) }
+                )
+            },
+            AppT   => -> TTerm $f, TTerm $a {
+
+#                my $outM = $collect-args($onUnapplicable, $onLamT, $a, $nil, $f);
+
+                #my $resultM = $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $a, $nil, $f);
+                #my $outM = case-Maybe($resultM,
+                #    None => $None,
+                #    Some => -> $result {
+                #        _if_($Term-eq($t, $result),
+                #            $None,
+                #            $resultM
+                #        )
+                #    }
+                #);
+
+                my $outM = case-Term($f,
+                    ConstT => -> Mu {
+                        case-Maybe(&self($a),
+                            None => $None,
+                            Some => -> $newA { $Some($AppT($f, $newA)) }
+                        )
+                    },
+                    VarT => -> Mu {
+                        case-Maybe(&self($a),
+                            None => $None,
+                            Some => -> $newA { $Some($AppT($f, $newA)) }
+                        )
+                    },
+                    LamT => -> $fv, $fb {
+                        _if_($is-not-free-varName($fv, $fb),
+                            {   $Some($fb)   },
+                            {   my $doSubst = { # simulate lazy evaluation 
+                                    case-Maybe(&self($a),
+                                        None =>          { $Some($subst-alpha_direct($fv, $a,    $fb)) },
+                                        Some => -> $newA { $Some($subst-alpha_direct($fv, $newA, $fb)) }
+                                    );
+                                };
+                                _if_($is-selfAppOf($fv, $fb),   # short-circuit AND
+                                    { _if_($is-omegaOf($fv, $a),
+                                        $None,
+                                        $doSubst
+                                    ) },
+                                    $doSubst
+                                )
+                            }
+                        );
+                    },
+                    AppT => -> $ff, $fa {
+                        my $resultM = $collect-args-and-lambdas($onUnapplicable, $onInsideLambda, $fa, $cons($a, $nil), $ff);
+                        case-Maybe($resultM,
+                            None => { # try to contract a (collect-args-and-lambdas tried it only up to, but excluding this)
+                                case-Maybe(&self($a),
+                                    None => $None,
+                                    Some => -> $newA { $Some($AppT($f, $newA)) }
+                                )
+                            },
+                            Some => -> $result {
+                                _if_($Term-eq($t, $result),
+                                    $None,
+                                    $resultM
+                                )
+                            }
+                        );
+                    }
+                );
+
+                $outM;
+
+                ## This should effectively find the fixed point:
+                #case-Maybe($outM,
+                #    None => $None,
+                #    Some => -> $outTerm {
+                #        my $outM2 = &self($outTerm);
+                #        case-Maybe($outM2,
+                #            None => $outM,  # 2nd round didn't change it but 1st did ~> return the Some from 1st round
+                #            Some => -> Mu { $outM2 }
+                #        )
+                #    }
+                #);
+
+            }
+        )}
+    )
+});
+

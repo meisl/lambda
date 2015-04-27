@@ -11,7 +11,7 @@ use Lambda::Boolean;
 use Lambda::MaybeADT;
 
 
-plan 63;
+plan 66;
 
 
 # ->Str -----------------------------------------------------------------------
@@ -147,7 +147,16 @@ plan 63;
 
 # functions on Maybe ----------------------------------------------------------
 
-# TODO: findFP-inMaybe
+{ # ->findFP-inMaybe ----------------------------------------------------------
+    my $f = lambdaFn(
+        Str, 'λn.if (lte? n 0) None (Some (- n 1))',
+        -> Int $n { $n <= 0 ?? $None !! $Some($n-1) }
+    );
+    
+    is $findFP-inMaybe($f, 0), $None,    "findFP-inMaybe $f 0";
+    is $findFP-inMaybe($f, 1), $Some(0), "findFP-inMaybe $f 1";
+    is $findFP-inMaybe($f, 5), $Some(0), "findFP-inMaybe $f 5";
+}
 
 { # Maybe->valueWithDefault
    is_properLambdaFn($Maybe2valueWithDefault, 'Maybe->valueWithDefault');

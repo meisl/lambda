@@ -21,9 +21,32 @@ constant $is-free-varName is export = $Y(-> &self { lambdaFn(
                     { &self($varName, $arg) }
                 )
             },
-            LamT => -> Str $lamVarName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
-                _if_( $Str-eq($varName, $lamVarName),
+            LamT => -> Str $binderName, TTerm $body {
+                _if_( $Str-ne($varName, $binderName),   # short-circuit AND
+                    { &self($varName, $body) },
                     $false,
+                )
+            }
+        );
+    }
+)});
+
+
+constant $is-not-free-varName is export = $Y(-> &self { lambdaFn(
+    'not-free-varName?', 'λself.λvarName.λt.error "NYI"',
+    -> Str:D $varName, TTerm $t -->TBool{
+        case-Term($t,
+            ConstT => $K1true,
+            VarT => -> Str $name { $Str-ne($varName, $name) },
+            AppT => -> TTerm $func, TTerm $arg {
+                _if_( &self($varName, $func),       # short-circuit AND
+                    { &self($varName, $arg) },
+                    $false
+                )
+            },
+            LamT => -> Str $binderName, TTerm $body {
+                _if_( $Str-eq($varName, $binderName),   # short-circuit OR
+                    $true,
                     { &self($varName, $body) }
                 )
             }
@@ -50,13 +73,13 @@ constant $is-freeName-under is export = $Y(-> &self { lambdaFn(
                 )
             },
             LamT => -> Str $lamVarName, TTerm $body {    # DONE: LamT_ctor_with_Str_binder
-                _if_($Str-eq($varName, $lamVarName),
-                    $false, # if the λ binds the var then it's not free anywhere in the λ's body
+                _if_($Str-ne($varName, $lamVarName),    # short-circuit AND
                     {   _if_( $Str-eq($binderName, $lamVarName),        # or else, if the binder is the λ's var then...
                             { $is-free-varName($varName, $body) },      # $var is free under $binder if $var is free in the λ's body
                             { &self($varName, $binderName, $body) }     # otherwise it depends on the λ's body
                         )
                     },
+                    $false, # if the λ binds the var then it's not free anywhere in the λ's body
                 );
             }
         )
@@ -127,7 +150,11 @@ constant $free-varNames-internal = $Y(-> &self { lambdaFn(
     }
 )});
 
-constant $free-varNames is export = lambdaFn('free-varNames', 'free-varNames-internal nil nil', $free-varNames-internal($nil, $nil));
+constant $free-varNames is export = lambdaFn(
+    'free-varNames', 
+    'free-varNames-internal nil nil', 
+    -> TTerm $t { $free-varNames-internal($nil, $nil, $t) }
+);
 
 
 constant $free-vars-internal = $Y(-> &self { lambdaFn(

@@ -514,7 +514,7 @@ constant $is-selfAppOf is export = lambdaFn(
             AppT => -> TTerm $func, TTerm $arg {
                 case-Term($func,
                     VarT => -> Str $funcName {
-                        _if_( $Str-eq($varName, $funcName),
+                        _if_( $Str-eq($varName, $funcName), # short-circuit AND
                             { case-Term($arg,
                                 VarT   => -> Str $argName { $Str-eq($varName, $argName) },
                                 LamT   => $K2false,
@@ -563,7 +563,7 @@ constant $is-omegaOf is export = lambdaFn(
     'ωOf?', 'λvarName.λterm.error "NYI"',
     -> Str $varName, TTerm:D $t -->TBool{ case-Term($t,
         LamT   => -> $vName, $body {
-            _if_($Str-eq($varName, $vName),     # short-circuit OR
+            _if_($Str-eq($varName, $vName),     # short-circuit AND
                 { $is-selfAppOf($varName, $body) },
                 $false
             )

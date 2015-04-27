@@ -3,6 +3,7 @@ use v6;
 use Lambda::BaseP6;
 use Lambda::Boolean;
 use Lambda::PairADT;
+use Lambda::MaybeADT;
 use Lambda::ListADT;
 
 module Lambda::Conversion;
@@ -51,9 +52,10 @@ sub convertP6ArrayToTListOfTPairs(Array $arrayOfarrays) is export {
 
 proto sub convert2Lambda(|) is export {*};
 
-multi sub convert2Lambda(Bool:D  $x) { convertP6Bool2TBool($x) }
-multi sub convert2Lambda(Pair:D  $x) { $Pair(convert2Lambda($x.key), convert2Lambda($x.value)) }
-multi sub convert2Lambda(        @x) { convertP6Array2TList(@x.map(&convert2Lambda)) }
+multi sub convert2Lambda(Bool:D   $x) { convertP6Bool2TBool($x) }
+multi sub convert2Lambda(Pair:D   $x) { $Pair(convert2Lambda($x.key), convert2Lambda($x.value)) }
+multi sub convert2Lambda(TMaybe:D $x) { case-Maybe($x, None => $None, Some => -> $v { $Some(&convert2Lambda($v)) } ) }
+multi sub convert2Lambda(         @x) { convertP6Array2TList(@x.map(&convert2Lambda)) }
 
 # any other *single* arg is returned as is (including Lambda values like TBool, TPair, TList)
 multi sub convert2Lambda(Any:D $x) { $x }

@@ -211,3 +211,5 @@ Lambda::P6Currying_Stats::init(Curried, Partial, curry => &curry, part => &apply
 our sub set_stats_enabled(Bool $enabled) {
     Lambda::P6Currying_Stats::set_enabled($enabled);
 }
+
+#set_stats_enabled(True);

@@ -13,3 +13,10 @@ constant $Str-eq is export = lambdaFn(
         convert2Lambda($str1 eq $str2)
     }
 );
+
+constant $Str-ne is export = lambdaFn(
+    'Str-ne?', 'λstr1.λstr2.built-in',
+    -> Str:D $str1, Str:D $str2 -->TBool{
+        convert2Lambda($str1 ne $str2)
+    }
+);

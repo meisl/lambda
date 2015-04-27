@@ -66,7 +66,7 @@ plan 28;
         testTermFn($fut,
             [[x => `'y'],   `'"c"' ] => $None,
 
-            #[[],            `'y'   ] => $None,
+            [[],            `'y'   ] => $None,
             [[x => `'y'],   `'y'   ] => $None,
             [[x => `'y'],   `'x'   ] => $Some(`'y'),
 

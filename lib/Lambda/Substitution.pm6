@@ -23,13 +23,12 @@ constant $subst-seq is export = $Y(-> &self { lambdaFn(
                 VarT => -> Str $tName {
                     my Str $forName = $fst($head);
                     _if_($Str-eq($forName, $tName),
-                        {
-                            my TTerm  $what = $snd($head);
-                            my TMaybe $out  = &self($what, $tail);
-                            case-Maybe($out,
-                                None => { $Some($what) },
-                                Some => -> Mu { $out }
-                            )
+                        { my TTerm  $what = $snd($head);
+                          my TMaybe $out  = &self($what, $tail);
+                          case-Maybe($out,
+                              None => { $Some($what) },
+                              Some => -> Mu { $out }
+                          )
                         },
                         { &self($t, $tail) }
                     )
@@ -91,6 +90,30 @@ constant $subst is export = lambdaFn(
 );
 
 
+constant $except-substs_noDupes = $Y(-> &self { lambdaFn(
+    'except-substs_noDupes', '',
+    -> $skip, TList $xs {
+        case-List($xs,
+            nil => $nil,
+            cons => -> $sPair, $rest {
+                $sPair(-> $forName, $replacement {
+                    my $newSkip = -> $vn {
+                        _if_($Str-eq($forName, $vn),  # short-circuit OR
+                            $true,
+                            { $skip($vn) }
+                        );
+                    };
+                    my $newRest = &self($newSkip, $rest);
+                    _if_($skip($forName),
+                        $newRest,
+                        { $cons($sPair, $newRest) }
+                    )
+                })
+            }
+        )
+    }
+)});
+
 constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
     'subst-par-alpha_direct', 'λself.λsubstitutions.λt.error "NYI"',
     -> TList $substitutions, TTerm $t -->TTerm{
@@ -106,33 +129,29 @@ constant $subst-par-alpha_direct is export = $Y(-> &self { lambdaFn(
                 $AppT(
                     &self($substitutions, $func),
                     &self($substitutions, $arg)
-                );
+                )
             },
-            LamT => -> Str $myVarName, TTerm $body {
+            LamT => -> Str $binderName, TTerm $body {
                 # kick out irrelevant substitutions:
-                #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
-                my $newSubsts  = $filter(
-                    -> TPair $sPair {
-                        $is-free-varName($fst($sPair), $t)  # more efficient than (exists (λiName.Str-eq (fst sPair) iName) myFreeNames)
+                my $newSubsts = $except-substs_noDupes(
+                    -> $forName {
+                        _if_($Str-eq($binderName, $forName), # short-circuit OR
+                            $true,
+                            { $is-not-free-varName($forName, $body) }
+                        )
                     },
                     $substitutions
                 );
                 case-List($newSubsts,
                     nil => $t,
                     cons => -> Mu, Mu {
-                        my $needFreshVar = $exists(
-                            -> $sPair {
-                                $is-free-varName($myVarName, $snd($sPair))
-                            }, 
-                            $newSubsts
-                        );
-                        _if_($needFreshVar,
-                            {   my $freshVar  = $fresh-var-for($myVarName);
+                        _if_($exists(-> $sPair { $is-free-varName($binderName, $snd($sPair)) }, $newSubsts),
+                            {   my $freshVar  = $fresh-var-for($binderName);
                                 my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
-                                my $myAlpha  = $Pair($myVarName, $freshVar);
+                                my $myAlpha  = $Pair($binderName, $freshVar);
                                 $LamT($freshName, &self($cons($myAlpha, $newSubsts), $body));
                             },
-                            { $LamT($myVarName, &self($newSubsts, $body)) }
+                            { $LamT($binderName, &self($newSubsts, $body)) }
                         )
                     }
                 )
@@ -171,35 +190,31 @@ constant $subst-par-alpha_Maybe is export = $Y(-> &self { lambdaFn(
                     }
                 )
             },
-            LamT => -> Str $myVarName, TTerm $body {
+            LamT => -> Str $binderName, TTerm $body {
                 # kick out irrelevant substitutions:
-                #my $myFreeNames = $free-varNames($t);   # not as efficient as (is-free-varName ...); see below
-                my $newSubsts  = $filter(
-                    -> TPair $sPair {
-                        $is-free-varName($fst($sPair), $t)  # more efficient than (exists (λiName.Str-eq (fst sPair) iName) myFreeNames)
+                my $newSubsts = $except-substs_noDupes(
+                    -> $forName {
+                        _if_($Str-eq($binderName, $forName), # short-circuit OR
+                            $true,
+                            { $is-not-free-varName($forName, $body) }
+                        )
                     },
                     $substitutions
                 );
                 case-List($newSubsts,
                     nil => $None,
                     cons => -> Mu, Mu {
-                        my $needFreshVar = $exists(
-                            -> $sPair {
-                                $is-free-varName($myVarName, $snd($sPair))
-                            }, 
-                            $newSubsts
-                        );
-                        _if_($needFreshVar,
-                            {   my $freshVar  = $fresh-var-for($myVarName);
+                        _if_($exists(-> $sPair { $is-free-varName($binderName, $snd($sPair)) }, $newSubsts),
+                            {   my $freshVar  = $fresh-var-for($binderName);
                                 my $freshName = $VarT2name($freshVar);  # TODO: return Str from $fresh-name-for-name
-                                my $myAlpha  = $Pair($myVarName, $freshVar);
+                                my $myAlpha  = $Pair($binderName, $freshVar);
                                 # Here we use the fact that we *know* that body will change:
                                 $Some($LamT($freshName, $subst-par-alpha_direct($cons($myAlpha, $newSubsts), $body)));
                             },
                             { case-Maybe(&self($newSubsts, $body),
-                                None => $None,
-                                Some => -> TTerm $newBody { $Some($LamT($myVarName, $newBody)) }
-                            )}
+                                  None => $None,
+                                  Some => -> TTerm $newBody { $Some($LamT($binderName, $newBody)) }
+                            ) }
                         )
                     }
                 )

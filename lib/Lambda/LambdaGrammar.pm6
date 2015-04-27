@@ -55,7 +55,7 @@ grammar LambdaGrammar {
     token delta { 'δ' }
 
     token varName {
-        <-[\"\\αβδλ.()\s]>+
+        <-[\"\\βδλ.()\s]>+
     }
 
     token variable {

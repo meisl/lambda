@@ -18,7 +18,7 @@ constant $is-etaRedex is export = lambdaFn(
     -> TTerm:D $t {
         #match-Term($t,
         #    '(LamT vName (AppT bf (VarT vName))' => -> $vName, $bf {
-        #        $not($is-free-varName($vName, $bf))
+        #        $is-not-free-varName($vName, $bf)
         #    },
         #    otherwise => $false
         #)
@@ -26,7 +26,7 @@ constant $is-etaRedex is export = lambdaFn(
             ConstT => $K1false,
             VarT => $K1false,
             AppT => $K2false,
-            LamT => -> Str $varName, TTerm $body {   # DONE: LamT_ctor_with_Str_binder
+            LamT => -> Str $binderName, TTerm $body {   # DONE: LamT_ctor_with_Str_binder
                 # λx.(B x) is an η-redex if x not free in B.
                 # (if so, it η-contracts to just B)
                 case-Term($body,
@@ -39,8 +39,8 @@ constant $is-etaRedex is export = lambdaFn(
                             LamT => $K2false,
                             AppT => $K2false,
                             VarT => -> Str $argName {   # DONE: LamT_ctor_with_Str_binder
-                                _if_( $Str-eq($argName, $varName),   # short-circuit AND
-                                    { $not($is-free-varName($varName, $func)) },
+                                _if_( $Str-eq($argName, $binderName),   # short-circuit AND
+                                    { $is-not-free-varName($binderName, $func) },
                                     $false
                                 )
                             }
