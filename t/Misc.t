@@ -17,8 +17,21 @@ use Lambda::Conversion;
 # module(s) under test:
 use Lambda::String;
 
-plan 3;
+plan 4;
 
+
+subtest({ # case-Str
+    
+    is case-Str('', ε => 'bar', -> $c, $rest { die 'should not be called' }), 'bar', 'on ε with a block';
+    is case-Str('', ε => { 'bar' }, -> $c, $rest { die 'should not be called' }), 'bar', 'on ε with a block';
+    
+    is case-Str('foo', ε => 'bar', -> $c, $rest { $c.perl ~ '~' ~ $rest.perl }), '"f"~"oo"', 'on non-ε';
+    is case-Str('foo', ε => { die 'should not be called' }, -> $c, $rest { $c.perl ~ '~' ~ $rest.perl }), '"f"~"oo"', 'on non-ε';
+    
+    is case-Str('x', ε => 'bar', -> $c, $rest { $c.perl ~ '~' ~ $rest.perl }), '"x"~""', 'on non-ε';
+    is case-Str('x', ε => { die 'should not be called' }, -> $c, $rest { $c.perl ~ '~' ~ $rest.perl }), '"x"~""', 'on non-ε';
+
+}, 'case-Str');
 
 subtest({ # Str-concat
     is_properLambdaFn($Str-concat, 'Str-concat');

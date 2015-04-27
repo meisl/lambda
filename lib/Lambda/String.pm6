@@ -27,3 +27,12 @@ constant $Str-concat is export = lambdaFn(
         $s1 ~ $s2
     }
 );
+
+our sub case-Str(Str:D $s, &otherwise, :ε($onEpsilon)!) is hidden_from_backtrace is export {
+    $s eq '' 
+        ?? (($onEpsilon ~~ Block) && ($onEpsilon.arity == 0) 
+            ?? $onEpsilon()    # simulate lazy evaluation by passing a thunk (needed only for ctors of arity 0)
+            !! $onEpsilon)
+        !! &otherwise($s.substr(0, 1), $s.substr(1))
+    ;
+}
