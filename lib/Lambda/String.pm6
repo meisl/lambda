@@ -36,3 +36,25 @@ our sub case-Str(Str:D $s, &otherwise, :ε($onEpsilon)!) is hidden_from_backtrac
         !! &otherwise($s.substr(0, 1), $s.substr(1))
     ;
 }
+
+
+constant $is-SPACE is export = lambdaFn(
+    'SPACE?', 'λs.Str-eq " "',
+    -> Str:D $s -->TBool{ convert2Lambda($s eq ' ') }
+);
+
+constant $is-LF is export = lambdaFn(
+    'LF?', 'λs.Str-eq "\n"',
+    -> Str:D $s -->TBool{ convert2Lambda($s eq "\n") }
+);
+
+constant $is-CR is export = lambdaFn(
+    'CR?', 'λs.Str-eq "\r"',
+    -> Str:D $s -->TBool{ convert2Lambda($s eq "\r") }
+);
+
+constant $is-TAB is export = lambdaFn(
+    'TAB?', 'λs.Str-eq "\t"',
+    -> Str:D $s -->TBool{ convert2Lambda($s eq "\t") }
+);
+

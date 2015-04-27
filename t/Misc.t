@@ -17,7 +17,98 @@ use Lambda::Conversion;
 # module(s) under test:
 use Lambda::String;
 
-plan 4;
+plan 8;
+
+
+subtest({ # is-TAB
+    is_properLambdaFn($is-TAB, 'TAB?');
+    
+    is $is-TAB(""),      $false, '"" is *not* TAB';
+    is $is-TAB(" "),     $false, '" " is *not* TAB';
+    is $is-TAB("  "),    $false, '"  " is *not* TAB';
+    
+    is $is-TAB("a"),     $false, '"a" is TAB';
+    is $is-TAB("aa"),    $false, '"aa" is *not* TAB';
+    
+    is $is-TAB("\n"),    $false, '"\n" is *not* TAB';
+    is $is-TAB("\n\n"),  $false, '"\n\n" is *not* TAB';
+    is $is-TAB("\n\r"),  $false, '"\n\r" is *not* TAB';
+    
+    is $is-TAB("\r"),    $false,  '"\r" is *not* TAB';
+    is $is-TAB("\r\n"),  $false, '"\r\n" is *not* TAB';
+    is $is-TAB("\r\r"),  $false, '"\r\r" is *not* TAB';
+    
+    is $is-TAB("\t"),    $true,  '"\t" is TAB';
+    is $is-TAB("\t\t"),  $false, '"\t\t" is *not* (a single) TAB';
+}, 'is-TAB');
+
+subtest({ # is-CR
+    is_properLambdaFn($is-CR, 'CR?');
+    
+    is $is-CR(""),      $false, '"" is *not* CR';
+    is $is-CR(" "),     $false, '" " is *not* CR';
+    is $is-CR("  "),    $false, '"  " is *not* CR';
+    
+    is $is-CR("a"),     $false, '"a" is CR';
+    is $is-CR("aa"),    $false, '"aa" is *not* CR';
+    
+    is $is-CR("\n"),    $false, '"\n" is *not* CR';
+    is $is-CR("\n\n"),  $false, '"\n\n" is *not* CR';
+    is $is-CR("\n\r"),  $false, '"\n\r" is *not* CR';
+    
+    is $is-CR("\r"),    $true,  '"\r" is CR';
+    is $is-CR("\r\n"),  $false, '"\r\n" is *not* CR';
+    is $is-CR("\r\r"),  $false, '"\r\r" is *not* (a single) CR';
+    
+    is $is-CR("\t"),    $false, '"\t" is *not* CR';
+    is $is-CR("\t\t"),  $false, '"\t\t" is *not* CR';
+}, 'is-CR');
+
+
+subtest({ # is-LF
+    is_properLambdaFn($is-LF, 'LF?');
+    
+    is $is-LF(""),      $false, '"" is *not* LF';
+    is $is-LF(" "),     $false, '" " is *not* LF';
+    is $is-LF("  "),    $false, '"  " is *not* LF';
+    
+    is $is-LF("a"),     $false, '"a" is *not* LF';
+    is $is-LF("aa"),    $false, '"aa" is *not* LF';
+    
+    is $is-LF("\n"),    $true,  '"\n" is LF';
+    is $is-LF("\n\n"),  $false, '"\n\n" is *not* (a single) LF';
+    is $is-LF("\n\r"),  $false, '"\n\r" is *not* (a single) LF';
+    
+    is $is-LF("\r"),    $false, '"\r" is *not* LF';
+    is $is-LF("\r\n"),  $false, '"\r\n" is *not* LF';
+    is $is-LF("\r\r"),  $false, '"\r\r" is *not* LF';
+    
+    is $is-LF("\t"),    $false, '"\t" is *not* LF';
+    is $is-LF("\t\t"),  $false, '"\t\t" is *not* LF';
+}, 'is-LF');
+
+
+subtest({ # is-SPACE
+    is_properLambdaFn($is-SPACE, 'SPACE?');
+    
+    is $is-SPACE(""),       $false, '"" is *not* SPACE';
+    is $is-SPACE(" "),      $true,  '" " is SPACE';
+    is $is-SPACE("  "),     $false, '"  " is *not* (a single) SPACE';
+    
+    is $is-SPACE("a"),      $false, '"a" is SPACE';
+    is $is-SPACE("aa"),     $false, '"aa" is *not* SPACE';
+    
+    is $is-SPACE("\n"),     $false, '"\n" is *not* SPACE';
+    is $is-SPACE("\n\n"),   $false, '"\n\n" is *not* SPACE';
+    is $is-SPACE("\n\r"),   $false, '"\n\r" is *not* SPACE';
+    
+    is $is-SPACE("\r"),     $false, '"\r" is *not* SPACE';
+    is $is-SPACE("\r\n"),   $false, '"\r\n" is *not* SPACE';
+    is $is-SPACE("\r\r"),   $false, '"\r\r" is *not* SPACE';
+    
+    is $is-SPACE("\t"),     $false, '"\t" is *not* SPACE';
+    is $is-SPACE("\t\t"),   $false, '"\t\t" is *not* SPACE';
+}, 'is-SPACE');
 
 
 subtest({ # case-Str
