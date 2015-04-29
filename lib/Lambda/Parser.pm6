@@ -9,19 +9,15 @@ use Lambda::MaybeADT;
 use Lambda::ListADT;
 
 module Lambda::Parser;
-# Parser a: Str -> (List (Pair a Str))
+# Parser a: Str -> (Maybe (Pair a Str))
 
 
-# basic parsers ---------------------------------------------------------------
+# basic parsers nxt_P and fail_P & generator return_P -------------------------
 
+# return_P: a -> Parser a
 constant $return_P is export = lambdaFn(
     'return_P', 'λx.λs.Some (Pair x s)',
     -> $x, Str:D $s { $Some($Pair($x, $s)) }
-);
-
-constant $fail_P is export = lambdaFn(
-    'fail_P', 'λs.None',
-    -> Str:D $s { $None }
 );
 
 # nxt_P: Parser Str
@@ -33,6 +29,12 @@ constant $nxt_P is export = lambdaFn(
             $return_P
         )
     }
+);
+
+# fail_P: Parser a
+constant $fail_P is export = lambdaFn(
+    'fail_P', 'λs.None',
+    -> Str:D $s { $None }
 );
 
 
@@ -159,9 +161,9 @@ constant $many1_P is export = lambdaFn(
 
 # character class parser (generator)s anyOf_P and noneOf_P --------------------
 
-# anyOf_P: Str -> Parser Str
+# anyOf_P: Str -> Parser Chr
 constant $anyOf_P is export = lambdaFn(
-    'anyOf_P', 'λs.NYI',
+    'anyOf_P', 'λs.sat_P (foldl1 (λleft.λright.λc.if (left c) #true (right c)) (map Str-eq? (fst (Some->value (many1_P nxt_P s)))))',
     -> Str:D $s {
         case-Maybe($many1_P($nxt_P)($s),
             None => { die "empty character class" },
@@ -184,7 +186,31 @@ constant $anyOf_P is export = lambdaFn(
     }
 );
 
-# TODO: noneOf_P
+
+# noneOf_P: Str -> Parser Chr
+constant $noneOf_P is export = lambdaFn(
+    'noneOf_P', 'λs.sat_P (foldl1 (λleft.λright.λc.if (left c) (right c) #false) (map Str-ne? (fst (Some->value (many1_P nxt_P s)))))',
+    -> Str:D $s {
+        case-Maybe($many1_P($nxt_P)($s),
+            None => { die "empty character class" },
+            Some => -> $out {
+                $out(-> $cs, Mu {   # TODO: pattern-match a Pair
+                    $sat_P($foldl1(
+                        -> $left, $right { 
+                            -> $c {
+                                _if_($left($c), # short-circuit AND
+                                    { $right($c) },
+                                    $false
+                                )
+                            } 
+                        }, 
+                        $map($Str-ne, $cs)
+                    ))
+                })
+            }
+        )
+    }
+);
 
 
 # linebreak, whitespace, etc --------------------------------------------------
