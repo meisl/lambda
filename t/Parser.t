@@ -16,7 +16,7 @@ use Lambda::Conversion;
 # module(s) under test:
 use Lambda::Parser;
 
-plan 12;
+plan 13;
 
 
 sub is_Some($maybe, $expectedValue, Str $msg?) {
@@ -38,7 +38,22 @@ sub is_None($maybe, Str $msg?) {
 
 # -----------------------------------------------------------------------------
 
+subtest({ # anyOf_P
+    is_properLambdaFn($anyOf_P, 'anyOf_P');
 
+    my $p;
+
+    dies_ok { $anyOf_P("") }, '(anyOf_P "") dies';
+
+    $p = $anyOf_P("abc");
+    is_None $p(""),                     '(anyOf_P "abc" "")  ~> None';
+    is_None $p("x"),                    '(anyOf_P "abc" "x")  ~> None';
+    is_None $p("xa"),                   '(anyOf_P "abc" "xa")  ~> None';
+
+    is_Some $p("abc"), $Pair('a', 'bc'), '(anyOf_P "abc" "abc")';
+    is_Some $p("bca"), $Pair('b', 'ca'), '(anyOf_P "abc" "bca")';
+    is_Some $p("cab"), $Pair('c', 'ab'), '(anyOf_P "abc" "cba")';
+}, 'anyOf_P');
 
 
 subtest({ # linebreak_P

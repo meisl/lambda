@@ -70,8 +70,7 @@ constant $alt_P is export = lambdaFn(
     }
 );
 
-
-# simple parsers sat_P, char_P, string_P --------------------------------------
+# simple parser (generator)s sat_P, char_P, string_P --------------------------
 
 # sat_P: (Str -> Bool) -> Parser Str
 constant $sat_P is export = lambdaFn(
@@ -156,6 +155,37 @@ constant $many1_P is export = lambdaFn(
         })})
     }
 );
+
+
+# character class parser (generator)s anyOf_P and noneOf_P --------------------
+
+# anyOf_P: Str -> Parser Str
+constant $anyOf_P is export = lambdaFn(
+    'anyOf_P', 'λs.NYI',
+    -> Str:D $s {
+        case-Maybe($many1_P($nxt_P)($s),
+            None => { die "empty character class" },
+            Some => -> $out {
+                $out(-> $cs, Mu {   # TODO: pattern-match a Pair
+                    $sat_P($foldl1(
+                        -> $left, $right { 
+                            -> $c {
+                                _if_($left($c), # short-circuit OR
+                                    $true,
+                                    { $right($c) }
+                                )
+                            } 
+                        }, 
+                        $map($Str-eq, $cs)
+                    ))
+                })
+            }
+        )
+    }
+);
+
+# TODO: noneOf_P
+
 
 # linebreak, whitespace, etc --------------------------------------------------
 
