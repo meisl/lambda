@@ -16,36 +16,55 @@ use Lambda::Conversion;
 # module(s) under test:
 use Lambda::Parser;
 
-plan 10;
+plan 12;
 
 
 sub is_Some($maybe, $expectedValue, Str $msg?) {
-    subtest {
-        does_ok($maybe, TMaybe)
-            and
-        case-Maybe($maybe,
-            None => { ok(False, $msg // "expected a Some but got None") },
-            Some => -> $v {
-                my $expected = $Some(convert2Lambda($expectedValue));
-                is "(Some $v)", $expected, $msg;  # TODO: improve msg
-            }
-        );
-    };
+    case-Maybe($maybe,
+        None => { ok(False, $msg // "expected a Some but got None") },
+        Some => -> $v {
+            my $expected = $Some(convert2Lambda($expectedValue));
+            is "(Some $v)", $expected, $msg;  # TODO: improve msg
+        }
+    )
 }
 
 sub is_None($maybe, Str $msg?) {
-    subtest {
-        does_ok($maybe, TMaybe)
-            and
-        case-Maybe($maybe,
-            None => { ok(True, $msg) },
-            Some => -> $v { ok(False, $msg // "expected a None but got (Some " ~ $v ~ ")") }
-        );
-    };
+    case-Maybe($maybe,
+        None => { ok(True, $msg) },
+        Some => -> $v { ok(False, $msg // "expected a None but got (Some " ~ $v ~ ")") }
+    )
 }
 
+# -----------------------------------------------------------------------------
 
 
+
+
+subtest({ # linebreak_P
+    is_properLambdaFn($linebreak_P, 'linebreak_P');
+
+    is_None $linebreak_P(""),                                   '(linebreak_P "")';
+    is_None $linebreak_P("foo"),                                '(linebreak_P "foo")';
+
+    is_Some $linebreak_P("\n"),         $Pair("\n", ""),        '(linebreak_P "\n")';
+    is_Some $linebreak_P("\nfoo"),      $Pair("\n", "foo"),     '(linebreak_P "\nfoo")';
+
+    is_Some $linebreak_P("\r"),         $Pair("\r", ""),        '(linebreak_P "\r")';
+    is_Some $linebreak_P("\rfoo"),      $Pair("\r", "foo"),     '(linebreak_P "\rfoo")';
+
+    is_Some $linebreak_P("\n\n"),       $Pair("\n", "\n"),      '(linebreak_P "\n\n")';
+    is_Some $linebreak_P("\n\nfoo"),    $Pair("\n", "\nfoo"),   '(linebreak_P "\n\nfoo")';
+
+    is_Some $linebreak_P("\n\r"),       $Pair("\n", "\r"),      '(linebreak_P "\n\r")';
+    is_Some $linebreak_P("\n\rfoo"),    $Pair("\n", "\rfoo"),   '(linebreak_P "\n\rfoo")';
+
+    is_Some $linebreak_P("\r\n"),       $Pair("\r\n", ""),      '(linebreak_P "\r\n")';
+    is_Some $linebreak_P("\r\nfoo"),    $Pair("\r\n", "foo"),   '(linebreak_P "\r\nfoo")';
+}, 'linebreak_P');
+
+
+# -----------------------------------------------------------------------------
 
 subtest({ # return_P
     is_properLambdaFn($return_P, 'return_P');
@@ -135,6 +154,20 @@ subtest({ # str_P
 
 
 
+
+subtest({ # oneOrZero_P
+    is_properLambdaFn($oneOrZero_P, 'oneOrZero_P');
+    
+    my $oneOrZero-as = $oneOrZero_P($chr_P('a'));
+
+    is_Some($oneOrZero-as(''),   $Pair([],      ''),    '(oneOrZero_P (chr_P "a") "")');
+    is_Some($oneOrZero-as('a'),  $Pair(['a'],   ''),    '(oneOrZero_P (chr_P "a") "a")');
+    is_Some($oneOrZero-as('aa'), $Pair(['a'],   'a'),   '(oneOrZero_P (chr_P "a") "aa")');
+
+    is_Some($oneOrZero-as('b'),   $Pair([],     'b'),   '(oneOrZero_P (chr_P "a") "b")');
+    is_Some($oneOrZero-as('ab'),  $Pair(['a'],  'b'),   '(oneOrZero_P (chr_P "a") "ab")');
+    is_Some($oneOrZero-as('aab'), $Pair(['a'],  'ab'),  '(oneOrZero_P (chr_P "a") "aab")');
+}, 'oneOrZero_P');
 
 subtest({ # many_P
     is_properLambdaFn($many_P, 'many_P');
