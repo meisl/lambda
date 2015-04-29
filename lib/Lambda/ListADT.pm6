@@ -68,7 +68,7 @@ constant $is-cons is export = lambdaFn(
 
 # projections
 
-my constant $cXr-nil-error = -> Str $fnName { die "cannot get $fnName of nil" }
+my constant $cXr-nil-error = -> Str $fnName { die "cannot get $fnName of nil" };
 
 constant $car is export = lambdaFn(
     'car', 'λxs.if-nil xs (λ_.error "cannot get car of nil") π2->1',
@@ -147,6 +147,16 @@ constant $foldl is export = $Y(-> &self { lambdaFn(
         )
     }
 )});
+
+constant $foldl1 is export = lambdaFn(
+    'foldl1', 'λf.λxs.NYI',
+    -> &f, TList $xs {
+        case-List($xs,
+            nil => { die "cannot foldl1 nil" },
+            cons => -> $hd, $tl { $foldl(&f, $hd, $tl) }
+        )
+    }
+);
 
 constant $reverse is export = lambdaFn(
     'reverse', '(foldl (C cons) nil)',

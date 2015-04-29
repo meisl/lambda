@@ -11,7 +11,7 @@ use Lambda::MaybeADT;
 # module under test:
 use Lambda::ListADT;
 
-plan 168;
+plan 169;
 
 
 subtest({ # findFP-inMaybe_dbg ----------------------------------------------------------
@@ -256,6 +256,30 @@ subtest({ # findFP-inMaybe_dbg -------------------------------------------------
         }, "foldl on non-empty list") or diag 'seen: [ ' ~  @seen.map(*.perl).join(', ') ~ ' ]' and die;
     }
 }
+
+subtest({ # foldl1
+    is_properLambdaFn $foldl1, 'foldl1';
+
+    my $result;
+    my @seen = @();
+    my &f = -> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 };
+    
+    dies_ok { $foldl1(&f, $nil) }, '(foldl1 ... nil) dies';
+
+    @seen = @();
+    $result = $foldl1(&f, $cons(23, $nil));
+    is @seen.elems, 0, "calls f one time less than nr of elements";
+    is $result, 23, 'returns elem for a singleton list';
+
+    @seen = @();
+    $result = $foldl1(&f, $cons(42, $cons(23, $cons('A', $nil))));
+    is @seen.elems, 2, "calls f one time less than nr of elements";
+    is $result, 4, 'returns what f returned last';
+    is @seen[0][0], 42,  "passes 1st elem to f as 1st arg in first call";
+    is @seen[0][1], 23,  "passes 2nd elem to f as 2nd arg on first call";
+    is @seen[1][0], 2,   "passes last result from f to f as 1st arg in subsequent calls";
+    is @seen[1][1], 'A', "passes current elem to f as 2nd arg";
+}, 'foldl1');
 
 { # foldr
     is_properLambdaFn $foldr,      'foldr'      or die;
