@@ -8,6 +8,7 @@ use Lambda::PairADT;
 use Lambda::MaybeADT;
 use Lambda::ListADT;
 
+
 module Lambda::Parser;
 # Parser a: Str -> (Maybe (Pair a Str))
 
@@ -20,21 +21,21 @@ constant $return_P is export = lambdaFn(
     -> $x, Str:D $s { $Some($Pair($x, $s)) }
 );
 
+# fail_P: Parser a
+constant $fail_P is export = lambdaFn(
+    'fail_P', 'λs.None',
+    -> Str:D $s { $None }
+);
+
 # nxt_P: Parser Str
 constant $nxt_P is export = lambdaFn(
     'nxt_P', 'λs.case-Str s (ε (fail_P s)) return_P',
     -> Str:D $s {
         case-Str($s,
-            ε => $None, # = fail_P($s)
+            ε =>  { $fail_P($s) },
             $return_P
         )
     }
-);
-
-# fail_P: Parser a
-constant $fail_P is export = lambdaFn(
-    'fail_P', 'λs.None',
-    -> Str:D $s { $None }
 );
 
 
@@ -47,7 +48,7 @@ constant $seq_P is export = lambdaFn(   # this is bind for the Parser Monad
         lambdaFn(Str, '',
             -> Str:D $s {
                 case-Maybe($p($s),
-                    None => $None,  # = $fail_P($s)
+                    None => { $fail_P($s) },
                     #Some => -> TPair $result { $result($f) }    # = $f($fst($result), $snd($result)), requires $f to be curried
                     Some => -> TPair $result { $result(-> $a, $b { $f($a)($b) }) }    # = $f($fst($result), $snd($result))
                 )
@@ -126,37 +127,118 @@ constant $oneOrZero_P is export = lambdaFn(
     })}
 );
 
-# many_P: Parser a -> Parser [a]
-constant $many_P is export = $Y(-> &self { lambdaFn(
-    'many_P', 'Y λself.λp.λs.case (p s) (None (return_P nil s)) (Some <v, rest> ((self p >>= λvs.return_P v vs) rest))',
-    -> $p {
-        lambdaFn(Str, '',
-            -> Str:D $s {
-                case-Maybe($p($s),
-                    None => { $return_P($nil, $s) },
-                    Some => -> TPair $out {
-                        $out(-> $v, Str:D $rest {   # TODO: pattern-match a Pair
-                            $seq_P(&self($p),   -> TList $vs {
-                                $return_P($cons($v, $vs))
-                            }).($rest)
-                        })
-                    }
-                )
-            }
-        )
+# many_P-foldl: (b -> a -> b) -> b -> Parser a -> Parser b
+constant $many_P-foldl is export = $Y(-> &self { lambdaFn(
+    'many_P-foldl', 'Y λself.λf.λstart.λp.λs.NYI',
+    -> $f, $start {
+        -> $p {
+            lambdaFn(Str, 'λs.NYI',
+                -> Str:D $s {
+                    case-Maybe($p($s),
+                        None => { $return_P($start, $s) },
+                        Some => -> TPair $out { $out(-> $v, Str:D $rest {   # TODO: pattern-match a Pair
+                            &self($f, $f($start, $v), $p, $rest)
+                        })}
+                    )
+                }
+            )
+        }
     }
 )});
 
-# many1_P: Parser a -> Parser [a]
-constant $many1_P is export = lambdaFn(
-    'many1_P', 'λp.p >>= λv.(many_P p) >>= λvs.return_P (cons v vs)',
-    -> $p {
-        $seq_P($p,          -> $v {
-        $seq_P($many_P($p), -> $vs {
-            $return_P($cons($v, $vs))
-        })})
+# many_P-foldr: (a -> b -> b) -> b -> Parser a -> Parser b
+constant $many_P-foldr is export = $Y(-> &self { lambdaFn(
+    'many_P-foldr', 'Y λself.λf.λstart.λp.λs.NYI',
+    -> $f, $start {
+        -> $p {
+            lambdaFn(Str, 'λs.NYI',
+                -> Str:D $s {
+                    case-Maybe($p($s),
+                        None => { $return_P($start, $s) },
+                        
+                        #Some => -> TPair $out { $out(-> $v, Str:D $rest {   # TODO: pattern-match a Pair
+                        #    my $rightOut = $Some2value(&self($f, $start, $p, $rest));
+                        #    $rightOut(-> $rightV, $rightRest {
+                        #        $return_P($f($v, $rightV), $rightRest)   # TODO: pattern-match a Pair
+                        #    });
+                        #})}
+
+                        Some => -> TPair $out { $out(-> $v, Str:D $rest {   # TODO: pattern-match a Pair
+                            $seq_P(&self($f, $start, $p), -> $acc {
+                                                             $return_P($f($v, $acc))
+                            }).($rest)
+                        })}
+                    )
+                }
+            )
+        }
+    }
+)});
+
+
+# many1_P-foldl: (b -> a -> b) -> b -> Parser a -> Parser b
+constant $many1_P-foldl is export = lambdaFn(
+    'many1_P-foldl', 'λf.λstart.λp.p >>= λv.(many_P-foldl f (f start v) p)',
+    -> $f, $start {
+        -> $p {
+            $seq_P($p, -> $v {
+                          $many_P-foldl($f, $f($start, $v), $p)
+            })
+        }
     }
 );
+
+# many1_P-foldr: (a -> b -> b) -> b -> Parser a -> Parser b
+constant $many1_P-foldr is export = lambdaFn(
+    'many1_P-foldr', 'λf.λstart.λp.p >>= λv.(many_P-foldr f start p) >>= λacc.return_P (f v acc)',
+    -> $f, $start {
+        -> $p {
+            $seq_P($p,                            -> $v {
+            $seq_P($many_P-foldr($f, $start, $p), -> $acc {
+                                                     $return_P($f($v, $acc))
+            })})
+        }
+    }
+);
+
+
+# many1_P-foldl1: (a -> a -> a) -> Parser a -> Parser a
+constant $many1_P-foldl1 is export = lambdaFn(
+    'many1_P-foldl1', 'λf.λp.p >>= λv.many_P-foldl f v p',
+    -> $f {
+        -> $p {
+            $seq_P($p, -> $v {
+                          $many_P-foldl($f, $v, $p)
+            })
+        }
+    }
+);
+
+# many1_P-foldr1: (a -> a -> a) -> a -> Parser a -> Parser a
+constant $many1_P-foldr1 is export = lambdaFn(
+    'many1_P-foldr1', 'λf.λp.NYI',
+    -> $f {
+        -> $p { # TODO: think about a more efficient impl, which avoid the intermediary list
+            $seq_P($many1_P-foldr($cons, $nil, $p), -> TList $vs {
+                                                       $return_P($foldr1($f, $vs))
+            })
+        }
+    }
+);
+
+
+
+constant $many_P is export = lambdaFn(
+    'many_P', 'many_P-foldr cons nil',
+    $many_P-foldr($cons, $nil)
+);
+
+constant $many1_P is export = lambdaFn(
+    'many1_P', 'many1_P-foldr cons nil',
+    $many1_P-foldr($cons, $nil)
+);
+
+
 
 
 # character class parser (generator)s anyOf_P and noneOf_P --------------------

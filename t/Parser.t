@@ -16,14 +16,17 @@ use Lambda::Conversion;
 # module(s) under test:
 use Lambda::Parser;
 
-plan 14;
+plan 20;
+
+
+# test helpers ----------------------------------------------------------------
 
 
 sub is_Some($maybe, $expectedValue, Str $msg?) {
+    my $expected = $Some(convert2Lambda($expectedValue));
     case-Maybe($maybe,
-        None => { ok(False, $msg // "expected a Some but got None") },
+        None => { ok(False, $msg // "") or diag("expected $expected but got None") and False },
         Some => -> $v {
-            my $expected = $Some(convert2Lambda($expectedValue));
             is "(Some $v)", $expected, $msg;  # TODO: improve msg
         }
     )
@@ -32,11 +35,88 @@ sub is_Some($maybe, $expectedValue, Str $msg?) {
 sub is_None($maybe, Str $msg?) {
     case-Maybe($maybe,
         None => { ok(True, $msg) },
-        Some => -> $v { ok(False, $msg // "expected a None but got (Some " ~ $v ~ ")") }
+        Some => -> $v { ok(False, $msg // "") or diag("expected a None but got (Some " ~ $v ~ ")") and False }
     )
 }
 
+
 # -----------------------------------------------------------------------------
+
+
+# many_P-foldl & many_P-foldr -------------------------------------------------
+
+subtest({ # many_P-foldl
+    is_properLambdaFn($many_P-foldl, 'many_P-foldl');
+    
+    my $parse = $many_P-foldl(-> $a, $b { "($a $b)" }, '', $nxt_P);
+    
+    is_Some($parse(''),     $Pair('', ''),              '((many_P-foldl (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "")');
+    is_Some($parse('a'),    $Pair('( a)', ''),          '((many_P-foldl (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "a")');
+    is_Some($parse('ab'),   $Pair('(( a) b)', ''),      '((many_P-foldl (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "ab")');
+    is_Some($parse('abc'),  $Pair('((( a) b) c)', ''),  '((many_P-foldl (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "abc")');
+}, 'many_P-foldl');
+
+subtest({ # many_P-foldr
+    is_properLambdaFn($many_P-foldr, 'many_P-foldr');
+    
+    my $parse = $many_P-foldr(-> $a, $b { "($a $b)" }, '', $nxt_P);
+    
+    is_Some($parse(''),     $Pair('', ''),              '((many_P-foldr (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "")');
+    is_Some($parse('a'),    $Pair('(a )', ''),          '((many_P-foldr (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "a")');
+    is_Some($parse('ab'),   $Pair('(a (b ))', ''),      '((many_P-foldr (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "ab")');
+    is_Some($parse('abc'),  $Pair('(a (b (c )))', ''),  '((many_P-foldr (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "abc")');
+}, 'many_P-foldr');
+
+
+# many1_P-foldl & many1_P-foldr -----------------------------------------------
+
+subtest({ # many1_P-foldl
+    is_properLambdaFn($many1_P-foldl, 'many1_P-foldl');
+    
+    my $parse = $many1_P-foldl(-> $a, $b { "($a $b)" }, '', $nxt_P);
+    
+    is_None($parse(''),                                 '((many1_P-foldl (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "")  ~>  None');
+    is_Some($parse('a'),    $Pair('( a)', ''),          '((many1_P-foldl (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "a")');
+    is_Some($parse('ab'),   $Pair('(( a) b)', ''),      '((many1_P-foldl (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "ab")');
+    is_Some($parse('abc'),  $Pair('((( a) b) c)', ''),  '((many1_P-foldl (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "abc")');
+}, 'many1_P-foldl');
+
+subtest({ # many1_P-foldr
+    is_properLambdaFn($many1_P-foldr, 'many1_P-foldr');
+    
+    my $parse = $many1_P-foldr(-> $a, $b { "($a $b)" }, '', $nxt_P);
+    
+    is_None($parse(''),                                 '((many1_P-foldr (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "")  ~>  None');
+    is_Some($parse('a'),    $Pair('(a )', ''),          '((many1_P-foldr (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "a")');
+    is_Some($parse('ab'),   $Pair('(a (b ))', ''),      '((many1_P-foldr (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "ab")');
+    is_Some($parse('abc'),  $Pair('(a (b (c )))', ''),  '((many1_P-foldr (λa.λb."(" ~ a ~ " " ~ b ~ ")") "" nxt_P) "abc")');
+}, 'many1_P-foldr');
+
+
+# many1_P-foldl1 & many1_P-foldr1 ---------------------------------------------
+
+subtest({ # many1_P-foldl1
+    is_properLambdaFn($many1_P-foldl1, 'many1_P-foldl1');
+    
+    my $parse = $many1_P-foldl1(-> $a, $b { "($a $b)" }, $nxt_P);
+    
+    is_None($parse(''),                             '((many1_P-foldl1 (λa.λb."(" ~ a ~ " " ~ b ~ ")") nxt_P) "")');
+    is_Some($parse('a'),    $Pair('a', ''),         '((many1_P-foldl1 (λa.λb."(" ~ a ~ " " ~ b ~ ")") nxt_P) "a")');
+    is_Some($parse('ab'),   $Pair('(a b)', ''),     '((many1_P-foldl1 (λa.λb."(" ~ a ~ " " ~ b ~ ")") nxt_P) "ab")');
+    is_Some($parse('abc'),  $Pair('((a b) c)', ''), '((many1_P-foldl1 (λa.λb."(" ~ a ~ " " ~ b ~ ")") nxt_P) "abc")');
+}, 'many1_P-foldl1');
+
+subtest({ # many1_P-foldr1
+    is_properLambdaFn($many1_P-foldr1, 'many1_P-foldr1');
+    
+    my $parse = $many1_P-foldr1(-> $a, $b { "($a $b)" }, $nxt_P);
+    
+    is_None($parse(''),                             '((many1_P-foldr1 (λa.λb."(" ~ a ~ " " ~ b ~ ")") nxt_P) "")');
+    is_Some($parse('a'),    $Pair('a', ''),         '((many1_P-foldr1 (λa.λb."(" ~ a ~ " " ~ b ~ ")") nxt_P) "a")');
+    is_Some($parse('ab'),   $Pair('(a b)', ''),     '((many1_P-foldr1 (λa.λb."(" ~ a ~ " " ~ b ~ ")") nxt_P) "ab")');
+    is_Some($parse('abc'),  $Pair('(a (b c))', ''), '((many1_P-foldr1 (λa.λb."(" ~ a ~ " " ~ b ~ ")") nxt_P) "abc")');
+}, 'many1_P-foldr1');
+
 
 subtest({ # noneOf_P
     is_properLambdaFn($noneOf_P, 'noneOf_P');
@@ -213,6 +293,14 @@ subtest({ # many_P
     is_Some($many-as('b'),   $Pair([],          'b'),   '(many_P (chr_P "a") "b")');
     is_Some($many-as('ab'),  $Pair(['a'],       'b'),   '(many_P (chr_P "a") "ab")');
     is_Some($many-as('aab'), $Pair(['a', 'a'],  'b'),   '(many_P (chr_P "a") "aab")');
+
+
+    my $many-any = $many_P($nxt_P);
+
+    is_Some($many-any(''),      $Pair([],               ''),    '(many_P nxt_P "")');
+    is_Some($many-any('a'),     $Pair(['a'],            ''),    '(many_P nxt_P "a")');
+    is_Some($many-any('ab'),    $Pair(['a', 'b'],       ''),    '(many_P nxt_P "ab")');
+    is_Some($many-any('abc'),   $Pair(['a', 'b', 'c'],  ''),    '(many_P nxt_P "abc")');
 }, 'many_P');
 
 subtest({ # many1_P
@@ -227,5 +315,13 @@ subtest({ # many1_P
     is_None($many1-as('b'),                             '(many1_P (chr_P "a") "b")  ~>  None');
     is_Some($many1-as('ab'),  $Pair(['a'],        'b'), '(many1_P (chr_P "a") "ab")');
     is_Some($many1-as('aab'), $Pair(['a', 'a'],   'b'), '(many1_P (chr_P "a") "aab")');
+
+
+    my $many1-any = $many1_P($nxt_P);
+
+    is_None($many1-any(''),                                      '(many1_P nxt_P "")  ~>  None');
+    is_Some($many1-any('a'),     $Pair(['a'],            ''),    '(many1_P nxt_P "a")');
+    is_Some($many1-any('ab'),    $Pair(['a', 'b'],       ''),    '(many1_P nxt_P "ab")');
+    is_Some($many1-any('abc'),   $Pair(['a', 'b', 'c'],  ''),    '(many1_P nxt_P "abc")');
 }, 'many1_P');
 
