@@ -205,6 +205,22 @@ constant $foldr-iter is export = lambdaFn(
 );
 constant $foldr is export = $foldr-rec but name<foldr>;
 
+constant $foldr1 is export = $Y(-> &self { lambdaFn(
+    'foldr1', 'λself.λf.λxs.NYI',
+    -> &f, TList:D $xs {
+        case-List($xs,
+            nil  => { die "cannot foldr1 nil" },
+            cons => -> $hd, TList:D $tl {
+                case-List($tl,
+                    nil  => $hd,
+                    cons => -> Mu, Mu { &f($hd, &self(&f, $tl)) }
+                )
+            }
+        )
+    }
+)});
+
+
 constant $map-foldr is export = lambdaFn(
     'map-foldr', 'λf.foldr (B cons f) nil',
     -> &f, TList:D $xs {

@@ -11,7 +11,7 @@ use Lambda::MaybeADT;
 # module under test:
 use Lambda::ListADT;
 
-plan 169;
+plan 170;
 
 
 subtest({ # findFP-inMaybe_dbg ----------------------------------------------------------
@@ -278,7 +278,7 @@ subtest({ # foldl1
     is @seen[0][0], 42,  "passes 1st elem to f as 1st arg in first call";
     is @seen[0][1], 23,  "passes 2nd elem to f as 2nd arg on first call";
     is @seen[1][0], 2,   "passes last result from f to f as 1st arg in subsequent calls";
-    is @seen[1][1], 'A', "passes current elem to f as 2nd arg";
+    is @seen[1][1], 'A', "passes current elem to f as 2nd arg in subsequent calls";
 }, 'foldl1');
 
 { # foldr
@@ -316,6 +316,31 @@ subtest({ # foldl1
         }, "foldr implemented as {$foldr.symbol}: {$foldr.lambda}";
     }
 }
+
+subtest({ # foldr1
+    is_properLambdaFn $foldr1, 'foldr1';
+
+    my $result;
+    my @seen = @();
+    my &f = -> $a, $b { @seen.push([$a, $b].item); @seen.elems * 2 };
+    
+    dies_ok { $foldr1(&f, $nil) }, '(foldr1 ... nil) dies';
+
+    @seen = @();
+    $result = $foldr1(&f, $cons(23, $nil));
+    is @seen.elems, 0, "calls f one time less than nr of elements";
+    is $result, 23, 'returns elem for a singleton list';
+
+    @seen = @();
+    $result = $foldr1(&f, $cons(42, $cons(23, $cons('A', $nil))));
+    is @seen.elems, 2, "calls f one time less than nr of elements";
+    is $result, 4, 'returns what f returned last';
+    is @seen[0][0], 23,  "passes last but 1 elem to f as 1st arg in first call";
+    is @seen[0][1], 'A',  "passes last elem to f as 2nd arg on first call";
+    is @seen[1][0], 42, "passes current elem to f as 1st arg in subsequent calls";
+    is @seen[1][1], 2,   "passes last result from f to f as 2nd arg in subsequent calls";
+}, 'foldr1');
+
 
 { # reverse
     is_properLambdaFn $reverse, 'reverse';
