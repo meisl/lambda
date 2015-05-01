@@ -125,19 +125,13 @@ constant $oneOrZero_P is export = lambdaFn(
 
 # many_P-foldl: (b -> a -> b) -> b -> Parser a -> Parser b
 constant $many_P-foldl is export = $Y(-> &self { lambdaFn(
-    'many_P-foldl', 'Y λself.λf.λstart.λp.λs.NYI',
+    'many_P-foldl', 'Y λself.λf.λstart.λp.(p >>= λv.self f (f start v) p) +++ (return_P start)',
     -> $f, $start {
         -> $p {
-            lambdaFn(Str, 'λs.NYI',
-                -> Str:D $s {
-                    case-Maybe($p($s),
-                        None => { $return_P($start, $s) },
-                        Some => -> TPair $out { $out(-> $v, Str:D $rest {   # TODO: pattern-match a Pair
-                            &self($f, $f($start, $v), $p, $rest)
-                        })}
-                    )
-                }
-            )
+            $alt_P(
+                $seq_P($p, -> $v { &self($f, $f($start, $v), $p) }),
+                $return_P($start)
+            );
         }
     }
 )});
