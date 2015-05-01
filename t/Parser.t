@@ -43,6 +43,27 @@ sub is_None($maybe, Str $msg?) {
 # -----------------------------------------------------------------------------
 
 
+subtest({ # str_P
+    is_properLambdaFn($str_P, 'str_P');
+    
+    my $s = 'some string';
+    
+    diag '(str_P ""):   ' ~ $str_P('');
+    diag '(str_P "f"):  ' ~ $str_P('f');
+    diag '(str_P "fo"): ' ~ $str_P('fo');
+
+    is_None($str_P('foo')($s),                                      "(str_P 'foo' {$s.perl})  ~> None");
+    is_Some($str_P('')($s),             $Pair('', 'some string'),   "(str_P '' {$s.perl})");
+    is_Some($str_P('s')($s),            $Pair('s', 'ome string'),   "(str_P 's' {$s.perl})");
+    is_Some($str_P('so')($s),           $Pair('so', 'me string'),   "(str_P 'so' {$s.perl})");
+    is_Some($str_P('som')($s),          $Pair('som', 'e string'),   "(str_P 'som' {$s.perl})");
+    is_Some($str_P('some')($s),         $Pair('some', ' string'),   "(str_P 'some' {$s.perl})");
+    is_Some($str_P('some ')($s),        $Pair('some ', 'string'),   "(str_P 'some ' {$s.perl})");
+    
+    is_None($str_P('some stringXXX')($s),                           "(str_P 'some stringXXX' {$s.perl})  ~>  None");
+}, 'string_P');
+
+
 subtest({ # oneOrZero_P
     is_properLambdaFn($oneOrZero_P, 'oneOrZero_P');
     
@@ -261,23 +282,6 @@ subtest({ # chr_P
     is_Some($chr_P('a')($as), $Pair('a', 'aaa'),   '(chr_P "a" {$as.perl})');
     is_Some($chr_P('a')('a'), $Pair('a', ''),      '(chr_P "a" "a")');
 }, 'char_P');
-
-
-subtest({ # str_P
-    is_properLambdaFn($str_P, 'str_P');
-    
-    my $s = 'some string';
-    
-    is_None($str_P('foo')($s),                                      "(str_P 'foo' {$s.perl})  ~> None");
-    is_Some($str_P('')($s),             $Pair('', 'some string'),   "(str_P '' {$s.perl})");
-    is_Some($str_P('s')($s),            $Pair('s', 'ome string'),   "(str_P 's' {$s.perl})");
-    is_Some($str_P('so')($s),           $Pair('so', 'me string'),   "(str_P 'so' {$s.perl})");
-    is_Some($str_P('som')($s),          $Pair('som', 'e string'),   "(str_P 'som' {$s.perl})");
-    is_Some($str_P('some')($s),         $Pair('some', ' string'),   "(str_P 'some' {$s.perl})");
-    is_Some($str_P('some ')($s),        $Pair('some ', 'string'),   "(str_P 'some ' {$s.perl})");
-    
-    is_None($str_P('some stringXXX')($s),                           "(str_P 'some stringXXX' {$s.perl})  ~>  None");
-}, 'string_P');
 
 
 

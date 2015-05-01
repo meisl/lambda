@@ -18,7 +18,11 @@ module Lambda::Parser;
 # return_P: a -> Parser a
 constant $return_P is export = lambdaFn(
     'return_P', 'λx.λs.Some (Pair x s)',
-    -> $x, Str:D $s { $Some($Pair($x, $s)) }
+    -> $x {
+        lambdaFn(Str, { my $xStr = $x.?name // $x.?lambda // $x.perl; "(return_P $xStr)" },
+            -> Str:D $s { $Some($Pair($x, $s)) }
+        )
+    }
 );
 
 # fail_P: Parser a
@@ -45,7 +49,7 @@ constant $nxt_P is export = lambdaFn(
 constant $seq_P is export = lambdaFn(   # this is bind for the Parser Monad
     'seq_P', 'λp.λf.λs.case (p s) (None (fail_P s)) (Some <x, out> (f x out))',
     -> $p, $f {
-        lambdaFn(Str, '',
+        lambdaFn(Str, { my $fStr = $f.?name // $f.?lambda // $f.perl; "$p >>= $fStr" },
             -> Str:D $s {
                 case-Maybe($p($s),
                     None => { $fail_P($s) },
@@ -80,10 +84,10 @@ constant $sat_P is export = lambdaFn(
     'sat_P', 'λpred.λs.nxt_P >>= λc.if (pred c) (return_P c) fail_P ',
     -> $pred {
         $seq_P($nxt_P, -> Str:D $c {
-            _if_($pred($c),
-                { $return_P($c) },
-                $fail_P
-            )
+                                _if_($pred($c),
+                                    { $return_P($c) },
+                                    $fail_P
+                                )
         })
     }
 );
@@ -92,22 +96,6 @@ constant $chr_P is export = lambdaFn(
     'chr_P', 'λc.sat_P (Str-eq? c)',    # = `sat_P ° Str-eq?`
     -> Str:D $c { $sat_P($Str-eq($c)) }
 );
-
-constant $str_P is export = $Y(-> &self { lambdaFn(
-    'str_P', 'Y λself.λs.(λreturn-s.case s (ε return-s) (λc.λcs.(self c) >>= λ_.(self cs) >>= λ_.return-s)) (return_P s)',
-    -> Str:D $s {
-        my $return-s = $return_P($s);
-        case-Str($s,
-            ε => $return-s,
-            -> $c, $cs {
-                $seq_P($chr_P($c),  -> Mu {
-                $seq_P(&self($cs),  -> Mu {
-                     $return-s
-                })})
-            }
-        )
-    }
-)});
 
 
 # parser combinators oneOrZero ("?"), many ("*") and many1 ("+") --------------
@@ -221,6 +209,37 @@ constant $many1_P is export = lambdaFn(
 
 
 
+constant $str_P_ZZZ is export = $Y(-> &self { lambdaFn(
+    'str_P', 'Y λself.λs.(λreturn-s.case s (ε return-s) (λc.λcs.(self c) >>= λ_.(self cs) >>= λ_.return-s)) (return_P s)',
+    -> Str:D $s {
+        my $return-s = $return_P($s);
+        case-Str($s,
+            ε => $return-s,
+            -> $c, $cs {
+                $seq_P($chr_P($c),  -> Mu {
+                $seq_P(&self($cs),  -> Mu {
+                     $return-s
+                })})
+            }
+        )
+    }
+)});
+
+# str_P: Str -> Parser Str
+# abstracts from low-level case-Str
+constant $str_P is export = lambdaFn(
+    'str_P', 'fst ° Some->value ° (many_P-foldl (λacc.λc.acc >>= λs.(chr_P c) >>= λ_.return_P (s ~ c)) (return_P "") nxt_P)',
+    $B($fst, $B($Some2value, $many_P-foldl(
+        -> $acc, $c { 
+            $seq_P($acc,       -> $s {
+            $seq_P($chr_P($c), -> Mu {
+                                  $return_P($Str-concat($s, $c))
+            })} does lambda("λs.(chr_P {$c.perl}) >>= λ_.return_P (s ~ {$c.perl})"))
+        },
+        $return_P(""),
+        $nxt_P
+    )))
+);
 
 # character class parser (generator)s anyOf_P and noneOf_P --------------------
 
