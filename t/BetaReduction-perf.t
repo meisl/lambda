@@ -1,5 +1,6 @@
 use v6;
 use Test;
+use Test::Util;
 use Test::Util_Term;
 use Lambda::MaybeADT;
 use Lambda::TermADT;
@@ -14,9 +15,6 @@ use Lambda::Conversion;
 use Lambda::BetaReduction;
 
 plan 7;
-
-
-my $time;
 
 
 diag curryStats;
@@ -73,14 +71,10 @@ sub is_confluent(TTerm $s, TTerm $t, Str :$msg = '', Str :$sStr, Str :$tStr) {
     my $timeStr;
 #    subtest({
         diag("$sStr  =  $sSrc") if $sStr.defined;
-        my $timeS = now;
-        my $sr = case-Maybe($reduce($s), None => $s, Some => $I);
-        $timeS = (now - $timeS).Real;
+        my ($sr, $timeS) = tm { case-Maybe($reduce($s), None => $s, Some => $I) };
 
         diag("$tStr  =  $tSrc") if $tStr.defined;
-        my $timeT = now;
-        my $tr = case-Maybe($reduce($t), None => $t, Some => $I);
-        $timeT = (now - $timeT).Real;
+        my ($tr, $timeT) = tm { case-Maybe($reduce($t), None => $t, Some => $I) };
 
         my $timeTtl = max($timeS + $timeT, 0.001);
         $timeStr = sprintf('%1.2f = %1.2f + %1.2f sec (%1.0f%% + %1.0f%%) consumed for beta-reduction',
@@ -120,9 +114,11 @@ sub is_confluent(TTerm $s, TTerm $t, Str :$msg = '', Str :$sStr, Str :$tStr) {
 
     #$make-Ctor-chi_term: ctor2o4f5 (expects 4 callbacks and applies the 2nd to 5 fields)
     $bigLambda = 'λf1.λf2.λf3.λf4.λf5.(λy.λ_.y) ((λg.λh.(λy.λ_.y) (g h)) ((λg.λh.(λy.λ_.y) (g h)) (λk.(λk.(λk.(λk.(λk.(λx.x) k f1) k f2) k f3) k f4) k f5)))';
-    $time = now;
-    $bigTerm = $LamT('f1', $LamT('f2', $LamT('f3', $LamT('f4', $LamT('f5', $AppT(`'λy.λ_.y', $AppT(`'λg.λh.(λy.λ_.y) (g h)', $AppT(`'λg.λh.(λy.λ_.y) (g h)', $LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT(`'λk.(λx.x) k f1', `'k'), `'f2')), `'k'), `'f3')), `'k'), `'f4')), `'k'), `'f5'))))))))));
-    diag (now.Real - $time.Real).round(0.01) ~ " sec consumed for big-term construction";
+    $bigTerm = diagTime(
+        { $LamT('f1', $LamT('f2', $LamT('f3', $LamT('f4', $LamT('f5', $AppT(`'λy.λ_.y', $AppT(`'λg.λh.(λy.λ_.y) (g h)', $AppT(`'λg.λh.(λy.λ_.y) (g h)', $LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT($LamT('k', $AppT($AppT(`'λk.(λx.x) k f1', `'k'), `'f2')), `'k'), `'f3')), `'k'), `'f4')), `'k'), `'f5'))))))))));
+        },
+        'big-term construction'
+    );
 
     is $Term2srcLess($bigTerm), $bigLambda, "\$bigTerm.lambda is $bigLambda";
 
