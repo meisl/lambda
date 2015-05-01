@@ -49,7 +49,7 @@ constant $nxt_P is export = lambdaFn(
 # apply a parser and die if it fails or doesn't consume the whole input
 constant $parse is export = lambdaFn(
     'parse', 'λs.NYI',
-    -> $p, Str:D $s, $onFailure {
+    -> $p, $onFailure, Str:D $s {
         case-Maybe($p($s),
             None => {
                 ($onFailure ~~ Block) && ($onFailure.arity == 0) 
@@ -286,41 +286,63 @@ constant $str_P_XXX is export = lambdaFn(
     )))
 );
 
+constant $str_P_WWW is export = {
+    # first we make a parser for inpStr; of type Parser [Parser Chr]
+    # ie. it produces a list of (chr_P c)s, one for each Chr c in inpStr
+    my $inpP = $many_P($seq_P($nxt_P, -> $c { $return_P($chr_P($c)) }));
+    lambdaFn(
+        'str_P', 'λinpStr.NYI',
+        -> Str:D $inpStr {
+            # next we parse the inputStr, giving the list of (chr_P c)s)
+            # my TList $chrPs = $fst($Some2value($inpP($inpStr)));
+            my TList $chrPs = $parse($inpP, { die "should not happen" }, $inpStr);
+
+            my $returnInp = $return_P($inpStr); # reads nothing and returns inpStr
+            case-List($chrPs,
+                nil => $returnInp,  # inpStr == ε, so the output parser is (return_P "")
+                cons => -> $hd, TList $tl {
+                    case-List($tl,
+                        nil => $hd, # inpStr is just one character (so we don't >>= returnInp)
+                        cons => -> Mu, Mu {
+                            #$seq_P(    # eg: (str_P "foo") ~> ((((chr_P "f") >>= λ_.chr_P "o") >>= λ_.chr_P "o") >>= λ_.return_P "foo")
+                            #    #$foldl($seq_P, $hd, $map($K, $tl)),
+                            #    $foldl(-> $acc, $p { $seq_P($acc, $K($p)) }, $hd, $tl),
+                            #    $K($returnInp)
+                            #)
+                            $foldr(    # eg: (str_P "foo") ~> ((chr_P "f") >>= λ_.(chr_P "o") >>= λ_.(chr_P "o") >>= λ_.return_P "foo")
+                                -> $p, $acc { $seq_P($p, $K($acc)) },
+                                $returnInp,
+                                $chrPs
+                            )
+                        }
+                    )
+                }
+            )
+        }
+    );
+}();
+
 constant $str_P is export = lambdaFn(
-    'str_P', 'λinpStr.NYI',
+    'str_P', 'λinpStr.built-in',
     -> Str:D $inpStr {
-        # first we make a parser for inpStr; of type Parser [Parser Chr]
-        # ie. it produces a list of (chr_P c)s, one for each Chr c in inpStr
-        my $inpP = $many_P($seq_P($nxt_P, -> $c { $return_P($chr_P($c)) }));
-
-        # next we parse the inputStr, giving the list of (chr_P c)s)
-       # my TList $chrPs = $fst($Some2value($inpP($inpStr)));
-        my TList $chrPs = $parse($inpP, $inpStr, { die "should not happen" });
-
-        my $returnInp = $return_P($inpStr); # reads nothing and returns inpStr
-        case-List($chrPs,
-            nil => $returnInp,  # inpStr == ε, so the output parser is (return_P "")
-            cons => -> $hd, TList $tl {
-                case-List($tl,
-                    nil => $hd, # inpStr is just one character (so we don't >>= returnInp)
-                    cons => -> Mu, Mu {
-                        #$seq_P(    # eg: (str_P "foo") ~> ((((chr_P "f") >>= λ_.chr_P "o") >>= λ_.chr_P "o") >>= λ_.return_P "foo")
-                        #    #$foldl($seq_P, $hd, $map($K, $tl)),
-                        #    $foldl(-> $acc, $p { $seq_P($acc, $K($p)) }, $hd, $tl),
-                        #    $K($returnInp)
-                        #)
-                        $foldr(    # eg: (str_P "foo") ~> ((chr_P "f") >>= λ_.(chr_P "o") >>= λ_.(chr_P "o") >>= λ_.return_P "foo")
-                            -> $p, $acc { $seq_P($p, $K($acc)) },
-                            $returnInp,
-                            $chrPs
+        my $n = $inpStr.chars;
+        given $n {
+            when 0 { $return_P("") }
+            when 1 { $chr_P($inpStr) }
+            default {
+                lambdaFn(
+                    Str, "(str_P {$inpStr.perl})",
+                    -> Str:D $s {
+                        _if_($Str-eq($inpStr, $s.substr(0, $n)),
+                            { $return_P($inpStr).($s.substr($n)) },
+                            { $fail_P($s) }
                         )
                     }
                 )
             }
-        )
+        }
     }
 );
-
 
 # character class parser (generator)s anyOf_P and noneOf_P --------------------
 
@@ -328,9 +350,11 @@ constant $str_P is export = lambdaFn(
 constant $anyOf_P is export = lambdaFn(
     'anyOf_P', 'λs.sat_P (foldl1 (λleft.λright.λc.if (left c) #true (right c)) (map Str-eq? (fst (Some->value (many1_P nxt_P s)))))',
     -> Str:D $s {
-        my $inpP = $many1_P($seq_P($nxt_P, -> $c { $return_P($Str-eq($c)) }));
-        my TList $eqs = $parse($inpP, $s, { die "empty character class" });
-        $sat_P($foldl1(
+        #my $inpP = $many1_P-foldl1( $seq_P($nxt_P, -> $c { $return_P($Str-eq($c)) }) );
+        #my TList $eqs = $parse($inpP, { die "empty character class" }, $s);
+        
+        
+        my $inpP = $many1_P-foldl1(
             -> $left, $right { 
                 -> $c {
                     _if_($left($c), # short-circuit OR
@@ -339,8 +363,9 @@ constant $anyOf_P is export = lambdaFn(
                     )
                 } 
             }, 
-            $eqs
-        ))
+            $seq_P($nxt_P, -> $c { $return_P($Str-eq($c)) })
+        );
+        $sat_P($parse($inpP, { die "empty character class" }, $s));
     }
 );
 

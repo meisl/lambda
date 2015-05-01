@@ -60,9 +60,19 @@ subtest({ # str_P
     is_Some($str_P('som')($s),          $Pair('som', 'e string'),   "(str_P 'som' {$s.perl})");
     is_Some($str_P('some')($s),         $Pair('some', ' string'),   "(str_P 'some' {$s.perl})");
     is_Some($str_P('some ')($s),        $Pair('some ', 'string'),   "(str_P 'some ' {$s.perl})");
-    is_Some($str_P('some string')($s),  $Pair('some string', ''),   "(str_P 'some string' {$s.perl})");
-    
-    is_None($str_P('some stringXXX')($s),                           "(str_P 'some stringXXX' {$s.perl})  ~>  None");
+    is_Some($str_P($s)($s),             $Pair($s, ''),              "(str_P '$s' {$s.perl})");
+    is_None($str_P($s ~ 'XXX')($s),                                 "(str_P '{$s}XXX' {$s.perl})  ~>  None");
+
+    $s = 'here is a rather long string, so we can estimate performance';
+    my $p       = diagTime { $str_P($s) },  'big str parser construction';
+    my $actual  = diagTime { $p($s) },      'big str parser application';
+    is_Some($actual,            $Pair($s, ''),      "(str_P '$s' {$s.perl})");
+
+    $p = $str_P($s);
+    is_Some($p($s ~ 'XXX'),     $Pair($s, 'XXX'),   "(str_P '$s' {($s ~ 'XXX').perl})");
+
+    $p = $str_P($s ~ 'XXX');
+    is_None($p($s),                                 "(str_P '{$s}XXX' {$s.perl})  ~>  None");
 }, 'string_P');
 
 
