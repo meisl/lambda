@@ -117,7 +117,9 @@ constant $oneOrZero_P is export = lambdaFn(
     'oneOrZero_P', 'λp.(nxt_P >>= λc.return_P (cons c nil)) +++ (return_P nil)',
     -> $p {
         $alt_P(
-            $seq_P($p, -> $c { $return_P($cons($c, $nil)) }),
+            $seq_P($p, -> $c {
+                          $return_P($cons($c, $nil))
+            }),
             $return_P($nil)
         )
     }
@@ -129,7 +131,9 @@ constant $many_P-foldl is export = $Y(-> &self { lambdaFn(
     -> $f, $start {
         -> $p {
             $alt_P(
-                $seq_P($p, -> $v { &self($f, $f($start, $v), $p) }),
+                $seq_P($p, -> $v {
+                              &self($f, $f($start, $v), $p)
+                }),
                 $return_P($start)
             );
         }
@@ -138,29 +142,16 @@ constant $many_P-foldl is export = $Y(-> &self { lambdaFn(
 
 # many_P-foldr: (a -> b -> b) -> b -> Parser a -> Parser b
 constant $many_P-foldr is export = $Y(-> &self { lambdaFn(
-    'many_P-foldr', 'Y λself.λf.λstart.λp.λs.NYI',
+    'many_P-foldr', 'Y λself.λf.λstart.λp.(p >>= λv.(self f start p) >>= λacc.return_P (f v acc)) +++ (return_P start)',
     -> $f, $start {
         -> $p {
-            lambdaFn(Str, 'λs.NYI',
-                -> Str:D $s {
-                    case-Maybe($p($s),
-                        None => { $return_P($start, $s) },
-                        
-                        #Some => -> TPair $out { $out(-> $v, Str:D $rest {   # TODO: pattern-match a Pair
-                        #    my $rightOut = $Some2value(&self($f, $start, $p, $rest));
-                        #    $rightOut(-> $rightV, $rightRest {
-                        #        $return_P($f($v, $rightV), $rightRest)   # TODO: pattern-match a Pair
-                        #    });
-                        #})}
-
-                        Some => -> TPair $out { $out(-> $v, Str:D $rest {   # TODO: pattern-match a Pair
-                            $seq_P(&self($f, $start, $p), -> $acc {
-                                                             $return_P($f($v, $acc))
-                            }).($rest)
-                        })}
-                    )
-                }
-            )
+            $alt_P(
+                $seq_P($p,                      -> $v { 
+                $seq_P(&self($f, $start, $p),   -> $acc {
+                                                   $return_P($f($v, $acc))
+                })}),
+                $return_P($start)
+            );
         }
     }
 )});
