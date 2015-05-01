@@ -48,9 +48,10 @@ subtest({ # str_P
     
     my $s = 'some string';
     
-    diag '(str_P ""):   ' ~ $str_P('');
-    diag '(str_P "f"):  ' ~ $str_P('f');
-    diag '(str_P "fo"): ' ~ $str_P('fo');
+    diag '(str_P ""):    ' ~ $str_P('');
+    diag '(str_P "f"):   ' ~ $str_P('f');
+    diag '(str_P "fo"):  ' ~ $str_P('fo');
+    diag '(str_P "foo"): ' ~ $str_P('foo');
 
     is_None($str_P('foo')($s),                                      "(str_P 'foo' {$s.perl})  ~> None");
     is_Some($str_P('')($s),             $Pair('', 'some string'),   "(str_P '' {$s.perl})");
@@ -59,6 +60,7 @@ subtest({ # str_P
     is_Some($str_P('som')($s),          $Pair('som', 'e string'),   "(str_P 'som' {$s.perl})");
     is_Some($str_P('some')($s),         $Pair('some', ' string'),   "(str_P 'some' {$s.perl})");
     is_Some($str_P('some ')($s),        $Pair('some ', 'string'),   "(str_P 'some ' {$s.perl})");
+    is_Some($str_P('some string')($s),  $Pair('some string', ''),   "(str_P 'some string' {$s.perl})");
     
     is_None($str_P('some stringXXX')($s),                           "(str_P 'some stringXXX' {$s.perl})  ~>  None");
 }, 'string_P');

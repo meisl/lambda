@@ -49,7 +49,7 @@ constant $nxt_P is export = lambdaFn(
 constant $seq_P is export = lambdaFn(   # this is bind for the Parser Monad
     'seq_P', 'λp.λf.λs.case (p s) (None (fail_P s)) (Some <x, out> (f x out))',
     -> $p, $f {
-        lambdaFn(Str, { my $fStr = $f.?name // $f.?lambda // $f.perl; "$p >>= $fStr" },
+        lambdaFn(Str, { my $fStr = $f.?name // $f.?lambda // $f.perl; "($p >>= $fStr)" },
             -> Str:D $s {
                 case-Maybe($p($s),
                     None => { $fail_P($s) },
@@ -243,8 +243,8 @@ constant $str_P_YYY is export = lambdaFn(
     )))
 );
 
-constant $str_P is export = lambdaFn(
-    'str_P', 'fst ° Some->value ° (many_P-foldl (λacc.λc.acc >>= λs.(chr_P c) >>= λ_.return_P (s ~ c)) (return_P "") nxt_P)',
+constant $str_P_XXX is export = lambdaFn(
+    'str_P', 'fst ° Some->value ° (many_P-foldl (λacc.λcP.acc >>= λt.cP >>= λc.return_P (t ~ c)) (return_P "") (nxt_P >>= λc.return_P (chr_P c)))',
     $B($fst, $B($Some2value, $many_P-foldl(
         -> $accP, $cP { 
             $seq_P($accP,      -> $s {
@@ -255,6 +255,40 @@ constant $str_P is export = lambdaFn(
         $return_P(""),
         $seq_P($nxt_P, -> $c { $return_P($chr_P($c)) })
     )))
+);
+
+constant $str_P is export = lambdaFn(
+    'str_P', 'fst ° Some->value ° (many_P-foldl (λacc.λcP.acc >>= λt.cP >>= λc.return_P (t ~ c)) (return_P "") (nxt_P >>= λc.return_P (chr_P c)))',
+    -> Str:D $inpStr {
+        # first we make a parser for inpStr; of type Parser [Parser Chr]
+        # ie. it produces a list of (chr_P c)s, one for each Chr c in inpStr
+        my $inpP = $many_P($seq_P($nxt_P, -> $c { $return_P($chr_P($c)) }));
+
+        # next we parse the inputStr, giving the list of (chr_P c)s)
+        my $chrPs = $fst($Some2value($inpP($inpStr)));
+
+        my $returnInp = $return_P($inpStr); # reads nothing and returns inpStr
+        case-List($chrPs,
+            nil => $returnInp,  # inpStr == ε, so the output parser is (return_P "")
+            cons => -> $hd, TList $tl {
+                case-List($tl,
+                    nil => $hd, # inpStr is just one character (so we don't >>= returnInp)
+                    cons => -> Mu, Mu {
+                        #$seq_P(    # eg: (str_P "foo") ~> ((((chr_P "f") >>= (λ_.chr_P "o")) >>= (λ_.chr_P "o")) >>= (λ_.return_P "foo"))
+                        #    #$foldl($seq_P, $hd, $map($K, $tl)),
+                        #    $foldl(-> $acc, $p { $seq_P($acc, $K($p)) }, $hd, $tl),
+                        #    $K($returnInp)
+                        #)
+                        $foldr(    # eg: (str_P "foo") ~> (chr_P "f") >>= λ_.(chr_P "o") >>= λ_.(chr_P "o") >>= λ_.return_P "foo"
+                            -> $p, $acc { $seq_P($p, $K($acc)) },
+                            $returnInp,
+                            $chrPs
+                        )
+                    }
+                )
+            }
+        )
+    }
 );
 
 
