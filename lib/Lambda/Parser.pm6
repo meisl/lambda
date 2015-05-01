@@ -46,6 +46,28 @@ constant $nxt_P is export = lambdaFn(
 );
 
 
+# apply a parser and die if it fails or doesn't consume the whole input
+constant $parse is export = lambdaFn(
+    'parse', 'λs.NYI',
+    -> $p, Str:D $s, $onFailure {
+        case-Maybe($p($s),
+            None => {
+                ($onFailure ~~ Block) && ($onFailure.arity == 0) 
+                ?? $onFailure()    # simulate lazy evaluation by passing a thunk
+                !! $onFailure
+            },
+            Some => -> TPair $result {
+                $result(-> $v, $rest {  # TODO: pattern-match a Pair
+                    case-Str($rest,
+                        ε => $v,
+                        -> Mu, Mu { die "unmatched input: {$rest.perl}" }
+                    )
+                })
+            }
+        )
+    }
+);
+
 # parser combinators seq_P (aka bind_Parser) + alt_P (aka choice_P) -----------
 
 # seq_P (aka bind_Parser): Parser a -> (a -> Parser b) -> Parser b
@@ -265,14 +287,15 @@ constant $str_P_XXX is export = lambdaFn(
 );
 
 constant $str_P is export = lambdaFn(
-    'str_P', 'fst ° Some->value ° (many_P-foldl (λacc.λcP.acc >>= λt.cP >>= λc.return_P (t ~ c)) (return_P "") (nxt_P >>= λc.return_P (chr_P c)))',
+    'str_P', 'λinpStr.NYI',
     -> Str:D $inpStr {
         # first we make a parser for inpStr; of type Parser [Parser Chr]
         # ie. it produces a list of (chr_P c)s, one for each Chr c in inpStr
         my $inpP = $many_P($seq_P($nxt_P, -> $c { $return_P($chr_P($c)) }));
 
         # next we parse the inputStr, giving the list of (chr_P c)s)
-        my $chrPs = $fst($Some2value($inpP($inpStr)));
+       # my TList $chrPs = $fst($Some2value($inpP($inpStr)));
+        my TList $chrPs = $parse($inpP, $inpStr, { die "should not happen" });
 
         my $returnInp = $return_P($inpStr); # reads nothing and returns inpStr
         case-List($chrPs,
@@ -305,24 +328,19 @@ constant $str_P is export = lambdaFn(
 constant $anyOf_P is export = lambdaFn(
     'anyOf_P', 'λs.sat_P (foldl1 (λleft.λright.λc.if (left c) #true (right c)) (map Str-eq? (fst (Some->value (many1_P nxt_P s)))))',
     -> Str:D $s {
-        case-Maybe($many1_P($nxt_P)($s),
-            None => { die "empty character class" },
-            Some => -> $out {
-                $out(-> $cs, Mu {   # TODO: pattern-match a Pair
-                    $sat_P($foldl1(
-                        -> $left, $right { 
-                            -> $c {
-                                _if_($left($c), # short-circuit OR
-                                    $true,
-                                    { $right($c) }
-                                )
-                            } 
-                        }, 
-                        $map($Str-eq, $cs)
-                    ))
-                })
-            }
-        )
+        my $inpP = $many1_P($seq_P($nxt_P, -> $c { $return_P($Str-eq($c)) }));
+        my TList $eqs = $parse($inpP, $s, { die "empty character class" });
+        $sat_P($foldl1(
+            -> $left, $right { 
+                -> $c {
+                    _if_($left($c), # short-circuit OR
+                        $true,
+                        { $right($c) }
+                    )
+                } 
+            }, 
+            $eqs
+        ))
     }
 );
 
