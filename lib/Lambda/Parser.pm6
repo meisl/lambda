@@ -19,7 +19,7 @@ module Lambda::Parser;
 constant $return_P is export = lambdaFn(
     'return_P', 'λx.λs.Some (Pair x s)',
     -> $x {
-        lambdaFn(Str, { my $xStr = $x.?name // $x.?lambda // $x.perl; "(return_P $xStr)" },
+        lambdaFn(Str, { my $xStr = $x.?name // $x.?lambda // $x.perl; "return_P $xStr" },
             -> Str:D $s { $Some($Pair($x, $s)) }
         )
     }
@@ -49,7 +49,10 @@ constant $nxt_P is export = lambdaFn(
 constant $seq_P is export = lambdaFn(   # this is bind for the Parser Monad
     'seq_P', 'λp.λf.λs.case (p s) (None (fail_P s)) (Some <x, out> (f x out))',
     -> $p, $f {
-        lambdaFn(Str, { my $fStr = $f.?name // $f.?lambda // $f.perl; "($p >>= $fStr)" },
+        lambdaFn(Str, {
+                        my $fStr = $f.?name // ($f.^can('lambda') ?? $f.lambda.substr(1, *-1) !! $f.lambda) // $f.perl;
+                        "($p >>= $fStr)";
+                      },
             -> Str:D $s {
                 case-Maybe($p($s),
                     None => { $fail_P($s) },
@@ -274,12 +277,12 @@ constant $str_P is export = lambdaFn(
                 case-List($tl,
                     nil => $hd, # inpStr is just one character (so we don't >>= returnInp)
                     cons => -> Mu, Mu {
-                        #$seq_P(    # eg: (str_P "foo") ~> ((((chr_P "f") >>= (λ_.chr_P "o")) >>= (λ_.chr_P "o")) >>= (λ_.return_P "foo"))
+                        #$seq_P(    # eg: (str_P "foo") ~> ((((chr_P "f") >>= λ_.chr_P "o") >>= λ_.chr_P "o") >>= λ_.return_P "foo")
                         #    #$foldl($seq_P, $hd, $map($K, $tl)),
                         #    $foldl(-> $acc, $p { $seq_P($acc, $K($p)) }, $hd, $tl),
                         #    $K($returnInp)
                         #)
-                        $foldr(    # eg: (str_P "foo") ~> (chr_P "f") >>= λ_.(chr_P "o") >>= λ_.(chr_P "o") >>= λ_.return_P "foo"
+                        $foldr(    # eg: (str_P "foo") ~> ((chr_P "f") >>= λ_.(chr_P "o") >>= λ_.(chr_P "o") >>= λ_.return_P "foo")
                             -> $p, $acc { $seq_P($p, $K($acc)) },
                             $returnInp,
                             $chrPs
