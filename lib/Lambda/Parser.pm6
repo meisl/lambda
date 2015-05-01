@@ -94,7 +94,9 @@ constant $sat_P is export = lambdaFn(
 
 constant $chr_P is export = lambdaFn(
     'chr_P', 'λc.sat_P (Str-eq? c)',    # = `sat_P ° Str-eq?`
-    -> Str:D $c { $sat_P($Str-eq($c)) }
+    -> Str:D $c { 
+        $sat_P($Str-eq($c)) does lambda({ "(chr_P {$c.perl})" })
+    }
 );
 
 
@@ -227,11 +229,11 @@ constant $str_P_ZZZ is export = $Y(-> &self { lambdaFn(
 
 # str_P: Str -> Parser Str
 # abstracts from low-level case-Str
-constant $str_P is export = lambdaFn(
-    'str_P', 'fst ° Some->value ° (many_P-foldl (λacc.λc.acc >>= λs.(chr_P c) >>= λ_.return_P (s ~ c)) (return_P "") nxt_P)',
+constant $str_P_YYY is export = lambdaFn(
+    'str_P', 'fst ° Some->value ° (many_P-foldl (λaccP.λc.accP >>= λs.(chr_P c) >>= λ_.return_P (s ~ c)) (return_P "") nxt_P)',
     $B($fst, $B($Some2value, $many_P-foldl(
-        -> $acc, $c { 
-            $seq_P($acc,       -> $s {
+        -> $accP, $c { 
+            $seq_P($accP,      -> $s {
             $seq_P($chr_P($c), -> Mu {
                                   $return_P($Str-concat($s, $c))
             })} does lambda("λs.(chr_P {$c.perl}) >>= λ_.return_P (s ~ {$c.perl})"))
@@ -240,6 +242,21 @@ constant $str_P is export = lambdaFn(
         $nxt_P
     )))
 );
+
+constant $str_P is export = lambdaFn(
+    'str_P', 'fst ° Some->value ° (many_P-foldl (λacc.λc.acc >>= λs.(chr_P c) >>= λ_.return_P (s ~ c)) (return_P "") nxt_P)',
+    $B($fst, $B($Some2value, $many_P-foldl(
+        -> $accP, $cP { 
+            $seq_P($accP,      -> $s {
+            $seq_P($cP,        -> $c {
+                                  $return_P($Str-concat($s, $c))
+            })} does lambda("λs.$cP >>= λc.return_P (s ~ c)"))
+        },
+        $return_P(""),
+        $seq_P($nxt_P, -> $c { $return_P($chr_P($c)) })
+    )))
+);
+
 
 # character class parser (generator)s anyOf_P and noneOf_P --------------------
 
