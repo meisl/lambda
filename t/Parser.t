@@ -43,6 +43,21 @@ sub is_None($maybe, Str $msg?) {
 # -----------------------------------------------------------------------------
 
 
+subtest({ # oneOrZero_P
+    is_properLambdaFn($oneOrZero_P, 'oneOrZero_P');
+    
+    my $oneOrZero-as = $oneOrZero_P($chr_P('a'));
+
+    is_Some($oneOrZero-as(''),   $Pair([],      ''),    '(oneOrZero_P (chr_P "a") "")');
+    is_Some($oneOrZero-as('a'),  $Pair(['a'],   ''),    '(oneOrZero_P (chr_P "a") "a")');
+    is_Some($oneOrZero-as('aa'), $Pair(['a'],   'a'),   '(oneOrZero_P (chr_P "a") "aa")');
+
+    is_Some($oneOrZero-as('b'),   $Pair([],     'b'),   '(oneOrZero_P (chr_P "a") "b")');
+    is_Some($oneOrZero-as('ab'),  $Pair(['a'],  'b'),   '(oneOrZero_P (chr_P "a") "ab")');
+    is_Some($oneOrZero-as('aab'), $Pair(['a'],  'ab'),  '(oneOrZero_P (chr_P "a") "aab")');
+}, 'oneOrZero_P');
+
+
 # many_P-foldl & many_P-foldr -------------------------------------------------
 
 subtest({ # many_P-foldl
@@ -265,21 +280,6 @@ subtest({ # str_P
 }, 'string_P');
 
 
-
-
-subtest({ # oneOrZero_P
-    is_properLambdaFn($oneOrZero_P, 'oneOrZero_P');
-    
-    my $oneOrZero-as = $oneOrZero_P($chr_P('a'));
-
-    is_Some($oneOrZero-as(''),   $Pair([],      ''),    '(oneOrZero_P (chr_P "a") "")');
-    is_Some($oneOrZero-as('a'),  $Pair(['a'],   ''),    '(oneOrZero_P (chr_P "a") "a")');
-    is_Some($oneOrZero-as('aa'), $Pair(['a'],   'a'),   '(oneOrZero_P (chr_P "a") "aa")');
-
-    is_Some($oneOrZero-as('b'),   $Pair([],     'b'),   '(oneOrZero_P (chr_P "a") "b")');
-    is_Some($oneOrZero-as('ab'),  $Pair(['a'],  'b'),   '(oneOrZero_P (chr_P "a") "ab")');
-    is_Some($oneOrZero-as('aab'), $Pair(['a'],  'ab'),  '(oneOrZero_P (chr_P "a") "aab")');
-}, 'oneOrZero_P');
 
 subtest({ # many_P
     is_properLambdaFn($many_P, 'many_P');

@@ -114,17 +114,13 @@ constant $str_P is export = $Y(-> &self { lambdaFn(
 
 # oneOrZero_P: Parser a -> Parser [a]
 constant $oneOrZero_P is export = lambdaFn(
-    'oneOrZero_P', 'λp.λs.case (p s) (None (return_P nil s)) (Some <v, rest> (return_P (cons v nil) s))',
-    -> $p { lambdaFn(Str, '', -> $s {
-        case-Maybe($p($s),
-            None => $return_P($nil, $s),
-            Some => -> TPair $out {
-                $out(-> $v, Str:D $rest {   # TODO: pattern-match a Pair
-                    $return_P($cons($v, $nil), $rest)
-                })
-            }
+    'oneOrZero_P', 'λp.(nxt_P >>= λc.return_P (cons c nil)) +++ (return_P nil)',
+    -> $p {
+        $alt_P(
+            $seq_P($p, -> $c { $return_P($cons($c, $nil)) }),
+            $return_P($nil)
         )
-    })}
+    }
 );
 
 # many_P-foldl: (b -> a -> b) -> b -> Parser a -> Parser b
