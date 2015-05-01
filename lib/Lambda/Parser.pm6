@@ -16,6 +16,7 @@ module Lambda::Parser;
 # basic parsers nxt_P and fail_P & generator return_P -------------------------
 
 # return_P: a -> Parser a
+# always succeeds with the given value, leaving the remainder string untouched
 constant $return_P is export = lambdaFn(
     'return_P', 'λx.λs.Some (Pair x s)',
     -> $x {
@@ -26,12 +27,14 @@ constant $return_P is export = lambdaFn(
 );
 
 # fail_P: Parser a
+# always fails leaving the remainder string untouched
 constant $fail_P is export = lambdaFn(
     'fail_P', 'λs.None',
     -> Str:D $s { $None }
 );
 
-# nxt_P: Parser Str
+# nxt_P: Parser Chr
+# fails on empty string or succeds with the first character removed from the beginning of remainder string
 constant $nxt_P is export = lambdaFn(
     'nxt_P', 'λs.case-Str s (ε (fail_P s)) return_P',
     -> Str:D $s {
@@ -54,8 +57,9 @@ constant $seq_P is export = lambdaFn(   # this is bind for the Parser Monad
                         "($p >>= $fStr)";
                       },
             -> Str:D $s {
-                case-Maybe($p($s),
-                    None => { $fail_P($s) },
+                my $pOut = $p($s);
+                case-Maybe($pOut,
+                    None => $pOut,
                     #Some => -> TPair $result { $result($f) }    # = $f($fst($result), $snd($result)), requires $f to be curried
                     Some => -> TPair $result { $result(-> $a, $b { $f($a)($b) }) }    # = $f($fst($result), $snd($result))
                 )
@@ -70,10 +74,10 @@ constant $alt_P is export = lambdaFn(
     -> $p, $q {
         lambdaFn(Str, '',
             -> Str:D $s {
-                my $pResult = $p($s);
-                case-Maybe($pResult,
+                my $pOut = $p($s);
+                case-Maybe($pOut,
                     None => $q($s),
-                    Some => -> Mu { $pResult }
+                    Some => -> Mu { $pOut }
                 )
             }
         )
@@ -82,7 +86,7 @@ constant $alt_P is export = lambdaFn(
 
 # simple parser (generator)s sat_P, char_P, string_P --------------------------
 
-# sat_P: (Str -> Bool) -> Parser Str
+# sat_P: (Chr -> Bool) -> Parser Chr
 constant $sat_P is export = lambdaFn(
     'sat_P', 'λpred.λs.nxt_P >>= λc.if (pred c) (return_P c) fail_P ',
     -> $pred {
