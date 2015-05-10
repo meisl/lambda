@@ -30,7 +30,7 @@
 - ...
 - [ ] #23 'make an interpreter using stacked environments' (rather than stupid subst)
 - [ ] #24 'implement proper tail calls'
-- [ ] #25 'compile to Perl6'
+- [ ] #25 'compile to QAST, using the NQP toolchain'
 
 ##### branch 2 (make it do *something*)
 - [ ] #40 'add facility to switch on/off stats for P6Currying'
