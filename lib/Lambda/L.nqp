@@ -118,31 +118,41 @@ class LActions is HLL::Actions {
         $out;
     }
 
-    method TOP($/) {
-        my $outVar := locVar('out');
-        make QAST::Block.new(
-            QAST::Stmts.new(
-                QAST::Op.new(:op('bind'),
-                    $outVar.declV,
-                    $/<termlist1orMore>.ast
-                ),
+    my $_stringify := lexVar('.stringify');
+
+    my sub mkSetting() {
+        my $block := QAST::Block.new(QAST::Stmts.new());
+        
+        my $_stringify-p1 := lexVar('v');
+        $block[0].push(QAST::Op.new(:op<bind>, $_stringify.declV,
+            QAST::Block.new(:arity(1), QAST::Stmts.new(
+                $_stringify-p1.declP,
                 QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<isstr>,
-                        $outVar
-                    ),
-                    mkQuoted($outVar),
+                    QAST::Op.new(:op<isstr>, $_stringify-p1),
+                    mkQuoted($_stringify-p1),
                     QAST::Op.new(:op<if>,
                         QAST::Op.new(:op<ishash>,
-                            $outVar
+                            $_stringify-p1
                         ),
-                        mkHashLookup($outVar, :key<lambda>),
+                        mkHashLookup($_stringify-p1, :key<lambda>),
                         QAST::Op.new(:op<reprname>,
-                            $outVar
-                        ),
+                            $_stringify-p1
+                        )
                     )
                 )
-            )
-        );
+            ))
+        ));
+
+        $block;
+    }
+
+    method TOP($/) {
+        my $outVar := locVar('out');
+        my $s := mkSetting();
+        $s[0].push(QAST::Op.new(:op<call>, $_stringify,
+            $/<termlist1orMore>.ast
+        ));
+        make $s;
     }
 
     method termlist1orMore($/) {
