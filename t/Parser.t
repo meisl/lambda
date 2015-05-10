@@ -75,7 +75,6 @@ subtest({ # str_P
     is_None($p($s),                                 "(str_P '{$s}XXX' {$s.perl})  ~>  None");
 }, 'string_P');
 
-
 subtest({ # oneOrZero_P
     is_properLambdaFn($oneOrZero_P, 'oneOrZero_P');
     

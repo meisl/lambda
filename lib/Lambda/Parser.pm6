@@ -98,7 +98,7 @@ constant $alt_P is export = lambdaFn(
             -> Str:D $s {
                 my $pOut = $p($s);
                 case-Maybe($pOut,
-                    None => $q($s),
+                    None => { $q($s) },
                     Some => -> Mu { $pOut }
                 )
             }
@@ -286,7 +286,7 @@ constant $str_P_XXX is export = lambdaFn(
     )))
 );
 
-constant $str_P_WWW is export = {
+constant $str_P is export = {
     # first we make a parser for inpStr; of type Parser [Parser Chr]
     # ie. it produces a list of (chr_P c)s, one for each Chr c in inpStr
     my $inpP = $many_P($seq_P($nxt_P, -> $c { $return_P($chr_P($c)) }));
@@ -322,7 +322,7 @@ constant $str_P_WWW is export = {
     );
 }();
 
-constant $str_P is export = lambdaFn(
+constant $str_P_WWW is export = lambdaFn(
     'str_P', 'λinpStr.built-in',
     -> Str:D $inpStr {
         my $n = $inpStr.chars;
