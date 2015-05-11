@@ -110,6 +110,7 @@ class LActions is HLL::Actions {
 
     my $_strOut := lexVar('.strOut');
     my $_strLit := lexVar('.strLit');
+    my $_apply1 := lexVar('.apply1');
 
     my sub mkConcat(*@args) {
         if nqp::elems(@args) < 1 {
@@ -152,7 +153,6 @@ class LActions is HLL::Actions {
     }
 
     my sub mkSetting() {
-
         my $block := QAST::Block.new(QAST::Stmts.new());
         
         my $_strOut-p1 := lexVar('v');
@@ -183,6 +183,30 @@ class LActions is HLL::Actions {
             ))
         ));
         
+        my $_apply1-p1 := lexVar('f');
+        my $_apply1-p2 := lexVar('a1');
+        $block[0].push(QAST::Op.new(:op<bind>, $_apply1.declV,
+            QAST::Block.new(:arity(2), QAST::Stmts.new(
+                $_apply1-p1.declP,
+                $_apply1-p2.declP,
+                QAST::Op.new(:op<if>,
+                    QAST::Op.new(:op<ishash>, $_apply1-p1),
+                    QAST::Op.new(:op('call'),
+                        mkHashLookup($_apply1-p1, :key<code>),
+                        $_apply1-p2
+                    ),
+                    QAST::Op.new(:op<if>,
+                        QAST::Op.new(:op<isinvokable>, $_apply1-p1),
+                        QAST::Op.new(:op('call'),
+                            $_apply1-p1,
+                            $_apply1-p2
+                        ),
+                        mkDie('cannot apply ', mkCall($_strLit, $_apply1-p1), ' to ', mkCall($_strOut, $_apply1-p2)),
+                    )
+                )
+            ))
+        ));
+        
         $block;
     }
 
@@ -205,25 +229,10 @@ class LActions is HLL::Actions {
     my sub mkApp($f, $a) {
         if $f.has_ann('λ') {
             #say($f[0].value ~ ": ...");
-            return QAST::Op.new(:op('call'), $f[1], $a);
+            QAST::Op.new(:op('call'), $f[1], $a);
+        } else {
+            mkCall($_apply1, $f, $a);
         }
-        my $subject := locVar('subject');
-        QAST::Op.new(:op<call>, QAST::Block.new(
-            QAST::Stmts.new(
-                QAST::Op.new(:op<bind>,
-                    $subject.declV,
-                    $f
-                ),
-                QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<ishash>, $subject),
-                    QAST::Op.new(:op('call'),
-                        mkHashLookup($subject, :key<code>),
-                        $a
-                    ),
-                    mkDie('cannot apply ', mkCall($_strLit, $subject), ' to ', mkCall($_strOut, $a))
-                )
-            )
-        ))
     }
 
     method termlist2orMore($/) {
