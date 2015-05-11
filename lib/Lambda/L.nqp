@@ -111,7 +111,44 @@ class LActions is HLL::Actions {
     my $_strOut := lexVar('.strOut');
     my $_strLit := lexVar('.strLit');
 
+    my sub mkConcat(*@args) {
+        if nqp::elems(@args) < 2 {
+            nqp::die("need at least 2 args for mkConcat");
+        }
+        my @nodes := [];
+        for @args { # map any str to an SVal
+            if nqp::isstr($_) {
+                nqp::push(@nodes, QAST::SVal.new(:value($_)));
+            } else {
+                #say('###' ~ $_.dump);
+                nqp::push(@nodes, $_);
+            }
+        }
+
+        my @compressed := [];
+        my $current := nqp::shift(@nodes);
+        for @nodes {
+            if nqp::istype($current, QAST::SVal) && nqp::istype($_, QAST::SVal) {
+                $current.value($current.value ~ $_.value);
+            } else {
+                nqp::push(@compressed, $current);
+                $current := $_;
+            }
+        }
+        nqp::push(@compressed, $current);
+
+        if nqp::elems(@compressed) > 1 {
+            $current := nqp::shift(@compressed);
+            for @compressed {
+                $current := QAST::Op.new(:op<concat>, $current, $_)
+            }
+        }
+
+        return $current;
+    }
+
     my sub mkSetting() {
+
         my $block := QAST::Block.new(QAST::Stmts.new());
         
         my $_strOut-p1 := lexVar('v');
@@ -138,13 +175,7 @@ class LActions is HLL::Actions {
         $block[0].push(QAST::Op.new(:op<bind>, $_strLit.declV,
             QAST::Block.new(:arity(1), QAST::Stmts.new(
                 $_strLit-p1.declP,
-                QAST::Op.new(:op<concat>,
-                    QAST::Op.new(:op<concat>,
-                        QAST::SVal.new(:value('"')),
-                        QAST::Op.new(:op<escape>, $_strLit-p1)
-                    ),
-                    QAST::SVal.new(:value('"')),
-                )
+                mkConcat('"', QAST::Op.new(:op<escape>, $_strLit-p1), '"')
             ))
         ));
         
@@ -186,16 +217,7 @@ class LActions is HLL::Actions {
                         $a
                     ),
                     QAST::Op.new(:op<die>,
-                        QAST::Op.new(:op<concat>,
-                            QAST::Op.new(:op<concat>,
-                                QAST::Op.new(:op<concat>,
-                                    QAST::SVal.new(:value('cannot apply ')),
-                                    mkCall($_strLit, $subject)
-                                ),
-                                QAST::SVal.new(:value(' to '))
-                            ),
-                            mkCall($_strOut, $a)
-                        )
+                        mkConcat('cannot apply ', mkCall($_strLit, $subject), ' to ', mkCall($_strOut, $a))
                     )
                 )
             )
