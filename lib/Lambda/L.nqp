@@ -108,6 +108,13 @@ class LActions is HLL::Actions {
         )
     }
 
+    my sub mkListLookup($list, int :$index!) {
+        QAST::Op.new(:op<atpos>,
+            $list,
+            QAST::IVal.new(:value($index)),
+        )
+    }
+
     my $_strOut := lexVar('.strOut');
     my $_strLit := lexVar('.strLit');
     my $_apply1 := lexVar('.apply1');
@@ -152,21 +159,24 @@ class LActions is HLL::Actions {
         QAST::Op.new(:op<die>, mkConcat("ERROR: ", |@msgPieces));
     }
 
+    has $!lamCount;
+
     my sub mkSetting() {
-        my $block := QAST::Block.new(QAST::Stmts.new());
-        
+        my $init := QAST::Stmts.new();
+        my $block := QAST::Block.new($init);
+
         my $_strOut-p1 := lexVar('v');
-        $block[0].push(QAST::Op.new(:op<bind>, $_strOut.declV,
+        $init.push(QAST::Op.new(:op<bind>, $_strOut.declV,
             QAST::Block.new(:arity(1), QAST::Stmts.new(
                 $_strOut-p1.declP,
                 QAST::Op.new(:op<if>,
                     QAST::Op.new(:op<isstr>, $_strOut-p1),
                     mkCall($_strLit, $_strOut-p1),
                     QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<ishash>,
+                        QAST::Op.new(:op<islist>,
                             $_strOut-p1
                         ),
-                        mkHashLookup($_strOut-p1, :key<lambda>),
+                        mkListLookup($_strOut-p1, :index(1)),
                         QAST::Op.new(:op<reprname>,
                             $_strOut-p1
                         )
@@ -176,7 +186,7 @@ class LActions is HLL::Actions {
         ));
         
         my $_strLit-p1 := lexVar('v');
-        $block[0].push(QAST::Op.new(:op<bind>, $_strLit.declV,
+        $init.push(QAST::Op.new(:op<bind>, $_strLit.declV,
             QAST::Block.new(:arity(1), QAST::Stmts.new(
                 $_strLit-p1.declP,
                 mkConcat('"', QAST::Op.new(:op<escape>, $_strLit-p1), '"')
@@ -185,14 +195,14 @@ class LActions is HLL::Actions {
         
         my $_apply1-f  := lexVar('f');
         my $_apply1-a1 := lexVar('a1');
-        $block[0].push(QAST::Op.new(:op<bind>, $_apply1.declV,
+        $init.push(QAST::Op.new(:op<bind>, $_apply1.declV,
             QAST::Block.new(:arity(2), QAST::Stmts.new(
                 $_apply1-f.declP,
                 $_apply1-a1.declP,
                 QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<ishash>, $_apply1-f),
+                    QAST::Op.new(:op<islist>, $_apply1-f),
                     QAST::Op.new(:op<bind>, $_apply1-f,
-                        mkHashLookup($_apply1-f, :key<code>)
+                        mkListLookup($_apply1-f, :index(0))
                     ),
                     QAST::Op.new(:op<unless>,
                         QAST::Op.new(:op<isinvokable>, $_apply1-f),
@@ -205,14 +215,19 @@ class LActions is HLL::Actions {
                 )
             ))
         ));
-        
-        $block;
+
+        return $block;
     }
 
     method TOP($/) {
         my $outVar := locVar('out');
         my $s := mkSetting();
+        
+        $s[0].push(QAST::Op.new(:op<say>, mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")));
+        #$s[0].push(QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)));
+        
         $s[0].push(mkCall($_strOut, $/<termlist1orMore>.ast));
+        
         make $s;
     }
 
@@ -278,20 +293,20 @@ class LActions is HLL::Actions {
     }
 
     method abstraction($/) {
-        my $binder := QAST::Var.new(:name($/<varName>), :scope('lexical'), :decl('param'));
+        my $binder := lexVar(~$/<varName>).declP;
         my $body   := $/<body>.ast;
 
         my $block := QAST::Block.new(:node($/), $binder, $body);
 
-        my $hash := QAST::Op.new(:op<hash>,
-            QAST::SVal.new(:value<code>),   $block,
-            QAST::SVal.new(:value<lambda>), QAST::SVal.new(:value(~$/)), 
-            #QAST::SVal.new(:value<qast>),   QAST::WVal.new(:value($block)),
+        my $lam := QAST::Op.new(:op<list>,
+            $block,
+            QAST::SVal.new(:value(~$/)),
         );
         
-        $hash.annotate('λ', 1);
-
-        make $hash;
+        $lam.annotate('id', 'λ' ~ $!lamCount);
+        $!lamCount++;
+        
+        make $lam;
     }
 }
 
@@ -322,6 +337,6 @@ sub MAIN(*@ARGS) {
     my $c := LCompiler.new();
     $c.language('lambda');
     $c.parsegrammar(LGrammar);
-    $c.parseactions(LActions);
+    $c.parseactions(LActions.new);
     $c.command_line(@ARGS, :encoding('utf8'));
 }
