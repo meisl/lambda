@@ -2,57 +2,65 @@
 - QAST::Block
   - QAST::Stmts
     - QAST::Op(bind)
-      - QAST::Var(lexical .ifLambda :decl(var))
+      - QAST::Var(lexical .ifTag :decl(var))
       - QAST::Block
         - QAST::Stmts
-          - QAST::Var(lexical c :decl(param))
+          - QAST::Var(lexical s :decl(param))
+          - QAST::Var(lexical x :decl(param))
           - QAST::Var(lexical t :decl(param))
           - QAST::Var(lexical e :decl(param))
           - QAST::Op(call)
             - QAST::Op(if)
               - QAST::Op(islist)
-                - QAST::Var+{Var}(lexical c :decl())
+                - QAST::Var+{Var}(lexical s :decl())
               - QAST::Op(if)
                 - QAST::Op(iseq_s)
-                  - QAST::SVal(λ)
+                  - QAST::Var+{Var}(lexical x :decl())
                   - QAST::Op(atpos)
-                    - QAST::Var+{Var}(lexical c :decl())
+                    - QAST::Var+{Var}(lexical s :decl())
                     - QAST::IVal(0)
                 - QAST::Var+{Var}(lexical t :decl())
                 - QAST::Var+{Var}(lexical e :decl())
               - QAST::Var+{Var}(lexical e :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical .lambda->code :decl(var))
+      - QAST::Var(lexical .->#n :decl(var))
       - QAST::Block
         - QAST::Stmts
-          - QAST::Var(lexical l :decl(param))
+          - QAST::Var(lexical s :decl(param))
+          - QAST::Var(lexical t :decl(param))
+          - QAST::Var(lexical i :decl(param))
           - QAST::Op(call)
-            - QAST::Var+{Var}(lexical .ifLambda :decl())
-            - QAST::Var+{Var}(lexical l :decl())
+            - QAST::Var+{Var}(lexical .ifTag :decl())
+            - QAST::Var+{Var}(lexical s :decl())
+            - QAST::Var+{Var}(lexical t :decl())
             - QAST::Block
               - QAST::Stmt
                 - QAST::Op(atpos)
-                  - QAST::Var+{Var}(lexical l :decl())
-                  - QAST::IVal(1)
+                  - QAST::Var+{Var}(lexical s :decl())
+                  - QAST::Var+{Var}(lexical i :decl())
             - QAST::Block
               - QAST::Stmt
                 - QAST::Op(null)
     - QAST::Op(bind)
+      - QAST::Var(lexical .lambda->code :decl(var))
+      - QAST::Block
+        - QAST::Stmts
+          - QAST::Var(lexical s :decl(param))
+          - QAST::Op(call)
+            - QAST::Var+{Var}(lexical .->#n :decl())
+            - QAST::Var+{Var}(lexical s :decl())
+            - QAST::SVal(λ)
+            - QAST::IVal(1)
+    - QAST::Op(bind)
       - QAST::Var(lexical .lambda->str :decl(var))
       - QAST::Block
         - QAST::Stmts
-          - QAST::Var(lexical l :decl(param))
+          - QAST::Var(lexical s :decl(param))
           - QAST::Op(call)
-            - QAST::Var+{Var}(lexical .ifLambda :decl())
-            - QAST::Var+{Var}(lexical l :decl())
-            - QAST::Block
-              - QAST::Stmt
-                - QAST::Op(atpos)
-                  - QAST::Var+{Var}(lexical l :decl())
-                  - QAST::IVal(2)
-            - QAST::Block
-              - QAST::Stmt
-                - QAST::Op(null)
+            - QAST::Var+{Var}(lexical .->#n :decl())
+            - QAST::Var+{Var}(lexical s :decl())
+            - QAST::SVal(λ)
+            - QAST::IVal(2)
     - QAST::Op(bind)
       - QAST::Var(lexical .strOut :decl(var))
       - QAST::Block
@@ -149,4 +157,4 @@
             - QAST::SVal(λy.\"qumbl\"\n)
 
 
-Output completed (1 sec consumed) - Normal Termination
+Output completed (2 sec consumed) - Normal Termination

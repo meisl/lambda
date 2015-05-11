@@ -90,23 +90,38 @@ class LActions is HLL::Actions {
         $out;
     }
 
+    my sub asNode($v) {
+        if nqp::isstr($v) {
+            QAST::SVal.new(:value($v));
+        } elsif nqp::isint($v) {
+            QAST::IVal.new(:value($v));
+        } elsif nqp::isnum($v) {
+            QAST::NVal.new(:value($v));
+        } elsif nqp::istype($v, QAST::Node) {
+            $v;
+        } else {
+            die("cannot turn " ~ $v ~ " into a QAST::Node");
+        }
+    }
+
     my sub mkCall($fVar, *@args) {
         my $out := QAST::Op.new(:op<call>, $fVar);
         for @args {
-            $out.push($_);
+            $out.push(asNode($_));
         }
         return $out;
     }
 
     my sub mkSCall(str $fnName, *@args) {
-        if $fnName eq '.ifLambda' {
+        if $fnName eq '.ifTag' {
             my @as := [];
-            @as.push(@args.shift);
+            @as.push(asNode(@args.shift));
+            @as.push(asNode(@args.shift));
             for @args {
                 if nqp::istype($_, QAST::Block) && ($_.arity == 0) {
                     @as.push($_);
                 } else {
-                    @as.push(QAST::Block.new(:arity(0), QAST::Stmt.new($_)));
+                    @as.push(QAST::Block.new(:arity(0), QAST::Stmt.new(asNode($_))));
                 }
             };
             mkCall(lexVar($fnName), |@as);
@@ -115,18 +130,20 @@ class LActions is HLL::Actions {
         }
     }
 
-    my sub mkHashLookup($hash, str :$key!) {
-        QAST::Op.new(:op<atkey>,
-            $hash,
-            QAST::SVal.new(:value($key)),
-        )
+    my sub mkHashLookup($hash, :$key!) {
+        if nqp::isstr($key) || nqp::istype($key, QAST::Node) {
+            QAST::Op.new( :op<atkey>, $hash, asNode($key) );
+        } else {
+            die("need str or QAST::SVal as key");
+        }
     }
 
-    my sub mkListLookup($list, int :$index!) {
-        QAST::Op.new(:op<atpos>,
-            $list,
-            QAST::IVal.new(:value($index)),
-        )
+    my sub mkListLookup($list, :$index!) {
+        if nqp::isint($index) || nqp::istype($index, QAST::Node) {
+            QAST::Op.new( :op<atpos>, $list, asNode($index) );
+        } else {
+            die("need int or QAST::IVal as index");
+        }
     }
 
     my sub mkConcat(*@args) {
@@ -136,7 +153,7 @@ class LActions is HLL::Actions {
         my @nodes := [];
         for @args { # map any str to an SVal
             if nqp::isstr($_) {
-                nqp::push(@nodes, QAST::SVal.new(:value($_)));
+                nqp::push(@nodes, asNode($_));
             } else {
                 #say('###' ~ $_.dump);
                 nqp::push(@nodes, $_);
@@ -166,7 +183,7 @@ class LActions is HLL::Actions {
     }
 
     my sub mkDie(*@msgPieces) {
-        QAST::Op.new(:op<die>, mkConcat("ERROR: ", |@msgPieces));
+        QAST::Op.new(:op<die>, mkConcat('ERROR: ', |@msgPieces));
     }
 
     has $!lamCount;
@@ -175,50 +192,61 @@ class LActions is HLL::Actions {
         my $init := QAST::Stmts.new();
         my $block := QAST::Block.new($init);
         
-        my $_ifLambda-c := lexVar('c');
-        my $_ifLambda-t := lexVar('t');
-        my $_ifLambda-e := lexVar('e');
-        $init.push(QAST::Op.new(:op<bind>, lexVar('.ifLambda').declV,
-            QAST::Block.new(:arity(3), QAST::Stmts.new(
-                $_ifLambda-c.declP,
-                $_ifLambda-t.declP,
-                $_ifLambda-e.declP,
+        my $_ifTag-s := lexVar('s');    # "subject"
+        my $_ifTag-x := lexVar('x');
+        my $_ifTag-t := lexVar('t');
+        my $_ifTag-e := lexVar('e');
+        $init.push(QAST::Op.new(:op<bind>, lexVar('.ifTag').declV,
+            QAST::Block.new(:arity(4), QAST::Stmts.new(
+                $_ifTag-s.declP,
+                $_ifTag-x.declP,
+                $_ifTag-t.declP,
+                $_ifTag-e.declP,
                 mkCall( # expects 0-arity block as "then" and "else" args (taken care of by mkSCall)
                     QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<islist>, $_ifLambda-c),
+                        QAST::Op.new(:op<islist>, $_ifTag-s),
                         QAST::Op.new(:op<if>,
                             QAST::Op.new(:op<iseq_s>,
-                                QAST::SVal.new(:value('λ')),
-                                mkListLookup($_ifLambda-c, :index(0)),
+                                $_ifTag-x,
+                                mkListLookup($_ifTag-s, :index(0)),
                             ),
-                            $_ifLambda-t,
-                            $_ifLambda-e
+                            $_ifTag-t,
+                            $_ifTag-e
                         ),
-                        $_ifLambda-e
+                        $_ifTag-e
                     )
                 )
             ))
         ));
 
-        my $_lambda2code-l := lexVar('l');
-        $init.push(QAST::Op.new(:op<bind>, lexVar('.lambda->code').declV,
+        my $_project-s := lexVar('s');  # "subject"
+        my $_project-t := lexVar('t');  # "tag"
+        my $_project-i := lexVar('i');  # "index"
+        $init.push(QAST::Op.new(:op<bind>, lexVar('.->#n').declV,
             QAST::Block.new(:arity(1), QAST::Stmts.new(
-                $_lambda2code-l.declP,
-                mkSCall('.ifLambda', $_lambda2code-l,
-                    mkListLookup($_lambda2code-l, :index(1)),
+                $_project-s.declP,
+                $_project-t.declP,
+                $_project-i.declP,
+                mkSCall('.ifTag', $_project-s, $_project-t,
+                    mkListLookup($_project-s, :index($_project-i)),
                     QAST::Op.new(:op<null>)
                 )
             ))
         ));
 
-        my $_lambda2str-l := lexVar('l');
+        my $_lambda2code-s := lexVar('s');  # "subject"
+        $init.push(QAST::Op.new(:op<bind>, lexVar('.lambda->code').declV,
+            QAST::Block.new(:arity(1), QAST::Stmts.new(
+                $_lambda2code-s.declP,
+                mkSCall('.->#n', $_lambda2code-s, 'λ', 1)
+            ))
+        ));
+
+        my $_lambda2str-s := lexVar('s');  # "subject"
         $init.push(QAST::Op.new(:op<bind>, lexVar('.lambda->str').declV,
             QAST::Block.new(:arity(1), QAST::Stmts.new(
-                $_lambda2str-l.declP,
-                mkSCall('.ifLambda', $_lambda2str-l,
-                    mkListLookup($_lambda2str-l, :index(2)),
-                    QAST::Op.new(:op<null>)
-                )
+                $_lambda2str-s.declP,
+                mkSCall('.->#n', $_lambda2str-s, 'λ', 2)
             ))
         ));
 
