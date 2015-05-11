@@ -73,21 +73,35 @@ class LActions is HLL::Actions {
 
     my role Var {
         method declV() {
-            QAST::Var.new(:name(self.name), :scope(self.scope), :decl<var>);
+            my $out := nqp::clone(self);
+            $out.decl('var');
+            $out;
         }
         method declP() {
-            QAST::Var.new(:name(self.name), :scope(self.scope), :decl<param>);
+            my $out := nqp::clone(self);
+            $out.decl('param');
+            $out;
         }
     }
 
-    my sub locVar(str $name) {
-        my $out := QAST::Var.new(:$name, :scope<local>);
+    my sub locVar(str $name, *%adverbs) {
+        my $out := QAST::VarWithFallback.new(
+            :name($name),
+            :scope<local>,
+            :fallback(mkDie('tried to evaluate unbound local var ', $name)),
+            |%adverbs
+        );
         $out.HOW.mixin($out, Var);
         $out;
     }
 
-    my sub lexVar(str $name) {
-        my $out := QAST::Var.new(:$name, :scope<lexical>);
+    my sub lexVar(str $name, *%adverbs) {
+        my $out := QAST::VarWithFallback.new(
+            :name($name),
+            :scope<lexical>,
+            :fallback(mkDie('tried to evaluate unbound var ', $name)),
+            |%adverbs
+        );
         $out.HOW.mixin($out, Var);
         $out;
     }
@@ -352,12 +366,7 @@ class LActions is HLL::Actions {
 
     method variable($/) {
         my str $name := ~$/;
-        my $var := QAST::VarWithFallback.new(
-            :$name,
-            :scope('lexical'),
-            :node($/),
-            :fallback(mkDie('tried to evaluate unbound var ', $name))
-        );
+        my $var := lexVar($name, :node($/));
         make $var;
     }
 
