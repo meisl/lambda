@@ -40,17 +40,14 @@
           - QAST::Op(if)
             - QAST::Op(ishash)
               - QAST::Var+{Var}(lexical f :decl())
-            - QAST::Op(call)
+            - QAST::Op(bind)
+              - QAST::Var+{Var}(lexical f :decl())
               - QAST::Op(atkey)
                 - QAST::Var+{Var}(lexical f :decl())
                 - QAST::SVal(code)
-              - QAST::Var+{Var}(lexical a1 :decl())
-            - QAST::Op(if)
+            - QAST::Op(unless)
               - QAST::Op(isinvokable)
                 - QAST::Var+{Var}(lexical f :decl())
-              - QAST::Op(call)
-                - QAST::Var+{Var}(lexical f :decl())
-                - QAST::Var+{Var}(lexical a1 :decl())
               - QAST::Op(die)
                 - QAST::Op(concat)
                   - QAST::Op(concat)
@@ -63,6 +60,9 @@
                   - QAST::Op(call)
                     - QAST::Var+{Var}(lexical .strOut :decl())
                     - QAST::Var+{Var}(lexical a1 :decl())
+          - QAST::Op(call)
+            - QAST::Var+{Var}(lexical f :decl())
+            - QAST::Var+{Var}(lexical a1 :decl())
     - QAST::Op(call)
       - QAST::Var+{Var}(lexical .strOut :decl())
       - QAST::Stmts (λx.λ_.λy.x) \"fo\\noö\" \"bar\" \"baz\" λy.\"qumb...
@@ -100,4 +100,4 @@
             - QAST::SVal(λy.\"qumbl\"\n)
 
 
-Output completed (1 sec consumed) - Normal Termination
+Output completed (0 sec consumed) - Normal Termination

@@ -183,26 +183,25 @@ class LActions is HLL::Actions {
             ))
         ));
         
-        my $_apply1-p1 := lexVar('f');
-        my $_apply1-p2 := lexVar('a1');
+        my $_apply1-f  := lexVar('f');
+        my $_apply1-a1 := lexVar('a1');
         $block[0].push(QAST::Op.new(:op<bind>, $_apply1.declV,
             QAST::Block.new(:arity(2), QAST::Stmts.new(
-                $_apply1-p1.declP,
-                $_apply1-p2.declP,
+                $_apply1-f.declP,
+                $_apply1-a1.declP,
                 QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<ishash>, $_apply1-p1),
-                    QAST::Op.new(:op('call'),
-                        mkHashLookup($_apply1-p1, :key<code>),
-                        $_apply1-p2
+                    QAST::Op.new(:op<ishash>, $_apply1-f),
+                    QAST::Op.new(:op<bind>, $_apply1-f,
+                        mkHashLookup($_apply1-f, :key<code>)
                     ),
-                    QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<isinvokable>, $_apply1-p1),
-                        QAST::Op.new(:op('call'),
-                            $_apply1-p1,
-                            $_apply1-p2
-                        ),
-                        mkDie('cannot apply ', mkCall($_strLit, $_apply1-p1), ' to ', mkCall($_strOut, $_apply1-p2)),
+                    QAST::Op.new(:op<unless>,
+                        QAST::Op.new(:op<isinvokable>, $_apply1-f),
+                        mkDie('cannot apply ', mkCall($_strLit, $_apply1-f), ' to ', mkCall($_strOut, $_apply1-a1))
                     )
+                ),
+                QAST::Op.new(:op<call>,
+                    $_apply1-f,
+                    $_apply1-a1
                 )
             ))
         ));
