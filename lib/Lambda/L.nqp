@@ -118,25 +118,36 @@ class LActions is HLL::Actions {
         $out;
     }
 
-    my $_stringify := lexVar('.stringify');
+    my sub mkCall($fVar, *@args) {
+        if nqp::istype($fVar, QAST::Var) {
+            my $out := QAST::Op.new(:op<call>, $fVar);
+            for @args {
+                $out.push($_);
+            }
+            return $out;
+        }
+        nqp::die("invalid invocant " ~ $fVar.dump());
+    }
+
+    my $_strOut := lexVar('.strOut');
 
     my sub mkSetting() {
         my $block := QAST::Block.new(QAST::Stmts.new());
         
-        my $_stringify-p1 := lexVar('v');
-        $block[0].push(QAST::Op.new(:op<bind>, $_stringify.declV,
+        my $_strOut-p1 := lexVar('v');
+        $block[0].push(QAST::Op.new(:op<bind>, $_strOut.declV,
             QAST::Block.new(:arity(1), QAST::Stmts.new(
-                $_stringify-p1.declP,
+                $_strOut-p1.declP,
                 QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<isstr>, $_stringify-p1),
-                    mkQuoted($_stringify-p1),
+                    QAST::Op.new(:op<isstr>, $_strOut-p1),
+                    mkQuoted($_strOut-p1),
                     QAST::Op.new(:op<if>,
                         QAST::Op.new(:op<ishash>,
-                            $_stringify-p1
+                            $_strOut-p1
                         ),
-                        mkHashLookup($_stringify-p1, :key<lambda>),
+                        mkHashLookup($_strOut-p1, :key<lambda>),
                         QAST::Op.new(:op<reprname>,
-                            $_stringify-p1
+                            $_strOut-p1
                         )
                     )
                 )
@@ -149,9 +160,7 @@ class LActions is HLL::Actions {
     method TOP($/) {
         my $outVar := locVar('out');
         my $s := mkSetting();
-        $s[0].push(QAST::Op.new(:op<call>, $_stringify,
-            $/<termlist1orMore>.ast
-        ));
+        $s[0].push(mkCall($_strOut, $/<termlist1orMore>.ast));
         make $s;
     }
 
