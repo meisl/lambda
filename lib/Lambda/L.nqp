@@ -111,27 +111,6 @@ class LActions is HLL::Actions {
     my $_strOut := lexVar('.strOut');
     my $_strLit := lexVar('.strLit');
 
-    my sub mkQuoted($strNode) {
-        #say("###mkQuoted " ~ $strNode.dump());
-        if nqp::istype($strNode, QAST::SVal) {
-            if $strNode.has_ann('quoted') {
-                QAST::SVal(:value('"' ~ $strNode.ann('quoted')));
-            } else {
-                nqp::die("annotation 'quoted' not found on " ~ $strNode.dump());
-            }
-        } elsif nqp::istype($strNode, QAST::Node) {
-            QAST::Op.new(:op<concat>,
-                QAST::Op.new(:op<concat>,
-                    QAST::SVal.new(:value('"')),
-                    QAST::Op.new(:op<escape>, $strNode)
-                ),
-                QAST::SVal.new(:value('"')),
-            )
-        } else {
-            nqp::die("fuck");
-        }
-    }
-
     my sub mkSetting() {
         my $block := QAST::Block.new(QAST::Stmts.new());
         
