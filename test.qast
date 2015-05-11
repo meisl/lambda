@@ -42,26 +42,6 @@
               - QAST::Stmt
                 - QAST::Op(null)
     - QAST::Op(bind)
-      - QAST::Var(lexical .lambda->code :decl(var))
-      - QAST::Block
-        - QAST::Stmts
-          - QAST::Var(lexical s :decl(param))
-          - QAST::Op(call)
-            - QAST::Var+{Var}(lexical .->#n :decl())
-            - QAST::Var+{Var}(lexical s :decl())
-            - QAST::SVal(λ)
-            - QAST::IVal(1)
-    - QAST::Op(bind)
-      - QAST::Var(lexical .lambda->str :decl(var))
-      - QAST::Block
-        - QAST::Stmts
-          - QAST::Var(lexical s :decl(param))
-          - QAST::Op(call)
-            - QAST::Var+{Var}(lexical .->#n :decl())
-            - QAST::Var+{Var}(lexical s :decl())
-            - QAST::SVal(λ)
-            - QAST::IVal(2)
-    - QAST::Op(bind)
       - QAST::Var(lexical .strOut :decl(var))
       - QAST::Block
         - QAST::Stmts
@@ -74,8 +54,10 @@
               - QAST::Var+{Var}(lexical v :decl())
             - QAST::Op(defor)
               - QAST::Op(call)
-                - QAST::Var+{Var}(lexical .lambda->str :decl())
+                - QAST::Var+{Var}(lexical .->#n :decl())
                 - QAST::Var+{Var}(lexical v :decl())
+                - QAST::SVal(λ)
+                - QAST::IVal(2)
               - QAST::Op(reprname)
                 - QAST::Var+{Var}(lexical v :decl())
     - QAST::Op(bind)
@@ -98,8 +80,10 @@
           - QAST::Op(call)
             - QAST::Op(defor)
               - QAST::Op(call)
-                - QAST::Var+{Var}(lexical .lambda->code :decl())
+                - QAST::Var+{Var}(lexical .->#n :decl())
                 - QAST::Var+{Var}(lexical f :decl())
+                - QAST::SVal(λ)
+                - QAST::IVal(1)
               - QAST::Op(if)
                 - QAST::Op(isinvokable)
                   - QAST::Var+{Var}(lexical f :decl())
@@ -157,4 +141,4 @@
             - QAST::SVal(λy.\"qumbl\"\n)
 
 
-Output completed (2 sec consumed) - Normal Termination
+Output completed (1 sec consumed) - Normal Termination

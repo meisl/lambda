@@ -186,6 +186,14 @@ class LActions is HLL::Actions {
         QAST::Op.new(:op<die>, mkConcat('ERROR: ', |@msgPieces));
     }
 
+    my sub mkLambda2code($subject) {
+        mkSCall('.->#n', $subject, 'λ', 1);
+    }
+
+    my sub mkLambda2str($subject) {
+        mkSCall('.->#n', $subject, 'λ', 2);
+    }
+
     has $!lamCount;
 
     my sub mkSetting() {
@@ -234,22 +242,6 @@ class LActions is HLL::Actions {
             ))
         ));
 
-        my $_lambda2code-s := lexVar('s');  # "subject"
-        $init.push(QAST::Op.new(:op<bind>, lexVar('.lambda->code').declV,
-            QAST::Block.new(:arity(1), QAST::Stmts.new(
-                $_lambda2code-s.declP,
-                mkSCall('.->#n', $_lambda2code-s, 'λ', 1)
-            ))
-        ));
-
-        my $_lambda2str-s := lexVar('s');  # "subject"
-        $init.push(QAST::Op.new(:op<bind>, lexVar('.lambda->str').declV,
-            QAST::Block.new(:arity(1), QAST::Stmts.new(
-                $_lambda2str-s.declP,
-                mkSCall('.->#n', $_lambda2str-s, 'λ', 2)
-            ))
-        ));
-
         my $_strOut-p1 := lexVar('v');
         $init.push(QAST::Op.new(:op<bind>, lexVar('.strOut').declV,
             QAST::Block.new(:arity(1), QAST::Stmts.new(
@@ -258,7 +250,7 @@ class LActions is HLL::Actions {
                     QAST::Op.new(:op<isstr>, $_strOut-p1),
                     mkSCall('.strLit', $_strOut-p1),
                     QAST::Op.new(:op<defor>,
-                        mkSCall('.lambda->str', $_strOut-p1),
+                        mkLambda2str($_strOut-p1),
                         QAST::Op.new(:op<reprname>,
                             $_strOut-p1
                         )
@@ -283,7 +275,7 @@ class LActions is HLL::Actions {
                 $_apply1-a1.declP,
                 QAST::Op.new(:op<call>,
                     QAST::Op.new(:op<defor>,
-                        mkSCall('.lambda->code', $_apply1-f),
+                        mkLambda2code($_apply1-f),
                         QAST::Op.new(:op<if>,
                             QAST::Op.new(:op<isinvokable>, $_apply1-f),
                             $_apply1-f,
