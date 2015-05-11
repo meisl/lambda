@@ -200,6 +200,28 @@ class LActions is HLL::Actions {
             ))
         ));
 
+        my $_lambda2code-l := lexVar('l');
+        $init.push(QAST::Op.new(:op<bind>, lexVar('.lambda->code').declV,
+            QAST::Block.new(:arity(1), QAST::Stmts.new(
+                $_lambda2code-l.declP,
+                mkSCall('.ifLambda', $_lambda2code-l,
+                    mkListLookup($_lambda2code-l, :index(1)),
+                    QAST::Op.new(:op<null>)
+                )
+            ))
+        ));
+
+        my $_lambda2str-l := lexVar('l');
+        $init.push(QAST::Op.new(:op<bind>, lexVar('.lambda->str').declV,
+            QAST::Block.new(:arity(1), QAST::Stmts.new(
+                $_lambda2str-l.declP,
+                mkSCall('.ifLambda', $_lambda2str-l,
+                    mkListLookup($_lambda2str-l, :index(2)),
+                    QAST::Op.new(:op<null>)
+                )
+            ))
+        ));
+
         my $_strOut-p1 := lexVar('v');
         $init.push(QAST::Op.new(:op<bind>, lexVar('.strOut').declV,
             QAST::Block.new(:arity(1), QAST::Stmts.new(
@@ -207,8 +229,8 @@ class LActions is HLL::Actions {
                 QAST::Op.new(:op<if>,
                     QAST::Op.new(:op<isstr>, $_strOut-p1),
                     mkSCall('.strLit', $_strOut-p1),
-                    mkSCall('.ifLambda', $_strOut-p1,
-                        mkListLookup($_strOut-p1, :index(2)),
+                    QAST::Op.new(:op<defor>,
+                        mkSCall('.lambda->str', $_strOut-p1),
                         QAST::Op.new(:op<reprname>,
                             $_strOut-p1
                         )
@@ -231,17 +253,15 @@ class LActions is HLL::Actions {
             QAST::Block.new(:arity(2), QAST::Stmts.new(
                 $_apply1-f.declP,
                 $_apply1-a1.declP,
-                mkSCall('.ifLambda', $_apply1-f,
-                    QAST::Op.new(:op<bind>, $_apply1-f,
-                        mkListLookup($_apply1-f, :index(1))
-                    ),
-                    QAST::Op.new(:op<unless>,
-                        QAST::Op.new(:op<isinvokable>, $_apply1-f),
-                        mkDie('cannot apply ', mkSCall('.strLit', $_apply1-f), ' to ', mkSCall('.strOut', $_apply1-a1))
-                    )
-                ),
                 QAST::Op.new(:op<call>,
-                    $_apply1-f,
+                    QAST::Op.new(:op<defor>,
+                        mkSCall('.lambda->code', $_apply1-f),
+                        QAST::Op.new(:op<if>,
+                            QAST::Op.new(:op<isinvokable>, $_apply1-f),
+                            $_apply1-f,
+                            mkDie('cannot apply ', mkSCall('.strLit', $_apply1-f), ' to ', mkSCall('.strOut', $_apply1-a1))
+                        )
+                    ),
                     $_apply1-a1
                 )
             ))

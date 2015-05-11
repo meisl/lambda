@@ -22,6 +22,38 @@
                 - QAST::Var+{Var}(lexical e :decl())
               - QAST::Var+{Var}(lexical e :decl())
     - QAST::Op(bind)
+      - QAST::Var(lexical .lambda->code :decl(var))
+      - QAST::Block
+        - QAST::Stmts
+          - QAST::Var(lexical l :decl(param))
+          - QAST::Op(call)
+            - QAST::Var+{Var}(lexical .ifLambda :decl())
+            - QAST::Var+{Var}(lexical l :decl())
+            - QAST::Block
+              - QAST::Stmt
+                - QAST::Op(atpos)
+                  - QAST::Var+{Var}(lexical l :decl())
+                  - QAST::IVal(1)
+            - QAST::Block
+              - QAST::Stmt
+                - QAST::Op(null)
+    - QAST::Op(bind)
+      - QAST::Var(lexical .lambda->str :decl(var))
+      - QAST::Block
+        - QAST::Stmts
+          - QAST::Var(lexical l :decl(param))
+          - QAST::Op(call)
+            - QAST::Var+{Var}(lexical .ifLambda :decl())
+            - QAST::Var+{Var}(lexical l :decl())
+            - QAST::Block
+              - QAST::Stmt
+                - QAST::Op(atpos)
+                  - QAST::Var+{Var}(lexical l :decl())
+                  - QAST::IVal(2)
+            - QAST::Block
+              - QAST::Stmt
+                - QAST::Op(null)
+    - QAST::Op(bind)
       - QAST::Var(lexical .strOut :decl(var))
       - QAST::Block
         - QAST::Stmts
@@ -32,18 +64,12 @@
             - QAST::Op(call)
               - QAST::Var+{Var}(lexical .strLit :decl())
               - QAST::Var+{Var}(lexical v :decl())
-            - QAST::Op(call)
-              - QAST::Var+{Var}(lexical .ifLambda :decl())
-              - QAST::Var+{Var}(lexical v :decl())
-              - QAST::Block
-                - QAST::Stmt
-                  - QAST::Op(atpos)
-                    - QAST::Var+{Var}(lexical v :decl())
-                    - QAST::IVal(2)
-              - QAST::Block
-                - QAST::Stmt
-                  - QAST::Op(reprname)
-                    - QAST::Var+{Var}(lexical v :decl())
+            - QAST::Op(defor)
+              - QAST::Op(call)
+                - QAST::Var+{Var}(lexical .lambda->str :decl())
+                - QAST::Var+{Var}(lexical v :decl())
+              - QAST::Op(reprname)
+                - QAST::Var+{Var}(lexical v :decl())
     - QAST::Op(bind)
       - QAST::Var(lexical .strLit :decl(var))
       - QAST::Block
@@ -62,34 +88,26 @@
           - QAST::Var(lexical f :decl(param))
           - QAST::Var(lexical a1 :decl(param))
           - QAST::Op(call)
-            - QAST::Var+{Var}(lexical .ifLambda :decl())
-            - QAST::Var+{Var}(lexical f :decl())
-            - QAST::Block
-              - QAST::Stmt
-                - QAST::Op(bind)
+            - QAST::Op(defor)
+              - QAST::Op(call)
+                - QAST::Var+{Var}(lexical .lambda->code :decl())
+                - QAST::Var+{Var}(lexical f :decl())
+              - QAST::Op(if)
+                - QAST::Op(isinvokable)
                   - QAST::Var+{Var}(lexical f :decl())
-                  - QAST::Op(atpos)
-                    - QAST::Var+{Var}(lexical f :decl())
-                    - QAST::IVal(1)
-            - QAST::Block
-              - QAST::Stmt
-                - QAST::Op(unless)
-                  - QAST::Op(isinvokable)
-                    - QAST::Var+{Var}(lexical f :decl())
-                  - QAST::Op(die)
+                - QAST::Var+{Var}(lexical f :decl())
+                - QAST::Op(die)
+                  - QAST::Op(concat)
                     - QAST::Op(concat)
                       - QAST::Op(concat)
-                        - QAST::Op(concat)
-                          - QAST::SVal(ERROR: cannot apply )
-                          - QAST::Op(call)
-                            - QAST::Var+{Var}(lexical .strLit :decl())
-                            - QAST::Var+{Var}(lexical f :decl())
-                        - QAST::SVal( to )
-                      - QAST::Op(call)
-                        - QAST::Var+{Var}(lexical .strOut :decl())
-                        - QAST::Var+{Var}(lexical a1 :decl())
-          - QAST::Op(call)
-            - QAST::Var+{Var}(lexical f :decl())
+                        - QAST::SVal(ERROR: cannot apply )
+                        - QAST::Op(call)
+                          - QAST::Var+{Var}(lexical .strLit :decl())
+                          - QAST::Var+{Var}(lexical f :decl())
+                      - QAST::SVal( to )
+                    - QAST::Op(call)
+                      - QAST::Var+{Var}(lexical .strOut :decl())
+                      - QAST::Var+{Var}(lexical a1 :decl())
             - QAST::Var+{Var}(lexical a1 :decl())
     - QAST::Op(say)
       - QAST::SVal(4 lambdas\n------------------------------------------------)
