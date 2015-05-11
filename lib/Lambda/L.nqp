@@ -112,8 +112,8 @@ class LActions is HLL::Actions {
     my $_strLit := lexVar('.strLit');
 
     my sub mkConcat(*@args) {
-        if nqp::elems(@args) < 2 {
-            nqp::die("need at least 2 args for mkConcat");
+        if nqp::elems(@args) < 1 {
+            nqp::die("need at least 1 arg for mkConcat");
         }
         my @nodes := [];
         for @args { # map any str to an SVal
@@ -145,6 +145,10 @@ class LActions is HLL::Actions {
         }
 
         return $current;
+    }
+
+    my sub mkDie(*@msgPieces) {
+        QAST::Op.new(:op<die>, mkConcat("ERROR: ", |@msgPieces));
     }
 
     my sub mkSetting() {
@@ -216,9 +220,7 @@ class LActions is HLL::Actions {
                         mkHashLookup($subject, :key<code>),
                         $a
                     ),
-                    QAST::Op.new(:op<die>,
-                        mkConcat('cannot apply ', mkCall($_strLit, $subject), ' to ', mkCall($_strOut, $a))
-                    )
+                    mkDie('cannot apply ', mkCall($_strLit, $subject), ' to ', mkCall($_strOut, $a))
                 )
             )
         ))
