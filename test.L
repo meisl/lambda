@@ -1,1 +1,1 @@
-(λx.λ_.λy.x) "fo\noö" "bar" "baz" λy."qumbl"
+(λx.λ_.x (y λy.x y z)) "fo\noö" "bar" "baz" λy."qumbl"

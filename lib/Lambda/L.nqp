@@ -5,6 +5,7 @@ use NQPHLL;
 grammar LGrammar is HLL::Grammar {
 
     rule TOP {
+        :my %*FV := nqp::hash();
         ^ <termlist1orMore> $
     }
 
@@ -39,6 +40,7 @@ grammar LGrammar is HLL::Grammar {
 
     token variable {
         <varName>
+        { %*FV{$<varName>} := 1 }
     }
 
     token symbol {
@@ -290,7 +292,17 @@ class LActions is HLL::Actions {
         return $block;
     }
 
+    my sub reportFV(str $where, $match) {
+        say(nqp::elems(%*FV), " FVs in $where @ ", '"', nqp::escape($match), '"');
+        for %*FV {
+            say('    ', nqp::iterkey_s($_), ' => ', nqp::iterval($_));
+        }
+        
+    
+    }
+
     method TOP($/) {
+        reportFV("TOP", $/);
         my $outVar := locVar('out');
         my $s := mkSetting();
         
@@ -303,6 +315,7 @@ class LActions is HLL::Actions {
     }
 
     method termlist1orMore($/) {
+        reportFV("termlist1orMore", $/);
         if nqp::elems($/<term>) == 1 {
 #            say('####termlist1orMore: ' ~ ~$/<term>[0]);
             make $/<term>[0].ast;
@@ -321,6 +334,7 @@ class LActions is HLL::Actions {
     }
 
     method termlist2orMore($/) {
+        reportFV("termlist1orMore", $/);
         my $f := $/<term>.shift.ast;
         my $a := $/<term>.shift.ast;
         my $app := mkApp($f, $a);
@@ -332,11 +346,18 @@ class LActions is HLL::Actions {
     }
 
     method term($/) {
+        reportFV("term", $/);
         make $/<t>.ast;
     }
 
     method variable($/) {
-        my $var := QAST::Var.new(:name($/), :scope('lexical'), :node($/));
+        my str $name := ~$/;
+        my $var := QAST::VarWithFallback.new(
+            :$name,
+            :scope('lexical'),
+            :node($/),
+            :fallback(mkDie('tried to evaluate unbound var ', $name))
+        );
         make $var;
     }
 
