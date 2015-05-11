@@ -69,34 +69,6 @@ grammar LGrammar is HLL::Grammar {
 
 class LActions is HLL::Actions {
 
-    my sub mkHashLookup($hash, str :$key!) {
-        QAST::Op.new(:op<atkey>,
-            $hash,
-            QAST::SVal.new(:value($key)),
-        )
-    }
-
-    my sub mkQuoted($strNode) {
-        #say("###mkQuoted " ~ $strNode.dump());
-        if nqp::istype($strNode, QAST::SVal) {
-            if $strNode.has_ann('quoted') {
-                QAST::SVal(:value('"' ~ $strNode.ann('quoted')));
-            } else {
-                nqp::die("annotation 'quoted' not found on " ~ $strNode.dump());
-            }
-        } elsif nqp::istype($strNode, QAST::Node) {
-            QAST::Op.new(:op<concat>,
-                QAST::Op.new(:op<concat>,
-                    QAST::SVal.new(:value('"')),
-                    QAST::Op.new(:op<escape>, $strNode)
-                ),
-                QAST::SVal.new(:value('"')),
-            )
-        } else {
-            nqp::die("fuck");
-        }
-    }
-
     my role Var {
         method declV() {
             QAST::Var.new(:name(self.name), :scope(self.scope), :decl<var>);
@@ -129,7 +101,36 @@ class LActions is HLL::Actions {
         nqp::die("invalid invocant " ~ $fVar.dump());
     }
 
+    my sub mkHashLookup($hash, str :$key!) {
+        QAST::Op.new(:op<atkey>,
+            $hash,
+            QAST::SVal.new(:value($key)),
+        )
+    }
+
     my $_strOut := lexVar('.strOut');
+    my $_strLit := lexVar('.strLit');
+
+    my sub mkQuoted($strNode) {
+        #say("###mkQuoted " ~ $strNode.dump());
+        if nqp::istype($strNode, QAST::SVal) {
+            if $strNode.has_ann('quoted') {
+                QAST::SVal(:value('"' ~ $strNode.ann('quoted')));
+            } else {
+                nqp::die("annotation 'quoted' not found on " ~ $strNode.dump());
+            }
+        } elsif nqp::istype($strNode, QAST::Node) {
+            QAST::Op.new(:op<concat>,
+                QAST::Op.new(:op<concat>,
+                    QAST::SVal.new(:value('"')),
+                    QAST::Op.new(:op<escape>, $strNode)
+                ),
+                QAST::SVal.new(:value('"')),
+            )
+        } else {
+            nqp::die("fuck");
+        }
+    }
 
     my sub mkSetting() {
         my $block := QAST::Block.new(QAST::Stmts.new());
@@ -140,7 +141,7 @@ class LActions is HLL::Actions {
                 $_strOut-p1.declP,
                 QAST::Op.new(:op<if>,
                     QAST::Op.new(:op<isstr>, $_strOut-p1),
-                    mkQuoted($_strOut-p1),
+                    mkCall($_strLit, $_strOut-p1),
                     QAST::Op.new(:op<if>,
                         QAST::Op.new(:op<ishash>,
                             $_strOut-p1
@@ -153,7 +154,21 @@ class LActions is HLL::Actions {
                 )
             ))
         ));
-
+        
+        my $_strLit-p1 := lexVar('v');
+        $block[0].push(QAST::Op.new(:op<bind>, $_strLit.declV,
+            QAST::Block.new(:arity(1), QAST::Stmts.new(
+                $_strLit-p1.declP,
+                QAST::Op.new(:op<concat>,
+                    QAST::Op.new(:op<concat>,
+                        QAST::SVal.new(:value('"')),
+                        QAST::Op.new(:op<escape>, $_strLit-p1)
+                    ),
+                    QAST::SVal.new(:value('"')),
+                )
+            ))
+        ));
+        
         $block;
     }
 
@@ -179,7 +194,7 @@ class LActions is HLL::Actions {
             return QAST::Op.new(:op('call'), $f[1], $a);
         }
         my $subject := locVar('subject');
-        QAST::Op.new(:op('call'), QAST::Block.new(
+        QAST::Op.new(:op<call>, QAST::Block.new(
             QAST::Stmts.new(
                 QAST::Op.new(:op<bind>,
                     $subject.declV,
@@ -193,8 +208,14 @@ class LActions is HLL::Actions {
                     ),
                     QAST::Op.new(:op<die>,
                         QAST::Op.new(:op<concat>,
-                            QAST::SVal.new(:value('cannot apply ')),
-                            mkQuoted($subject)
+                            QAST::Op.new(:op<concat>,
+                                QAST::Op.new(:op<concat>,
+                                    QAST::SVal.new(:value('cannot apply ')),
+                                    mkCall($_strLit, $subject)
+                                ),
+                                QAST::SVal.new(:value(' to '))
+                            ),
+                            mkCall($_strOut, $a)
                         )
                     )
                 )
