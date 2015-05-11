@@ -91,18 +91,28 @@ class LActions is HLL::Actions {
     }
 
     my sub mkCall($fVar, *@args) {
-        if nqp::istype($fVar, QAST::Var) {
-            my $out := QAST::Op.new(:op<call>, $fVar);
-            for @args {
-                $out.push($_);
-            }
-            return $out;
+        my $out := QAST::Op.new(:op<call>, $fVar);
+        for @args {
+            $out.push($_);
         }
-        nqp::die("invalid invocant " ~ $fVar.dump());
+        return $out;
     }
 
     my sub mkSCall(str $fnName, *@args) {
-        mkCall(lexVar($fnName), |@args);
+        if $fnName eq '.ifLambda' {
+            my @as := [];
+            @as.push(@args.shift);
+            for @args {
+                if nqp::istype($_, QAST::Block) && ($_.arity == 0) {
+                    @as.push($_);
+                } else {
+                    @as.push(QAST::Block.new(:arity(0), QAST::Stmt.new($_)));
+                }
+            };
+            mkCall(lexVar($fnName), |@as);
+        } else {
+            mkCall(lexVar($fnName), |@args);
+        }
     }
 
     my sub mkHashLookup($hash, str :$key!) {
@@ -118,11 +128,6 @@ class LActions is HLL::Actions {
             QAST::IVal.new(:value($index)),
         )
     }
-
-    my $_strOut := lexVar('.strOut');
-    my $_strLit := lexVar('.strLit');
-    my $_apply1 := lexVar('.apply1');
-    my $_isLambda := lexVar('.lambda?');
 
     my sub mkConcat(*@args) {
         if nqp::elems(@args) < 1 {
@@ -170,34 +175,39 @@ class LActions is HLL::Actions {
         my $init := QAST::Stmts.new();
         my $block := QAST::Block.new($init);
         
-        my $_isLambda-x := lexVar('x');
-        $init.push(QAST::Op.new(:op<bind>, $_isLambda.declV,
-            QAST::Block.new(:arity(1), QAST::Stmts.new(
-                $_isLambda-x.declP,
-                QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<islist>, $_isLambda-x),
+        my $_ifLambda-c := lexVar('c');
+        my $_ifLambda-t := lexVar('t');
+        my $_ifLambda-e := lexVar('e');
+        $init.push(QAST::Op.new(:op<bind>, lexVar('.ifLambda').declV,
+            QAST::Block.new(:arity(3), QAST::Stmts.new(
+                $_ifLambda-c.declP,
+                $_ifLambda-t.declP,
+                $_ifLambda-e.declP,
+                mkCall( # expects 0-arity block as "then" and "else" args (taken care of by mkSCall)
                     QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<iseq_s>,
-                            QAST::SVal.new(:value('λ')),
-                            mkListLookup($_isLambda-x, :index(0)),
+                        QAST::Op.new(:op<islist>, $_ifLambda-c),
+                        QAST::Op.new(:op<if>,
+                            QAST::Op.new(:op<iseq_s>,
+                                QAST::SVal.new(:value('λ')),
+                                mkListLookup($_ifLambda-c, :index(0)),
+                            ),
+                            $_ifLambda-t,
+                            $_ifLambda-e
                         ),
-                        QAST::IVal.new(:value(1)),
-                        QAST::IVal.new(:value(0))
-                    ),
-                    QAST::IVal.new(:value(0))
+                        $_ifLambda-e
+                    )
                 )
             ))
         ));
 
         my $_strOut-p1 := lexVar('v');
-        $init.push(QAST::Op.new(:op<bind>, $_strOut.declV,
+        $init.push(QAST::Op.new(:op<bind>, lexVar('.strOut').declV,
             QAST::Block.new(:arity(1), QAST::Stmts.new(
                 $_strOut-p1.declP,
                 QAST::Op.new(:op<if>,
                     QAST::Op.new(:op<isstr>, $_strOut-p1),
                     mkSCall('.strLit', $_strOut-p1),
-                    QAST::Op.new(:op<if>,
-                        mkSCall('.lambda?', $_strOut-p1),
+                    mkSCall('.ifLambda', $_strOut-p1,
                         mkListLookup($_strOut-p1, :index(2)),
                         QAST::Op.new(:op<reprname>,
                             $_strOut-p1
@@ -208,7 +218,7 @@ class LActions is HLL::Actions {
         ));
         
         my $_strLit-p1 := lexVar('v');
-        $init.push(QAST::Op.new(:op<bind>, $_strLit.declV,
+        $init.push(QAST::Op.new(:op<bind>, lexVar('.strLit').declV,
             QAST::Block.new(:arity(1), QAST::Stmts.new(
                 $_strLit-p1.declP,
                 mkConcat('"', QAST::Op.new(:op<escape>, $_strLit-p1), '"')
@@ -217,18 +227,17 @@ class LActions is HLL::Actions {
         
         my $_apply1-f  := lexVar('f');
         my $_apply1-a1 := lexVar('a1');
-        $init.push(QAST::Op.new(:op<bind>, $_apply1.declV,
+        $init.push(QAST::Op.new(:op<bind>, lexVar('.apply1').declV,
             QAST::Block.new(:arity(2), QAST::Stmts.new(
                 $_apply1-f.declP,
                 $_apply1-a1.declP,
-                QAST::Op.new(:op<if>,
-                    mkSCall('.lambda?', $_apply1-f),
+                mkSCall('.ifLambda', $_apply1-f,
                     QAST::Op.new(:op<bind>, $_apply1-f,
                         mkListLookup($_apply1-f, :index(1))
                     ),
                     QAST::Op.new(:op<unless>,
                         QAST::Op.new(:op<isinvokable>, $_apply1-f),
-                        mkDie('cannot apply ', mkCall($_strLit, $_apply1-f), ' to ', mkCall($_strOut, $_apply1-a1))
+                        mkDie('cannot apply ', mkSCall('.strLit', $_apply1-f), ' to ', mkSCall('.strOut', $_apply1-a1))
                     )
                 ),
                 QAST::Op.new(:op<call>,
