@@ -1,0 +1,45 @@
+---------- L-compiler ----------
+1 FVs in term @ "U "
+   at E:\proj\perl6\Lambda\test.L:6:5  (U)
+1 FVs in term @ "U"
+   at E:\proj\perl6\Lambda\test.L:6:7  (U)
+1 FVs in termlist2orMore @ "U U"
+   at E:\proj\perl6\Lambda\test.L:6:5  (U)
+   at E:\proj\perl6\Lambda\test.L:6:7  (U)
+0 FVs in term @ "#(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.u \"qumbl\"\n\n#(λx.λ_.(x λy.x y)) \"xfo\\noö\" \"xbar\" \"xbaz\" λz.\"qumbl\"\n\n# Turing's Y:\n(λU.U U) "
+1 FVs in term @ "f "
+   at E:\proj\perl6\Lambda\test.L:6:17  (f)
+1 FVs in term @ "u "
+   at E:\proj\perl6\Lambda\test.L:6:20  (u)
+1 FVs in term @ "u "
+   at E:\proj\perl6\Lambda\test.L:6:22  (u)
+1 FVs in term @ "f"
+   at E:\proj\perl6\Lambda\test.L:6:24  (f)
+2 FVs in termlist2orMore @ "u u f"
+   at E:\proj\perl6\Lambda\test.L:6:20  (u)
+   at E:\proj\perl6\Lambda\test.L:6:22  (u)
+   at E:\proj\perl6\Lambda\test.L:6:24  (f)
+2 FVs in term @ "(u u f)"
+   at E:\proj\perl6\Lambda\test.L:6:20  (u)
+   at E:\proj\perl6\Lambda\test.L:6:22  (u)
+   at E:\proj\perl6\Lambda\test.L:6:24  (f)
+2 FVs in termlist2orMore @ "f (u u f)"
+   at E:\proj\perl6\Lambda\test.L:6:17  (f)
+   at E:\proj\perl6\Lambda\test.L:6:24  (f)
+   at E:\proj\perl6\Lambda\test.L:6:20  (u)
+   at E:\proj\perl6\Lambda\test.L:6:22  (u)
+1 FVs in term @ "λf.f (u u f)"
+   at E:\proj\perl6\Lambda\test.L:6:20  (u)
+   at E:\proj\perl6\Lambda\test.L:6:22  (u)
+1 FVs in termlist1orMore @ "λf.f (u u f)"
+   at E:\proj\perl6\Lambda\test.L:6:20  (u)
+   at E:\proj\perl6\Lambda\test.L:6:22  (u)
+0 FVs in term @ "(λu.λf.f (u u f))\n\n# Turing's Y applied to a function that ignores param self:\n#(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)\n\n"
+0 FVs in termlist2orMore @ "#(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.u \"qumbl\"\n\n#(λx.λ_.(x λy.x y)) \"xfo\\noö\" \"xbar\" \"xbaz\" λz.\"qumbl\"\n\n# Turing's Y:\n(λU.U U) (λu.λf.f (u u f))\n\n# Turing's Y applied to a function that ignores param self:\n#(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)\n\n"
+3 lambdas
+------------------------------------------------
+λf.f (u u f)
+   # where u = λu.λf.f (u u f)
+   # where u = λu.λf.f (u u f)
+
+Output completed (1 sec consumed) - Normal Termination

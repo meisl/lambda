@@ -203,12 +203,85 @@ class LActions is HLL::Actions {
         QAST::Op.new(:op<die>, mkConcat('ERROR: ', |@msgPieces));
     }
 
+    my sub isForced($node) {
+        if nqp::istype($node, QAST::Node) {
+            nqp::istype($node, QAST::Op) && ($node.op eq 'call') && (nqp::elems($node.list) == 1);
+        } else {
+            nqp::die("expected a QAST::Node");
+        }
+    }
+
+    my sub isDelayed($node) {
+        if nqp::istype($node, QAST::Node) {
+            nqp::istype($node, QAST::Block) && ($node.arity == 0);
+        } else {
+            nqp::die("expected a QAST::Node");
+        }
+    }
+
+    my sub isImmediate($node) {
+        if nqp::istype($node, QAST::Node) {
+            nqp::istype($node, QAST::SVal) || nqp::istype($node, QAST::IVal) || nqp::istype($node, QAST::NVal);
+        } else {
+            nqp::die("expected a QAST::Node");
+        }
+    }
+
+    my sub mkImmediateOrAddAsChildTo($node, $otherwise) {
+        my $x := lexVar('x');
+        my $otherwiseWithAddedX := nqp::clone($otherwise);
+        $otherwiseWithAddedX.push($x);
+        if !nqp::istype($node, QAST::Node) {
+            nqp::die("expected a QAST::Node for param 'node'");
+        }
+        if !nqp::istype($otherwise, QAST::Node) {
+            nqp::die("expected a QAST::Node for param 'otherwise'");
+        }
+        QAST::Block.new(
+            :blocktype('immediate'),
+            QAST::Op.new(:op<bind>, $x.declV, $node),
+            QAST::Op.new(:op<if>,
+                QAST::Op.new(:op<isstr>, $x),
+                $x,
+                QAST::Op.new(:op<if>,
+                    QAST::Op.new(:op<isint>, $x),
+                    $x,
+                    QAST::Op.new(:op<if>,
+                        QAST::Op.new(:op<isnum>, $x),
+                        $x,
+                        $otherwiseWithAddedX
+                    )
+                )
+            )
+        );
+    }
+
+    my sub mkForce($node) {
+        if nqp::istype($node, QAST::Node) {
+            if isDelayed($node) {
+                $node[0];
+            } elsif isForced($node) || isImmediate($node) {
+                $node;
+            } else {
+                my $out := mkImmediateOrAddAsChildTo(
+                    $node,
+                    QAST::Op.new(:op<call>)
+                );
+#                say(">>>> " ~ $node.dump);
+#                say(">>>> " ~ $out.dump);
+                $out;
+            }
+        } else {
+            nqp::die("expected a QAST::Node");
+        }
+    }
+
     my sub mkLambda2code($subject) {
         mkSCall('.->#n', $subject, 'λ', 1);
     }
 
     my sub mkLambda2str($subject) {
-        mkSCall('.->#n', $subject, 'λ', 2);
+        mkForce(mkSCall('.->#n', $subject, 'λ', 2));
     }
 
     has $!lamCount;
@@ -320,7 +393,7 @@ class LActions is HLL::Actions {
                 my $lineN := nqp::elems(@lines);
                 my $colN  := 1 + nqp::chars(@lines.pop);
                 my $file := $*USER_FILES;
-                @out.push(hash(:file($file), :line($lineN), :column($colN), :name($key)));
+                @out.push(hash(:file($file), :line($lineN), :column($colN), :name($key), :var($val)));
             }
         }
         @out;
@@ -362,7 +435,6 @@ class LActions is HLL::Actions {
 
     method termlist1orMore($/) {
         if nqp::elems($/<term>) == 1 {
-#            say('####termlist1orMore: ' ~ ~$/<term>[0]);
             my $out := $/<term>[0].ast;
             reportFV('termlist1orMore', $/, $out.ann('FV'));
             make $out;
@@ -456,11 +528,31 @@ class LActions is HLL::Actions {
 
         my $block := QAST::Block.new(:node($/), $binder, $body);
 
+        my %fvs := nqp::clone($body.ann('FV'));
+        nqp::deletekey(%fvs, $/<varName>);
+
+        my $strRepr;
+        if nqp::elems(%fvs) == 0 {
+            $strRepr := asNode(~$/);
+        } else {
+            my @strs := [~$/];
+            for freeVars2locations(%fvs) {
+                @strs.push("\n   # where ");
+                @strs.push($_<name>);
+                @strs.push(' = ');
+                @strs.push(mkSCall('.strOut', $_<var>));
+            }
+            $strRepr := QAST::Block.new(:arity(0),
+                mkConcat(|@strs)
+            );
+        }
+
         my $lam := QAST::Op.new(:op<list>,
             QAST::SVal.new(:value('λ')),
             $block,
-            QAST::SVal.new(:value(~$/)),
+            $strRepr,
         );
+        $lam.annotate('FV', %fvs);
         
         $lam.annotate('id', 'λ' ~ $!lamCount);
         $!lamCount++;
@@ -468,10 +560,6 @@ class LActions is HLL::Actions {
         if !$body.has_ann('FV') {
             nqp::die("missing annotation 'FV' in body " ~ $/<body>);
         }
-
-        my $fv := nqp::clone($body.ann('FV'));
-        nqp::deletekey($fv, $/<varName>);
-        $lam.annotate('FV', $fv);
         
         make $lam;
     }
