@@ -1,6 +1,11 @@
----------- L-compiler --target=ast ----------
-Compile Error: unbound variables y z w 
-   at lib\Lambda\L.nqp:321  (<ephemeral file>:TOP:55)
+---------- L-compiler ----------
+Compile Error: unbound variables
+   at E:\proj\perl6\Lambda\test.L:2:8  (y)
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
+   at E:\proj\perl6\Lambda\test.L:2:50  (u)
+
+   at lib\Lambda\L.nqp:345  (<ephemeral file>:TOP:66)
  from gen\moar\stage2\QRegex.nqp:1241  (C:\rakudo\languages\nqp\lib/QRegex.moarvm:!reduce:26)
  from gen\moar\stage2\QRegex.nqp:1202  (C:\rakudo\languages\nqp\lib/QRegex.moarvm:!cursor_pass:47)
  from <unknown>:1  (<ephemeral file>:TOP:160)
@@ -9,9 +14,9 @@ Compile Error: unbound variables y z w
  from gen\moar\stage2\NQPHLL.nqp:1495  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:compile:203)
  from gen\moar\stage2\NQPHLL.nqp:1236  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:eval:53)
  from gen\moar\stage2\NQPHLL.nqp:1451  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:evalfiles:91)
- from lib\Lambda\L.nqp:461  (<ephemeral file>:command_line:95)
- from lib\Lambda\L.nqp:471  (<ephemeral file>:MAIN:45)
- from lib\Lambda\L.nqp:443  (<ephemeral file>:<mainline>:45)
+ from lib\Lambda\L.nqp:494  (<ephemeral file>:command_line:103)
+ from lib\Lambda\L.nqp:504  (<ephemeral file>:MAIN:45)
+ from lib\Lambda\L.nqp:475  (<ephemeral file>:<mainline>:45)
  from gen\moar\stage2\NQPHLL.nqp:1253  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:eval:181)
  from gen\moar\stage2\NQPHLL.nqp:1451  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:evalfiles:91)
  from gen\moar\stage2\NQPHLL.nqp:1349  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:command_eval:211)
@@ -21,62 +26,72 @@ Compile Error: unbound variables y z w
  from <unknown>:1  (C:\rakudo\languages\nqp\lib\nqp.moarvm:<main>:8)
  from <unknown>:1  (C:\rakudo\languages\nqp\lib\nqp.moarvm:<entry>:9)
 1 FVs in term @ "y "
-    y => 1
+   at E:\proj\perl6\Lambda\test.L:2:8  (y)
 1 FVs in term @ "x "
-    x => 1
+   at E:\proj\perl6\Lambda\test.L:2:11  (x)
 1 FVs in term @ "x "
-    x => 1
+   at E:\proj\perl6\Lambda\test.L:2:16  (x)
 1 FVs in term @ "y "
-    y => 1
+   at E:\proj\perl6\Lambda\test.L:2:18  (y)
 1 FVs in term @ "z "
-    z => 1
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
 1 FVs in term @ "w"
-    w => 1
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
 4 FVs in termlist2orMore @ "x y z w"
-    x => 1
-    y => 1
-    z => 1
-    w => 1
+   at E:\proj\perl6\Lambda\test.L:2:16  (x)
+   at E:\proj\perl6\Lambda\test.L:2:18  (y)
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
 3 FVs in term @ "λy.x y z w"
-    x => 1
-    z => 1
-    w => 1
+   at E:\proj\perl6\Lambda\test.L:2:16  (x)
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
 3 FVs in termlist2orMore @ "x λy.x y z w"
-    x => 1
-    z => 1
-    w => 1
+   at E:\proj\perl6\Lambda\test.L:2:11  (x)
+   at E:\proj\perl6\Lambda\test.L:2:16  (x)
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
 3 FVs in term @ "(x λy.x y z w)"
-    x => 1
-    z => 1
-    w => 1
+   at E:\proj\perl6\Lambda\test.L:2:11  (x)
+   at E:\proj\perl6\Lambda\test.L:2:16  (x)
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
 4 FVs in termlist2orMore @ "y (x λy.x y z w)"
-    y => 1
-    x => 1
-    z => 1
-    w => 1
+   at E:\proj\perl6\Lambda\test.L:2:8  (y)
+   at E:\proj\perl6\Lambda\test.L:2:11  (x)
+   at E:\proj\perl6\Lambda\test.L:2:16  (x)
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
 4 FVs in term @ "λ_.y (x λy.x y z w)"
-    y => 1
-    x => 1
-    z => 1
-    w => 1
+   at E:\proj\perl6\Lambda\test.L:2:8  (y)
+   at E:\proj\perl6\Lambda\test.L:2:11  (x)
+   at E:\proj\perl6\Lambda\test.L:2:16  (x)
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
 4 FVs in termlist1orMore @ "λ_.y (x λy.x y z w)"
-    y => 1
-    x => 1
-    z => 1
-    w => 1
+   at E:\proj\perl6\Lambda\test.L:2:8  (y)
+   at E:\proj\perl6\Lambda\test.L:2:11  (x)
+   at E:\proj\perl6\Lambda\test.L:2:16  (x)
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
 3 FVs in term @ "(λx.λ_.y (x λy.x y z w)) "
-    y => 1
-    z => 1
-    w => 1
+   at E:\proj\perl6\Lambda\test.L:2:8  (y)
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
 0 FVs in term @ "\"fo\\noö\" "
 0 FVs in term @ "\"bar\" "
 0 FVs in term @ "\"baz\" "
+1 FVs in term @ "u "
+   at E:\proj\perl6\Lambda\test.L:2:50  (u)
 0 FVs in term @ "\"qumbl\"\n"
-0 FVs in termlist1orMore @ "\"qumbl\"\n"
-0 FVs in term @ "λy.\"qumbl\"\n"
-3 FVs in termlist2orMore @ "(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.\"qumbl\"\n"
-    y => 1
-    z => 1
-    w => 1
+1 FVs in termlist2orMore @ "u \"qumbl\"\n"
+   at E:\proj\perl6\Lambda\test.L:2:50  (u)
+1 FVs in term @ "λy.u \"qumbl\"\n"
+   at E:\proj\perl6\Lambda\test.L:2:50  (u)
+4 FVs in termlist2orMore @ "(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.u \"qumbl\"\n"
+   at E:\proj\perl6\Lambda\test.L:2:8  (y)
+   at E:\proj\perl6\Lambda\test.L:2:20  (z)
+   at E:\proj\perl6\Lambda\test.L:2:22  (w)
+   at E:\proj\perl6\Lambda\test.L:2:50  (u)
 
 Output completed (1 sec consumed) - Normal Termination

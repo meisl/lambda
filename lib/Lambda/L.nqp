@@ -302,10 +302,34 @@ class LActions is HLL::Actions {
         return $block;
     }
 
+    my sub freeVars2locations(%fvs) {
+        my @out := [];
+        for %fvs {
+            my $key := nqp::iterkey_s($_);
+            my @vals := nqp::iterval($_);
+            for @vals -> $val {
+                if !nqp::istype($val, QUAST::Node) {
+                    die("not a Node: $key => ??");
+                }
+                my @lines := nqp::split("\n", nqp::substr($val.node.orig, 0, $val.node.from));
+                my $lineN := nqp::elems(@lines);
+                my $colN  := 1 + nqp::chars(@lines.pop);
+                my $file := $*USER_FILES;
+                @out.push(hash(:file($file), :line($lineN), :column($colN), :name($key)));
+            }
+        }
+        @out;
+    }
+
+    my sub loc2str($l) {
+        return '   at ' ~ $l<file> ~ ':' ~ $l<line> ~ ':' ~ $l<column> ~ '  (' ~ $l<name> ~ ')';
+    }
+
     my sub reportFV(str $where, $match, %fvs) {
         say(nqp::elems(%fvs), " FVs in $where @ ", '"', nqp::escape($match), '"');
-        for %fvs {
-            say('    ', nqp::iterkey_s($_), ' => ', nqp::iterval($_));
+        my @locs := freeVars2locations(%fvs);
+        for @locs {
+            say(loc2str($_));
         }
     }
 
@@ -314,9 +338,9 @@ class LActions is HLL::Actions {
 
         my $fvs := $mainExpr.ann('FV');
         if nqp::elems($fvs) > 0 {
-            my $msg := "Compile Error: unbound variables ";
-            for $fvs {
-                $msg := $msg ~ nqp::iterkey_s($_) ~ " ";
+            my $msg := "Compile Error: unbound variables\n";
+            for freeVars2locations($fvs) {
+                $msg := $msg ~ loc2str($_) ~ "\n";
             }
             nqp::die($msg);
         }
@@ -352,7 +376,15 @@ class LActions is HLL::Actions {
         }
         my $fv := nqp::clone($f.ann('FV'));
         for $a.ann('FV') {
-            $fv{nqp::iterkey_s($_)} := nqp::iterval($_);
+            my $key := nqp::iterkey_s($_);
+            my @vals := nqp::iterval($_);
+            if nqp::existskey($fv, $key) {
+                for @vals -> $val {
+                    $fv{$key}.push($val);
+                }
+            } else {
+                $fv{$key} := @vals;
+            }
         }
         $out.annotate('FV', $fv);
 
@@ -383,7 +415,7 @@ class LActions is HLL::Actions {
         my str $name := ~$/;
         my $var := lexVar($name, :node($/));
         my $fv := hash();
-        $fv{$name} := 1;
+        $fv{$name} := [$var];
         $var.annotate('FV', $fv);
         make $var;
     }
@@ -458,6 +490,7 @@ class LCompiler is HLL::Compiler {
 
         #self.command_eval(|@a, |%adverbs);
         
+        my $*USER_FILES := join('; ', @a);
         my $result := self.evalfiles(|@a, :encoding('utf8'), |%adverbs);
         self.interactive_result($result);
     }
