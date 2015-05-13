@@ -105,7 +105,7 @@
       - QAST::SVal(4 lambdas\n------------------------------------------------)
     - QAST::Op(call)
       - QAST::VarWithFallback+{Var}(lexical .strOut :decl())
-      - QAST::Stmts (λx.λ_.x (y λy.x y z)) \"fo\\noö\" \"bar\" \"baz\"...
+      - QAST::Stmts (λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz...
         - QAST::Op(call)
           - QAST::VarWithFallback+{Var}(lexical .apply1 :decl())
           - QAST::Op(call)
@@ -116,35 +116,38 @@
                 - QAST::VarWithFallback+{Var}(lexical .apply1 :decl())
                 - QAST::Op(list)
                   - QAST::SVal(λ)
-                  - QAST::Block λx.λ_.x (y λy.x y z)
+                  - QAST::Block λx.λ_.y (x λy.x y z w)
                     - QAST::VarWithFallback+{Var}(lexical x :decl(param))
                     - QAST::Op(list)
                       - QAST::SVal(λ)
-                      - QAST::Block λ_.x (y λy.x y z)
+                      - QAST::Block λ_.y (x λy.x y z w)
                         - QAST::VarWithFallback+{Var}(lexical _ :decl(param))
-                        - QAST::Stmts x (y λy.x y z)
+                        - QAST::Stmts y (x λy.x y z w)
                           - QAST::Op(call)
                             - QAST::VarWithFallback+{Var}(lexical .apply1 :decl())
-                            - QAST::VarWithFallback+{Var}(lexical x :decl()) x
-                            - QAST::Stmts y λy.x y z
+                            - QAST::VarWithFallback+{Var}(lexical y :decl()) y
+                            - QAST::Stmts x λy.x y z w
                               - QAST::Op(call)
                                 - QAST::VarWithFallback+{Var}(lexical .apply1 :decl())
-                                - QAST::VarWithFallback+{Var}(lexical y :decl()) y
+                                - QAST::VarWithFallback+{Var}(lexical x :decl()) x
                                 - QAST::Op(list)
                                   - QAST::SVal(λ)
-                                  - QAST::Block λy.x y z
+                                  - QAST::Block λy.x y z w
                                     - QAST::VarWithFallback+{Var}(lexical y :decl(param))
-                                    - QAST::Stmts x y z
+                                    - QAST::Stmts x y z w
                                       - QAST::Op(call)
                                         - QAST::VarWithFallback+{Var}(lexical .apply1 :decl())
                                         - QAST::Op(call)
                                           - QAST::VarWithFallback+{Var}(lexical .apply1 :decl())
-                                          - QAST::VarWithFallback+{Var}(lexical x :decl()) x
-                                          - QAST::VarWithFallback+{Var}(lexical y :decl()) y
-                                        - QAST::VarWithFallback+{Var}(lexical z :decl()) z
-                                  - QAST::SVal(λy.x y z)
-                      - QAST::SVal(λ_.x (y λy.x y z))
-                  - QAST::SVal(λx.λ_.x (y λy.x y z))
+                                          - QAST::Op(call)
+                                            - QAST::VarWithFallback+{Var}(lexical .apply1 :decl())
+                                            - QAST::VarWithFallback+{Var}(lexical x :decl()) x
+                                            - QAST::VarWithFallback+{Var}(lexical y :decl()) y
+                                          - QAST::VarWithFallback+{Var}(lexical z :decl()) z
+                                        - QAST::VarWithFallback+{Var}(lexical w :decl()) w
+                                  - QAST::SVal(λy.x y z w)
+                      - QAST::SVal(λ_.y (x λy.x y z w))
+                  - QAST::SVal(λx.λ_.y (x λy.x y z w))
                 - QAST::SVal(fo\noö)
               - QAST::SVal(bar)
             - QAST::SVal(baz)
@@ -154,97 +157,64 @@
               - QAST::VarWithFallback+{Var}(lexical y :decl(param))
               - QAST::SVal(qumbl)
             - QAST::SVal(λy.\"qumbl\"\n)
+1 FVs in term @ "y "
+    y => 1
 1 FVs in term @ "x "
     x => 1
-2 FVs in term @ "y "
+1 FVs in term @ "x "
     x => 1
+1 FVs in term @ "y "
     y => 1
-2 FVs in term @ "x "
-    x => 1
-    y => 1
-2 FVs in term @ "y "
-    x => 1
-    y => 1
-3 FVs in term @ "z"
+1 FVs in term @ "z "
+    z => 1
+1 FVs in term @ "w"
+    w => 1
+4 FVs in termlist2orMore @ "x y z w"
     x => 1
     y => 1
     z => 1
-3 FVs in termlist1orMore @ "x y z"
+    w => 1
+3 FVs in term @ "λy.x y z w"
     x => 1
+    z => 1
+    w => 1
+3 FVs in termlist2orMore @ "x λy.x y z w"
+    x => 1
+    z => 1
+    w => 1
+3 FVs in term @ "(x λy.x y z w)"
+    x => 1
+    z => 1
+    w => 1
+4 FVs in termlist2orMore @ "y (x λy.x y z w)"
+    y => 1
+    x => 1
+    z => 1
+    w => 1
+4 FVs in term @ "λ_.y (x λy.x y z w)"
+    y => 1
+    x => 1
+    z => 1
+    w => 1
+4 FVs in termlist1orMore @ "λ_.y (x λy.x y z w)"
+    y => 1
+    x => 1
+    z => 1
+    w => 1
+3 FVs in term @ "(λx.λ_.y (x λy.x y z w)) "
     y => 1
     z => 1
-3 FVs in termlist1orMore @ "x y z"
-    x => 1
+    w => 1
+0 FVs in term @ "\"fo\\noö\" "
+0 FVs in term @ "\"bar\" "
+0 FVs in term @ "\"baz\" "
+0 FVs in term @ "\"qumbl\"\n"
+0 FVs in termlist1orMore @ "\"qumbl\"\n"
+0 FVs in term @ "λy.\"qumbl\"\n"
+3 FVs in termlist2orMore @ "(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.\"qumbl\"\n"
     y => 1
     z => 1
-3 FVs in term @ "λy.x y z"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in termlist1orMore @ "y λy.x y z"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in term @ "(y λy.x y z)"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in termlist1orMore @ "x (y λy.x y z)"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in termlist1orMore @ "x (y λy.x y z)"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in term @ "λ_.x (y λy.x y z)"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in termlist1orMore @ "λ_.x (y λy.x y z)"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in term @ "(λx.λ_.x (y λy.x y z)) "
-    x => 1
-    y => 1
-    z => 1
-3 FVs in term @ "\"fo\\noö\" "
-    x => 1
-    y => 1
-    z => 1
-3 FVs in term @ "\"bar\" "
-    x => 1
-    y => 1
-    z => 1
-3 FVs in term @ "\"baz\" "
-    x => 1
-    y => 1
-    z => 1
-3 FVs in term @ "\"qumbl\"\n"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in termlist1orMore @ "\"qumbl\"\n"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in term @ "λy.\"qumbl\"\n"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in termlist1orMore @ "(λx.λ_.x (y λy.x y z)) \"fo\\noö\" \"bar\" \"baz\" λy.\"qumbl\"\n"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in termlist1orMore @ "(λx.λ_.x (y λy.x y z)) \"fo\\noö\" \"bar\" \"baz\" λy.\"qumbl\"\n"
-    x => 1
-    y => 1
-    z => 1
-3 FVs in TOP @ "(λx.λ_.x (y λy.x y z)) \"fo\\noö\" \"bar\" \"baz\" λy.\"qumbl\"\n"
-    x => 1
-    y => 1
-    z => 1
+    w => 1
 
 
-Output completed (2 sec consumed) - Normal Termination
+Output completed (1 sec consumed) - Normal Termination

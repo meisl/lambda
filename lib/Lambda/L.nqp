@@ -5,7 +5,6 @@ use NQPHLL;
 grammar LGrammar is HLL::Grammar {
 
     rule TOP {
-        :my %*FV := nqp::hash();
         ^ <termlist1orMore> $
     }
 
@@ -40,7 +39,6 @@ grammar LGrammar is HLL::Grammar {
 
     token variable {
         <varName>
-        { %*FV{$<varName>} := 1 }
     }
 
     token symbol {
@@ -306,9 +304,9 @@ class LActions is HLL::Actions {
         return $block;
     }
 
-    my sub reportFV(str $where, $match) {
-        say(nqp::elems(%*FV), " FVs in $where @ ", '"', nqp::escape($match), '"');
-        for %*FV {
+    my sub reportFV(str $where, $match, %fvs) {
+        say(nqp::elems(%fvs), " FVs in $where @ ", '"', nqp::escape($match), '"');
+        for %fvs {
             say('    ', nqp::iterkey_s($_), ' => ', nqp::iterval($_));
         }
         
@@ -316,7 +314,6 @@ class LActions is HLL::Actions {
     }
 
     method TOP($/) {
-        reportFV("TOP", $/);
         my $outVar := locVar('out');
         my $s := mkSetting();
         
@@ -329,26 +326,34 @@ class LActions is HLL::Actions {
     }
 
     method termlist1orMore($/) {
-        reportFV("termlist1orMore", $/);
         if nqp::elems($/<term>) == 1 {
 #            say('####termlist1orMore: ' ~ ~$/<term>[0]);
-            make $/<term>[0].ast;
+            my $out := $/<term>[0].ast;
+            reportFV('termlist1orMore', $/, $out.ann('FV'));
+            make $out;
         } else {
             self.termlist2orMore($/);
         }
     }
 
     my sub mkApp($f, $a) {
+        my $out;
         if $f.has_ann('λ') {
             #say($f[0].value ~ ": ...");
-            QAST::Op.new(:op('call'), $f[1], $a);
+            $out := QAST::Op.new(:op('call'), $f[1], $a);
         } else {
-            mkSCall('.apply1', $f, $a);
+            $out := mkSCall('.apply1', $f, $a);
         }
+        my $fv := nqp::clone($f.ann('FV'));
+        for $a.ann('FV') {
+            $fv{nqp::iterkey_s($_)} := nqp::iterval($_);
+        }
+        $out.annotate('FV', $fv);
+
+        $out;
     }
 
     method termlist2orMore($/) {
-        reportFV("termlist1orMore", $/);
         my $f := $/<term>.shift.ast;
         my $a := $/<term>.shift.ast;
         my $app := mkApp($f, $a);
@@ -356,17 +361,24 @@ class LActions is HLL::Actions {
         for $/<term> {
             $app := mkApp($app, $_.ast);
         }
-        make QAST::Stmts.new(:node($/), $app);
+        my $out := QAST::Stmts.new(:node($/), $app);
+        $out.annotate('FV', $app.ann('FV'));
+        reportFV('termlist2orMore', $/, $out.ann('FV'));
+        make $out;
     }
 
     method term($/) {
-        reportFV("term", $/);
-        make $/<t>.ast;
+        my $out := $/<t>.ast;
+        reportFV('term', $/, $out.ann('FV'));
+        make $out;
     }
 
     method variable($/) {
         my str $name := ~$/;
         my $var := lexVar($name, :node($/));
+        my $fv := hash();
+        $fv{$name} := 1;
+        $var.annotate('FV', $fv);
         make $var;
     }
 
@@ -390,7 +402,9 @@ class LActions is HLL::Actions {
             }
         }
 #        say("###str-constant: " ~ $s);
-        make QAST::SVal.new(:value($s));
+        my $out := asNode($s);
+        $out.annotate('FV', hash());
+        make $out;
     }
 
     method abstraction($/) {
@@ -407,6 +421,14 @@ class LActions is HLL::Actions {
         
         $lam.annotate('id', 'λ' ~ $!lamCount);
         $!lamCount++;
+
+        if !$body.has_ann('FV') {
+            nqp::die("missing annotation 'FV' in body " ~ $/<body>);
+        }
+
+        my $fv := nqp::clone($body.ann('FV'));
+        nqp::deletekey($fv, $/<varName>);
+        $lam.annotate('FV', $fv);
         
         make $lam;
     }
