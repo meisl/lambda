@@ -83,10 +83,9 @@ class LActions is HLL::Actions {
     }
 
     my sub locVar(str $name, *%adverbs) {
-        my $out := QAST::VarWithFallback.new(
+        my $out := QAST::Var.new(
             :name($name),
             :scope<local>,
-            :fallback(mkDie('tried to evaluate unbound local var ', $name)),
             |%adverbs
         );
         $out.HOW.mixin($out, Var);
@@ -94,10 +93,9 @@ class LActions is HLL::Actions {
     }
 
     my sub lexVar(str $name, *%adverbs) {
-        my $out := QAST::VarWithFallback.new(
+        my $out := QAST::Var.new(
             :name($name),
             :scope<lexical>,
-            :fallback(mkDie('tried to evaluate unbound var ', $name)),
             |%adverbs
         );
         $out.HOW.mixin($out, Var);
@@ -309,18 +307,26 @@ class LActions is HLL::Actions {
         for %fvs {
             say('    ', nqp::iterkey_s($_), ' => ', nqp::iterval($_));
         }
-        
-    
     }
 
     method TOP($/) {
-        my $outVar := locVar('out');
+        my $mainExpr := $/<termlist1orMore>.ast;
+
+        my $fvs := $mainExpr.ann('FV');
+        if nqp::elems($fvs) > 0 {
+            my $msg := "Compile Error: unbound variables ";
+            for $fvs {
+                $msg := $msg ~ nqp::iterkey_s($_) ~ " ";
+            }
+            nqp::die($msg);
+        }
+
         my $s := mkSetting();
         
         $s[0].push(QAST::Op.new(:op<say>, mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")));
         #$s[0].push(QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)));
         
-        $s[0].push(mkSCall('.strOut', $/<termlist1orMore>.ast));
+        $s[0].push(mkSCall('.strOut', $mainExpr));
         
         make $s;
     }
