@@ -5,7 +5,7 @@ use NQPHLL;
 grammar LGrammar is HLL::Grammar {
 
     rule TOP {
-        ^ <termlist1orMore> $
+        ^ \s* <.eolComment>* <termlist1orMore>? $
     }
 
     token termlist1orMore() {
@@ -380,6 +380,14 @@ class LActions is HLL::Actions {
         return $block;
     }
 
+    my sub match2location($match) {
+        my @lines := nqp::split("\n", nqp::substr($match.orig, 0, $match.from == 0 ?? $match.chars !! $match.from));
+        my $lineN := nqp::elems(@lines);
+        my $colN  := 1 + nqp::chars(@lines.pop);
+        my $file := $*USER_FILES;
+        hash(:file($file), :line($lineN), :column($colN), :match($match));
+    }
+
     my sub freeVars2locations(%fvs) {
         my @out := [];
         for %fvs {
@@ -389,18 +397,21 @@ class LActions is HLL::Actions {
                 if !nqp::istype($val, QUAST::Node) {
                     die("not a Node: $key => ??");
                 }
-                my @lines := nqp::split("\n", nqp::substr($val.node.orig, 0, $val.node.from));
-                my $lineN := nqp::elems(@lines);
-                my $colN  := 1 + nqp::chars(@lines.pop);
-                my $file := $*USER_FILES;
-                @out.push(hash(:file($file), :line($lineN), :column($colN), :name($key), :var($val)));
+                my $loc := match2location($val.node);
+                $loc{'name'} := $key;
+                $loc{'var'}  := $val;
+                @out.push($loc);
             }
         }
         @out;
     }
 
-    my sub loc2str($l) {
-        return '   at ' ~ $l<file> ~ ':' ~ $l<line> ~ ':' ~ $l<column> ~ '  (' ~ $l<name> ~ ')';
+    my sub loc2str(%l) {
+        my $varNameStr := nqp::existskey(%l, 'var')
+            ?? '  (' ~ %l<var>.name ~ ')'
+            !! ''
+        ;
+        return '   at ' ~ %l<file> ~ ':' ~ %l<line> ~ ':' ~ %l<column> ~ $varNameStr;
     }
 
     my sub reportFV(str $where, $match, %fvs) {
@@ -412,9 +423,14 @@ class LActions is HLL::Actions {
     }
 
     method TOP($/) {
-        my $mainExpr := $/<termlist1orMore>.ast;
+        my $mainTermMatch := $/<termlist1orMore>;
+        nqp::defor($mainTermMatch,
+            nqp::die("Compile Error: no term found at all\n" ~ loc2str(match2location($/)) ~ "\n")
+        );
 
-        my $fvs := $mainExpr.ann('FV');
+        my $mainTerm := $/<termlist1orMore>.ast;
+
+        my $fvs := $mainTerm.ann('FV');
         if nqp::elems($fvs) > 0 {
             my $msg := "Compile Error: unbound variables\n";
             for freeVars2locations($fvs) {
@@ -428,7 +444,7 @@ class LActions is HLL::Actions {
         $s[0].push(QAST::Op.new(:op<say>, mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")));
         #$s[0].push(QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)));
         
-        $s[0].push(mkSCall('.strOut', $mainExpr));
+        $s[0].push(mkSCall('.strOut', $mainTerm));
         
         make $s;
     }

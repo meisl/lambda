@@ -1,45 +1,26 @@
 ---------- L-compiler ----------
-1 FVs in term @ "U "
-   at E:\proj\perl6\Lambda\test.L:6:5  (U)
-1 FVs in term @ "U"
-   at E:\proj\perl6\Lambda\test.L:6:7  (U)
-1 FVs in termlist2orMore @ "U U"
-   at E:\proj\perl6\Lambda\test.L:6:5  (U)
-   at E:\proj\perl6\Lambda\test.L:6:7  (U)
-0 FVs in term @ "#(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.u \"qumbl\"\n\n#(λx.λ_.(x λy.x y)) \"xfo\\noö\" \"xbar\" \"xbaz\" λz.\"qumbl\"\n\n# Turing's Y:\n(λU.U U) "
-1 FVs in term @ "f "
-   at E:\proj\perl6\Lambda\test.L:6:17  (f)
-1 FVs in term @ "u "
-   at E:\proj\perl6\Lambda\test.L:6:20  (u)
-1 FVs in term @ "u "
-   at E:\proj\perl6\Lambda\test.L:6:22  (u)
-1 FVs in term @ "f"
-   at E:\proj\perl6\Lambda\test.L:6:24  (f)
-2 FVs in termlist2orMore @ "u u f"
-   at E:\proj\perl6\Lambda\test.L:6:20  (u)
-   at E:\proj\perl6\Lambda\test.L:6:22  (u)
-   at E:\proj\perl6\Lambda\test.L:6:24  (f)
-2 FVs in term @ "(u u f)"
-   at E:\proj\perl6\Lambda\test.L:6:20  (u)
-   at E:\proj\perl6\Lambda\test.L:6:22  (u)
-   at E:\proj\perl6\Lambda\test.L:6:24  (f)
-2 FVs in termlist2orMore @ "f (u u f)"
-   at E:\proj\perl6\Lambda\test.L:6:17  (f)
-   at E:\proj\perl6\Lambda\test.L:6:24  (f)
-   at E:\proj\perl6\Lambda\test.L:6:20  (u)
-   at E:\proj\perl6\Lambda\test.L:6:22  (u)
-1 FVs in term @ "λf.f (u u f)"
-   at E:\proj\perl6\Lambda\test.L:6:20  (u)
-   at E:\proj\perl6\Lambda\test.L:6:22  (u)
-1 FVs in termlist1orMore @ "λf.f (u u f)"
-   at E:\proj\perl6\Lambda\test.L:6:20  (u)
-   at E:\proj\perl6\Lambda\test.L:6:22  (u)
-0 FVs in term @ "(λu.λf.f (u u f))\n\n# Turing's Y applied to a function that ignores param self:\n#(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)\n\n"
-0 FVs in termlist2orMore @ "#(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.u \"qumbl\"\n\n#(λx.λ_.(x λy.x y)) \"xfo\\noö\" \"xbar\" \"xbaz\" λz.\"qumbl\"\n\n# Turing's Y:\n(λU.U U) (λu.λf.f (u u f))\n\n# Turing's Y applied to a function that ignores param self:\n#(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)\n\n"
-3 lambdas
-------------------------------------------------
-λf.f (u u f)
-   # where u = λu.λf.f (u u f)
-   # where u = λu.λf.f (u u f)
+Compile Error: no term found at all
+   at E:\proj\perl6\Lambda\test.L:15:2
+
+   at lib\Lambda\L.nqp:427  (<ephemeral file>:TOP:32)
+ from gen\moar\stage2\QRegex.nqp:1241  (C:\rakudo\languages\nqp\lib/QRegex.moarvm:!reduce:4294967295)
+ from gen\moar\stage2\QRegex.nqp:1202  (C:\rakudo\languages\nqp\lib/QRegex.moarvm:!cursor_pass:47)
+ from <unknown>:1  (<ephemeral file>:TOP:315)
+ from gen\moar\stage2\QRegex.nqp:1873  (C:\rakudo\languages\nqp\lib/QRegex.moarvm:parse:44)
+ from gen\moar\stage2\NQPHLL.nqp:1539  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:parse:80)
+ from gen\moar\stage2\NQPHLL.nqp:1495  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:compile:203)
+ from gen\moar\stage2\NQPHLL.nqp:1236  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:eval:53)
+ from gen\moar\stage2\NQPHLL.nqp:1451  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:evalfiles:91)
+ from lib\Lambda\L.nqp:603  (<ephemeral file>:command_line:103)
+ from lib\Lambda\L.nqp:613  (<ephemeral file>:MAIN:45)
+ from lib\Lambda\L.nqp:584  (<ephemeral file>:<mainline>:45)
+ from gen\moar\stage2\NQPHLL.nqp:1253  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:eval:181)
+ from gen\moar\stage2\NQPHLL.nqp:1451  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:evalfiles:91)
+ from gen\moar\stage2\NQPHLL.nqp:1349  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:command_eval:211)
+ from gen\moar\stage2\NQPHLL.nqp:1324  (C:\rakudo\languages\nqp\lib/NQPHLL.moarvm:command_line:116)
+ from gen\moar\stage2\NQP.nqp:4084  (C:\rakudo\languages\nqp\lib\nqp.moarvm:MAIN:16)
+ from gen\moar\stage2\NQP.nqp:4079  (C:\rakudo\languages\nqp\lib\nqp.moarvm:<mainline>:337)
+ from <unknown>:1  (C:\rakudo\languages\nqp\lib\nqp.moarvm:<main>:8)
+ from <unknown>:1  (C:\rakudo\languages\nqp\lib\nqp.moarvm:<entry>:9)
 
 Output completed (1 sec consumed) - Normal Termination
