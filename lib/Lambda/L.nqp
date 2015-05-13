@@ -17,7 +17,7 @@ grammar LGrammar is HLL::Grammar {
     }
 
     token term {
-        \s*
+        \s* <.eolComment>*
         [
         | <t=variable>
         | <t=str-constant>
@@ -26,7 +26,12 @@ grammar LGrammar is HLL::Grammar {
         | <t=abstraction>
         | '(' <t=abstraction> ')'
         | '(' <t=termlist2orMore> ')'
-        ] \s*
+        ]
+        \s* <.eolComment>*
+    }
+
+    token eolComment {
+        '#' <-[\v]>* \s*
     }
 
     token lambda { \\ | 'λ' | '&' }
