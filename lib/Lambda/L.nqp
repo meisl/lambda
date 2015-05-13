@@ -551,12 +551,16 @@ class LActions is HLL::Actions {
         if nqp::elems(%fvs) == 0 {
             $strRepr := asNode(~$/);
         } else {
-            my @strs := [~$/];
+            my %strs := hash();
             for freeVars2locations(%fvs) {
-                @strs.push("\n   # where ");
-                @strs.push($_<name>);
-                @strs.push(' = ');
-                @strs.push(mkSCall('.strOut', $_<var>));
+                my $k := "\n   # where " ~ $_<name> ~ ' = ';
+                my $v := mkSCall('.strOut', $_<var>);
+                %strs{$k} := $v;
+            }
+            my @strs := [~$/];
+            for %strs {
+                @strs.push(nqp::iterkey_s($_));
+                @strs.push(nqp::iterval($_));
             }
             $strRepr := QAST::Block.new(:arity(0),
                 mkConcat(|@strs)

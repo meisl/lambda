@@ -157,13 +157,7 @@
                           - QAST::Var+{Var}(lexical f :decl()) f
                 - QAST::Block
                   - QAST::Op(concat)
-                    - QAST::Op(concat)
-                      - QAST::Op(concat)
-                        - QAST::SVal(λf.f (u u f)\n   # where u = )
-                        - QAST::Op(call)
-                          - QAST::Var+{Var}(lexical .strOut :decl())
-                          - QAST::Var+{Var}(lexical u :decl()) u
-                      - QAST::SVal(\n   # where u = )
+                    - QAST::SVal(λf.f (u u f)\n   # where u = )
                     - QAST::Op(call)
                       - QAST::Var+{Var}(lexical .strOut :decl())
                       - QAST::Var+{Var}(lexical u :decl()) u
