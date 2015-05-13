@@ -452,7 +452,7 @@ class LActions is HLL::Actions {
     method termlist1orMore($/) {
         if nqp::elems($/<term>) == 1 {
             my $out := $/<term>[0].ast;
-            reportFV('termlist1orMore', $/, $out.ann('FV'));
+            #reportFV('termlist1orMore', $/, $out.ann('FV'));
             make $out;
         } else {
             self.termlist2orMore($/);
@@ -494,13 +494,13 @@ class LActions is HLL::Actions {
         }
         my $out := QAST::Stmts.new(:node($/), $app);
         $out.annotate('FV', $app.ann('FV'));
-        reportFV('termlist2orMore', $/, $out.ann('FV'));
+        #reportFV('termlist2orMore', $/, $out.ann('FV'));
         make $out;
     }
 
     method term($/) {
         my $out := $/<t>.ast;
-        reportFV('term', $/, $out.ann('FV'));
+        #reportFV('term', $/, $out.ann('FV'));
         make $out;
     }
 
