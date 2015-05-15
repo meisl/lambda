@@ -37,12 +37,7 @@
               - QAST::Op(atpos)
                 - QAST::Var+{Var}(lexical s :decl())
                 - QAST::Var+{Var}(lexical i :decl())
-        - QAST::Stmts
-          - QAST::Op(call .say)
-            - QAST::SVal(# calling .delayM on\n- QAST::Op(null)\n)
-          - QAST::Op(call .delayM)
-            - QAST::Block
-              - QAST::Op(null)
+        - QAST::Op(null)
   - QAST::Op(bind)
     - QAST::Var+{Var}(lexical .strOut :decl(static))
     - QAST::Block

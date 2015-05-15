@@ -139,7 +139,8 @@ class LActions is HLL::Actions {
 
     my sub isVal($node) {
         if nqp::istype($node, QAST::Node) {
-            nqp::istype($node, QAST::SVal) || nqp::istype($node, QAST::IVal) || nqp::istype($node, QAST::NVal);
+            nqp::istype($node, QAST::SVal) || nqp::istype($node, QAST::IVal) || nqp::istype($node, QAST::NVal)
+            || nqp::istype($node, QAST::Op) && ($node.op eq 'null');
         } else {
             nqp::die("expected a QAST::Node");
         }

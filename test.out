@@ -16,15 +16,9 @@
   - QAST::Var+{Var}(lexical i :decl())
 
 # calling .delayM on
-- QAST::Op(null)
-
-# calling .delayM on
 - QAST::Op(atpos)
   - QAST::Var+{Var}(lexical s :decl())
   - QAST::Var+{Var}(lexical i :decl())
-
-# calling .delayM on
-- QAST::Op(null)
 
 # calling .delayM on
 - QAST::Op(concat)
@@ -38,15 +32,9 @@
   - QAST::Var+{Var}(lexical i :decl())
 
 # calling .delayM on
-- QAST::Op(null)
-
-# calling .delayM on
 - QAST::Op(atpos)
   - QAST::Var+{Var}(lexical s :decl())
   - QAST::Var+{Var}(lexical i :decl())
-
-# calling .delayM on
-- QAST::Op(null)
 
 ------------------------------------------------
 λf.f (u u f)
