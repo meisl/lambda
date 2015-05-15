@@ -163,53 +163,25 @@ class LActions is HLL::Actions {
 
     }
 
-    my sub mkImmediateOrAddAsChildTo($node, $otherwise) {
-        if !nqp::istype($node, QAST::Node) {
-            nqp::die("expected a QAST::Node for param 'node'");
-        }
-        if !nqp::istype($otherwise, QAST::Node) {
-            nqp::die("expected a QAST::Node for param 'otherwise'");
-        }
-        if !nqp::istype($node, QAST::Var) {
-            my $nVar := locVar('x');
-            QAST::Block.new(
-                :blocktype('immediate'),
-                QAST::Op.new(:op<bind>, $nVar.declV, $node),
-                mkImmediateOrAddAsChildTo($nVar, $otherwise)
-            );
-        } else {    # $node isa QAST::Var
-            my $otherwiseWithAddedNode := nqp::clone($otherwise);
-            $otherwiseWithAddedNode.push($node);
-            QAST::Op.new(:op<if>,
-                QAST::Op.new(:op<isstr>, $node),
-                $node,
-                QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<isint>, $node),
-                    $node,
-                    QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<isnum>, $node),
-                        $node,
-                        $otherwiseWithAddedNode
-                    )
-                )
-            )
-        }
-    }
-
     my sub mkForce($node) {
         if nqp::istype($node, QAST::Node) {
             if isDelayed($node) {
                 $node[0];
             } elsif isForced($node) || isVal($node) {
                 $node;
+            } elsif nqp::istype($node, QAST::Var) {
+                QAST::Op.new(:op<if>,
+                    QAST::Op.new(:op<isinvokable>, $node),
+                    QAST::Op.new(:op<call>, $node),
+                    $node
+                )
             } else {
-                my $out := mkImmediateOrAddAsChildTo(
-                    $node,
-                    QAST::Op.new(:op<call>)
+                my $nVar := locVar('x');
+                QAST::Block.new(
+                    :blocktype('immediate'),
+                    QAST::Op.new(:op<bind>, $nVar.declV, $node),
+                    mkForce($nVar)
                 );
-#                say(">>>> " ~ $node.dump);
-#                say(">>>> " ~ $out.dump);
-                $out;
             }
         } else {
             nqp::die("expected a QAST::Node");
