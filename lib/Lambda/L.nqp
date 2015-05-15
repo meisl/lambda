@@ -208,8 +208,15 @@ class LActions is HLL::Actions {
         }
     }
 
-    my sub mkCall($fVar, *@args) {
-        my $out := QAST::Op.new(:op<call>, $fVar);
+    my sub mkCall($fn, *@args) {
+        my $out := QAST::Op.new(:op<call>);
+        if nqp::isstr($fn) {
+            $out.name($fn);
+        } elsif nqp::istype($fn, QAST::Node) {
+            $out.push($fn);
+        } else {
+            nqp::die("expected a str or a QAST::Node for param 'fn'");
+        }
         for @args {
             $out.push(asNode($_));
         }
@@ -219,14 +226,14 @@ class LActions is HLL::Actions {
     my sub mkSCall(str $fnName, *@args) {
         if $fnName eq '.ifTag' {
             my @as := [];
-            @as.push(asNode(@args.shift));
-            @as.push(asNode(@args.shift));
+            @as.push(@args.shift);
+            @as.push(@args.shift);
             for @args {
                 @as.push(mkDelay(asNode($_)));
             };
-            mkCall(lexVar($fnName), |@as);
+            mkCall($fnName, |@as);
         } else {
-            mkCall(lexVar($fnName), |@args);
+            mkCall($fnName, |@args);
         }
     }
 
@@ -303,7 +310,7 @@ class LActions is HLL::Actions {
         my $_ifTag-x := lexVar('x');
         my $_ifTag-t := lexVar('t');
         my $_ifTag-e := lexVar('e');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.ifTag').declV,
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.ifTag', :decl<static>),
             QAST::Block.new(:arity(4),
                 $_ifTag-s.declP,
                 $_ifTag-x.declP,
@@ -329,7 +336,7 @@ class LActions is HLL::Actions {
         my $_project-s := lexVar('s');  # "subject"
         my $_project-t := lexVar('t');  # "tag"
         my $_project-i := lexVar('i');  # "index"
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.->#n').declV,
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.->#n', :decl<static>),
             QAST::Block.new(:arity(1),
                 $_project-s.declP,
                 $_project-t.declP,
@@ -342,7 +349,7 @@ class LActions is HLL::Actions {
         ));
 
         my $_strOut-p1 := lexVar('v');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.strOut').declV,
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.strOut', :decl<static>),
             QAST::Block.new(:arity(1),
                 $_strOut-p1.declP,
                 QAST::Op.new(:op<if>,
@@ -361,7 +368,7 @@ class LActions is HLL::Actions {
         my $_delayM-block  := lexVar('block');
         my $_delayM-wasRun := lexVar('wasRun');
         my $_delayM-result := lexVar('result');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.delayM').declV,
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.delayM', :decl<static>),
             QAST::Block.new(:arity(1),
                 $_delayM-block.declP,
                 QAST::Op.new(:op<bind>, $_delayM-wasRun.declV, asNode(0)),
@@ -379,7 +386,7 @@ class LActions is HLL::Actions {
         ));
 
         my $_show-p1 := lexVar('v');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.say').declV,
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.say', :decl<static>),
             QAST::Block.new(:arity(1),
                 $_show-p1.declP,
                 QAST::Op.new(:op<bind>, $_show-p1, mkForce($_show-p1)),
@@ -394,7 +401,7 @@ class LActions is HLL::Actions {
         ));
 
         my $_strLit-p1 := lexVar('v');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.strLit').declV,
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.strLit', :decl<static>),
             QAST::Block.new(:arity(1),
                 $_strLit-p1.declP,
                 mkConcat('"', QAST::Op.new(:op<escape>, $_strLit-p1), '"')
@@ -403,7 +410,7 @@ class LActions is HLL::Actions {
         
         my $_apply1-f  := lexVar('f');
         my $_apply1-a1 := lexVar('a1');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.apply1').declV,
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.apply1', :decl<static>),
             QAST::Block.new(:arity(2),
                 $_apply1-f.declP,
                 $_apply1-a1.declP,
@@ -421,7 +428,7 @@ class LActions is HLL::Actions {
             )
         ));
 
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay').declV,
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay', :decl<static>),
             mkDelay(
                 QAST::Stmts.new(
                     QAST::Op.new(:op<say>, asNode('!!!!')),
