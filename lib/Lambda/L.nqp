@@ -154,7 +154,10 @@ class LActions is HLL::Actions {
         } elsif isForced($node) {
             $node[1];
         } else {
-            mkSCall('.delayM', QAST::Block.new(:arity(0), $node))
+            QAST::Stmts.new(
+                mkSCall('.say', mkConcat("# calling .delayM on\n", $node.dump)),
+                mkSCall('.delayM', QAST::Block.new(:arity(0), $node))
+            );
         }
 
     }

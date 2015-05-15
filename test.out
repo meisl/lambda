@@ -1,11 +1,55 @@
 ---------- L-compiler ----------
+# calling .delayM on
+- QAST::Stmts
+  - QAST::Op(say)
+    - QAST::SVal(!!!!)
+  - QAST::SVal(42)
+
 3 lambdas
 ------------------------------------------------
 !!!!
 42
 42
+# calling .delayM on
+- QAST::Op(atpos)
+  - QAST::Var+{Var}(lexical s :decl())
+  - QAST::Var+{Var}(lexical i :decl())
+
+# calling .delayM on
+- QAST::Op(null)
+
+# calling .delayM on
+- QAST::Op(atpos)
+  - QAST::Var+{Var}(lexical s :decl())
+  - QAST::Var+{Var}(lexical i :decl())
+
+# calling .delayM on
+- QAST::Op(null)
+
+# calling .delayM on
+- QAST::Op(concat)
+  - QAST::SVal(λf.f (u u f)\n   # where u = )
+  - QAST::Op(call .strOut)
+    - QAST::Var+{Var}(lexical u :decl()) u
+
+# calling .delayM on
+- QAST::Op(atpos)
+  - QAST::Var+{Var}(lexical s :decl())
+  - QAST::Var+{Var}(lexical i :decl())
+
+# calling .delayM on
+- QAST::Op(null)
+
+# calling .delayM on
+- QAST::Op(atpos)
+  - QAST::Var+{Var}(lexical s :decl())
+  - QAST::Var+{Var}(lexical i :decl())
+
+# calling .delayM on
+- QAST::Op(null)
+
 ------------------------------------------------
 λf.f (u u f)
    # where u = λu.λf.f (u u f)
 
-Output completed (0 sec consumed) - Normal Termination
+Output completed (1 sec consumed) - Normal Termination
