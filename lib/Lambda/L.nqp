@@ -121,6 +121,14 @@ class LActions is HLL::Actions {
         }
     }
 
+    my sub mkSCall(str $fnName, *@args) {
+        my $out := QAST::Op.new(:op<call>, :name($fnName));
+        for @args {
+            $out.push(asNode($_));
+        }
+        return $out;
+    }
+
     my sub isForced($node) {
         if nqp::istype($node, QAST::Node) {
             nqp::istype($node, QAST::Op) && ($node.op eq 'call') && (nqp::elems($node.list) == 1);
@@ -146,7 +154,7 @@ class LActions is HLL::Actions {
         }
     }
 
-    my sub mkDelay($node) {
+    my sub mkDelaySimple($node) {
         if !nqp::istype($node, QAST::Node) {
             nqp::die("expected a QAST::Node for param 'node'");
         }
@@ -155,12 +163,28 @@ class LActions is HLL::Actions {
         } elsif isForced($node) {
             $node[1];
         } else {
-            QAST::Stmts.new(
-                mkSCall('.say', mkConcat("# calling .delayM on\n", $node.dump)),
-                mkSCall('.delayM', QAST::Block.new(:arity(0), $node))
-            );
+            $node := QAST::Block.new(:arity(0), $node);
+            $node.annotate('delay', 'simple');
+            $node;
         }
+    }
 
+    my sub mkDelayMemo($node) {
+        if !nqp::istype($node, QAST::Node) {
+            nqp::die("expected a QAST::Node for param 'node'");
+        }
+        if isVal($node) || isDelayed($node) {
+            $node;
+        } elsif isForced($node) {
+            $node[1];   # TODO: check if inner thing is simple or memo already
+        } else {
+            $node := QAST::Stmts.new(
+                mkSCall('.say', mkConcat("# calling .delayM on\n", $node.dump)),
+                mkSCall('.delayM', mkDelaySimple($node))
+            );
+            $node.annotate('delay', 'memo');
+            $node;
+        }
     }
 
     my sub mkForce($node) {
@@ -185,35 +209,6 @@ class LActions is HLL::Actions {
             }
         } else {
             nqp::die("expected a QAST::Node");
-        }
-    }
-
-    my sub mkCall($fn, *@args) {
-        my $out := QAST::Op.new(:op<call>);
-        if nqp::isstr($fn) {
-            $out.name($fn);
-        } elsif nqp::istype($fn, QAST::Node) {
-            $out.push($fn);
-        } else {
-            nqp::die("expected a str or a QAST::Node for param 'fn'");
-        }
-        for @args {
-            $out.push(asNode($_));
-        }
-        return $out;
-    }
-
-    my sub mkSCall(str $fnName, *@args) {
-        if $fnName eq '.ifTag' {
-            my @as := [];
-            @as.push(@args.shift);
-            @as.push(@args.shift);
-            for @args {
-                @as.push(mkDelay(asNode($_)));
-            };
-            mkCall($fnName, |@as);
-        } else {
-            mkCall($fnName, |@args);
         }
     }
 
@@ -296,7 +291,7 @@ class LActions is HLL::Actions {
                 $_ifTag-x.declP,
                 $_ifTag-t.declP,
                 $_ifTag-e.declP,
-                mkCall( # expects 0-arity block as "then" and "else" args (taken care of by mkSCall)
+                mkForce(
                     QAST::Op.new(:op<if>,
                         QAST::Op.new(:op<islist>, $_ifTag-s),
                         QAST::Op.new(:op<if>,
@@ -322,7 +317,7 @@ class LActions is HLL::Actions {
                 $_project-t.declP,
                 $_project-i.declP,
                 mkSCall('.ifTag', $_project-s, $_project-t,
-                    mkListLookup($_project-s, :index($_project-i)),
+                    mkDelaySimple(mkListLookup($_project-s, :index($_project-i))),
                     QAST::Op.new(:op<null>)
                 )
             )
@@ -409,7 +404,7 @@ class LActions is HLL::Actions {
         ));
 
         $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay', :decl<static>),
-            mkDelay(
+            mkDelayMemo(
                 QAST::Stmts.new(
                     QAST::Op.new(:op<say>, asNode('!!!!')),
                     asNode('42')
@@ -608,7 +603,7 @@ class LActions is HLL::Actions {
                 @strs.push(nqp::iterkey_s($_));
                 @strs.push(nqp::iterval($_));
             }
-            $strRepr := mkDelay(mkConcat(|@strs));
+            $strRepr := mkDelayMemo(mkConcat(|@strs));
         }
 
         my $lam := QAST::Op.new(:op<list>,
