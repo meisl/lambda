@@ -68,7 +68,7 @@
           - QAST::Op(reprname)
             - QAST::Var+{Var}(lexical v :decl())
   - QAST::Op(bind)
-    - QAST::Var+{Var}(lexical .delayM :decl(static))
+    - QAST::Var+{Var}(lexical .delayMemo :decl(static))
     - QAST::Block
       - QAST::Var+{Var}(lexical block :decl(param))
       - QAST::Op(bind)
@@ -144,11 +144,15 @@
         - QAST::Var+{Var}(lexical a1 :decl())
   - QAST::Op(bind)
     - QAST::Var+{Var}(lexical .testDelay :decl(static))
-    - QAST::Block
-      - QAST::Stmts
-        - QAST::Op(say)
-          - QAST::SVal(!!!!)
-        - QAST::SVal(42)
+    - QAST::Stmts
+      - QAST::Op(call .say)
+        - QAST::SVal(# calling .delayMemo on\n- QAST::Stmts\n  - QAST::Op(say)\n    - QAST::SVal(!!!!)\n  - QAST::SVal(42)\n)
+      - QAST::Op(call .delayMemo)
+        - QAST::Block
+          - QAST::Stmts
+            - QAST::Op(say)
+              - QAST::SVal(!!!!)
+            - QAST::SVal(42)
   - QAST::Stmts(:resultchild(3)))
     - QAST::Op(call .say)
       - QAST::SVal(3 lambdas\n------------------------------------------------)
@@ -183,8 +187,8 @@
                     - QAST::Var+{Var}(lexical f :decl()) f
               - QAST::Stmts
                 - QAST::Op(call .say)
-                  - QAST::SVal(# calling .delayM on\n- QAST::Op(concat)\n  - QAST::SVal(λf.f (u u f)\\n   # where u = )\n  - QAST::Op(call .strOut)\n    - QAST::Var+{Var}(lexical u :decl()) u\n)
-                - QAST::Op(call .delayM)
+                  - QAST::SVal(# calling .delayMemo on\n- QAST::Op(concat)\n  - QAST::SVal(λf.f (u u f)\\n   # where u = )\n  - QAST::Op(call .strOut)\n    - QAST::Var+{Var}(lexical u :decl()) u\n)
+                - QAST::Op(call .delayMemo)
                   - QAST::Block
                     - QAST::Op(concat)
                       - QAST::SVal(λf.f (u u f)\n   # where u = )

@@ -129,22 +129,6 @@ class LActions is HLL::Actions {
         return $out;
     }
 
-    my sub isForced($node) {
-        if nqp::istype($node, QAST::Node) {
-            nqp::istype($node, QAST::Op) && ($node.op eq 'call') && (nqp::elems($node.list) == 1);
-        } else {
-            nqp::die("expected a QAST::Node");
-        }
-    }
-
-    my sub isDelayed($node) {
-        if nqp::istype($node, QAST::Node) {
-            nqp::istype($node, QAST::Block) && ($node.arity == 0);
-        } else {
-            nqp::die("expected a QAST::Node");
-        }
-    }
-
     my sub isVal($node) {
         if nqp::istype($node, QAST::Node) {
             nqp::istype($node, QAST::SVal) || nqp::istype($node, QAST::IVal) || nqp::istype($node, QAST::NVal)
@@ -154,35 +138,60 @@ class LActions is HLL::Actions {
         }
     }
 
+    my sub isForced($node) {
+        if nqp::istype($node, QAST::Node) {
+            $node.has_ann('forced');
+        } else {
+            nqp::die("expected a QAST::Node");
+        }
+    }
+
+    my sub isDelayed($node) {
+        if nqp::istype($node, QAST::Node) {
+            $node.has_ann('delayed');
+        } else {
+            nqp::die("expected a QAST::Node");
+        }
+    }
+
     my sub mkDelaySimple($node) {
         if !nqp::istype($node, QAST::Node) {
-            nqp::die("expected a QAST::Node for param 'node'");
+            nqp::die("mkDelaySimple expects a QAST::Node");
         }
         if isVal($node) || isDelayed($node) {
             $node;
         } elsif isForced($node) {
-            $node[1];
+            $node.ann('forced');
         } else {
             $node := QAST::Block.new(:arity(0), $node);
-            $node.annotate('delay', 'simple');
+            $node.annotate('delayed', 'simple');
             $node;
         }
     }
 
     my sub mkDelayMemo($node) {
         if !nqp::istype($node, QAST::Node) {
-            nqp::die("expected a QAST::Node for param 'node'");
+            nqp::die("mkDelayMemo expects a QAST::Node");
         }
-        if isVal($node) || isDelayed($node) {
+        if isVal($node) {
             $node;
+        } elsif isDelayed($node) {
+            my $delayType := $node.ann('delayed');
+            if $delayType eq 'memo' {
+                $node;
+            } elsif $delayType eq 'simple' {
+                mkDelayMemo($node[0]);
+            } else {
+                nqp::die("mkDelayMemo: unknown delay type '$delayType' in\n" ~ $node.dump);
+            }
         } elsif isForced($node) {
-            $node[1];   # TODO: check if inner thing is simple or memo already
+            mkDelayMemo($node.ann('forced'));
         } else {
             $node := QAST::Stmts.new(
-                mkSCall('.say', mkConcat("# calling .delayM on\n", $node.dump)),
-                mkSCall('.delayM', mkDelaySimple($node))
+                mkSCall('.say', mkConcat("# calling .delayMemo on\n", $node.dump)),
+                mkSCall('.delayMemo', mkDelaySimple($node))
             );
-            $node.annotate('delay', 'memo');
+            $node.annotate('delayed', 'memo');
             $node;
         }
     }
@@ -194,21 +203,24 @@ class LActions is HLL::Actions {
             } elsif isForced($node) || isVal($node) {
                 $node;
             } elsif nqp::istype($node, QAST::Var) {
-                QAST::Op.new(:op<if>,
+                my $out := QAST::Op.new(:op<if>,
                     QAST::Op.new(:op<isinvokable>, $node),
                     QAST::Op.new(:op<call>, $node),
                     $node
-                )
+                );
+                $out.annotate('force', $node);
+                $out;
             } else {
                 my $nVar := locVar('x');
-                QAST::Block.new(
-                    :blocktype('immediate'),
+                my $out := QAST::Block.new(:blocktype('immediate'), :name('forcing'),
                     QAST::Op.new(:op<bind>, $nVar.declV, $node),
                     mkForce($nVar)
                 );
+                $out.annotate('force', $node);
+                $out;
             }
         } else {
-            nqp::die("expected a QAST::Node");
+            nqp::die("mkForce expects a QAST::Node");
         }
     }
 
@@ -340,20 +352,20 @@ class LActions is HLL::Actions {
             )
         ));
 
-        my $_delayM-block  := lexVar('block');
-        my $_delayM-wasRun := lexVar('wasRun');
-        my $_delayM-result := lexVar('result');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.delayM', :decl<static>),
+        my $_delayMemo-block  := lexVar('block');
+        my $_delayMemo-wasRun := lexVar('wasRun');
+        my $_delayMemo-result := lexVar('result');
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.delayMemo', :decl<static>),
             QAST::Block.new(:arity(1),
-                $_delayM-block.declP,
-                QAST::Op.new(:op<bind>, $_delayM-wasRun.declV, asNode(0)),
-                $_delayM-result.declV,
+                $_delayMemo-block.declP,
+                QAST::Op.new(:op<bind>, $_delayMemo-wasRun.declV, asNode(0)),
+                $_delayMemo-result.declV,
                 QAST::Block.new(:arity(0),
-                    QAST::Op.new(:op<if>, $_delayM-wasRun,
-                        $_delayM-result,
+                    QAST::Op.new(:op<if>, $_delayMemo-wasRun,
+                        $_delayMemo-result,
                         QAST::Stmts.new(
-                            QAST::Op.new(:op<bind>, $_delayM-wasRun, asNode(1)),
-                            QAST::Op.new(:op<bind>, $_delayM-result, QAST::Op.new(:op<call>, $_delayM-block))
+                            QAST::Op.new(:op<bind>, $_delayMemo-wasRun, asNode(1)),
+                            QAST::Op.new(:op<bind>, $_delayMemo-result, QAST::Op.new(:op<call>, $_delayMemo-block))
                         )
                     )
                 )
@@ -404,12 +416,12 @@ class LActions is HLL::Actions {
         ));
 
         $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay', :decl<static>),
-            mkDelaySimple(
+            mkDelayMemo(mkDelaySimple(
                 QAST::Stmts.new(
                     QAST::Op.new(:op<say>, asNode('!!!!')),
                     asNode('42')
                 )
-            )
+            ))
         ));
 
         return $block;

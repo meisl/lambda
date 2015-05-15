@@ -1,11 +1,16 @@
 ---------- L-compiler ----------
+# calling .delayMemo on
+- QAST::Stmts
+  - QAST::Op(say)
+    - QAST::SVal(!!!!)
+  - QAST::SVal(42)
+
 3 lambdas
 ------------------------------------------------
 !!!!
 42
-!!!!
 42
-# calling .delayM on
+# calling .delayMemo on
 - QAST::Op(concat)
   - QAST::SVal(λf.f (u u f)\n   # where u = )
   - QAST::Op(call .strOut)
