@@ -154,7 +154,7 @@ class LActions is HLL::Actions {
         } elsif isForced($node) {
             $node[1];
         } else {
-            QAST::Block.new(:arity(0), $node);
+            mkSCall('.delayM', QAST::Block.new(:arity(0), $node))
         }
 
     }
@@ -352,6 +352,26 @@ class LActions is HLL::Actions {
                         mkLambda2str($_strOut-p1),
                         QAST::Op.new(:op<reprname>,
                             $_strOut-p1
+                        )
+                    )
+                )
+            )
+        ));
+
+        my $_delayM-block  := lexVar('block');
+        my $_delayM-wasRun := lexVar('wasRun');
+        my $_delayM-result := lexVar('result');
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.delayM').declV,
+            QAST::Block.new(:arity(1),
+                $_delayM-block.declP,
+                QAST::Op.new(:op<bind>, $_delayM-wasRun.declV, asNode(0)),
+                $_delayM-result.declV,
+                QAST::Block.new(:arity(0),
+                    QAST::Op.new(:op<if>, $_delayM-wasRun,
+                        $_delayM-result,
+                        QAST::Stmts.new(
+                            QAST::Op.new(:op<bind>, $_delayM-wasRun, asNode(1)),
+                            QAST::Op.new(:op<bind>, $_delayM-result, QAST::Op.new(:op<call>, $_delayM-block))
                         )
                     )
                 )

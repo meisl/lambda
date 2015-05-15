@@ -30,12 +30,16 @@
         - QAST::Var+{Var}(lexical .ifTag :decl())
         - QAST::Var+{Var}(lexical s :decl())
         - QAST::Var+{Var}(lexical t :decl())
-        - QAST::Block
-          - QAST::Op(atpos)
-            - QAST::Var+{Var}(lexical s :decl())
-            - QAST::Var+{Var}(lexical i :decl())
-        - QAST::Block
-          - QAST::Op(null)
+        - QAST::Op(call)
+          - QAST::Var+{Var}(lexical .delayM :decl())
+          - QAST::Block
+            - QAST::Op(atpos)
+              - QAST::Var+{Var}(lexical s :decl())
+              - QAST::Var+{Var}(lexical i :decl())
+        - QAST::Op(call)
+          - QAST::Var+{Var}(lexical .delayM :decl())
+          - QAST::Block
+            - QAST::Op(null)
   - QAST::Op(bind)
     - QAST::Var+{Var}(lexical .strOut :decl(var))
     - QAST::Block
@@ -71,6 +75,26 @@
                     - QAST::Var+{Var}(lexical x :decl())
           - QAST::Op(reprname)
             - QAST::Var+{Var}(lexical v :decl())
+  - QAST::Op(bind)
+    - QAST::Var+{Var}(lexical .delayM :decl(var))
+    - QAST::Block
+      - QAST::Var+{Var}(lexical block :decl(param))
+      - QAST::Op(bind)
+        - QAST::Var+{Var}(lexical wasRun :decl(var))
+        - QAST::IVal(0)
+      - QAST::Var+{Var}(lexical result :decl(var))
+      - QAST::Block
+        - QAST::Op(if)
+          - QAST::Var+{Var}(lexical wasRun :decl())
+          - QAST::Var+{Var}(lexical result :decl())
+          - QAST::Stmts
+            - QAST::Op(bind)
+              - QAST::Var+{Var}(lexical wasRun :decl())
+              - QAST::IVal(1)
+            - QAST::Op(bind)
+              - QAST::Var+{Var}(lexical result :decl())
+              - QAST::Op(call)
+                - QAST::Var+{Var}(lexical block :decl())
   - QAST::Op(bind)
     - QAST::Var+{Var}(lexical .say :decl(var))
     - QAST::Block
@@ -144,11 +168,13 @@
         - QAST::Var+{Var}(lexical a1 :decl())
   - QAST::Op(bind)
     - QAST::Var+{Var}(lexical .testDelay :decl(var))
-    - QAST::Block
-      - QAST::Stmts
-        - QAST::Op(say)
-          - QAST::SVal(!!!!)
-        - QAST::SVal(42)
+    - QAST::Op(call)
+      - QAST::Var+{Var}(lexical .delayM :decl())
+      - QAST::Block
+        - QAST::Stmts
+          - QAST::Op(say)
+            - QAST::SVal(!!!!)
+          - QAST::SVal(42)
   - QAST::Stmts(:resultchild(3)))
     - QAST::Op(call)
       - QAST::Var+{Var}(lexical .say :decl())
@@ -190,12 +216,14 @@
                       - QAST::Var+{Var}(lexical u :decl()) u
                       - QAST::Var+{Var}(lexical u :decl()) u
                     - QAST::Var+{Var}(lexical f :decl()) f
-              - QAST::Block
-                - QAST::Op(concat)
-                  - QAST::SVal(λf.f (u u f)\n   # where u = )
-                  - QAST::Op(call)
-                    - QAST::Var+{Var}(lexical .strOut :decl())
-                    - QAST::Var+{Var}(lexical u :decl()) u
+              - QAST::Op(call)
+                - QAST::Var+{Var}(lexical .delayM :decl())
+                - QAST::Block
+                  - QAST::Op(concat)
+                    - QAST::SVal(λf.f (u u f)\n   # where u = )
+                    - QAST::Op(call)
+                      - QAST::Var+{Var}(lexical .strOut :decl())
+                      - QAST::Var+{Var}(lexical u :decl()) u
           - QAST::SVal(λu.λf.f (u u f))
     - QAST::Op(call)
       - QAST::Var+{Var}(lexical .say :decl())
