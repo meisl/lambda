@@ -402,12 +402,12 @@ class LActions is HLL::Actions {
         ));
 
         $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay').declV,
-            #mkDelay(
+            mkDelay(
                 QAST::Stmts.new(
                     QAST::Op.new(:op<say>, asNode('!!!!')),
                     asNode('42')
                 )
-            #)
+            )
         ));
 
         return $block;

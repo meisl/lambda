@@ -144,10 +144,11 @@
         - QAST::Var+{Var}(lexical a1 :decl())
   - QAST::Op(bind)
     - QAST::Var+{Var}(lexical .testDelay :decl(var))
-    - QAST::Stmts
-      - QAST::Op(say)
-        - QAST::SVal(!!!!)
-      - QAST::SVal(42)
+    - QAST::Block
+      - QAST::Stmts
+        - QAST::Op(say)
+          - QAST::SVal(!!!!)
+        - QAST::SVal(42)
   - QAST::Stmts(:resultchild(3)))
     - QAST::Op(call)
       - QAST::Var+{Var}(lexical .say :decl())
