@@ -166,26 +166,30 @@ class LActions is HLL::Actions {
         if !nqp::istype($otherwise, QAST::Node) {
             nqp::die("expected a QAST::Node for param 'otherwise'");
         }
-        my $x := lexVar('x');
-        my $otherwiseWithAddedX := nqp::clone($otherwise);
-        $otherwiseWithAddedX.push($x);
-        QAST::Block.new(
-            :blocktype('immediate'),
-            QAST::Op.new(:op<bind>, $x.declV, $node),
+        if !nqp::istype($node, QAST::Var) {
+            my $nVar := locVar('x');
+            QAST::Block.new(
+                :blocktype('immediate'),
+                QAST::Op.new(:op<bind>, $nVar.declV, $node),
+                mkImmediateOrAddAsChildTo($nVar, $otherwise)
+            );
+        } else {    # $node isa QAST::Var
+            my $otherwiseWithAddedNode := nqp::clone($otherwise);
+            $otherwiseWithAddedNode.push($node);
             QAST::Op.new(:op<if>,
-                QAST::Op.new(:op<isstr>, $x),
-                $x,
+                QAST::Op.new(:op<isstr>, $node),
+                $node,
                 QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<isint>, $x),
-                    $x,
+                    QAST::Op.new(:op<isint>, $node),
+                    $node,
                     QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<isnum>, $x),
-                        $x,
-                        $otherwiseWithAddedX
+                        QAST::Op.new(:op<isnum>, $node),
+                        $node,
+                        $otherwiseWithAddedNode
                     )
                 )
             )
-        );
+        }
     }
 
     my sub mkForce($node) {
@@ -385,16 +389,16 @@ class LActions is HLL::Actions {
             )
         ));
 
-        my $_show-p1 := lexVar('v');
+        my $_say-p1 := lexVar('v');
         $block.push(QAST::Op.new(:op<bind>, lexVar('.say', :decl<static>),
             QAST::Block.new(:arity(1),
-                $_show-p1.declP,
-                QAST::Op.new(:op<bind>, $_show-p1, mkForce($_show-p1)),
+                $_say-p1.declP,
+                QAST::Op.new(:op<bind>, $_say-p1, mkForce($_say-p1)),
                 QAST::Op.new(:op<say>,
                     QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<isstr>, $_show-p1),
-                        $_show-p1,
-                        mkSCall('.strOut', $_show-p1)
+                        QAST::Op.new(:op<isstr>, $_say-p1),
+                        $_say-p1,
+                        mkSCall('.strOut', $_say-p1)
                     )
                 )
             )
