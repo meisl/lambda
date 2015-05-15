@@ -34,13 +34,11 @@
             - QAST::Var+{Var}(lexical s :decl())
             - QAST::Var+{Var}(lexical t :decl())
             - QAST::Block
-              - QAST::Stmt
-                - QAST::Op(atpos)
-                  - QAST::Var+{Var}(lexical s :decl())
-                  - QAST::Var+{Var}(lexical i :decl())
+              - QAST::Op(atpos)
+                - QAST::Var+{Var}(lexical s :decl())
+                - QAST::Var+{Var}(lexical i :decl())
             - QAST::Block
-              - QAST::Stmt
-                - QAST::Op(null)
+              - QAST::Op(null)
     - QAST::Op(bind)
       - QAST::Var+{Var}(lexical .strOut :decl(var))
       - QAST::Block

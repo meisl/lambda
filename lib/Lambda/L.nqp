@@ -121,6 +121,93 @@ class LActions is HLL::Actions {
         }
     }
 
+    my sub isForced($node) {
+        if nqp::istype($node, QAST::Node) {
+            nqp::istype($node, QAST::Op) && ($node.op eq 'call') && (nqp::elems($node.list) == 1);
+        } else {
+            nqp::die("expected a QAST::Node");
+        }
+    }
+
+    my sub isDelayed($node) {
+        if nqp::istype($node, QAST::Node) {
+            nqp::istype($node, QAST::Block) && ($node.arity == 0);
+        } else {
+            nqp::die("expected a QAST::Node");
+        }
+    }
+
+    my sub isVal($node) {
+        if nqp::istype($node, QAST::Node) {
+            nqp::istype($node, QAST::SVal) || nqp::istype($node, QAST::IVal) || nqp::istype($node, QAST::NVal);
+        } else {
+            nqp::die("expected a QAST::Node");
+        }
+    }
+
+    my sub mkDelay($node) {
+        if !nqp::istype($node, QAST::Node) {
+            nqp::die("expected a QAST::Node for param 'node'");
+        }
+        if isVal($node) || isDelayed($node) {
+            $node;
+        } elsif isForced($node) {
+            $node[1];
+        } else {
+            QAST::Block.new(:arity(0), $node);
+        }
+
+    }
+
+    my sub mkImmediateOrAddAsChildTo($node, $otherwise) {
+        if !nqp::istype($node, QAST::Node) {
+            nqp::die("expected a QAST::Node for param 'node'");
+        }
+        if !nqp::istype($otherwise, QAST::Node) {
+            nqp::die("expected a QAST::Node for param 'otherwise'");
+        }
+        my $x := lexVar('x');
+        my $otherwiseWithAddedX := nqp::clone($otherwise);
+        $otherwiseWithAddedX.push($x);
+        QAST::Block.new(
+            :blocktype('immediate'),
+            QAST::Op.new(:op<bind>, $x.declV, $node),
+            QAST::Op.new(:op<if>,
+                QAST::Op.new(:op<isstr>, $x),
+                $x,
+                QAST::Op.new(:op<if>,
+                    QAST::Op.new(:op<isint>, $x),
+                    $x,
+                    QAST::Op.new(:op<if>,
+                        QAST::Op.new(:op<isnum>, $x),
+                        $x,
+                        $otherwiseWithAddedX
+                    )
+                )
+            )
+        );
+    }
+
+    my sub mkForce($node) {
+        if nqp::istype($node, QAST::Node) {
+            if isDelayed($node) {
+                $node[0];
+            } elsif isForced($node) || isVal($node) {
+                $node;
+            } else {
+                my $out := mkImmediateOrAddAsChildTo(
+                    $node,
+                    QAST::Op.new(:op<call>)
+                );
+#                say(">>>> " ~ $node.dump);
+#                say(">>>> " ~ $out.dump);
+                $out;
+            }
+        } else {
+            nqp::die("expected a QAST::Node");
+        }
+    }
+
     my sub mkCall($fVar, *@args) {
         my $out := QAST::Op.new(:op<call>, $fVar);
         for @args {
@@ -135,11 +222,7 @@ class LActions is HLL::Actions {
             @as.push(asNode(@args.shift));
             @as.push(asNode(@args.shift));
             for @args {
-                if nqp::istype($_, QAST::Block) && ($_.arity == 0) {
-                    @as.push($_);
-                } else {
-                    @as.push(QAST::Block.new(:arity(0), QAST::Stmt.new(asNode($_))));
-                }
+                @as.push(mkDelay(asNode($_)));
             };
             mkCall(lexVar($fnName), |@as);
         } else {
@@ -201,79 +284,6 @@ class LActions is HLL::Actions {
 
     my sub mkDie(*@msgPieces) {
         QAST::Op.new(:op<die>, mkConcat('ERROR: ', |@msgPieces));
-    }
-
-    my sub isForced($node) {
-        if nqp::istype($node, QAST::Node) {
-            nqp::istype($node, QAST::Op) && ($node.op eq 'call') && (nqp::elems($node.list) == 1);
-        } else {
-            nqp::die("expected a QAST::Node");
-        }
-    }
-
-    my sub isDelayed($node) {
-        if nqp::istype($node, QAST::Node) {
-            nqp::istype($node, QAST::Block) && ($node.arity == 0);
-        } else {
-            nqp::die("expected a QAST::Node");
-        }
-    }
-
-    my sub isImmediate($node) {
-        if nqp::istype($node, QAST::Node) {
-            nqp::istype($node, QAST::SVal) || nqp::istype($node, QAST::IVal) || nqp::istype($node, QAST::NVal);
-        } else {
-            nqp::die("expected a QAST::Node");
-        }
-    }
-
-    my sub mkImmediateOrAddAsChildTo($node, $otherwise) {
-        my $x := lexVar('x');
-        my $otherwiseWithAddedX := nqp::clone($otherwise);
-        $otherwiseWithAddedX.push($x);
-        if !nqp::istype($node, QAST::Node) {
-            nqp::die("expected a QAST::Node for param 'node'");
-        }
-        if !nqp::istype($otherwise, QAST::Node) {
-            nqp::die("expected a QAST::Node for param 'otherwise'");
-        }
-        QAST::Block.new(
-            :blocktype('immediate'),
-            QAST::Op.new(:op<bind>, $x.declV, $node),
-            QAST::Op.new(:op<if>,
-                QAST::Op.new(:op<isstr>, $x),
-                $x,
-                QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<isint>, $x),
-                    $x,
-                    QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<isnum>, $x),
-                        $x,
-                        $otherwiseWithAddedX
-                    )
-                )
-            )
-        );
-    }
-
-    my sub mkForce($node) {
-        if nqp::istype($node, QAST::Node) {
-            if isDelayed($node) {
-                $node[0];
-            } elsif isForced($node) || isImmediate($node) {
-                $node;
-            } else {
-                my $out := mkImmediateOrAddAsChildTo(
-                    $node,
-                    QAST::Op.new(:op<call>)
-                );
-#                say(">>>> " ~ $node.dump);
-#                say(">>>> " ~ $out.dump);
-                $out;
-            }
-        } else {
-            nqp::die("expected a QAST::Node");
-        }
     }
 
     my sub mkLambda2code($subject) {
@@ -542,7 +552,7 @@ class LActions is HLL::Actions {
         my $binder := lexVar(~$/<varName>).declP;
         my $body   := $/<body>.ast;
 
-        my $block := QAST::Block.new(:node($/), $binder, $body);
+        my $block := QAST::Block.new(:arity(1), :node($/), $binder, $body);
 
         my %fvs := nqp::clone($body.ann('FV'));
         nqp::deletekey(%fvs, $/<varName>);
@@ -562,9 +572,7 @@ class LActions is HLL::Actions {
                 @strs.push(nqp::iterkey_s($_));
                 @strs.push(nqp::iterval($_));
             }
-            $strRepr := QAST::Block.new(:arity(0),
-                mkConcat(|@strs)
-            );
+            $strRepr := mkDelay(mkConcat(|@strs));
         }
 
         my $lam := QAST::Op.new(:op<list>,

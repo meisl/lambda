@@ -4,6 +4,9 @@
 # ~> (Runtime) ERROR: cannot apply "xfo\noö" to λy.x y
 #(λx.λ_.(x λy.x y)) "xfo\noö" "xbar" "xbaz" λz."qumbl"
 
+# K applied to "foo" and "bar": ~> "foo"
+#(λx.λ_.x) "foo" "bar"
+
 # Turing's Y:
 (λU.U U) (λu.λf.f (u u f))
 
