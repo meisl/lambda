@@ -357,7 +357,22 @@ class LActions is HLL::Actions {
                 )
             )
         ));
-        
+
+        my $_show-p1 := lexVar('v');
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.say').declV,
+            QAST::Block.new(:arity(1),
+                $_show-p1.declP,
+                QAST::Op.new(:op<bind>, $_show-p1, mkForce($_show-p1)),
+                QAST::Op.new(:op<say>,
+                    QAST::Op.new(:op<if>,
+                        QAST::Op.new(:op<isstr>, $_show-p1),
+                        $_show-p1,
+                        mkSCall('.strOut', $_show-p1)
+                    )
+                )
+            )
+        ));
+
         my $_strLit-p1 := lexVar('v');
         $block.push(QAST::Op.new(:op<bind>, lexVar('.strLit').declV,
             QAST::Block.new(:arity(1),
@@ -384,6 +399,15 @@ class LActions is HLL::Actions {
                     $_apply1-a1
                 )
             )
+        ));
+
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay').declV,
+            #mkDelay(
+                QAST::Stmts.new(
+                    QAST::Op.new(:op<say>, asNode('!!!!')),
+                    asNode('42')
+                )
+            #)
         ));
 
         return $block;
@@ -450,10 +474,17 @@ class LActions is HLL::Actions {
 
         my $s := mkSetting();
         
-        $s.push(QAST::Op.new(:op<say>, mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")));
-        #$s.push(QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)));
-        
-        $s.push(mkSCall('.strOut', $mainTerm));
+        $s.push(QAST::Stmts.new(:resultchild(3),
+            mkSCall('.say', mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")),
+            #QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)),
+            
+            mkSCall('.say', lexVar('.testDelay')),
+            mkSCall('.say', lexVar('.testDelay')),
+            
+            mkSCall('.strOut', $mainTerm),
+            
+            mkSCall('.say', "------------------------------------------------"),
+        ));
         
         make $s;
     }
