@@ -297,15 +297,14 @@ class LActions is HLL::Actions {
     has $!lamCount;
 
     my sub mkSetting() {
-        my $init := QAST::Stmts.new();
-        my $block := QAST::Block.new($init);
+        my $block := QAST::Block.new(:arity(0));
         
         my $_ifTag-s := lexVar('s');    # "subject"
         my $_ifTag-x := lexVar('x');
         my $_ifTag-t := lexVar('t');
         my $_ifTag-e := lexVar('e');
-        $init.push(QAST::Op.new(:op<bind>, lexVar('.ifTag').declV,
-            QAST::Block.new(:arity(4), QAST::Stmts.new(
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.ifTag').declV,
+            QAST::Block.new(:arity(4),
                 $_ifTag-s.declP,
                 $_ifTag-x.declP,
                 $_ifTag-t.declP,
@@ -324,14 +323,14 @@ class LActions is HLL::Actions {
                         $_ifTag-e
                     )
                 )
-            ))
+            )
         ));
 
         my $_project-s := lexVar('s');  # "subject"
         my $_project-t := lexVar('t');  # "tag"
         my $_project-i := lexVar('i');  # "index"
-        $init.push(QAST::Op.new(:op<bind>, lexVar('.->#n').declV,
-            QAST::Block.new(:arity(1), QAST::Stmts.new(
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.->#n').declV,
+            QAST::Block.new(:arity(1),
                 $_project-s.declP,
                 $_project-t.declP,
                 $_project-i.declP,
@@ -339,12 +338,12 @@ class LActions is HLL::Actions {
                     mkListLookup($_project-s, :index($_project-i)),
                     QAST::Op.new(:op<null>)
                 )
-            ))
+            )
         ));
 
         my $_strOut-p1 := lexVar('v');
-        $init.push(QAST::Op.new(:op<bind>, lexVar('.strOut').declV,
-            QAST::Block.new(:arity(1), QAST::Stmts.new(
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.strOut').declV,
+            QAST::Block.new(:arity(1),
                 $_strOut-p1.declP,
                 QAST::Op.new(:op<if>,
                     QAST::Op.new(:op<isstr>, $_strOut-p1),
@@ -356,21 +355,21 @@ class LActions is HLL::Actions {
                         )
                     )
                 )
-            ))
+            )
         ));
         
         my $_strLit-p1 := lexVar('v');
-        $init.push(QAST::Op.new(:op<bind>, lexVar('.strLit').declV,
-            QAST::Block.new(:arity(1), QAST::Stmts.new(
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.strLit').declV,
+            QAST::Block.new(:arity(1),
                 $_strLit-p1.declP,
                 mkConcat('"', QAST::Op.new(:op<escape>, $_strLit-p1), '"')
-            ))
+            )
         ));
         
         my $_apply1-f  := lexVar('f');
         my $_apply1-a1 := lexVar('a1');
-        $init.push(QAST::Op.new(:op<bind>, lexVar('.apply1').declV,
-            QAST::Block.new(:arity(2), QAST::Stmts.new(
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.apply1').declV,
+            QAST::Block.new(:arity(2),
                 $_apply1-f.declP,
                 $_apply1-a1.declP,
                 QAST::Op.new(:op<call>,
@@ -384,7 +383,7 @@ class LActions is HLL::Actions {
                     ),
                     $_apply1-a1
                 )
-            ))
+            )
         ));
 
         return $block;
@@ -438,7 +437,7 @@ class LActions is HLL::Actions {
             nqp::die("Compile Error: no term found at all\n" ~ loc2str(match2location($/)) ~ "\n")
         );
 
-        my $mainTerm := $/<termlist1orMore>.ast;
+        my $mainTerm := $mainTermMatch.ast;
 
         my $fvs := $mainTerm.ann('FV');
         if nqp::elems($fvs) > 0 {
@@ -451,10 +450,10 @@ class LActions is HLL::Actions {
 
         my $s := mkSetting();
         
-        $s[0].push(QAST::Op.new(:op<say>, mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")));
-        #$s[0].push(QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)));
+        $s.push(QAST::Op.new(:op<say>, mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")));
+        #$s.push(QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)));
         
-        $s[0].push(mkSCall('.strOut', $mainTerm));
+        $s.push(mkSCall('.strOut', $mainTerm));
         
         make $s;
     }
@@ -502,10 +501,9 @@ class LActions is HLL::Actions {
         for $/<term> {
             $app := mkApp($app, $_.ast);
         }
-        my $out := QAST::Stmts.new(:node($/), $app);
-        $out.annotate('FV', $app.ann('FV'));
-        #reportFV('termlist2orMore', $/, $out.ann('FV'));
-        make $out;
+        $app.node($/);
+        #reportFV('termlist2orMore', $/, $app.ann('FV'));
+        make $app;
     }
 
     method term($/) {
