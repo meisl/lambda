@@ -168,13 +168,21 @@
           - QAST::Var+{Var}(lexical memo :decl())
           - QAST::Var+{Var}(lexical delayed :decl())
         - QAST::Var+{Var}(lexical memo :decl())
+    - QAST::Op(bind)
+      - QAST::Var+{Var}(lexical .qastSize :decl(static))
+      - QAST::NVal(514)
     - QAST::Block
       - QAST::Op(bind)
         - QAST::Var+{Var}(lexical .src :decl(static))
         - QAST::SVal(# ~> Compile Error: unbound variables y, z, w, u\n#(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.u \"qumbl\"\n\n# ~> (Runtime) ERROR: cannot apply \"xfo\\noö\" to λy.x y\n#(λx.λ_.(x λy.x y)) \"xfo\\noö\" \"xbar\" \"xbaz\" λz.\"qumbl\"\n\n#(λy.λz.λx.y (λy.y z)) \"y\" \"z\"\n\n# K applied to \"foo\" and something: ~> \"foo\"\n#(λx.λ_.x) \"foo\" (λf.λg.λx.f (g x))\n\n# Turing's Y:\n#(λU.U U) (λu.λf.f (u u f))\n\n# Turing's Y applied to a function that ignores param self:\n#(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)\n\n\n# Lists:\n(λnil.λcons.λcar.λcdr.\n    (λxs.\n        #nil\n        #car xs              # \"a\"\n        #car nil             # ~> (Runtime) ERROR: cannot apply \"car\" to \"nil\"\n        #cdr xs              # (cons \"b\" (cons \"c\" nil))\n        #car (cdr xs)        # \"b\"\n        cdr (cdr xs)        # (cons \"c\", nil)\n        #car (cdr (cdr xs))  # \"c\"\n    ) (cons \"a\" (cons \"b\" (cons \"c\" nil)))\n)\n    (λonNil.λonCons.onNil)                  # ctor nil\n    (λx.λxs.λonNil.λonCons.onCons x xs)     # ctor cons\n    (λxs.xs (\"car\" \"nil\") (λhd.λtl.hd))     # car   (provoke error on nil)\n    (λxs.xs (\"cdr\" \"nil\") (λhd.λtl.tl))     # cdr   (provoke error on nil)\n)
       - QAST::Var+{Var}(local mainResult :decl(var))
       - QAST::Op(call .say)
-        - QAST::SVal(17 lambdas\n------------------------------------------------)
+        - QAST::Op(concat)
+          - QAST::Op(concat)
+            - QAST::SVal(17 lambdas\n)
+            - QAST::Op(call .force)
+              - QAST::Var+{Var}(lexical .qastSize :decl())
+          - QAST::SVal( QAST::Nodes ttl\n------------------------------------------------)
       - QAST::Op(bind)
         - QAST::Var+{Var}(local mainResult :decl())
         - QAST::Op(call .strOut)
@@ -507,4 +515,4 @@
       - QAST::Var+{Var}(local mainResult :decl())
 
 
-Output completed (4 sec consumed) - Normal Termination
+Output completed (5 sec consumed) - Normal Termination

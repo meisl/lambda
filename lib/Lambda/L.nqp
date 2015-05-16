@@ -482,6 +482,17 @@ class LActions is HLL::Actions {
         }
     }
 
+    my sub size($node) {
+        if !nqp::istype($node, QAST::Node) {
+            nqp::die("size expects a QAST::Node");
+        }
+        my int $out := 1;
+        for $node.list {
+            $out := $out + size($_);
+        }
+        $out;
+    }
+
     method TOP($/) {
         my $mainTermMatch := $/<termlist1orMore>;
         nqp::defor($mainTermMatch,
@@ -500,13 +511,19 @@ class LActions is HLL::Actions {
         }
 
         my $s := mkSetting();
+        my $quastSizeBinding := QAST::Op.new(:op<bind>, lexVar('.qastSize', :decl<static>));   # will receive a value node later
+        $s.push($quastSizeBinding);
         
         my $src := lexVar('.src', :decl<static>);
         my $mainResult := locVar('mainResult');
         $s.push(QAST::Block.new(:blocktype<immediate>,
             QAST::Op.new(:op<bind>, $src, asNode(~$/)),
             $mainResult.declV,
-            mkSCall('.say', mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")),
+            mkSCall('.say', mkConcat(
+                ~$!lamCount, " lambdas\n",
+                lexVar('.qastSize'), " QAST::Nodes ttl\n",
+                "------------------------------------------------",
+            )),
             #QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)),
             
             #mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
@@ -518,12 +535,17 @@ class LActions is HLL::Actions {
             $mainResult,
         ));
         
-        make QAST::CompUnit.new(
+        my $out := QAST::CompUnit.new(
             :hll('L'), 
             #:load(...),
             :main(mkCall(QAST::BVal.new(:value($s)))),
             $s
         );
+
+        my $size := size($out) + 1; # we're pushing 1 more:
+        $quastSizeBinding.push(asNode($size));
+
+        make $out;
     }
 
     method termlist1orMore($/) {
