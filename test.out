@@ -2,22 +2,37 @@
 # calling .delayMemo on
 - QAST::Stmts
   - QAST::Op(say)
-    - QAST::SVal(!!!!)
+    - QAST::SVal(.testDelay01 forced!!!!)
+  - QAST::SVal(42)
+
+# calling .delayMemo on
+- QAST::Stmts
+  - QAST::Op(say)
+    - QAST::SVal(.testDelay02 forced!!!!)
   - QAST::SVal(42)
 
 3 lambdas
 ------------------------------------------------
-!!!!
-42
-42
+.testDelay02 forced!!!!
+.testDelay02 = 42
+.testDelay02 = 42
 # calling .delayMemo on
 - QAST::Op(concat)
   - QAST::SVal(λf.f (u u f)\n   # where u = )
-  - QAST::Op(call .strOut)
-    - QAST::Var+{Var}(lexical u :decl()) u
+  - QAST::Block
+    - QAST::Op(bind)
+      - QAST::Var+{Var}(local x :decl(var))
+      - QAST::Op(call .strOut)
+        - QAST::Var+{Var}(lexical u :decl()) u
+    - QAST::Op(if)
+      - QAST::Op(isinvokable)
+        - QAST::Var+{Var}(local x :decl())
+      - QAST::Op(call)
+        - QAST::Var+{Var}(local x :decl())
+      - QAST::Var+{Var}(local x :decl())
 
 ------------------------------------------------
 λf.f (u u f)
    # where u = λu.λf.f (u u f)
 
-Output completed (0 sec consumed) - Normal Termination
+Output completed (1 sec consumed) - Normal Termination

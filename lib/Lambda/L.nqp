@@ -260,11 +260,11 @@ class LActions is HLL::Actions {
             if nqp::istype($current, QAST::SVal) && nqp::istype($_, QAST::SVal) {
                 $current.value($current.value ~ $_.value);
             } else {
-                nqp::push(@compressed, $current);
+                nqp::push(@compressed, mkForce($current));
                 $current := $_;
             }
         }
-        nqp::push(@compressed, $current);
+        nqp::push(@compressed, mkForce($current));
 
         if nqp::elems(@compressed) > 1 {
             $current := nqp::shift(@compressed);
@@ -415,10 +415,19 @@ class LActions is HLL::Actions {
             )
         ));
 
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay', :decl<static>),
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay01', :decl<static>),
             mkDelayMemo(mkDelaySimple(
                 QAST::Stmts.new(
-                    QAST::Op.new(:op<say>, asNode('!!!!')),
+                    QAST::Op.new(:op<say>, asNode('.testDelay01 forced!!!!')),
+                    asNode('42')
+                )
+            ))
+        ));
+
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay02', :decl<static>),
+            mkDelayMemo(mkDelaySimple(
+                QAST::Stmts.new(
+                    QAST::Op.new(:op<say>, asNode('.testDelay02 forced!!!!')),
                     asNode('42')
                 )
             ))
@@ -492,8 +501,8 @@ class LActions is HLL::Actions {
             mkSCall('.say', mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")),
             #QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)),
             
-            mkSCall('.say', lexVar('.testDelay')),
-            mkSCall('.say', lexVar('.testDelay')),
+            mkSCall('.say', mkConcat('.testDelay02 = ', lexVar('.testDelay02'))),
+            mkSCall('.say', mkConcat('.testDelay02 = ', lexVar('.testDelay02'))),
             
             mkSCall('.strOut', $mainTerm),
             
