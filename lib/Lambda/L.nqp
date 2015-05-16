@@ -206,7 +206,7 @@ class LActions is HLL::Actions {
                 my $out := mkSCall('.force', $node);
                 $out.annotate('force', $node);
                 $out;
-            }
+            } # TODO: if $node is a call, and we introduce annotations re delayed status of return values...
         } else {
             nqp::die("mkForce expects a QAST::Node");
         }
@@ -280,6 +280,23 @@ class LActions is HLL::Actions {
 
     my sub mkSetting() {
         my $block := QAST::Block.new(:arity(0));
+
+        my sub mkSFn(str $name, $varNames, $callback) {
+            if nqp::isstr($varNames) {
+                $varNames := [$varNames];
+            }
+            my $body := QAST::Block.new(:name($name), :arity(nqp::elems($varNames)));
+            my @vars := [];
+            for $varNames {
+                my $var := lexVar($_);
+                $body.push($var.declP);
+                @vars.push($var);
+            }
+            $body.push($callback(|@vars));
+            $block.push(
+                QAST::Op.new(:op<bind>, lexVar($name, :decl<static>), $body)
+            );
+        }
         
         my $_ifTag-s := lexVar('s');    # "subject"
         my $_ifTag-x := lexVar('x');
@@ -360,19 +377,13 @@ class LActions is HLL::Actions {
             )
         ));
 
-        my $_force-x := lexVar('x');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.force', :decl<static>),
-            QAST::Block.new(:arity(1), :name<.force>,
-                $_force-x.declP,
-                QAST::Op.new(:op<if>, 
-                    QAST::Op.new(:op<isinvokable>,
-                        $_force-x
-                    ),
-                    QAST::Op.new(:op<call>, :name($_force-x.name)),
-                    $_force-x
-                )
+        mkSFn('.force', <x>, -> $x {
+            QAST::Op.new(:op<if>, 
+                QAST::Op.new(:op<isinvokable>, $x),
+                QAST::Op.new(:op<call>, :name($x.name)),
+                $x
             )
-        ));
+        });
 
         my $_say-p1 := lexVar('v');
         $block.push(QAST::Op.new(:op<bind>, lexVar('.say', :decl<static>),
