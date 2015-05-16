@@ -501,8 +501,10 @@ class LActions is HLL::Actions {
 
         my $s := mkSetting();
         
+        my $src := lexVar('.src', :decl<static>);
         my $mainResult := locVar('mainResult');
         $s.push(QAST::Block.new(:blocktype<immediate>,
+            QAST::Op.new(:op<bind>, $src, asNode(~$/)),
             $mainResult.declV,
             mkSCall('.say', mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")),
             #QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)),
@@ -516,7 +518,12 @@ class LActions is HLL::Actions {
             $mainResult,
         ));
         
-        make $s;
+        make QAST::CompUnit.new(
+            :hll('L'), 
+            #:load(...),
+            :main(mkCall(QAST::BVal.new(:value($s)))),
+            $s
+        );
     }
 
     method termlist1orMore($/) {
@@ -608,25 +615,30 @@ class LActions is HLL::Actions {
         my $block := QAST::Block.new(:arity(1), :node($/), $binder, $body);
 
         my %fvs := nqp::clone($body.ann('FV'));
-        nqp::deletekey(%fvs, $/<varName>);
+        nqp::deletekey(%fvs, $binder.name);
 
-        my $strRepr;
-        if nqp::elems(%fvs) == 0 {
-            $strRepr := asNode(~$/);
-        } else {
+        my $strRepr := QAST::Op.new(:op<substr>, 
+            lexVar('.src'),
+            asNode($/.from), 
+            asNode(nqp::sub_i($/.to, $/.from)) # length
+        );
+
+        if nqp::elems(%fvs) > 0 {
             my %strs := hash();
             for freeVars2locations(%fvs) {
                 my $k := "\n   # where " ~ $_<name> ~ ' = ';
                 my $v := mkSCall('.strOut', $_<var>);
                 %strs{$k} := $v;
             }
-            my @strs := [~$/];
+            my @strs := [$strRepr];
             for %strs {
                 @strs.push(nqp::iterkey_s($_));
                 @strs.push(nqp::iterval($_));
             }
-            $strRepr := mkDelayMemo(mkConcat(|@strs));
+            $strRepr := mkConcat(|@strs);
         }
+
+        $strRepr := mkDelayMemo($strRepr);
 
         my $lam := QAST::Op.new(:op<list>,
             QAST::SVal.new(:value('λ')),
@@ -634,7 +646,7 @@ class LActions is HLL::Actions {
             $strRepr,
         );
         $lam.annotate('FV', %fvs);
-        
+
         $lam.annotate('id', 'λ' ~ $!lamCount);
         $!lamCount++;
 

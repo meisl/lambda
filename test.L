@@ -4,6 +4,8 @@
 # ~> (Runtime) ERROR: cannot apply "xfo\noö" to λy.x y
 #(λx.λ_.(x λy.x y)) "xfo\noö" "xbar" "xbaz" λz."qumbl"
 
+#(λy.λz.λx.y (λy.y z)) "y" "z"
+
 # K applied to "foo" and something: ~> "foo"
 #(λx.λ_.x) "foo" (λf.λg.λx.f (g x))
 
@@ -12,8 +14,6 @@
 
 # Turing's Y applied to a function that ignores param self:
 #(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)
-
-#(λy.λz.λx.y (λy.y z)) "y" "z"
 
 
 # Lists:
