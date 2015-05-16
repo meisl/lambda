@@ -21,7 +21,7 @@
 - [ ] #12 'most simple impl of β-red. avoiding accidental capture (in Perl6 only, efficiency is of NO importance)'
     - [x] implement sequential substitution, ie. instead of just taking *one* "term `t` for var `x`" arg accept a *list* of those `Pair`s (#29), to be applied one after the other, in the order they appear in the list (-> transitively). Use `None` (`Maybe`, #28) as a return value indicating no change and `Some t'` if the result is indeed a different term `t'`; in order to support maximal sharing.
     - [ ] implement β-reduction in terms of sequential substitution, removing and/or adding particular substitutions to the list as required by certain binders of λs, or, resp., for doing necessary α-conversions. Again, use `Maybe Term` as return type for sharing.
-- [ ] #27 'augment syntax tree nodes with src location info'
+- [ ] #25 'augment syntax tree nodes with src location info'
 - [ ] #11 'implement β/η-red. and α-conv using ADT `Term` (simple but correct)'
 - [ ] #13 'refine β/η-red. and α-conv using ADT `Term`: clever & efficient & flexible!'
 - ...
@@ -30,7 +30,7 @@
 - ...
 - [ ] #23 'make an interpreter using stacked environments' (rather than stupid subst)
 - [ ] #24 'implement proper tail calls'
-- [ ] #25 'compile to QAST, using the NQP toolchain'
+- [ ] #27 'compile to QAST, using the NQP toolchain'
 
 ##### branch 2 (make it do *something*)
 - [ ] #40 'add facility to switch on/off stats for P6Currying'
