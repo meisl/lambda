@@ -173,7 +173,7 @@ class LActions is HLL::Actions {
         if !nqp::istype($node, QAST::Node) {
             nqp::die("mkDelaySimple expects a QAST::Node");
         }
-        if isVal($node) || isDelayed($node) {
+        if isVal($node) || isDelayed($node) || nqp::istype($node, QAST::Var) {
             $node;
         } elsif isForced($node) {
             $node.ann('forced');
@@ -423,9 +423,12 @@ class LActions is HLL::Actions {
             ))
         ));
     
-        mkSFn('.testDelay02', <delayed>, :x(nqp::null), -> $delayed, $x {
-            QAST::Op.new(:op<bind>, $x, $delayed),
-            $x
+        mkSFn('.testDelay02', <delayed>, :simple(nqp::null), :memo(nqp::null), -> $delayed, $simple, $memo {
+            QAST::Op.new(:op<bind>, $simple, mkDelaySimple($delayed)),
+            QAST::Op.new(:op<bind>, $simple, mkDelayMemo($delayed)),
+            
+            $simple
+            #$memo
         });
 
         return $block;
