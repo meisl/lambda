@@ -425,10 +425,10 @@ class LActions is HLL::Actions {
     
         mkSFn('.testDelay02', <delayed>, :simple(nqp::null), :memo(nqp::null), -> $delayed, $simple, $memo {
             QAST::Op.new(:op<bind>, $simple, mkDelaySimple($delayed)),
-            QAST::Op.new(:op<bind>, $simple, mkDelayMemo($delayed)),
+            QAST::Op.new(:op<bind>, $memo,   mkDelayMemo($delayed)),
             
-            $simple
-            #$memo
+            #$simple
+            $memo
         });
 
         return $block;
