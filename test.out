@@ -5,15 +5,9 @@
     - QAST::SVal(.testDelay01 forced!!!!)
   - QAST::SVal(42)
 
-# calling .delayMemo on
-- QAST::Stmts
-  - QAST::Op(say)
-    - QAST::SVal(.testDelay02 forced!!!!)
-  - QAST::SVal(42)
-
 3 lambdas
 ------------------------------------------------
-.testDelay02 forced!!!!
+.testDelay01 forced!!!!
 .testDelay02 = 42
 .testDelay02 = 42
 # calling .delayMemo on
@@ -27,4 +21,4 @@
 λf.f (u u f)
    # where u = λu.λf.f (u u f)
 
-Output completed (1 sec consumed) - Normal Termination
+Output completed (0 sec consumed) - Normal Termination

@@ -344,14 +344,14 @@ class LActions is HLL::Actions {
                 )
             )
         });
-
+        
         mkSFn('.->#n', <subject tag index>, -> $subject, $tag, $index {
             mkSCall('.ifTag', $subject, $tag,
                 mkDelaySimple(mkListLookup($subject, :index($index))),
                 QAST::Op.new(:op<null>)
             )
         });
-
+        
         mkSFn('.strOut', <v>, -> $v {
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<isstr>, $v),
@@ -364,7 +364,7 @@ class LActions is HLL::Actions {
                 )
             )
         });
-
+        
         mkSFn('.delayMemo', <block>, :wasRun(0), :result(nqp::null), -> $block, $wasRun, $result {
             QAST::Block.new(:arity(0),
                 QAST::Op.new(:op<if>, $wasRun,
@@ -376,7 +376,7 @@ class LActions is HLL::Actions {
                 )
             )
         });
-
+        
         mkSFn('.force', <x>, -> $x {
             QAST::Op.new(:op<if>, 
                 QAST::Op.new(:op<isinvokable>, $x),
@@ -384,7 +384,7 @@ class LActions is HLL::Actions {
                 $x
             )
         });
-
+        
         mkSFn('.say', <v>, -> $v {
             QAST::Op.new(:op<bind>, $v, mkForce($v)),
             QAST::Op.new(:op<say>,
@@ -413,7 +413,7 @@ class LActions is HLL::Actions {
                 $a1
             );
         });
-
+        
         $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay01', :decl<static>),
             mkDelayMemo(mkDelaySimple(
                 QAST::Stmts.new(
@@ -422,15 +422,11 @@ class LActions is HLL::Actions {
                 )
             ))
         ));
-
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay02', :decl<static>),
-            mkDelayMemo(mkDelaySimple(
-                QAST::Stmts.new(
-                    QAST::Op.new(:op<say>, asNode('.testDelay02 forced!!!!')),
-                    asNode('42')
-                )
-            ))
-        ));
+    
+        mkSFn('.testDelay02', <delayed>, :x(nqp::null), -> $delayed, $x {
+            QAST::Op.new(:op<bind>, $x, $delayed),
+            $x
+        });
 
         return $block;
     }
@@ -500,8 +496,8 @@ class LActions is HLL::Actions {
             mkSCall('.say', mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")),
             #QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)),
             
-            mkSCall('.say', mkConcat('.testDelay02 = ', lexVar('.testDelay02'))),
-            mkSCall('.say', mkConcat('.testDelay02 = ', lexVar('.testDelay02'))),
+            mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
+            mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
             
             mkSCall('.strOut', $mainTerm),
             
