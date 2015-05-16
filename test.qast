@@ -110,6 +110,10 @@
     - QAST::Block
       - QAST::Var+{Var}(lexical f :decl(param))
       - QAST::Var+{Var}(lexical a1 :decl(param))
+      - QAST::Op(bind)
+        - QAST::Var+{Var}(lexical f :decl())
+        - QAST::Op(call .force)
+          - QAST::Var+{Var}(lexical f :decl())
       - QAST::Op(call)
         - QAST::Op(defor)
           - QAST::Op(call .->#n)
@@ -135,15 +139,12 @@
         - QAST::Var+{Var}(lexical a1 :decl())
   - QAST::Op(bind)
     - QAST::Var+{Var}(lexical .testDelay01 :decl(static))
-    - QAST::Stmts
-      - QAST::Op(call .say)
-        - QAST::SVal(# calling .delayMemo on\n- QAST::Stmts\n  - QAST::Op(say)\n    - QAST::SVal(.testDelay01 forced!!!!)\n  - QAST::SVal(42)\n)
-      - QAST::Op(call .delayMemo)
-        - QAST::Block
-          - QAST::Stmts
-            - QAST::Op(say)
-              - QAST::SVal(.testDelay01 forced!!!!)
-            - QAST::SVal(42)
+    - QAST::Op(call .delayMemo)
+      - QAST::Block
+        - QAST::Stmts
+          - QAST::Op(say)
+            - QAST::SVal(.testDelay01 forced!!!!)
+          - QAST::SVal(42)
   - QAST::Op(bind)
     - QAST::Var+{Var}(lexical .testDelay02 :decl(static))
     - QAST::Block
@@ -157,59 +158,66 @@
         - QAST::Var+{Var}(lexical memo :decl())
         - QAST::Var+{Var}(lexical delayed :decl())
       - QAST::Var+{Var}(lexical memo :decl())
-  - QAST::Stmts(:resultchild(3)))
+  - QAST::Block
+    - QAST::Var+{Var}(local mainResult :decl(var))
     - QAST::Op(call .say)
-      - QAST::SVal(3 lambdas\n------------------------------------------------)
-    - QAST::Op(call .say)
-      - QAST::Op(concat)
-        - QAST::SVal(.testDelay02 = )
-        - QAST::Op(call .force)
-          - QAST::Op(call .testDelay02)
-            - QAST::Var+{Var}(lexical .testDelay01 :decl())
-    - QAST::Op(call .say)
-      - QAST::Op(concat)
-        - QAST::SVal(.testDelay02 = )
-        - QAST::Op(call .force)
-          - QAST::Op(call .testDelay02)
-            - QAST::Var+{Var}(lexical .testDelay01 :decl())
-    - QAST::Op(call .strOut)
-      - QAST::Op(call .apply1) (λU.U U) (λu.λf.f (u u f))\n\n# Turing's Y applied...
-        - QAST::Op(list)
-          - QAST::SVal(λ)
-          - QAST::Block λU.U U
-            - QAST::Var+{Var}(lexical U :decl(param))
-            - QAST::Op(call .apply1) U U
-              - QAST::Var+{Var}(lexical U :decl()) U
-              - QAST::Var+{Var}(lexical U :decl()) U
-          - QAST::SVal(λU.U U)
-        - QAST::Op(list)
-          - QAST::SVal(λ)
-          - QAST::Block λu.λf.f (u u f)
-            - QAST::Var+{Var}(lexical u :decl(param))
+      - QAST::SVal(5 lambdas\n------------------------------------------------)
+    - QAST::Op(bind)
+      - QAST::Var+{Var}(local mainResult :decl())
+      - QAST::Op(call .strOut)
+        - QAST::Op(call .apply1) (λU.U U) (λu.λf.f (u u f)) (λself.λx.x)\n\n#(λy.λz...
+          - QAST::Op(call .apply1)
             - QAST::Op(list)
               - QAST::SVal(λ)
-              - QAST::Block λf.f (u u f)
-                - QAST::Var+{Var}(lexical f :decl(param))
-                - QAST::Op(call .apply1) f (u u f)
-                  - QAST::Var+{Var}(lexical f :decl()) f
-                  - QAST::Op(call .apply1) u u f
-                    - QAST::Op(call .apply1)
-                      - QAST::Var+{Var}(lexical u :decl()) u
-                      - QAST::Var+{Var}(lexical u :decl()) u
-                    - QAST::Var+{Var}(lexical f :decl()) f
-              - QAST::Stmts
-                - QAST::Op(call .say)
-                  - QAST::SVal(# calling .delayMemo on\n- QAST::Op(concat)\n  - QAST::SVal(λf.f (u u f)\\n   # where u = )\n  - QAST::Op(call .force)\n    - QAST::Op(call .strOut)\n      - QAST::Var+{Var}(lexical u :decl()) u\n)
-                - QAST::Op(call .delayMemo)
-                  - QAST::Block
-                    - QAST::Op(concat)
-                      - QAST::SVal(λf.f (u u f)\n   # where u = )
-                      - QAST::Op(call .force)
-                        - QAST::Op(call .strOut)
-                          - QAST::Var+{Var}(lexical u :decl()) u
-          - QAST::SVal(λu.λf.f (u u f))
+              - QAST::Block λU.U U
+                - QAST::Var+{Var}(lexical U :decl(param))
+                - QAST::Op(call .apply1) U U
+                  - QAST::Var+{Var}(lexical U :decl()) U
+                  - QAST::Var+{Var}(lexical U :decl()) U
+              - QAST::SVal(λU.U U)
+            - QAST::Op(call .delayMemo)
+              - QAST::Block
+                - QAST::Op(list)
+                  - QAST::SVal(λ)
+                  - QAST::Block λu.λf.f (u u f)
+                    - QAST::Var+{Var}(lexical u :decl(param))
+                    - QAST::Op(list)
+                      - QAST::SVal(λ)
+                      - QAST::Block λf.f (u u f)
+                        - QAST::Var+{Var}(lexical f :decl(param))
+                        - QAST::Op(call .apply1) f (u u f)
+                          - QAST::Var+{Var}(lexical f :decl()) f
+                          - QAST::Op(call .delayMemo)
+                            - QAST::Block
+                              - QAST::Op(call .apply1) u u f
+                                - QAST::Op(call .apply1)
+                                  - QAST::Var+{Var}(lexical u :decl()) u
+                                  - QAST::Var+{Var}(lexical u :decl()) u
+                                - QAST::Var+{Var}(lexical f :decl()) f
+                      - QAST::Op(call .delayMemo)
+                        - QAST::Block
+                          - QAST::Op(concat)
+                            - QAST::SVal(λf.f (u u f)\n   # where u = )
+                            - QAST::Op(call .force)
+                              - QAST::Op(call .strOut)
+                                - QAST::Var+{Var}(lexical u :decl()) u
+                  - QAST::SVal(λu.λf.f (u u f))
+          - QAST::Op(call .delayMemo)
+            - QAST::Block
+              - QAST::Op(list)
+                - QAST::SVal(λ)
+                - QAST::Block λself.λx.x
+                  - QAST::Var+{Var}(lexical self :decl(param))
+                  - QAST::Op(list)
+                    - QAST::SVal(λ)
+                    - QAST::Block λx.x
+                      - QAST::Var+{Var}(lexical x :decl(param))
+                      - QAST::Var+{Var}(lexical x :decl()) x
+                    - QAST::SVal(λx.x)
+                - QAST::SVal(λself.λx.x)
     - QAST::Op(call .say)
       - QAST::SVal(------------------------------------------------)
+    - QAST::Var+{Var}(local mainResult :decl())
 
 
 Output completed (2 sec consumed) - Normal Termination

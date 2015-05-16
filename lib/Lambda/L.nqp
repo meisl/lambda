@@ -202,10 +202,13 @@ class LActions is HLL::Actions {
         } elsif isForced($node) {
             mkDelayMemo($node.ann('forced'));
         } else {
-            $node := QAST::Stmts.new(
-                mkSCall('.say', mkConcat("# calling .delayMemo on\n", $node.dump)),
-                mkSCall('.delayMemo', mkDelaySimple($node))
-            );
+            $node := mkSCall('.delayMemo', mkDelaySimple($node));
+
+            #$node := QAST::Stmts.new(
+            #    mkSCall('.say', mkConcat("# calling .delayMemo on\n", $node.dump)),
+            #    $node
+            #);
+            
             $node.annotate('delayed', 'memo');
             $node;
         }
@@ -401,6 +404,7 @@ class LActions is HLL::Actions {
         });
         
         mkSFn('.apply1', <f a1>, -> $f, $a1 {
+            QAST::Op.new(:op<bind>, $f, mkForce($f)),
             mkCall(
                 QAST::Op.new(:op<defor>,
                     mkLambda2code($f),
@@ -495,16 +499,19 @@ class LActions is HLL::Actions {
 
         my $s := mkSetting();
         
-        $s.push(QAST::Stmts.new(:resultchild(3),
+        my $mainResult := locVar('mainResult');
+        $s.push(QAST::Block.new(:blocktype<immediate>,
+            $mainResult.declV,
             mkSCall('.say', mkConcat(~$!lamCount, " lambdas\n------------------------------------------------")),
             #QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)),
             
-            mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
-            mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
+            #mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
+            #mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
             
-            mkSCall('.strOut', $mainTerm),
+            QAST::Op.new(:op<bind>, $mainResult, mkSCall('.strOut', $mainTerm)),
             
             mkSCall('.say', "------------------------------------------------"),
+            $mainResult,
         ));
         
         make $s;
@@ -521,13 +528,7 @@ class LActions is HLL::Actions {
     }
 
     my sub mkApp($f, $a) {
-        my $out;
-        if $f.has_ann('λ') {
-            #say($f[0].value ~ ": ...");
-            $out := QAST::Op.new(:op('call'), $f[1], $a);
-        } else {
-            $out := mkSCall('.apply1', $f, $a);
-        }
+        my $out := mkSCall('.apply1', $f, mkDelayMemo($a));
         my $fv := nqp::clone($f.ann('FV'));
         for $a.ann('FV') {
             my $key := nqp::iterkey_s($_);

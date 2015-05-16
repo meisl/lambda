@@ -1,24 +1,7 @@
 ---------- L-compiler ----------
-# calling .delayMemo on
-- QAST::Stmts
-  - QAST::Op(say)
-    - QAST::SVal(.testDelay01 forced!!!!)
-  - QAST::SVal(42)
-
-3 lambdas
+5 lambdas
 ------------------------------------------------
-.testDelay01 forced!!!!
-.testDelay02 = 42
-.testDelay02 = 42
-# calling .delayMemo on
-- QAST::Op(concat)
-  - QAST::SVal(λf.f (u u f)\n   # where u = )
-  - QAST::Op(call .force)
-    - QAST::Op(call .strOut)
-      - QAST::Var+{Var}(lexical u :decl()) u
-
 ------------------------------------------------
-λf.f (u u f)
-   # where u = λu.λf.f (u u f)
+λx.x
 
 Output completed (0 sec consumed) - Normal Termination
