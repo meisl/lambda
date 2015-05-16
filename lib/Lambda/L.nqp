@@ -121,12 +121,27 @@ class LActions is HLL::Actions {
         }
     }
 
-    my sub mkSCall(str $fnName, *@args) {
-        my $out := QAST::Op.new(:op<call>, :name($fnName));
+    my sub mkCall($fn, *@args) {
+        my $out := QAST::Op.new(:op<call>);
+        if nqp::isstr($fn) {
+            $out.name($fn);
+        } elsif nqp::istype($fn, QAST::Node) {
+            if (nqp::istype($fn, QAST::Var) && $fn.scope eq 'lexical') {
+                $out.name($fn.name);
+            } else {
+                $out.push($fn);
+            }
+        } else {
+            nqp::die("mkCall expects a QAST::Node as 1st arg");
+        }
         for @args {
             $out.push(asNode($_));
         }
         return $out;
+    }
+
+    my sub mkSCall(str $fnName, *@args) {
+        mkCall($fnName, |@args);
     }
 
     my sub isVal($node) {
@@ -142,7 +157,7 @@ class LActions is HLL::Actions {
         if nqp::istype($node, QAST::Node) {
             $node.has_ann('forced');
         } else {
-            nqp::die("expected a QAST::Node");
+            nqp::die("isForced expects a QAST::Node");
         }
     }
 
@@ -150,7 +165,7 @@ class LActions is HLL::Actions {
         if nqp::istype($node, QAST::Node) {
             $node.has_ann('delayed');
         } else {
-            nqp::die("expected a QAST::Node");
+            nqp::die("isDelayed expects a QAST::Node");
         }
     }
 
@@ -292,7 +307,12 @@ class LActions is HLL::Actions {
                 $body.push($var.declP);
                 @vars.push($var);
             }
-            $body.push($callback(|@vars));
+            my $stmts := $callback(|@vars);
+            if nqp::islist($stmts) {
+                for $stmts { $body.push($_) }
+            } else {
+                $body.push($stmts);
+            }
             $block.push(
                 QAST::Op.new(:op<bind>, lexVar($name, :decl<static>), $body)
             );
@@ -357,76 +377,59 @@ class LActions is HLL::Actions {
             )
         ));
 
-        my $_delayMemo-block  := lexVar('block');
-        my $_delayMemo-wasRun := lexVar('wasRun');
-        my $_delayMemo-result := lexVar('result');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.delayMemo', :decl<static>),
-            QAST::Block.new(:arity(1),
-                $_delayMemo-block.declP,
-                QAST::Op.new(:op<bind>, $_delayMemo-wasRun.declV, asNode(0)),
-                $_delayMemo-result.declV,
-                QAST::Block.new(:arity(0),
-                    QAST::Op.new(:op<if>, $_delayMemo-wasRun,
-                        $_delayMemo-result,
-                        QAST::Stmts.new(
-                            QAST::Op.new(:op<bind>, $_delayMemo-wasRun, asNode(1)),
-                            QAST::Op.new(:op<bind>, $_delayMemo-result, QAST::Op.new(:op<call>, $_delayMemo-block))
-                        )
+        mkSFn('.delayMemo', <block>, -> $block {
+            my $wasRun := lexVar('wasRun');
+            my $result := lexVar('result');
+
+            QAST::Op.new(:op<bind>, $wasRun.declV, asNode(0)),
+            $result.declV,
+            QAST::Block.new(:arity(0),
+                QAST::Op.new(:op<if>, $wasRun,
+                    $result,
+                    QAST::Stmts.new(
+                        QAST::Op.new(:op<bind>, $wasRun, asNode(1)),
+                        QAST::Op.new(:op<bind>, $result, mkCall($block))
                     )
                 )
             )
-        ));
+        });
 
         mkSFn('.force', <x>, -> $x {
             QAST::Op.new(:op<if>, 
                 QAST::Op.new(:op<isinvokable>, $x),
-                QAST::Op.new(:op<call>, :name($x.name)),
+                mkCall($x),
                 $x
             )
         });
 
-        my $_say-p1 := lexVar('v');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.say', :decl<static>),
-            QAST::Block.new(:arity(1),
-                $_say-p1.declP,
-                QAST::Op.new(:op<bind>, $_say-p1, mkForce($_say-p1)),
-                QAST::Op.new(:op<say>,
-                    QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<isstr>, $_say-p1),
-                        $_say-p1,
-                        mkSCall('.strOut', $_say-p1)
-                    )
+        mkSFn('.say', <v>, -> $v {
+            QAST::Op.new(:op<bind>, $v, mkForce($v)),
+            QAST::Op.new(:op<say>,
+                QAST::Op.new(:op<if>,
+                    QAST::Op.new(:op<isstr>, $v),
+                    $v,
+                    mkSCall('.strOut', $v)
                 )
             )
-        ));
-
-        my $_strLit-p1 := lexVar('v');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.strLit', :decl<static>),
-            QAST::Block.new(:arity(1),
-                $_strLit-p1.declP,
-                mkConcat('"', QAST::Op.new(:op<escape>, $_strLit-p1), '"')
-            )
-        ));
+        });
         
-        my $_apply1-f  := lexVar('f');
-        my $_apply1-a1 := lexVar('a1');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.apply1', :decl<static>),
-            QAST::Block.new(:arity(2),
-                $_apply1-f.declP,
-                $_apply1-a1.declP,
-                QAST::Op.new(:op<call>,
-                    QAST::Op.new(:op<defor>,
-                        mkLambda2code($_apply1-f),
-                        QAST::Op.new(:op<if>,
-                            QAST::Op.new(:op<isinvokable>, $_apply1-f),
-                            $_apply1-f,
-                            mkDie('cannot apply ', mkSCall('.strLit', $_apply1-f), ' to ', mkSCall('.strOut', $_apply1-a1))
-                        )
-                    ),
-                    $_apply1-a1
-                )
-            )
-        ));
+        mkSFn('.strLit', <s>, -> $s {
+            mkConcat('"', QAST::Op.new(:op<escape>, $s), '"');
+        });
+        
+        mkSFn('.apply1', <f a1>, -> $f, $a1 {
+            mkCall(
+                QAST::Op.new(:op<defor>,
+                    mkLambda2code($f),
+                    QAST::Op.new(:op<if>,
+                        QAST::Op.new(:op<isinvokable>, $f),
+                        $f,
+                        mkDie('cannot apply ', mkSCall('.strLit', $f), ' to ', mkSCall('.strOut', $a1))
+                    )
+                ),
+                $a1
+            );
+        });
 
         $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay01', :decl<static>),
             mkDelayMemo(mkDelaySimple(

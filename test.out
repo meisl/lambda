@@ -27,4 +27,4 @@
 λf.f (u u f)
    # where u = λu.λf.f (u u f)
 
-Output completed (1 sec consumed) - Normal Termination
+Output completed (0 sec consumed) - Normal Termination
