@@ -188,7 +188,7 @@ class LActions is HLL::Actions {
         if !nqp::istype($node, QAST::Node) {
             nqp::die("mkDelayMemo expects a QAST::Node");
         }
-        if isVal($node) {
+        if isVal($node) || nqp::istype($node, QAST::Var) {
             $node;
         } elsif isDelayed($node) {
             my $delayType := $node.ann('delayed');
@@ -217,7 +217,7 @@ class LActions is HLL::Actions {
                 $node[0];
             } elsif isForced($node) || isVal($node) {
                 $node;
-            } else {    # TODO: maybe inline if $node is already a QAST::VAR
+            } else {    # TODO: maybe inline if $node is already a QAST::Var
                 my $out := mkSCall('.force', $node);
                 $out.annotate('force', $node);
                 $out;

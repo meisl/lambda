@@ -7,14 +7,8 @@
 
 3 lambdas
 ------------------------------------------------
-# calling .delayMemo on
-- QAST::Var+{Var}(lexical delayed :decl())
-
 .testDelay01 forced!!!!
 .testDelay02 = 42
-# calling .delayMemo on
-- QAST::Var+{Var}(lexical delayed :decl())
-
 .testDelay02 = 42
 # calling .delayMemo on
 - QAST::Op(concat)
