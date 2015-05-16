@@ -1,6 +1,7 @@
 ---------- L-compiler ----------
 17 lambdas
-514 QAST::Nodes ttl
+530 QAST::Node s
+1592 chars ttl in 51 QAST::SVal s
 ------------------------------------------------
 ------------------------------------------------
 λonNil.λonCons.onCons x xs
