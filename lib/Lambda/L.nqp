@@ -296,15 +296,25 @@ class LActions is HLL::Actions {
     my sub mkSetting() {
         my $block := QAST::Block.new(:arity(0));
 
-        my sub mkSFn(str $name, $varNames, $callback) {
-            if nqp::isstr($varNames) {
-                $varNames := [$varNames];
+        my sub mkSFn(str $name, $paramNames, $callback, *%lexicals) {
+            if nqp::isstr($paramNames) {
+                $paramNames := [$paramNames];
             }
-            my $body := QAST::Block.new(:name($name), :arity(nqp::elems($varNames)));
+            my $body := QAST::Block.new(:name($name), :arity(nqp::elems($paramNames)));
             my @vars := [];
-            for $varNames {
+            for $paramNames {
                 my $var := lexVar($_);
                 $body.push($var.declP);
+                @vars.push($var);
+            }
+            for %lexicals {
+                my $var := lexVar(nqp::iterkey_s($_));
+                my $val := nqp::iterval($_);
+                my $decl := $var.declV;
+                if !nqp::isnull($val) {
+                    $decl := QAST::Op.new(:op<bind>, $decl, asNode($val))
+                }
+                $body.push($decl);
                 @vars.push($var);
             }
             my $stmts := $callback(|@vars);
@@ -377,12 +387,7 @@ class LActions is HLL::Actions {
             )
         ));
 
-        mkSFn('.delayMemo', <block>, -> $block {
-            my $wasRun := lexVar('wasRun');
-            my $result := lexVar('result');
-
-            QAST::Op.new(:op<bind>, $wasRun.declV, asNode(0)),
-            $result.declV,
+        mkSFn('.delayMemo', <block>, :wasRun(0), :result(nqp::null), -> $block, $wasRun, $result {
             QAST::Block.new(:arity(0),
                 QAST::Op.new(:op<if>, $wasRun,
                     $result,
