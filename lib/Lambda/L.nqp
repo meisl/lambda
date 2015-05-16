@@ -202,20 +202,8 @@ class LActions is HLL::Actions {
                 $node[0];
             } elsif isForced($node) || isVal($node) {
                 $node;
-            } elsif nqp::istype($node, QAST::Var) {
-                my $out := QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<isinvokable>, $node),
-                    QAST::Op.new(:op<call>, $node),
-                    $node
-                );
-                $out.annotate('force', $node);
-                $out;
-            } else {
-                my $nVar := locVar('x');
-                my $out := QAST::Block.new(:blocktype('immediate'), :name('forcing'),
-                    QAST::Op.new(:op<bind>, $nVar.declV, $node),
-                    mkForce($nVar)
-                );
+            } else {    # TODO: maybe inline if $node is already a QAST::VAR
+                my $out := mkSCall('.force', $node);
                 $out.annotate('force', $node);
                 $out;
             }
@@ -368,6 +356,20 @@ class LActions is HLL::Actions {
                             QAST::Op.new(:op<bind>, $_delayMemo-result, QAST::Op.new(:op<call>, $_delayMemo-block))
                         )
                     )
+                )
+            )
+        ));
+
+        my $_force-x := lexVar('x');
+        $block.push(QAST::Op.new(:op<bind>, lexVar('.force', :decl<static>),
+            QAST::Block.new(:arity(1), :name<.force>,
+                $_force-x.declP,
+                QAST::Op.new(:op<if>, 
+                    QAST::Op.new(:op<isinvokable>,
+                        $_force-x
+                    ),
+                    QAST::Op.new(:op<call>, :name($_force-x.name)),
+                    $_force-x
                 )
             )
         ));
