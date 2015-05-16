@@ -525,10 +525,10 @@ class LActions is HLL::Actions {
         $s.push($svalCountBinding);
         $s.push($svalSizeBinding);
         
-        my $src := lexVar('.src', :decl<static>);
+        #my $src := lexVar('.src', :decl<static>);
         my $mainResult := locVar('mainResult');
         $s.push(QAST::Block.new(:blocktype<immediate>,
-            QAST::Op.new(:op<bind>, $src, asNode(~$/)),
+            #QAST::Op.new(:op<bind>, $src, asNode(~$/)),
             $mainResult.declV,
             mkSCall('.say', mkConcat(
                 ~$!lamCount, " lambdas\n",
@@ -653,11 +653,13 @@ class LActions is HLL::Actions {
         my %fvs := nqp::clone($body.ann('FV'));
         nqp::deletekey(%fvs, $binder.name);
 
-        my $strRepr := QAST::Op.new(:op<substr>, 
-            lexVar('.src'),
-            asNode($/.from), 
-            asNode(nqp::sub_i($/.to, $/.from)) # length
-        );
+        #my $strRepr := QAST::Op.new(:op<substr>, 
+        #    lexVar('.src'),
+        #    asNode($/.from), 
+        #    asNode(nqp::sub_i($/.to, $/.from)) # length
+        #);
+
+        my $strRepr := asNode(~$/);
 
         if nqp::elems(%fvs) > 0 {
             my %strs := hash();
