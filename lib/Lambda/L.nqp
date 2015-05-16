@@ -356,6 +356,7 @@ class LActions is HLL::Actions {
         });
         
         mkSFn('.strOut', <v>, -> $v {
+            QAST::Op.new(:op<bind>, $v, mkForce($v)),
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<isstr>, $v),
                 mkSCall('.strLit', $v),
@@ -403,9 +404,9 @@ class LActions is HLL::Actions {
             mkConcat('"', QAST::Op.new(:op<escape>, $s), '"');
         });
         
-        mkSFn('.apply1', <f a1>, -> $f, $a1 {
+        mkSFn('.apply1', <f a1>, :result(nqp::null), -> $f, $a1, $result {
             QAST::Op.new(:op<bind>, $f, mkForce($f)),
-            mkCall(
+            QAST::Op.new(:op<bind>, $result, mkCall(
                 QAST::Op.new(:op<defor>,
                     mkLambda2code($f),
                     QAST::Op.new(:op<if>,
@@ -415,7 +416,8 @@ class LActions is HLL::Actions {
                     )
                 ),
                 $a1
-            );
+            )),
+            mkForce($result),
         });
         
         $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay01', :decl<static>),

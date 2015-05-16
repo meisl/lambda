@@ -1,7 +1,9 @@
 ---------- L-compiler ----------
-5 lambdas
+17 lambdas
 ------------------------------------------------
 ------------------------------------------------
-λx.x
+λonNil.λonCons.onCons x xs
+   # where x = "c"
+   # where xs = λonNil.λonCons.onNil
 
-Output completed (0 sec consumed) - Normal Termination
+Output completed (1 sec consumed) - Normal Termination

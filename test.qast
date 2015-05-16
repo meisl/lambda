@@ -38,6 +38,10 @@
     - QAST::Var+{Var}(lexical .strOut :decl(static))
     - QAST::Block
       - QAST::Var+{Var}(lexical v :decl(param))
+      - QAST::Op(bind)
+        - QAST::Var+{Var}(lexical v :decl())
+        - QAST::Op(call .force)
+          - QAST::Var+{Var}(lexical v :decl())
       - QAST::Op(if)
         - QAST::Op(isstr)
           - QAST::Var+{Var}(lexical v :decl())
@@ -110,33 +114,38 @@
     - QAST::Block
       - QAST::Var+{Var}(lexical f :decl(param))
       - QAST::Var+{Var}(lexical a1 :decl(param))
+      - QAST::Var+{Var}(lexical result :decl(var))
       - QAST::Op(bind)
         - QAST::Var+{Var}(lexical f :decl())
         - QAST::Op(call .force)
           - QAST::Var+{Var}(lexical f :decl())
-      - QAST::Op(call)
-        - QAST::Op(defor)
-          - QAST::Op(call .->#n)
-            - QAST::Var+{Var}(lexical f :decl())
-            - QAST::SVal(λ)
-            - QAST::IVal(1)
-          - QAST::Op(if)
-            - QAST::Op(isinvokable)
+      - QAST::Op(bind)
+        - QAST::Var+{Var}(lexical result :decl())
+        - QAST::Op(call)
+          - QAST::Op(defor)
+            - QAST::Op(call .->#n)
               - QAST::Var+{Var}(lexical f :decl())
-            - QAST::Var+{Var}(lexical f :decl())
-            - QAST::Op(die)
-              - QAST::Op(concat)
+              - QAST::SVal(λ)
+              - QAST::IVal(1)
+            - QAST::Op(if)
+              - QAST::Op(isinvokable)
+                - QAST::Var+{Var}(lexical f :decl())
+              - QAST::Var+{Var}(lexical f :decl())
+              - QAST::Op(die)
                 - QAST::Op(concat)
                   - QAST::Op(concat)
-                    - QAST::SVal(ERROR: cannot apply )
-                    - QAST::Op(call .force)
-                      - QAST::Op(call .strLit)
-                        - QAST::Var+{Var}(lexical f :decl())
-                  - QAST::SVal( to )
-                - QAST::Op(call .force)
-                  - QAST::Op(call .strOut)
-                    - QAST::Var+{Var}(lexical a1 :decl())
-        - QAST::Var+{Var}(lexical a1 :decl())
+                    - QAST::Op(concat)
+                      - QAST::SVal(ERROR: cannot apply )
+                      - QAST::Op(call .force)
+                        - QAST::Op(call .strLit)
+                          - QAST::Var+{Var}(lexical f :decl())
+                    - QAST::SVal( to )
+                  - QAST::Op(call .force)
+                    - QAST::Op(call .strOut)
+                      - QAST::Var+{Var}(lexical a1 :decl())
+          - QAST::Var+{Var}(lexical a1 :decl())
+      - QAST::Op(call .force)
+        - QAST::Var+{Var}(lexical result :decl())
   - QAST::Op(bind)
     - QAST::Var+{Var}(lexical .testDelay01 :decl(static))
     - QAST::Op(call .delayMemo)
@@ -161,63 +170,243 @@
   - QAST::Block
     - QAST::Var+{Var}(local mainResult :decl(var))
     - QAST::Op(call .say)
-      - QAST::SVal(5 lambdas\n------------------------------------------------)
+      - QAST::SVal(17 lambdas\n------------------------------------------------)
     - QAST::Op(bind)
       - QAST::Var+{Var}(local mainResult :decl())
       - QAST::Op(call .strOut)
-        - QAST::Op(call .apply1) (λU.U U) (λu.λf.f (u u f)) (λself.λx.x)\n\n#(λy.λz...
+        - QAST::Op(call .apply1) (λnil.λcons.λcar.λcdr.\n    (λxs.\n        #nil\n ...
           - QAST::Op(call .apply1)
-            - QAST::Op(list)
-              - QAST::SVal(λ)
-              - QAST::Block λU.U U
-                - QAST::Var+{Var}(lexical U :decl(param))
-                - QAST::Op(call .apply1) U U
-                  - QAST::Var+{Var}(lexical U :decl()) U
-                  - QAST::Var+{Var}(lexical U :decl()) U
-              - QAST::SVal(λU.U U)
+            - QAST::Op(call .apply1)
+              - QAST::Op(call .apply1)
+                - QAST::Op(list)
+                  - QAST::SVal(λ)
+                  - QAST::Block λnil.λcons.λcar.λcdr.\n    (λxs.\n        #nil\n  ...
+                    - QAST::Var+{Var}(lexical nil :decl(param))
+                    - QAST::Op(list)
+                      - QAST::SVal(λ)
+                      - QAST::Block λcons.λcar.λcdr.\n    (λxs.\n        #nil\n       ...
+                        - QAST::Var+{Var}(lexical cons :decl(param))
+                        - QAST::Op(list)
+                          - QAST::SVal(λ)
+                          - QAST::Block λcar.λcdr.\n    (λxs.\n        #nil\n        #car ...
+                            - QAST::Var+{Var}(lexical car :decl(param))
+                            - QAST::Op(list)
+                              - QAST::SVal(λ)
+                              - QAST::Block λcdr.\n    (λxs.\n        #nil\n        #car xs   ...
+                                - QAST::Var+{Var}(lexical cdr :decl(param))
+                                - QAST::Op(call .apply1) \n    (λxs.\n        #nil\n        #car xs        ...
+                                  - QAST::Op(list)
+                                    - QAST::SVal(λ)
+                                    - QAST::Block λxs.\n        #nil\n        #car xs              #...
+                                      - QAST::Var+{Var}(lexical xs :decl(param))
+                                      - QAST::Op(call .apply1) \n        #nil\n        #car xs              # \"a...
+                                        - QAST::Var+{Var}(lexical cdr :decl()) cdr
+                                        - QAST::Op(call .delayMemo)
+                                          - QAST::Block
+                                            - QAST::Op(call .apply1) cdr xs
+                                              - QAST::Var+{Var}(lexical cdr :decl()) cdr
+                                              - QAST::Var+{Var}(lexical xs :decl()) xs
+                                    - QAST::Op(call .delayMemo)
+                                      - QAST::Block
+                                        - QAST::Op(concat)
+                                          - QAST::SVal(λxs.\n        #nil\n        #car xs              # \"a\"\n        #car nil             # ~> (Runtime) ERROR: cannot apply \"car\" to \"nil\"\n        #cdr xs              # (cons \"b\" (cons \"c\" nil))\n        #car (cdr xs)        # \"b\"\n        cdr (cdr xs)        # (cons \"c\", nil)\n        #car (cdr (cdr xs))  # \"c\"\n    \n   # where cdr = )
+                                          - QAST::Op(call .force)
+                                            - QAST::Op(call .strOut)
+                                              - QAST::Var+{Var}(lexical cdr :decl()) cdr
+                                  - QAST::Op(call .delayMemo)
+                                    - QAST::Block
+                                      - QAST::Op(call .apply1) cons \"a\" (cons \"b\" (cons \"c\" nil))
+                                        - QAST::Op(call .apply1)
+                                          - QAST::Var+{Var}(lexical cons :decl()) cons
+                                          - QAST::SVal(a)
+                                        - QAST::Op(call .delayMemo)
+                                          - QAST::Block
+                                            - QAST::Op(call .apply1) cons \"b\" (cons \"c\" nil)
+                                              - QAST::Op(call .apply1)
+                                                - QAST::Var+{Var}(lexical cons :decl()) cons
+                                                - QAST::SVal(b)
+                                              - QAST::Op(call .delayMemo)
+                                                - QAST::Block
+                                                  - QAST::Op(call .apply1) cons \"c\" nil
+                                                    - QAST::Op(call .apply1)
+                                                      - QAST::Var+{Var}(lexical cons :decl()) cons
+                                                      - QAST::SVal(c)
+                                                    - QAST::Var+{Var}(lexical nil :decl()) nil
+                              - QAST::Op(call .delayMemo)
+                                - QAST::Block
+                                  - QAST::Op(concat)
+                                    - QAST::Op(concat)
+                                      - QAST::Op(concat)
+                                        - QAST::SVal(λcdr.\n    (λxs.\n        #nil\n        #car xs              # \"a\"\n        #car nil             # ~> (Runtime) ERROR: cannot apply \"car\" to \"nil\"\n        #cdr xs              # (cons \"b\" (cons \"c\" nil))\n        #car (cdr xs)        # \"b\"\n        cdr (cdr xs)        # (cons \"c\", nil)\n        #car (cdr (cdr xs))  # \"c\"\n    ) (cons \"a\" (cons \"b\" (cons \"c\" nil)))\n\n   # where cons = )
+                                        - QAST::Op(call .force)
+                                          - QAST::Op(call .strOut)
+                                            - QAST::Var+{Var}(lexical cons :decl()) cons
+                                      - QAST::SVal(\n   # where nil = )
+                                    - QAST::Op(call .force)
+                                      - QAST::Op(call .strOut)
+                                        - QAST::Var+{Var}(lexical nil :decl()) nil
+                          - QAST::Op(call .delayMemo)
+                            - QAST::Block
+                              - QAST::Op(concat)
+                                - QAST::Op(concat)
+                                  - QAST::Op(concat)
+                                    - QAST::SVal(λcar.λcdr.\n    (λxs.\n        #nil\n        #car xs              # \"a\"\n        #car nil             # ~> (Runtime) ERROR: cannot apply \"car\" to \"nil\"\n        #cdr xs              # (cons \"b\" (cons \"c\" nil))\n        #car (cdr xs)        # \"b\"\n        cdr (cdr xs)        # (cons \"c\", nil)\n        #car (cdr (cdr xs))  # \"c\"\n    ) (cons \"a\" (cons \"b\" (cons \"c\" nil)))\n\n   # where cons = )
+                                    - QAST::Op(call .force)
+                                      - QAST::Op(call .strOut)
+                                        - QAST::Var+{Var}(lexical cons :decl()) cons
+                                  - QAST::SVal(\n   # where nil = )
+                                - QAST::Op(call .force)
+                                  - QAST::Op(call .strOut)
+                                    - QAST::Var+{Var}(lexical nil :decl()) nil
+                      - QAST::Op(call .delayMemo)
+                        - QAST::Block
+                          - QAST::Op(concat)
+                            - QAST::SVal(λcons.λcar.λcdr.\n    (λxs.\n        #nil\n        #car xs              # \"a\"\n        #car nil             # ~> (Runtime) ERROR: cannot apply \"car\" to \"nil\"\n        #cdr xs              # (cons \"b\" (cons \"c\" nil))\n        #car (cdr xs)        # \"b\"\n        cdr (cdr xs)        # (cons \"c\", nil)\n        #car (cdr (cdr xs))  # \"c\"\n    ) (cons \"a\" (cons \"b\" (cons \"c\" nil)))\n\n   # where nil = )
+                            - QAST::Op(call .force)
+                              - QAST::Op(call .strOut)
+                                - QAST::Var+{Var}(lexical nil :decl()) nil
+                  - QAST::SVal(λnil.λcons.λcar.λcdr.\n    (λxs.\n        #nil\n        #car xs              # \"a\"\n        #car nil             # ~> (Runtime) ERROR: cannot apply \"car\" to \"nil\"\n        #cdr xs              # (cons \"b\" (cons \"c\" nil))\n        #car (cdr xs)        # \"b\"\n        cdr (cdr xs)        # (cons \"c\", nil)\n        #car (cdr (cdr xs))  # \"c\"\n    ) (cons \"a\" (cons \"b\" (cons \"c\" nil)))\n)
+                - QAST::Op(call .delayMemo)
+                  - QAST::Block
+                    - QAST::Op(list)
+                      - QAST::SVal(λ)
+                      - QAST::Block λonNil.λonCons.onNil
+                        - QAST::Var+{Var}(lexical onNil :decl(param))
+                        - QAST::Op(list)
+                          - QAST::SVal(λ)
+                          - QAST::Block λonCons.onNil
+                            - QAST::Var+{Var}(lexical onCons :decl(param))
+                            - QAST::Var+{Var}(lexical onNil :decl()) onNil
+                          - QAST::Op(call .delayMemo)
+                            - QAST::Block
+                              - QAST::Op(concat)
+                                - QAST::SVal(λonCons.onNil\n   # where onNil = )
+                                - QAST::Op(call .force)
+                                  - QAST::Op(call .strOut)
+                                    - QAST::Var+{Var}(lexical onNil :decl()) onNil
+                      - QAST::SVal(λonNil.λonCons.onNil)
+              - QAST::Op(call .delayMemo)
+                - QAST::Block
+                  - QAST::Op(list)
+                    - QAST::SVal(λ)
+                    - QAST::Block λx.λxs.λonNil.λonCons.onCons x xs
+                      - QAST::Var+{Var}(lexical x :decl(param))
+                      - QAST::Op(list)
+                        - QAST::SVal(λ)
+                        - QAST::Block λxs.λonNil.λonCons.onCons x xs
+                          - QAST::Var+{Var}(lexical xs :decl(param))
+                          - QAST::Op(list)
+                            - QAST::SVal(λ)
+                            - QAST::Block λonNil.λonCons.onCons x xs
+                              - QAST::Var+{Var}(lexical onNil :decl(param))
+                              - QAST::Op(list)
+                                - QAST::SVal(λ)
+                                - QAST::Block λonCons.onCons x xs
+                                  - QAST::Var+{Var}(lexical onCons :decl(param))
+                                  - QAST::Op(call .apply1) onCons x xs
+                                    - QAST::Op(call .apply1)
+                                      - QAST::Var+{Var}(lexical onCons :decl()) onCons
+                                      - QAST::Var+{Var}(lexical x :decl()) x
+                                    - QAST::Var+{Var}(lexical xs :decl()) xs
+                                - QAST::Op(call .delayMemo)
+                                  - QAST::Block
+                                    - QAST::Op(concat)
+                                      - QAST::Op(concat)
+                                        - QAST::Op(concat)
+                                          - QAST::SVal(λonCons.onCons x xs\n   # where x = )
+                                          - QAST::Op(call .force)
+                                            - QAST::Op(call .strOut)
+                                              - QAST::Var+{Var}(lexical x :decl()) x
+                                        - QAST::SVal(\n   # where xs = )
+                                      - QAST::Op(call .force)
+                                        - QAST::Op(call .strOut)
+                                          - QAST::Var+{Var}(lexical xs :decl()) xs
+                            - QAST::Op(call .delayMemo)
+                              - QAST::Block
+                                - QAST::Op(concat)
+                                  - QAST::Op(concat)
+                                    - QAST::Op(concat)
+                                      - QAST::SVal(λonNil.λonCons.onCons x xs\n   # where x = )
+                                      - QAST::Op(call .force)
+                                        - QAST::Op(call .strOut)
+                                          - QAST::Var+{Var}(lexical x :decl()) x
+                                    - QAST::SVal(\n   # where xs = )
+                                  - QAST::Op(call .force)
+                                    - QAST::Op(call .strOut)
+                                      - QAST::Var+{Var}(lexical xs :decl()) xs
+                        - QAST::Op(call .delayMemo)
+                          - QAST::Block
+                            - QAST::Op(concat)
+                              - QAST::SVal(λxs.λonNil.λonCons.onCons x xs\n   # where x = )
+                              - QAST::Op(call .force)
+                                - QAST::Op(call .strOut)
+                                  - QAST::Var+{Var}(lexical x :decl()) x
+                    - QAST::SVal(λx.λxs.λonNil.λonCons.onCons x xs)
             - QAST::Op(call .delayMemo)
               - QAST::Block
                 - QAST::Op(list)
                   - QAST::SVal(λ)
-                  - QAST::Block λu.λf.f (u u f)
-                    - QAST::Var+{Var}(lexical u :decl(param))
-                    - QAST::Op(list)
-                      - QAST::SVal(λ)
-                      - QAST::Block λf.f (u u f)
-                        - QAST::Var+{Var}(lexical f :decl(param))
-                        - QAST::Op(call .apply1) f (u u f)
-                          - QAST::Var+{Var}(lexical f :decl()) f
-                          - QAST::Op(call .delayMemo)
-                            - QAST::Block
-                              - QAST::Op(call .apply1) u u f
-                                - QAST::Op(call .apply1)
-                                  - QAST::Var+{Var}(lexical u :decl()) u
-                                  - QAST::Var+{Var}(lexical u :decl()) u
-                                - QAST::Var+{Var}(lexical f :decl()) f
+                  - QAST::Block λxs.xs (\"car\" \"nil\") (λhd.λtl.hd)
+                    - QAST::Var+{Var}(lexical xs :decl(param))
+                    - QAST::Op(call .apply1) xs (\"car\" \"nil\") (λhd.λtl.hd)
+                      - QAST::Op(call .apply1)
+                        - QAST::Var+{Var}(lexical xs :decl()) xs
+                        - QAST::Op(call .delayMemo)
+                          - QAST::Block
+                            - QAST::Op(call .apply1) \"car\" \"nil\"
+                              - QAST::SVal(car)
+                              - QAST::SVal(nil)
                       - QAST::Op(call .delayMemo)
                         - QAST::Block
-                          - QAST::Op(concat)
-                            - QAST::SVal(λf.f (u u f)\n   # where u = )
-                            - QAST::Op(call .force)
-                              - QAST::Op(call .strOut)
-                                - QAST::Var+{Var}(lexical u :decl()) u
-                  - QAST::SVal(λu.λf.f (u u f))
+                          - QAST::Op(list)
+                            - QAST::SVal(λ)
+                            - QAST::Block λhd.λtl.hd
+                              - QAST::Var+{Var}(lexical hd :decl(param))
+                              - QAST::Op(list)
+                                - QAST::SVal(λ)
+                                - QAST::Block λtl.hd
+                                  - QAST::Var+{Var}(lexical tl :decl(param))
+                                  - QAST::Var+{Var}(lexical hd :decl()) hd
+                                - QAST::Op(call .delayMemo)
+                                  - QAST::Block
+                                    - QAST::Op(concat)
+                                      - QAST::SVal(λtl.hd\n   # where hd = )
+                                      - QAST::Op(call .force)
+                                        - QAST::Op(call .strOut)
+                                          - QAST::Var+{Var}(lexical hd :decl()) hd
+                            - QAST::SVal(λhd.λtl.hd)
+                  - QAST::SVal(λxs.xs (\"car\" \"nil\") (λhd.λtl.hd))
           - QAST::Op(call .delayMemo)
             - QAST::Block
               - QAST::Op(list)
                 - QAST::SVal(λ)
-                - QAST::Block λself.λx.x
-                  - QAST::Var+{Var}(lexical self :decl(param))
-                  - QAST::Op(list)
-                    - QAST::SVal(λ)
-                    - QAST::Block λx.x
-                      - QAST::Var+{Var}(lexical x :decl(param))
-                      - QAST::Var+{Var}(lexical x :decl()) x
-                    - QAST::SVal(λx.x)
-                - QAST::SVal(λself.λx.x)
+                - QAST::Block λxs.xs (\"cdr\" \"nil\") (λhd.λtl.tl)
+                  - QAST::Var+{Var}(lexical xs :decl(param))
+                  - QAST::Op(call .apply1) xs (\"cdr\" \"nil\") (λhd.λtl.tl)
+                    - QAST::Op(call .apply1)
+                      - QAST::Var+{Var}(lexical xs :decl()) xs
+                      - QAST::Op(call .delayMemo)
+                        - QAST::Block
+                          - QAST::Op(call .apply1) \"cdr\" \"nil\"
+                            - QAST::SVal(cdr)
+                            - QAST::SVal(nil)
+                    - QAST::Op(call .delayMemo)
+                      - QAST::Block
+                        - QAST::Op(list)
+                          - QAST::SVal(λ)
+                          - QAST::Block λhd.λtl.tl
+                            - QAST::Var+{Var}(lexical hd :decl(param))
+                            - QAST::Op(list)
+                              - QAST::SVal(λ)
+                              - QAST::Block λtl.tl
+                                - QAST::Var+{Var}(lexical tl :decl(param))
+                                - QAST::Var+{Var}(lexical tl :decl()) tl
+                              - QAST::SVal(λtl.tl)
+                          - QAST::SVal(λhd.λtl.tl)
+                - QAST::SVal(λxs.xs (\"cdr\" \"nil\") (λhd.λtl.tl))
     - QAST::Op(call .say)
       - QAST::SVal(------------------------------------------------)
     - QAST::Var+{Var}(local mainResult :decl())
 
 
-Output completed (2 sec consumed) - Normal Termination
+Output completed (3 sec consumed) - Normal Termination

@@ -11,7 +11,24 @@
 #(λU.U U) (λu.λf.f (u u f))
 
 # Turing's Y applied to a function that ignores param self:
-(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)
+#(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)
 
 #(λy.λz.λx.y (λy.y z)) "y" "z"
 
+
+# Lists:
+(λnil.λcons.λcar.λcdr.
+    (λxs.
+        #nil
+        #car xs              # "a"
+        #car nil             # ~> (Runtime) ERROR: cannot apply "car" to "nil"
+        #cdr xs              # (cons "b" (cons "c" nil))
+        #car (cdr xs)        # "b"
+        cdr (cdr xs)        # (cons "c", nil)
+        #car (cdr (cdr xs))  # "c"
+    ) (cons "a" (cons "b" (cons "c" nil)))
+)
+    (λonNil.λonCons.onNil)                  # ctor nil
+    (λx.λxs.λonNil.λonCons.onCons x xs)     # ctor cons
+    (λxs.xs ("car" "nil") (λhd.λtl.hd))     # car   (provoke error on nil)
+    (λxs.xs ("cdr" "nil") (λhd.λtl.tl))     # cdr   (provoke error on nil)
