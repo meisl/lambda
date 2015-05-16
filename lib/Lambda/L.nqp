@@ -328,64 +328,42 @@ class LActions is HLL::Actions {
             );
         }
         
-        my $_ifTag-s := lexVar('s');    # "subject"
-        my $_ifTag-x := lexVar('x');
-        my $_ifTag-t := lexVar('t');
-        my $_ifTag-e := lexVar('e');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.ifTag', :decl<static>),
-            QAST::Block.new(:arity(4),
-                $_ifTag-s.declP,
-                $_ifTag-x.declP,
-                $_ifTag-t.declP,
-                $_ifTag-e.declP,
-                mkForce(
-                    QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<islist>, $_ifTag-s),
-                        QAST::Op.new(:op<if>,
-                            QAST::Op.new(:op<iseq_s>,
-                                $_ifTag-x,
-                                mkListLookup($_ifTag-s, :index(0)),
-                            ),
-                            $_ifTag-t,
-                            $_ifTag-e
-                        ),
-                        $_ifTag-e
-                    )
-                )
-            )
-        ));
-
-        my $_project-s := lexVar('s');  # "subject"
-        my $_project-t := lexVar('t');  # "tag"
-        my $_project-i := lexVar('i');  # "index"
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.->#n', :decl<static>),
-            QAST::Block.new(:arity(1),
-                $_project-s.declP,
-                $_project-t.declP,
-                $_project-i.declP,
-                mkSCall('.ifTag', $_project-s, $_project-t,
-                    mkDelaySimple(mkListLookup($_project-s, :index($_project-i))),
-                    QAST::Op.new(:op<null>)
-                )
-            )
-        ));
-
-        my $_strOut-p1 := lexVar('v');
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.strOut', :decl<static>),
-            QAST::Block.new(:arity(1),
-                $_strOut-p1.declP,
+        mkSFn('.ifTag', <subject tag then else>, -> $subject, $tag, $then, $else {
+            mkForce(
                 QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<isstr>, $_strOut-p1),
-                    mkSCall('.strLit', $_strOut-p1),
-                    QAST::Op.new(:op<defor>,
-                        mkLambda2str($_strOut-p1),
-                        QAST::Op.new(:op<reprname>,
-                            $_strOut-p1
-                        )
+                    QAST::Op.new(:op<islist>, $subject),
+                    QAST::Op.new(:op<if>,
+                        QAST::Op.new(:op<iseq_s>,
+                            $tag,
+                            mkListLookup($subject, :index(0)),
+                        ),
+                        $then,
+                        $else
+                    ),
+                    $else
+                )
+            )
+        });
+
+        mkSFn('.->#n', <subject tag index>, -> $subject, $tag, $index {
+            mkSCall('.ifTag', $subject, $tag,
+                mkDelaySimple(mkListLookup($subject, :index($index))),
+                QAST::Op.new(:op<null>)
+            )
+        });
+
+        mkSFn('.strOut', <v>, -> $v {
+            QAST::Op.new(:op<if>,
+                QAST::Op.new(:op<isstr>, $v),
+                mkSCall('.strLit', $v),
+                QAST::Op.new(:op<defor>,
+                    mkLambda2str($v),
+                    QAST::Op.new(:op<reprname>,
+                        $v
                     )
                 )
             )
-        ));
+        });
 
         mkSFn('.delayMemo', <block>, :wasRun(0), :result(nqp::null), -> $block, $wasRun, $result {
             QAST::Block.new(:arity(0),
