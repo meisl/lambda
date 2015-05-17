@@ -1,11 +1,13 @@
 ---------- L-compiler ----------
-17 lambdas
-433 QAST::Node s
-2479 chars ttl in 58 QAST::SVal s
+45 lambdas
+805 QAST::Node s
+12776 chars ttl in 122 QAST::SVal s
 ------------------------------------------------
 ------------------------------------------------
-λonNil.λonCons.onCons x xs
-   # where x = "c"
-   # where xs = λonNil.λonCons.onNil
+λf.λstart.λxs.                 # foldl
+            xs start
+               λhd.λtl.self f (f start hd) tl
+        
+   # where self = ...
 
 Output completed (1 sec consumed) - Normal Termination

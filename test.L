@@ -16,19 +16,37 @@
 #(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)
 
 
-# Lists:
-(λnil.λcons.λcar.λcdr.
-    (λxs.
-        #nil
-        #car xs              # "a"
-        #car nil             # ~> (Runtime) ERROR: cannot apply "car" to "nil"
-        #cdr xs              # (cons "b" (cons "c" nil))
-        #car (cdr xs)        # "b"
-        cdr (cdr xs)        # (cons "c", nil)
-        #car (cdr (cdr xs))  # "c"
-    ) (cons "a" (cons "b" (cons "c" nil)))
+(λU.λC.λB.λS.λK.λI.
+    (λY.
+        # Lists:
+        (λnil.λcons.λcar.λcdr.λfoldl.
+            (λxs.
+                #nil
+                #car xs              # "a"
+                #car nil             # ~> (Runtime) ERROR: cannot apply "car" to "nil"
+                #cdr xs              # (cons "b" (cons "c" nil))
+                #car (cdr xs)        # "b"
+                #cdr (cdr xs)        # (cons "c", nil)
+                #car (cdr (cdr xs))  # "c"
+                #foldl (λx.λ_.x) "zzz" xs   # "zzz"
+                #foldl (λ_.λx.x) "zzz" xs   # "c"
+                foldl
+            ) (cons "a" (cons "b" (cons "c" nil)))
+        )
+        (λonNil.λonCons.onNil)                  # ctor nil
+        (λx.λxs.λonNil.λonCons.onCons x xs)     # ctor cons
+        (λxs.xs ("car" "nil") (λhd.λtl.hd))     # car   (provoke error on nil)
+        (λxs.xs ("cdr" "nil") (λhd.λtl.tl))     # cdr   (provoke error on nil)
+        (Y λself.λf.λstart.λxs.                 # foldl
+            xs start
+               λhd.λtl.self f (f start hd) tl
+        )
+    )
+    (U U)   # Y
 )
-    (λonNil.λonCons.onNil)                  # ctor nil
-    (λx.λxs.λonNil.λonCons.onCons x xs)     # ctor cons
-    (λxs.xs ("car" "nil") (λhd.λtl.hd))     # car   (provoke error on nil)
-    (λxs.xs ("cdr" "nil") (λhd.λtl.tl))     # cdr   (provoke error on nil)
+(λu.λf.f (u u f))       # U
+(λf.λx.λy.f y x)        # C
+(λf.λg.λx.f (g x))      # B
+(λf.λg.λx.f x (g x))    # S
+(λx.λ_.x)               # K
+(λx.x)                  # I

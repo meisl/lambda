@@ -665,13 +665,20 @@ class LActions is HLL::Actions {
             my %strs := hash();
             for freeVars2locations(%fvs) {
                 my $k := "\n   # where " ~ $_<name> ~ ' = ';
-                my $v := mkSCall('.strOut', $_<var>);
+                my $v;
+                if $_<name> eq 'self' {
+                    $v := '...';
+                } else {
+                    $v := mkSCall('.strOut', $_<var>);
+                }
                 %strs{$k} := $v;
             }
             my @strs := [$strRepr];
             for %strs {
-                @strs.push(nqp::iterkey_s($_));
-                @strs.push(nqp::iterval($_));
+                my $k := nqp::iterkey_s($_);
+                my $v := nqp::iterval($_);
+                @strs.push($k);
+                @strs.push($v);
             }
             $strRepr := mkConcat(|@strs);
         }
