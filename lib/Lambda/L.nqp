@@ -34,7 +34,7 @@ grammar LGrammar is HLL::Grammar {
         '#' <-[\v]>* \s*
     }
 
-    token lambda { \\ | 'λ' | '&' }
+    token lambda { 'λ' | \\ | '&' }
 
     token delta { 'δ' }
 
@@ -117,7 +117,7 @@ class LActions is HLL::Actions {
         } elsif nqp::istype($v, QAST::Node) {
             $v;
         } else {
-            die("cannot turn " ~ $v ~ " into a QAST::Node");
+            nqp::die("cannot turn " ~ $v ~ " into a QAST::Node");
         }
     }
 
@@ -234,7 +234,7 @@ class LActions is HLL::Actions {
         if nqp::isstr($key) || nqp::istype($key, QAST::Node) {
             QAST::Op.new( :op<atkey>, $hash, asNode($key) );
         } else {
-            die("need str or QAST::SVal as key");
+            nqp::die("need str or QAST::SVal as key");
         }
     }
 
@@ -242,7 +242,7 @@ class LActions is HLL::Actions {
         if nqp::isint($index) || nqp::istype($index, QAST::Node) {
             QAST::Op.new( :op<atpos>, $list, asNode($index) );
         } else {
-            die("need int or QAST::IVal as index");
+            nqp::die("need int or QAST::IVal as index");
         }
     }
 
@@ -734,3 +734,4 @@ sub MAIN(*@ARGS) {
     $c.parseactions(LActions.new);
     $c.command_line(@ARGS, :encoding('utf8'));
 }
+
