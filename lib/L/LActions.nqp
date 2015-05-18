@@ -1,77 +1,6 @@
 use NQPHLL;
 
 
-
-grammar LGrammar is HLL::Grammar {
-
-    rule TOP {
-        ^ \s* <.eolComment>* <termlist1orMore>? $
-    }
-
-    token termlist1orMore() {
-        <term>**1..*
-    }
-
-    token termlist2orMore {
-        <term>**2..* 
-    }
-
-    token term {
-        \s* <.eolComment>*
-        [
-        | <t=variable>
-        | <t=str-constant>
-        | <t=int-constant>
-        | <t=definition>
-        | <t=abstraction>
-        | '(' <t=abstraction> ')'
-        | '(' <t=termlist2orMore> ')'
-        ]
-        \s* <.eolComment>*
-    }
-
-    token eolComment {
-        '#' <-[\v]>* \s*
-    }
-
-    token lambda { 'λ' | \\ | '&' }
-
-    token delta { 'δ' }
-
-    token varName {
-        <-[\"\\βδλ&.()\s]>+
-    }
-
-    token variable {
-        <varName>
-    }
-
-    token symbol {
-        <varName>
-    }
-
-    token str-constant {
-        '"'
-        [ (<-[\n\"\\]>+)
-        | (\\ [ <[brnft\"\\]> || <.panic: "unknown escape sequence"> ])
-        ]*
-        '"'
-    } 
-
-    token int-constant {
-        <!>     # NYI
-    }
-
-    token abstraction {
-        \s* <.lambda> <varName> '.'  <body=.termlist1orMore>
-    }
-
-    rule definition {
-        '(' <.delta> <symbol> <term> ')'
-    }
-}
-
-
 class LActions is HLL::Actions {
 
     my role Var {
@@ -701,37 +630,5 @@ class LActions is HLL::Actions {
         
         make $lam;
     }
-}
-
-class LCompiler is HLL::Compiler {
-    method command_line(@args, *%adverbs) {
-        my $program-name := @args[0];
-        my $res  := self.process_args(@args);
-        my %opts := $res.options;
-        my @a    := $res.arguments;
-
-        for %opts {
-            %adverbs{$_.key} := $_.value;
-        }
-        self.usage($program-name) if %adverbs<help>  || %adverbs<h>;
-        
-        #if $!backend.is_precomp_stage(%adverbs<target>) {
-        #    %adverbs<precomp> := 1;
-        #}
-
-        #self.command_eval(|@a, |%adverbs);
-        
-        my $*USER_FILES := join('; ', @a);
-        my $result := self.evalfiles(|@a, :encoding('utf8'), |%adverbs);
-        self.interactive_result($result);
-    }
-}
-
-sub MAIN(*@ARGS) {
-    my $c := LCompiler.new();
-    $c.language('lambda');
-    $c.parsegrammar(LGrammar);
-    $c.parseactions(LActions.new);
-    $c.command_line(@ARGS, :encoding('utf8'));
 }
 
