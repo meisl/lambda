@@ -645,10 +645,10 @@ class LActions is HLL::Actions {
     }
 
     method abstraction($/) {
-        my $binder := lexVar(~$/<varName>).declP;
+        my $binder := lexVar(~$/<varName>);
         my $body   := $/<body>.ast;
 
-        my $block := QAST::Block.new(:arity(1), :node($/), $binder, $body);
+        my $code := QAST::Block.new(:arity(1), :node($/), $binder.declP, $body);
 
         my %fvs := nqp::clone($body.ann('FV'));
         nqp::deletekey(%fvs, $binder.name);
@@ -687,7 +687,7 @@ class LActions is HLL::Actions {
 
         my $lam := QAST::Op.new(:op<list>,
             QAST::SVal.new(:value('λ')),
-            $block,
+            $code,
             $strRepr,
         );
         $lam.annotate('FV', %fvs);
