@@ -1,4 +1,6 @@
 
+my $needsCompilation := 0;
+
 sub compile($file, :$lib, :$cwd) {
     my $nqpName := "$lib/$file.nqp";
     my $mvmName := "$lib/$file.moarvm";
@@ -10,7 +12,8 @@ sub compile($file, :$lib, :$cwd) {
         ?? nqp::stat($mvmName, nqp::const::STAT_MODIFYTIME)
         !! 0
     ;
-    if $nqpTime < $mvmTime {
+    $needsCompilation := $needsCompilation || ($nqpTime > $mvmTime);
+    if !$needsCompilation {
         say($mvmName);
     } else {
         my $cmd := 'nqp-m.bat '

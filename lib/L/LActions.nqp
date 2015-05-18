@@ -589,7 +589,7 @@ class LActions is HLL::Actions {
         #);
 
         my $strRepr := asNode(~$/);
-
+        
         if nqp::elems(%fvs) > 0 {
             my %strs := hash();
             for freeVars2locations(%fvs) {
