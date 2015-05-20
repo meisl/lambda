@@ -496,18 +496,22 @@ class LActions is HLL::Actions {
             @results[0] := @results[0] + 1; # size of tree
             if nqp::istype($node, QAST::Block) {
                 @results[1] := @results[1] + 1; # nr of Blocks
+            } elsif nqp::istype($node, QAST::Op) {
+                if $node.op eq 'list' {
+                    @results[2] := @results[2] + 1; # nr of Op(list)s
+                }
             } elsif nqp::istype($node, QAST::IVal) {
-                @results[2] := @results[2] + 1; # nr of IVals
+                @results[3] := @results[3] + 1; # nr of IVals
             } elsif nqp::istype($node, QAST::SVal) {
-                @results[3] := @results[3] + 1; # nr of SVals
-                @results[4] := @results[4] + nqp::chars($node.value); # ttl size of SVals
+                @results[4] := @results[4] + 1; # nr of SVals
+                @results[5] := @results[5] + nqp::chars($node.value); # ttl size of SVals
             }
             for $node.list {
                 _stats($_, @results);
             }
             @results;
         }
-        _stats($node, [0, 0, 0, 0, 0]);
+        _stats($node, [0, 0, 0, 0, 0, 0]);
     }
 
     method TOP($/) {
@@ -530,11 +534,13 @@ class LActions is HLL::Actions {
         my $s := mkSetting($/, @!lambdaInfo);
         my $quastSizeBinding  := QAST::Op.new(:op<bind>, lexVar('.qastSize',   :decl<static>));   # will receive a value node later
         my $blockCountBinding := QAST::Op.new(:op<bind>, lexVar('.blockCount', :decl<static>));   # will receive a value node later
+        my $listCountBinding  := QAST::Op.new(:op<bind>, lexVar('.listCount',  :decl<static>));   # will receive a value node later
         my $ivalCountBinding  := QAST::Op.new(:op<bind>, lexVar('.ivalCount',  :decl<static>));   # will receive a value node later
         my $svalCountBinding  := QAST::Op.new(:op<bind>, lexVar('.svalCount',  :decl<static>));   # will receive a value node later
         my $svalSizeBinding   := QAST::Op.new(:op<bind>, lexVar('.svalSize',   :decl<static>));   # will receive a value node later
         $s.push($quastSizeBinding);
         $s.push($blockCountBinding);
+        $s.push($listCountBinding);
         $s.push($ivalCountBinding);
         $s.push($svalCountBinding);
         $s.push($svalSizeBinding);
@@ -546,6 +552,7 @@ class LActions is HLL::Actions {
                 ~nqp::elems(@!lambdaInfo), " lambdas\n",
                 lexVar('.qastSize'), " QAST::Node s\n",
                 lexVar('.blockCount'), " QAST::Block s\n",
+                lexVar('.listCount'), " QAST::Op(list) s\n",
                 lexVar('.ivalCount'), " QAST::IVal s\n",
                 lexVar('.svalSize'), " chars ttl in ", lexVar('.svalCount'), " QAST::SVal s\n",
                 "------------------------------------------------",
@@ -569,11 +576,12 @@ class LActions is HLL::Actions {
         );
 
         my @stats := stats($out);
-        $quastSizeBinding.push(asNode(@stats[0] + 5));  # size (we're pushing 5 more right here)
+        $quastSizeBinding.push(asNode(@stats[0] + nqp::elems(@stats)));  # size (we're pushing more right here)
         $blockCountBinding.push(asNode(@stats[1]));     # nr of Block nodes
-        $ivalCountBinding.push(asNode(@stats[2]));      # nr of IVal nodes
-        $svalCountBinding.push(asNode(@stats[3]));      # nr of SVal nodes
-        $svalSizeBinding.push(asNode(@stats[4]));       # ttl nr of characters in SVal nodes
+        $listCountBinding.push(asNode(@stats[2]));      # nr of IVal nodes
+        $ivalCountBinding.push(asNode(@stats[3]));      # nr of IVal nodes
+        $svalCountBinding.push(asNode(@stats[4]));      # nr of SVal nodes
+        $svalSizeBinding.push(asNode(@stats[5]));       # ttl nr of characters in SVal nodes
 
         make $out;
     }
