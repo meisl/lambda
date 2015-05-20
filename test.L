@@ -16,7 +16,7 @@
 #(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)
 
 
-(λU.λC.λB.λS.λK.λI.
+(λU.λM.λC.λB.λS.λK.λI.
     (λY.
         # Lists:
         (λnil.λcons.λcar.λcdr.λfoldl.
@@ -31,6 +31,8 @@
                 #foldl (λx.λ_.x) "zzz" xs   # "zzz"
                 #foldl (λ_.λx.x) "zzz" xs   # "c"
                 foldl
+                #Y
+                #(λx.λy.λz.y x) "foo" ((λx.λu.u x) "bar")    # TODO: two free x under *different* binders
             ) (cons "a" (cons "b" (cons "c" nil)))
         )
         (λonNil.λonCons.onNil)                  # ctor nil
@@ -45,6 +47,7 @@
     (U U)   # Y
 )
 (λu.λf.f (u u f))       # U
+(λx.x x)                # M
 (λf.λx.λy.f y x)        # C
 (λf.λg.λx.f (g x))      # B
 (λf.λg.λx.f x (g x))    # S

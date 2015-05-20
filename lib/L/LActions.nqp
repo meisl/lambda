@@ -220,6 +220,7 @@ class LActions is HLL::Actions {
     }
 
     my sub mkLambda2str($subject) {
+        #mkForce(mkSCall('.->#n', $subject, 'λ', 2));
         mkForce(mkSCall('.->#n', $subject, 'λ', 2));
     }
 
@@ -311,7 +312,7 @@ class LActions is HLL::Actions {
         });
         
         mkSFn('.force', <x>, -> $x {
-            QAST::Op.new(:op<if>, 
+            QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<isinvokable>, $x),
                 mkCall($x),
                 $x
@@ -374,7 +375,7 @@ class LActions is HLL::Actions {
         my $lineN := nqp::elems(@lines);
         my $colN  := 1 + nqp::chars(@lines.pop);
         my $file := $*USER_FILES;
-        hash(:file($file), :line($lineN), :column($colN), :match($match));
+        hash(:file($file), :line($lineN), :column($colN), :match($match), :str("$file:$lineN:$colN"));
     }
 
     my sub freeVars2locations(%fvs) {
@@ -400,7 +401,7 @@ class LActions is HLL::Actions {
             ?? '  (' ~ %l<var>.name ~ ')'
             !! ''
         ;
-        return '   at ' ~ %l<file> ~ ':' ~ %l<line> ~ ':' ~ %l<column> ~ $varNameStr;
+        return '   at ' ~ %l<str> ~ $varNameStr;
     }
 
     my sub reportFV(str $where, $match, %fvs) {
@@ -477,7 +478,7 @@ class LActions is HLL::Actions {
         ));
         
         my $out := QAST::CompUnit.new(
-            :hll('L'), 
+            :hll('L'),
             #:load(...),
             :main(mkCall(QAST::BVal.new(:value($s)))),
             $s
@@ -574,40 +575,56 @@ class LActions is HLL::Actions {
     }
 
     method abstraction($/) {
-        my $binder := lexVar(~$/<varName>);
+        my $binder := lexVar(~$/<varName>, :node($/<varName>)).declP;
         my $body   := $/<body>.ast;
 
-        my $code := QAST::Block.new(:arity(1), :node($/), $binder.declP, $body);
+        my $code := QAST::Block.new(:arity(1), :node($/), $binder, $body);
 
         my %fvs := nqp::clone($body.ann('FV'));
+        my @bound := nqp::defor(%fvs{$binder.name}, []);
         nqp::deletekey(%fvs, $binder.name);
+        for @bound {
+            $_.annotate('bound_by', $binder);
+        }
 
-        #my $strRepr := QAST::Op.new(:op<substr>, 
+        #my $strRepr := QAST::Op.new(:op<substr>,
         #    lexVar('.src'),
-        #    asNode($/.from), 
+        #    asNode($/.from),
         #    asNode(nqp::sub_i($/.to, $/.from)) # length
         #);
 
         my $strRepr := asNode(~$/);
         
         if nqp::elems(%fvs) > 0 {
-            my %strs := hash();
-            for freeVars2locations(%fvs) {
-                my $k := "\n   # where " ~ $_<name> ~ ' = ';
-                my $v;
-                if $_<name> eq 'self' {
-                    $v := '...';
-                } else {
-                    $v := mkSCall('.strOut', $_<var>);
-                }
-                %strs{$k} := $v;
-            }
             my @strs := [$strRepr];
-            for %strs {
-                my $k := nqp::iterkey_s($_);
-                my $v := nqp::iterval($_);
-                @strs.push($k);
-                @strs.push($v);
+            for %fvs {
+                my $name := nqp::iterkey_s($_);
+                my @vars := nqp::iterval($_);
+                my $i := 0;
+                for @vars -> $v {
+                    my $j := 0;
+                    my $duped := 0;
+                    while !$duped && ($j < $i) {
+                        my $b1 := $v.ann('bound_by');
+                        my $b2 := @vars[$j].ann('bound_by');
+                        $duped := (!nqp::istype($b1, QAST::Var) && !nqp::istype($b2, QAST::Var))     # both unbound
+                                  || ((!nqp::istype($b1, QAST::Var) && !nqp::istype($b2, QAST::Var)) # OR both bound by...
+                                      && match2location($b1.node)<str>                               # ...same thing in src
+                                      eq match2location($b2.node)<str>
+                                  )
+                        ;
+                        $j++;
+                    }
+                    if !$duped {
+                        @strs.push("\n   # where " ~ $v.name ~ ' = ');
+                        if $v.name eq 'self' {
+                            @strs.push('...');
+                        } else {
+                            @strs.push(mkSCall('.strOut', $v));
+                        }
+                    }
+                    $i++;
+                }
             }
             $strRepr := mkConcat(|@strs);
         }
@@ -618,6 +635,7 @@ class LActions is HLL::Actions {
             QAST::SVal.new(:value('λ')),
             $code,
             $strRepr,
+            #QAST::Op.new(:op<list>, |@fvs),
         );
         $lam.annotate('FV', %fvs);
 

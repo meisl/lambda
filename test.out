@@ -1,7 +1,11 @@
 ---------- L-compiler ----------
-45 lambdas
-805 QAST::Node s
-12776 chars ttl in 122 QAST::SVal s
+lib/L/LGrammar.moarvm
+lib/L/LActions.moarvm...
+lib/L/L.moarvm...
+--------------------------------
+47 lambdas
+827 QAST::Node s
+15628 chars ttl in 126 QAST::SVal s
 ------------------------------------------------
 ------------------------------------------------
 λf.λstart.λxs.                 # foldl
