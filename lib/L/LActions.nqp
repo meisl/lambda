@@ -215,7 +215,7 @@ class LActions is HLL::Actions {
     }
 
     my sub mkLambda2code($subject) {
-        mkSCall('.->#n', $subject, 'λ', 2);
+        mkSCall('.->#n', $subject, 'λ', 1);
     }
 
     has @!lambdaInfo;
@@ -329,7 +329,7 @@ class LActions is HLL::Actions {
                     'λ',
                     QAST::Block.new(:arity(1),
                         QAST::Op.new(:op<bind>, $id.declP,          mkForce($id)),
-                        QAST::Op.new(:op<bind>, $fvars.declV,       mkListLookup($v, :index(1))),
+                        QAST::Op.new(:op<bind>, $fvars.declV,       mkListLookup($v, :index(2))),
                         QAST::Op.new(:op<bind>, $info.declV,        mkListLookup(lexVar('.λinfo'), :index($id))),
                         QAST::Op.new(:op<bind>, $from.declV,        mkListLookup($info, :index(1))),
                         QAST::Op.new(:op<bind>, $length.declV,      mkListLookup($info, :index(2))),
@@ -720,8 +720,8 @@ class LActions is HLL::Actions {
         ];
         my $lam := QAST::Op.new(:op<list>,
             asNode('λ' ~ $id),
-            QAST::Op.new(:op<list>, |@freeVars),
             $code,
+            QAST::Op.new(:op<list>, |@freeVars),
         );
         $lam.annotate('FV', %fvs);
 
