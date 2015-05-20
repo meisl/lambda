@@ -180,13 +180,8 @@ class LActions is HLL::Actions {
             nqp::die("need at least 1 arg for mkConcat");
         }
         my @nodes := [];
-        for @args { # map any str to an SVal
-            if nqp::isstr($_) {
-                nqp::push(@nodes, asNode($_));
-            } else {
-                #say('###' ~ $_.dump);
-                nqp::push(@nodes, $_);
-            }
+        for @args {
+            nqp::push(@nodes, asNode($_));
         }
 
         my @compressed := [];
@@ -215,21 +210,21 @@ class LActions is HLL::Actions {
         QAST::Op.new(:op<die>, mkConcat('ERROR: ', |@msgPieces));
     }
 
-    my sub mkLambda2code($subject) {
+    my sub mkLambda2id($subject) {
         mkSCall('.->#n', $subject, 'λ', 1);
     }
 
-    my sub mkLambda2binder($subject) {
+    my sub mkLambda2freevars($subject) {
         mkSCall('.->#n', $subject, 'λ', 2);
     }
 
-    my sub mkLambda2str($subject) {
-        mkForce(mkSCall('.->#n', $subject, 'λ', 3));
+    my sub mkLambda2code($subject) {
+        mkSCall('.->#n', $subject, 'λ', 3);
     }
 
-    has $!lamCount;
+    has @!lambdaInfo;
 
-    my sub mkSetting($/) {
+    my sub mkSetting($/, @lambdaInfo) {
         my $block := QAST::Block.new(:arity(0));
 
         my sub mkSFn(str $name, $paramNames, $callback, *%lexicals) {
@@ -268,6 +263,15 @@ class LActions is HLL::Actions {
             QAST::Op.new(:op<bind>, lexVar('.src', :decl<static>), asNode(~$/))
         );
 
+        my $lambdaInfo := QAST::Op.new(:op<list>);
+        for @lambdaInfo {
+            my @info := $_;
+            $lambdaInfo.push(QAST::Op.new(:op<list>, |@info));
+        }
+        $block.push(
+            QAST::Op.new(:op<bind>, lexVar('.λinfo', :decl<static>), $lambdaInfo)
+        );
+
         mkSFn('.ifTag', <subject tag then else>, -> $subject, $tag, $then, $else {
             mkForce(
                 QAST::Op.new(:op<if>,
@@ -293,14 +297,16 @@ class LActions is HLL::Actions {
         });
         
         mkSFn('.strOut', <v indent>, -> $v, $indent {
-            my $binderName := lexVar('binderName');
-            my $src        := lexVar('src');
-            my $from       := lexVar('from');
-            my $length     := lexVar('length');
-            my $fvs        := lexVar('fvs');
-            my $fv         := lexVar('fv');
-            my $key        := lexVar('key');
-            my $val        := lexVar('val');
+            my $id      := lexVar('id');
+            my $info    := lexVar('info');
+            my $src     := lexVar('src');
+            my $from    := lexVar('from');
+            my $length  := lexVar('length');
+            my $fvars   := lexVar('fvars');
+            my $fnames  := lexVar('fnames');
+            my $i       := lexVar('i');
+            my $name    := lexVar('name');
+            my $var     := lexVar('var');
 
             QAST::Op.new(:op<bind>, $v, mkForce($v)),
             QAST::Op.new(:op<if>,
@@ -308,27 +314,30 @@ class LActions is HLL::Actions {
                 mkSCall('.strLit', $v),
                 mkSCall('.ifTag', $v, 'λ',
                     mkDelaySimple(QAST::Stmts.new(
-                        QAST::Op.new(:op<bind>, $binderName.declV,  mkListLookup($v, :index(2))),
-                        QAST::Op.new(:op<bind>, $from.declV,        mkListLookup($v, :index(3))),
-                        QAST::Op.new(:op<bind>, $length.declV,      mkListLookup($v, :index(4))),
-                        QAST::Op.new(:op<bind>, $fvs.declV,         mkListLookup($v, :index(5))),
+                        QAST::Op.new(:op<bind>, $id.declV,          mkListLookup($v, :index(1))),
+                        QAST::Op.new(:op<bind>, $fvars.declV,       mkListLookup($v, :index(2))),
+                        QAST::Op.new(:op<bind>, $info.declV,        mkListLookup(lexVar('.λinfo'), :index($id))),
+                        QAST::Op.new(:op<bind>, $from.declV,        mkListLookup($info, :index(1))),
+                        QAST::Op.new(:op<bind>, $length.declV,      mkListLookup($info, :index(2))),
                         QAST::Op.new(:op<bind>, $src.declV,         QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length)),
-                        QAST::Op.new(:op<for>, $fvs, QAST::Block.new(:arity(1),
-                            $fv.declP,
-                            QAST::Op.new(:op<bind>, $key.declV, QAST::Op.new(:op<iterkey_s>, $fv)),
-                            QAST::Op.new(:op<bind>, $val.declV, QAST::Op.new(:op<iterval>,   $fv)),
+                        QAST::Op.new(:op<bind>, $fnames.declV,      mkListLookup($info, :index(3))),
+                        QAST::Op.new(:op<bind>, $i.declV,           asNode(0)),
+                        QAST::Op.new(:op<for>, $fnames, QAST::Block.new(:arity(1),
+                            $name.declP,
+                            QAST::Op.new(:op<bind>, $var.declV, mkListLookup($fvars, :index($i))),
+                            QAST::Op.new(:op<bind>, $i, QAST::Op.new(:op<add_i>, $i, asNode(1))),
                             QAST::Op.new(:op<bind>, $src,
                                 mkConcat($src, 
                                     "\n",
                                     $indent,
                                     '# where ',
-                                    $key, 
+                                    $name, 
                                     ' = ',
                                     QAST::Op.new(:op<if>,
-                                        QAST::Op.new(:op<iseq_s>, $key, asNode('self')),
+                                        QAST::Op.new(:op<iseq_s>, $name, asNode('self')),
                                         asNode('...'),
                                         mkSCall('.strOut', 
-                                            $val,
+                                            $var,
                                             mkConcat($indent, '#           ')
                                         ),
                                     )
@@ -490,7 +499,7 @@ class LActions is HLL::Actions {
             nqp::die($msg);
         }
 
-        my $s := mkSetting($/);
+        my $s := mkSetting($/, @!lambdaInfo);
         my $quastSizeBinding := QAST::Op.new(:op<bind>, lexVar('.qastSize',  :decl<static>));   # will receive a value node later
         my $svalCountBinding := QAST::Op.new(:op<bind>, lexVar('.svalCount', :decl<static>));   # will receive a value node later
         my $svalSizeBinding  := QAST::Op.new(:op<bind>, lexVar('.svalSize',  :decl<static>));   # will receive a value node later
@@ -502,7 +511,7 @@ class LActions is HLL::Actions {
         $s.push(QAST::Block.new(:blocktype<immediate>,
             $mainResult.declV,
             mkSCall('.say', mkConcat(
-                ~$!lamCount, " lambdas\n",
+                ~nqp::elems(@!lambdaInfo), " lambdas\n",
                 lexVar('.qastSize'), " QAST::Node s\n",
                 lexVar('.svalSize'), " chars ttl in ", lexVar('.svalCount'), " QAST::SVal s\n",
                 "------------------------------------------------",
@@ -628,7 +637,8 @@ class LActions is HLL::Actions {
             $_.annotate('bound_by', $binder);
         }
         
-        my @fvs := [];
+        my @freeVarNames := [];
+        my @freeVars := [];
         if nqp::elems(%fvs) > 0 {
             for %fvs {
                 my $name := nqp::iterkey_s($_);
@@ -648,26 +658,32 @@ class LActions is HLL::Actions {
                         $j++;
                     }
                     if !$duped {
-                        @fvs.push(asNode($v.name));
-                        @fvs.push($v);
+                        @freeVarNames.push(asNode($v.name));
+                        @freeVars.push($v);
                     }
                     $i++;
                 }
             }
         }
 
-        my $lam := QAST::Op.new(:op<list>,
-            QAST::SVal.new(:value('λ')),
-            $code,
+        my $id := nqp::elems(@!lambdaInfo);
+
+        my @info := [
             asNode($binder.name),
             asNode($/.from),
             asNode(nqp::sub_i($/.to, $/.from)), # length
-            QAST::Op.new(:op<hash>, |@fvs),
+            QAST::Op.new(:op<list>, |@freeVarNames),
+        ];
+        my $lam := QAST::Op.new(:op<list>,
+            asNode('λ'),
+            asNode($id),
+            QAST::Op.new(:op<list>, |@freeVars),
+            $code,
         );
         $lam.annotate('FV', %fvs);
 
-        $lam.annotate('id', 'λ' ~ $!lamCount);
-        $!lamCount++;
+        $lam.annotate('id', 'λ' ~ $id);
+        @!lambdaInfo.push(@info);
 
         if !$body.has_ann('FV') {
             nqp::die("missing annotation 'FV' in body " ~ $/<body>);
