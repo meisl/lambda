@@ -333,7 +333,12 @@ class LActions is HLL::Actions {
                         QAST::Op.new(:op<bind>, $info.declV,        mkListLookup(lexVar('.λinfo'), :index($id))),
                         QAST::Op.new(:op<bind>, $from.declV,        mkListLookup($info, :index(1))),
                         QAST::Op.new(:op<bind>, $length.declV,      mkListLookup($info, :index(2))),
-                        QAST::Op.new(:op<bind>, $src.declV,         QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length)),
+                        QAST::Op.new(:op<bind>, $src.declV,
+                            mkConcat(
+                                QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length),
+                                '  # :tag(', mkSCall('.strLit', mkListLookup($v, :index(0))), ')',
+                            )
+                        ),
                         QAST::Op.new(:op<bind>, $fnames.declV,
                             QAST::Op.new(:op<split>,
                                 asNode(' '),
