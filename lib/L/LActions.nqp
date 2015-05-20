@@ -3,6 +3,14 @@ use NQPHLL;
 
 class LActions is HLL::Actions {
 
+    my sub locVar(str $name, *%adverbs) {
+        QAST::Var.new(:name($name), :scope<local>,   |%adverbs);
+    }
+
+    my sub lexVar(str $name, *%adverbs) {
+        QAST::Var.new(:name($name), :scope<lexical>, |%adverbs);
+    }
+
     my sub mkDeclV($var, *%adverbs) {
         if !nqp::istype($var, QAST::Var) {
             nqp::die("mkDeclV expects a QAST::Var");
@@ -17,12 +25,15 @@ class LActions is HLL::Actions {
         QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<param>,   |%adverbs);
     }
 
-    my sub locVar(str $name, *%adverbs) {
-        QAST::Var.new(:name($name), :scope<local>,   |%adverbs);
-    }
-
-    my sub lexVar(str $name, *%adverbs) {
-        QAST::Var.new(:name($name), :scope<lexical>, |%adverbs);
+    my sub mkBind($var, $value) {
+        if !nqp::istype($var, QAST::Var) {
+            nqp::die("mkBind expects a QAST::Var as 1st arg - got " ~ nqp::reprname($var));
+        }
+        my $valNode := asNode($value);
+        if !nqp::istype($valNode, QAST::Node) {
+            nqp::die("mkBind cannot grok 2nd arg - got " ~ nqp::reprname($value));
+        }
+        QAST::Op.new(:op<bind>, $var, $valNode);
     }
 
     my sub asNode($v) {
@@ -228,7 +239,7 @@ class LActions is HLL::Actions {
                 my $val := nqp::iterval($_);
                 my $decl := mkDeclV($var);
                 if !nqp::isnull($val) {
-                    $decl := QAST::Op.new(:op<bind>, $decl, asNode($val))
+                    $decl := mkBind($decl, $val);
                 }
                 $body.push($decl);
                 @vars.push($var);
@@ -240,12 +251,12 @@ class LActions is HLL::Actions {
                 $body.push($stmts);
             }
             $block.push(
-                QAST::Op.new(:op<bind>, lexVar($name, :decl<static>), $body)
+                mkBind(lexVar($name, :decl<static>), $body)
             );
         }
 
         $block.push(
-            QAST::Op.new(:op<bind>, lexVar('.src', :decl<static>), asNode(~$/))
+            mkBind(lexVar('.src', :decl<static>), ~$/)
         );
 
         my $lambdaInfo := QAST::Op.new(:op<list>);
@@ -254,14 +265,14 @@ class LActions is HLL::Actions {
             $lambdaInfo.push(QAST::Op.new(:op<list>, |@info));
         }
         $block.push(
-            QAST::Op.new(:op<bind>, lexVar('.λinfo', :decl<static>), $lambdaInfo)
+            mkBind(lexVar('.λinfo', :decl<static>), $lambdaInfo)
         );
 
         mkSFn('.ifTag', <subject tag then else>, :tagAndId(nqp::null), -> $subject, $tag, $then, $else, $tagAndId {
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<islist>, $subject),
                 QAST::Stmts.new(
-                    QAST::Op.new(:op<bind>, $tagAndId, mkListLookup($subject, :index(0))),
+                    mkBind($tagAndId, mkListLookup($subject, :index(0))),
                     QAST::Op.new(:op<if>,
                         QAST::Op.new(:op<iseq_s>,
                             $tag,
@@ -300,13 +311,13 @@ class LActions is HLL::Actions {
             my $count := lexVar('count');
             
             mkDeclP($count, :default(QAST::Op.new(:op<elems>, $list))),
-            QAST::Op.new(:op<bind>, mkDeclV($to),  QAST::Op.new(:op<add_i>, $from, $count)),
-            QAST::Op.new(:op<bind>, mkDeclV($out), QAST::Op.new(:op<list>)),
+            mkBind(mkDeclV($to),  QAST::Op.new(:op<add_i>, $from, $count)),
+            mkBind(mkDeclV($out), QAST::Op.new(:op<list>)),
             QAST::Op.new(:op<while>,
                 QAST::Op.new(:op<islt_i>, $from, $to),
                 QAST::Stmts.new(
                     QAST::Op.new(:op<push>, $out, mkListLookup($list, :index($from))),
-                    QAST::Op.new(:op<bind>, $from, QAST::Op.new(:op<add_i>, $from, asNode(1))),
+                    mkBind($from, QAST::Op.new(:op<add_i>, $from, asNode(1))),
                 )
             ),
             $out,
@@ -324,7 +335,7 @@ class LActions is HLL::Actions {
             my $name    := lexVar('name');
             my $var     := lexVar('var');
 
-            QAST::Op.new(:op<bind>, $v, mkForce($v)),
+            mkBind($v, mkForce($v)),
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<isstr>, $v),
                 mkSCall('.strLit', $v),
@@ -332,10 +343,10 @@ class LActions is HLL::Actions {
                     $v, 
                     'λ',
                     QAST::Block.new(:arity(1),
-                        QAST::Op.new(:op<bind>, mkDeclP($id),          mkForce($id)),
-                        QAST::Op.new(:op<bind>, mkDeclV($fvars),       mkListLookup($v, :index(2))),
-                        QAST::Op.new(:op<bind>, mkDeclV($info),        mkListLookup(lexVar('.λinfo'), :index($id))),
-                        QAST::Op.new(:op<bind>, mkDeclV($fnames),
+                        mkBind(mkDeclP($id),          mkForce($id)),
+                        mkBind(mkDeclV($fvars),       mkListLookup($v, :index(2))),
+                        mkBind(mkDeclV($info),        mkListLookup(lexVar('.λinfo'), :index($id))),
+                        mkBind(mkDeclV($fnames),
                             mkSCall('.sublist',
                                 QAST::Op.new(:op<split>,
                                     asNode(' '),
@@ -344,20 +355,20 @@ class LActions is HLL::Actions {
                                 0,
                             ),
                         ),
-                        QAST::Op.new(:op<bind>, mkDeclV($from),        mkListLookup($info, :index(1))),
-                        QAST::Op.new(:op<bind>, mkDeclV($length),      mkListLookup($info, :index(2))),
-                        QAST::Op.new(:op<bind>, mkDeclV($src),
+                        mkBind(mkDeclV($from),        mkListLookup($info, :index(1))),
+                        mkBind(mkDeclV($length),      mkListLookup($info, :index(2))),
+                        mkBind(mkDeclV($src),
                             mkConcat(
                                 QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length),
                                 '  # :tag(', mkSCall('.strLit', mkListLookup($v, :index(0))), ')',
                             )
                         ),
-                        QAST::Op.new(:op<bind>, mkDeclV($i),           asNode(0)),
+                        mkBind(mkDeclV($i), 0),
                         QAST::Op.new(:op<for>, $fnames, QAST::Block.new(:arity(1),
                             mkDeclP($name),
-                            QAST::Op.new(:op<bind>, mkDeclV($var), mkListLookup($fvars, :index($i))),
-                            QAST::Op.new(:op<bind>, $i, QAST::Op.new(:op<add_i>, $i, asNode(1))),
-                            QAST::Op.new(:op<bind>, $src,
+                            mkBind(mkDeclV($var), mkListLookup($fvars, :index($i))),
+                            mkBind($i, QAST::Op.new(:op<add_i>, $i, asNode(1))),
+                            mkBind($src,
                                 mkConcat($src, 
                                     "\n",
                                     $indent,
@@ -387,8 +398,8 @@ class LActions is HLL::Actions {
                 QAST::Op.new(:op<if>, $wasRun,
                     $result,
                     QAST::Stmts.new(
-                        QAST::Op.new(:op<bind>, $wasRun, asNode(1)),
-                        QAST::Op.new(:op<bind>, $result, mkCall($block))
+                        mkBind($wasRun, 1),
+                        mkBind($result, mkCall($block))
                     )
                 )
             )
@@ -403,7 +414,7 @@ class LActions is HLL::Actions {
         });
         
         mkSFn('.say', <v>, -> $v {
-            QAST::Op.new(:op<bind>, $v, mkForce($v)),
+            mkBind($v, mkForce($v)),
             QAST::Op.new(:op<say>,
                 QAST::Op.new(:op<if>,
                     QAST::Op.new(:op<isstr>, $v),
@@ -418,8 +429,8 @@ class LActions is HLL::Actions {
         });
         
         mkSFn('.apply1', <f a1>, :result(nqp::null), -> $f, $a1, $result {
-            QAST::Op.new(:op<bind>, $f, mkForce($f)),
-            QAST::Op.new(:op<bind>, $result, mkCall(
+            mkBind($f, mkForce($f)),
+            mkBind($result, mkCall(
                 QAST::Op.new(:op<defor>,
                     mkLambda2code($f),
                     QAST::Op.new(:op<if>,
@@ -433,7 +444,7 @@ class LActions is HLL::Actions {
             mkForce($result),
         });
         
-        $block.push(QAST::Op.new(:op<bind>, lexVar('.testDelay01', :decl<static>),
+        $block.push(mkBind(lexVar('.testDelay01', :decl<static>),
             mkDelayMemo(mkDelaySimple(
                 QAST::Stmts.new(
                     QAST::Op.new(:op<say>, asNode('.testDelay01 forced!!!!')),
@@ -443,8 +454,8 @@ class LActions is HLL::Actions {
         ));
     
         mkSFn('.testDelay02', <delayed>, :simple(nqp::null), :memo(nqp::null), -> $delayed, $simple, $memo {
-            QAST::Op.new(:op<bind>, $simple, mkDelaySimple($delayed)),
-            QAST::Op.new(:op<bind>, $memo,   mkDelayMemo($delayed)),
+            mkBind($simple, mkDelaySimple($delayed)),
+            mkBind($memo,   mkDelayMemo($delayed)),
             
             #$simple
             $memo
@@ -539,6 +550,7 @@ class LActions is HLL::Actions {
         }
 
         my $s := mkSetting($/, @!lambdaInfo);
+        # Note: cannot use mkBind here since this enforces an init value
         my $quastSizeBinding  := QAST::Op.new(:op<bind>, lexVar('.qastSize',   :decl<static>));   # will receive a value node later
         my $blockCountBinding := QAST::Op.new(:op<bind>, lexVar('.blockCount', :decl<static>));   # will receive a value node later
         my $listCountBinding  := QAST::Op.new(:op<bind>, lexVar('.listCount',  :decl<static>));   # will receive a value node later
@@ -569,7 +581,7 @@ class LActions is HLL::Actions {
             #mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
             #mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
             
-            QAST::Op.new(:op<bind>, $mainResult, mkSCall('.strOut', $mainTerm, '')),
+            mkBind($mainResult, mkSCall('.strOut', $mainTerm, '')),
             
             mkSCall('.say', "------------------------------------------------"),
             $mainResult,
