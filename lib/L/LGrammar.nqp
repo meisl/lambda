@@ -24,8 +24,12 @@ grammar LGrammar is HLL::Grammar {
         | <t=int-constant>
         | <t=definition>
         | <t=abstraction>
-        | '(' <t=abstraction> ')'
-        | '(' <t=termlist2orMore> ')'
+        | '(' \s* <.eolComment>*
+              [
+              | <t=abstraction>
+              | <t=termlist2orMore>
+              ]
+          ')'
         ]
         \s* <.eolComment>*
     }
@@ -63,7 +67,7 @@ grammar LGrammar is HLL::Grammar {
     }
 
     token abstraction {
-        \s* <.lambda> <varName> '.'  <body=.termlist1orMore>
+        <.lambda> <varName> '.'  <body=.termlist1orMore>
     }
 
     rule definition {
