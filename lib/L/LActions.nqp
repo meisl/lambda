@@ -210,16 +210,12 @@ class LActions is HLL::Actions {
         QAST::Op.new(:op<die>, mkConcat('ERROR: ', |@msgPieces));
     }
 
-    my sub mkLambda2id($subject) {
+    my sub mkLambda2freevars($subject) {
         mkSCall('.->#n', $subject, 'λ', 1);
     }
 
-    my sub mkLambda2freevars($subject) {
-        mkSCall('.->#n', $subject, 'λ', 2);
-    }
-
     my sub mkLambda2code($subject) {
-        mkSCall('.->#n', $subject, 'λ', 3);
+        mkSCall('.->#n', $subject, 'λ', 2);
     }
 
     has @!lambdaInfo;
@@ -273,25 +269,41 @@ class LActions is HLL::Actions {
         );
 
         mkSFn('.ifTag', <subject tag then else>, -> $subject, $tag, $then, $else {
-            mkForce(
-                QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<islist>, $subject),
+            my $tagAndId    := lexVar('tagAndId');
+            
+            $tagAndId.declV,
+            QAST::Op.new(:op<if>,
+                QAST::Op.new(:op<islist>, $subject),
+                QAST::Stmts.new(
+                    QAST::Op.new(:op<bind>, $tagAndId, mkListLookup($subject, :index(0))),
                     QAST::Op.new(:op<if>,
                         QAST::Op.new(:op<iseq_s>,
                             $tag,
-                            mkListLookup($subject, :index(0)),
+                            QAST::Op.new(:op<substr>, $tagAndId, asNode(0), asNode(1)),
                         ),
-                        $then,
-                        $else
+                        mkCall($then, 
+                            mkListLookup(:index(0), # extract id as int from str tagAndId
+                                QAST::Op.new(:op<radix>,
+                                    asNode(10),
+                                    $tagAndId,
+                                    asNode(1),
+                                    asNode(0)
+                                )
+                            )
+                        ),
+                        mkForce($else)
                     ),
-                    $else
-                )
+                ),
+                mkForce($else)
             )
         });
         
         mkSFn('.->#n', <subject tag index>, -> $subject, $tag, $index {
             mkSCall('.ifTag', $subject, $tag,
-                mkDelaySimple(mkListLookup($subject, :index($index))),
+                QAST::Block.new(:arity(1),
+                    lexVar('_', :decl<param>),
+                    mkListLookup($subject, :index($index))
+                ),
                 QAST::Op.new(:op<null>)
             )
         });
@@ -312,10 +324,12 @@ class LActions is HLL::Actions {
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<isstr>, $v),
                 mkSCall('.strLit', $v),
-                mkSCall('.ifTag', $v, 'λ',
-                    mkDelaySimple(QAST::Stmts.new(
-                        QAST::Op.new(:op<bind>, $id.declV,          mkListLookup($v, :index(1))),
-                        QAST::Op.new(:op<bind>, $fvars.declV,       mkListLookup($v, :index(2))),
+                mkSCall('.ifTag', 
+                    $v, 
+                    'λ',
+                    QAST::Block.new(:arity(1),
+                        QAST::Op.new(:op<bind>, $id.declP,          mkForce($id)),
+                        QAST::Op.new(:op<bind>, $fvars.declV,       mkListLookup($v, :index(1))),
                         QAST::Op.new(:op<bind>, $info.declV,        mkListLookup(lexVar('.λinfo'), :index($id))),
                         QAST::Op.new(:op<bind>, $from.declV,        mkListLookup($info, :index(1))),
                         QAST::Op.new(:op<bind>, $length.declV,      mkListLookup($info, :index(2))),
@@ -350,8 +364,8 @@ class LActions is HLL::Actions {
                             )
                         )),
                         $src
-                    )),
-                    QAST::Op.new(:op<reprname>, $v)
+                    ),
+                    mkDelaySimple(QAST::Op.new(:op<reprname>, $v))
                 )
             )
         });
@@ -680,8 +694,7 @@ class LActions is HLL::Actions {
             asNode(nqp::join(' ', @freeVarNames)),
         ];
         my $lam := QAST::Op.new(:op<list>,
-            asNode('λ'),
-            asNode($id),
+            asNode('λ' ~ $id),
             QAST::Op.new(:op<list>, |@freeVars),
             $code,
         );
