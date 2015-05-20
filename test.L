@@ -30,9 +30,9 @@
                 #car (cdr (cdr xs))  # "c"
                 #foldl (λx.λ_.x) "zzz" xs   # "zzz"
                 #foldl (λ_.λx.x) "zzz" xs   # "c"
-                foldl
+                #foldl
                 #Y
-                #(λx.λy.λz.y x) "foo" ((λx.λu.u x) "bar")    # TODO: two free x under *different* binders
+                (λx.λy.λzzz.y x) "foo" ((λx.λu.u x) "bar")    # TODO: two free x under *different* binders
             ) (cons "a" (cons "b" (cons "c" nil)))
         )
         (λonNil.λonCons.onNil)                  # ctor nil

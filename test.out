@@ -3,15 +3,14 @@ lib/L/LGrammar.moarvm
 lib/L/LActions.moarvm...
 lib/L/L.moarvm...
 --------------------------------
-47 lambdas
-879 QAST::Node s
-2366 chars ttl in 164 QAST::SVal s
+52 lambdas
+962 QAST::Node s
+2383 chars ttl in 181 QAST::SVal s
 ------------------------------------------------
 ------------------------------------------------
-λf.λstart.λxs.                 # foldl
-            xs start
-               λhd.λtl.self f (f start hd) tl
-        
-   # where self = ...
+λzzz.y x
+    # where y = λu.u x
+                  # where x = "bar"
+    # where x = "foo"
 
 Output completed (1 sec consumed) - Normal Termination
