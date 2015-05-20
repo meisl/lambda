@@ -320,7 +320,12 @@ class LActions is HLL::Actions {
                         QAST::Op.new(:op<bind>, $from.declV,        mkListLookup($info, :index(1))),
                         QAST::Op.new(:op<bind>, $length.declV,      mkListLookup($info, :index(2))),
                         QAST::Op.new(:op<bind>, $src.declV,         QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length)),
-                        QAST::Op.new(:op<bind>, $fnames.declV,      mkListLookup($info, :index(3))),
+                        QAST::Op.new(:op<bind>, $fnames.declV,
+                            QAST::Op.new(:op<split>,
+                                asNode(' '),
+                                mkListLookup($info, :index(3))
+                            )
+                        ),
                         QAST::Op.new(:op<bind>, $i.declV,           asNode(0)),
                         QAST::Op.new(:op<for>, $fnames, QAST::Block.new(:arity(1),
                             $name.declP,
@@ -658,7 +663,7 @@ class LActions is HLL::Actions {
                         $j++;
                     }
                     if !$duped {
-                        @freeVarNames.push(asNode($v.name));
+                        @freeVarNames.push($v.name);
                         @freeVars.push($v);
                     }
                     $i++;
@@ -672,7 +677,7 @@ class LActions is HLL::Actions {
             asNode($binder.name),
             asNode($/.from),
             asNode(nqp::sub_i($/.to, $/.from)), # length
-            QAST::Op.new(:op<list>, |@freeVarNames),
+            asNode(nqp::join(' ', @freeVarNames)),
         ];
         my $lam := QAST::Op.new(:op<list>,
             asNode('λ'),
