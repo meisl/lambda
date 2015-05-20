@@ -308,6 +308,42 @@ class LActions is HLL::Actions {
             )
         });
         
+        mkSFn('.sublist', <list from>, -> $list, $from {
+            my $to    := lexVar('to');
+            my $out   := lexVar('out');
+            my $count := lexVar('count');
+            
+            lexVar('count', :decl<param>, :default(QAST::Op.new(:op<elems>, $list))),
+            QAST::Op.new(:op<bind>, $to.declV,  QAST::Op.new(:op<add_i>, $from, $count)),
+            QAST::Op.new(:op<bind>, $out.declV, QAST::Op.new(:op<list>)),
+            mkSCall('.say', mkConcat(
+                '#   elems-in: ', QAST::Op.new(:op<elems>, $list),
+                ', elems-out: ', QAST::Op.new(:op<elems>, $out),
+                ', from: ', $from,
+                ', count: ', $count,
+                ', to: ', $to,
+                ', from <= to: ', QAST::Op.new(:op<isle_i>, $from, $to),
+                ', from < to: ',  QAST::Op.new(:op<islt_i>, $from, $to),
+            )),
+            QAST::Op.new(:op<while>,
+                QAST::Op.new(:op<islt_i>, $from, $to),
+                QAST::Stmts.new(
+                    QAST::Op.new(:op<push>, $out, mkListLookup($list, :index($from))),
+                    QAST::Op.new(:op<bind>, $from, QAST::Op.new(:op<add_i>, $from, asNode(1))),
+                    mkSCall('.say', mkConcat(
+                        '  # elems-in: ', QAST::Op.new(:op<elems>, $list),
+                        ', elems-out: ', QAST::Op.new(:op<elems>, $out),
+                        ', from: ', $from,
+                        ', count: ', $count,
+                        ', to: ', $to,
+                        ', from <= to: ', QAST::Op.new(:op<isle_i>, $from, $to),
+                        ', from < to: ',  QAST::Op.new(:op<islt_i>, $from, $to),
+                    )),
+                )
+            ),
+            $out,
+        });
+        
         mkSFn('.strOut', <v indent>, -> $v, $indent {
             my $id      := lexVar('id');
             my $info    := lexVar('info');
@@ -331,18 +367,21 @@ class LActions is HLL::Actions {
                         QAST::Op.new(:op<bind>, $id.declP,          mkForce($id)),
                         QAST::Op.new(:op<bind>, $fvars.declV,       mkListLookup($v, :index(2))),
                         QAST::Op.new(:op<bind>, $info.declV,        mkListLookup(lexVar('.λinfo'), :index($id))),
+                        QAST::Op.new(:op<bind>, $fnames.declV,
+                            mkSCall('.sublist',
+                                QAST::Op.new(:op<split>,
+                                    asNode(' '),
+                                    mkListLookup($info, :index(3))
+                                ),
+                                0,
+                            ),
+                        ),
                         QAST::Op.new(:op<bind>, $from.declV,        mkListLookup($info, :index(1))),
                         QAST::Op.new(:op<bind>, $length.declV,      mkListLookup($info, :index(2))),
                         QAST::Op.new(:op<bind>, $src.declV,
                             mkConcat(
                                 QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length),
                                 '  # :tag(', mkSCall('.strLit', mkListLookup($v, :index(0))), ')',
-                            )
-                        ),
-                        QAST::Op.new(:op<bind>, $fnames.declV,
-                            QAST::Op.new(:op<split>,
-                                asNode(' '),
-                                mkListLookup($info, :index(3))
                             )
                         ),
                         QAST::Op.new(:op<bind>, $i.declV,           asNode(0)),
@@ -489,10 +528,10 @@ class LActions is HLL::Actions {
     }
 
     my sub stats($node) {
-        if !nqp::istype($node, QAST::Node) {
-            nqp::die("stats expects a QAST::Node");
-        }
         my sub _stats($node, @results) {
+            if !nqp::istype($node, QAST::Node) {
+                nqp::die("stats expects a QAST::Node - got " ~ nqp::reprname($node));
+            }
             @results[0] := @results[0] + 1; # size of tree
             if nqp::istype($node, QAST::Block) {
                 @results[1] := @results[1] + 1; # nr of Blocks

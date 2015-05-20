@@ -4,12 +4,20 @@ lib/L/LActions.moarvm...
 lib/L/L.moarvm...
 --------------------------------
 55 lambdas
-1118 QAST::Node s
-100 QAST::Block s
-166 QAST::Op(list) s
-127 QAST::IVal s
-2609 chars ttl in 204 QAST::SVal s
+1232 QAST::Node s
+101 QAST::Block s
+167 QAST::Op(list) s
+129 QAST::IVal s
+2763 chars ttl in 218 QAST::SVal s
 ------------------------------------------------
+#   elems-in: 2, elems-out: 0, from: 0, count: 2, to: 2, from <= to: 1, from < to: 1
+  # elems-in: 2, elems-out: 1, from: 1, count: 2, to: 2, from <= to: 1, from < to: 1
+  # elems-in: 2, elems-out: 2, from: 2, count: 2, to: 2, from <= to: 1, from < to: 0
+#   elems-in: 1, elems-out: 0, from: 0, count: 1, to: 1, from <= to: 1, from < to: 1
+  # elems-in: 1, elems-out: 1, from: 1, count: 1, to: 1, from <= to: 1, from < to: 0
+#   elems-in: 2, elems-out: 0, from: 0, count: 2, to: 2, from <= to: 1, from < to: 1
+  # elems-in: 2, elems-out: 1, from: 1, count: 2, to: 2, from <= to: 1, from < to: 1
+  # elems-in: 2, elems-out: 2, from: 2, count: 2, to: 2, from <= to: 1, from < to: 0
 ------------------------------------------------
 λzzz.x y  # :tag("λ0")
 # where x = λu.u x  # :tag("λ3")
@@ -18,4 +26,4 @@ lib/L/L.moarvm...
 #           #           # where b = "qumbl"
 # where y = "foo"
 
-Output completed (1 sec consumed) - Normal Termination
+Output completed (2 sec consumed) - Normal Termination
