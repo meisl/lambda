@@ -36,6 +36,14 @@ class LActions is HLL::Actions {
         QAST::Op.new(:op<bind>, $var, $valNode);
     }
 
+    my sub mkList(*@contents) {
+        my @contentNodes := [];
+        for @contents {
+            @contentNodes.push(asNode($_));
+        }
+        QAST::Op.new(:op<list>, |@contentNodes);
+    }
+
     my sub asNode($v) {
         if nqp::isstr($v) {
             QAST::SVal.new(:value($v));
@@ -259,10 +267,10 @@ class LActions is HLL::Actions {
             mkBind(lexVar('.src', :decl<static>), ~$/)
         );
 
-        my $lambdaInfo := QAST::Op.new(:op<list>);
+        my $lambdaInfo := mkList();
         for @lambdaInfo {
             my @info := $_;
-            $lambdaInfo.push(QAST::Op.new(:op<list>, |@info));
+            $lambdaInfo.push(mkList(|@info));
         }
         $block.push(
             mkBind(lexVar('.λinfo', :decl<static>), $lambdaInfo)
@@ -312,7 +320,7 @@ class LActions is HLL::Actions {
             
             mkDeclP($count, :default(QAST::Op.new(:op<elems>, $list))),
             mkBind(mkDeclV($to),  QAST::Op.new(:op<add_i>, $from, $count)),
-            mkBind(mkDeclV($out), QAST::Op.new(:op<list>)),
+            mkBind(mkDeclV($out), mkList()),
             QAST::Op.new(:op<while>,
                 QAST::Op.new(:op<islt_i>, $from, $to),
                 QAST::Stmts.new(
@@ -737,10 +745,10 @@ class LActions is HLL::Actions {
             asNode(nqp::sub_i($/.to, $/.from)), # length
             asNode(nqp::join(' ', @freeVarNames)),
         ];
-        my $lam := QAST::Op.new(:op<list>,
+        my $lam := mkList(
             asNode('λ' ~ $id),
             $code,
-            QAST::Op.new(:op<list>, |@freeVars),
+            mkList(|@freeVars),
         );
         $lam.annotate('FV', %fvs);
 
