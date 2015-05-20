@@ -3,25 +3,26 @@ use NQPHLL;
 
 class LActions is HLL::Actions {
 
-    my role Var {
-        method declV(*%adverbs) {
-            QAST::Var.new(:name(self.name), :scope(self.scope), :node(self.node), :decl<var>,   |%adverbs);
+    my sub mkDeclV($var, *%adverbs) {
+        if !nqp::istype($var, QAST::Var) {
+            nqp::die("mkDeclV expects a QAST::Var");
         }
-        method declP(*%adverbs) {
-            QAST::Var.new(:name(self.name), :scope(self.scope), :node(self.node), :decl<param>, |%adverbs);
+        QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<var>,   |%adverbs);
+    }
+
+    my sub mkDeclP($var, *%adverbs) {
+        if !nqp::istype($var, QAST::Var) {
+            nqp::die("mkDeclP expects a QAST::Var");
         }
+        QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<param>,   |%adverbs);
     }
 
     my sub locVar(str $name, *%adverbs) {
-        my $out := QAST::Var.new(:name($name), :scope<local>,   |%adverbs);
-        $out.HOW.mixin($out, Var);
-        $out;
+        QAST::Var.new(:name($name), :scope<local>,   |%adverbs);
     }
 
     my sub lexVar(str $name, *%adverbs) {
-        my $out := QAST::Var.new(:name($name), :scope<lexical>, |%adverbs);
-        $out.HOW.mixin($out, Var);
-        $out;
+        QAST::Var.new(:name($name), :scope<lexical>, |%adverbs);
     }
 
     my sub asNode($v) {
@@ -219,13 +220,13 @@ class LActions is HLL::Actions {
             my @vars := [];
             for $paramNames {
                 my $var := lexVar($_);
-                $body.push($var.declP);
+                $body.push(mkDeclP($var));
                 @vars.push($var);
             }
             for %lexicals {
                 my $var := lexVar(nqp::iterkey_s($_));
                 my $val := nqp::iterval($_);
-                my $decl := $var.declV;
+                my $decl := mkDeclV($var);
                 if !nqp::isnull($val) {
                     $decl := QAST::Op.new(:op<bind>, $decl, asNode($val))
                 }
@@ -256,10 +257,7 @@ class LActions is HLL::Actions {
             QAST::Op.new(:op<bind>, lexVar('.λinfo', :decl<static>), $lambdaInfo)
         );
 
-        mkSFn('.ifTag', <subject tag then else>, -> $subject, $tag, $then, $else {
-            my $tagAndId    := lexVar('tagAndId');
-            
-            $tagAndId.declV,
+        mkSFn('.ifTag', <subject tag then else>, :tagAndId(nqp::null), -> $subject, $tag, $then, $else, $tagAndId {
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<islist>, $subject),
                 QAST::Stmts.new(
@@ -301,9 +299,9 @@ class LActions is HLL::Actions {
             my $out   := lexVar('out');
             my $count := lexVar('count');
             
-            $count.declP(:default(QAST::Op.new(:op<elems>, $list))),
-            QAST::Op.new(:op<bind>, $to.declV,  QAST::Op.new(:op<add_i>, $from, $count)),
-            QAST::Op.new(:op<bind>, $out.declV, QAST::Op.new(:op<list>)),
+            mkDeclP($count, :default(QAST::Op.new(:op<elems>, $list))),
+            QAST::Op.new(:op<bind>, mkDeclV($to),  QAST::Op.new(:op<add_i>, $from, $count)),
+            QAST::Op.new(:op<bind>, mkDeclV($out), QAST::Op.new(:op<list>)),
             QAST::Op.new(:op<while>,
                 QAST::Op.new(:op<islt_i>, $from, $to),
                 QAST::Stmts.new(
@@ -334,10 +332,10 @@ class LActions is HLL::Actions {
                     $v, 
                     'λ',
                     QAST::Block.new(:arity(1),
-                        QAST::Op.new(:op<bind>, $id.declP,          mkForce($id)),
-                        QAST::Op.new(:op<bind>, $fvars.declV,       mkListLookup($v, :index(2))),
-                        QAST::Op.new(:op<bind>, $info.declV,        mkListLookup(lexVar('.λinfo'), :index($id))),
-                        QAST::Op.new(:op<bind>, $fnames.declV,
+                        QAST::Op.new(:op<bind>, mkDeclP($id),          mkForce($id)),
+                        QAST::Op.new(:op<bind>, mkDeclV($fvars),       mkListLookup($v, :index(2))),
+                        QAST::Op.new(:op<bind>, mkDeclV($info),        mkListLookup(lexVar('.λinfo'), :index($id))),
+                        QAST::Op.new(:op<bind>, mkDeclV($fnames),
                             mkSCall('.sublist',
                                 QAST::Op.new(:op<split>,
                                     asNode(' '),
@@ -346,18 +344,18 @@ class LActions is HLL::Actions {
                                 0,
                             ),
                         ),
-                        QAST::Op.new(:op<bind>, $from.declV,        mkListLookup($info, :index(1))),
-                        QAST::Op.new(:op<bind>, $length.declV,      mkListLookup($info, :index(2))),
-                        QAST::Op.new(:op<bind>, $src.declV,
+                        QAST::Op.new(:op<bind>, mkDeclV($from),        mkListLookup($info, :index(1))),
+                        QAST::Op.new(:op<bind>, mkDeclV($length),      mkListLookup($info, :index(2))),
+                        QAST::Op.new(:op<bind>, mkDeclV($src),
                             mkConcat(
                                 QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length),
                                 '  # :tag(', mkSCall('.strLit', mkListLookup($v, :index(0))), ')',
                             )
                         ),
-                        QAST::Op.new(:op<bind>, $i.declV,           asNode(0)),
+                        QAST::Op.new(:op<bind>, mkDeclV($i),           asNode(0)),
                         QAST::Op.new(:op<for>, $fnames, QAST::Block.new(:arity(1),
-                            $name.declP,
-                            QAST::Op.new(:op<bind>, $var.declV, mkListLookup($fvars, :index($i))),
+                            mkDeclP($name),
+                            QAST::Op.new(:op<bind>, mkDeclV($var), mkListLookup($fvars, :index($i))),
                             QAST::Op.new(:op<bind>, $i, QAST::Op.new(:op<add_i>, $i, asNode(1))),
                             QAST::Op.new(:op<bind>, $src,
                                 mkConcat($src, 
@@ -556,7 +554,7 @@ class LActions is HLL::Actions {
         
         my $mainResult := locVar('mainResult');
         $s.push(QAST::Block.new(:blocktype<immediate>,
-            $mainResult.declV,
+            mkDeclV($mainResult),
             mkSCall('.say', mkConcat(
                 ~nqp::elems(@!lambdaInfo), " lambdas\n",
                 lexVar('.qastSize'), " QAST::Node s\n",
@@ -678,7 +676,7 @@ class LActions is HLL::Actions {
     }
 
     method abstraction($/) {
-        my $binder := lexVar(~$/<varName>, :node($/<varName>)).declP;
+        my $binder := mkDeclP(lexVar(~$/<varName>, :node($/<varName>)));
         my $body   := $/<body>.ast;
 
         my $code := QAST::Block.new(:arity(1), :node($/), $binder, $body);
