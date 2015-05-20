@@ -1,16 +1,18 @@
 ---------- L-compiler ----------
 lib/L/LGrammar.moarvm
-lib/L/LActions.moarvm...
-lib/L/L.moarvm...
+lib/L/LActions.moarvm
+lib/L/L.moarvm
 --------------------------------
-52 lambdas
-962 QAST::Node s
-2383 chars ttl in 181 QAST::SVal s
+55 lambdas
+988 QAST::Node s
+2433 chars ttl in 194 QAST::SVal s
 ------------------------------------------------
 ------------------------------------------------
 λzzz.y x
-    # where y = λu.u x
-                  # where x = "bar"
-    # where x = "foo"
+# where y = λu.u x
+#           # where x = λ_.a b
+#           #           # where a = "bar"
+#           #           # where b = "qumbl"
+# where x = "foo"
 
-Output completed (1 sec consumed) - Normal Termination
+Output completed (0 sec consumed) - Normal Termination

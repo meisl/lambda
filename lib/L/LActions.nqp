@@ -313,14 +313,6 @@ class LActions is HLL::Actions {
                         QAST::Op.new(:op<bind>, $length.declV,      mkListLookup($v, :index(4))),
                         QAST::Op.new(:op<bind>, $fvs.declV,         mkListLookup($v, :index(5))),
                         QAST::Op.new(:op<bind>, $src.declV,         QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length)),
-                        QAST::Op.new(:op<bind>, $indent, 
-                            QAST::Op.new(:op<add_i>, $indent,
-                                QAST::Op.new(:op<add_i>,
-                                    QAST::Op.new(:op<chars>, $binderName),
-                                    asNode(1)   # so that it's right under the 'λ'
-                                )
-                            )
-                        ),
                         QAST::Op.new(:op<for>, $fvs, QAST::Block.new(:arity(1),
                             $fv.declP,
                             QAST::Op.new(:op<bind>, $key.declV, QAST::Op.new(:op<iterkey_s>, $fv)),
@@ -328,7 +320,7 @@ class LActions is HLL::Actions {
                             QAST::Op.new(:op<bind>, $src,
                                 mkConcat($src, 
                                     "\n",
-                                    QAST::Op.new(:op<x>, asNode(' '), $indent),
+                                    $indent,
                                     '# where ',
                                     $key, 
                                     ' = ',
@@ -336,14 +328,8 @@ class LActions is HLL::Actions {
                                         QAST::Op.new(:op<iseq_s>, $key, asNode('self')),
                                         asNode('...'),
                                         mkSCall('.strOut', 
-                                            $val, 
-                                            QAST::Op.new(:op<add_i>,
-                                                $indent,
-                                                QAST::Op.new(:op<add_i>,
-                                                    QAST::Op.new(:op<chars>, $key),
-                                                    asNode(11)
-                                                )
-                                            )
+                                            $val,
+                                            mkConcat($indent, '#           ')
                                         ),
                                     )
                                 )
@@ -382,7 +368,7 @@ class LActions is HLL::Actions {
                 QAST::Op.new(:op<if>,
                     QAST::Op.new(:op<isstr>, $v),
                     $v,
-                    mkSCall('.strOut', $v, 0)
+                    mkSCall('.strOut', $v, '')
                 )
             )
         });
@@ -399,7 +385,7 @@ class LActions is HLL::Actions {
                     QAST::Op.new(:op<if>,
                         QAST::Op.new(:op<isinvokable>, $f),
                         $f,
-                        mkDie('cannot apply ', mkSCall('.strLit', $f), ' to ', mkSCall('.strOut', $a1, 0))
+                        mkDie('cannot apply ', mkSCall('.strLit', $f), ' to ', mkSCall('.strOut', $a1, ''))
                     )
                 ),
                 $a1
@@ -526,7 +512,7 @@ class LActions is HLL::Actions {
             #mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
             #mkSCall('.say', mkConcat('.testDelay02 = ', mkSCall('.testDelay02', lexVar('.testDelay01')))),
             
-            QAST::Op.new(:op<bind>, $mainResult, mkSCall('.strOut', $mainTerm, 0)),
+            QAST::Op.new(:op<bind>, $mainResult, mkSCall('.strOut', $mainTerm, '')),
             
             mkSCall('.say', "------------------------------------------------"),
             $mainResult,
