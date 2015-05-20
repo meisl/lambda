@@ -4,8 +4,9 @@ lib/L/LActions.moarvm...
 lib/L/L.moarvm...
 --------------------------------
 55 lambdas
-1094 QAST::Node s
-2562 chars ttl in 201 QAST::SVal s
+1102 QAST::Node s
+127 QAST::IVal s
+2576 chars ttl in 202 QAST::SVal s
 ------------------------------------------------
 ------------------------------------------------
 λzzz.x y  # :tag("λ0")

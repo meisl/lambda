@@ -494,16 +494,18 @@ class LActions is HLL::Actions {
         }
         my sub _stats($node, @results) {
             @results[0] := @results[0] + 1; # size of tree
-            if nqp::istype($node, QAST::SVal) {
-                @results[1] := @results[1] + 1; # nr of SVals
-                @results[2] := @results[2] + nqp::chars($node.value); # ttl size of SVals
+            if nqp::istype($node, QAST::IVal) {
+                @results[1] := @results[1] + 1; # nr of IVals
+            } elsif nqp::istype($node, QAST::SVal) {
+                @results[2] := @results[2] + 1; # nr of SVals
+                @results[3] := @results[3] + nqp::chars($node.value); # ttl size of SVals
             }
             for $node.list {
                 _stats($_, @results);
             }
             @results;
         }
-        _stats($node, [0, 0, 0]);
+        _stats($node, [0, 0, 0, 0]);
     }
 
     method TOP($/) {
@@ -525,9 +527,11 @@ class LActions is HLL::Actions {
 
         my $s := mkSetting($/, @!lambdaInfo);
         my $quastSizeBinding := QAST::Op.new(:op<bind>, lexVar('.qastSize',  :decl<static>));   # will receive a value node later
+        my $ivalCountBinding := QAST::Op.new(:op<bind>, lexVar('.ivalCount', :decl<static>));   # will receive a value node later
         my $svalCountBinding := QAST::Op.new(:op<bind>, lexVar('.svalCount', :decl<static>));   # will receive a value node later
         my $svalSizeBinding  := QAST::Op.new(:op<bind>, lexVar('.svalSize',  :decl<static>));   # will receive a value node later
         $s.push($quastSizeBinding);
+        $s.push($ivalCountBinding);
         $s.push($svalCountBinding);
         $s.push($svalSizeBinding);
         
@@ -537,6 +541,7 @@ class LActions is HLL::Actions {
             mkSCall('.say', mkConcat(
                 ~nqp::elems(@!lambdaInfo), " lambdas\n",
                 lexVar('.qastSize'), " QAST::Node s\n",
+                lexVar('.ivalCount'), " QAST::IVal s\n",
                 lexVar('.svalSize'), " chars ttl in ", lexVar('.svalCount'), " QAST::SVal s\n",
                 "------------------------------------------------",
             )),
@@ -559,9 +564,10 @@ class LActions is HLL::Actions {
         );
 
         my @stats := stats($out);
-        $quastSizeBinding.push(asNode(@stats[0] + 3));  # size (we're pushing 3 more right here)
-        $svalCountBinding.push(asNode(@stats[1]));      # nr of SVal nodes
-        $svalSizeBinding.push(asNode(@stats[2]));       # ttl nr of characters in SVal nodes
+        $quastSizeBinding.push(asNode(@stats[0] + 4));  # size (we're pushing 4 more right here)
+        $ivalCountBinding.push(asNode(@stats[1]));      # nr of IVal nodes
+        $svalCountBinding.push(asNode(@stats[2]));      # nr of SVal nodes
+        $svalSizeBinding.push(asNode(@stats[3]));       # ttl nr of characters in SVal nodes
 
         make $out;
     }
