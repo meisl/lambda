@@ -218,12 +218,18 @@ class LActions is HLL::Actions {
         QAST::Op.new(:op<die>, mkConcat('ERROR: ', |@msgPieces));
     }
 
-    my sub mkLambda2freevars($subject) {
+    my sub mkLambda2code($subject) {
         mkSCall('.->#n', $subject, 'λ', 1);
     }
 
-    my sub mkLambda2code($subject) {
-        mkSCall('.->#n', $subject, 'λ', 1);
+    my sub mkLambda2freevars($subject) {
+        mkSCall('.ifTag', $subject, 'λ',
+            QAST::Block.new(:arity(1),
+                mkDeclP(lexVar('id')),
+                mkSCall('.sublist', $subject, 2)
+            ),
+            QAST::Op.new(:op<null>)
+        );
     }
 
     has @!lambdaInfo;
@@ -317,10 +323,16 @@ class LActions is HLL::Actions {
             my $to    := lexVar('to');
             my $out   := lexVar('out');
             my $count := lexVar('count');
+            my $n     := lexVar('n');
             
             mkDeclP($count, :default(QAST::Op.new(:op<elems>, $list))),
-            mkBind(mkDeclV($to),  QAST::Op.new(:op<add_i>, $from, $count)),
+            mkBind(mkDeclV($n),   QAST::Op.new(:op<elems>, $list)),
             mkBind(mkDeclV($out), mkList()),
+            mkBind(mkDeclV($to),  QAST::Op.new(:op<add_i>, $from, $count)),
+            QAST::Op.new(:op<if>,
+                QAST::Op.new(:op<isgt_i>, $to, $n),
+                mkBind($to, $n)
+            ),
             QAST::Op.new(:op<while>,
                 QAST::Op.new(:op<islt_i>, $from, $to),
                 QAST::Stmts.new(
@@ -352,17 +364,9 @@ class LActions is HLL::Actions {
                     'λ',
                     QAST::Block.new(:arity(1),
                         mkBind(mkDeclP($id),          mkForce($id)),
-                        mkBind(mkDeclV($fvars),       mkListLookup($v, :index(2))),
+                        mkBind(mkDeclV($fvars),       mkSCall('.sublist', $v, 2)),
                         mkBind(mkDeclV($info),        mkListLookup(lexVar('.λinfo'), :index($id))),
-                        mkBind(mkDeclV($fnames),
-                            mkSCall('.sublist',
-                                QAST::Op.new(:op<split>,
-                                    asNode(' '),
-                                    mkListLookup($info, :index(3))
-                                ),
-                                0,
-                            ),
-                        ),
+                        mkBind(mkDeclV($fnames),      QAST::Op.new(:op<split>, asNode(' '), mkListLookup($info, :index(3)))),
                         mkBind(mkDeclV($from),        mkListLookup($info, :index(1))),
                         mkBind(mkDeclV($length),      mkListLookup($info, :index(2))),
                         mkBind(mkDeclV($src),
@@ -748,7 +752,7 @@ class LActions is HLL::Actions {
         my $lam := mkList(
             asNode('λ' ~ $id),
             $code,
-            mkList(|@freeVars),
+            |@freeVars,
         );
         $lam.annotate('FV', %fvs);
 

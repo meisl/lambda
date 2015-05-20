@@ -4,10 +4,10 @@ lib/L/LActions.moarvm...
 lib/L/L.moarvm...
 --------------------------------
 55 lambdas
-1150 QAST::Node s
+1104 QAST::Node s
 101 QAST::Block s
-167 QAST::Op(list) s
-129 QAST::IVal s
+112 QAST::Op(list) s
+128 QAST::IVal s
 2609 chars ttl in 204 QAST::SVal s
 ------------------------------------------------
 ------------------------------------------------
