@@ -4,34 +4,22 @@ use NQPHLL;
 class LActions is HLL::Actions {
 
     my role Var {
-        method declV() {
-            my $out := nqp::clone(self);
-            $out.decl('var');
-            $out;
+        method declV(*%adverbs) {
+            QAST::Var.new(:name(self.name), :scope(self.scope), :node(self.node), :decl<var>,   |%adverbs);
         }
-        method declP() {
-            my $out := nqp::clone(self);
-            $out.decl('param');
-            $out;
+        method declP(*%adverbs) {
+            QAST::Var.new(:name(self.name), :scope(self.scope), :node(self.node), :decl<param>, |%adverbs);
         }
     }
 
     my sub locVar(str $name, *%adverbs) {
-        my $out := QAST::Var.new(
-            :name($name),
-            :scope<local>,
-            |%adverbs
-        );
+        my $out := QAST::Var.new(:name($name), :scope<local>,   |%adverbs);
         $out.HOW.mixin($out, Var);
         $out;
     }
 
     my sub lexVar(str $name, *%adverbs) {
-        my $out := QAST::Var.new(
-            :name($name),
-            :scope<lexical>,
-            |%adverbs
-        );
+        my $out := QAST::Var.new(:name($name), :scope<lexical>, |%adverbs);
         $out.HOW.mixin($out, Var);
         $out;
     }
@@ -313,7 +301,7 @@ class LActions is HLL::Actions {
             my $out   := lexVar('out');
             my $count := lexVar('count');
             
-            lexVar('count', :decl<param>, :default(QAST::Op.new(:op<elems>, $list))),
+            $count.declP(:default(QAST::Op.new(:op<elems>, $list))),
             QAST::Op.new(:op<bind>, $to.declV,  QAST::Op.new(:op<add_i>, $from, $count)),
             QAST::Op.new(:op<bind>, $out.declV, QAST::Op.new(:op<list>)),
             QAST::Op.new(:op<while>,
