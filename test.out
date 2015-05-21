@@ -4,18 +4,18 @@ lib/L/LActions.moarvm...
 lib/L/L.moarvm...
 --------------------------------
 55 lambdas
-1217 QAST::Node s
+1223 QAST::Node s
 101 QAST::Block s
 112 QAST::Op(list) s
 179 QAST::IVal s
-2592 chars ttl in 200 QAST::SVal s
+2545 chars ttl in 201 QAST::SVal s
 ------------------------------------------------
 ------------------------------------------------
 λzzz.x y  # :tag("λ0")
-# where x(0) = λu.u x  # :tag("λ3")
-#           # where x(0) = λ_.a b  # :tag("λ5")
-#           #           # where a(0) = "bar"
-#           #           # where b(0) = "qumbl"
-# where y(0) = "foo"
+# where x(∞) = λu.u x  # :tag("λ3")
+#           # where x(∞) = λ_.a b  # :tag("λ5")
+#           #           # where a(∞) = "bar"
+#           #           # where b(∞) = "qumbl"
+# where y(∞) = "foo"
 
 Output completed (1 sec consumed) - Normal Termination

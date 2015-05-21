@@ -399,9 +399,13 @@ class LActions is HLL::Actions {
                         QAST::Op.new(:op<for>, $fvn2dBI, QAST::Block.new(:arity(1),
                             mkDeclP($pair),
                             mkBind(mkDeclV($name), QAST::Op.new(:op<iterkey_s>, $pair)),
-                            mkBind(mkDeclV($dBI), QAST::Op.new(:op<iterval>, $pair)),           # TODO: print "∞" for deBruijn index of unbound var
+                            mkBind(mkDeclV($dBI), QAST::Op.new(:op<iterval>, $pair)),
                             mkBind(mkDeclV($var), mkListLookup($fvars, :index($i))),
                             mkBind($i, QAST::Op.new(:op<add_i>, $i, asNode(1))),
+                            QAST::Op.new(:op<if>, 
+                                QAST::Op.new(:op<not_i>, $dBI),
+                                mkBind($dBI, '∞')           # show "∞" as deBruijn index of unbound var
+                            ),
                             mkBind($src,
                                 mkConcat($src, 
                                     "\n",
