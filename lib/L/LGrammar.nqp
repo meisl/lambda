@@ -67,7 +67,10 @@ grammar LGrammar is HLL::Grammar {
     }
 
     token abstraction {
-        <.lambda> <varName> '.'  <body=.termlist1orMore>
+        <.lambda>
+        [  <varName> '.'  <body=.termlist1orMore>
+        || <.panic: 'expected var name after λ'>
+        ]
     }
 
     rule definition {

@@ -14,7 +14,7 @@ sub compile($file, :$lib, :$cwd) {
     ;
     $needsCompilation := $needsCompilation || ($nqpTime > $mvmTime);
     if !$needsCompilation {
-        say($mvmName);
+        say($mvmName, ' ');
     } else {
         my $cmd := 'nqp-m.bat '
             ~ '--module-path="' ~ $lib ~ '" '
@@ -23,9 +23,9 @@ sub compile($file, :$lib, :$cwd) {
             ~ $nqpName;
         #say($cmd);
         say($mvmName, '...');
-        nqp::shell($cmd, $cwd, hash());
+        return nqp::shell($cmd, $cwd, hash());
     }
-
+    return 0;
 }
 
 sub MAIN(*@ARGS) {
@@ -33,8 +33,13 @@ sub MAIN(*@ARGS) {
     my $lib := 'lib/L';
     #say('CWD: ', $cwd);
     @ARGS.shift;  # first is program name
-    for @ARGS {
-        compile($_, :lib($lib), :cwd($cwd));
+     for @ARGS {
+        my $error := compile($_, :lib($lib), :cwd($cwd));
+        if $error {
+            #nqp::die("Compile Error: ", $error);
+            nqp::exit($error);
+        }
     }
+
     say('--------------------------------');
 }
