@@ -3,6 +3,78 @@ use NQPHLL;
 
 class LActions is HLL::Actions {
 
+    my sub isSVal($node) {
+        nqp::die("isSVal expects a QAST::Node - got " ~ nqp::reprname($node))
+            unless nqp::istype($node, QAST::Node);
+        return nqp::istype($node, QAST::SVal);
+    }
+
+    my sub isIVal($node) {
+        nqp::die("isIVal expects a QAST::Node - got " ~ nqp::reprname($node))
+            unless nqp::istype($node, QAST::Node);
+        return nqp::istype($node, QAST::IVal);
+    }
+
+    my sub isNVal($node) {
+        nqp::die("isNVal expects a QAST::Node - got " ~ nqp::reprname($node))
+            unless nqp::istype($node, QAST::Node);
+        return nqp::istype($node, QAST::NVal);
+    }
+
+    my sub isNull($node) {
+        nqp::die("isNull expects a QAST::Node - got " ~ nqp::reprname($node))
+            unless nqp::istype($node, QAST::Node);
+        return nqp::istype($node, QAST::Op) && ($node.op eq 'null');
+    }
+
+    my sub isVal($node) {
+        nqp::die("isVal expects a QAST::Node - got " ~ nqp::reprname($node))
+            unless nqp::istype($node, QAST::Node);
+        return isSVal($node) || isIVal($node) || isNVal($node) || isNull($node);
+    }
+
+    my sub isVar($node) {
+        nqp::die("isVar expects a QAST::Node - got " ~ nqp::reprname($node))
+            unless nqp::istype($node, QAST::Node);
+        return nqp::istype($node, QAST::Var);
+    }
+
+    my sub isOp($node, $opName?) {
+        nqp::die("isOp expects a QAST::Node as 1st arg - got " ~ nqp::reprname($node))
+            unless nqp::istype($node, QAST::Node);
+        if !nqp::istype($opName, NQPMu) {
+            nqp::die("isOp expects a str as 2nd arg (optional) - got " ~ nqp::reprname($opName))
+                unless nqp::isstr($opName);
+            return nqp::istype($node, QAST::Op) && ($node.op eq $opName);
+        } else {
+            return nqp::istype($node, QAST::Op);
+        }
+    }
+
+    my sub isLambda($node) {
+        nqp::die("isLambda expects a QAST::Node - got " ~ nqp::reprname($node))
+            unless nqp::istype($node, QAST::Node);
+        return isOp($node, 'list')
+            && (nqp::elems($node.list) > 1) # expect at least tag str and code block
+            && isSVal($node[0])
+            && (nqp::substr($node[0].value, 0, 1) eq 'λ')
+        ;
+    }
+
+    my sub asNode($v) {
+        if nqp::isstr($v) {
+            QAST::SVal.new(:value($v));
+        } elsif nqp::isint($v) {
+            QAST::IVal.new(:value($v));
+        } elsif nqp::isnum($v) {
+            QAST::NVal.new(:value($v));
+        } elsif nqp::istype($v, QAST::Node) {
+            $v;
+        } else {
+            nqp::die("cannot turn into QAST::Node: " ~ nqp::reprname($v));
+        }
+    }
+
     my sub locVar(str $name, *%adverbs) {
         QAST::Var.new(:name($name), :scope<local>,   |%adverbs);
     }
@@ -12,27 +84,21 @@ class LActions is HLL::Actions {
     }
 
     my sub mkDeclV($var, *%adverbs) {
-        if !nqp::istype($var, QAST::Var) {
-            nqp::die("mkDeclV expects a QAST::Var");
-        }
+        nqp::die("mkDeclV expects a QAST::Var")
+            unless isVar($var);
         QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<var>,   |%adverbs);
     }
 
     my sub mkDeclP($var, *%adverbs) {
-        if !nqp::istype($var, QAST::Var) {
-            nqp::die("mkDeclP expects a QAST::Var");
-        }
+        nqp::die("mkDeclP expects a QAST::Var")
+            unless isVar($var);
         QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<param>,   |%adverbs);
     }
 
     my sub mkBind($var, $value) {
-        if !nqp::istype($var, QAST::Var) {
-            nqp::die("mkBind expects a QAST::Var as 1st arg - got " ~ nqp::reprname($var));
-        }
+        nqp::die("mkBind expects a QAST::Var as 1st arg - got " ~ nqp::reprname($var))
+            unless isVar($var);
         my $valNode := asNode($value);
-        if !nqp::istype($valNode, QAST::Node) {
-            nqp::die("mkBind cannot grok 2nd arg - got " ~ nqp::reprname($value));
-        }
         QAST::Op.new(:op<bind>, $var, $valNode);
     }
 
@@ -59,32 +125,18 @@ class LActions is HLL::Actions {
         $out;
     }
 
-    my sub asNode($v) {
-        if nqp::isstr($v) {
-            QAST::SVal.new(:value($v));
-        } elsif nqp::isint($v) {
-            QAST::IVal.new(:value($v));
-        } elsif nqp::isnum($v) {
-            QAST::NVal.new(:value($v));
-        } elsif nqp::istype($v, QAST::Node) {
-            $v;
-        } else {
-            nqp::die("cannot turn into QAST::Node: " ~ nqp::reprname($v));
-        }
-    }
-
     my sub mkCall($fn, *@args) {
         my $out := QAST::Op.new(:op<call>);
         if nqp::isstr($fn) {
             $out.name($fn);
-        } elsif nqp::istype($fn, QAST::Node) {
-            if (nqp::istype($fn, QAST::Var) && $fn.scope eq 'lexical') {
+        } else {
+            nqp::die("mkCall expects a str or a QAST::Node as 1st arg")
+                unless nqp::istype($fn, QAST::Node);
+            if (isVar($fn) && $fn.scope eq 'lexical') {
                 $out.name($fn.name);
             } else {
                 $out.push($fn);
             }
-        } else {
-            nqp::die("mkCall expects a QAST::Node as 1st arg");
         }
         for @args {
             $out.push(asNode($_));
@@ -96,36 +148,22 @@ class LActions is HLL::Actions {
         mkCall($fnName, |@args);
     }
 
-    my sub isVal($node) {
-        if nqp::istype($node, QAST::Node) {
-            nqp::istype($node, QAST::SVal) || nqp::istype($node, QAST::IVal) || nqp::istype($node, QAST::NVal)
-            || nqp::istype($node, QAST::Op) && ($node.op eq 'null');
-        } else {
-            nqp::die("expected a QAST::Node");
-        }
-    }
-
     my sub isForced($node) {
-        if nqp::istype($node, QAST::Node) {
-            $node.has_ann('forced');
-        } else {
-            nqp::die("isForced expects a QAST::Node");
-        }
+        nqp::die("isForced expects a QAST::Node")
+            unless nqp::istype($node, QAST::Node);
+        $node.has_ann('forced');
     }
 
     my sub isDelayed($node) {
-        if nqp::istype($node, QAST::Node) {
-            $node.has_ann('delayed');
-        } else {
-            nqp::die("isDelayed expects a QAST::Node");
-        }
+        nqp::die("isDelayed expects a QAST::Node")
+            unless nqp::istype($node, QAST::Node);
+        $node.has_ann('delayed');
     }
 
     my sub mkDelaySimple($node) {
-        if !nqp::istype($node, QAST::Node) {
-            nqp::die("mkDelaySimple expects a QAST::Node");
-        }
-        if isVal($node) || isDelayed($node) || nqp::istype($node, QAST::Var) {
+        nqp::die("mkDelaySimple expects a QAST::Node")
+            unless nqp::istype($node, QAST::Node);
+        if isVal($node) || isDelayed($node) || isVar($node) {
             $node;
         } elsif isForced($node) {
             $node.ann('forced');
@@ -137,10 +175,9 @@ class LActions is HLL::Actions {
     }
 
     my sub mkDelayMemo($node) {
-        if !nqp::istype($node, QAST::Node) {
-            nqp::die("mkDelayMemo expects a QAST::Node");
-        }
-        if isVal($node) || nqp::istype($node, QAST::Var) {
+        nqp::die("mkDelayMemo expects a QAST::Node")
+            unless nqp::istype($node, QAST::Node);
+        if isVal($node) || isVar($node) {
             $node;
         } elsif isDelayed($node) {
             my $delayType := $node.ann('delayed');
@@ -167,41 +204,34 @@ class LActions is HLL::Actions {
     }
 
     my sub mkForce($node) {
-        if nqp::istype($node, QAST::Node) {
-            if isDelayed($node) {
-                $node[0];
-            } elsif isForced($node) || isVal($node) {
-                $node;
-            } else {    # TODO: maybe inline if $node is already a QAST::Var
-                my $out := mkSCall('.force', $node);
-                $out.annotate('force', $node);
-                $out;
-            } # TODO: if $node is a call, and we introduce annotations re delayed status of return values...
-        } else {
-            nqp::die("mkForce expects a QAST::Node");
-        }
+        nqp::die("mkForce expects a QAST::Node") 
+            unless nqp::istype($node, QAST::Node);
+        if isDelayed($node) {
+            $node[0];
+        } elsif isForced($node) || isVal($node) {
+            $node;
+        } else {    # TODO: maybe inline if $node is already a QAST::Var
+            my $out := mkSCall('.force', $node);
+            $out.annotate('force', $node);
+            $out;
+        } # TODO: if $node is a call, and we introduce annotations re delayed status of return values...
     }
 
     my sub mkHashLookup($hash, :$key!) {
-        if nqp::isstr($key) || nqp::istype($key, QAST::Node) {
-            QAST::Op.new( :op<atkey>, $hash, asNode($key) );
-        } else {
-            nqp::die("need str or QAST::SVal as key");
-        }
+        nqp::die("mkHashLookup expects a str or QAST::Node as key")
+            unless nqp::isstr($key) || nqp::istype($key, QAST::Node);
+        return QAST::Op.new(:op<atkey>, $hash, asNode($key));
     }
 
     my sub mkListLookup($list, :$index!) {
-        if nqp::isint($index) || nqp::istype($index, QAST::Node) {
-            QAST::Op.new( :op<atpos>, $list, asNode($index) );
-        } else {
-            nqp::die("need int or QAST::IVal as index");
-        }
+        nqp::die("mkListLookup expects an int or a QAST::Node as index")
+            unless nqp::isint($index) || nqp::istype($index, QAST::Node);
+        return QAST::Op.new(:op<atpos>, $list, asNode($index));
     }
 
     my sub mkConcat(*@args) {
-        if nqp::elems(@args) < 1 {
-            nqp::die("need at least 1 arg for mkConcat");
-        }
+        nqp::die("mkConcat expects at least 1 arg")
+            unless nqp::elems(@args) > 0;
         my @nodes := [];
         for @args {
             nqp::push(@nodes, asNode($_));
@@ -210,7 +240,7 @@ class LActions is HLL::Actions {
         my @compressed := [];
         my $current := nqp::shift(@nodes);
         for @nodes {
-            if nqp::istype($current, QAST::SVal) && nqp::istype($_, QAST::SVal) {
+            if isSVal($current) && isSVal($_) {
                 $current.value($current.value ~ $_.value);
             } else {
                 nqp::push(@compressed, mkForce($current));
@@ -517,9 +547,8 @@ class LActions is HLL::Actions {
             my $key := nqp::iterkey_s($_);
             my @vals := nqp::iterval($_);
             for @vals -> $val {
-                if !nqp::istype($val, QUAST::Node) {
-                    die("not a Node: $key => ??");
-                }
+                die("not a Node: $key => ??")
+                    unless nqp::istype($val, QUAST::Node);
                 my $loc := match2location($val.node);
                 $loc{'name'} := $key;
                 $loc{'var'}  := $val;
@@ -547,19 +576,16 @@ class LActions is HLL::Actions {
 
     my sub stats($node) {
         my sub _stats($node, @results) {
-            if !nqp::istype($node, QAST::Node) {
-                nqp::die("stats expects a QAST::Node - got " ~ nqp::reprname($node));
-            }
+            nqp::die("stats expects a QAST::Node - got " ~ nqp::reprname($node))
+                unless nqp::istype($node, QAST::Node);
             @results[0] := @results[0] + 1; # size of tree
             if nqp::istype($node, QAST::Block) {
                 @results[1] := @results[1] + 1; # nr of Blocks
-            } elsif nqp::istype($node, QAST::Op) {
-                if $node.op eq 'list' {
-                    @results[2] := @results[2] + 1; # nr of Op(list)s
-                }
-            } elsif nqp::istype($node, QAST::IVal) {
+            } elsif isOp($node, 'list') {
+                @results[2] := @results[2] + 1; # nr of Op(list)s
+            } elsif isIVal($node) {
                 @results[3] := @results[3] + 1; # nr of IVals
-            } elsif nqp::istype($node, QAST::SVal) {
+            } elsif isSVal($node) {
                 @results[4] := @results[4] + 1; # nr of SVals
                 @results[5] := @results[5] + nqp::chars($node.value); # ttl size of SVals
             }
@@ -699,7 +725,7 @@ class LActions is HLL::Actions {
         my $fv := hash();
         $fv{$name} := [$var];
         $var.annotate('FV', $fv);
-        $var.annotate('deBruijnIdx', 0);
+        $var.annotate('deBruijnIndex', 0);
         make $var;
     }
 
@@ -742,17 +768,29 @@ class LActions is HLL::Actions {
         my $out := mkList(
             asNode('λ' ~ $id),
             $code
-            # free vars added below
+            # free vars will be added below
         );
-        $out.annotate('id', 'λ' ~ $id);
         $body.annotate('parent', $out);
+        $out.annotate('id', 'λ' ~ $id);
 
         my %fvs := nqp::clone($body.ann('FV'));
         my @boundVars := nqp::defor(%fvs{$binder.name}, []);
         nqp::deletekey(%fvs, $binder.name);
+
+        $out.annotate('FV', %fvs);
+
         for @boundVars {
             $_.annotate('bound_by', $binder);
-            #$_.annotate('deBruijnIdx', ???);
+            my $i := 0;
+            my $p := $_;
+            while !($p =:= $out) {
+                $p := $p.ann('parent');
+                if isLambda($p) {
+                    $i := $i + 1;
+                }
+            }
+            $_.annotate('deBruijnIndex', $i);
+            say($_.name, ' bound by ', $binder.name, ', deBruijn index ', $i);
         }
         
         my @freeVarNames := [];
@@ -766,20 +804,19 @@ class LActions is HLL::Actions {
                     my $j := 0;
                     my $duped := 0;
                     while !$duped && ($j < $i) {
+                        my $w  := @vars[$j];
                         my $b1 := $v.ann('bound_by');
-                        my $b2 := @vars[$j].ann('bound_by');
-                        $duped := (!nqp::istype($b1, QAST::Var) && !nqp::istype($b2, QAST::Var))     # both unbound
-                                  || ((!nqp::istype($b1, QAST::Var) && !nqp::istype($b2, QAST::Var)) # OR both bound by...
-                                      && ($b1.node =:= $b2.node)                                     # ...same thing in src
-                                  )
+                        my $b2 := $w.ann('bound_by');
+                        $duped := (!$v.has_ann('bound_by') && !$w.has_ann('bound_by'))  # both unbound
+                                  || ($b1.node =:= $b2.node)        # OR both bound by same thing in src
                         ;
                         $j++;
                     }
                     if !$duped {
                         @freeVarNames.push($v.name);
                         $out.push($v);
-                        @fvn2dBI.push($v.name);
-                        @fvn2dBI.push($v.ann('deBruijnIdx'));
+                        @fvn2dBI.push($v.name);     # Note: we're coming bottom, so the deBruijn index is not yet known
+                        @fvn2dBI.push(0);           #       it will be updated by the lambda that binds v
                     }
                     $i++;
                 }
@@ -792,7 +829,6 @@ class LActions is HLL::Actions {
             asNode(nqp::sub_i($/.to, $/.from)), # length
             mkHash(@fvn2dBI),
         ];
-        $out.annotate('FV', %fvs);
 
         @!lambdaInfo.push(@info);
         

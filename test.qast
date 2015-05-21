@@ -1226,6 +1226,53 @@ lib/L/L.moarvm
       - QAST::Op(call .say)
         - QAST::SVal(------------------------------------------------)
       - QAST::Var(local mainResult :decl())
+x bound by x, deBruijn index 2
+y bound by y, deBruijn index 3
+u bound by u, deBruijn index 1
+x bound by x, deBruijn index 2
+b bound by b, deBruijn index 2
+a bound by a, deBruijn index 3
+cons bound by cons, deBruijn index 4
+cons bound by cons, deBruijn index 4
+cons bound by cons, deBruijn index 4
+nil bound by nil, deBruijn index 5
+onNil bound by onNil, deBruijn index 2
+onCons bound by onCons, deBruijn index 1
+xs bound by xs, deBruijn index 3
+x bound by x, deBruijn index 4
+hd bound by hd, deBruijn index 2
+xs bound by xs, deBruijn index 1
+tl bound by tl, deBruijn index 1
+xs bound by xs, deBruijn index 1
+tl bound by tl, deBruijn index 1
+hd bound by hd, deBruijn index 2
+xs bound by xs, deBruijn index 1
+start bound by start, deBruijn index 2
+start bound by start, deBruijn index 4
+f bound by f, deBruijn index 5
+f bound by f, deBruijn index 5
+self bound by self, deBruijn index 6
+Y bound by Y, deBruijn index 1
+U bound by U, deBruijn index 7
+U bound by U, deBruijn index 7
+f bound by f, deBruijn index 1
+f bound by f, deBruijn index 1
+u bound by u, deBruijn index 2
+u bound by u, deBruijn index 2
+x bound by x, deBruijn index 1
+x bound by x, deBruijn index 1
+y bound by y, deBruijn index 1
+x bound by x, deBruijn index 2
+f bound by f, deBruijn index 3
+x bound by x, deBruijn index 1
+g bound by g, deBruijn index 2
+f bound by f, deBruijn index 3
+x bound by x, deBruijn index 1
+x bound by x, deBruijn index 1
+g bound by g, deBruijn index 2
+f bound by f, deBruijn index 3
+x bound by x, deBruijn index 2
+x bound by x, deBruijn index 1
 
 
 Output completed (9 sec consumed) - Normal Termination
