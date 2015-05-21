@@ -282,7 +282,7 @@ class LActions is HLL::Actions {
     my sub mkSetting($/, @lambdaInfo) {
         my $block := QAST::Block.new(:arity(0));
 
-        my sub mkSFn(str $name, $paramNames, $callback, *%lexicals) {
+        my sub mkSFn(str $name, $paramNames, $cb, *%lexicals) {
             if nqp::isstr($paramNames) {
                 $paramNames := [$paramNames];
             }
@@ -303,7 +303,7 @@ class LActions is HLL::Actions {
                 $body.push($decl);
                 @vars.push($var);
             }
-            my $stmts := $callback(|@vars);
+            my $stmts := $cb(|@vars);
             if nqp::islist($stmts) {
                 for $stmts { $body.push($_) }
             } else {
@@ -790,7 +790,7 @@ class LActions is HLL::Actions {
                 }
             }
             $_.annotate('deBruijnIndex', $i);
-            say($_.name, ' bound by ', $binder.name, ', deBruijn index ', $i);
+            #say($_.name, ' bound by ', $binder.name, ', deBruijn index ', $i);
         }
         
         my @freeVarNames := [];
