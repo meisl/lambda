@@ -32,7 +32,7 @@
                 #foldl (λ_.λx.x) "zzz" xs   # "c"
                 #foldl
                 #Y
-                (λy.λx.λzzz.x y) "foo" ((λx.λu.u x) ((λa.λb.λ_.a b) "bar" "qumbl"))    # TODO: two free x under *different* binders
+                (λy.λx.λzzz.x y) "foo" ((λx.λu.u x) ((λa.λb.λ_.a b) "bar" "qumbl"))
             ) (cons "a" (cons "b" (cons "c" nil)))
         )
         (λonNil.λonCons.onNil)                  # ctor nil

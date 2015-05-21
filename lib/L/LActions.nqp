@@ -44,6 +44,21 @@ class LActions is HLL::Actions {
         QAST::Op.new(:op<list>, |@contentNodes);
     }
 
+    my sub mkHash($contents) {
+        if !nqp::islist($contents) {
+            nqp::die("mkHash expects a list - got " ~ nqp::reprname($contents));
+        }
+        my $length := nqp::elems($contents);
+        if nqp::mod_i($length, 2) {
+            nqp::die("mkHash expects a list with an even nr elems - has " ~ $length);
+        }
+        my $out := QAST::Op.new(:op<hash>);
+        for $contents {
+            $out.push(asNode($_));
+        }
+        $out;
+    }
+
     my sub asNode($v) {
         if nqp::isstr($v) {
             QAST::SVal.new(:value($v));
@@ -54,7 +69,7 @@ class LActions is HLL::Actions {
         } elsif nqp::istype($v, QAST::Node) {
             $v;
         } else {
-            nqp::die("cannot turn " ~ $v ~ " into a QAST::Node");
+            nqp::die("cannot turn into QAST::Node: " ~ nqp::reprname($v));
         }
     }
 
@@ -350,9 +365,11 @@ class LActions is HLL::Actions {
             my $from    := lexVar('from');
             my $length  := lexVar('length');
             my $fvars   := lexVar('fvars');
-            my $fnames  := lexVar('fnames');
+            my $fvn2dBI := lexVar('fvn2dBI');  # "free var name 2 deBruijn index"
             my $i       := lexVar('i');
+            my $pair    := lexVar('pair');
             my $name    := lexVar('name');
+            my $dBI     := lexVar('dBI');   # "deBruijn index"
             my $var     := lexVar('var');
 
             mkBind($v, mkForce($v)),
@@ -366,7 +383,10 @@ class LActions is HLL::Actions {
                         mkBind(mkDeclP($id),          mkForce($id)),
                         mkBind(mkDeclV($fvars),       mkSCall('.sublist', $v, 2)),
                         mkBind(mkDeclV($info),        mkListLookup(lexVar('.λinfo'), :index($id))),
-                        mkBind(mkDeclV($fnames),      QAST::Op.new(:op<split>, asNode(' '), mkListLookup($info, :index(3)))),
+                        mkBind(mkDeclV($fvn2dBI),
+                            #QAST::Op.new(:op<split>, asNode(' '), mkListLookup($info, :index(3)))
+                            mkListLookup($info, :index(3))
+                        ),
                         mkBind(mkDeclV($from),        mkListLookup($info, :index(1))),
                         mkBind(mkDeclV($length),      mkListLookup($info, :index(2))),
                         mkBind(mkDeclV($src),
@@ -376,8 +396,10 @@ class LActions is HLL::Actions {
                             )
                         ),
                         mkBind(mkDeclV($i), 0),
-                        QAST::Op.new(:op<for>, $fnames, QAST::Block.new(:arity(1),
-                            mkDeclP($name),
+                        QAST::Op.new(:op<for>, $fvn2dBI, QAST::Block.new(:arity(1),
+                            mkDeclP($pair),
+                            mkBind(mkDeclV($name), QAST::Op.new(:op<iterkey_s>, $pair)),
+                            mkBind(mkDeclV($dBI), QAST::Op.new(:op<iterval>, $pair)),           # TODO: print "∞" for deBruijn index of unbound var
                             mkBind(mkDeclV($var), mkListLookup($fvars, :index($i))),
                             mkBind($i, QAST::Op.new(:op<add_i>, $i, asNode(1))),
                             mkBind($src,
@@ -385,7 +407,8 @@ class LActions is HLL::Actions {
                                     "\n",
                                     $indent,
                                     '# where ',
-                                    $name, 
+                                    $name,
+                                    '(', $dBI, ')',
                                     ' = ',
                                     QAST::Op.new(:op<if>,
                                         QAST::Op.new(:op<iseq_s>, $name, asNode('self')),
@@ -642,7 +665,8 @@ class LActions is HLL::Actions {
             }
         }
         $out.annotate('FV', $fv);
-
+        $f.annotate('parent', $out);
+        $a.annotate('parent', $out);
         $out;
     }
 
@@ -671,6 +695,7 @@ class LActions is HLL::Actions {
         my $fv := hash();
         $fv{$name} := [$var];
         $var.annotate('FV', $fv);
+        $var.annotate('deBruijnIdx', 0);
         make $var;
     }
 
@@ -703,17 +728,31 @@ class LActions is HLL::Actions {
         my $binder := mkDeclP(lexVar(~$/<varName>, :node($/<varName>)));
         my $body   := $/<body>.ast;
 
+        if !$body.has_ann('FV') {
+            nqp::die("missing annotation 'FV' in body\n" ~ $body.dump);
+        }
+
         my $code := QAST::Block.new(:arity(1), :node($/), $binder, $body);
+        
+        my $id := nqp::elems(@!lambdaInfo);
+        my $out := mkList(
+            asNode('λ' ~ $id),
+            $code
+            # free vars added below
+        );
+        $out.annotate('id', 'λ' ~ $id);
+        $body.annotate('parent', $out);
 
         my %fvs := nqp::clone($body.ann('FV'));
-        my @bound := nqp::defor(%fvs{$binder.name}, []);
+        my @boundVars := nqp::defor(%fvs{$binder.name}, []);
         nqp::deletekey(%fvs, $binder.name);
-        for @bound {
+        for @boundVars {
             $_.annotate('bound_by', $binder);
+            #$_.annotate('deBruijnIdx', ???);
         }
         
         my @freeVarNames := [];
-        my @freeVars := [];
+        my @fvn2dBI := [];  # "free var names 2 deBruijn indices"
         if nqp::elems(%fvs) > 0 {
             for %fvs {
                 my $name := nqp::iterkey_s($_);
@@ -734,36 +773,26 @@ class LActions is HLL::Actions {
                     }
                     if !$duped {
                         @freeVarNames.push($v.name);
-                        @freeVars.push($v);
+                        $out.push($v);
+                        @fvn2dBI.push($v.name);
+                        @fvn2dBI.push($v.ann('deBruijnIdx'));
                     }
                     $i++;
                 }
             }
         }
 
-        my $id := nqp::elems(@!lambdaInfo);
-
         my @info := [
             asNode($binder.name),
             asNode($/.from),
             asNode(nqp::sub_i($/.to, $/.from)), # length
-            asNode(nqp::join(' ', @freeVarNames)),
+            mkHash(@fvn2dBI),
         ];
-        my $lam := mkList(
-            asNode('λ' ~ $id),
-            $code,
-            |@freeVars,
-        );
-        $lam.annotate('FV', %fvs);
+        $out.annotate('FV', %fvs);
 
-        $lam.annotate('id', 'λ' ~ $id);
         @!lambdaInfo.push(@info);
-
-        if !$body.has_ann('FV') {
-            nqp::die("missing annotation 'FV' in body " ~ $/<body>);
-        }
         
-        make $lam;
+        make $out;
     }
 }
 
