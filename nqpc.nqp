@@ -178,10 +178,8 @@ sub compile($file, :$lib, :$cwd) {
 }
 
 sub MAIN(*@ARGS) {
-    my %hash := hash();
     my $cwd := nqp::cwd();
     my $lib := 'lib/L';
-    
     
     @ARGS.shift;  # first is program name
 
