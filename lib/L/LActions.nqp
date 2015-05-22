@@ -241,7 +241,7 @@ class LActions is HLL::Actions {
             unless nqp::elems(@args) > 0;
         my @nodes := [];
         for @args {
-            @nodes.push(asNode($_));
+            nqp::push(@nodes, asNode($_));
         }
 
         my @compressed := [];
@@ -250,19 +250,19 @@ class LActions is HLL::Actions {
             if isSVal($current) && isSVal($_) {
                 $current.value($current.value ~ $_.value);
             } else {
-                @compressed.push(mkForce($current));
+                nqp::push(@compressed, mkForce($current));
                 $current := $_;
             }
         }
-        @compressed.push(mkForce($current));
+        nqp::push(@compressed, mkForce($current));
 
-        my $n := nqp::elems(@compressed);
-        if $n > 1 {
+        if nqp::elems(@compressed) > 1 {
             $current := nqp::shift(@compressed);
             for @compressed {
                 $current := QAST::Op.new(:op<concat>, $current, $_)
             }
         }
+
         return $current;
     }
 

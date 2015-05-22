@@ -5,45 +5,6 @@ use NQPHLL;
 sub max($a, $b) { $a > $b ?? $a !! $b }
 sub min($a, $b) { $a < $b ?? $a !! $b }
 
-class NQPCompiler is NQP::Compiler {
-    
-    method handle-exception($error) {
-        nqp::rethrow($error);
-    }
-    
-    method inspectQAST($ast) {
-        #say(">>>nqpc.inspectQAST: ", $ast.dump);
-        return $ast;
-    }
-    
-}
-
-
-sub setupCompiler() {
-    # Create and configure compiler object.
-    my $nqpcomp := NQPCompiler.new();
-    $nqpcomp.language('nqp');
-    $nqpcomp.parsegrammar(NQP::Grammar);
-    $nqpcomp.parseactions(NQP::Actions);
-
-    $nqpcomp.addstage('optimize', :after<ast>);
-    $nqpcomp.addstage('inspectQAST', :before<optimize>);
-
-    # Add extra command line options.
-    my @clo := $nqpcomp.commandline_options();
-    @clo.push('parsetrace');
-    @clo.push('setting=s');
-    @clo.push('setting-path=s');
-    @clo.push('module-path=s');
-    @clo.push('no-regex-lib');
-    @clo.push('stable-sc');
-    @clo.push('optimize=s');
-    
-    return $nqpcomp;
-}
-
-my $nqpCompiler := setupCompiler();
-
 sub linesFrom(str $filename, $from = 1, $count?) {
     my $to := $from + nqp::defor($count, nqp::inf());
     my @out := [];
@@ -59,15 +20,60 @@ sub linesFrom(str $filename, $from = 1, $count?) {
     @out;
 }
 
+
+class NQPCompiler is NQP::Compiler {
+
+    has @!qastInspectors;
+
+    method BUILD() {
+        @!qastInspectors := [];
+        #say(">>>>BUILD: self=", nqp::reprname(self));
+        self.language('nqp');
+        self.parsegrammar(NQP::Grammar);
+        self.parseactions(NQP::Actions);
+
+        self.addstage('optimize', :after<ast>);
+        self.addstage('inspectQAST', :before<optimize>);
+
+        # Add extra command line options.
+        my @clo := self.commandline_options();
+        @clo.push('parsetrace');
+        @clo.push('setting=s');
+        @clo.push('setting-path=s');
+        @clo.push('module-path=s');
+        @clo.push('no-regex-lib');
+        @clo.push('stable-sc');
+        @clo.push('optimize=s');
+    }
+    
+
+    method add_qastInspector($consumer) {
+        @!qastInspectors.push($consumer);
+    }
+
+    method inspectQAST($ast) {
+        my $fileName := $*USER_FILE;
+        for @!qastInspectors {
+            $_($fileName, $ast);
+        }
+        return $ast;
+    }
+
+    method handle-exception($error) {
+        nqp::rethrow($error);
+    }
+}
+
+
 my $needsCompilation := 0;
 
-sub compile($file, :$lib, :$cwd) {
+sub compile($nqpc, $file, :$lib, :$cwd) {
     my $nqpName := "$lib/$file.nqp";
     my $mvmName := "$lib/$file.moarvm";
     if !nqp::filereadable($nqpName) {
         nqp::die("no such file: $nqpName");
     }
-    if !nqp::filewritable($mvmName) {
+    if nqp::stat($mvmName, nqp::const::STAT_EXISTS) && !nqp::filewritable($mvmName) {
         nqp::die("cannot write to file: $mvmName");
     }
     my $nqpTime := nqp::stat($nqpName, nqp::const::STAT_MODIFYTIME);
@@ -75,9 +81,10 @@ sub compile($file, :$lib, :$cwd) {
         ?? nqp::stat($mvmName, nqp::const::STAT_MODIFYTIME)
         !! 0
     ;
-    $needsCompilation := 1;     # $needsCompilation || ($nqpTime > $mvmTime);
+    $needsCompilation := $needsCompilation || ($nqpTime > $mvmTime);
     if !$needsCompilation {
         #say($mvmName, ' ');
+        return 0;   # means: "not compiled (again) because it was up-to-date"
     } else {
         my @opts := [
             '--module-path=' ~ $lib,
@@ -91,10 +98,11 @@ sub compile($file, :$lib, :$cwd) {
 
         #say(nqp::join(' ', @args));
         #say(nqp::x('-', 29));
+        my $*USER_FILE := $nqpName;
         my $result;
         my $error;
         try {
-            $result := $nqpCompiler.command_line(@args, :encoding('utf8'), :transcode('ascii iso-8859-1'));
+            $result := $nqpc.command_line(@args, :encoding('utf8'), :transcode('ascii iso-8859-1'));
             CATCH {
                 $error := $_;
             }
@@ -173,31 +181,46 @@ sub compile($file, :$lib, :$cwd) {
             nqp::flushfh(nqp::getstdout());
             nqp::die($msg);
         }
+        return 1;   # means: "yes, we did compile and write it to disk"
     }
-    return 0;
 }
 
 sub MAIN(*@ARGS) {
     my $cwd := nqp::cwd();
     my $lib := 'lib/L';
-    
+    my $ext := '.nqp';
+    my $sep := '# [nqpc] ' ~ nqp::x('-', 29);
+    my $nqpc := NQPCompiler.new();
+
+    #$nqpc.add_qastInspector(-> $fileName, $ast {
+    #    say(">>> $fileName\n", $ast.dump);
+    #});
+
     @ARGS.shift;  # first is program name
 
     if nqp::elems(@ARGS) == 0 {
-        @ARGS.push('LGrammar');
-        @ARGS.push('LActions');
-        @ARGS.push('L');
+        #@ARGS.push('LGrammar');
+        #@ARGS.push('LActions');
+        #@ARGS.push('L');
+        @ARGS.push('foo');
     }
 
     for @ARGS {
-        compile($_, :lib($lib), :cwd($cwd));
+        my $file := $_ ~ $ext;
+        my $result := compile($nqpc, $_, :lib($lib), :cwd($cwd));
+        say($result
+            ?? "# [nqpc] compiled: $lib/$file"
+            !! "# [nqpc] uptodate: $lib/$file",
+        );
         CATCH {
             my $msg := nqp::join('', [
-                      'CWD: ', $cwd,
-                "\n", 'lib: ', $lib,
-                "\n", 'ARGS: ', nqp::join(' ', @ARGS),
-                "\n", nqp::x('-', 29),
-                "\n", ~$_,
+                  "# [nqpc] ", "   ERROR: $lib/$file",
+                "\n", $sep,
+                "\n# [nqpc] ", "     CWD: $cwd",
+                "\n# [nqpc] ", "     lib: $lib",
+                "\n# [nqpc] ", '    ARGS: ', nqp::join(' ', @ARGS),
+                "\n# [nqpc] ",
+                "\n# [nqpc] ", ~$_,
             ]);
             say($msg);
             nqp::exit(1);
@@ -205,5 +228,6 @@ sub MAIN(*@ARGS) {
             #nqp::die($msg);    # cannot do this: sometimes "Memory allocation failed; could not allocate zu bytes"
         }
     }
+    say($sep);
 }
 

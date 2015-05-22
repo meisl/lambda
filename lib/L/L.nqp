@@ -13,7 +13,7 @@ class LCompiler is HLL::Compiler {
     }
 
     method inspectQAST($ast) {
-        my $fileName := $*USER_FILES;
+        my $fileName := $*USER_FILE;
         for @!qastInspectors {
             $_($fileName, $ast);
         }
@@ -41,24 +41,23 @@ class LCompiler is HLL::Compiler {
 
         #self.command_eval(|@a, |%adverbs);
         
-        my $*USER_FILES := join('; ', @a);
+        my $*USER_FILE := @a[0];
         my $error := 0;
         my $result;
         try {
-            $result := self.evalfiles(|@a, :encoding('utf8'), |%adverbs);
+            $result := self.evalfiles($*USER_FILE, :encoding('utf8'), |%adverbs);
             CATCH {
                 $error := $_;
             }
         }
         if $error {
-            nqp::die(">>>Error evaluating $*USER_FILES:\n" ~ $error);
+            nqp::die(">>>Error evaluating $*USER_FILE:\n" ~ $error);
         } else {
             self.interactive_result($result);
         }
     }
 
 }
-
 
 
 sub flatten(@args) {

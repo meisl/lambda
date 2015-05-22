@@ -1,3 +1,7 @@
+# [nqpc] uptodate: lib/L/LGrammar.nqp
+# [nqpc] uptodate: lib/L/LActions.nqp
+# [nqpc] uptodate: lib/L/L.nqp
+# [nqpc] -----------------------------
 47 lambdas
 1033 QAST::Node s
 91 QAST::Block s
@@ -8,7 +12,7 @@
 Unhandled exception: >>>Error evaluating E:\proj\perl6\Lambda\test.L:
 ERROR: cannot apply "foo" to "bar"
    at <unknown>:1  (lib\L\L.moarvm:command_line:4294967295)
- from lib/L/L.nqp:92  (lib\L\L.moarvm:MAIN:69)
+ from lib/L/L.nqp:91  (lib\L\L.moarvm:MAIN:69)
  from lib/L/L.nqp:7  (lib\L\L.moarvm:<mainline>:37)
  from <unknown>:1  (lib\L\L.moarvm:<main>:8)
  from <unknown>:1  (lib\L\L.moarvm:<entry>:9)
