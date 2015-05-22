@@ -3,29 +3,29 @@
 SET OPTS=
 IF x%~x1 EQU x.L (
     SET OPTS=
-    SET IN=%~dpn1
+    SET IN=%~dpnx1
 ) ELSE (
     SET OPTS=%1
     IF x%~x2 EQU x.L (
         SET OPTS=%1
-        SET IN=%~dpn2
+        SET IN=%~dpnx2
     ) ELSE (
         SET OPTS=%1 %2
         IF x%~x3 EQU x.L (
             SET OPTS=%1 %2
-            SET IN=%~dpn3
+            SET IN=%~dpnx3
         ) ELSE (
             IF x%~x4 EQU x.L (
                 SET OPTS=%1 %2 %3
-                SET IN=%~dpn4
+                SET IN=%~dpnx4
             ) ELSE (
                 IF x%~x5 EQU x.L (
                     SET OPTS=%1 %2 %3 %4
-                    SET IN=%~dpn5
+                    SET IN=%~dpnx5
                 ) ELSE (
                     IF x%~x6 EQU x.L (
                         SET OPTS=%1 %2 %3 %4 %5
-                        SET IN=%~dpn6
+                        SET IN=%~dpnx6
                     ) ELSE (
                         ECHO could not find input .L file
                         ECHO arguments: %*
@@ -41,7 +41,9 @@ SET QASTOUT=%IN%.qast
 SET PROGOUT=%IN%.out
 SET NQPLIB=C:\rakudo\languages\nqp\lib
 SET MOAR=moar.exe --libpath="%NQPLIB%"
-SET COMPILECOMPILER=%MOAR% "%NQPLIB%\nqp.moarvm" nqpc.nqp LGrammar LActions L
+SET NQPCARGS=LGrammar LActions L
+SET COMPILECOMPILER=%MOAR% "%NQPLIB%\nqp.moarvm" nqpc.nqp %NQPCARGS%
+SET COMPILECOMPILEROUT=nqpc.out
 SET L=%MOAR% --libpath="lib\L" "lib\L\L.moarvm"
 
 REM echo OPTS: %OPTS%
@@ -49,17 +51,14 @@ REM echo IN: %IN%
 REM echo QASTOUT: %QASTOUT%
 REM echo PROGOUT: %PROGOUT%
 
-ECHO $ %COMPILECOMPILER%
-%COMPILECOMPILER% >L.stdout.tmp
-SET COMPILERESULT=%ERRORLEVEL%
-REM must save this *immediately*!
-
-IF NOT x%COMPILERESULT%==x0 (
-    ECHO ERRORLEVEL: %COMPILERESULT%
-    TYPE L.stdout.tmp
+REM ECHO $ %COMPILECOMPILER%
+ECHO $ nqpc %NQPCARGS%
+%COMPILECOMPILER% >%COMPILECOMPILEROUT% 2>&1
+IF %ERRORLEVEL% GEQ 1 (
+    REM ECHO ERRORLEVEL: %COMPILERESULT%
+    TYPE %COMPILECOMPILEROUT%
     GOTO :ERROR
 )
-
 
 IF x%OPTS% EQU x (
     GOTO :RUNIT
@@ -74,18 +73,11 @@ IF x%OPTS% EQU x (
 
 
 :RUNIT
-COPY /Y L.stdout.tmp %QASTOUT% >NUL
-ECHO $ %L% %IN%.L
-%L% --target=ast %IN%.L >>%QASTOUT%
+COPY /Y %COMPILECOMPILEROUT% %PROGOUT% >NUL
+ECHO $ L %IN%
+%L% %IN% >>%PROGOUT% 2>&1
 IF %ERRORLEVEL% GEQ 1 (
-    ECHO ERRORLEVEL: %ERRORLEVEL%
-    TYPE L.stdout.tmp
-    GOTO :ERROR
-)
-COPY /Y L.stdout.tmp %PROGOUT% >NUL
-%L% %IN%.L >>%PROGOUT%
-IF %ERRORLEVEL% GEQ 1 (
-    ECHO ERRORLEVEL: %ERRORLEVEL%
+    REM ECHO ERRORLEVEL: %ERRORLEVEL%
     TYPE %PROGOUT%
     GOTO :ERROR
 )
@@ -94,22 +86,15 @@ GOTO :DONE
 
 
 :QASTONLY
-COPY /Y L.stdout.tmp %QASTOUT% >NUL
-ECHO $ %L% --target=ast %IN%.L
-%L% --target=ast %IN%.L >>%QASTOUT%
-IF %ERRORLEVEL% GEQ 1 (
-    ECHO ERRORLEVEL: %ERRORLEVEL%
-    GOTO :ERROR
-)
-TYPE %QASTOUT%
-GOTO :DONE
+ECHO NOTE: L automatically saves the QAST to xyz.L.qast - just run it...
+GOTO :ERROR
 
 
 :DONE
-DEL L.stdout.tmp
+DEL %COMPILECOMPILEROUT%
 EXIT /B 0
 
 
 :ERROR
-DEL L.stdout.tmp
+DEL %COMPILECOMPILEROUT%
 EXIT /B 1

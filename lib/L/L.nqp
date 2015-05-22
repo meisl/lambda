@@ -10,6 +10,10 @@ class LCompiler is HLL::Compiler {
         my $res  := self.process_args(@args);
         my %opts := $res.options;
         my @a    := $res.arguments;
+        nqp::die('no input file specified')
+            unless nqp::elems(@a) > 0;
+        nqp::die('cannot (yet) handle more than one input file: ' ~ nqp::join('; ', @a))
+            unless nqp::elems(@a) <= 1;
 
         for %opts {
             %adverbs{$_.key} := $_.value;
@@ -37,6 +41,17 @@ class LCompiler is HLL::Compiler {
             self.interactive_result($result);
         }
     }
+
+    method inspectQAST($ast) {
+        my $fileName := $*USER_FILES;
+        my $outfileName := $fileName ~ '.qast';
+        #say('>>>Lc.inspectQAST: ->"', $outfileName, '"');
+        my $outfile := nqp::open($outfileName, 'w');
+        nqp::printfh($outfile, $ast.dump);
+        nqp::closefh($outfile);
+        return $ast;
+    }
+
 }
 
 
@@ -60,6 +75,7 @@ sub MAIN(@ARGS) {
     $c.language('lambda');
     $c.parsegrammar(LGrammar);
     $c.parseactions(LActions.new);
+    $c.addstage('inspectQAST', :after<ast>);
     $c.command_line(flatten(@ARGS), :encoding('utf8'));
 }
 

@@ -10,6 +10,12 @@ class NQPCompiler is NQP::Compiler {
     method handle-exception($error) {
         nqp::rethrow($error);
     }
+    
+    method inspectQAST($ast) {
+        #say(">>>nqpc.inspectQAST: ", $ast.dump);
+        return $ast;
+    }
+    
 }
 
 
@@ -21,6 +27,7 @@ sub setupCompiler() {
     $nqpcomp.parseactions(NQP::Actions);
 
     $nqpcomp.addstage('optimize', :after<ast>);
+    $nqpcomp.addstage('inspectQAST', :before<optimize>);
 
     # Add extra command line options.
     my @clo := $nqpcomp.commandline_options();
@@ -75,7 +82,7 @@ sub compile($file, :$lib, :$cwd) {
         my @opts := [
             '--module-path=' ~ $lib,
             '--target=mbc',
-            '--output="' ~ $mvmName,
+            '--output=' ~ $mvmName,
         ];
         my @args := nqp::clone(@opts);
         @args.unshift('nqpc');  # give it a program name (for command_line)
@@ -155,9 +162,11 @@ sub compile($file, :$lib, :$cwd) {
             # TODO: Use of undeclared variable '$fuck' at line 4, near " := [a b];"
             # TODO: Malformed binding at line 4, near "[a b];\ngra"
             } else {
+                my $line := 1;
+                my $column;
                 $msg := nqp::join('', [
                           'ERROR: ', $msg,
-                    "\n", '   at ', $nqpName,    # ':', ~$line, ($column ?? ':' ~ $column !! ''),
+                    "\n", '   at ', $nqpName, ':', ~$line, ($column ?? ':' ~ $column !! ''),
                     "\n",
                ]);
             }
@@ -173,10 +182,6 @@ sub MAIN(*@ARGS) {
     my $cwd := nqp::cwd();
     my $lib := 'lib/L';
     
-    #say('ARGS: ', nqp::join(' ', @ARGS));
-    #say('CWD: ', $cwd);
-    #say('lib: ', $lib);
-    #say(nqp::x('-', 29));
     
     @ARGS.shift;  # first is program name
 
@@ -187,10 +192,19 @@ sub MAIN(*@ARGS) {
     }
 
     for @ARGS {
-        my $error := compile($_, :lib($lib), :cwd($cwd));
-        if $error {
-            #nqp::die("Compile Error: ", $error);
-            nqp::exit($error);
+        compile($_, :lib($lib), :cwd($cwd));
+        CATCH {
+            my $msg := nqp::join('', [
+                      'CWD: ', $cwd,
+                "\n", 'lib: ', $lib,
+                "\n", 'ARGS: ', nqp::join(' ', @ARGS),
+                "\n", nqp::x('-', 29),
+                "\n", ~$_,
+            ]);
+            say($msg);
+            nqp::exit(1);
+            
+            #nqp::die($msg);    # cannot do this: sometimes "Memory allocation failed; could not allocate zu bytes"
         }
     }
 }
