@@ -5,6 +5,21 @@ use LActions;
 
 
 class LCompiler is HLL::Compiler {
+
+    has @!qastInspectors;
+
+    method add_qastInspector($consumer) {
+        @!qastInspectors.push($consumer);
+    }
+
+    method inspectQAST($ast) {
+        my $fileName := $*USER_FILES;
+        for @!qastInspectors {
+            $_($fileName, $ast);
+        }
+        return $ast;
+    }
+
     method command_line(@args, *%adverbs) {
         my $program-name := @args[0];
         my $res  := self.process_args(@args);
@@ -42,16 +57,6 @@ class LCompiler is HLL::Compiler {
         }
     }
 
-    method inspectQAST($ast) {
-        my $fileName := $*USER_FILES;
-        my $outfileName := $fileName ~ '.qast';
-        #say('>>>Lc.inspectQAST: ->"', $outfileName, '"');
-        my $outfile := nqp::open($outfileName, 'w');
-        nqp::printfh($outfile, $ast.dump);
-        nqp::closefh($outfile);
-        return $ast;
-    }
-
 }
 
 
@@ -76,6 +81,14 @@ sub MAIN(@ARGS) {
     $c.parsegrammar(LGrammar);
     $c.parseactions(LActions.new);
     $c.addstage('inspectQAST', :after<ast>);
+
+    $c.add_qastInspector(-> $fileName, $ast {
+        my $outfileName := $fileName ~ '.qast';
+        my $outfile := nqp::open($outfileName, 'w');
+        nqp::printfh($outfile, $ast.dump);
+        nqp::closefh($outfile);
+    });
+
     $c.command_line(flatten(@ARGS), :encoding('utf8'));
 }
 
