@@ -92,10 +92,16 @@ nqp::die(^!);
 #T=exit
 nqp::exit(^!);
 
+#T=join
+nqp::join(^!, @)
+#T=nqj
+nqp::join(^!, @)
 #T=nqsa
 nqp::say(^!)
 #T=nqsu
 nqp::subst(^!, , )
+#T=nqesc
+nqp::escape(^!)
 #T=nqel
 nqp::elems(^!)
 #T=nqik
@@ -110,4 +116,12 @@ nqp::file^!
 filereadable(^!)
 #T=filew
 filerwritable(^!)
+#T=nqo
+nqp::open(^!, '')
+#T=nqcl
+nqp::closefh(^!)
+#T=nqeof
+nqp::eoffh(^!)
+#T=nqpf
+nqp::printfh(^!, )
 #
