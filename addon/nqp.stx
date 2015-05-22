@@ -1,0 +1,142 @@
+#TITLE=NQP
+; NQP syntax file written meisl.
+; This file is required for EditPlus to run correctly.
+
+#DELIMITER=,(){}[]-+*/=~!&|<>?:;.$@%
+#QUOTATION1='
+#QUOTATION2="
+#CONTINUE_QUOTE=n
+#LINECOMMENT=#
+#COMMENTON==begin
+#COMMENTOFF==end
+#ESCAPE=\
+#CASE=y
+
+; #PREFIX1=   ; Reserved words
+; #PREFIX2=   ; Special words (nqp, const)
+; #PREFIX3=   ; Built-in functions
+; #PREFIX4=   ; Building blocks
+
+; Scalar variables
+#PREFIX5=$
+
+; Array variables
+#PREFIX6=@
+
+; Hash variables
+#PREFIX7=%
+
+; nqp:: ops
+#PREFIX8=nqp::
+
+; nqp::const s
+#PREFIX9=nqp::const
+
+; #HEREDOC=<<EOF
+#NUMBER_PATTERN=cpp
+; #SPECIAL_STX=perl
+
+#KEYWORD=Reserved words
+do
+if
+else
+elsif
+unless
+while
+for
+last
+next
+continue
+my
+our
+use
+try
+CATCH
+return
+is
+does
+has
+self
+*
+
+#KEYWORD=Special words
+nqp
+const
+
+#KEYWORD=Built-in functions
+say
+hash
+
+#KEYWORD=Building blocks
+knowhow
+module
+class
+role
+grammar
+token
+rule
+regex
+sub
+method
+
+#KEYWORD=Scalar variables
+$
+
+#KEYWORD=Array variables
+@
+
+#KEYWORD=Hash variables
+%
+
+#KEYWORD=nqp:: ops
+defor
+isnull
+isinvokable
+say
+join
+split
+index
+substr
+chars
+chr
+concat
+lc
+tc
+x
+findcclass
+findnotcclass
+getmessage
+elems
+list
+hash
+die
+exit
+getstdout
+getstderr
+getstdin
+flushfh
+filereadable
+filewritable
+stat
+readlinefh
+setinputlinesep
+open
+eoffh
+closefh
+push
+pop
+shift
+unshift
+atpos
+atkey
+bindkey
+existskey
+deletekey
+iterkey_s
+iterval
+
+#KEYWORD=nqp::const s
+CCLASS_NUMERIC
+
+
+#

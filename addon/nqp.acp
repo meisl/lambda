@@ -1,0 +1,113 @@
+#TITLE=Perl
+; EditPlus Auto-completion file v1.0 written by ES-Computing.
+; This file is provided as a default auto-completion file for Perl.
+
+#CASE=y
+
+#T=if
+if ^! {
+    
+}
+#T=else
+else {
+    ^!
+}
+#T=elsif
+elsif ^! {
+    
+}
+#T=unless
+unless ^!
+#T=while
+while ^! {
+    
+}
+#T=for
+for ^! {
+    
+}
+#T=knowhow
+knowhow ^! {
+    
+}
+
+#T=module
+module ^!;
+
+#T=class
+class ^! {
+    
+}
+
+#T=role
+role ^! {
+    
+}
+
+#T=grammar
+grammar ^! {
+    rule TOP {
+        
+    }
+    
+    token  {
+        
+    }
+}
+
+#T=sub
+sub ^!() {
+    
+}
+
+#T=method
+method ^!() {
+    
+}
+
+#T=rule
+rule ^! {
+    
+}
+
+#T=token
+token ^! {
+    
+}
+
+#T=regex
+regex ^! {
+    
+}
+
+#T=use
+use ^!;
+
+#T=say
+say(^!);
+
+#T=die
+nqp::die(^!);
+
+#T=exit
+nqp::exit(^!);
+
+#T=nqsa
+nqp::say(^!)
+#T=nqsu
+nqp::subst(^!, , )
+#T=nqel
+nqp::elems(^!)
+#T=nqik
+nqp::iterkey_s(^!)
+#T=nqiv
+nqp::iterval(^!)
+#T=nqisinv
+nqp::isinvokable(^!)
+#T=nqf
+nqp::file^!
+#T=filer
+filereadable(^!)
+#T=filew
+filerwritable(^!)
+#
