@@ -1,0 +1,153 @@
+---------- run nqp ----------
+>>> lib/L/foo.nqp:
+
+- QAST::Block {\n    $v := force($v);\n    if nqp::isstr($v) {\n...
+  - QAST::Stmts
+    - QAST::Var(lexical $v :decl(param)) $v
+    - QAST::Var(lexical $indent :decl(param)) $indent
+    - QAST::Var(lexical $depth :decl(param)) $depth
+  - QAST::Stmts \n    $v := force($v);\n    if nqp::isstr($v) {\n ...
+    - QAST::Stmts
+      - QAST::Op(bind &infix:<:=>) :=
+        - QAST::Var(lexical $v :decl())
+        - QAST::Op(call &force) $v
+          - QAST::Var(lexical $v :decl())
+    - QAST::Stmts
+      - QAST::Op(if) nqp::isstr($v) {\n        '\"' ~ nqp::escape($v) ~...
+        - QAST::Op(isstr) nqp::isstr($v)
+          - QAST::Var(lexical $v :decl())
+        - QAST::Stmts {\n        '\"' ~ nqp::escape($v) ~ '\"';\n    }
+          - QAST::Stmts
+          - QAST::Stmts \n        '\"' ~ nqp::escape($v) ~ '\"';\n    
+            - QAST::Stmts
+              - QAST::Op(concat &infix:<~>) ~
+                - QAST::Op(concat &infix:<~>) ~
+                  - QAST::SVal(\")
+                  - QAST::Op(escape) nqp::escape($v)
+                    - QAST::Var(lexical $v :decl())
+                - QAST::SVal(\")
+        - QAST::Block {\n        my @fvs := $v<freeVars>;\n        my $i...
+          - QAST::Stmts
+            - QAST::Var(lexical @fvs :decl(var))
+            - QAST::Var(lexical $idx :decl(var))
+            - QAST::Var(lexical %info :decl(var))
+            - QAST::Var(lexical @fvns :decl(var))
+            - QAST::Var(lexical $src :decl(var))
+            - QAST::Var(lexical $i :decl(var))
+          - QAST::Stmts \n        my @fvs := $v<freeVars>;\n        my $id...
+            - QAST::Stmts
+              - QAST::Op(bind) @fvs := $v<freeVars>
+                - QAST::Var(lexical @fvs :decl())
+                - QAST::VarWithFallback(associative  :decl())
+                  - QAST::Var(lexical $v :decl())
+                  - QAST::SVal(freeVars)
+            - QAST::Stmts
+              - QAST::Op(bind) $idx := $v<infoIdx>
+                - QAST::Var(lexical $idx :decl())
+                - QAST::VarWithFallback(associative  :decl())
+                  - QAST::Var(lexical $v :decl())
+                  - QAST::SVal(infoIdx)
+            - QAST::Stmts
+              - QAST::Op(bind) %info := %λinfo[$idx]
+                - QAST::Var(lexical %info :decl())
+                - QAST::VarWithFallback(positional  :decl())
+                  - QAST::Var(lexical %λinfo :decl())
+                  - QAST::Var(lexical $idx :decl())
+            - QAST::Stmts
+              - QAST::Op(bind) @fvns := %info<freeVarNames>
+                - QAST::Var(lexical @fvns :decl())
+                - QAST::VarWithFallback(associative  :decl())
+                  - QAST::Var(lexical %info :decl())
+                  - QAST::SVal(freeVarNames)
+            - QAST::Stmts
+              - QAST::Op(bind) $src := nqp::substr($λsrc, %info<from>, %info<leng...
+                - QAST::Var(lexical $src :decl())
+                - QAST::Op(substr) nqp::substr($λsrc, %info<from>, %info<length>)
+                  - QAST::Var(lexical $λsrc :decl())
+                  - QAST::VarWithFallback(associative  :decl())
+                    - QAST::Var(lexical %info :decl())
+                    - QAST::SVal(from)
+                  - QAST::VarWithFallback(associative  :decl())
+                    - QAST::Var(lexical %info :decl())
+                    - QAST::SVal(length)
+            - QAST::Stmts
+              - QAST::Op(bind) $i := 0
+                - QAST::Var(lexical $i :decl())
+                - QAST::IVal(0)
+            - QAST::Stmts
+              - QAST::Op(for) @fvs -> $fv {\n            my $fvName := @fvns[$i]...
+                - QAST::Var(lexical @fvs :decl())
+                - QAST::Block {\n            my $fvName := @fvns[$i];\n         ...
+                  - QAST::Stmts
+                    - QAST::Var(lexical $fv :decl(param)) $fv
+                    - QAST::Var(lexical $fvName :decl(var))
+                    - QAST::Var(lexical $pre :decl(var))
+                  - QAST::Stmts \n            my $fvName := @fvns[$i];\n          ...
+                    - QAST::Stmts
+                      - QAST::Op(bind) $fvName := @fvns[$i]
+                        - QAST::Var(lexical $fvName :decl())
+                        - QAST::VarWithFallback(positional  :decl())
+                          - QAST::Var(lexical @fvns :decl())
+                          - QAST::Var(lexical $i :decl())
+                    - QAST::Stmts
+                      - QAST::Op(bind) $pre := \"# where $fvName = \"
+                        - QAST::Var(lexical $pre :decl())
+                        - QAST::Op(concat)
+                          - QAST::Op(concat)
+                            - QAST::SVal(# where )
+                            - QAST::Var(lexical $fvName :decl())
+                          - QAST::SVal( = )
+                    - QAST::Stmts
+                      - QAST::Op(bind &infix:<:=>) :=
+                        - QAST::Var(lexical $src :decl())
+                        - QAST::Op(concat &infix:<~>) ~
+                          - QAST::Var(lexical $src :decl())
+                          - QAST::Op(concat)
+                            - QAST::Op(concat)
+                              - QAST::SVal(\n)
+                              - QAST::Var(lexical $indent :decl())
+                            - QAST::Var(lexical $pre :decl())
+                    - QAST::Stmts
+                      - QAST::Op(if) $depth > 2 {\n                $src := $src ~ '...'...
+                        - QAST::Op(isgt_n &infix:<>>) >
+                          - QAST::Var(lexical $depth :decl())
+                          - QAST::IVal(2)
+                        - QAST::Stmts {\n                $src := $src ~ '...';\n        ...
+                          - QAST::Stmts
+                          - QAST::Stmts \n                $src := $src ~ '...';\n         ...
+                            - QAST::Stmts
+                              - QAST::Op(bind &infix:<:=>) :=
+                                - QAST::Var(lexical $src :decl())
+                                - QAST::Op(concat &infix:<~>) ~
+                                  - QAST::Var(lexical $src :decl())
+                                  - QAST::SVal(...)
+                        - QAST::Stmts {\n                $src := $src ~ strOut($fv, $ind...
+                          - QAST::Stmts
+                          - QAST::Stmts \n                $src := $src ~ strOut($fv, $inde...
+                            - QAST::Stmts
+                              - QAST::Op(bind &infix:<:=>) :=
+                                - QAST::Var(lexical $src :decl())
+                                - QAST::Op(concat &infix:<~>) ~
+                                  - QAST::Var(lexical $src :decl())
+                                  - QAST::Op(call &strOut) $fv, $indent ~ nqp::x(' ', nqp::chars($pre)), $dep...
+                                    - QAST::Var(lexical $fv :decl())
+                                    - QAST::Op(concat &infix:<~>) ~
+                                      - QAST::Var(lexical $indent :decl())
+                                      - QAST::Op(x) nqp::x(' ', nqp::chars($pre))
+                                        - QAST::SVal( )
+                                        - QAST::Op(chars) nqp::chars($pre)
+                                          - QAST::Var(lexical $pre :decl())
+                                    - QAST::Op(add_n &infix:<+>) +
+                                      - QAST::Var(lexical $depth :decl())
+                                      - QAST::IVal(1)
+                    - QAST::Stmts
+                      - QAST::Op(postinc &postfix:<++>) ++
+                        - QAST::Var(lexical $i :decl())
+                - QAST::IVal+{QAST::SpecialArg}(1)
+            - QAST::Stmts
+              - QAST::Var(lexical $src :decl())
+
+# [nqpc] compiled: lib/L/foo.nqp
+# [nqpc] -----------------------------
+
+Output completed (1 sec consumed) - Normal Termination

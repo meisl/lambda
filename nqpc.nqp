@@ -81,7 +81,7 @@ sub compile($nqpc, $file, :$lib, :$cwd) {
         ?? nqp::stat($mvmName, nqp::const::STAT_MODIFYTIME)
         !! 0
     ;
-    $needsCompilation := $needsCompilation || ($nqpTime > $mvmTime);
+    $needsCompilation := 1; #$needsCompilation || ($nqpTime > $mvmTime);
     if !$needsCompilation {
         #say($mvmName, ' ');
         return 0;   # means: "not compiled (again) because it was up-to-date"
@@ -185,6 +185,51 @@ sub compile($nqpc, $file, :$lib, :$cwd) {
     }
 }
 
+sub istypeAny($subject, *@types) {
+    for @types {
+        return 1 if nqp::istype($subject, $_);
+    }
+    return 0;
+}
+
+
+sub qastChildren($ast, *@types) {
+    nqp::die('qastChildren expects a QAST::Node as 1st arg - got ' ~ nqp::reprname($ast) )
+        unless nqp::istype($ast, QAST::Node);
+    my @out := [];
+    if nqp::elems(@types) == 0 {
+        @types := [QAST::Node];
+    }
+    for $ast.list {
+        if istypeAny($_, |@types) {
+            @out.push($_);
+        }
+    }
+    @out;
+}
+
+sub findDef($ast, str $name) {
+    my $out;
+    if nqp::istype($ast, QAST::CompUnit) {
+        return findDef(qastChildren($ast, QAST::Block)[0], $name);
+    } elsif istypeAny($ast, QAST::Block, QAST::Stmts, QAST::Stmt) {
+        for qastChildren($ast, QAST::Stmts, QAST::Stmt, QAST::Op) {
+            if nqp::istype($_, QAST::Op) {
+                if $_.op eq 'bind' && $_[0].name eq $name {
+                    return $_[1];
+                }
+            } else {
+                $out := findDef($_, $name);
+                if $out {
+                    return $out;
+                }
+            }
+        }
+    }
+    $out;
+}
+
+
 sub MAIN(*@ARGS) {
     my $cwd := nqp::cwd();
     my $lib := 'lib/L';
@@ -192,9 +237,17 @@ sub MAIN(*@ARGS) {
     my $sep := '# [nqpc] ' ~ nqp::x('-', 29);
     my $nqpc := NQPCompiler.new();
 
-    #$nqpc.add_qastInspector(-> $fileName, $ast {
-    #    say(">>> $fileName\n", $ast.dump);
-    #});
+    $nqpc.add_qastInspector(-> $fileName, $ast {
+        my $what := '&strOut';
+        say(">>> $fileName:\n");
+        $ast := findDef($ast, $what);
+        if $ast {
+            say($ast.dump);
+        } else {
+            say($what, ' not found!');
+        }
+        
+    });
 
     @ARGS.shift;  # first is program name
 
