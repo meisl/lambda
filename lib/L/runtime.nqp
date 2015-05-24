@@ -57,7 +57,7 @@ sub ifTag($subject, str $tag, $then, $else) {
         if nqp::substr($id, 0, 1) eq $tag {
             my $idx := nqp::atpos(nqp::radix(10, $id, 1, 0), 0);
             my $rawInfo := %info{$tag}[$idx];
-            $then(lam2info($subject, $id, $idx, $rawInfo));
+            $then($id, $idx, $rawInfo);
         } else {
             force($else);
         }
@@ -65,6 +65,48 @@ sub ifTag($subject, str $tag, $then, $else) {
         force($else);
     }
 }
+
+sub fellthroughtypecase($subject) {
+    nqp::die('typecase: fell through due to missing "otherwise"-callback: ' ~ nqp::reprname($subject));
+}
+
+
+sub typecase($subject, *%callbacks) {
+    say('>>>typecase(', nqp::reprname($subject), '...)');
+    my $otherwise := nqp::defor(
+        %callbacks<otherwise>,
+        &fellthroughtypecase
+    );
+    if nqp::islist($subject) {
+        ifTag($subject, 'λ',
+            -> str $id, int $idx, $rawInfo {
+                my $cb := nqp::defor(%callbacks<λ>, $otherwise);
+                $cb(lam2info($subject, $id, $idx, $rawInfo));
+            },
+            {
+                if nqp::elems($subject) == 0 {
+                    nqp::die('typecase: unsupported low-level list type - empty');
+                } else {
+                    nqp::die('typecase: unsupported low-level list type - invalid tag');
+                }
+            }
+        )
+    } else {
+        my $cbKey;
+        if nqp::isstr($subject) {
+            $cbKey := 'str';
+        } elsif nqp::isint($subject) {
+            $cbKey := 'int';
+        } elsif nqp::isnum($subject) {
+            $cbKey := 'num';
+        } else {
+            nqp::die('typecase: unsupported low-level type ' ~ nqp::reprname($subject));
+        }
+        my $cb := nqp::defor(%callbacks{$cbKey}, $otherwise);
+        $cb($subject);
+    }
+}
+
 
 sub nonLam2strOut($v) {
     if nqp::isstr($v) {
@@ -85,25 +127,26 @@ sub lam2strOut(%info, str $indent = '', %done = {}) {
         my $fvName  := nqp::iterkey_s($_);
         my $fv      := nqp::iterval($_);
         my $pre := "# where $fvName = ";
-        ifTag($fv, 'λ', 
-            -> %info {
+        $src := $src ~ typecase($fv,
+            :λ(-> %info {
                 my $id      := %info<id>;
                 my $doneKey := "$fvName = $id";
-                unless %done{$doneKey} {
+                if %done{$doneKey} {
+                    '';
+                } else {
                     %done{$doneKey} := 1;
-                    $src := $src 
-                        ~ "\n$indent$pre"
-                        ~ lam2strOut(%info, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre) - 1), %done)
-                    ;
+                    "\n$indent$pre" ~ lam2strOut(%info, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre) - 1), %done);
                 }
-            },
-            {
+            }),
+            :otherwise(-> $x {
                 my $doneKey := $pre ~ nonLam2strOut($fv);
-                unless %done{$doneKey} {
+                if %done{$doneKey} {
+                    '';
+                } else {
                     %done{$doneKey} := 1;
-                    $src := $src ~ "\n$indent$doneKey";
+                    "\n$indent$doneKey";
                 }
-            }
+            })
         );
     }
     $src;
@@ -112,11 +155,9 @@ sub lam2strOut(%info, str $indent = '', %done = {}) {
 
 sub strOut($v, str $indent = '', %done = {}) {
     $v := force($v);
-    ifTag($v, 'λ',
-        -> %info {
-            lam2strOut(%info, $indent, %done);
-        },
-        { nonLam2strOut($v) }
+    typecase($v,
+        :λ(&lam2strOut),
+        :otherwise(&nonLam2strOut)
     );
 }
 

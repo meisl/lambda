@@ -30,78 +30,6 @@
               - QAST::Var(lexical $s :decl())
           - QAST::SVal(\")
     - QAST::Op(bind)
-      - QAST::Var(lexical .lam2info :decl(var))
-      - QAST::Block {\n    my @fvs     := sublist($lambda, 2);    # fr...
-        - QAST::Var(lexical $lambda :decl(param)) $lambda
-        - QAST::Var(lexical $id :decl(param)) $id
-        - QAST::Var(lexical $idx :decl(param)) $idx
-        - QAST::Var(lexical %rawInfo :decl(param)) %rawInfo
-        - QAST::Var(lexical @fvs :decl(var))
-        - QAST::Var(lexical %fvs :decl(var))
-        - QAST::Var(lexical %out :decl(var))
-        - QAST::Var(lexical @fvns :decl(var))
-        - QAST::Var(lexical $i :decl(var))
-        - QAST::Op(bind) @fvs     := sublist($lambda, 2)
-          - QAST::Var(lexical @fvs :decl())
-          - QAST::Op(call .sublist) $lambda, 2
-            - QAST::Var(lexical $lambda :decl())
-            - QAST::IVal(2)
-        - QAST::Op(bind) %fvs     := nqp::hash()
-          - QAST::Var(lexical %fvs :decl())
-          - QAST::Op(hash) nqp::hash()
-        - QAST::Op(bind) %out     := nqp::hash(\n        'id',       $id,\n...
-          - QAST::Var(lexical %out :decl())
-          - QAST::Op(hash) nqp::hash(\n        'id',       $id,\n        'idx...
-            - QAST::SVal(id)
-            - QAST::Var(lexical $id :decl())
-            - QAST::SVal(idx)
-            - QAST::Var(lexical $idx :decl())
-            - QAST::SVal(from)
-            - QAST::VarWithFallback(associative  :decl())
-              - QAST::Var(lexical %rawInfo :decl())
-              - QAST::SVal(from)
-            - QAST::SVal(length)
-            - QAST::VarWithFallback(associative  :decl())
-              - QAST::Var(lexical %rawInfo :decl())
-              - QAST::SVal(length)
-            - QAST::SVal(src)
-            - QAST::Op(substr) nqp::substr($λsrc, %rawInfo<from>, %rawInfo<length...
-              - QAST::Var(lexical .λsrc :decl())
-              - QAST::VarWithFallback(associative  :decl())
-                - QAST::Var(lexical %rawInfo :decl())
-                - QAST::SVal(from)
-              - QAST::VarWithFallback(associative  :decl())
-                - QAST::Var(lexical %rawInfo :decl())
-                - QAST::SVal(length)
-            - QAST::SVal(code)
-            - QAST::Op(atpos) nqp::atpos($lambda, 1)
-              - QAST::Var(lexical $lambda :decl())
-              - QAST::IVal(1)
-            - QAST::SVal(freeVars)
-            - QAST::Var(lexical %fvs :decl())
-        - QAST::Op(bind) @fvns := %rawInfo<freeVarNames>
-          - QAST::Var(lexical @fvns :decl())
-          - QAST::VarWithFallback(associative  :decl())
-            - QAST::Var(lexical %rawInfo :decl())
-            - QAST::SVal(freeVarNames)
-        - QAST::Op(bind) $i := 0
-          - QAST::Var(lexical $i :decl())
-          - QAST::IVal(0)
-        - QAST::Op(for) @fvns {\n        nqp::bindkey(%fvs, $_, @fvs[$i]);...
-          - QAST::Var(lexical @fvns :decl())
-          - QAST::Block {\n        nqp::bindkey(%fvs, $_, @fvs[$i]);\n    ...
-            - QAST::Var(lexical $_ :decl(param))
-            - QAST::Op(bindkey) nqp::bindkey(%fvs, $_, @fvs[$i])
-              - QAST::Var(lexical %fvs :decl())
-              - QAST::Var(lexical $_ :decl())
-              - QAST::VarWithFallback(positional  :decl())
-                - QAST::Var(lexical @fvs :decl())
-                - QAST::Var(lexical $i :decl())
-            - QAST::Op(postinc &postfix:<++>) ++
-              - QAST::Var(lexical $i :decl())
-          - QAST::IVal+{QAST::SpecialArg}(1)
-        - QAST::Var(lexical %out :decl())
-    - QAST::Op(bind)
       - QAST::Var(lexical .sublist :decl(var))
       - QAST::Block {\n    my int $n     := nqp::elems(@list);\n    my...
         - QAST::Var(lexical @list :decl(param)) @list
@@ -147,6 +75,78 @@
               - QAST::Var(lexical $from :decl())
           - QAST::IVal+{QAST::SpecialArg}(1)
         - QAST::Var(lexical @out :decl())
+    - QAST::Op(bind)
+      - QAST::Var(lexical .lam2info :decl(var))
+      - QAST::Block {\n    my @fvs     := sublist($lambda, 2);    # fr...
+        - QAST::Var(lexical $lambda :decl(param)) $lambda
+        - QAST::Var(lexical $id :decl(param)) $id
+        - QAST::Var(lexical $idx :decl(param)) $idx
+        - QAST::Var(lexical %rawLambdaInfo :decl(param)) %rawLambdaInfo
+        - QAST::Var(lexical @fvs :decl(var))
+        - QAST::Var(lexical %fvs :decl(var))
+        - QAST::Var(lexical %out :decl(var))
+        - QAST::Var(lexical @fvns :decl(var))
+        - QAST::Var(lexical $i :decl(var))
+        - QAST::Op(bind) @fvs     := sublist($lambda, 2)
+          - QAST::Var(lexical @fvs :decl())
+          - QAST::Op(call .sublist) $lambda, 2
+            - QAST::Var(lexical $lambda :decl())
+            - QAST::IVal(2)
+        - QAST::Op(bind) %fvs     := nqp::hash()
+          - QAST::Var(lexical %fvs :decl())
+          - QAST::Op(hash) nqp::hash()
+        - QAST::Op(bind) %out     := nqp::hash(\n        'id',       $id,\n...
+          - QAST::Var(lexical %out :decl())
+          - QAST::Op(hash) nqp::hash(\n        'id',       $id,\n        'idx...
+            - QAST::SVal(id)
+            - QAST::Var(lexical $id :decl())
+            - QAST::SVal(idx)
+            - QAST::Var(lexical $idx :decl())
+            - QAST::SVal(from)
+            - QAST::VarWithFallback(associative  :decl())
+              - QAST::Var(lexical %rawLambdaInfo :decl())
+              - QAST::SVal(from)
+            - QAST::SVal(length)
+            - QAST::VarWithFallback(associative  :decl())
+              - QAST::Var(lexical %rawLambdaInfo :decl())
+              - QAST::SVal(length)
+            - QAST::SVal(src)
+            - QAST::Op(substr) nqp::substr($λsrc, %rawLambdaInfo<from>, %rawLambd...
+              - QAST::Var(lexical .λsrc :decl())
+              - QAST::VarWithFallback(associative  :decl())
+                - QAST::Var(lexical %rawLambdaInfo :decl())
+                - QAST::SVal(from)
+              - QAST::VarWithFallback(associative  :decl())
+                - QAST::Var(lexical %rawLambdaInfo :decl())
+                - QAST::SVal(length)
+            - QAST::SVal(code)
+            - QAST::Op(atpos) nqp::atpos($lambda, 1)
+              - QAST::Var(lexical $lambda :decl())
+              - QAST::IVal(1)
+            - QAST::SVal(freeVars)
+            - QAST::Var(lexical %fvs :decl())
+        - QAST::Op(bind) @fvns := %rawLambdaInfo<freeVarNames>
+          - QAST::Var(lexical @fvns :decl())
+          - QAST::VarWithFallback(associative  :decl())
+            - QAST::Var(lexical %rawLambdaInfo :decl())
+            - QAST::SVal(freeVarNames)
+        - QAST::Op(bind) $i := 0
+          - QAST::Var(lexical $i :decl())
+          - QAST::IVal(0)
+        - QAST::Op(for) @fvns {\n        nqp::bindkey(%fvs, $_, @fvs[$i]);...
+          - QAST::Var(lexical @fvns :decl())
+          - QAST::Block {\n        nqp::bindkey(%fvs, $_, @fvs[$i]);\n    ...
+            - QAST::Var(lexical $_ :decl(param))
+            - QAST::Op(bindkey) nqp::bindkey(%fvs, $_, @fvs[$i])
+              - QAST::Var(lexical %fvs :decl())
+              - QAST::Var(lexical $_ :decl())
+              - QAST::VarWithFallback(positional  :decl())
+                - QAST::Var(lexical @fvs :decl())
+                - QAST::Var(lexical $i :decl())
+            - QAST::Op(postinc &postfix:<++>) ++
+              - QAST::Var(lexical $i :decl())
+          - QAST::IVal+{QAST::SpecialArg}(1)
+        - QAST::Var(lexical %out :decl())
     - QAST::Op(bind)
       - QAST::Var(lexical .ifTag :decl(var))
       - QAST::Block {\n    say(\">>>ifTag(..., $tag, ...)\");\n    if ...
@@ -196,19 +196,127 @@
                       - QAST::Var(lexical %info :decl())
                       - QAST::Var(lexical $tag :decl())
                     - QAST::Var(lexical $idx :decl())
-                - QAST::Op(call) lam2info($subject, $id, $idx, $rawInfo)
+                - QAST::Op(call) $id, $idx, $rawInfo
                   - QAST::Var(lexical $then :decl())
-                  - QAST::Op(call .lam2info) $subject, $id, $idx, $rawInfo
-                    - QAST::Var(lexical $subject :decl())
-                    - QAST::Var(lexical $id :decl())
-                    - QAST::Var(lexical $idx :decl())
-                    - QAST::Var(lexical $rawInfo :decl())
+                  - QAST::Var(lexical $id :decl())
+                  - QAST::Var(lexical $idx :decl())
+                  - QAST::Var(lexical $rawInfo :decl())
               - QAST::Stmts {\n            force($else);\n        }
                 - QAST::Op(call .force) $else
                   - QAST::Var(lexical $else :decl())
           - QAST::Stmts {\n        force($else);\n    }
             - QAST::Op(call .force) $else
               - QAST::Var(lexical $else :decl())
+    - QAST::Op(bind)
+      - QAST::Var(lexical .fellthroughtypecase :decl(var))
+      - QAST::Block {\n    nqp::die('typecase: fell through due to mis...
+        - QAST::Var(lexical $subject :decl(param)) $subject
+        - QAST::Op(die) nqp::die('typecase: fell through due to missing \"...
+          - QAST::Op(concat &infix:<~>) ~
+            - QAST::SVal(typecase: fell through due to missing \"otherwise\"-callback: )
+            - QAST::Op(reprname) nqp::reprname($subject)
+              - QAST::Var(lexical $subject :decl())
+    - QAST::Op(bind)
+      - QAST::Var(lexical .typecase :decl(var))
+      - QAST::Block {\n    say('>>>typecase(', nqp::reprname($subject)...
+        - QAST::Var(lexical $subject :decl(param)) $subject
+        - QAST::Var+{QAST::SpecialArg}(lexical %callbacks :decl(param)) %callbacks
+        - QAST::Var(lexical $otherwise :decl(var))
+        - QAST::Op(call .say) '>>>typecase(', nqp::reprname($subject), '...)'
+          - QAST::SVal(>>>typecase()
+          - QAST::Op(reprname) nqp::reprname($subject)
+            - QAST::Var(lexical $subject :decl())
+          - QAST::SVal(...))
+        - QAST::Op(bind) $otherwise := nqp::defor(\n        %callbacks<othe...
+          - QAST::Var(lexical $otherwise :decl())
+          - QAST::Op(defor) nqp::defor(\n        %callbacks<otherwise>,\n     ...
+            - QAST::VarWithFallback(associative  :decl())
+              - QAST::Var(lexical %callbacks :decl())
+              - QAST::SVal(otherwise)
+            - QAST::Var(lexical .fellthroughtypecase :decl())
+        - QAST::Op(if) nqp::islist($subject) {\n        ifTag($subject, '...
+          - QAST::Op(islist) nqp::islist($subject)
+            - QAST::Var(lexical $subject :decl())
+          - QAST::Stmts {\n        ifTag($subject, 'λ',\n            -> st...
+            - QAST::Op(call .ifTag) $subject, 'λ',\n            -> str $id, int $idx, ...
+              - QAST::Var(lexical $subject :decl())
+              - QAST::SVal(λ)
+              - QAST::Op(takeclosure)
+                - QAST::Block {\n                my $cb := nqp::defor(%callbacks...
+                  - QAST::Var(lexical $id :decl(param)) $id
+                  - QAST::Var(lexical $idx :decl(param)) $idx
+                  - QAST::Var(lexical $rawInfo :decl(param)) $rawInfo
+                  - QAST::Var(lexical $cb :decl(var))
+                  - QAST::Op(bind) $cb := nqp::defor(%callbacks<λ>, $otherwise)
+                    - QAST::Var(lexical $cb :decl())
+                    - QAST::Op(defor) nqp::defor(%callbacks<λ>, $otherwise)
+                      - QAST::VarWithFallback(associative  :decl())
+                        - QAST::Var(lexical %callbacks :decl())
+                        - QAST::SVal(λ)
+                      - QAST::Var(lexical $otherwise :decl())
+                  - QAST::Op(call) lam2info($subject, $id, $idx, $rawInfo)
+                    - QAST::Var(lexical $cb :decl())
+                    - QAST::Op(call .lam2info) $subject, $id, $idx, $rawInfo
+                      - QAST::Var(lexical $subject :decl())
+                      - QAST::Var(lexical $id :decl())
+                      - QAST::Var(lexical $idx :decl())
+                      - QAST::Var(lexical $rawInfo :decl())
+              - QAST::Op(takeclosure)
+                - QAST::Block {\n                if nqp::elems($subject) == 0 {\...
+                  - QAST::Op(if) nqp::elems($subject) == 0 {\n                    n...
+                    - QAST::Op(iseq_n &infix:<==>) ==
+                      - QAST::Op(elems) nqp::elems($subject)
+                        - QAST::Var(lexical $subject :decl())
+                      - QAST::IVal(0)
+                    - QAST::Stmts {\n                    nqp::die('typecase: unsuppo...
+                      - QAST::Op(die) nqp::die('typecase: unsupported low-level list typ...
+                        - QAST::SVal(typecase: unsupported low-level list type - empty)
+                    - QAST::Stmts {\n                    nqp::die('typecase: unsuppo...
+                      - QAST::Op(die) nqp::die('typecase: unsupported low-level list typ...
+                        - QAST::SVal(typecase: unsupported low-level list type - invalid tag)
+          - QAST::Block {\n        my $cbKey;\n        if nqp::isstr($subj...
+            - QAST::Op(bind) $cbKey
+              - QAST::Var(lexical $cbKey :decl(var))
+              - QAST::WVal(NQPMu)
+            - QAST::Var(lexical $cb :decl(var))
+            - QAST::Var(lexical $cbKey :decl())
+            - QAST::Op(if) nqp::isstr($subject) {\n            $cbKey := 'str...
+              - QAST::Op(isstr) nqp::isstr($subject)
+                - QAST::Var(lexical $subject :decl())
+              - QAST::Stmts {\n            $cbKey := 'str';\n        }
+                - QAST::Op(bind &infix:<:=>) :=
+                  - QAST::Var(lexical $cbKey :decl())
+                  - QAST::SVal(str)
+              - QAST::Op(if) nqp::isint($subject) {\n            $cbKey := 'int...
+                - QAST::Op(isint) nqp::isint($subject)
+                  - QAST::Var(lexical $subject :decl())
+                - QAST::Stmts {\n            $cbKey := 'int';\n        }
+                  - QAST::Op(bind &infix:<:=>) :=
+                    - QAST::Var(lexical $cbKey :decl())
+                    - QAST::SVal(int)
+                - QAST::Op(if) nqp::isnum($subject) {\n            $cbKey := 'num...
+                  - QAST::Op(isnum) nqp::isnum($subject)
+                    - QAST::Var(lexical $subject :decl())
+                  - QAST::Stmts {\n            $cbKey := 'num';\n        }
+                    - QAST::Op(bind &infix:<:=>) :=
+                      - QAST::Var(lexical $cbKey :decl())
+                      - QAST::SVal(num)
+                  - QAST::Stmts {\n            nqp::die('typecase: unsupported low...
+                    - QAST::Op(die) nqp::die('typecase: unsupported low-level type ' ~...
+                      - QAST::Op(concat &infix:<~>) ~
+                        - QAST::SVal(typecase: unsupported low-level type )
+                        - QAST::Op(reprname) nqp::reprname($subject)
+                          - QAST::Var(lexical $subject :decl())
+            - QAST::Op(bind) $cb := nqp::defor(%callbacks{$cbKey}, $otherwise)
+              - QAST::Var(lexical $cb :decl())
+              - QAST::Op(defor) nqp::defor(%callbacks{$cbKey}, $otherwise)
+                - QAST::VarWithFallback(associative  :decl())
+                  - QAST::Var(lexical %callbacks :decl())
+                  - QAST::Var(lexical $cbKey :decl())
+                - QAST::Var(lexical $otherwise :decl())
+            - QAST::Op(call) $subject
+              - QAST::Var(lexical $cb :decl())
+              - QAST::Var(lexical $subject :decl())
     - QAST::Op(bind)
       - QAST::Var(lexical .nonLam2strOut :decl(var))
       - QAST::Block {\n    if nqp::isstr($v) {\n        strLit($v);\n ...
@@ -274,92 +382,115 @@
                   - QAST::SVal(# where )
                   - QAST::Var(lexical $fvName :decl())
                 - QAST::SVal( = )
-            - QAST::Op(call .ifTag) $fv, 'λ', \n            -> %info {\n              ...
-              - QAST::Var(lexical $fv :decl())
-              - QAST::SVal(λ)
-              - QAST::Op(takeclosure)
-                - QAST::Block {\n                my $id      := %info<id>;\n    ...
-                  - QAST::Var(lexical %info :decl(param)) %info
-                  - QAST::Var(lexical $id :decl(var))
-                  - QAST::Var(lexical $doneKey :decl(var))
-                  - QAST::Op(bind) $id      := %info<id>
-                    - QAST::Var(lexical $id :decl())
-                    - QAST::VarWithFallback(associative  :decl())
-                      - QAST::Var(lexical %info :decl())
-                      - QAST::SVal(id)
-                  - QAST::Op(bind) $doneKey := \"$fvName = $id\"
-                    - QAST::Var(lexical $doneKey :decl())
-                    - QAST::Op(concat)
-                      - QAST::Op(concat)
-                        - QAST::Var(lexical $fvName :decl())
-                        - QAST::SVal( = )
-                      - QAST::Var(lexical $id :decl())
-                  - QAST::Op(unless) %done{$doneKey} {\n                    %done{$done...
-                    - QAST::VarWithFallback(associative  :decl())
-                      - QAST::Var(lexical %done :decl())
-                      - QAST::Var(lexical $doneKey :decl())
-                    - QAST::Stmts {\n                    %done{$doneKey} := 1;\n    ...
-                      - QAST::Op(bind &infix:<:=>) :=
-                        - QAST::VarWithFallback(associative  :decl())
-                          - QAST::Var(lexical %done :decl())
-                          - QAST::Var(lexical $doneKey :decl())
-                        - QAST::IVal(1)
-                      - QAST::Op(bind &infix:<:=>) :=
-                        - QAST::Var(lexical $src :decl())
-                        - QAST::Op(concat &infix:<~>) ~
-                          - QAST::Op(concat &infix:<~>) ~
-                            - QAST::Var(lexical $src :decl())
+            - QAST::Op(bind &infix:<:=>) :=
+              - QAST::Var(lexical $src :decl())
+              - QAST::Op(concat &infix:<~>) ~
+                - QAST::Var(lexical $src :decl())
+                - QAST::Op(call .typecase) $fv,\n            :λ(-> %info {\n                m...
+                  - QAST::Var(lexical $fv :decl())
+                  - QAST::Op+{QAST::SpecialArg}(takeclosure)
+                    - QAST::Block {\n                my $id      := %info<id>;\n    ...
+                      - QAST::Stmts
+                        - QAST::Var(lexical %info :decl(param)) %info
+                        - QAST::Var(lexical $id :decl(var))
+                        - QAST::Var(lexical $doneKey :decl(var))
+                      - QAST::Stmts \n                my $id      := %info<id>;\n     ...
+                        - QAST::Stmts
+                          - QAST::Op(bind) $id      := %info<id>
+                            - QAST::Var(lexical $id :decl())
+                            - QAST::VarWithFallback(associative  :decl())
+                              - QAST::Var(lexical %info :decl())
+                              - QAST::SVal(id)
+                        - QAST::Stmts
+                          - QAST::Op(bind) $doneKey := \"$fvName = $id\"
+                            - QAST::Var(lexical $doneKey :decl())
                             - QAST::Op(concat)
                               - QAST::Op(concat)
-                                - QAST::SVal(\n)
-                                - QAST::Var(lexical $indent :decl())
-                              - QAST::Var(lexical $pre :decl())
-                          - QAST::Op(call .lam2strOut) %info, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre...
-                            - QAST::Var(lexical %info :decl())
-                            - QAST::Op(concat &infix:<~>) ~
-                              - QAST::Op(concat &infix:<~>) ~
-                                - QAST::Var(lexical $indent :decl())
-                                - QAST::SVal(#)
-                              - QAST::Op(x) nqp::x(' ', nqp::chars($pre) - 1)
-                                - QAST::SVal( )
-                                - QAST::Op(sub_n &infix:<->) -
-                                  - QAST::Op(chars) nqp::chars($pre)
-                                    - QAST::Var(lexical $pre :decl())
-                                  - QAST::IVal(1)
-                            - QAST::Var(lexical %done :decl())
-              - QAST::Op(takeclosure)
-                - QAST::Block {\n                my $doneKey := $pre ~ nonLam2st...
-                  - QAST::Var(lexical $doneKey :decl(var))
-                  - QAST::Op(bind) $doneKey := $pre ~ nonLam2strOut($fv)
-                    - QAST::Var(lexical $doneKey :decl())
-                    - QAST::Op(concat &infix:<~>) ~
-                      - QAST::Var(lexical $pre :decl())
-                      - QAST::Op(call .nonLam2strOut) $fv
-                        - QAST::Var(lexical $fv :decl())
-                  - QAST::Op(unless) %done{$doneKey} {\n                    %done{$done...
-                    - QAST::VarWithFallback(associative  :decl())
-                      - QAST::Var(lexical %done :decl())
-                      - QAST::Var(lexical $doneKey :decl())
-                    - QAST::Stmts {\n                    %done{$doneKey} := 1;\n    ...
-                      - QAST::Op(bind &infix:<:=>) :=
-                        - QAST::VarWithFallback(associative  :decl())
-                          - QAST::Var(lexical %done :decl())
-                          - QAST::Var(lexical $doneKey :decl())
-                        - QAST::IVal(1)
-                      - QAST::Op(bind &infix:<:=>) :=
-                        - QAST::Var(lexical $src :decl())
-                        - QAST::Op(concat &infix:<~>) ~
-                          - QAST::Var(lexical $src :decl())
-                          - QAST::Op(concat)
-                            - QAST::Op(concat)
-                              - QAST::SVal(\n)
-                              - QAST::Var(lexical $indent :decl())
+                                - QAST::Var(lexical $fvName :decl())
+                                - QAST::SVal( = )
+                              - QAST::Var(lexical $id :decl())
+                        - QAST::Stmts
+                          - QAST::Op(if) %done{$doneKey} {\n                    '';\n      ...
+                            - QAST::VarWithFallback(associative  :decl())
+                              - QAST::Var(lexical %done :decl())
+                              - QAST::Var(lexical $doneKey :decl())
+                            - QAST::Stmts {\n                    '';\n                }
+                              - QAST::Stmts
+                              - QAST::Stmts \n                    '';\n                
+                                - QAST::Stmts
+                                  - QAST::SVal
+                            - QAST::Stmts {\n                    %done{$doneKey} := 1;\n    ...
+                              - QAST::Stmts
+                              - QAST::Stmts \n                    %done{$doneKey} := 1;\n     ...
+                                - QAST::Stmts
+                                  - QAST::Op(bind &infix:<:=>) :=
+                                    - QAST::VarWithFallback(associative  :decl())
+                                      - QAST::Var(lexical %done :decl())
+                                      - QAST::Var(lexical $doneKey :decl())
+                                    - QAST::IVal(1)
+                                - QAST::Stmts
+                                  - QAST::Op(concat &infix:<~>) ~
+                                    - QAST::Op(concat)
+                                      - QAST::Op(concat)
+                                        - QAST::SVal(\n)
+                                        - QAST::Var(lexical $indent :decl())
+                                      - QAST::Var(lexical $pre :decl())
+                                    - QAST::Op(call &lam2strOut) %info, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre...
+                                      - QAST::Var(lexical %info :decl())
+                                      - QAST::Op(concat &infix:<~>) ~
+                                        - QAST::Op(concat &infix:<~>) ~
+                                          - QAST::Var(lexical $indent :decl())
+                                          - QAST::SVal(#)
+                                        - QAST::Op(x) nqp::x(' ', nqp::chars($pre) - 1)
+                                          - QAST::SVal( )
+                                          - QAST::Op(sub_n &infix:<->) -
+                                            - QAST::Op(chars) nqp::chars($pre)
+                                              - QAST::Var(lexical $pre :decl())
+                                            - QAST::IVal(1)
+                                      - QAST::Var(lexical %done :decl())
+                  - QAST::Op+{QAST::SpecialArg}(takeclosure)
+                    - QAST::Block {\n                my $doneKey := $pre ~ nonLam2st...
+                      - QAST::Stmts
+                        - QAST::Var(lexical $x :decl(param)) $x
+                        - QAST::Var(lexical $doneKey :decl(var))
+                      - QAST::Stmts \n                my $doneKey := $pre ~ nonLam2str...
+                        - QAST::Stmts
+                          - QAST::Op(bind) $doneKey := $pre ~ nonLam2strOut($fv)
                             - QAST::Var(lexical $doneKey :decl())
+                            - QAST::Op(concat &infix:<~>) ~
+                              - QAST::Var(lexical $pre :decl())
+                              - QAST::Op(call &nonLam2strOut) $fv
+                                - QAST::Var(lexical $fv :decl())
+                        - QAST::Stmts
+                          - QAST::Op(if) %done{$doneKey} {\n                    '';\n      ...
+                            - QAST::VarWithFallback(associative  :decl())
+                              - QAST::Var(lexical %done :decl())
+                              - QAST::Var(lexical $doneKey :decl())
+                            - QAST::Stmts {\n                    '';\n                }
+                              - QAST::Stmts
+                              - QAST::Stmts \n                    '';\n                
+                                - QAST::Stmts
+                                  - QAST::SVal
+                            - QAST::Stmts {\n                    %done{$doneKey} := 1;\n    ...
+                              - QAST::Stmts
+                              - QAST::Stmts \n                    %done{$doneKey} := 1;\n     ...
+                                - QAST::Stmts
+                                  - QAST::Op(bind &infix:<:=>) :=
+                                    - QAST::VarWithFallback(associative  :decl())
+                                      - QAST::Var(lexical %done :decl())
+                                      - QAST::Var(lexical $doneKey :decl())
+                                    - QAST::IVal(1)
+                                - QAST::Stmts
+                                  - QAST::Op(concat)
+                                    - QAST::Op(concat)
+                                      - QAST::SVal(\n)
+                                      - QAST::Var(lexical $indent :decl())
+                                    - QAST::Var(lexical $doneKey :decl())
           - QAST::IVal+{QAST::SpecialArg}(1)
         - QAST::Var(lexical $src :decl())
     - QAST::Op(bind)
       - QAST::Var(lexical .strOut :decl(var))
-      - QAST::Block {\n    $v := force($v);\n    ifTag($v, 'λ',\n     ...
+      - QAST::Block {\n    $v := force($v);\n    typecase($v,\n       ...
         - QAST::Var(lexical $v :decl(param)) $v
         - QAST::Var(lexical $indent :decl(param)) $indent
         - QAST::Var(lexical %done :decl(param)) %done
@@ -367,20 +498,10 @@
           - QAST::Var(lexical $v :decl())
           - QAST::Op(call .force) $v
             - QAST::Var(lexical $v :decl())
-        - QAST::Op(call .ifTag) $v, 'λ',\n        -> %info {\n            lam2strO...
+        - QAST::Op(call .typecase) $v,\n        :λ(&lam2strOut),\n        :otherwise(...
           - QAST::Var(lexical $v :decl())
-          - QAST::SVal(λ)
-          - QAST::Op(takeclosure)
-            - QAST::Block {\n            lam2strOut(%info, $indent, %done);\...
-              - QAST::Var(lexical %info :decl(param)) %info
-              - QAST::Op(call .lam2strOut) %info, $indent, %done
-                - QAST::Var(lexical %info :decl())
-                - QAST::Var(lexical $indent :decl())
-                - QAST::Var(lexical %done :decl())
-          - QAST::Op(takeclosure)
-            - QAST::Block { nonLam2strOut($v) }
-              - QAST::Op(call .nonLam2strOut) $v
-                - QAST::Var(lexical $v :decl())
+          - QAST::Var+{QAST::SpecialArg}(lexical .lam2strOut :decl())
+          - QAST::Var+{QAST::SpecialArg}(lexical .nonLam2strOut :decl())
     - QAST::Op(bind)
       - QAST::Var(lexical .MAIN :decl(var))
       - QAST::Block {\n    my $lambda2 := [\n        'λ1',            ...
@@ -460,9 +581,11 @@
               - QAST::SVal(foo)
     - QAST::Var(lexical .force :decl())
     - QAST::Var(lexical .strLit :decl())
-    - QAST::Var(lexical .lam2info :decl())
     - QAST::Var(lexical .sublist :decl())
+    - QAST::Var(lexical .lam2info :decl())
     - QAST::Var(lexical .ifTag :decl())
+    - QAST::Var(lexical .fellthroughtypecase :decl())
+    - QAST::Var(lexical .typecase :decl())
     - QAST::Var(lexical .nonLam2strOut :decl())
     - QAST::Var(lexical .lam2strOut :decl())
     - QAST::Var(lexical .strOut :decl())
@@ -475,4 +598,4 @@
 # [nqpc] compiled: lib/L/runtime.nqp
 # [nqpc] -----------------------------
 
-Output completed (4 sec consumed) - Normal Termination
+Output completed (7 sec consumed) - Normal Termination
