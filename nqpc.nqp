@@ -244,7 +244,7 @@ sub findDef($ast, str $name) {
         for qastChildren($ast, QAST::Stmts, QAST::Stmt, QAST::Op) {
             if nqp::istype($_, QAST::Op) {
                 if $_.op eq 'bind' && $_[0].name eq $name {
-                    return dropStmts($_[1]);
+                    return $_;
                 }
             } else {
                 $out := findDef($_, $name);
@@ -290,27 +290,29 @@ sub MAIN(*@ARGS) {
     my $sep := '# [nqpc] ' ~ nqp::x('-', 29);
     my $nqpc := NQPCompiler.new();
 
-    $nqpc.add_qastInspector(-> $fileName, $ast {
-        my $what := '&strOut';  #   '&renameVars';  #   
+    my $inspector := -> $fileName, $ast {
+        my $what := '&lam2info';  #   '&strOut';  #   '&renameVars';  #   '&ifTag';    #   
         say(">>> $fileName:\n");
-        $ast := findDef($ast, $what);
+        $ast := dropStmts($ast);
+        #$ast := findDef($ast, $what);
         if $ast {
             $ast := renameVars($ast, -> $s {
-                my $fst := nqp::substr($s, 0, 1);
-                if $fst eq '&' {
+                my str $fst := nqp::substr($s, 0, 1);
+                my str $snd := nqp::substr($s, 1, 1);
+                if $fst eq '&' || $snd eq 'λ' {
                     '.' ~ nqp::substr($s, 1);
-                } elsif nqp::index('$@%', $fst) > -1 {
-                    nqp::substr($s, 1);
                 } else {
                     $s;
-                } 
+                }
             });
             say($ast.dump);
         } else {
             say($what, ' not found!');
         }
         
-    });
+    };
+
+    $nqpc.add_qastInspector($inspector);
 
     @ARGS.shift;  # first is program name
 
@@ -318,7 +320,7 @@ sub MAIN(*@ARGS) {
         #@ARGS.push('LGrammar');
         #@ARGS.push('LActions');
         #@ARGS.push('L');
-        @ARGS.push('foo');
+        @ARGS.push('runtime');
     }
 
     for @ARGS {
