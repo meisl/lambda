@@ -208,6 +208,33 @@ sub qastChildren($ast, *@types) {
     @out;
 }
 
+sub _dropStmts($ast, $parent = nqp::null) {
+    nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) )
+        unless nqp::istype($ast, QAST::Node);
+    return [nqp::clone($ast)]
+        unless nqp::istype($ast, QAST::Children);
+    my @children := [];
+    for $ast.list {
+        for _dropStmts($_, $ast) {
+            @children.push($_);
+        }
+    }
+    if nqp::istype($ast, QAST::Stmts) && istypeAny($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) {
+        return @children; # return the Stmts' children as is, dropping the Stmts node
+    } else {
+        $ast := nqp::clone($ast);
+        $ast.set_children(@children);
+        return [$ast];
+    }
+}
+
+sub dropStmts($ast) {
+    my @out := _dropStmts($ast);
+    return nqp::elems(@out) == 1
+        ?? @out[0]
+        !! QAST::Stmts.new(|@out);
+}
+
 sub findDef($ast, str $name) {
     my $out;
     if nqp::istype($ast, QAST::CompUnit) {
@@ -216,7 +243,7 @@ sub findDef($ast, str $name) {
         for qastChildren($ast, QAST::Stmts, QAST::Stmt, QAST::Op) {
             if nqp::istype($_, QAST::Op) {
                 if $_.op eq 'bind' && $_[0].name eq $name {
-                    return $_[1];
+                    return dropStmts($_[1]);
                 }
             } else {
                 $out := findDef($_, $name);
