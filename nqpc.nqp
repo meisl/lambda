@@ -235,6 +235,7 @@ sub dropStmts($ast) {
         !! QAST::Stmts.new(|@out);
 }
 
+
 sub findDef($ast, str $name) {
     my $out;
     if nqp::istype($ast, QAST::CompUnit) {
@@ -256,6 +257,31 @@ sub findDef($ast, str $name) {
     $out;
 }
 
+sub renameVars($ast, $map?) {
+    nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ nqp::reprname($ast) )
+        unless nqp::istype($ast, QAST::Node);
+    if nqp::defined($map) {
+        nqp::die('renameVars expects a unary fn as 2nd arg(optional) - got ' ~ nqp::reprname($map) )
+            unless nqp::isinvokable($map);
+    } else {
+        $map := -> str $name { $name };
+    }
+    if nqp::istype($ast, QAST::Var) || (nqp::istype($ast, QAST::Op) && ($ast.op eq 'call')) {
+        my str $old := $ast.name;
+        my str $new := $map($old);
+        if $new ne $old {
+            $ast.name($new);
+        }
+    }
+    if nqp::istype($ast, QAST::Children) {
+        for $ast.list {
+            renameVars($_, $map);
+        }
+    }
+    $ast;
+}
+
+
 
 sub MAIN(*@ARGS) {
     my $cwd := nqp::cwd();
@@ -265,10 +291,20 @@ sub MAIN(*@ARGS) {
     my $nqpc := NQPCompiler.new();
 
     $nqpc.add_qastInspector(-> $fileName, $ast {
-        my $what := '&strOut';
+        my $what := '&strOut';  #   '&renameVars';  #   
         say(">>> $fileName:\n");
         $ast := findDef($ast, $what);
         if $ast {
+            $ast := renameVars($ast, -> $s {
+                my $fst := nqp::substr($s, 0, 1);
+                if $fst eq '&' {
+                    '.' ~ nqp::substr($s, 1);
+                } elsif nqp::index('$@%', $fst) > -1 {
+                    nqp::substr($s, 1);
+                } else {
+                    $s;
+                } 
+            });
             say($ast.dump);
         } else {
             say($what, ' not found!');
