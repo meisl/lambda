@@ -1,6 +1,14 @@
 use NQPHLL;
 
-
+# TODO: Unable to parse expression in blockoid; couldn't find final '}'  at line 143, near "$msg := $m"
+=begin
+{
+    my $msg := nqp::join('', ['a',
+        'b'
+        'c'
+    ]);
+}
+=end
 
 grammar LGrammar is HLL::Grammar {
 
