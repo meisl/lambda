@@ -33,6 +33,21 @@ sub lam2info(str $id, @fvs) {
     %out;
 }
 
+sub sublist(@list, int $from) {
+    my int $n     := nqp::elems(@list);
+    my int $count := $n;
+    my int $to    := $from + $count;
+    my     @out   := [];
+    if $to > $n {
+        $to := $n
+    }
+    while $from < $to {
+        @out.push(@list[$from]);
+        $from++;
+    }
+    @out;
+}
+
 sub ifTag($subject, str $tag, $then, $else) {
     say(">>>ifTag(..., $tag, ...)");
     if nqp::islist($subject) {
@@ -41,7 +56,7 @@ sub ifTag($subject, str $tag, $then, $else) {
             $then(
                 lam2info(
                     $id,
-                    nqp::atpos($subject, 1),    # freeVars
+                    sublist($subject, 2),    # freeVars start at 2
                 )
             );
         } else {
@@ -109,14 +124,18 @@ sub strOut($v, str $indent = '', %done = {}) {
 
 sub MAIN(*@ARGS) {
     my $lambda2 := [
-        'λ1',   # infoIdx
-        [23],   # freeVars
+        'λ1',                           # id: tag 'λ' and idx into %λinfo
+        -> *@as { 'λ1(...) called' },   # code
+        23,                             # freeVars (ie values of)
     ];
     my $lambda1 := [
-        'λ0',                               # infoIdx 
-        ['foo', 42, 3.14159265, $lambda2],  # freeVars
+        'λ0',                               #  id: tag 'λ' and idx into %λinfo
+        -> *@as { 'λ0(...) called' },       # code
+        'foo', 42, 3.14159265, $lambda2     # freeVars (ie values of)
     ];
-    $lambda1[1].push($lambda1);
-    $lambda1[1].push($lambda1);
+    $lambda1.push($lambda1);    # add a self (recursive) ref
+    $lambda1.push($lambda1);    # add a self (recursive) ref
+    
     say(strOut($lambda1));
 }
+

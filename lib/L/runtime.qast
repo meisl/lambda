@@ -1,5 +1,5 @@
 ---------- run nqp ----------
->>> lib/L/foo.nqp:
+>>> lib/L/runtime.nqp:
 
 - QAST::CompUnit
   - QAST::Block
@@ -106,6 +106,52 @@
           - QAST::IVal+{QAST::SpecialArg}(1)
         - QAST::Var(lexical %out :decl())
     - QAST::Op(bind)
+      - QAST::Var(lexical .sublist :decl(var))
+      - QAST::Block {\n    my int $n     := nqp::elems(@list);\n    my...
+        - QAST::Var(lexical @list :decl(param)) @list
+        - QAST::Var(lexical $from :decl(param)) $from
+        - QAST::Var(lexical $n :decl(var))
+        - QAST::Var(lexical $count :decl(var))
+        - QAST::Var(lexical $to :decl(var))
+        - QAST::Var(lexical @out :decl(var))
+        - QAST::Op(bind) int $n     := nqp::elems(@list)
+          - QAST::Var(lexical $n :decl())
+          - QAST::Op(elems) nqp::elems(@list)
+            - QAST::Var(lexical @list :decl())
+        - QAST::Op(bind) int $count := $n
+          - QAST::Var(lexical $count :decl())
+          - QAST::Var(lexical $n :decl())
+        - QAST::Op(bind) int $to    := $from + $count
+          - QAST::Var(lexical $to :decl())
+          - QAST::Op(add_n &infix:<+>) +
+            - QAST::Var(lexical $from :decl())
+            - QAST::Var(lexical $count :decl())
+        - QAST::Op(bind) @out   := []
+          - QAST::Var(lexical @out :decl())
+          - QAST::Op(list &circumfix:<[ ]>)
+        - QAST::Op(if) $to > $n {\n        $to := $n\n    }
+          - QAST::Op(isgt_n &infix:<>>) >
+            - QAST::Var(lexical $to :decl())
+            - QAST::Var(lexical $n :decl())
+          - QAST::Stmts {\n        $to := $n\n    }
+            - QAST::Op(bind &infix:<:=>) :=
+              - QAST::Var(lexical $to :decl())
+              - QAST::Var(lexical $n :decl())
+        - QAST::Op(while) $from < $to {\n        @out.push(@list[$from]);\n ...
+          - QAST::Op(islt_n &infix:<<>) <
+            - QAST::Var(lexical $from :decl())
+            - QAST::Var(lexical $to :decl())
+          - QAST::Stmts {\n        @out.push(@list[$from]);\n        $from...
+            - QAST::Op(callmethod push) @list[$from]
+              - QAST::Var(lexical @out :decl())
+              - QAST::VarWithFallback(positional  :decl())
+                - QAST::Var(lexical @list :decl())
+                - QAST::Var(lexical $from :decl())
+            - QAST::Op(postinc &postfix:<++>) ++
+              - QAST::Var(lexical $from :decl())
+          - QAST::IVal+{QAST::SpecialArg}(1)
+        - QAST::Var(lexical @out :decl())
+    - QAST::Op(bind)
       - QAST::Var(lexical .ifTag :decl(var))
       - QAST::Block {\n    say(\">>>ifTag(..., $tag, ...)\");\n    if ...
         - QAST::Var(lexical $subject :decl(param)) $subject
@@ -138,11 +184,11 @@
               - QAST::Stmts {\n            $then(\n                lam2info(\n...
                 - QAST::Op(call) lam2info(\n                    $id,\n             ...
                   - QAST::Var(lexical $then :decl())
-                  - QAST::Op(call .lam2info) \n                    $id,\n                    nq...
+                  - QAST::Op(call .lam2info) \n                    $id,\n                    su...
                     - QAST::Var(lexical $id :decl())
-                    - QAST::Op(atpos) nqp::atpos($subject, 1)
+                    - QAST::Op(call .sublist) $subject, 2
                       - QAST::Var(lexical $subject :decl())
-                      - QAST::IVal(1)
+                      - QAST::IVal(2)
               - QAST::Stmts {\n            force($else);\n        }
                 - QAST::Op(call .force) $else
                   - QAST::Var(lexical $else :decl())
@@ -323,34 +369,36 @@
                 - QAST::Var(lexical $v :decl())
     - QAST::Op(bind)
       - QAST::Var(lexical .MAIN :decl(var))
-      - QAST::Block {\n    my $lambda2 := [\n        'λ1',   # infoIdx...
+      - QAST::Block {\n    my $lambda2 := [\n        'λ1',            ...
         - QAST::Var+{QAST::SpecialArg}(lexical @ARGS :decl(param)) @ARGS
         - QAST::Var(lexical $lambda2 :decl(var))
         - QAST::Var(lexical $lambda1 :decl(var))
-        - QAST::Op(bind) $lambda2 := [\n        'λ1',   # infoIdx\n        ...
+        - QAST::Op(bind) $lambda2 := [\n        'λ1',                      ...
           - QAST::Var(lexical $lambda2 :decl())
           - QAST::Op(list &circumfix:<[ ]>) ,
             - QAST::SVal(λ1)
-            - QAST::Op(list &circumfix:<[ ]>)
-              - QAST::IVal(23)
+            - QAST::Op(takeclosure)
+              - QAST::Block { 'λ1(...) called' }
+                - QAST::Var+{QAST::SpecialArg}(lexical @as :decl(param)) @as
+                - QAST::SVal(λ1(...) called)
+            - QAST::IVal(23)
         - QAST::Op(bind) $lambda1 := [\n        'λ0',                      ...
           - QAST::Var(lexical $lambda1 :decl())
           - QAST::Op(list &circumfix:<[ ]>) ,
             - QAST::SVal(λ0)
-            - QAST::Op(list &circumfix:<[ ]>) ,
-              - QAST::SVal(foo)
-              - QAST::IVal(42)
-              - QAST::NVal(3.14159265)
-              - QAST::Var(lexical $lambda2 :decl())
+            - QAST::Op(takeclosure)
+              - QAST::Block { 'λ0(...) called' }
+                - QAST::Var+{QAST::SpecialArg}(lexical @as :decl(param)) @as
+                - QAST::SVal(λ0(...) called)
+            - QAST::SVal(foo)
+            - QAST::IVal(42)
+            - QAST::NVal(3.14159265)
+            - QAST::Var(lexical $lambda2 :decl())
         - QAST::Op(callmethod push) $lambda1
-          - QAST::VarWithFallback(positional  :decl())
-            - QAST::Var(lexical $lambda1 :decl())
-            - QAST::IVal(1)
+          - QAST::Var(lexical $lambda1 :decl())
           - QAST::Var(lexical $lambda1 :decl())
         - QAST::Op(callmethod push) $lambda1
-          - QAST::VarWithFallback(positional  :decl())
-            - QAST::Var(lexical $lambda1 :decl())
-            - QAST::IVal(1)
+          - QAST::Var(lexical $lambda1 :decl())
           - QAST::Var(lexical $lambda1 :decl())
         - QAST::Op(call .say) strOut($lambda1)
           - QAST::Op(call .strOut) $lambda1
@@ -397,6 +445,7 @@
     - QAST::Var(lexical .force :decl())
     - QAST::Var(lexical .strLit :decl())
     - QAST::Var(lexical .lam2info :decl())
+    - QAST::Var(lexical .sublist :decl())
     - QAST::Var(lexical .ifTag :decl())
     - QAST::Var(lexical .nonLam2strOut :decl())
     - QAST::Var(lexical .lam2strOut :decl())
@@ -407,7 +456,7 @@
       - QAST::Op(call .MAIN)
         - QAST::Var+{QAST::SpecialArg}(lexical @ARGS :decl())
 
-# [nqpc] compiled: lib/L/foo.nqp
+# [nqpc] compiled: lib/L/runtime.nqp
 # [nqpc] -----------------------------
 
-Output completed (3 sec consumed) - Normal Termination
+Output completed (4 sec consumed) - Normal Termination
