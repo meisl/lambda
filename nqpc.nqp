@@ -208,33 +208,47 @@ sub qastChildren($ast, *@types) {
     @out;
 }
 
-sub _dropStmts($ast, $parent = nqp::null) {
+sub _drop_Stmts($ast, $parent) {
     nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) )
         unless nqp::istype($ast, QAST::Node);
-    return [nqp::clone($ast)]
-        unless nqp::istype($ast, QAST::Children);
-    my @children := [];
-    for $ast.list {
-        for _dropStmts($_, $ast) {
-            @children.push($_);
+    if nqp::istype($ast, QAST::Children) {
+        my @children := [];
+        for $ast.list {
+            for _drop_Stmts($_, $ast) {
+                @children.push($_);
+            }
+        }
+        if nqp::istype($ast, QAST::Stmts) && istypeAny($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) {
+            return @children; # return the Stmts' children as is, dropping the Stmts node
+        } else {
+            $ast.set_children(@children);
         }
     }
-    if nqp::istype($ast, QAST::Stmts) && istypeAny($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) {
-        return @children; # return the Stmts' children as is, dropping the Stmts node
-    } else {
-        $ast := nqp::clone($ast);
-        $ast.set_children(@children);
-        return [$ast];
-    }
+    return [$ast];
 }
 
-sub dropStmts($ast) {
-    my @out := _dropStmts($ast);
+sub drop_Stmts($ast) {
+    my @out := _drop_Stmts($ast, nqp::null);
     return nqp::elems(@out) == 1
         ?? @out[0]
         !! QAST::Stmts.new(|@out);
 }
 
+sub drop_takeclosure($ast) {
+    nqp::die('drop_takeclosure expects a QAST::Node - got ' ~ nqp::reprname($ast) )
+        unless nqp::istype($ast, QAST::Node);
+    if nqp::istype($ast, QAST::Op) && $ast.op eq 'takeclosure' {
+        $ast := $ast[0];
+    }
+    elsif nqp::istype($ast, QAST::Children) {
+        my @children := [];
+        for $ast.list {
+            @children.push(drop_takeclosure($_));
+        }
+        $ast.set_children(@children);
+    }
+    return $ast;
+}
 
 sub findDef($ast, str $name) {
     my $out;
@@ -293,7 +307,8 @@ sub MAIN(*@ARGS) {
     my $inspector := -> $fileName, $ast {
         my $what := '&lam2info';  #   '&strOut';  #   '&renameVars';  #   '&ifTag';    #   
         say(">>> $fileName:\n");
-        $ast := dropStmts($ast);
+        $ast := drop_takeclosure($ast);  # must precede dropStms
+        $ast := drop_Stmts($ast);
         #$ast := findDef($ast, $what);
         if $ast {
             $ast := renameVars($ast, -> $s {
