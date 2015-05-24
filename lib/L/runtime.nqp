@@ -1,8 +1,10 @@
 my $λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)';
-my %λinfo := [
-    nqp::hash('from',  1, 'length', 55, 'freeVarNames', ['foo', 'bar', 'baz', 'qumbl', 'self', 'self']),
-    nqp::hash('from', 59, 'length',  4, 'freeVarNames', ['foo']),
-];
+my %info := nqp::hash(
+    'λ', [
+        nqp::hash('from',  1, 'length', 55, 'freeVarNames', ['foo', 'bar', 'baz', 'qumbl', 'self', 'self']),
+        nqp::hash('from', 59, 'length',  4, 'freeVarNames', ['foo']),
+    ],
+);
 
 sub force($v) {
     nqp::isinvokable($v) ?? $v() !! $v;
@@ -10,27 +12,6 @@ sub force($v) {
 
 sub strLit(str $s) {
     '"' ~ nqp::escape($s) ~ '"';
-}
-
-sub lam2info(str $id, @fvs) {
-    my $idx     := nqp::atpos(nqp::radix(10, $id, 1, 0), 0);
-    my %rawInfo := %λinfo[$idx];
-    my %fvs     := nqp::hash();
-    my %out     := nqp::hash(
-        'id',       $id,
-        'idx',      $idx,
-        'from',     %rawInfo<from>,
-        'length',   %rawInfo<length>,
-        'src',      nqp::substr($λsrc, %rawInfo<from>, %rawInfo<length>),
-        'freeVars', %fvs
-    );
-    my @fvns := %rawInfo<freeVarNames>;
-    my $i := 0; # TODO: use nqp::iterator(@fvs)
-    for @fvns {
-        nqp::bindkey(%fvs, $_, @fvs[$i]);
-        $i++;
-    }
-    %out;
 }
 
 sub sublist(@list, int $from) {
@@ -48,17 +29,35 @@ sub sublist(@list, int $from) {
     @out;
 }
 
+sub lam2info($lambda, str $id, int $idx, %rawLambdaInfo) {
+    my @fvs     := sublist($lambda, 2);    # freeVars start at 2
+    my %fvs     := nqp::hash();
+    my %out     := nqp::hash(
+        'id',       $id,
+        'idx',      $idx,
+        'from',     %rawLambdaInfo<from>,
+        'length',   %rawLambdaInfo<length>,
+        'src',      nqp::substr($λsrc, %rawLambdaInfo<from>, %rawLambdaInfo<length>),
+        'code',     nqp::atpos($lambda, 1),
+        'freeVars', %fvs
+    );
+    my @fvns := %rawLambdaInfo<freeVarNames>;
+    my $i := 0; # TODO: use nqp::iterator(@fvs)
+    for @fvns {
+        nqp::bindkey(%fvs, $_, @fvs[$i]);
+        $i++;
+    }
+    %out;
+}
+
 sub ifTag($subject, str $tag, $then, $else) {
     say(">>>ifTag(..., $tag, ...)");
     if nqp::islist($subject) {
         my $id := nqp::atpos($subject, 0);
         if nqp::substr($id, 0, 1) eq $tag {
-            $then(
-                lam2info(
-                    $id,
-                    sublist($subject, 2),    # freeVars start at 2
-                )
-            );
+            my $idx := nqp::atpos(nqp::radix(10, $id, 1, 0), 0);
+            my $rawInfo := %info{$tag}[$idx];
+            $then(lam2info($subject, $id, $idx, $rawInfo));
         } else {
             force($else);
         }
