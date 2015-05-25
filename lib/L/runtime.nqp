@@ -10,10 +10,6 @@ sub force($v) {
     nqp::isinvokable($v) ?? $v() !! $v;
 }
 
-sub strLit(str $s) {
-    '"' ~ nqp::escape($s) ~ '"';
-}
-
 sub sublist(@list, int $from) {
     my int $n     := nqp::elems(@list);
     my int $count := $n;
@@ -58,18 +54,16 @@ sub lam2info($lambda) {
     %out;
 }
 
-sub fellthroughtypecase($subject) {
-    nqp::die('typecase: fell through due to missing "otherwise"-callback: '
-        ~ nqp::reprname($subject)
-    );
-}
-
 
 sub typecase($subject, *%callbacks) {
     say('>>>typecase(', nqp::reprname($subject), '...) ');
     my $otherwise := nqp::defor(
         %callbacks<otherwise>,
-        &fellthroughtypecase
+        -> $x { # compiler should see that this needs not be a closure
+            nqp::die('typecase: fell through due to missing "otherwise"-callback: '
+                ~ nqp::reprname($subject)
+            )
+        }
     );
     my $cbKey;
     if nqp::islist($subject) {
@@ -85,12 +79,9 @@ sub typecase($subject, *%callbacks) {
             }
         }
     } else {
-        if nqp::isstr($subject) {
-            $cbKey := 'str';
-        } elsif nqp::isint($subject) {
-            $cbKey := 'int';
-        } elsif nqp::isnum($subject) {
-            $cbKey := 'num';
+             if nqp::isstr($subject) { $cbKey := 'str';
+        } elsif nqp::isint($subject) { $cbKey := 'int';
+        } elsif nqp::isnum($subject) { $cbKey := 'num';
         } else {
             nqp::die('typecase: unsupported low-level type ' ~ nqp::reprname($subject));
         }
@@ -102,11 +93,13 @@ sub typecase($subject, *%callbacks) {
 
 sub int2str(int $i) { ~$i }
 sub num2str(num $n) { ~$n }
+# did you expect `str2str`? - that's `strLit`
+sub strLit(str $s) { '"' ~ nqp::escape($s) ~ '"' }
+
 
 sub strOut($v, str $indent = '', %done = {}) {
-    $v := force($v);
-    typecase($v,
-        :λ(-> $lambda {
+    typecase(force($v),
+        :λ(-> $lambda { # compiler should see that this needs not be a closure
             my %info := lam2info($lambda);
             my $src := %info<src>;
             my %fvs := %info<freeVars>;
@@ -115,7 +108,7 @@ sub strOut($v, str $indent = '', %done = {}) {
                 my $fv      := nqp::iterval($_);
                 my $pre     := "# where $fvName = ";
                 my $flatVal := typecase($fv,
-                    :λ(-> $x { nqp::null }),
+                    :λ(-> $x { nqp::null }), # compiler should see that this needs not be a closure
                     :str(&strLit),
                     :int(&int2str),
                     :num(&num2str)

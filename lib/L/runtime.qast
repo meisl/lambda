@@ -20,16 +20,6 @@
             - QAST::Var(lexical $v :decl())
           - QAST::Var(lexical $v :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical .strLit :decl(var))
-      - QAST::Block {\n    '\"' ~ nqp::escape($s) ~ '\"';\n}
-        - QAST::Var(lexical $s :decl(param)) $s
-        - QAST::Op(concat) ~
-          - QAST::Op(concat) ~
-            - QAST::SVal(\")
-            - QAST::Op(escape) nqp::escape($s)
-              - QAST::Var(lexical $s :decl())
-          - QAST::SVal(\")
-    - QAST::Op(bind)
       - QAST::Var(lexical .sublist :decl(var))
       - QAST::Block {\n    my int $n     := nqp::elems(@list);\n    my...
         - QAST::Var(lexical @list :decl(param)) @list
@@ -185,15 +175,6 @@
           - QAST::Var(lexical %fvs :decl())
         - QAST::Var(lexical %out :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical .fellthroughtypecase :decl(var))
-      - QAST::Block {\n    nqp::die('typecase: fell through due to mis...
-        - QAST::Var(lexical $subject :decl(param)) $subject
-        - QAST::Op(die) nqp::die('typecase: fell through due to missing \"...
-          - QAST::Op(concat) ~
-            - QAST::SVal(typecase: fell through due to missing \"otherwise\"-callback: )
-            - QAST::Op(reprname) nqp::reprname($subject)
-              - QAST::Var(lexical $subject :decl())
-    - QAST::Op(bind)
       - QAST::Var(lexical .typecase :decl(var))
       - QAST::Block {\n    say('>>>typecase(', nqp::reprname($subject)...
         - QAST::Var(lexical $subject :decl(param)) $subject
@@ -214,7 +195,13 @@
             - QAST::VarWithFallback(associative  :decl())
               - QAST::Var(lexical %callbacks :decl())
               - QAST::SVal(otherwise)
-            - QAST::Var(lexical .fellthroughtypecase :decl())
+            - QAST::Block { # compiler should see that this needs not be a c...
+              - QAST::Var(lexical $x :decl(param)) $x
+              - QAST::Op(die) nqp::die('typecase: fell through due to missing \"...
+                - QAST::Op(concat) ~
+                  - QAST::SVal(typecase: fell through due to missing \"otherwise\"-callback: )
+                  - QAST::Op(reprname) nqp::reprname($subject)
+                    - QAST::Var(lexical $subject :decl())
         - QAST::Var(lexical $cbKey :decl())
         - QAST::Op(if) nqp::islist($subject) {\n        my $id := nqp::at...
           - QAST::Op(islist) nqp::islist($subject)
@@ -252,19 +239,19 @@
                     - QAST::SVal(typecase: unsupported low-level list type - invalid tag )
                     - QAST::Op(reprname) nqp::reprname($tag)
                       - QAST::Var(lexical $tag :decl())
-          - QAST::Op(if) nqp::isstr($subject) {\n            $cbKey := 'str...
+          - QAST::Op(if) nqp::isstr($subject) { $cbKey := 'str';\n        }
             - QAST::Op(isstr) nqp::isstr($subject)
               - QAST::Var(lexical $subject :decl())
             - QAST::Op(bind) :=
               - QAST::Var(lexical $cbKey :decl())
               - QAST::SVal(str)
-            - QAST::Op(if) nqp::isint($subject) {\n            $cbKey := 'int...
+            - QAST::Op(if) nqp::isint($subject) { $cbKey := 'int';\n        }
               - QAST::Op(isint) nqp::isint($subject)
                 - QAST::Var(lexical $subject :decl())
               - QAST::Op(bind) :=
                 - QAST::Var(lexical $cbKey :decl())
                 - QAST::SVal(int)
-              - QAST::Op(if) nqp::isnum($subject) {\n            $cbKey := 'num...
+              - QAST::Op(if) nqp::isnum($subject) { $cbKey := 'num';\n        }
                 - QAST::Op(isnum) nqp::isnum($subject)
                   - QAST::Var(lexical $subject :decl())
                 - QAST::Op(bind) :=
@@ -298,18 +285,25 @@
         - QAST::Op(stringify) ~
           - QAST::Var(lexical $n :decl())
     - QAST::Op(bind)
+      - QAST::Var(lexical .strLit :decl(var))
+      - QAST::Block { '\"' ~ nqp::escape($s) ~ '\"' }
+        - QAST::Var(lexical $s :decl(param)) $s
+        - QAST::Op(concat) ~
+          - QAST::Op(concat) ~
+            - QAST::SVal(\")
+            - QAST::Op(escape) nqp::escape($s)
+              - QAST::Var(lexical $s :decl())
+          - QAST::SVal(\")
+    - QAST::Op(bind)
       - QAST::Var(lexical .strOut :decl(var))
-      - QAST::Block {\n    $v := force($v);\n    typecase($v,\n       ...
+      - QAST::Block {\n    typecase(force($v),\n        :λ(-> $lambda ...
         - QAST::Var(lexical $v :decl(param)) $v
         - QAST::Var(lexical $indent :decl(param)) $indent
         - QAST::Var(lexical %done :decl(param)) %done
-        - QAST::Op(bind) :=
-          - QAST::Var(lexical $v :decl())
+        - QAST::Op(call .typecase) force($v),\n        :λ(-> $lambda { # compiler sho...
           - QAST::Op(call .force) $v
             - QAST::Var(lexical $v :decl())
-        - QAST::Op(call .typecase) $v,\n        :λ(-> $lambda {\n            my %info...
-          - QAST::Var(lexical $v :decl())
-          - QAST::Block {\n            my %info := lam2info($lambda);\n   ...
+          - QAST::Block { # compiler should see that this needs not be a c...
             - QAST::Var(lexical $lambda :decl(param)) $lambda
             - QAST::Var(lexical %info :decl(var))
             - QAST::Var(lexical $src :decl(var))
@@ -496,16 +490,15 @@
             - QAST::Op(list)
               - QAST::SVal(foo)
     - QAST::Var(lexical .force :decl())
-    - QAST::Var(lexical .strLit :decl())
     - QAST::Var(lexical .sublist :decl())
     - QAST::Var(lexical .lam2id :decl())
     - QAST::Var(lexical .lam2code :decl())
     - QAST::Var(lexical .lam2fvs :decl())
     - QAST::Var(lexical .lam2info :decl())
-    - QAST::Var(lexical .fellthroughtypecase :decl())
     - QAST::Var(lexical .typecase :decl())
     - QAST::Var(lexical .int2str :decl())
     - QAST::Var(lexical .num2str :decl())
+    - QAST::Var(lexical .strLit :decl())
     - QAST::Var(lexical .strOut :decl())
     - QAST::Var(lexical .MAIN :decl())
     - QAST::Op(if)
