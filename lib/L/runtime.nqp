@@ -155,6 +155,16 @@ sub apply1($f, $a1) {
     force($result);
 }
 
+sub say(*@args) {
+    my $s := '';
+    for @args {
+        $s := $s ~ (nqp::isstr($_)
+            ?? $_
+            !! strOut($_));
+    }
+    nqp::say($s);
+}
+
 
 sub MAIN(*@ARGS) {
     my $n := 0;

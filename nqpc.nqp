@@ -54,7 +54,7 @@ class NQPCompiler is NQP::Compiler {
     method inspectQAST($ast) {
         my $fileName := $*USER_FILE;
         for @!qastInspectors {
-            $_($fileName, $ast);
+            $ast := $_($fileName, $ast);
         }
         return $ast;
     }
@@ -212,21 +212,27 @@ sub drop_takeclosure($ast) {
     nqp::die('drop_takeclosure expects a QAST::Node - got ' ~ nqp::reprname($ast) )
         unless nqp::istype($ast, QAST::Node);
     if nqp::istype($ast, QAST::Op) && $ast.op eq 'takeclosure' {
-        return $ast[0];
-    } elsif nqp::istype($ast, QAST::Children) {
+        $ast := drop_takeclosure($ast[0]);  #   $ast[0];    #   
+    #} elsif nqp::istype($ast, QAST::Children) {
+    } elsif nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
         my @children := [];
         for $ast.list {
             @children.push(drop_takeclosure($_));
         }
-        $ast.set_children(@children);
+        #$ast.set_children(@children);
+        my @list := $ast.list;
+        while +@list { @list.pop }
+        for @children { @list.push($_) }
+
     }
     $ast;
 }
 
 sub _drop_Stmts($ast, $parent) {
-    nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) )
+    nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) ~ (nqp::isstr($ast) ?? ' "' ~ nqp::escape($ast) ~ '"' !! '') )
         unless nqp::istype($ast, QAST::Node);
-    if nqp::istype($ast, QAST::Children) {
+    #if nqp::istype($ast, QAST::Children) {
+    if nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
         my @children := [];
         for $ast.list {
             for _drop_Stmts($_, $ast) {
@@ -241,7 +247,10 @@ sub _drop_Stmts($ast, $parent) {
         {
             return @children; # return the Stmts' children as is, dropping the Stmts node
         } else {
-            $ast.set_children(@children);
+            #$ast.set_children(@children);
+            my @list := $ast.list;
+            while +@list { @list.pop }
+            for @children { @list.push($_) }
         }
     }
     [$ast];
@@ -257,12 +266,13 @@ sub drop_Stmts($ast) {
 sub remove_bogusOpNames($ast) {
     nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
         unless nqp::istype($ast, QAST::Node);
-    if nqp::istype($ast, QAST::Children) {
+    #if nqp::istype($ast, QAST::Children) {
+    if nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
         for $ast.list {
             remove_bogusOpNames($_);
         }
     }
-    if nqp::istype($ast, QAST::Op) && ($ast.op ne 'call')  && ($ast.op ne 'callmethod') {
+    if nqp::istype($ast, QAST::Op) && ($ast.op ne 'call') && ($ast.op ne 'callmethod') && ($ast.op ne 'lexotic') {
         #say('>>>Op(', $ast.op, ' ', $ast.dump_extra_node_info, ')')
         #    unless nqp::index('x radix can postinc preinc add_n sub_n stringify bind bindkey concat atpos atkey die reprname defor isnull iseq_s iseq_n isgt_n islt_n isinvokable isstr isint isnum islist ishash substr if unless for while elems chars escape list hash iterkey_s iterval', $ast.op) >= 0;
         $ast.name(nqp::null_s);
@@ -307,7 +317,8 @@ sub renameVars($ast, $map?) {
             $ast.name($new);
         }
     }
-    if nqp::istype($ast, QAST::Children) {
+    #if nqp::istype($ast, QAST::Children) {
+    if nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
         for $ast.list {
             renameVars($_, $map);
         }
@@ -319,15 +330,25 @@ sub renameVars($ast, $map?) {
 
 sub MAIN(*@ARGS) {
     my $cwd := nqp::cwd();
-    my $lib := 'lib/L';
+    my $lib := 'lib/L';    #   '.';     #   
     my $ext := '.nqp';
     my $sep := '# [nqpc] ' ~ nqp::x('-', 29);
     my $nqpc := NQPCompiler.new();
 
+    @ARGS.shift;  # first is program name
+
+    if nqp::elems(@ARGS) == 0 {
+        #@ARGS.push('LGrammar');
+        #@ARGS.push('LActions');
+        #@ARGS.push('L');
+
+        @ARGS.push('runtime');
+    }
+
     my $inspector := -> $fileName, $ast {
         my $what := '&lam2info';  #   '&strOut';  #   '&renameVars';  #   '&ifTag';    #   
-        say(">>> $fileName:\n");
-        $ast := drop_takeclosure($ast);  # must precede dropStms
+        say(">>> $fileName...");
+        #$ast := drop_takeclosure($ast);  # breaks things!!!!!!
         $ast := drop_Stmts($ast);
         $ast := remove_bogusOpNames($ast);
         #$ast := findDef($ast, $what);
@@ -341,23 +362,18 @@ sub MAIN(*@ARGS) {
                     $s;
                 }
             });
-            say($ast.dump);
+            my $dump := $ast.dump;
+            my $qastfileName := $fileName ~ '.qast';
+            spew($qastfileName, $dump);
+            say(">>> QAST dump written to ", $qastfileName);
         } else {
             say($what, ' not found!');
         }
-        
+        $ast;
     };
 
-    $nqpc.add_qastInspector($inspector);
-
-    @ARGS.shift;  # first is program name
-
-    if nqp::elems(@ARGS) == 0 {
-        #@ARGS.push('LGrammar');
-        #@ARGS.push('LActions');
-        #@ARGS.push('L');
-        @ARGS.push('runtime');
-    }
+    $nqpc.add_qastInspector($inspector)
+        if +@ARGS == 1 && @ARGS[0] eq 'runtime';
 
     for @ARGS {
         my $file := $_ ~ $ext;
