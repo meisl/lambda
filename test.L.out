@@ -1,7 +1,17 @@
-# [nqpc] compiled: lib/L/LGrammar.nqp
-# [nqpc] compiled: lib/L/LActions.nqp
-# [nqpc] compiled: lib/L/L.nqp
+# [nqpc] compiled: lib/L/nqpc.nqp ~> "./nqpc.moarvm"
+# [nqpc] compiled: lib/L/LGrammar.nqp ~> "lib/L/LGrammar.moarvm"
+# [nqpc] compiled: lib/L/LActions.nqp ~> "lib/L/LActions.moarvm"
+# [nqpc] compiled: lib/L/L.nqp ~> "lib/L/L.moarvm"
 # [nqpc] -----------------------------
+Stage start      :   0.000
+Stage mkRuntime  :   0.234
+Stage parse      :   0.047
+Stage ast        :   0.000
+Stage inspectQAST:   0.031
+Stage mast       :   0.078
+Stage mbc        :   0.000
+Stage moar       :   0.000
+# [Lc] mkRuntime ~> QAST::CompUnit+{StrByDump}
 47 lambdas
 1029 QAST::Node s
 91 QAST::Block s
@@ -12,7 +22,7 @@
 Unhandled exception: >>>Error evaluating E:\proj\perl6\Lambda\test.L:
 ERROR: cannot apply "foo" to "bar"
    at <unknown>:1  (lib\L\L.moarvm:command_line:4294967295)
- from lib/L/L.nqp:91  (lib\L\L.moarvm:MAIN:69)
- from lib/L/L.nqp:7  (lib\L\L.moarvm:<mainline>:37)
+ from lib/L/L.nqp:108  (lib\L\L.moarvm:MAIN:107)
+ from lib/L/L.nqp:8  (lib\L\L.moarvm:<mainline>:37)
  from <unknown>:1  (lib\L\L.moarvm:<main>:8)
  from <unknown>:1  (lib\L\L.moarvm:<entry>:9)

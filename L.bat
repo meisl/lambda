@@ -41,10 +41,10 @@ SET QASTOUT=%IN%.qast
 SET PROGOUT=%IN%.out
 SET NQPLIB=C:\rakudo\languages\nqp\lib
 SET MOAR=moar.exe --libpath="%NQPLIB%"
-SET NQPCARGS=LGrammar LActions L
+SET NQPCARGS=nqpc LGrammar LActions L
 SET COMPILECOMPILER=%MOAR% "%NQPLIB%\nqp.moarvm" nqpc.nqp %NQPCARGS%
 SET COMPILECOMPILEROUT=nqpc.out
-SET L=%MOAR% --libpath="lib\L" "lib\L\L.moarvm"
+SET L=%MOAR% --libpath="lib\L" --libpath="." "lib\L\L.moarvm"
 
 REM echo OPTS: %OPTS%
 REM echo IN: %IN%

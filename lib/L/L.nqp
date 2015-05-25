@@ -2,6 +2,7 @@ use NQPHLL;
 
 use LGrammar;
 use LActions;
+use nqpc;
 
 
 class LCompiler is HLL::Compiler {
@@ -19,6 +20,14 @@ class LCompiler is HLL::Compiler {
         }
         return $ast;
     }
+
+    method mkRuntime($src) {
+        my $nqpc := NQPCompiler.new();
+        my $rtQAST := $nqpc.compileFile('runTime', :lib('lib/L'), :target('ast'));
+        say("# [Lc] mkRuntime ~> " ~ whatsit($rtQAST));
+        return $src;
+    }
+    
 
     method command_line(@args, *%adverbs) {
         my $program-name := @args[0];
@@ -60,9 +69,11 @@ class LCompiler is HLL::Compiler {
 }
 
 
-sub flatten(@args) {
+sub flatten($args) {
+    return [$args]
+        unless nqp::islist($args);
     my @out := [];
-    for @args -> $_ {
+    for $args -> $_ {
         if nqp::islist($_) {
             for flatten($_) -> $_ {
                 @out.push($_);
@@ -79,6 +90,8 @@ sub MAIN(@ARGS) {
     $c.language('lambda');
     $c.parsegrammar(LGrammar);
     $c.parseactions(LActions.new);
+    
+    $c.addstage('mkRuntime', :after<start>);
     $c.addstage('inspectQAST', :after<ast>);
 
     $c.add_qastInspector(-> $fileName, $ast {
@@ -88,6 +101,10 @@ sub MAIN(@ARGS) {
         nqp::closefh($outfile);
     });
 
-    $c.command_line(flatten(@ARGS), :encoding('utf8'));
+    my @as := flatten(@ARGS);
+    @as.push('Lc')     unless nqp::elems(@as) > 0; # program name for command_line
+    @as.push('test.L') unless nqp::elems(@as) > 1;
+
+    $c.command_line(@as, :encoding('utf8'), :stagestats(1));
 }
 

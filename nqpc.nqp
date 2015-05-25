@@ -2,10 +2,32 @@ use nqp;
 use NQPHLL;
 
 
-sub max($a, $b) { $a > $b ?? $a !! $b }
-sub min($a, $b) { $a < $b ?? $a !! $b }
+sub max($a, $b) is export { $a > $b ?? $a !! $b }
+sub min($a, $b) is export { $a < $b ?? $a !! $b }
 
-sub linesFrom(str $filename, $from = 1, $count?) {
+sub whatsit($v) is export {
+    my $reprname := nqp::reprname($v);
+
+    if nqp::isstr($v) {
+        my $length := nqp::chars($v);
+        if $length > 80 {
+            return '"' ~ nqp::escape(nqp::substr($v, 0, 45)) ~ '"'
+                 ~ ' ~ ... ~ '
+                 ~ '"' ~ nqp::escape(nqp::substr($v, $length - 25)) ~ '"'
+           ;
+        } else {
+            return '"' ~ nqp::escape($v) ~ '"';
+        }
+    } elsif nqp::isint($v)            { $reprname ~ ' ' ~ $v
+    } elsif nqp::isnum($v)            { $reprname ~ ' ' ~ $v
+    #} elsif nqp::istype($v, Something) { ??? } # TODO: something smart for lists and hashes
+    } elsif nqp::can($v.HOW, 'name')  { $v.HOW.name($v)
+    } else {
+        $reprname
+    }
+}
+
+sub linesFrom(str $filename, $from = 1, $count?) is export {
     my $to := $from + nqp::defor($count, nqp::inf());
     my @out := [];
     my $fh := nqp::open($filename, 'r');
@@ -20,6 +42,12 @@ sub linesFrom(str $filename, $from = 1, $count?) {
     @out;
 }
 
+role StrByDump {
+    method Str() { self.dump }
+}
+
+
+my $needsCompilation := 0;
 
 class NQPCompiler is NQP::Compiler {
 
@@ -32,8 +60,10 @@ class NQPCompiler is NQP::Compiler {
         self.parsegrammar(NQP::Grammar);
         self.parseactions(NQP::Actions);
 
-        self.addstage('optimize', :after<ast>);
-        self.addstage('inspectQAST', :before<optimize>);
+        # in this order (!):
+        self.addstage('optimize',    :after<ast>);
+        self.addstage('inspectqast', :after<ast>);
+        #self.addstage('aststr',      :after<ast>);
 
         # Add extra command line options.
         my @clo := self.commandline_options();
@@ -45,14 +75,26 @@ class NQPCompiler is NQP::Compiler {
         @clo.push('stable-sc');
         @clo.push('optimize=s');
     }
+
+    # override stage 'ast' and make the AST stringifiable
     
+    method ast($source, *%adverbs) {
+        my $ast := $source.ast();
+        self.panic("Unable to obtain AST from " ~ $source.HOW.name($source))
+            unless $ast ~~ QAST::Node;
+        $ast.HOW.mixin($ast, StrByDump);
+        $ast;
+    }
+
+    # additional stages
 
     method add_qastInspector($consumer) {
         @!qastInspectors.push($consumer);
     }
 
-    method inspectQAST($ast) {
+    method inspectqast($ast, *%adverbs) {
         my $fileName := $*USER_FILE;
+        
         for @!qastInspectors {
             $ast := $_($fileName, $ast);
         }
@@ -62,52 +104,64 @@ class NQPCompiler is NQP::Compiler {
     method handle-exception($error) {
         nqp::rethrow($error);
     }
-}
 
-
-my $needsCompilation := 0;
-
-sub compile($nqpc, $file, :$lib, :$cwd) {
-    my $nqpName := "$lib/$file.nqp";
-    my $mvmName := "$lib/$file.moarvm";
-    if !nqp::filereadable($nqpName) {
-        nqp::die("no such file: $nqpName");
-    }
-    if nqp::stat($mvmName, nqp::const::STAT_EXISTS) && !nqp::filewritable($mvmName) {
-        nqp::die("cannot write to file: $mvmName");
-    }
-    my $nqpTime := nqp::stat($nqpName, nqp::const::STAT_MODIFYTIME);
-    my $mvmTime := nqp::filewritable($mvmName)
-        ?? nqp::stat($mvmName, nqp::const::STAT_MODIFYTIME)
-        !! 0
-    ;
-    $needsCompilation := 1; #$needsCompilation || ($nqpTime > $mvmTime);
-    if !$needsCompilation {
-        #say($mvmName, ' ');
-        return 0;   # means: "not compiled (again) because it was up-to-date"
-    } else {
-        my @opts := [
-            '--module-path=' ~ $lib,
-            '--target=mbc',
-            '--output=' ~ $mvmName,
-        ];
-        my @args := nqp::clone(@opts);
-        @args.unshift('nqpc');  # give it a program name (for command_line)
-        @args.push($nqpName);
-        #say($mvmName, '...');
-
-        #say(nqp::join(' ', @args));
-        #say(nqp::x('-', 29));
-        my $*USER_FILE := $nqpName;
-        my $result;
-        my $error;
-        try {
-            $result := $nqpc.command_line(@args, :encoding('utf8'), :transcode('ascii iso-8859-1'));
-            CATCH {
-                $error := $_;
-            }
+    method compileFile($file, :$lib = '.', :$target = 'mbc') {
+        my $nqpName := "$lib/$file.nqp";
+        #say(">>> $nqpName: target=$target");
+        my $qastName := "$nqpName.qast";
+        my $mvmName := "$lib/$file.moarvm";
+        if !nqp::filereadable($nqpName) {
+            nqp::die("no such file: $nqpName");
         }
-        if $error {
+        if nqp::stat($mvmName, nqp::const::STAT_EXISTS) && !nqp::filewritable($mvmName) {
+            nqp::die("cannot write to file: $mvmName");
+        }
+        my $nqpTime := nqp::stat($nqpName, nqp::const::STAT_MODIFYTIME);
+        my $mvmTime := nqp::filewritable($mvmName)
+            ?? nqp::stat($mvmName, nqp::const::STAT_MODIFYTIME)
+            !! 0
+        ;
+        $needsCompilation := 1; #$needsCompilation || ($nqpTime > $mvmTime);
+        if !$needsCompilation {
+            return nqp::null;   # means: "not compiled (again) because it was up-to-date"
+        } else {
+            my @opts := [
+                #'--stagestats',
+                '--module-path=' ~ $lib,
+                '--target=' ~ $target,
+            ];
+            if $target eq 'mbc' {
+                @opts.push('--output=' ~ $mvmName);
+            } elsif $target eq 'ast' || $target eq 'inspectqast' {
+                @opts.push('--output=' ~ $qastName);
+            }
+            my @args := nqp::clone(@opts);
+            @args.unshift('nqpc');  # give it a program name (for command_line)
+            @args.push($nqpName);
+            #say($mvmName, '...');
+
+            #say(nqp::join(' ', @args));
+            #say(nqp::x('-', 29));
+            my $*USER_FILE := $nqpName;
+            my $result;
+            my $error;
+            try {
+                $result := self.command_line(@args, :encoding('utf8'), :transcode('ascii iso-8859-1'));
+                CATCH {
+                    $error := $_;
+                }
+            }
+            unless $error {
+                if nqp::isnull($result) {   # returning non-null means: "yes, we did compile and write it to disk"
+                    if $target eq 'mbc' {
+                        $result := $mvmName;
+                    } else {
+                        nqp::die("??? - successfully compiled $nqpName to target $target - but got null result...!?");
+                    }
+                }
+                return $result;
+            }
+            
             my $msg := nqp::getmessage($error);
             my $msglc := nqp::lc($msg);
             my $from;
@@ -169,7 +223,7 @@ sub compile($nqpc, $file, :$lib, :$cwd) {
             # TODO: Unable to parse expression in blockoid; couldn't find final '}'  at line 143, near "$msg := $m"
             # TODO: Use of undeclared variable '$fuck' at line 4, near " := [a b];"
             # TODO: Malformed binding at line 4, near "[a b];\ngra"
-            } else {
+            } elsif 0 {
                 my $line := 1;
                 my $column;
                 $msg := nqp::join('', [
@@ -177,13 +231,18 @@ sub compile($nqpc, $file, :$lib, :$cwd) {
                     "\n", '   at ', $nqpName, ':', ~$line, ($column ?? ':' ~ $column !! ''),
                     "\n",
                ]);
+            } else {
+                $msg := $msg ~ nqp::join("\n", nqp::backtracestrings($error));
             }
             nqp::flushfh(nqp::getstdout());
             nqp::die($msg);
         }
-        return 1;   # means: "yes, we did compile and write it to disk"
     }
+
 }
+
+
+
 
 sub istypeAny($subject, *@types) {
     for @types {
@@ -327,7 +386,6 @@ sub renameVars($ast, $map?) {
 }
 
 
-
 sub MAIN(*@ARGS) {
     my $cwd := nqp::cwd();
     my $lib := 'lib/L';    #   '.';     #   
@@ -377,10 +435,12 @@ sub MAIN(*@ARGS) {
 
     for @ARGS {
         my $file := $_ ~ $ext;
-        my $result := compile($nqpc, $_, :lib($lib), :cwd($cwd));
-        say($result
-            ?? "# [nqpc] compiled: $lib/$file"
-            !! "# [nqpc] uptodate: $lib/$file",
+        my $result := $_ eq 'nqpc'
+            ?? $nqpc.compileFile($_, :lib('.'))
+            !! $nqpc.compileFile($_, :lib($lib));
+        say(nqp::isnull($result)
+            ?? "# [nqpc] uptodate: $lib/$file"
+            !! "# [nqpc] compiled: $lib/$file ~> " ~ whatsit($result)
         );
         CATCH {
             my $msg := nqp::join('', [
