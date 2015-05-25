@@ -29,41 +29,33 @@ sub sublist(@list, int $from) {
     @out;
 }
 
-sub lam2info($lambda, str $id, int $idx, %rawLambdaInfo) {
-    my @fvs     := sublist($lambda, 2);    # freeVars start at 2
-    my %fvs     := nqp::hash();
+sub lam2code($lambda) {
+    nqp::atpos($lambda, 1);
+}
+
+sub lam2info($lambda) {
+    my $id      := nqp::atpos($lambda, 0);
+    my $idx     := nqp::atpos(nqp::radix(10, $id, 1, 0), 0);
+    my %rawInfo := %info<λ>[$idx];
     my %out     := nqp::hash(
         'id',       $id,
         'idx',      $idx,
-        'from',     %rawLambdaInfo<from>,
-        'length',   %rawLambdaInfo<length>,
-        'src',      nqp::substr($λsrc, %rawLambdaInfo<from>, %rawLambdaInfo<length>),
-        'code',     nqp::atpos($lambda, 1),
-        'freeVars', %fvs
+        'from',     %rawInfo<from>,
+        'length',   %rawInfo<length>,
+        'src',      nqp::substr($λsrc, %rawInfo<from>, %rawInfo<length>),
     );
-    my @fvns := %rawLambdaInfo<freeVarNames>;
+    # --- up to here it was all the same for all instances ---
+
+    my @fvs     := sublist($lambda, 2);    # freeVars start at 2
+    my %fvs     := nqp::hash();
+    my @fvns := %rawInfo<freeVarNames>;
     my $i := 0; # TODO: use nqp::iterator(@fvs)
     for @fvns {
         nqp::bindkey(%fvs, $_, @fvs[$i]);
         $i++;
     }
+    nqp::bindkey(%out, 'freeVars', %fvs);
     %out;
-}
-
-sub ifTag($subject, str $tag, $then, $else) {
-    say(">>>ifTag(..., $tag, ...)");
-    if nqp::islist($subject) {
-        my $id := nqp::atpos($subject, 0);
-        if nqp::substr($id, 0, 1) eq $tag {
-            my $idx := nqp::atpos(nqp::radix(10, $id, 1, 0), 0);
-            my $rawInfo := %info{$tag}[$idx];
-            $then($id, $idx, $rawInfo);
-        } else {
-            force($else);
-        }
-    } else {
-        force($else);
-    }
 }
 
 sub fellthroughtypecase($subject) {
@@ -77,22 +69,20 @@ sub typecase($subject, *%callbacks) {
         %callbacks<otherwise>,
         &fellthroughtypecase
     );
+    my $cbKey;
     if nqp::islist($subject) {
-        ifTag($subject, 'λ',
-            -> str $id, int $idx, $rawInfo {
-                my $cb := nqp::defor(%callbacks<λ>, $otherwise);
-                $cb(lam2info($subject, $id, $idx, $rawInfo));
-            },
-            {
-                if nqp::elems($subject) == 0 {
-                    nqp::die('typecase: unsupported low-level list type - empty');
-                } else {
-                    nqp::die('typecase: unsupported low-level list type - invalid tag');
-                }
+        my $id := nqp::atpos($subject, 0);
+        my $tag := nqp::substr($id, 0, 1);
+        if $tag eq 'λ' {
+            $cbKey := 'λ';
+        } else {
+            if nqp::elems($subject) == 0 {
+                nqp::die('typecase: unsupported low-level list type - empty');
+            } else {
+                nqp::die('typecase: unsupported low-level list type - invalid tag ' ~ nqp::reprname($tag));
             }
-        )
+        }
     } else {
-        my $cbKey;
         if nqp::isstr($subject) {
             $cbKey := 'str';
         } elsif nqp::isint($subject) {
@@ -102,9 +92,9 @@ sub typecase($subject, *%callbacks) {
         } else {
             nqp::die('typecase: unsupported low-level type ' ~ nqp::reprname($subject));
         }
-        my $cb := nqp::defor(%callbacks{$cbKey}, $otherwise);
-        $cb($subject);
     }
+    my $cb := nqp::defor(%callbacks{$cbKey}, $otherwise);
+    $cb($subject);
 }
 
 
@@ -120,7 +110,8 @@ sub nonLam2strOut($v) {
     }
 }
 
-sub lam2strOut(%info, str $indent = '', %done = {}) {
+sub lam2strOut($lambda, str $indent = '', %done = {}) {
+    my %info := lam2info($lambda);
     my $src := %info<src>;
     my %fvs := %info<freeVars>;
     for %fvs {
@@ -128,14 +119,15 @@ sub lam2strOut(%info, str $indent = '', %done = {}) {
         my $fv      := nqp::iterval($_);
         my $pre := "# where $fvName = ";
         $src := $src ~ typecase($fv,
-            :λ(-> %info {
+            :λ(-> $x {
+                my %info    := lam2info($fv);
                 my $id      := %info<id>;
                 my $doneKey := "$fvName = $id";
                 if %done{$doneKey} {
                     '';
                 } else {
                     %done{$doneKey} := 1;
-                    "\n$indent$pre" ~ lam2strOut(%info, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre) - 1), %done);
+                    "\n$indent$pre" ~ lam2strOut($fv, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre) - 1), %done);
                 }
             }),
             :otherwise(-> $x {
