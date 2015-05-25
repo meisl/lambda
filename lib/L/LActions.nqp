@@ -523,11 +523,7 @@ class LActions is HLL::Actions {
             mkBind($result, mkCall(
                 QAST::Op.new(:op<defor>,
                     mkLambda2code($f),
-                    QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<isinvokable>, $f),
-                        $f,
-                        mkDie('cannot apply ', mkRCall('.strLit', $f), ' to ', mkRCall('.strOut', $a1, ''))
-                    )
+                    mkDie('cannot apply ', mkRCall('.strLit', $f), ' to ', mkRCall('.strOut', $a1, ''))
                 ),
                 $a1
             )),

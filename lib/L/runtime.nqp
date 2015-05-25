@@ -10,6 +10,19 @@ sub force($v) {
     nqp::isinvokable($v) ?? $v() !! $v;
 }
 
+sub delayMemo($block) {
+    my int $wasRun := 0;
+    my $result := nqp::null;
+    return {
+        if $wasRun {
+            $result;
+        } else {
+            $wasRun := 1;
+            $result := $block();
+        }
+    };
+}
+
 sub sublist(@list, int $from) {
     my int $n     := nqp::elems(@list);
     my int $count := $n;
@@ -132,8 +145,29 @@ sub strOut($v, str $indent = '', %done = {}) {
     );
 }
 
+sub apply1($f, $a1) {
+    my $result := typecase(force($f),
+        :λ(&lam2code),
+        :otherwise(-> $x {
+            nqp::die('ERROR: cannot apply ' ~ strOut($x) ~ ' to ' ~ strOut($a1))
+        })
+    )($a1);
+    force($result);
+}
+
 
 sub MAIN(*@ARGS) {
+    my $n := 0;
+    my $b := { $n := $n + 1; };
+    my $d := delayMemo($b);
+    nqp::die('not ok: .delayMemo') unless $n == 0;
+    nqp::die('not ok: .delayMemo') unless force($d) == 1;
+    nqp::die('not ok: .delayMemo') unless force($d) == 1;
+    nqp::die('not ok: .delayMemo') unless force($b) == 2;
+    nqp::die('not ok: .delayMemo') unless force($b) == 3;
+    nqp::die('not ok: .delayMemo') unless force($d) == 1;
+    
+    
     my $lambda2 := [
         'λ1',                           # id: tag 'λ' and idx into %λinfo
         -> *@as { 'λ1(...) called' },   # code

@@ -1,9 +1,9 @@
-# [nqpc] uptodate: lib/L/LGrammar.nqp
-# [nqpc] uptodate: lib/L/LActions.nqp
-# [nqpc] uptodate: lib/L/L.nqp
+# [nqpc] compiled: lib/L/LGrammar.nqp
+# [nqpc] compiled: lib/L/LActions.nqp
+# [nqpc] compiled: lib/L/L.nqp
 # [nqpc] -----------------------------
 47 lambdas
-1033 QAST::Node s
+1029 QAST::Node s
 91 QAST::Block s
 96 QAST::Op(list) s
 114 QAST::IVal s

@@ -20,6 +20,33 @@
             - QAST::Var(lexical $v :decl())
           - QAST::Var(lexical $v :decl())
     - QAST::Op(bind)
+      - QAST::Var(lexical .delayMemo :decl(var))
+      - QAST::Block {\n    my int $wasRun := 0;\n    my $result := nqp...
+        - QAST::Var(lexical $block :decl(param)) $block
+        - QAST::Var(lexical $wasRun :decl(var))
+        - QAST::Var(lexical $result :decl(var))
+        - QAST::Op(lexotic)
+          - QAST::Stmts \n    my int $wasRun := 0;\n    my $result := nqp:...
+            - QAST::Op(bind) int $wasRun := 0
+              - QAST::Var(lexical $wasRun :decl())
+              - QAST::IVal(0)
+            - QAST::Op(bind) $result := nqp::null
+              - QAST::Var(lexical $result :decl())
+              - QAST::Op(null) nqp::null
+            - QAST::Op(call RETURN)
+              - QAST::Block {\n        if $wasRun {\n            $result;\n   ...
+                - QAST::Op(if) $wasRun {\n            $result;\n        }
+                  - QAST::Var(lexical $wasRun :decl())
+                  - QAST::Var(lexical $result :decl())
+                  - QAST::Stmts {\n            $wasRun := 1;\n            $result ...
+                    - QAST::Op(bind) :=
+                      - QAST::Var(lexical $wasRun :decl())
+                      - QAST::IVal(1)
+                    - QAST::Op(bind) :=
+                      - QAST::Var(lexical $result :decl())
+                      - QAST::Op(call) 
+                        - QAST::Var(lexical $block :decl())
+    - QAST::Op(bind)
       - QAST::Var(lexical .sublist :decl(var))
       - QAST::Block {\n    my int $n     := nqp::elems(@list);\n    my...
         - QAST::Var(lexical @list :decl(param)) @list
@@ -415,11 +442,98 @@
           - QAST::Var+{QAST::SpecialArg}(lexical .int2str :decl())
           - QAST::Var+{QAST::SpecialArg}(lexical .num2str :decl())
     - QAST::Op(bind)
+      - QAST::Var(lexical .apply1 :decl(var))
+      - QAST::Block {\n    my $result := typecase(force($f),\n        ...
+        - QAST::Var(lexical $f :decl(param)) $f
+        - QAST::Var(lexical $a1 :decl(param)) $a1
+        - QAST::Var(lexical $result :decl(var))
+        - QAST::Op(bind) $result := typecase(force($f),\n        :λ(&lam2co...
+          - QAST::Var(lexical $result :decl())
+          - QAST::Op(call) $a1
+            - QAST::Op(call .typecase) force($f),\n        :λ(&lam2code),\n        :other...
+              - QAST::Op(call .force) $f
+                - QAST::Var(lexical $f :decl())
+              - QAST::Var+{QAST::SpecialArg}(lexical .lam2code :decl())
+              - QAST::Block {\n            nqp::die('ERROR: cannot apply ' ~ s...
+                - QAST::Var(lexical $x :decl(param)) $x
+                - QAST::Op(die) nqp::die('ERROR: cannot apply ' ~ strOut($x) ~ ' t...
+                  - QAST::Op(concat) ~
+                    - QAST::Op(concat) ~
+                      - QAST::Op(concat) ~
+                        - QAST::SVal(ERROR: cannot apply )
+                        - QAST::Op(call .strOut) $x
+                          - QAST::Var(lexical $x :decl())
+                      - QAST::SVal( to )
+                    - QAST::Op(call .strOut) $a1
+                      - QAST::Var(lexical $a1 :decl())
+            - QAST::Var(lexical $a1 :decl())
+        - QAST::Op(call .force) $result
+          - QAST::Var(lexical $result :decl())
+    - QAST::Op(bind)
       - QAST::Var(lexical .MAIN :decl(var))
-      - QAST::Block {\n    my $lambda2 := [\n        'λ1',            ...
+      - QAST::Block {\n    my $n := 0;\n    my $b := { $n := $n + 1; }...
         - QAST::Var+{QAST::SpecialArg}(lexical @ARGS :decl(param)) @ARGS
+        - QAST::Var(lexical $n :decl(var))
+        - QAST::Var(lexical $b :decl(var))
+        - QAST::Var(lexical $d :decl(var))
         - QAST::Var(lexical $lambda2 :decl(var))
         - QAST::Var(lexical $lambda1 :decl(var))
+        - QAST::Op(bind) $n := 0
+          - QAST::Var(lexical $n :decl())
+          - QAST::IVal(0)
+        - QAST::Op(bind) $b := { $n := $n + 1; }
+          - QAST::Var(lexical $b :decl())
+          - QAST::Block { $n := $n + 1; }
+            - QAST::Op(bind) :=
+              - QAST::Var(lexical $n :decl())
+              - QAST::Op(add_n) +
+                - QAST::Var(lexical $n :decl())
+                - QAST::IVal(1)
+        - QAST::Op(bind) $d := delayMemo($b)
+          - QAST::Var(lexical $d :decl())
+          - QAST::Op(call .delayMemo) $b
+            - QAST::Var(lexical $b :decl())
+        - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless $n == 0
+          - QAST::Op(iseq_n) ==
+            - QAST::Var(lexical $n :decl())
+            - QAST::IVal(0)
+          - QAST::Op(die) nqp::die('not ok: .delayMemo')
+            - QAST::SVal(not ok: .delayMemo)
+        - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless force($d) ==...
+          - QAST::Op(iseq_n) ==
+            - QAST::Op(call .force) $d
+              - QAST::Var(lexical $d :decl())
+            - QAST::IVal(1)
+          - QAST::Op(die) nqp::die('not ok: .delayMemo')
+            - QAST::SVal(not ok: .delayMemo)
+        - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless force($d) ==...
+          - QAST::Op(iseq_n) ==
+            - QAST::Op(call .force) $d
+              - QAST::Var(lexical $d :decl())
+            - QAST::IVal(1)
+          - QAST::Op(die) nqp::die('not ok: .delayMemo')
+            - QAST::SVal(not ok: .delayMemo)
+        - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless force($b) ==...
+          - QAST::Op(iseq_n) ==
+            - QAST::Op(call .force) $b
+              - QAST::Var(lexical $b :decl())
+            - QAST::IVal(2)
+          - QAST::Op(die) nqp::die('not ok: .delayMemo')
+            - QAST::SVal(not ok: .delayMemo)
+        - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless force($b) ==...
+          - QAST::Op(iseq_n) ==
+            - QAST::Op(call .force) $b
+              - QAST::Var(lexical $b :decl())
+            - QAST::IVal(3)
+          - QAST::Op(die) nqp::die('not ok: .delayMemo')
+            - QAST::SVal(not ok: .delayMemo)
+        - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless force($d) ==...
+          - QAST::Op(iseq_n) ==
+            - QAST::Op(call .force) $d
+              - QAST::Var(lexical $d :decl())
+            - QAST::IVal(1)
+          - QAST::Op(die) nqp::die('not ok: .delayMemo')
+            - QAST::SVal(not ok: .delayMemo)
         - QAST::Op(bind) $lambda2 := [\n        'λ1',                      ...
           - QAST::Var(lexical $lambda2 :decl())
           - QAST::Op(list) ,
@@ -490,6 +604,7 @@
             - QAST::Op(list)
               - QAST::SVal(foo)
     - QAST::Var(lexical .force :decl())
+    - QAST::Var(lexical .delayMemo :decl())
     - QAST::Var(lexical .sublist :decl())
     - QAST::Var(lexical .lam2id :decl())
     - QAST::Var(lexical .lam2code :decl())
@@ -500,6 +615,7 @@
     - QAST::Var(lexical .num2str :decl())
     - QAST::Var(lexical .strLit :decl())
     - QAST::Var(lexical .strOut :decl())
+    - QAST::Var(lexical .apply1 :decl())
     - QAST::Var(lexical .MAIN :decl())
     - QAST::Op(if)
       - QAST::Var(lexical @ARGS :decl())
