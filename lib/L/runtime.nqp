@@ -29,12 +29,12 @@ sub sublist(@list, int $from) {
     @out;
 }
 
-sub lam2code($lambda) {
-    nqp::atpos($lambda, 1);
-}
+sub lam2id($lambda)   { nqp::atpos($lambda, 0) }
+sub lam2code($lambda) { nqp::atpos($lambda, 1) }
+sub lam2fvs($lambda)  {    sublist($lambda, 2) }
 
 sub lam2info($lambda) {
-    my $id      := nqp::atpos($lambda, 0);
+    my $id      := lam2id($lambda);
     my $idx     := nqp::atpos(nqp::radix(10, $id, 1, 0), 0);
     my %rawInfo := %info<λ>[$idx];
     my %out     := nqp::hash(
@@ -46,7 +46,7 @@ sub lam2info($lambda) {
     );
     # --- up to here it was all the same for all instances ---
 
-    my @fvs     := sublist($lambda, 2);    # freeVars start at 2
+    my @fvs     := lam2fvs($lambda);
     my %fvs     := nqp::hash();
     my @fvns := %rawInfo<freeVarNames>;
     my $i := 0; # TODO: use nqp::iterator(@fvs)
@@ -59,12 +59,14 @@ sub lam2info($lambda) {
 }
 
 sub fellthroughtypecase($subject) {
-    nqp::die('typecase: fell through due to missing "otherwise"-callback: ' ~ nqp::reprname($subject));
+    nqp::die('typecase: fell through due to missing "otherwise"-callback: '
+        ~ nqp::reprname($subject)
+    );
 }
 
 
 sub typecase($subject, *%callbacks) {
-    say('>>>typecase(', nqp::reprname($subject), '...)');
+    say('>>>typecase(', nqp::reprname($subject), '...) ');
     my $otherwise := nqp::defor(
         %callbacks<otherwise>,
         &fellthroughtypecase
@@ -74,7 +76,7 @@ sub typecase($subject, *%callbacks) {
         my $id := nqp::atpos($subject, 0);
         my $tag := nqp::substr($id, 0, 1);
         if $tag eq 'λ' {
-            $cbKey := 'λ';
+            $cbKey := $tag;
         } else {
             if nqp::elems($subject) == 0 {
                 nqp::die('typecase: unsupported low-level list type - empty');
@@ -98,58 +100,42 @@ sub typecase($subject, *%callbacks) {
 }
 
 
-sub nonLam2strOut($v) {
-    if nqp::isstr($v) {
-        strLit($v);
-    } elsif nqp::isint($v) {
-        ~$v;
-    } elsif nqp::isnum($v) {
-        ~$v;
-    } else {
-        nqp::reprname($v);
-    }
-}
-
-sub lam2strOut($lambda, str $indent = '', %done = {}) {
-    my %info := lam2info($lambda);
-    my $src := %info<src>;
-    my %fvs := %info<freeVars>;
-    for %fvs {
-        my $fvName  := nqp::iterkey_s($_);
-        my $fv      := nqp::iterval($_);
-        my $pre := "# where $fvName = ";
-        $src := $src ~ typecase($fv,
-            :λ(-> $x {
-                my %info    := lam2info($fv);
-                my $id      := %info<id>;
-                my $doneKey := "$fvName = $id";
-                if %done{$doneKey} {
-                    '';
-                } else {
-                    %done{$doneKey} := 1;
-                    "\n$indent$pre" ~ lam2strOut($fv, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre) - 1), %done);
-                }
-            }),
-            :otherwise(-> $x {
-                my $doneKey := $pre ~ nonLam2strOut($fv);
-                if %done{$doneKey} {
-                    '';
-                } else {
-                    %done{$doneKey} := 1;
-                    "\n$indent$doneKey";
-                }
-            })
-        );
-    }
-    $src;
-}
-
+sub int2str(int $i) { ~$i }
+sub num2str(num $n) { ~$n }
 
 sub strOut($v, str $indent = '', %done = {}) {
     $v := force($v);
     typecase($v,
-        :λ(&lam2strOut),
-        :otherwise(&nonLam2strOut)
+        :λ(-> $lambda {
+            my %info := lam2info($lambda);
+            my $src := %info<src>;
+            my %fvs := %info<freeVars>;
+            for %fvs {
+                my $fvName  := nqp::iterkey_s($_);
+                my $fv      := nqp::iterval($_);
+                my $pre     := "# where $fvName = ";
+                my $flatVal := typecase($fv,
+                    :λ(-> $x { nqp::null }),
+                    :str(&strLit),
+                    :int(&int2str),
+                    :num(&num2str)
+                );
+                my $doneKey := nqp::isnull($flatVal)
+                    ?? $pre ~ lam2id($fv)
+                    !! $pre ~ $flatVal;
+                unless %done{$doneKey} {
+                    %done{$doneKey} := 1;
+                    $src := $src ~ "\n" ~ $indent ~ (nqp::isnull($flatVal)
+                        ?? $pre ~ strOut($fv, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre) - 1), %done)
+                        !! $doneKey
+                    );
+                }
+            }
+            $src
+        }),
+        :str(&strLit),
+        :int(&int2str),
+        :num(&num2str)
     );
 }
 
