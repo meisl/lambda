@@ -13,7 +13,7 @@
       - QAST::Var(lexical .force :decl(var))
       - QAST::Block {\n    nqp::isinvokable($v) ?? $v() !! $v;\n}
         - QAST::Var(lexical $v :decl(param)) $v
-        - QAST::Op(if &infix:<>) ?? $v() !!
+        - QAST::Op(if) ?? $v() !!
           - QAST::Op(isinvokable) nqp::isinvokable($v)
             - QAST::Var(lexical $v :decl())
           - QAST::Op(call) 
@@ -23,8 +23,8 @@
       - QAST::Var(lexical .strLit :decl(var))
       - QAST::Block {\n    '\"' ~ nqp::escape($s) ~ '\"';\n}
         - QAST::Var(lexical $s :decl(param)) $s
-        - QAST::Op(concat &infix:<~>) ~
-          - QAST::Op(concat &infix:<~>) ~
+        - QAST::Op(concat) ~
+          - QAST::Op(concat) ~
             - QAST::SVal(\")
             - QAST::Op(escape) nqp::escape($s)
               - QAST::Var(lexical $s :decl())
@@ -47,21 +47,21 @@
           - QAST::Var(lexical $n :decl())
         - QAST::Op(bind) int $to    := $from + $count
           - QAST::Var(lexical $to :decl())
-          - QAST::Op(add_n &infix:<+>) +
+          - QAST::Op(add_n) +
             - QAST::Var(lexical $from :decl())
             - QAST::Var(lexical $count :decl())
         - QAST::Op(bind) @out   := []
           - QAST::Var(lexical @out :decl())
-          - QAST::Op(list &circumfix:<[ ]>)
+          - QAST::Op(list)
         - QAST::Op(if) $to > $n {\n        $to := $n\n    }
-          - QAST::Op(isgt_n &infix:<>>) >
+          - QAST::Op(isgt_n) >
             - QAST::Var(lexical $to :decl())
             - QAST::Var(lexical $n :decl())
-          - QAST::Op(bind &infix:<:=>) :=
+          - QAST::Op(bind) :=
             - QAST::Var(lexical $to :decl())
             - QAST::Var(lexical $n :decl())
         - QAST::Op(while) $from < $to {\n        @out.push(@list[$from]);\n ...
-          - QAST::Op(islt_n &infix:<<>) <
+          - QAST::Op(islt_n) <
             - QAST::Var(lexical $from :decl())
             - QAST::Var(lexical $to :decl())
           - QAST::Stmts {\n        @out.push(@list[$from]);\n        $from...
@@ -70,7 +70,7 @@
               - QAST::VarWithFallback(positional  :decl())
                 - QAST::Var(lexical @list :decl())
                 - QAST::Var(lexical $from :decl())
-            - QAST::Op(postinc &postfix:<++>) ++
+            - QAST::Op(postinc) ++
               - QAST::Var(lexical $from :decl())
           - QAST::IVal+{QAST::SpecialArg}(1)
         - QAST::Var(lexical @out :decl())
@@ -142,7 +142,7 @@
               - QAST::VarWithFallback(positional  :decl())
                 - QAST::Var(lexical @fvs :decl())
                 - QAST::Var(lexical $i :decl())
-            - QAST::Op(postinc &postfix:<++>) ++
+            - QAST::Op(postinc) ++
               - QAST::Var(lexical $i :decl())
           - QAST::IVal+{QAST::SpecialArg}(1)
         - QAST::Var(lexical %out :decl())
@@ -170,7 +170,7 @@
                 - QAST::Var(lexical $subject :decl())
                 - QAST::IVal(0)
             - QAST::Op(if) nqp::substr($id, 0, 1) eq $tag {\n            my $...
-              - QAST::Op(iseq_s &infix:<eq>) eq
+              - QAST::Op(iseq_s) eq
                 - QAST::Op(substr) nqp::substr($id, 0, 1)
                   - QAST::Var(lexical $id :decl())
                   - QAST::IVal(0)
@@ -209,7 +209,7 @@
       - QAST::Block {\n    nqp::die('typecase: fell through due to mis...
         - QAST::Var(lexical $subject :decl(param)) $subject
         - QAST::Op(die) nqp::die('typecase: fell through due to missing \"...
-          - QAST::Op(concat &infix:<~>) ~
+          - QAST::Op(concat) ~
             - QAST::SVal(typecase: fell through due to missing \"otherwise\"-callback: )
             - QAST::Op(reprname) nqp::reprname($subject)
               - QAST::Var(lexical $subject :decl())
@@ -258,7 +258,7 @@
                   - QAST::Var(lexical $rawInfo :decl())
             - QAST::Block {\n                if nqp::elems($subject) == 0 {\...
               - QAST::Op(if) nqp::elems($subject) == 0 {\n                    n...
-                - QAST::Op(iseq_n &infix:<==>) ==
+                - QAST::Op(iseq_n) ==
                   - QAST::Op(elems) nqp::elems($subject)
                     - QAST::Var(lexical $subject :decl())
                   - QAST::IVal(0)
@@ -275,23 +275,23 @@
             - QAST::Op(if) nqp::isstr($subject) {\n            $cbKey := 'str...
               - QAST::Op(isstr) nqp::isstr($subject)
                 - QAST::Var(lexical $subject :decl())
-              - QAST::Op(bind &infix:<:=>) :=
+              - QAST::Op(bind) :=
                 - QAST::Var(lexical $cbKey :decl())
                 - QAST::SVal(str)
               - QAST::Op(if) nqp::isint($subject) {\n            $cbKey := 'int...
                 - QAST::Op(isint) nqp::isint($subject)
                   - QAST::Var(lexical $subject :decl())
-                - QAST::Op(bind &infix:<:=>) :=
+                - QAST::Op(bind) :=
                   - QAST::Var(lexical $cbKey :decl())
                   - QAST::SVal(int)
                 - QAST::Op(if) nqp::isnum($subject) {\n            $cbKey := 'num...
                   - QAST::Op(isnum) nqp::isnum($subject)
                     - QAST::Var(lexical $subject :decl())
-                  - QAST::Op(bind &infix:<:=>) :=
+                  - QAST::Op(bind) :=
                     - QAST::Var(lexical $cbKey :decl())
                     - QAST::SVal(num)
                   - QAST::Op(die) nqp::die('typecase: unsupported low-level type ' ~...
-                    - QAST::Op(concat &infix:<~>) ~
+                    - QAST::Op(concat) ~
                       - QAST::SVal(typecase: unsupported low-level type )
                       - QAST::Op(reprname) nqp::reprname($subject)
                         - QAST::Var(lexical $subject :decl())
@@ -317,12 +317,12 @@
           - QAST::Op(if) nqp::isint($v) {\n        ~$v;\n    }
             - QAST::Op(isint) nqp::isint($v)
               - QAST::Var(lexical $v :decl())
-            - QAST::Op(stringify &prefix:<~>) ~
+            - QAST::Op(stringify) ~
               - QAST::Var(lexical $v :decl())
             - QAST::Op(if) nqp::isnum($v) {\n        ~$v;\n    }
               - QAST::Op(isnum) nqp::isnum($v)
                 - QAST::Var(lexical $v :decl())
-              - QAST::Op(stringify &prefix:<~>) ~
+              - QAST::Op(stringify) ~
                 - QAST::Var(lexical $v :decl())
               - QAST::Op(reprname) nqp::reprname($v)
                 - QAST::Var(lexical $v :decl())
@@ -366,9 +366,9 @@
                   - QAST::SVal(# where )
                   - QAST::Var(lexical $fvName :decl())
                 - QAST::SVal( = )
-            - QAST::Op(bind &infix:<:=>) :=
+            - QAST::Op(bind) :=
               - QAST::Var(lexical $src :decl())
-              - QAST::Op(concat &infix:<~>) ~
+              - QAST::Op(concat) ~
                 - QAST::Var(lexical $src :decl())
                 - QAST::Op(call .typecase) $fv,\n            :λ(-> %info {\n                m...
                   - QAST::Var(lexical $fv :decl())
@@ -394,12 +394,12 @@
                         - QAST::Var(lexical $doneKey :decl())
                       - QAST::SVal
                       - QAST::Stmts {\n                    %done{$doneKey} := 1;\n    ...
-                        - QAST::Op(bind &infix:<:=>) :=
+                        - QAST::Op(bind) :=
                           - QAST::VarWithFallback(associative  :decl())
                             - QAST::Var(lexical %done :decl())
                             - QAST::Var(lexical $doneKey :decl())
                           - QAST::IVal(1)
-                        - QAST::Op(concat &infix:<~>) ~
+                        - QAST::Op(concat) ~
                           - QAST::Op(concat)
                             - QAST::Op(concat)
                               - QAST::SVal(\n)
@@ -407,13 +407,13 @@
                             - QAST::Var(lexical $pre :decl())
                           - QAST::Op(call .lam2strOut) %info, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre...
                             - QAST::Var(lexical %info :decl())
-                            - QAST::Op(concat &infix:<~>) ~
-                              - QAST::Op(concat &infix:<~>) ~
+                            - QAST::Op(concat) ~
+                              - QAST::Op(concat) ~
                                 - QAST::Var(lexical $indent :decl())
                                 - QAST::SVal(#)
                               - QAST::Op(x) nqp::x(' ', nqp::chars($pre) - 1)
                                 - QAST::SVal( )
-                                - QAST::Op(sub_n &infix:<->) -
+                                - QAST::Op(sub_n) -
                                   - QAST::Op(chars) nqp::chars($pre)
                                     - QAST::Var(lexical $pre :decl())
                                   - QAST::IVal(1)
@@ -423,7 +423,7 @@
                     - QAST::Var(lexical $doneKey :decl(var))
                     - QAST::Op(bind) $doneKey := $pre ~ nonLam2strOut($fv)
                       - QAST::Var(lexical $doneKey :decl())
-                      - QAST::Op(concat &infix:<~>) ~
+                      - QAST::Op(concat) ~
                         - QAST::Var(lexical $pre :decl())
                         - QAST::Op(call .nonLam2strOut) $fv
                           - QAST::Var(lexical $fv :decl())
@@ -433,7 +433,7 @@
                         - QAST::Var(lexical $doneKey :decl())
                       - QAST::SVal
                       - QAST::Stmts {\n                    %done{$doneKey} := 1;\n    ...
-                        - QAST::Op(bind &infix:<:=>) :=
+                        - QAST::Op(bind) :=
                           - QAST::VarWithFallback(associative  :decl())
                             - QAST::Var(lexical %done :decl())
                             - QAST::Var(lexical $doneKey :decl())
@@ -451,7 +451,7 @@
         - QAST::Var(lexical $v :decl(param)) $v
         - QAST::Var(lexical $indent :decl(param)) $indent
         - QAST::Var(lexical %done :decl(param)) %done
-        - QAST::Op(bind &infix:<:=>) :=
+        - QAST::Op(bind) :=
           - QAST::Var(lexical $v :decl())
           - QAST::Op(call .force) $v
             - QAST::Var(lexical $v :decl())
@@ -467,7 +467,7 @@
         - QAST::Var(lexical $lambda1 :decl(var))
         - QAST::Op(bind) $lambda2 := [\n        'λ1',                      ...
           - QAST::Var(lexical $lambda2 :decl())
-          - QAST::Op(list &circumfix:<[ ]>) ,
+          - QAST::Op(list) ,
             - QAST::SVal(λ1)
             - QAST::Block { 'λ1(...) called' }
               - QAST::Var+{QAST::SpecialArg}(lexical @as :decl(param)) @as
@@ -475,7 +475,7 @@
             - QAST::IVal(23)
         - QAST::Op(bind) $lambda1 := [\n        'λ0',                      ...
           - QAST::Var(lexical $lambda1 :decl())
-          - QAST::Op(list &circumfix:<[ ]>) ,
+          - QAST::Op(list) ,
             - QAST::SVal(λ0)
             - QAST::Block { 'λ0(...) called' }
               - QAST::Var+{QAST::SpecialArg}(lexical @as :decl(param)) @as
@@ -512,14 +512,14 @@
       - QAST::Var(lexical %info :decl())
       - QAST::Op(hash) nqp::hash(\n    'λ', [\n        nqp::hash('from', ...
         - QAST::SVal(λ)
-        - QAST::Op(list &circumfix:<[ ]>) ,
+        - QAST::Op(list) ,
           - QAST::Op(hash) nqp::hash('from',  1, 'length', 55, 'freeVarNames'...
             - QAST::SVal(from)
             - QAST::IVal(1)
             - QAST::SVal(length)
             - QAST::IVal(55)
             - QAST::SVal(freeVarNames)
-            - QAST::Op(list &circumfix:<[ ]>) ,
+            - QAST::Op(list) ,
               - QAST::SVal(foo)
               - QAST::SVal(bar)
               - QAST::SVal(baz)
@@ -532,7 +532,7 @@
             - QAST::SVal(length)
             - QAST::IVal(4)
             - QAST::SVal(freeVarNames)
-            - QAST::Op(list &circumfix:<[ ]>)
+            - QAST::Op(list)
               - QAST::SVal(foo)
     - QAST::Var(lexical .force :decl())
     - QAST::Var(lexical .strLit :decl())
@@ -553,4 +553,4 @@
 # [nqpc] compiled: lib/L/runtime.nqp
 # [nqpc] -----------------------------
 
-Output completed (6 sec consumed) - Normal Termination
+Output completed (5 sec consumed) - Normal Termination

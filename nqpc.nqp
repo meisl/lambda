@@ -208,6 +208,21 @@ sub qastChildren($ast, *@types) {
     @out;
 }
 
+sub drop_takeclosure($ast) {
+    nqp::die('drop_takeclosure expects a QAST::Node - got ' ~ nqp::reprname($ast) )
+        unless nqp::istype($ast, QAST::Node);
+    if nqp::istype($ast, QAST::Op) && $ast.op eq 'takeclosure' {
+        return $ast[0];
+    } elsif nqp::istype($ast, QAST::Children) {
+        my @children := [];
+        for $ast.list {
+            @children.push(drop_takeclosure($_));
+        }
+        $ast.set_children(@children);
+    }
+    $ast;
+}
+
 sub _drop_Stmts($ast, $parent) {
     nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) )
         unless nqp::istype($ast, QAST::Node);
@@ -229,30 +244,30 @@ sub _drop_Stmts($ast, $parent) {
             $ast.set_children(@children);
         }
     }
-    return [$ast];
+    [$ast];
 }
 
 sub drop_Stmts($ast) {
     my @out := _drop_Stmts($ast, nqp::null);
-    return nqp::elems(@out) == 1
+    nqp::elems(@out) == 1
         ?? @out[0]
         !! QAST::Stmts.new(|@out);
 }
 
-sub drop_takeclosure($ast) {
-    nqp::die('drop_takeclosure expects a QAST::Node - got ' ~ nqp::reprname($ast) )
+sub remove_bogusOpNames($ast) {
+    nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
         unless nqp::istype($ast, QAST::Node);
-    if nqp::istype($ast, QAST::Op) && $ast.op eq 'takeclosure' {
-        $ast := $ast[0];
-    }
-    elsif nqp::istype($ast, QAST::Children) {
-        my @children := [];
+    if nqp::istype($ast, QAST::Children) {
         for $ast.list {
-            @children.push(drop_takeclosure($_));
+            remove_bogusOpNames($_);
         }
-        $ast.set_children(@children);
     }
-    return $ast;
+    if nqp::istype($ast, QAST::Op) && ($ast.op ne 'call')  && ($ast.op ne 'callmethod') {
+        #say('>>>Op(', $ast.op, ' ', $ast.dump_extra_node_info, ')')
+        #    unless nqp::index('x radix can postinc preinc add_n sub_n stringify bind bindkey concat atpos atkey die reprname defor isnull iseq_s iseq_n isgt_n islt_n isinvokable isstr isint isnum islist ishash substr if unless for while elems chars escape list hash iterkey_s iterval', $ast.op) >= 0;
+        $ast.name(nqp::null_s);
+    }
+    $ast;
 }
 
 sub findDef($ast, str $name) {
@@ -314,6 +329,7 @@ sub MAIN(*@ARGS) {
         say(">>> $fileName:\n");
         $ast := drop_takeclosure($ast);  # must precede dropStms
         $ast := drop_Stmts($ast);
+        $ast := remove_bogusOpNames($ast);
         #$ast := findDef($ast, $what);
         if $ast {
             $ast := renameVars($ast, -> $s {
