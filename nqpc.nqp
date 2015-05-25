@@ -218,7 +218,12 @@ sub _drop_Stmts($ast, $parent) {
                 @children.push($_);
             }
         }
-        if nqp::istype($ast, QAST::Stmts) && istypeAny($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) {
+        if nqp::istype($ast, QAST::Stmts)
+            && (
+                  istypeAny($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) 
+               || (nqp::elems(@children) < 2)
+            )
+        {
             return @children; # return the Stmts' children as is, dropping the Stmts node
         } else {
             $ast.set_children(@children);
