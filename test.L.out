@@ -1,24 +1,24 @@
->>>saveast: QAST dump written to ./nqpc.nqp.qast
+>>>ast_save: QAST dump written to ./nqpc.nqp.qast
 # [nqpc] compiled: lib/L/nqpc.nqp ~> "./nqpc.moarvm"
->>>saveast: QAST dump written to lib/L/LGrammar.nqp.qast
+>>>ast_save: QAST dump written to lib/L/LGrammar.nqp.qast
 # [nqpc] compiled: lib/L/LGrammar.nqp ~> "lib/L/LGrammar.moarvm"
->>>saveast: QAST dump written to lib/L/LActions.nqp.qast
+>>>ast_save: QAST dump written to lib/L/LActions.nqp.qast
 # [nqpc] compiled: lib/L/LActions.nqp ~> "lib/L/LActions.moarvm"
->>>saveast: QAST dump written to lib/L/L.nqp.qast
+>>>ast_save: QAST dump written to lib/L/L.nqp.qast
 # [nqpc] compiled: lib/L/L.nqp ~> "lib/L/L.moarvm"
 # [nqpc] -----------------------------
 Stage start      :   0.000
 Stage mkRuntime  :   0.234
 Stage parse      :   0.047
 Stage ast        :   0.000
-Stage inspectqast:   0.000
 Stage optimize   :   0.016
-Stage saveast    :   0.016
-Stage mast       :   0.094
+Stage ast_save   :   0.016
+Stage mast       :   0.078
 Stage mbc        :   0.000
 Stage moar       :   0.000
+>>>ast_clean lib/L/runTime.nqp...
 # [Lc] mkRuntime ~> QAST::CompUnit+{StrByDump}
->>>saveast: QAST dump written to E:\proj\perl6\Lambda\test.L.qast
+>>>ast_save: QAST dump written to E:\proj\perl6\Lambda\test.L.qast
 47 lambdas
 1029 QAST::Node s
 91 QAST::Block s
@@ -29,7 +29,7 @@ Stage moar       :   0.000
 Unhandled exception: >>>Error evaluating E:\proj\perl6\Lambda\test.L:
 ERROR: cannot apply "foo" to "bar"
    at <unknown>:1  (lib\L\L.moarvm:command_line:4294967295)
- from lib/L/L.nqp:90  (lib\L\L.moarvm:MAIN:53)
+ from lib/L/L.nqp:91  (lib\L\L.moarvm:MAIN:53)
  from lib/L/L.nqp:8  (lib\L\L.moarvm:<mainline>:37)
  from <unknown>:1  (lib\L\L.moarvm:<main>:8)
  from <unknown>:1  (lib\L\L.moarvm:<entry>:9)
