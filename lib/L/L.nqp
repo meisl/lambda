@@ -18,7 +18,7 @@ class LCompiler is SmartCompiler {
 
     method mkRuntime($src) {
         my $nqpc := NQPCompiler.new();
-        my $rtQAST := $nqpc.compileFile('runTime', :lib('lib/L'), :target('ast'));
+        my $rtQAST := $nqpc.compileFile('runTime', :lib('lib/L'), :target('saveast'));
         say("# [Lc] mkRuntime ~> " ~ whatsit($rtQAST));
         return $src;
     }

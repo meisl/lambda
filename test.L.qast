@@ -603,7 +603,7 @@
     - QAST::Op(bind)
       - QAST::Var(lexical .svalSize :decl(static))
       - QAST::NVal(2636)
-    - QAST::Block
+    - QAST::Stmts
       - QAST::Var(local mainResult :decl(var))
       - QAST::Op(call .say)
         - QAST::Op(concat)

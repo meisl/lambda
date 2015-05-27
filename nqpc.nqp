@@ -18,12 +18,21 @@ sub whatsit($v) is export {
         } else {
             return '"' ~ nqp::escape($v) ~ '"';
         }
-    } elsif nqp::isint($v)            { $reprname ~ ' ' ~ $v
-    } elsif nqp::isnum($v)            { $reprname ~ ' ' ~ $v
-    #} elsif nqp::istype($v, Something) { ??? } # TODO: something smart for lists and hashes
-    } elsif nqp::can($v.HOW, 'name')  { $v.HOW.name($v)
+    } elsif nqp::isint($v) || nqp::isnum($v) {
+        return $reprname ~ ' ' ~ $v;
+    } elsif nqp::ishash($v) {
+        my @kvs := [];
+        for $v {
+            my $k := nqp::iterkey_s($_);
+            my $v := nqp::iterval($_);
+            @kvs.push(":$k(" ~ whatsit($v) ~ ')');
+        }
+        return 'hash(' ~ nqp::join(', ', @kvs) ~ ')';
+    #} elsif nqp::istype($v, Something) { ??? } # TODO: something smart for lists
+    } elsif nqp::can($v.HOW, 'name') {
+        return $v.HOW.name($v);
     } else {
-        $reprname
+        return $reprname
     }
 }
 
@@ -54,6 +63,7 @@ class SmartCompiler is NQP::Compiler {
         @!qastInspectors := [];
 
         # in this order (!):
+        self.addstage('saveast',     :after<ast>);
         self.addstage('optimize',    :after<ast>);
         self.addstage('inspectqast', :after<ast>);
 
@@ -79,6 +89,15 @@ class SmartCompiler is NQP::Compiler {
     }
 
     # additional stages
+    
+    method saveast($ast, *%adverbs) {
+        my $qastfileName := self.user-progname() ~ '.qast';
+        return $ast
+            if %adverbs<output> eq $qastfileName;
+        spew($qastfileName, $ast.dump);
+        say(">>>saveast: QAST dump written to ", $qastfileName);
+        $ast;
+    }
 
     method add_qastInspector($consumer) {
         @!qastInspectors.push($consumer);
@@ -138,8 +157,8 @@ class NQPCompiler is SmartCompiler {
             ];
             if $target eq 'mbc' {
                 @opts.push('--output=' ~ $mvmName);
-            } elsif $target eq 'ast' || $target eq 'inspectqast' {
-                @opts.push('--output=' ~ $qastName);
+            } elsif $target eq 'ast' || $target eq 'inspectqast' || $target eq 'saveast' {
+                @opts.push('--output=' ~ $qastName);    # not only write it but also prevent NQP::Compiler to dump it to stdout and return a null
             }
             my @args := nqp::clone(@opts);
             @args.unshift('nqpc');  # give it a program name (for command_line)
@@ -426,10 +445,6 @@ sub MAIN(*@ARGS) {
                     $s;
                 }
             });
-            my $dump := $ast.dump;
-            my $qastfileName := $fileName ~ '.qast';
-            spew($qastfileName, $dump);
-            say(">>> QAST dump written to ", $qastfileName);
         } else {
             say($what, ' not found!');
         }
