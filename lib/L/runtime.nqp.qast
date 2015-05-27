@@ -4,10 +4,10 @@
     - QAST::Var(lexical GLOBALish :decl(static))
     - QAST::Var(lexical $?PACKAGE :decl(static))
     - QAST::Var(lexical EXPORT :decl(static))
-    - QAST::Var(lexical $λsrc :decl(var))
+    - QAST::Var(lexical .λsrc :decl(var))
     - QAST::Var(lexical %info :decl(var))
     - QAST::Op(bind)
-      - QAST::Var(lexical &force :decl(var))
+      - QAST::Var(lexical .force :decl(var))
       - QAST::Block {\n    nqp::isinvokable($v) ?? $v() !! $v;\n}
         - QAST::Var(local __lowered_lex_1 :decl(param)) $v
         - QAST::Op(if &infix:<>) ?? $v() !!
@@ -17,7 +17,7 @@
             - QAST::Var(local __lowered_lex_1 :decl())
           - QAST::Var(local __lowered_lex_1 :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical &delayMemo :decl(var))
+      - QAST::Var(lexical .delayMemo :decl(var))
       - QAST::Block {\n    my int $wasRun := 0;\n    my $result := nqp...
         - QAST::Var(lexical $block :decl(param)) $block
         - QAST::Var(lexical $wasRun :decl(var))
@@ -45,7 +45,7 @@
                         - QAST::Op(call) 
                           - QAST::Var(lexical $block :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical &sublist :decl(var))
+      - QAST::Var(lexical .sublist :decl(var))
       - QAST::Block {\n    my int $n     := nqp::elems(@list);\n    my...
         - QAST::Var(local __lowered_lex_2 :decl(param)) @list
         - QAST::Var(local __lowered_lex_3 :decl(param)) $from
@@ -90,28 +90,28 @@
           - QAST::IVal+{QAST::SpecialArg}(1)
         - QAST::Var(local __lowered_lex_7 :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical &lam2id :decl(var))
+      - QAST::Var(lexical .lam2id :decl(var))
       - QAST::Block { nqp::atpos($lambda, 0) }
         - QAST::Var(local __lowered_lex_8 :decl(param)) $lambda
         - QAST::Op(atpos) nqp::atpos($lambda, 0)
           - QAST::Var(local __lowered_lex_8 :decl())
           - QAST::IVal(0)
     - QAST::Op(bind)
-      - QAST::Var(lexical &lam2code :decl(var))
+      - QAST::Var(lexical .lam2code :decl(var))
       - QAST::Block { nqp::atpos($lambda, 1) }
         - QAST::Var(local __lowered_lex_9 :decl(param)) $lambda
         - QAST::Op(atpos) nqp::atpos($lambda, 1)
           - QAST::Var(local __lowered_lex_9 :decl())
           - QAST::IVal(1)
     - QAST::Op(bind)
-      - QAST::Var(lexical &lam2fvs :decl(var))
+      - QAST::Var(lexical .lam2fvs :decl(var))
       - QAST::Block {    sublist($lambda, 2) }
         - QAST::Var(local __lowered_lex_10 :decl(param)) $lambda
-        - QAST::Op(callstatic &sublist) $lambda, 2
+        - QAST::Op(callstatic .sublist) $lambda, 2
           - QAST::Var(local __lowered_lex_10 :decl())
           - QAST::IVal(2)
     - QAST::Op(bind)
-      - QAST::Var(lexical &lam2info :decl(var))
+      - QAST::Var(lexical .lam2info :decl(var))
       - QAST::Block {\n    my $id      := lam2id($lambda);\n    my $id...
         - QAST::Var(local __lowered_lex_12 :decl(param)) $lambda
         - QAST::Var(local __lowered_lex_13 :decl(var))
@@ -124,7 +124,7 @@
         - QAST::Var(local __lowered_lex_20 :decl(var))
         - QAST::Op(bind) $id      := lam2id($lambda)
           - QAST::Var(local __lowered_lex_13 :decl())
-          - QAST::Op(callstatic &lam2id) $lambda
+          - QAST::Op(callstatic .lam2id) $lambda
             - QAST::Var(local __lowered_lex_12 :decl())
         - QAST::Op(bind) $idx     := nqp::atpos(nqp::radix(10, $id, 1, 0), ...
           - QAST::Var(local __lowered_lex_14 :decl())
@@ -159,7 +159,7 @@
               - QAST::SVal(length)
             - QAST::SVal(src)
             - QAST::Op(substr) nqp::substr($λsrc, %rawInfo<from>, %rawInfo<length...
-              - QAST::Var(lexical $λsrc :decl())
+              - QAST::Var(lexical .λsrc :decl())
               - QAST::VarWithFallback(associative  :decl())
                 - QAST::Var(local __lowered_lex_15 :decl())
                 - QAST::SVal(from)
@@ -168,7 +168,7 @@
                 - QAST::SVal(length)
         - QAST::Op(bind) @fvs     := lam2fvs($lambda)
           - QAST::Var(local __lowered_lex_17 :decl())
-          - QAST::Op(callstatic &lam2fvs) $lambda
+          - QAST::Op(callstatic .lam2fvs) $lambda
             - QAST::Var(local __lowered_lex_12 :decl())
         - QAST::Op(bind) %fvs     := nqp::hash()
           - QAST::Var(local __lowered_lex_18 :decl())
@@ -207,7 +207,7 @@
           - QAST::Var(local __lowered_lex_18 :decl())
         - QAST::Var(local __lowered_lex_16 :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical &typecase :decl(var))
+      - QAST::Var(lexical .typecase :decl(var))
       - QAST::Block {\n    say('>>>typecase(', nqp::reprname($subject)...
         - QAST::Var(lexical $subject :decl(param)) $subject
         - QAST::Var+{QAST::SpecialArg}(local __lowered_lex_24 :decl(param)) %callbacks
@@ -216,7 +216,7 @@
           - QAST::Var(local __lowered_lex_26 :decl(var))
           - QAST::WVal(NQPMu)
         - QAST::Var(local __lowered_lex_27 :decl(var))
-        - QAST::Op(callstatic &say) '>>>typecase(', nqp::reprname($subject), '...) '
+        - QAST::Op(callstatic .say) '>>>typecase(', nqp::reprname($subject), '...) '
           - QAST::SVal(>>>typecase()
           - QAST::Op(reprname) nqp::reprname($subject)
             - QAST::Var(lexical $subject :decl())
@@ -306,19 +306,19 @@
           - QAST::Var(local __lowered_lex_27 :decl())
           - QAST::Var(lexical $subject :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical &int2str :decl(var))
+      - QAST::Var(lexical .int2str :decl(var))
       - QAST::Block { ~$i }
         - QAST::Var(local __lowered_lex_28 :decl(param)) $i
         - QAST::Op(stringify &prefix:<~>) ~
           - QAST::Var(local __lowered_lex_28 :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical &num2str :decl(var))
+      - QAST::Var(lexical .num2str :decl(var))
       - QAST::Block { ~$n }
         - QAST::Var(local __lowered_lex_29 :decl(param)) $n
         - QAST::Op(stringify &prefix:<~>) ~
           - QAST::Var(local __lowered_lex_29 :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical &strLit :decl(var))
+      - QAST::Var(lexical .strLit :decl(var))
       - QAST::Block { '\"' ~ nqp::escape($s) ~ '\"' }
         - QAST::Var(local __lowered_lex_30 :decl(param)) $s
         - QAST::Op(concat &infix:<~>) ~
@@ -328,13 +328,13 @@
               - QAST::Var(local __lowered_lex_30 :decl())
           - QAST::SVal(\")
     - QAST::Op(bind)
-      - QAST::Var(lexical &strOut :decl(var))
+      - QAST::Var(lexical .strOut :decl(var))
       - QAST::Block {\n    typecase(force($v),\n        :λ(-> $lambda ...
         - QAST::Var(local __lowered_lex_42 :decl(param)) $v
         - QAST::Var(lexical $indent :decl(param)) $indent
         - QAST::Var(lexical %done :decl(param)) %done
-        - QAST::Op(callstatic &typecase) force($v),\n        :λ(-> $lambda { # compiler sho...
-          - QAST::Op(callstatic &force) $v
+        - QAST::Op(callstatic .typecase) force($v),\n        :λ(-> $lambda { # compiler sho...
+          - QAST::Op(callstatic .force) $v
             - QAST::Var(local __lowered_lex_42 :decl())
           - QAST::Op+{QAST::SpecialArg}(takeclosure)
             - QAST::Block { # compiler should see that this needs not be a c...
@@ -344,7 +344,7 @@
               - QAST::Var(local __lowered_lex_41 :decl(var))
               - QAST::Op(bind) %info := lam2info($lambda)
                 - QAST::Var(local __lowered_lex_39 :decl())
-                - QAST::Op(callstatic &lam2info) $lambda
+                - QAST::Op(callstatic .lam2info) $lambda
                   - QAST::Var(local __lowered_lex_38 :decl())
               - QAST::Op(bind) $src := %info<src>
                 - QAST::Var(local __lowered_lex_40 :decl())
@@ -390,15 +390,15 @@
                       - QAST::SVal( = )
                   - QAST::Op(bind) $flatVal := typecase($fv,\n                    :λ(...
                     - QAST::Var(local __lowered_lex_35 :decl())
-                    - QAST::Op(callstatic &typecase) $fv,\n                    :λ(-> $x { nqp::null }),...
+                    - QAST::Op(callstatic .typecase) $fv,\n                    :λ(-> $x { nqp::null }),...
                       - QAST::Var(local __lowered_lex_33 :decl())
                       - QAST::Op+{QAST::SpecialArg}(takeclosure)
                         - QAST::Block { nqp::null }
                           - QAST::Var(local __lowered_lex_31 :decl(param)) $x
                           - QAST::Op(null) nqp::null
-                      - QAST::Var+{QAST::SpecialArg}(lexical &strLit :decl())
-                      - QAST::Var+{QAST::SpecialArg}(lexical &int2str :decl())
-                      - QAST::Var+{QAST::SpecialArg}(lexical &num2str :decl())
+                      - QAST::Var+{QAST::SpecialArg}(lexical .strLit :decl())
+                      - QAST::Var+{QAST::SpecialArg}(lexical .int2str :decl())
+                      - QAST::Var+{QAST::SpecialArg}(lexical .num2str :decl())
                   - QAST::Op(bind) $doneKey := nqp::isnull($flatVal)\n               ...
                     - QAST::Var(local __lowered_lex_36 :decl())
                     - QAST::Op(if &infix:<>) ?? $pre ~ lam2id($fv)\n                    !!
@@ -406,7 +406,7 @@
                         - QAST::Var(local __lowered_lex_35 :decl())
                       - QAST::Op(concat &infix:<~>) ~
                         - QAST::Var(local __lowered_lex_34 :decl())
-                        - QAST::Op(callstatic &lam2id) $fv
+                        - QAST::Op(callstatic .lam2id) $fv
                           - QAST::Var(local __lowered_lex_33 :decl())
                       - QAST::Op(concat &infix:<~>) ~
                         - QAST::Var(local __lowered_lex_34 :decl())
@@ -434,7 +434,7 @@
                               - QAST::Var(local __lowered_lex_35 :decl())
                             - QAST::Op(concat &infix:<~>) ~
                               - QAST::Var(local __lowered_lex_34 :decl())
-                              - QAST::Op(callstatic &strOut) $fv, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre) ...
+                              - QAST::Op(callstatic .strOut) $fv, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre) ...
                                 - QAST::Var(local __lowered_lex_33 :decl())
                                 - QAST::Op(concat &infix:<~>) ~
                                   - QAST::Op(concat &infix:<~>) ~
@@ -449,11 +449,11 @@
                                 - QAST::Var(lexical %done :decl())
                             - QAST::Var(local __lowered_lex_36 :decl())
               - QAST::Var(local __lowered_lex_40 :decl())
-          - QAST::Var+{QAST::SpecialArg}(lexical &strLit :decl())
-          - QAST::Var+{QAST::SpecialArg}(lexical &int2str :decl())
-          - QAST::Var+{QAST::SpecialArg}(lexical &num2str :decl())
+          - QAST::Var+{QAST::SpecialArg}(lexical .strLit :decl())
+          - QAST::Var+{QAST::SpecialArg}(lexical .int2str :decl())
+          - QAST::Var+{QAST::SpecialArg}(lexical .num2str :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical &apply1 :decl(var))
+      - QAST::Var(lexical .apply1 :decl(var))
       - QAST::Block {\n    my $result := typecase(force($f),\n        ...
         - QAST::Var(local __lowered_lex_44 :decl(param)) $f
         - QAST::Var(lexical $a1 :decl(param)) $a1
@@ -461,10 +461,10 @@
         - QAST::Op(bind) $result := typecase(force($f),\n        :λ(&lam2co...
           - QAST::Var(local __lowered_lex_45 :decl())
           - QAST::Op(call) $a1
-            - QAST::Op(callstatic &typecase) force($f),\n        :λ(&lam2code),\n        :other...
-              - QAST::Op(callstatic &force) $f
+            - QAST::Op(callstatic .typecase) force($f),\n        :λ(&lam2code),\n        :other...
+              - QAST::Op(callstatic .force) $f
                 - QAST::Var(local __lowered_lex_44 :decl())
-              - QAST::Var+{QAST::SpecialArg}(lexical &lam2code :decl())
+              - QAST::Var+{QAST::SpecialArg}(lexical .lam2code :decl())
               - QAST::Op+{QAST::SpecialArg}(takeclosure)
                 - QAST::Block {\n            nqp::die('ERROR: cannot apply ' ~ s...
                   - QAST::Var(local __lowered_lex_43 :decl(param)) $x
@@ -473,16 +473,16 @@
                       - QAST::Op(concat &infix:<~>) ~
                         - QAST::Op(concat &infix:<~>) ~
                           - QAST::SVal(ERROR: cannot apply )
-                          - QAST::Op(callstatic &strOut) $x
+                          - QAST::Op(callstatic .strOut) $x
                             - QAST::Var(local __lowered_lex_43 :decl())
                         - QAST::SVal( to )
-                      - QAST::Op(callstatic &strOut) $a1
+                      - QAST::Op(callstatic .strOut) $a1
                         - QAST::Var(lexical $a1 :decl())
             - QAST::Var(lexical $a1 :decl())
-        - QAST::Op(callstatic &force) $result
+        - QAST::Op(callstatic .force) $result
           - QAST::Var(local __lowered_lex_45 :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical &say :decl(var))
+      - QAST::Var(lexical .say :decl(var))
       - QAST::Block {\n    my $s := '';\n    for @args {\n        $s :...
         - QAST::Var+{QAST::SpecialArg}(local __lowered_lex_47 :decl(param)) @args
         - QAST::Var(local __lowered_lex_48 :decl(var))
@@ -509,12 +509,12 @@
                   - QAST::Op(isstr) nqp::isstr($_)
                     - QAST::Var(local __lowered_lex_46 :decl())
                   - QAST::Var(local __lowered_lex_46 :decl())
-                  - QAST::Op(callstatic &strOut) $_
+                  - QAST::Op(callstatic .strOut) $_
                     - QAST::Var(local __lowered_lex_46 :decl())
         - QAST::Op(say) nqp::say($s)
           - QAST::Var(local __lowered_lex_48 :decl())
     - QAST::Op(bind)
-      - QAST::Var(lexical &MAIN :decl(var))
+      - QAST::Var(lexical .MAIN :decl(var))
       - QAST::Block {\n    my $n := 0;\n    my $b := { $n := $n + 1; }...
         - QAST::Var+{QAST::SpecialArg}(local __lowered_lex_51 :decl(param)) @ARGS
         - QAST::Var(lexical $n :decl(var))
@@ -536,7 +536,7 @@
                   - QAST::IVal(1)
         - QAST::Op(bind) $d := delayMemo($b)
           - QAST::Var(local __lowered_lex_53 :decl())
-          - QAST::Op(callstatic &delayMemo) $b
+          - QAST::Op(callstatic .delayMemo) $b
             - QAST::Var(local __lowered_lex_52 :decl())
         - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless $n == 0
           - QAST::Op(iseq_n &infix:<==>) ==
@@ -546,35 +546,35 @@
             - QAST::SVal(not ok: .delayMemo)
         - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless force($d) ==...
           - QAST::Op(iseq_n &infix:<==>) ==
-            - QAST::Op(callstatic &force) $d
+            - QAST::Op(callstatic .force) $d
               - QAST::Var(local __lowered_lex_53 :decl())
             - QAST::IVal(1)
           - QAST::Op(die) nqp::die('not ok: .delayMemo')
             - QAST::SVal(not ok: .delayMemo)
         - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless force($d) ==...
           - QAST::Op(iseq_n &infix:<==>) ==
-            - QAST::Op(callstatic &force) $d
+            - QAST::Op(callstatic .force) $d
               - QAST::Var(local __lowered_lex_53 :decl())
             - QAST::IVal(1)
           - QAST::Op(die) nqp::die('not ok: .delayMemo')
             - QAST::SVal(not ok: .delayMemo)
         - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless force($b) ==...
           - QAST::Op(iseq_n &infix:<==>) ==
-            - QAST::Op(callstatic &force) $b
+            - QAST::Op(callstatic .force) $b
               - QAST::Var(local __lowered_lex_52 :decl())
             - QAST::IVal(2)
           - QAST::Op(die) nqp::die('not ok: .delayMemo')
             - QAST::SVal(not ok: .delayMemo)
         - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless force($b) ==...
           - QAST::Op(iseq_n &infix:<==>) ==
-            - QAST::Op(callstatic &force) $b
+            - QAST::Op(callstatic .force) $b
               - QAST::Var(local __lowered_lex_52 :decl())
             - QAST::IVal(3)
           - QAST::Op(die) nqp::die('not ok: .delayMemo')
             - QAST::SVal(not ok: .delayMemo)
         - QAST::Op(unless) nqp::die('not ok: .delayMemo') unless force($d) ==...
           - QAST::Op(iseq_n &infix:<==>) ==
-            - QAST::Op(callstatic &force) $d
+            - QAST::Op(callstatic .force) $d
               - QAST::Var(local __lowered_lex_53 :decl())
             - QAST::IVal(1)
           - QAST::Op(die) nqp::die('not ok: .delayMemo')
@@ -606,8 +606,8 @@
         - QAST::Op(callmethod push) $lambda1
           - QAST::Var(local __lowered_lex_55 :decl())
           - QAST::Var(local __lowered_lex_55 :decl())
-        - QAST::Op(callstatic &say) strOut($lambda1)
-          - QAST::Op(callstatic &strOut) $lambda1
+        - QAST::Op(callstatic .say) strOut($lambda1)
+          - QAST::Op(callstatic .strOut) $lambda1
             - QAST::Var(local __lowered_lex_55 :decl())
     - QAST::Op(bind)
       - QAST::Var(local ctxsave :decl(var))
@@ -622,7 +622,7 @@
         - QAST::Op(callmethod ctxsave)
           - QAST::Var(local ctxsave :decl())
     - QAST::Op(bind) $λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f ...
-      - QAST::Var(lexical $λsrc :decl())
+      - QAST::Var(lexical .λsrc :decl())
       - QAST::SVal((λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x))
     - QAST::Op(bind) %info := nqp::hash(\n    'λ', [\n        nqp::hash...
       - QAST::Var(lexical %info :decl())
@@ -650,22 +650,22 @@
             - QAST::SVal(freeVarNames)
             - QAST::Op(list &circumfix:<[ ]>)
               - QAST::SVal(foo)
-    - QAST::Var(lexical &force :decl())
-    - QAST::Var(lexical &delayMemo :decl())
-    - QAST::Var(lexical &sublist :decl())
-    - QAST::Var(lexical &lam2id :decl())
-    - QAST::Var(lexical &lam2code :decl())
-    - QAST::Var(lexical &lam2fvs :decl())
-    - QAST::Var(lexical &lam2info :decl())
-    - QAST::Var(lexical &typecase :decl())
-    - QAST::Var(lexical &int2str :decl())
-    - QAST::Var(lexical &num2str :decl())
-    - QAST::Var(lexical &strLit :decl())
-    - QAST::Var(lexical &strOut :decl())
-    - QAST::Var(lexical &apply1 :decl())
-    - QAST::Var(lexical &say :decl())
-    - QAST::Var(lexical &MAIN :decl())
+    - QAST::Var(lexical .force :decl())
+    - QAST::Var(lexical .delayMemo :decl())
+    - QAST::Var(lexical .sublist :decl())
+    - QAST::Var(lexical .lam2id :decl())
+    - QAST::Var(lexical .lam2code :decl())
+    - QAST::Var(lexical .lam2fvs :decl())
+    - QAST::Var(lexical .lam2info :decl())
+    - QAST::Var(lexical .typecase :decl())
+    - QAST::Var(lexical .int2str :decl())
+    - QAST::Var(lexical .num2str :decl())
+    - QAST::Var(lexical .strLit :decl())
+    - QAST::Var(lexical .strOut :decl())
+    - QAST::Var(lexical .apply1 :decl())
+    - QAST::Var(lexical .say :decl())
+    - QAST::Var(lexical .MAIN :decl())
     - QAST::Op(if)
       - QAST::Var(local __lowered_lex_56 :decl())
-      - QAST::Op(callstatic &MAIN)
+      - QAST::Op(callstatic .MAIN)
         - QAST::Var+{QAST::SpecialArg}(local __lowered_lex_56 :decl())

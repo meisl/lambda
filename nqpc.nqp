@@ -181,7 +181,11 @@ sub renameVars($ast, $map?) {
     } else {
         $map := -> str $name { $name };
     }
-    if nqp::istype($ast, QAST::Var) || (nqp::istype($ast, QAST::Op) && ($ast.op eq 'call')) {
+    if nqp::istype($ast, QAST::Var) 
+       || (
+          nqp::istype($ast, QAST::Op)
+          && (($ast.op eq 'call') || ($ast.op eq 'callstatic'))
+        ) {
         my str $old := $ast.name;
         my str $new := $map($old);
         if $new ne $old {
@@ -242,13 +246,13 @@ class SmartCompiler is NQP::Compiler {
         $ast := drop_Stmts($ast);
         #$ast := remove_bogusOpNames($ast);
 
-        #$ast := renameVars($ast, -> $s {
-        #    my str $fst := nqp::substr($s, 0, 1);
-        #    my str $snd := nqp::substr($s, 1, 1);
-        #    $fst eq '&' || $snd eq 'λ'
-        #        ??  '.' ~ nqp::substr($s, 1)
-        #        !! $s;
-        #});
+        $ast := renameVars($ast, -> $s {
+            my str $fst := nqp::substr($s, 0, 1);
+            my str $snd := nqp::substr($s, 1, 1);
+            $fst eq '&' || $snd eq 'λ'
+                ??  '.' ~ nqp::substr($s, 1)
+                !! $s;
+        });
 
         my $what := '&lam2info';  #   '&strOut';  #   '&renameVars';  #   '&ifTag';    #   
         #$ast := findDef($ast, $what);
@@ -323,7 +327,7 @@ class NQPCompiler is SmartCompiler {
             @args.push($nqpName);
             #say($mvmName, '...');
 
-            #say("<nqpc> $nqpName ", nqp::join(' ', @args));
+            say("<nqpc> ", nqp::join(' ', @args));
             #say(nqp::x('-', 29));
             my $*USER_FILE := $nqpName;
             my $result;
@@ -443,14 +447,18 @@ sub MAIN(*@ARGS) {
         @ARGS.push('runtime');
     }
 
-    $nqpc.addstage('ast_clean', :before<ast_save>)
-        if +@ARGS == 1 && @ARGS[0] eq 'runtime';
+    my %opts := hash();
+
+    if +@ARGS == 1 && @ARGS[0] eq 'runtime' {
+        $nqpc.addstage('ast_clean', :before<ast_save>);
+        %opts<target> := '';    # ...and run it
+    }
 
     for @ARGS {
         my $file := $_ ~ $ext;
         my $result := $_ eq 'nqpc'
-            ?? $nqpc.compileFile($_, :lib('.'))
-            !! $nqpc.compileFile($_, :lib($lib));
+            ?? $nqpc.compileFile($_, :lib('.'),  |%opts)
+            !! $nqpc.compileFile($_, :lib($lib), |%opts);
         say(nqp::isnull($result)
             ?? "# [nqpc] uptodate: $lib/$file"
             !! "# [nqpc] compiled: $lib/$file ~> " ~ whatsit($result)

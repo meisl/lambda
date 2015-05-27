@@ -1,21 +1,26 @@
+<nqpc> nqpc --module-path=. --target=mbc --output=./nqpc.moarvm ./nqpc.nqp
 >>>ast_save: QAST dump written to ./nqpc.nqp.qast
 # [nqpc] compiled: lib/L/nqpc.nqp ~> "./nqpc.moarvm"
+<nqpc> nqpc --module-path=lib/L --target=mbc --output=lib/L/LGrammar.moarvm lib/L/LGrammar.nqp
 >>>ast_save: QAST dump written to lib/L/LGrammar.nqp.qast
 # [nqpc] compiled: lib/L/LGrammar.nqp ~> "lib/L/LGrammar.moarvm"
+<nqpc> nqpc --module-path=lib/L --target=mbc --output=lib/L/LActions.moarvm lib/L/LActions.nqp
 >>>ast_save: QAST dump written to lib/L/LActions.nqp.qast
 # [nqpc] compiled: lib/L/LActions.nqp ~> "lib/L/LActions.moarvm"
+<nqpc> nqpc --module-path=lib/L --target=mbc --output=lib/L/L.moarvm lib/L/L.nqp
 >>>ast_save: QAST dump written to lib/L/L.nqp.qast
 # [nqpc] compiled: lib/L/L.nqp ~> "lib/L/L.moarvm"
 # [nqpc] -----------------------------
 Stage start      :   0.000
-Stage mkRuntime  :   0.234
+Stage mkRuntime  :   0.250
 Stage parse      :   0.047
 Stage ast        :   0.000
-Stage optimize   :   0.016
-Stage ast_save   :   0.016
+Stage optimize   :   0.000
+Stage ast_save   :   0.031
 Stage mast       :   0.078
 Stage mbc        :   0.000
 Stage moar       :   0.000
+<nqpc> nqpc --module-path=lib/L --target=ast_save --output=lib/L/runTime.nqp.qast lib/L/runTime.nqp
 >>>ast_clean lib/L/runTime.nqp...
 # [Lc] mkRuntime ~> QAST::CompUnit+{StrByDump}
 >>>ast_save: QAST dump written to E:\proj\perl6\Lambda\test.L.qast
