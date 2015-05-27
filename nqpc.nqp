@@ -143,7 +143,7 @@ sub remove_bogusOpNames($ast) {
             remove_bogusOpNames($_);
         }
     }
-    if nqp::istype($ast, QAST::Op) && ($ast.op ne 'call') && ($ast.op ne 'callmethod') && ($ast.op ne 'lexotic') {
+    if nqp::istype($ast, QAST::Op) && ($ast.op ne 'call') && ($ast.op ne 'callstatic') && ($ast.op ne 'callmethod') && ($ast.op ne 'lexotic') {
         #say('>>>Op(', $ast.op, ' ', $ast.dump_extra_node_info, ')')
         #    unless nqp::index('x radix can postinc preinc add_n sub_n stringify bind bindkey concat atpos atkey die reprname defor isnull iseq_s iseq_n isgt_n islt_n isinvokable isstr isint isnum islist ishash substr if unless for while elems chars escape list hash iterkey_s iterval', $ast.op) >= 0;
         $ast.name(nqp::null_s);
@@ -244,7 +244,7 @@ class SmartCompiler is NQP::Compiler {
         
         #$ast := drop_takeclosure($ast);  # breaks things!!!!!!
         $ast := drop_Stmts($ast);
-        #$ast := remove_bogusOpNames($ast);
+        $ast := remove_bogusOpNames($ast);
 
         $ast := renameVars($ast, -> $s {
             my str $fst := nqp::substr($s, 0, 1);
