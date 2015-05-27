@@ -1,4 +1,4 @@
-- QAST::CompUnit
+- QAST::CompUnit+{StrByDump}
   - QAST::Block
     - QAST::Op(bind)
       - QAST::Var(lexical .src :decl(static))

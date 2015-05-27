@@ -5,20 +5,15 @@ use LActions;
 use nqpc;
 
 
-class LCompiler is HLL::Compiler {
+class LCompiler is SmartCompiler {
 
-    has @!qastInspectors;
-
-    method add_qastInspector($consumer) {
-        @!qastInspectors.push($consumer);
-    }
-
-    method inspectQAST($ast) {
-        my $fileName := $*USER_FILE;
-        for @!qastInspectors {
-            $_($fileName, $ast);
-        }
-        return $ast;
+    method BUILD() {
+        self.language('lambda');
+        self.parsegrammar(LGrammar);
+        self.parseactions(LActions.new);
+        
+        self.addstage('mkRuntime', :after<start>);
+        return self;
     }
 
     method mkRuntime($src) {
@@ -27,7 +22,7 @@ class LCompiler is HLL::Compiler {
         say("# [Lc] mkRuntime ~> " ~ whatsit($rtQAST));
         return $src;
     }
-    
+
 
     method command_line(@args, *%adverbs) {
         my $program-name := @args[0];
@@ -87,24 +82,11 @@ sub flatten($args) {
 
 sub MAIN(@ARGS) {
     my $c := LCompiler.new();
-    $c.language('lambda');
-    $c.parsegrammar(LGrammar);
-    $c.parseactions(LActions.new);
-    
-    $c.addstage('mkRuntime', :after<start>);
-    $c.addstage('inspectQAST', :after<ast>);
-
-    $c.add_qastInspector(-> $fileName, $ast {
-        my $outfileName := $fileName ~ '.qast';
-        my $outfile := nqp::open($outfileName, 'w');
-        nqp::printfh($outfile, $ast.dump);
-        nqp::closefh($outfile);
-    });
 
     my @as := flatten(@ARGS);
     @as.push('Lc')     unless nqp::elems(@as) > 0; # program name for command_line
     @as.push('test.L') unless nqp::elems(@as) > 1;
 
-    $c.command_line(@as, :encoding('utf8'), :stagestats(1));
+    $c.command_line(@as, :encoding('utf8'), :stagestats);
 }
 

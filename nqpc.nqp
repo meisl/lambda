@@ -46,24 +46,16 @@ role StrByDump {
     method Str() { self.dump }
 }
 
-
-my $needsCompilation := 0;
-
-class NQPCompiler is NQP::Compiler {
+class SmartCompiler is NQP::Compiler {
 
     has @!qastInspectors;
 
     method BUILD() {
         @!qastInspectors := [];
-        #say(">>>>BUILD: self=", nqp::reprname(self));
-        self.language('nqp');
-        self.parsegrammar(NQP::Grammar);
-        self.parseactions(NQP::Actions);
 
         # in this order (!):
         self.addstage('optimize',    :after<ast>);
         self.addstage('inspectqast', :after<ast>);
-        #self.addstage('aststr',      :after<ast>);
 
         # Add extra command line options.
         my @clo := self.commandline_options();
@@ -100,6 +92,20 @@ class NQPCompiler is NQP::Compiler {
         }
         return $ast;
     }
+}
+
+my $needsCompilation := 0;
+
+class NQPCompiler is SmartCompiler {
+
+    method BUILD() {
+        self.language('nqp');
+        self.parsegrammar(NQP::Grammar);
+        self.parseactions(NQP::Actions);
+
+        return self;
+    }
+
 
     method handle-exception($error) {
         nqp::rethrow($error);
@@ -107,7 +113,7 @@ class NQPCompiler is NQP::Compiler {
 
     method compileFile($file, :$lib = '.', :$target = 'mbc') {
         my $nqpName := "$lib/$file.nqp";
-        #say(">>> $nqpName: target=$target");
+        #say("<nqpc> $nqpName: target=$target ");
         my $qastName := "$nqpName.qast";
         my $mvmName := "$lib/$file.moarvm";
         if !nqp::filereadable($nqpName) {
@@ -140,7 +146,7 @@ class NQPCompiler is NQP::Compiler {
             @args.push($nqpName);
             #say($mvmName, '...');
 
-            #say(nqp::join(' ', @args));
+            #say("<nqpc> $nqpName ", nqp::join(' ', @args));
             #say(nqp::x('-', 29));
             my $*USER_FILE := $nqpName;
             my $result;
