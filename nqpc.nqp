@@ -102,6 +102,11 @@ sub drop_takeclosure($ast) {
 sub _drop_Stmts($ast, $parent) {
     nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) ~ (nqp::isstr($ast) ?? ' "' ~ nqp::escape($ast) ~ '"' !! '') )
         unless nqp::istype($ast, QAST::Node);
+
+    if nqp::can($ast, 'resultchild') && nqp::isint($ast.resultchild) {
+        return [$ast];   # don't muck with that...
+    }
+
     #if nqp::istype($ast, QAST::Children) {
     if nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
         my @children := [];
@@ -133,6 +138,10 @@ sub drop_Stmts($ast) {
         ?? @out[0]
         !! QAST::Stmts.new(|@out);
 }
+
+#sub drop_bogusVars($ast) {
+#}
+
 
 sub remove_bogusOpNames($ast) {
     nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
@@ -214,7 +223,7 @@ class SmartCompiler is NQP::Compiler {
     method BUILD() {
         # in this order (!):
         self.addstage('ast_save',     :after<ast>);
-        self.addstage('optimize',    :before<ast_save>);
+        #self.addstage('optimize',    :before<ast_save>);
 
         # Add extra command line options.
         my @clo := self.commandline_options();
@@ -243,8 +252,10 @@ class SmartCompiler is NQP::Compiler {
         say(">>>ast_clean ", self.user-progname(), '...');
         
         #$ast := drop_takeclosure($ast);  # breaks things!!!!!!
+        
         $ast := drop_Stmts($ast);
         $ast := remove_bogusOpNames($ast);
+
 
         $ast := renameVars($ast, -> $s {
             my str $fst := nqp::substr($s, 0, 1);
