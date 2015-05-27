@@ -107,29 +107,27 @@ sub _drop_Stmts($ast, $parent) {
         return [$ast];   # don't muck with that...
     }
 
-    #if nqp::istype($ast, QAST::Children) {
-    if nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
-        my @children := [];
-        for $ast.list {
-            for _drop_Stmts($_, $ast) {
-                @children.push($_);
-            }
-        }
-        if nqp::istype($ast, QAST::Stmts)
-            && (
-                  istypeAny($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) 
-               || (nqp::elems(@children) < 2)
-            )
-        {
-            return @children; # return the Stmts' children as is, dropping the Stmts node
-        } else {
-            #$ast.set_children(@children);
-            my @list := $ast.list;
-            while +@list { @list.pop }
-            for @children { @list.push($_) }
+    my @children := [];
+    for $ast.list {
+        for _drop_Stmts($_, $ast) {
+            @children.push($_);
         }
     }
-    [$ast];
+    if nqp::istype($ast, QAST::Stmts)
+        && (
+              istypeAny($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) 
+           || (nqp::elems(@children) < 2)
+        )
+    {
+        return @children; # return the Stmts' children as is, dropping the Stmts node
+    } else {
+        #$ast.set_children(@children);
+        my @list := $ast.list;
+        while +@list { @list.pop }
+        for @children { @list.push($_) }
+    }
+
+    return [$ast];
 }
 
 sub drop_Stmts($ast) {
@@ -139,8 +137,48 @@ sub drop_Stmts($ast) {
         !! QAST::Stmts.new(|@out);
 }
 
-#sub drop_bogusVars($ast) {
-#}
+sub isinResultPosition($node, $parent) {
+    my $n := nqp::elems($parent) - 1;
+    if ($parent[$n] =:= $node) || (nqp::can($parent, 'resultchild') && $parent[$parent.resultchild] =:= $node) {
+        return 1;
+    }
+    
+    while --$n >= 0 {
+        return 0 if $node =:= $parent[$n];
+    }
+
+    nqp::die(whatsit($node) ~ ' not a child of ' ~ whatsit($parent));
+}
+
+
+sub drop_bogusVars($ast, $parent = nqp::null) {
+    if nqp::istype($ast, QAST::Var) && !$ast.decl {
+        if istypeAny($parent, QAST::Block, QAST::Stmt, QAST::Stmts) {
+            unless isinResultPosition($ast, $parent) {
+                #nqp::print(whatsit($parent) ~ ' ' ~ $ast.dump);
+                return nqp::null;
+            }
+        }
+    } elsif +$ast.list { # workaround - not all nodes with children actually do that role
+        #say('  >> ', whatsit($ast), ' ', nqp::elems($ast.list));
+        my @children := [];
+        my $changed := 0;
+        for $ast.list {
+            my $child := drop_bogusVars($_, $ast);
+            if nqp::isnull($child) {
+                $changed := 1;
+            } else {
+                @children.push($child);
+            }
+        }
+        if $changed {
+            my @list := $ast.list;
+            while +@list { @list.pop }
+            for @children { @list.push($_) }
+        }
+    }
+    $ast;
+}
 
 
 sub remove_bogusOpNames($ast) {
@@ -254,8 +292,8 @@ class SmartCompiler is NQP::Compiler {
         #$ast := drop_takeclosure($ast);  # breaks things!!!!!!
         
         $ast := drop_Stmts($ast);
+        $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
         $ast := remove_bogusOpNames($ast);
-
 
         $ast := renameVars($ast, -> $s {
             my str $fst := nqp::substr($s, 0, 1);

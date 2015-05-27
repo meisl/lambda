@@ -78,7 +78,7 @@ sub typecase($subject, *%callbacks) {
             )
         }
     );
-    my $cbKey;
+    my $cbKey;# := nqp::null;
     if nqp::islist($subject) {
         my $id := nqp::atpos($subject, 0);
         my $tag := nqp::substr($id, 0, 1);
