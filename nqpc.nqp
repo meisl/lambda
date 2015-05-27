@@ -436,6 +436,7 @@ sub MAIN(*@ARGS) {
     my $ext := '.nqp';
     my $sep := '# [nqpc] ' ~ nqp::x('-', 29);
     my $nqpc := NQPCompiler.new();
+    my %opts := hash();
 
     @ARGS.shift;  # first is program name
 
@@ -445,14 +446,10 @@ sub MAIN(*@ARGS) {
         #@ARGS.push('L');
 
         @ARGS.push('runtime');
-    }
-
-    my %opts := hash();
-
-    if +@ARGS == 1 && @ARGS[0] eq 'runtime' {
         $nqpc.addstage('ast_clean', :before<ast_save>);
         %opts<target> := '';    # ...and run it
     }
+
 
     for @ARGS {
         my $file := $_ ~ $ext;
