@@ -242,19 +242,29 @@ sub drop_bogusVars($ast, $parent = nqp::null) {
     $ast;
 }
 
+sub repair_null_decl_attrs_of_vars($ast) {
+    nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
+        unless nqp::istype($ast, QAST::Node);
+    if nqp::istype($ast, QAST::Var) && !$ast.decl {
+        $ast.decl(nqp::null_s);
+    } else {
+        for $ast.list {
+            repair_null_decl_attrs_of_vars($_);
+        }
+    }
+    $ast;
+}
+
 sub remove_bogusOpNames($ast) {
     nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
         unless nqp::istype($ast, QAST::Node);
-    #if nqp::istype($ast, QAST::Children) {
-    if nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
-        for $ast.list {
-            remove_bogusOpNames($_);
-        }
-    }
     if nqp::istype($ast, QAST::Op) && ($ast.op ne 'call') && ($ast.op ne 'callstatic') && ($ast.op ne 'callmethod') && ($ast.op ne 'lexotic') {
         #say('>>>Op(', $ast.op, ' ', $ast.dump_extra_node_info, ')')
         #    unless nqp::index('x radix can postinc preinc add_n sub_n stringify bind bindkey concat atpos atkey die reprname defor isnull iseq_s iseq_n isgt_n islt_n isinvokable isstr isint isnum islist ishash substr if unless for while elems chars escape list hash iterkey_s iterval', $ast.op) >= 0;
         $ast.name(nqp::null_s);
+    }
+    for $ast.list {
+        remove_bogusOpNames($_);
     }
     $ast;
 }
@@ -442,6 +452,7 @@ class SmartCompiler is NQP::Compiler {
         
         $ast := drop_Stmts($ast);
         $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
+        $ast := repair_null_decl_attrs_of_vars($ast);
         $ast := remove_bogusOpNames($ast);
         $ast := remove_MAIN($ast);
 
