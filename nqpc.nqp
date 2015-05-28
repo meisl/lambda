@@ -64,6 +64,53 @@ sub linesFrom(str $filename, $from = 1, $count?) is export {
 # -----------------------------------------------
 
 
+sub dump($node, $indent = '', :$isLastChild = 2, :$isBlockChild = 0) {
+    my $clsStr := nqp::substr($node.HOW.name($node), 6);
+    my $nodesNodeStr := '';
+    if $node.node {
+        $nodesNodeStr := ' ' ~ nqp::escape(~$node.node);
+        if nqp::chars($nodesNodeStr) > 54 {
+            $nodesNodeStr := nqp::substr($nodesNodeStr, 0, 51) ~ '...'
+        }
+    }
+    my $extraStr := $node.dump_extra_node_info;
+    my $prefix := $indent;
+    if $isBlockChild {
+        $prefix := $prefix ~ ($isLastChild ?? ($isLastChild == 2 ?? '─' !! '╙') !! '╟' );
+    } else {
+        $prefix := $prefix ~ ($isLastChild ?? ($isLastChild == 2 ?? '─' !! '└') !! '├' );
+    }
+    
+    if nqp::istype($node, QAST::SpecialArg) {
+        $clsStr := nqp::substr($clsStr, 0, nqp::index($clsStr, '+{'));
+        $extraStr := $extraStr ~ ' :flat(' ~ $node.flat ~ ')' if $node.flat;
+        $extraStr := $extraStr ~ ' :named(' ~ $node.flat ~ ')' if $node.named;
+    }
+    if $clsStr eq 'Op' {
+        $clsStr := '';
+        $prefix := $prefix ~ '─';
+    } elsif $clsStr eq 'Var' {
+        $clsStr := ' ';
+        $prefix := $prefix ~ '─○';
+    } elsif $clsStr eq 'Block' {
+        $prefix := $prefix ~ '◄';
+    } elsif nqp::substr($clsStr, 0, 4) eq 'Stmt' {
+        $prefix := $prefix ~ '◄';
+    } else {
+        $prefix := $prefix ~ '─';
+    }
+    #my @lines := ["$prefix$clsStr$extraStr"];
+    my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
+    my $i := nqp::elems($node.list);
+    my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
+    my $iamblock := nqp::istype($node, QAST::Block);
+    for $node.list {
+        @lines.push(dump($_, $childIndent, :isLastChild(--$i == 0), :isBlockChild($iamblock)));
+    }
+    nqp::join("\n", @lines);
+}
+
+
 
 
 sub istypeAny($subject, *@types) {
@@ -239,13 +286,13 @@ sub removeChild($parent, $child) {
 
 sub remove_MAIN($ast) {
     say($ast[0].cuid);
-    say($ast.load.dump);
-    say($ast.main.dump);
+    say("CompUnit load: \n", dump($ast.load, '   '));
+    say("CompUnit main: \n", dump($ast.main, '   '));
 
     my @path := [];
     my $MAIN := findDef($ast, '&MAIN', @path);
     removeChild(@path[0], $MAIN);
-    #say(whatsit(@path), ' ', $MAIN.dump);
+    say(whatsit(@path), "\n", dump($MAIN));
     @path := [];
     my $MAINcall := findPath(-> $node, @pathUp {
             if nqp::istype($node, QAST::Op) && ($node.op eq 'call') && ($node.name eq '&MAIN' || (nqp::istype($node[0], QAST::Var) && $node[0].name eq '&MAIN')) {
@@ -350,7 +397,7 @@ sub renameVars($ast, $map?) {
 
 
 role StrByDump {
-    method Str() { self.dump }
+    method Str() { dump(self) }
 }
 
 class SmartCompiler is NQP::Compiler {
@@ -390,8 +437,8 @@ class SmartCompiler is NQP::Compiler {
         
         $ast := drop_Stmts($ast);
         $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
-        $ast := remove_MAIN($ast);
         $ast := remove_bogusOpNames($ast);
+        $ast := remove_MAIN($ast);
 
         $ast := renameVars($ast, -> $s {
             my str $fst := nqp::substr($s, 0, 1);
@@ -414,7 +461,7 @@ class SmartCompiler is NQP::Compiler {
         my $qastfileName := self.user-progname() ~ '.qast';
         return $ast
             if %adverbs<output> eq $qastfileName;
-        spew($qastfileName, $ast.dump);
+        spew($qastfileName, ~$ast);
         say(">>>ast_save: QAST dump written to ", $qastfileName);
         $ast;
     }
