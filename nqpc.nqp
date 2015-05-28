@@ -28,7 +28,17 @@ sub whatsit($v) is export {
             @kvs.push(":$k(" ~ whatsit($v) ~ ')');
         }
         return 'hash(' ~ nqp::join(', ', @kvs) ~ ')';
-    #} elsif nqp::istype($v, Something) { ??? } # TODO: something smart for lists
+    } elsif nqp::islist($v) {
+        my @out := [];
+        for $v {
+            @out.push(whatsit($_));
+        }
+        return '[' ~ nqp::join(', ', @out) ~ ']';
+    } elsif nqp::istype($v, QAST::Node) {
+        my $s := $v.HOW.name($v);
+        my $x := $v.dump_extra_node_info;
+        return $x ?? "$s($x)" !! $s;
+    #} elsif nqp::istype($v, Something) { ??? }
     } elsif nqp::can($v.HOW, 'name') {
         return $v.HOW.name($v);
     } else {
@@ -180,7 +190,6 @@ sub drop_bogusVars($ast, $parent = nqp::null) {
     $ast;
 }
 
-
 sub remove_bogusOpNames($ast) {
     nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
         unless nqp::istype($ast, QAST::Node);
@@ -198,26 +207,114 @@ sub remove_bogusOpNames($ast) {
     $ast;
 }
 
-sub findDef($ast, str $name) {
-    my $out;
-    if nqp::istype($ast, QAST::CompUnit) {
-        return findDef(qastChildren($ast, QAST::Block)[0], $name);
-    } elsif istypeAny($ast, QAST::Block, QAST::Stmts, QAST::Stmt) {
-        for qastChildren($ast, QAST::Stmts, QAST::Stmt, QAST::Op) {
-            if nqp::istype($_, QAST::Op) {
-                if $_.op eq 'bind' && $_[0].name eq $name {
-                    return $_;
+sub removeChild($parent, $child) {
+    my @children := nqp::islist($parent) ?? $parent !! $parent.list;
+    my @foundAt := [];
+    my $i := 0;
+    my $n := nqp::elems(@children);
+    for @children {
+        if $_ =:= $child {
+            @foundAt.push($i);
+        }
+        $i++;
+    }
+    unless +@foundAt {
+        nqp::die("could not find child " ~ whatsit($child) ~ ' under ' ~ $parent.dump);
+    }
+
+    my @removed := [];
+    @foundAt.push($n);
+    $i := @foundAt.shift;
+    my $k := $i + 1;
+    for @foundAt {
+        while $k < $_ {
+            @children[$i++] := @children[$k++];
+        }
+        @removed.push(@children[$k++]);
+    }
+    nqp::setelems(@children, $n - nqp::elems(@removed));
+    $parent;
+}
+
+
+sub remove_MAIN($ast) {
+    say($ast[0].cuid);
+    say($ast.load.dump);
+    say($ast.main.dump);
+
+    my @path := [];
+    my $MAIN := findDef($ast, '&MAIN', @path);
+    removeChild(@path[0], $MAIN);
+    #say(whatsit(@path), ' ', $MAIN.dump);
+    @path := [];
+    my $MAINcall := findPath(-> $node, @pathUp {
+            if nqp::istype($node, QAST::Op) && ($node.op eq 'call') && ($node.name eq '&MAIN' || (nqp::istype($node[0], QAST::Var) && $node[0].name eq '&MAIN')) {
+                my $parent := @pathUp[0];
+                if nqp::istype($parent, QAST::Op) && $parent.op eq 'if' {
+                    $parent;
+                } elsif istypeAny($parent, QAST::Stmt, QAST::Stmts) {
+                    $parent := @pathUp[0];
+                    if nqp::istype($parent, QAST::Op) && $parent.op eq 'if' {
+                        $parent;
+                    } else {
+                        $node
+                    }
                 }
             } else {
-                $out := findDef($_, $name);
-                if $out {
-                    return $out;
-                }
+                $node.list;
             }
+        },
+        $ast, @path
+    );
+    removeChild(@path[0], $MAINcall);
+    #say(whatsit(@path), ' ', $MAINcall.dump);
+    $ast;
+}
+
+
+sub findPath(&test, $node, @pathUp = []) {
+    my $res := &test($node, @pathUp);
+    if nqp::islist($res) {
+        @pathUp.unshift($node);
+        for $res {
+            my $res2 := findPath(&test, $_, @pathUp);
+            return $res2 if $res2;  # ie. if truthy (list, 1 or a node)
+        }
+        @pathUp.shift();
+    } elsif $res {
+        if $res =:= $node || !nqp::istype($res, QAST::Node) {    # just truthy to indicate that $node should be returned
+            return $node
+        } else {
+            while !($res =:= @pathUp.shift) {
+            }
+            return $res;
         }
     }
-    $out;
+    return nqp::null;
 }
+
+
+sub findDef($ast, str $name, @pathUp = []) {
+    findPath(
+        -> $node, @pathUp {
+            my $parent := nqp::elems(@pathUp) > 0 ?? @pathUp[0] !! nqp::null;
+            if nqp::isnull($parent) || nqp::istype($parent, QAST::CompUnit) {
+                $node.list;
+            } elsif nqp::istype($parent, QAST::Op) && nqp::istype($node, QAST::Var) {
+                 $parent.op eq 'bind' && $node.name eq $name && $node.decl
+                    ?? $parent
+                    !! nqp::null;
+            } elsif istypeAny($parent, QAST::Block, QAST::Stmts, QAST::Stmt, QAST::Op) {
+                my @next := qastChildren($node, QAST::Block, QAST::Stmts, QAST::Stmt, QAST::Var, QAST::Op); # TODO: put Op nodes first
+                @next;
+            } else {
+                0;
+            }
+        },
+        $ast, @pathUp
+    );
+}
+
 
 sub renameVars($ast, $map?) {
     nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ nqp::reprname($ast) )
@@ -293,6 +390,7 @@ class SmartCompiler is NQP::Compiler {
         
         $ast := drop_Stmts($ast);
         $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
+        $ast := remove_MAIN($ast);
         $ast := remove_bogusOpNames($ast);
 
         $ast := renameVars($ast, -> $s {
