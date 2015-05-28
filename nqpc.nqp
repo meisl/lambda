@@ -99,8 +99,8 @@ sub dump($node, $indent = '', :$isLastChild = 2, :$isBlockChild = 0) {
     } else {
         $prefix := $prefix ~ '─';
     }
-    #my @lines := ["$prefix$clsStr$extraStr"];
-    my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
+    my @lines := [$prefix ~ $clsStr ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
+    #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
     my $i := nqp::elems($node.list);
     my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
     my $iamblock := nqp::istype($node, QAST::Block);
