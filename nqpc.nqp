@@ -68,10 +68,13 @@ sub dump($node, $indent = '', :$isLastChild = 2, :$isBlockChild = 0) {
     my $clsStr := nqp::substr($node.HOW.name($node), 6);
     my $nodesNodeStr := '';
     if $node.node {
-        $nodesNodeStr := ' ' ~ nqp::escape(~$node.node);
+        $nodesNodeStr := nqp::escape(~$node.node);
         if nqp::chars($nodesNodeStr) > 54 {
-            $nodesNodeStr := nqp::substr($nodesNodeStr, 0, 51) ~ '...'
+            $nodesNodeStr := nqp::substr($nodesNodeStr, 0, 51) ~ '"...'
+        } else {
+            $nodesNodeStr := $nodesNodeStr ~ '"';
         }
+        $nodesNodeStr := '  ««"' ~ $nodesNodeStr;
     }
     my $extraStr := $node.dump_extra_node_info;
     my $prefix := $indent;
@@ -84,13 +87,15 @@ sub dump($node, $indent = '', :$isLastChild = 2, :$isBlockChild = 0) {
     if nqp::istype($node, QAST::SpecialArg) {
         $clsStr := nqp::substr($clsStr, 0, nqp::index($clsStr, '+{'));
         $extraStr := $extraStr ~ ' :flat(' ~ $node.flat ~ ')' if $node.flat;
-        $extraStr := $extraStr ~ ' :named(' ~ $node.flat ~ ')' if $node.named;
+        $extraStr := $extraStr ~ ' :named("' ~ nqp::escape($node.named) ~ '")' if $node.named;
     }
     if $clsStr eq 'Op' {
-        $clsStr := '';
+        $clsStr := $extraStr;
+        $extraStr := '';
         $prefix := $prefix ~ '─';
     } elsif $clsStr eq 'Var' {
-        $clsStr := ' ';
+        $clsStr := $extraStr;
+        $clsStr := '';
         $prefix := $prefix ~ '─○';
     } elsif $clsStr eq 'Block' {
         $prefix := $prefix ~ '◄';
@@ -99,7 +104,7 @@ sub dump($node, $indent = '', :$isLastChild = 2, :$isBlockChild = 0) {
     } else {
         $prefix := $prefix ~ '─';
     }
-    my @lines := [$prefix ~ $clsStr ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
+    my @lines := [$prefix ~ $clsStr ~ ($extraStr ?? ' ' ~ $extraStr !! '') ~ $nodesNodeStr];
     #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
     my $i := nqp::elems($node.list);
     my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
