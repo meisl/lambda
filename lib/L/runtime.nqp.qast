@@ -75,18 +75,16 @@
     ║   ║ └─bind  ««":="
     ║   ║   ├○ lexical $to
     ║   ║   └○ lexical $n
-    ║   ╟─while  ««"$from < $to {\n        @out.push(@list[$from]);\n  "...
+    ║   ╟─while  ««"$from < $to {\n        nqp::push(@out, nqp::atpos(@"...
     ║   ║ ├─islt_n  ««"<"
     ║   ║ │ ├○ lexical $from
     ║   ║ │ └○ lexical $to
-    ║   ║ ├─:Stmts  ««"{\n        @out.push(@list[$from]);\n        $from+"...
-    ║   ║ │ ├─callmethod push  ««"@list[$from]"
+    ║   ║ ├─:Stmts  ««"{\n        nqp::push(@out, nqp::atpos(@list, $from)"...
+    ║   ║ │ ├─push  ««"nqp::push(@out, nqp::atpos(@list, $from))"
     ║   ║ │ │ ├○ lexical @out
-    ║   ║ │ │ └○ positional  :fallback(...)
-    ║   ║ │ │   ├─fallback
-    ║   ║ │ │   │ └◙ WVal NQPMu
-    ║   ║ │ │   ├○ lexical @list :decl()
-    ║   ║ │ │   └○ lexical $from :decl()
+    ║   ║ │ │ └─atpos  ««"nqp::atpos(@list, $from)"
+    ║   ║ │ │   ├○ lexical @list
+    ║   ║ │ │   └○ lexical $from
     ║   ║ │ └─postinc  ««"++"
     ║   ║ │   └○ lexical $from
     ║   ║ └◙ IVal 1 :named("nohandler")
@@ -232,13 +230,11 @@
     ║   ║ ├─reprname  ««"nqp::reprname($subject)"
     ║   ║ │ └○ lexical $subject
     ║   ║ └◙ SVal "...) "
-    ║   ╟─bind  ««"$otherwise := nqp::defor(\n        %callbacks<other"...
+    ║   ╟─bind  ««"$otherwise := nqp::defor(\n        nqp::atkey(%call"...
     ║   ║ ├○ lexical $otherwise
-    ║   ║ └─defor  ««"nqp::defor(\n        %callbacks<otherwise>,\n      "...
-    ║   ║   ├○ associative  :fallback(...)
-    ║   ║   │ ├─fallback
-    ║   ║   │ │ └◙ WVal NQPMu
-    ║   ║   │ ├○ lexical %callbacks :decl()
+    ║   ║ └─defor  ««"nqp::defor(\n        nqp::atkey(%callbacks, 'otherw"...
+    ║   ║   ├─atkey  ««"nqp::atkey(%callbacks, 'otherwise')"
+    ║   ║   │ ├○ lexical %callbacks
     ║   ║   │ └◙ SVal "otherwise"
     ║   ║   └─:Block  ««"{ # compiler should see that this needs not be a cl"...
     ║   ║     ╟○ lexical $x :decl(param)  ««"$x"

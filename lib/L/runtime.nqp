@@ -33,7 +33,7 @@ sub sublist(@list, int $from) is export {
         $to := $n
     }
     while $from < $to {
-        @out.push(@list[$from]);
+        nqp::push(@out, nqp::atpos(@list, $from));
         $from++;
     }
     @out;
@@ -72,7 +72,7 @@ sub lam2info($lambda) {
 sub typecase($subject, *%callbacks) {
     say('>>>typecase(', nqp::reprname($subject), '...) ');
     my $otherwise := nqp::defor(
-        %callbacks<otherwise>,
+        nqp::atkey(%callbacks, 'otherwise'),
         -> $x { # compiler should see that this needs not be a closure
             nqp::die('typecase: fell through due to missing "otherwise"-callback: '
                 ~ nqp::reprname($subject)
