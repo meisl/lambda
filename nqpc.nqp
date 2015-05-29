@@ -110,6 +110,8 @@ sub dump($node, $indent = '', $parent?, :$isLastChild = 2, :$isBlockChild = 0) {
         $prefix := $prefix ~ '◙ ';
         if nqp::istype($node, QAST::SVal) {
             $extraStr := ' "' ~ nqp::escape($node.value) ~ '"';
+        } elsif istypeAny($node, QAST::IVal, QAST::NVal) {
+            $extraStr := ' ' ~ ~$node.value;
         }
     } elsif $clsStr eq 'Block' {
         $prefix := $prefix ~ '─:';

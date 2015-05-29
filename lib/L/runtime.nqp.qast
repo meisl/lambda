@@ -26,7 +26,7 @@
     ║     └─:Stmts  ««"\n    my int $wasRun := 0;\n    my $result := nqp::"...
     ║       ├─bind  ««"int $wasRun := 0"
     ║       │ ├○ lexical $wasRun
-    ║       │ └◙ IVal
+    ║       │ └◙ IVal 0
     ║       ├─bind  ««"$result := nqp::null"
     ║       │ ├○ lexical $result
     ║       │ └─null  ««"nqp::null"
@@ -95,7 +95,7 @@
     ║   ╟○ lexical $lambda :decl(param)  ««"$lambda"
     ║   ╙─atpos  ««"nqp::atpos($lambda, 0)"
     ║     ├○ lexical $lambda
-    ║     └◙ IVal
+    ║     └◙ IVal 0
     ╟─bind
     ║ ├○ lexical .lam2code :decl(var)
     ║ └─:Block  ««"{ nqp::atpos($lambda, 1) }"
@@ -133,8 +133,8 @@
     ║   ║   │ ├◙ IVal 10
     ║   ║   │ ├○ lexical $id
     ║   ║   │ ├◙ IVal 1
-    ║   ║   │ └◙ IVal
-    ║   ║   └◙ IVal
+    ║   ║   │ └◙ IVal 0
+    ║   ║   └◙ IVal 0
     ║   ╟─bind  ««"%rawInfo := %info<λ>[$idx]"
     ║   ║ ├○ lexical %rawInfo
     ║   ║ └─VarWithFallback positional 
@@ -180,7 +180,7 @@
     ║   ║   └◙ SVal "freeVarNames"
     ║   ╟─bind  ««"$i := 0"
     ║   ║ ├○ lexical $i
-    ║   ║ └◙ IVal
+    ║   ║ └◙ IVal 0
     ║   ╟─for  ««"@fvns {\n        nqp::bindkey(%fvs, $_, @fvs[$i]);\"...
     ║   ║ ├○ lexical @fvns
     ║   ║ ├─:Block  ««"{\n        nqp::bindkey(%fvs, $_, @fvs[$i]);\n     "...
@@ -238,12 +238,12 @@
     ║   ║ │ ║ ├○ lexical $id
     ║   ║ │ ║ └─atpos  ««"nqp::atpos($subject, 0)"
     ║   ║ │ ║   ├○ lexical $subject
-    ║   ║ │ ║   └◙ IVal
+    ║   ║ │ ║   └◙ IVal 0
     ║   ║ │ ╟─bind  ««"$tag := nqp::substr($id, 0, 1)"
     ║   ║ │ ║ ├○ lexical $tag
     ║   ║ │ ║ └─substr  ««"nqp::substr($id, 0, 1)"
     ║   ║ │ ║   ├○ lexical $id
-    ║   ║ │ ║   ├◙ IVal
+    ║   ║ │ ║   ├◙ IVal 0
     ║   ║ │ ║   └◙ IVal 1
     ║   ║ │ ╙─if  ««"$tag eq 'λ' {\n            $cbKey := $tag;\n        }"
     ║   ║ │   ├─iseq_s  ««"eq"
@@ -256,7 +256,7 @@
     ║   ║ │     ├─iseq_n  ««"=="
     ║   ║ │     │ ├─elems  ««"nqp::elems($subject)"
     ║   ║ │     │ │ └○ lexical $subject
-    ║   ║ │     │ └◙ IVal
+    ║   ║ │     │ └◙ IVal 0
     ║   ║ │     ├─die  ««"nqp::die('typecase: unsupported low-level list type"...
     ║   ║ │     │ └◙ SVal "typecase: unsupported low-level list type - empty"
     ║   ║ │     └─die  ««"nqp::die('typecase: unsupported low-level list type"...
