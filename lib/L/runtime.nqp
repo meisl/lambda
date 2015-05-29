@@ -13,7 +13,7 @@ sub force($v) {
 sub delayMemo($block) {
     my int $wasRun := 0;
     my $result := nqp::null;
-    return {
+    my $out := {
         if $wasRun {
             $result;
         } else {
@@ -21,6 +21,7 @@ sub delayMemo($block) {
             $result := $block();
         }
     };
+    $out;
 }
 
 sub sublist(@list, int $from) is export {
@@ -192,6 +193,5 @@ sub MAIN(*@ARGS) {
     $lambda1.push($lambda1);    # add a self (recursive) ref
     
     say(strOut($lambda1));
-    typecase(:foo("bar"), :baz<qumbl>, |%info);
 }
 

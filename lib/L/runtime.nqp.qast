@@ -22,27 +22,28 @@
     ║   ╟○ lexical $block :decl(param)  ««"$block"
     ║   ╟○ lexical $wasRun :decl(var)
     ║   ╟○ lexical $result :decl(var)
-    ║   ╙─lexotic RETURN
-    ║     └─:Stmts  ««"\n    my int $wasRun := 0;\n    my $result := nqp::"...
-    ║       ├─bind  ««"int $wasRun := 0"
-    ║       │ ├○ lexical $wasRun
-    ║       │ └◙ IVal 0
-    ║       ├─bind  ««"$result := nqp::null"
-    ║       │ ├○ lexical $result
-    ║       │ └─null  ««"nqp::null"
-    ║       └─call RETURN
-    ║         └─:Block  ««"{\n        if $wasRun {\n            $result;\n    "...
-    ║           ╙─if  ««"$wasRun {\n            $result;\n        }"
-    ║             ├○ lexical $wasRun
-    ║             ├○ lexical $result
-    ║             └─:Stmts  ««"{\n            $wasRun := 1;\n            $result :"...
-    ║               ├─bind  ««":="
-    ║               │ ├○ lexical $wasRun
-    ║               │ └◙ IVal 1
-    ║               └─bind  ««":="
-    ║                 ├○ lexical $result
-    ║                 └─call  ««""
-    ║                   └○ lexical $block
+    ║   ╟○ lexical $out :decl(var)
+    ║   ╟─bind  ««"int $wasRun := 0"
+    ║   ║ ├○ lexical $wasRun
+    ║   ║ └◙ IVal 0
+    ║   ╟─bind  ««"$result := nqp::null"
+    ║   ║ ├○ lexical $result
+    ║   ║ └─null  ««"nqp::null"
+    ║   ╟─bind  ««"$out := {\n        if $wasRun {\n            $resul"...
+    ║   ║ ├○ lexical $out
+    ║   ║ └─:Block  ««"{\n        if $wasRun {\n            $result;\n    "...
+    ║   ║   ╙─if  ««"$wasRun {\n            $result;\n        }"
+    ║   ║     ├○ lexical $wasRun
+    ║   ║     ├○ lexical $result
+    ║   ║     └─:Stmts  ««"{\n            $wasRun := 1;\n            $result :"...
+    ║   ║       ├─bind  ««":="
+    ║   ║       │ ├○ lexical $wasRun
+    ║   ║       │ └◙ IVal 1
+    ║   ║       └─bind  ««":="
+    ║   ║         ├○ lexical $result
+    ║   ║         └─call  ««""
+    ║   ║           └○ lexical $block
+    ║   ╙○ lexical $out
     ╟─bind
     ║ ├○ lexical .sublist :decl(var)
     ║ └─:Block  ««"{\n    my int $n     := nqp::elems(@list);\n    my "...
