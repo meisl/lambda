@@ -64,8 +64,9 @@ sub linesFrom(str $filename, $from = 1, $count?) is export {
 # -----------------------------------------------
 
 
-sub dump($node, $indent = '', $parent?, :$isLastChild = 2, :$isBlockChild = 0) {
+sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) {
     my $clsStr := nqp::substr($node.HOW.name($node), 6);
+    
     my $nodesNodeStr := '';
     if $node.node {
         $nodesNodeStr := nqp::escape(~$node.node);
@@ -76,12 +77,19 @@ sub dump($node, $indent = '', $parent?, :$isLastChild = 2, :$isBlockChild = 0) {
         }
         $nodesNodeStr := '  ««"' ~ $nodesNodeStr;
     }
+
+    my $isBlockChild := nqp::istype($parent, QAST::Block);
+    my $isOrphan     := nqp::isnull($parent);
+    my $siblingCount := $isOrphan ?? 0 !! nqp::elems($parent.list) - 1;
+    my $isLastChild  := $isOrphan || ($parent.list[$siblingCount] =:= $node);
     my $extraStr := $node.dump_extra_node_info;
     my $prefix := $indent;
-    if $isBlockChild {
-        $prefix := $prefix ~ ($isLastChild ?? ($isLastChild == 2 ?? '─' !! '╙') !! '╟' );
+    if $isOrphan {
+        $prefix := $prefix ~ '─'
+    } elsif $isBlockChild {
+        $prefix := $prefix ~ ($isLastChild ?? '╙' !! '╟' );
     } else {
-        $prefix := $prefix ~ ($isLastChild ?? ($isLastChild == 2 ?? '─' !! '└') !! '├' );
+        $prefix := $prefix ~ ($isLastChild ?? '└' !! '├' );
     }
     $extraStr := $extraStr ?? ' ' ~ $extraStr !! '';
     
@@ -99,27 +107,23 @@ sub dump($node, $indent = '', $parent?, :$isLastChild = 2, :$isBlockChild = 0) {
         }
     }
 
-    my @children := $node.list;
-
     if $clsStr eq 'Op' {
         $extraStr := nqp::substr($extraStr, 1);
         $clsStr := $extraStr;
         $extraStr := '';
         $prefix := $prefix ~ '─';
     } elsif nqp::istype($node, QAST::Var) {
-        $clsStr := '';
+        $clsStr := nqp::istype($node, QAST::VarWithFallback)
+            ?? '┬' ~ $clsStr
+            !! '';
         $prefix := $prefix ~ '○';
         $specialStr := $specialStr ~ ' :slurpy(' ~ $node.slurpy ~ ')'
             if $node.slurpy;
         if $node.default {
-            $specialStr := $specialStr ~ ' :default(...)';
-            @children := nqp::clone(@children);
-            @children.unshift(QAST::Op.new(:op<default>, $node.default));
+            $specialStr := $specialStr ~ ' :default' ~ dump($node.default, :oneLine(1));
         }
         if nqp::istype($node, QAST::VarWithFallback) && $node.fallback {
-            $specialStr := $specialStr ~ ' :fallback(...)';
-            @children := nqp::clone(@children);
-            @children.unshift(QAST::Op.new(:op<fallback>, $node.fallback));
+            $specialStr := $specialStr ~ ' :fallback' ~ dump($node.fallback, :oneLine(1));
         }
     } elsif nqp::substr($clsStr, 1, 3) eq 'Val' {
         $prefix := $prefix ~ '◙ ';
@@ -135,15 +139,27 @@ sub dump($node, $indent = '', $parent?, :$isLastChild = 2, :$isBlockChild = 0) {
     } else {
         $prefix := $prefix ~ '─';
     }
-    my @lines := [$prefix ~ $clsStr ~ $extraStr ~ $specialStr ~ $nodesNodeStr];
-    #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
-    my $i := nqp::elems(@children);
-    my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
-    my $iamblock := nqp::istype($node, QAST::Block);
-    for @children {
-        @lines.push(dump($_, $childIndent, :isLastChild(--$i == 0), :isBlockChild($iamblock)));
+
+    my $suffix := $nodesNodeStr;
+    my $sep    := "\n";
+    my $before := '';
+    my $after  := '';
+    if $oneLine {
+        $prefix := '(';
+        $suffix := ')';
+        $sep    := ' ';
+        if nqp::elems($node.list) > 0 {
+            $before := '(';
+            $after  := ')';
+        }
     }
-    nqp::join("\n", @lines);
+    my @lines := [$prefix  ~ $clsStr ~ $extraStr ~ $specialStr ~ $suffix];
+    #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
+    my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
+    for $node.list {
+        @lines.push(dump($_, $node, :indent($childIndent), :$oneLine));
+    }
+    $before ~ nqp::join($sep, @lines) ~ $after;
 }
 
 
@@ -338,13 +354,13 @@ sub removeChild($parent, $child) {
 
 sub remove_MAIN($ast) {
     say($ast[0].cuid);
-    say("CompUnit load: \n", dump($ast.load, '   '));
-    say("CompUnit main: \n", dump($ast.main, '   '));
+    say("CompUnit load: \n", dump($ast.load));
+    say("CompUnit main: \n", dump($ast.main));
 
     my @path := [];
     my $MAIN := findDef($ast, '&MAIN', @path);
     removeChild(@path[0], $MAIN);
-    say(whatsit(@path), "\n", dump($MAIN));
+    say(whatsit(@path), "\n", whatsit($MAIN));
     @path := [];
     my $MAINcall := findPath(-> $node, @pathUp {
             if nqp::istype($node, QAST::Op) && ($node.op eq 'call') && ($node.name eq '&MAIN' || (nqp::istype($node[0], QAST::Var) && $node[0].name eq '&MAIN')) {
@@ -491,7 +507,7 @@ class SmartCompiler is NQP::Compiler {
         $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
         $ast := repair_null_decl_attrs_of_vars($ast);
         $ast := remove_bogusOpNames($ast);
-        #$ast := remove_MAIN($ast);
+        $ast := remove_MAIN($ast);
 
         $ast := renameVars($ast, -> $s {
             my str $fst := nqp::substr($s, 0, 1);

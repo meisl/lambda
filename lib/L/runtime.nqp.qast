@@ -137,12 +137,8 @@
     ║   ║   └◙ IVal 0
     ║   ╟─bind  ««"%rawInfo := %info<λ>[$idx]"
     ║   ║ ├○ lexical %rawInfo
-    ║   ║ └○ positional  :fallback(...)
-    ║   ║   ├─fallback
-    ║   ║   │ └◙ WVal NQPMu
-    ║   ║   ├○ associative  :decl() :fallback(...)
-    ║   ║   │ ├─fallback
-    ║   ║   │ │ └◙ WVal NQPMu
+    ║   ║ └○┬VarWithFallback positional  :fallback(WVal NQPMu)
+    ║   ║   ├○┬VarWithFallback associative  :decl() :fallback(WVal NQPMu)
     ║   ║   │ ├○ lexical %info :decl()
     ║   ║   │ └◙ SVal "λ"
     ║   ║   └○ lexical $idx :decl()
@@ -154,28 +150,20 @@
     ║   ║   ├◙ SVal "idx"
     ║   ║   ├○ lexical $idx
     ║   ║   ├◙ SVal "from"
-    ║   ║   ├○ associative  :fallback(...)
-    ║   ║   │ ├─fallback
-    ║   ║   │ │ └◙ WVal NQPMu
+    ║   ║   ├○┬VarWithFallback associative  :fallback(WVal NQPMu)
     ║   ║   │ ├○ lexical %rawInfo :decl()
     ║   ║   │ └◙ SVal "from"
     ║   ║   ├◙ SVal "length"
-    ║   ║   ├○ associative  :fallback(...)
-    ║   ║   │ ├─fallback
-    ║   ║   │ │ └◙ WVal NQPMu
+    ║   ║   ├○┬VarWithFallback associative  :fallback(WVal NQPMu)
     ║   ║   │ ├○ lexical %rawInfo :decl()
     ║   ║   │ └◙ SVal "length"
     ║   ║   ├◙ SVal "src"
     ║   ║   └─substr  ««"nqp::substr($λsrc, %rawInfo<from>, %rawInfo<length>)"
     ║   ║     ├○ lexical .λsrc
-    ║   ║     ├○ associative  :fallback(...)
-    ║   ║     │ ├─fallback
-    ║   ║     │ │ └◙ WVal NQPMu
+    ║   ║     ├○┬VarWithFallback associative  :fallback(WVal NQPMu)
     ║   ║     │ ├○ lexical %rawInfo :decl()
     ║   ║     │ └◙ SVal "from"
-    ║   ║     └○ associative  :fallback(...)
-    ║   ║       ├─fallback
-    ║   ║       │ └◙ WVal NQPMu
+    ║   ║     └○┬VarWithFallback associative  :fallback(WVal NQPMu)
     ║   ║       ├○ lexical %rawInfo :decl()
     ║   ║       └◙ SVal "length"
     ║   ╟─bind  ««"@fvs     := lam2fvs($lambda)"
@@ -187,9 +175,7 @@
     ║   ║ └─hash  ««"nqp::hash()"
     ║   ╟─bind  ««"@fvns := %rawInfo<freeVarNames>"
     ║   ║ ├○ lexical @fvns
-    ║   ║ └○ associative  :fallback(...)
-    ║   ║   ├─fallback
-    ║   ║   │ └◙ WVal NQPMu
+    ║   ║ └○┬VarWithFallback associative  :fallback(WVal NQPMu)
     ║   ║   ├○ lexical %rawInfo :decl()
     ║   ║   └◙ SVal "freeVarNames"
     ║   ╟─bind  ««"$i := 0"
@@ -202,9 +188,7 @@
     ║   ║ │ ╟─bindkey  ««"nqp::bindkey(%fvs, $_, @fvs[$i])"
     ║   ║ │ ║ ├○ lexical %fvs
     ║   ║ │ ║ ├○ lexical $_
-    ║   ║ │ ║ └○ positional  :fallback(...)
-    ║   ║ │ ║   ├─fallback
-    ║   ║ │ ║   │ └◙ WVal NQPMu
+    ║   ║ │ ║ └○┬VarWithFallback positional  :fallback(WVal NQPMu)
     ║   ║ │ ║   ├○ lexical @fvs :decl()
     ║   ║ │ ║   └○ lexical $i :decl()
     ║   ║ │ ╙─postinc  ««"++"
@@ -305,9 +289,7 @@
     ║   ╟─bind  ««"$cb := nqp::defor(%callbacks{$cbKey}, $otherwise)"
     ║   ║ ├○ lexical $cb
     ║   ║ └─defor  ««"nqp::defor(%callbacks{$cbKey}, $otherwise)"
-    ║   ║   ├○ associative  :fallback(...)
-    ║   ║   │ ├─fallback
-    ║   ║   │ │ └◙ WVal NQPMu
+    ║   ║   ├○┬VarWithFallback associative  :fallback(WVal NQPMu)
     ║   ║   │ ├○ lexical %callbacks :decl()
     ║   ║   │ └○ lexical $cbKey :decl()
     ║   ║   └○ lexical $otherwise
@@ -340,12 +322,8 @@
     ║ ├○ lexical .strOut :decl(var)
     ║ └─:Block  ««"{\n    typecase(force($v),\n        :λ(-> $lambda {"...
     ║   ╟○ lexical $v :decl(param)  ««"$v"
-    ║   ╟○ lexical $indent :decl(param) :default(...)  ««"$indent"
-    ║   ║ └─default
-    ║   ║   └◙ SVal ""
-    ║   ╟○ lexical %done :decl(param) :default(...)  ««"%done"
-    ║   ║ └─default
-    ║   ║   └─hash
+    ║   ╟○ lexical $indent :decl(param) :default((if &infix:<>) (IVal 1) (SVal "") ((concat &infix:<~>) (SVal "asdf") (SVal "z")))  ««"$indent"
+    ║   ╟○ lexical %done :decl(param) :default(hash)  ««"%done"
     ║   ╙─call .typecase  ««"force($v),\n        :λ(-> $lambda { # compiler shou"...
     ║     ├─call .force  ««"$v"
     ║     │ └○ lexical $v
@@ -360,16 +338,12 @@
     ║     │ ║   └○ lexical $lambda
     ║     │ ╟─bind  ««"$src := %info<src>"
     ║     │ ║ ├○ lexical $src
-    ║     │ ║ └○ associative  :fallback(...)
-    ║     │ ║   ├─fallback
-    ║     │ ║   │ └◙ WVal NQPMu
+    ║     │ ║ └○┬VarWithFallback associative  :fallback(WVal NQPMu)
     ║     │ ║   ├○ lexical %info :decl()
     ║     │ ║   └◙ SVal "src"
     ║     │ ╟─bind  ««"%fvs := %info<freeVars>"
     ║     │ ║ ├○ lexical %fvs
-    ║     │ ║ └○ associative  :fallback(...)
-    ║     │ ║   ├─fallback
-    ║     │ ║   │ └◙ WVal NQPMu
+    ║     │ ║ └○┬VarWithFallback associative  :fallback(WVal NQPMu)
     ║     │ ║   ├○ lexical %info :decl()
     ║     │ ║   └◙ SVal "freeVars"
     ║     │ ╟─for  ««"%fvs {\n                my $fvName  := nqp::iterkey"...
@@ -419,16 +393,12 @@
     ║     │ ║ │ ║     ├○ lexical $pre
     ║     │ ║ │ ║     └○ lexical $flatVal
     ║     │ ║ │ ╙─unless  ««"%done{$doneKey} {\n                    %done{$doneK"...
-    ║     │ ║ │   ├○ associative  :fallback(...)
-    ║     │ ║ │   │ ├─fallback
-    ║     │ ║ │   │ │ └◙ WVal NQPMu
+    ║     │ ║ │   ├○┬VarWithFallback associative  :fallback(WVal NQPMu)
     ║     │ ║ │   │ ├○ lexical %done :decl()
     ║     │ ║ │   │ └○ lexical $doneKey :decl()
     ║     │ ║ │   └─:Stmts  ««"{\n                    %done{$doneKey} := 1;\n     "...
     ║     │ ║ │     ├─bind  ««":="
-    ║     │ ║ │     │ ├○ associative  :fallback(...)
-    ║     │ ║ │     │ │ ├─fallback
-    ║     │ ║ │     │ │ │ └◙ WVal NQPMu
+    ║     │ ║ │     │ ├○┬VarWithFallback associative  :fallback(WVal NQPMu)
     ║     │ ║ │     │ │ ├○ lexical %done :decl()
     ║     │ ║ │     │ │ └○ lexical $doneKey :decl()
     ║     │ ║ │     │ └◙ IVal 1
@@ -518,99 +488,6 @@
     ║   ╙─say  ««"nqp::say($s)"
     ║     └○ lexical $s
     ╟─bind
-    ║ ├○ lexical .MAIN :decl(var)
-    ║ └─:Block  ««"{\n    my $n := 0;\n    my $b := { $n := $n + 1; };"...
-    ║   ╟○ lexical @ARGS :decl(param) :slurpy(1)  ««"@ARGS"
-    ║   ╟○ lexical $n :decl(var)
-    ║   ╟○ lexical $b :decl(var)
-    ║   ╟○ lexical $d :decl(var)
-    ║   ╟○ lexical $lambda2 :decl(var)
-    ║   ╟○ lexical $lambda1 :decl(var)
-    ║   ╟─bind  ««"$n := 0"
-    ║   ║ ├○ lexical $n
-    ║   ║ └◙ IVal 0
-    ║   ╟─bind  ««"$b := { $n := $n + 1; }"
-    ║   ║ ├○ lexical $b
-    ║   ║ └─:Block  ««"{ $n := $n + 1; }"
-    ║   ║   ╙─bind  ««":="
-    ║   ║     ├○ lexical $n
-    ║   ║     └─add_n  ««"+"
-    ║   ║       ├○ lexical $n
-    ║   ║       └◙ IVal 1
-    ║   ╟─bind  ««"$d := delayMemo($b)"
-    ║   ║ ├○ lexical $d
-    ║   ║ └─call .delayMemo  ««"$b"
-    ║   ║   └○ lexical $b
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless $n == 0"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├○ lexical $n
-    ║   ║ │ └◙ IVal 0
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless force($d) == 1"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├─call .force  ««"$d"
-    ║   ║ │ │ └○ lexical $d
-    ║   ║ │ └◙ IVal 1
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless force($d) == 1"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├─call .force  ««"$d"
-    ║   ║ │ │ └○ lexical $d
-    ║   ║ │ └◙ IVal 1
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless force($b) == 2"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├─call .force  ««"$b"
-    ║   ║ │ │ └○ lexical $b
-    ║   ║ │ └◙ IVal 2
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless force($b) == 3"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├─call .force  ««"$b"
-    ║   ║ │ │ └○ lexical $b
-    ║   ║ │ └◙ IVal 3
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless force($d) == 1"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├─call .force  ««"$d"
-    ║   ║ │ │ └○ lexical $d
-    ║   ║ │ └◙ IVal 1
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─bind  ««"$lambda2 := [\n        'λ1',                       "...
-    ║   ║ ├○ lexical $lambda2
-    ║   ║ └─list  ««","
-    ║   ║   ├◙ SVal "λ1"
-    ║   ║   ├─:Block  ««"{ 'λ1(...) called' }"
-    ║   ║   │ ╟○ lexical @as :decl(param) :slurpy(1)  ««"@as"
-    ║   ║   │ ╙◙ SVal "λ1(...) called"
-    ║   ║   └◙ IVal 23
-    ║   ╟─bind  ««"$lambda1 := [\n        'λ0',                       "...
-    ║   ║ ├○ lexical $lambda1
-    ║   ║ └─list  ««","
-    ║   ║   ├◙ SVal "λ0"
-    ║   ║   ├─:Block  ««"{ 'λ0(...) called' }"
-    ║   ║   │ ╟○ lexical @as :decl(param) :slurpy(1)  ««"@as"
-    ║   ║   │ ╙◙ SVal "λ0(...) called"
-    ║   ║   ├◙ SVal "foo"
-    ║   ║   ├◙ IVal 42
-    ║   ║   ├◙ NVal 3.14159265
-    ║   ║   └○ lexical $lambda2
-    ║   ╟─callmethod push  ««"$lambda1"
-    ║   ║ ├○ lexical $lambda1
-    ║   ║ └○ lexical $lambda1
-    ║   ╟─callmethod push  ««"$lambda1"
-    ║   ║ ├○ lexical $lambda1
-    ║   ║ └○ lexical $lambda1
-    ║   ╙─call .say  ««"strOut($lambda1)"
-    ║     └─call .strOut  ««"$lambda1"
-    ║       └○ lexical $lambda1
-    ╟─bind
     ║ ├○ local ctxsave :decl(var)
     ║ └○ contextual $*CTXSAVE
     ╟─unless
@@ -625,33 +502,29 @@
     ╟─bind  ««"$λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f ("...
     ║ ├○ lexical .λsrc
     ║ └◙ SVal "(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)"
-    ╟─bind  ««"%info := nqp::hash(\n    'λ', [\n        nqp::hash("...
-    ║ ├○ lexical %info
-    ║ └─hash  ««"nqp::hash(\n    'λ', [\n        nqp::hash('from',  "...
-    ║   ├◙ SVal "λ"
-    ║   └─list  ««","
-    ║     ├─hash  ««"nqp::hash('from',  1, 'length', 55, 'freeVarNames',"...
-    ║     │ ├◙ SVal "from"
-    ║     │ ├◙ IVal 1
-    ║     │ ├◙ SVal "length"
-    ║     │ ├◙ IVal 55
-    ║     │ ├◙ SVal "freeVarNames"
-    ║     │ └─list  ««","
-    ║     │   ├◙ SVal "foo"
-    ║     │   ├◙ SVal "bar"
-    ║     │   ├◙ SVal "baz"
-    ║     │   ├◙ SVal "qumbl"
-    ║     │   ├◙ SVal "self"
-    ║     │   └◙ SVal "self"
-    ║     └─hash  ««"nqp::hash('from', 59, 'length',  4, 'freeVarNames',"...
-    ║       ├◙ SVal "from"
-    ║       ├◙ IVal 59
-    ║       ├◙ SVal "length"
-    ║       ├◙ IVal 4
-    ║       ├◙ SVal "freeVarNames"
-    ║       └─list
-    ║         └◙ SVal "foo"
-    ╙─if
-      ├○ lexical @ARGS
-      └─call .MAIN
-        └○ lexical @ARGS :flat(1)
+    ╙─bind  ««"%info := nqp::hash(\n    'λ', [\n        nqp::hash("...
+      ├○ lexical %info
+      └─hash  ««"nqp::hash(\n    'λ', [\n        nqp::hash('from',  "...
+        ├◙ SVal "λ"
+        └─list  ««","
+          ├─hash  ««"nqp::hash('from',  1, 'length', 55, 'freeVarNames',"...
+          │ ├◙ SVal "from"
+          │ ├◙ IVal 1
+          │ ├◙ SVal "length"
+          │ ├◙ IVal 55
+          │ ├◙ SVal "freeVarNames"
+          │ └─list  ««","
+          │   ├◙ SVal "foo"
+          │   ├◙ SVal "bar"
+          │   ├◙ SVal "baz"
+          │   ├◙ SVal "qumbl"
+          │   ├◙ SVal "self"
+          │   └◙ SVal "self"
+          └─hash  ««"nqp::hash('from', 59, 'length',  4, 'freeVarNames',"...
+            ├◙ SVal "from"
+            ├◙ IVal 59
+            ├◙ SVal "length"
+            ├◙ IVal 4
+            ├◙ SVal "freeVarNames"
+            └─list
+              └◙ SVal "foo"
