@@ -23,7 +23,7 @@ sub delayMemo($block) {
     };
 }
 
-sub sublist(@list, int $from) {
+sub sublist(@list, int $from) is export {
     my int $n     := nqp::elems(@list);
     my int $count := $n;
     my int $to    := $from + $count;
@@ -192,5 +192,6 @@ sub MAIN(*@ARGS) {
     $lambda1.push($lambda1);    # add a self (recursive) ref
     
     say(strOut($lambda1));
+    typecase(:foo("bar"), :baz<qumbl>, |%info);
 }
 
