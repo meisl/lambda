@@ -471,14 +471,13 @@ sub replace_assoc_and_pos_scoped($node) {
             $op := 'atkey';
         }
         if $op {
-            my $out := QAST::Op.new(:$op,
+            $node := QAST::Op.new(:$op,
                 :node($node.node),
                 :named($node.named),
                 :flat($node.flat),
                 |$node.list
             );
-            say("\n", ~$node.node, dump($node, :indent('# ')), "\n", dump($out, :indent('# ')));
-            $node := $out;
+            #$node := $out;
         }
     }
     $node;

@@ -91,21 +91,21 @@
     ║   ╙○ lexical @out
     ╟─bind
     ║ ├○ lexical .lam2id :decl(var)
-    ║ └─:Block  ««"{ nqp::atpos($lambda, 0) }"
+    ║ └─:Block  ««"{ $lambda[0] }"
     ║   ╟○ lexical $lambda :decl(param)  ««"$lambda"
-    ║   ╙─atpos  ««"nqp::atpos($lambda, 0)"
+    ║   ╙─atpos
     ║     ├○ lexical $lambda
     ║     └◙ IVal 0
     ╟─bind
     ║ ├○ lexical .lam2code :decl(var)
-    ║ └─:Block  ««"{ nqp::atpos($lambda, 1) }"
+    ║ └─:Block  ««"{ $lambda[1] }"
     ║   ╟○ lexical $lambda :decl(param)  ««"$lambda"
-    ║   ╙─atpos  ««"nqp::atpos($lambda, 1)"
+    ║   ╙─atpos
     ║     ├○ lexical $lambda
     ║     └◙ IVal 1
     ╟─bind
     ║ ├○ lexical .lam2fvs :decl(var)
-    ║ └─:Block  ««"{    sublist($lambda, 2) }"
+    ║ └─:Block  ««"{ sublist($lambda, 2) }"
     ║   ╟○ lexical $lambda :decl(param)  ««"$lambda"
     ║   ╙─call .sublist  ««"$lambda, 2"
     ║     ├○ lexical $lambda
@@ -118,17 +118,16 @@
     ║   ╟○ lexical $idx :decl(var)
     ║   ╟○ lexical %rawInfo :decl(var)
     ║   ╟○ lexical %out :decl(var)
-    ║   ╟○ lexical @fvs :decl(var)
+    ║   ╟○ lexical $varsIt :decl(var)
+    ║   ╟○ lexical $namesIt :decl(var)
     ║   ╟○ lexical %fvs :decl(var)
-    ║   ╟○ lexical @fvns :decl(var)
-    ║   ╟○ lexical $i :decl(var)
     ║   ╟─bind  ««"$id      := lam2id($lambda)"
     ║   ║ ├○ lexical $id
     ║   ║ └─call .lam2id  ««"$lambda"
     ║   ║   └○ lexical $lambda
-    ║   ╟─bind  ««"$idx     := nqp::atpos(nqp::radix(10, $id, 1, 0), 0)"
+    ║   ╟─bind  ««"$idx     := nqp::radix(10, $id, 1, 0)[0]"
     ║   ║ ├○ lexical $idx
-    ║   ║ └─atpos  ««"nqp::atpos(nqp::radix(10, $id, 1, 0), 0)"
+    ║   ║ └─atpos
     ║   ║   ├─radix  ««"nqp::radix(10, $id, 1, 0)"
     ║   ║   │ ├◙ IVal 10
     ║   ║   │ ├○ lexical $id
@@ -166,42 +165,37 @@
     ║   ║     └─atkey
     ║   ║       ├○ lexical %rawInfo
     ║   ║       └◙ SVal "length"
-    ║   ╟─bind  ««"@fvs     := lam2fvs($lambda)"
-    ║   ║ ├○ lexical @fvs
-    ║   ║ └─call .lam2fvs  ««"$lambda"
-    ║   ║   └○ lexical $lambda
-    ║   ╟─bind  ««"%fvs     := nqp::hash()"
+    ║   ╟─bind  ««"$varsIt  := nqp::iterator(lam2fvs($lambda))"
+    ║   ║ ├○ lexical $varsIt
+    ║   ║ └─iterator  ««"nqp::iterator(lam2fvs($lambda))"
+    ║   ║   └─call .lam2fvs  ««"$lambda"
+    ║   ║     └○ lexical $lambda
+    ║   ╟─bind  ««"$namesIt := nqp::iterator(%rawInfo<freeVarNames>)"
+    ║   ║ ├○ lexical $namesIt
+    ║   ║ └─iterator  ««"nqp::iterator(%rawInfo<freeVarNames>)"
+    ║   ║   └─atkey
+    ║   ║     ├○ lexical %rawInfo
+    ║   ║     └◙ SVal "freeVarNames"
+    ║   ╟─bind  ««"%fvs     := {}"
     ║   ║ ├○ lexical %fvs
-    ║   ║ └─hash  ««"nqp::hash()"
-    ║   ╟─bind  ««"@fvns := %rawInfo<freeVarNames>"
-    ║   ║ ├○ lexical @fvns
-    ║   ║ └─atkey
-    ║   ║   ├○ lexical %rawInfo
-    ║   ║   └◙ SVal "freeVarNames"
-    ║   ╟─bind  ««"$i := 0"
-    ║   ║ ├○ lexical $i
-    ║   ║ └◙ IVal 0
-    ║   ╟─for  ««"@fvns {\n        nqp::bindkey(%fvs, $_, @fvs[$i]);\"...
-    ║   ║ ├○ lexical @fvns
-    ║   ║ ├─:Block  ««"{\n        nqp::bindkey(%fvs, $_, @fvs[$i]);\n     "...
-    ║   ║ │ ╟○ lexical $_ :decl(param)
-    ║   ║ │ ╟─bindkey  ««"nqp::bindkey(%fvs, $_, @fvs[$i])"
-    ║   ║ │ ║ ├○ lexical %fvs
-    ║   ║ │ ║ ├○ lexical $_
-    ║   ║ │ ║ └─atpos
-    ║   ║ │ ║   ├○ lexical @fvs
-    ║   ║ │ ║   └○ lexical $i
-    ║   ║ │ ╙─postinc  ««"++"
-    ║   ║ │   └○ lexical $i
+    ║   ║ └─hash
+    ║   ╟─while  ««"$varsIt {\n        %fvs{nqp::shift($namesIt)} := nq"...
+    ║   ║ ├○ lexical $varsIt
+    ║   ║ ├─bindkey
+    ║   ║ │ ├○ lexical %fvs
+    ║   ║ │ ├─shift  ««"nqp::shift($namesIt)"
+    ║   ║ │ │ └○ lexical $namesIt
+    ║   ║ │ └─shift  ««"nqp::shift($varsIt)"
+    ║   ║ │   └○ lexical $varsIt
     ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╟─bindkey  ««"nqp::bindkey(%out, 'freeVars', %fvs)"
+    ║   ╟─bindkey
     ║   ║ ├○ lexical %out
     ║   ║ ├◙ SVal "freeVars"
     ║   ║ └○ lexical %fvs
     ║   ╙○ lexical %out
     ╟─bind
     ║ ├○ lexical .typecase :decl(var)
-    ║ └─:Block  ««"{\n    say('>>>typecase(', nqp::reprname($subject),"...
+    ║ └─:Block  ««"{\n    #say('>>>typecase(', nqp::reprname($subject)"...
     ║   ╟○ lexical $subject :decl(param)  ««"$subject"
     ║   ╟○ lexical %callbacks :decl(param) :named(1) :slurpy(1)  ««"%callbacks"
     ║   ╟○ lexical $otherwise :decl(var)
@@ -209,15 +203,10 @@
     ║   ║ ├○ lexical $cbKey :decl(var)
     ║   ║ └◙ WVal NQPMu
     ║   ╟○ lexical $cb :decl(var)
-    ║   ╟─call .say  ««"'>>>typecase(', nqp::reprname($subject), '...) '"
-    ║   ║ ├◙ SVal ">>>typecase("
-    ║   ║ ├─reprname  ««"nqp::reprname($subject)"
-    ║   ║ │ └○ lexical $subject
-    ║   ║ └◙ SVal "...) "
-    ║   ╟─bind  ««"$otherwise := nqp::defor(\n        nqp::atkey(%call"...
+    ║   ╟─bind  ««"$otherwise := nqp::defor(\n        %callbacks<other"...
     ║   ║ ├○ lexical $otherwise
-    ║   ║ └─defor  ««"nqp::defor(\n        nqp::atkey(%callbacks, 'otherw"...
-    ║   ║   ├─atkey  ««"nqp::atkey(%callbacks, 'otherwise')"
+    ║   ║ └─defor  ««"nqp::defor(\n        %callbacks<otherwise>,\n      "...
+    ║   ║   ├─atkey
     ║   ║   │ ├○ lexical %callbacks
     ║   ║   │ └◙ SVal "otherwise"
     ║   ║   └─:Block  ««"{ # compiler should see that this needs not be a cl"...
@@ -227,15 +216,15 @@
     ║   ║         ├◙ SVal "typecase: fell through due to missing \"otherwise\"-callback: "
     ║   ║         └─reprname  ««"nqp::reprname($subject)"
     ║   ║           └○ lexical $subject
-    ║   ╟─if  ««"nqp::islist($subject) {\n        my $id := nqp::atp"...
+    ║   ╟─if  ««"nqp::islist($subject) {\n        my $id := $subject"...
     ║   ║ ├─islist  ««"nqp::islist($subject)"
     ║   ║ │ └○ lexical $subject
-    ║   ║ ├─:Block  ««"{\n        my $id := nqp::atpos($subject, 0);\n    "...
+    ║   ║ ├─:Block  ««"{\n        my $id := $subject[0];\n        my $tag "...
     ║   ║ │ ╟○ lexical $id :decl(var)
     ║   ║ │ ╟○ lexical $tag :decl(var)
-    ║   ║ │ ╟─bind  ««"$id := nqp::atpos($subject, 0)"
+    ║   ║ │ ╟─bind  ««"$id := $subject[0]"
     ║   ║ │ ║ ├○ lexical $id
-    ║   ║ │ ║ └─atpos  ««"nqp::atpos($subject, 0)"
+    ║   ║ │ ║ └─atpos
     ║   ║ │ ║   ├○ lexical $subject
     ║   ║ │ ║   └◙ IVal 0
     ║   ║ │ ╟─bind  ««"$tag := nqp::substr($id, 0, 1)"
@@ -463,17 +452,28 @@
     ║     └○ lexical $result
     ╟─bind
     ║ ├○ lexical .say :decl(var)
-    ║ └─:Block  ««"{\n    my $s := '';\n    for @args {\n        $s :="...
+    ║ └─:Block  ««"{\n    my $it := nqp::iterator(@args);\n    my $s  "...
     ║   ╟○ lexical @args :decl(param) :slurpy(1)  ««"@args"
+    ║   ╟○ lexical $it :decl(var)
     ║   ╟○ lexical $s :decl(var)
-    ║   ╟─bind  ««"$s := ''"
+    ║   ╟─bind  ««"$_"
+    ║   ║ ├○ lexical $_ :decl(var)
+    ║   ║ └◙ WVal NQPMu
+    ║   ╟─bind  ««"$it := nqp::iterator(@args)"
+    ║   ║ ├○ lexical $it
+    ║   ║ └─iterator  ««"nqp::iterator(@args)"
+    ║   ║   └○ lexical @args
+    ║   ╟─bind  ««"$s  := ''"
     ║   ║ ├○ lexical $s
     ║   ║ └◙ SVal ""
-    ║   ╟─for  ««"@args {\n        $s := $s ~ (nqp::isstr($_)\n      "...
-    ║   ║ ├○ lexical @args
-    ║   ║ ├─:Block  ««"{\n        $s := $s ~ (nqp::isstr($_)\n            "...
-    ║   ║ │ ╟○ lexical $_ :decl(param)
-    ║   ║ │ ╙─bind  ««":="
+    ║   ╟─while  ««"$it {\n        $_ := nqp::shift($it);\n        $s :"...
+    ║   ║ ├○ lexical $it
+    ║   ║ ├─:Stmts  ««"{\n        $_ := nqp::shift($it);\n        $s := $s"...
+    ║   ║ │ ├─bind  ««":="
+    ║   ║ │ │ ├○ lexical $_
+    ║   ║ │ │ └─shift  ««"nqp::shift($it)"
+    ║   ║ │ │   └○ lexical $it
+    ║   ║ │ └─bind  ««":="
     ║   ║ │   ├○ lexical $s
     ║   ║ │   └─concat  ««"~"
     ║   ║ │     ├○ lexical $s

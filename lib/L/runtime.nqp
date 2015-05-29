@@ -39,13 +39,13 @@ sub sublist(@list, int $from) is export {
     @out;
 }
 
-sub lam2id($lambda)   { nqp::atpos($lambda, 0) }
-sub lam2code($lambda) { nqp::atpos($lambda, 1) }
-sub lam2fvs($lambda)  {    sublist($lambda, 2) }
+sub lam2id($lambda)   { $lambda[0] }
+sub lam2code($lambda) { $lambda[1] }
+sub lam2fvs($lambda)  { sublist($lambda, 2) }
 
 sub lam2info($lambda) {
     my $id      := lam2id($lambda);
-    my $idx     := nqp::atpos(nqp::radix(10, $id, 1, 0), 0);
+    my $idx     := nqp::radix(10, $id, 1, 0)[0];
     my %rawInfo := %info<λ>[$idx];
     my %out     := nqp::hash(
         'id',       $id,
@@ -56,23 +56,21 @@ sub lam2info($lambda) {
     );
     # --- up to here it was all the same for all instances ---
 
-    my @fvs     := lam2fvs($lambda);
-    my %fvs     := nqp::hash();
-    my @fvns := %rawInfo<freeVarNames>;
-    my $i := 0; # TODO: use nqp::iterator(@fvs)
-    for @fvns {
-        nqp::bindkey(%fvs, $_, @fvs[$i]);
-        $i++;
+    my $varsIt  := nqp::iterator(lam2fvs($lambda));
+    my $namesIt := nqp::iterator(%rawInfo<freeVarNames>);
+    my %fvs     := {};
+    while $varsIt {
+        %fvs{nqp::shift($namesIt)} := nqp::shift($varsIt);
     }
-    nqp::bindkey(%out, 'freeVars', %fvs);
+    %out<freeVars> := %fvs;
     %out;
 }
 
 
 sub typecase($subject, *%callbacks) {
-    say('>>>typecase(', nqp::reprname($subject), '...) ');
+    #say('>>>typecase(', nqp::reprname($subject), '...) ');
     my $otherwise := nqp::defor(
-        nqp::atkey(%callbacks, 'otherwise'),
+        %callbacks<otherwise>,
         -> $x { # compiler should see that this needs not be a closure
             nqp::die('typecase: fell through due to missing "otherwise"-callback: '
                 ~ nqp::reprname($subject)
@@ -81,7 +79,7 @@ sub typecase($subject, *%callbacks) {
     );
     my $cbKey;# := nqp::null;
     if nqp::islist($subject) {
-        my $id := nqp::atpos($subject, 0);
+        my $id := $subject[0];
         my $tag := nqp::substr($id, 0, 1);
         if $tag eq 'λ' {
             $cbKey := $tag;
@@ -157,8 +155,11 @@ sub apply1($f, $a1) {
 }
 
 sub say(*@args) {
-    my $s := '';
-    for @args {
+    my $it := nqp::iterator(@args);
+    my $s  := '';
+    my $_;
+    while $it {
+        $_ := nqp::shift($it);
         $s := $s ~ (nqp::isstr($_)
             ?? $_
             !! strOut($_));
