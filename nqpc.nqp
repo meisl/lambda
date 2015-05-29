@@ -165,7 +165,13 @@ sub drop_takeclosure($ast) {
     nqp::die('drop_takeclosure expects a QAST::Node - got ' ~ nqp::reprname($ast) )
         unless nqp::istype($ast, QAST::Node);
     if nqp::istype($ast, QAST::Op) && $ast.op eq 'takeclosure' {
-        $ast := drop_takeclosure($ast[0]);  #   $ast[0];    #   
+        my $child := drop_takeclosure($ast[0]);  # recurse!
+        if nqp::istype($ast, QAST::SpecialArg) {
+            $child.HOW.mixin($child, QAST::SpecialArg);
+            $child.flat($ast.flat);
+            $child.named($ast.named);
+        }
+        $ast := $child;
     #} elsif nqp::istype($ast, QAST::Children) {
     } elsif nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
         my @children := [];
@@ -468,13 +474,13 @@ class SmartCompiler is NQP::Compiler {
     method ast_clean($ast, *%adverbs) {
         say(">>>ast_clean ", self.user-progname(), '...');
         
-        #$ast := drop_takeclosure($ast);  # breaks things!!!!!!
+        $ast := drop_takeclosure($ast);  # breaks things!!!!!!
         
         $ast := drop_Stmts($ast);
         $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
         $ast := repair_null_decl_attrs_of_vars($ast);
         $ast := remove_bogusOpNames($ast);
-        $ast := remove_MAIN($ast);
+        #$ast := remove_MAIN($ast);
 
         $ast := renameVars($ast, -> $s {
             my str $fst := nqp::substr($s, 0, 1);
