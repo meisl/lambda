@@ -6,6 +6,21 @@ my %info := nqp::hash(
     ],
 );
 
+
+# inlineables? ----------------------------------------------------------------
+
+sub lam2id($lambda)   { $lambda[0] }
+sub lam2code($lambda) { $lambda[1] }
+sub lam2fvs($lambda)  { sublist($lambda, 2) }
+
+sub int2str(int $i) { ~$i }
+sub num2str(num $n) { ~$n }
+# did you expect `str2str`? - that's `strLit`
+sub strLit(str $s) { '"' ~ nqp::escape($s) ~ '"' }
+
+# -----------------------------------------------------------------------------
+
+
 sub force($v) {
     nqp::isinvokable($v) ?? $v() !! $v;
 }
@@ -39,9 +54,6 @@ sub sublist(@list, int $from) is export {
     @out;
 }
 
-sub lam2id($lambda)   { $lambda[0] }
-sub lam2code($lambda) { $lambda[1] }
-sub lam2fvs($lambda)  { sublist($lambda, 2) }
 
 sub lam2info($lambda) {
     my $id      := lam2id($lambda);
@@ -101,12 +113,6 @@ sub typecase($subject, *%callbacks) {
     my $cb := nqp::defor(%callbacks{$cbKey}, $otherwise);
     $cb($subject);
 }
-
-
-sub int2str(int $i) { ~$i }
-sub num2str(num $n) { ~$n }
-# did you expect `str2str`? - that's `strLit`
-sub strLit(str $s) { '"' ~ nqp::escape($s) ~ '"' }
 
 
 sub strOut($v, str $indent = '', %done = {}) {

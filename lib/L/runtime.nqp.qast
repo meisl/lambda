@@ -7,6 +7,49 @@
     ╟○ lexical .λsrc :decl(var)
     ╟○ lexical %info :decl(var)
     ╟─bind
+    ║ ├○ lexical .lam2id :decl(var)
+    ║ └─:Block  ««"{ $lambda[0] }"
+    ║   ╟○ lexical $lambda :decl(param)  ««"$lambda"
+    ║   ╙─atpos
+    ║     ├○ lexical $lambda
+    ║     └◙ IVal 0
+    ╟─bind
+    ║ ├○ lexical .lam2code :decl(var)
+    ║ └─:Block  ««"{ $lambda[1] }"
+    ║   ╟○ lexical $lambda :decl(param)  ««"$lambda"
+    ║   ╙─atpos
+    ║     ├○ lexical $lambda
+    ║     └◙ IVal 1
+    ╟─bind
+    ║ ├○ lexical .lam2fvs :decl(var)
+    ║ └─:Block  ««"{ sublist($lambda, 2) }"
+    ║   ╟○ lexical $lambda :decl(param)  ««"$lambda"
+    ║   ╙─call .sublist  ««"$lambda, 2"
+    ║     ├○ lexical $lambda
+    ║     └◙ IVal 2
+    ╟─bind
+    ║ ├○ lexical .int2str :decl(var)
+    ║ └─:Block  ««"{ ~$i }"
+    ║   ╟○ lexical $i :decl(param)  ««"$i"
+    ║   ╙─stringify  ««"~"
+    ║     └○ lexical $i
+    ╟─bind
+    ║ ├○ lexical .num2str :decl(var)
+    ║ └─:Block  ««"{ ~$n }"
+    ║   ╟○ lexical $n :decl(param)  ««"$n"
+    ║   ╙─stringify  ««"~"
+    ║     └○ lexical $n
+    ╟─bind
+    ║ ├○ lexical .strLit :decl(var)
+    ║ └─:Block  ««"{ '\"' ~ nqp::escape($s) ~ '\"' }"
+    ║   ╟○ lexical $s :decl(param)  ««"$s"
+    ║   ╙─concat  ««"~"
+    ║     ├─concat  ««"~"
+    ║     │ ├◙ SVal "\""
+    ║     │ └─escape  ««"nqp::escape($s)"
+    ║     │   └○ lexical $s
+    ║     └◙ SVal "\""
+    ╟─bind
     ║ ├○ lexical .force :decl(var)
     ║ └─:Block  ««"{\n    nqp::isinvokable($v) ?? $v() !! $v;\n}"
     ║   ╟○ lexical $v :decl(param)  ««"$v"
@@ -89,27 +132,6 @@
     ║   ║ │   └○ lexical $from
     ║   ║ └◙ IVal 1 :named("nohandler")
     ║   ╙○ lexical @out
-    ╟─bind
-    ║ ├○ lexical .lam2id :decl(var)
-    ║ └─:Block  ««"{ $lambda[0] }"
-    ║   ╟○ lexical $lambda :decl(param)  ««"$lambda"
-    ║   ╙─atpos
-    ║     ├○ lexical $lambda
-    ║     └◙ IVal 0
-    ╟─bind
-    ║ ├○ lexical .lam2code :decl(var)
-    ║ └─:Block  ««"{ $lambda[1] }"
-    ║   ╟○ lexical $lambda :decl(param)  ««"$lambda"
-    ║   ╙─atpos
-    ║     ├○ lexical $lambda
-    ║     └◙ IVal 1
-    ╟─bind
-    ║ ├○ lexical .lam2fvs :decl(var)
-    ║ └─:Block  ««"{ sublist($lambda, 2) }"
-    ║   ╟○ lexical $lambda :decl(param)  ««"$lambda"
-    ║   ╙─call .sublist  ««"$lambda, 2"
-    ║     ├○ lexical $lambda
-    ║     └◙ IVal 2
     ╟─bind
     ║ ├○ lexical .lam2info :decl(var)
     ║ └─:Block  ««"{\n    my $id      := lam2id($lambda);\n    my $idx"...
@@ -285,28 +307,6 @@
     ║   ╙─call  ««"$subject"
     ║     ├○ lexical $cb
     ║     └○ lexical $subject
-    ╟─bind
-    ║ ├○ lexical .int2str :decl(var)
-    ║ └─:Block  ««"{ ~$i }"
-    ║   ╟○ lexical $i :decl(param)  ««"$i"
-    ║   ╙─stringify  ««"~"
-    ║     └○ lexical $i
-    ╟─bind
-    ║ ├○ lexical .num2str :decl(var)
-    ║ └─:Block  ««"{ ~$n }"
-    ║   ╟○ lexical $n :decl(param)  ««"$n"
-    ║   ╙─stringify  ««"~"
-    ║     └○ lexical $n
-    ╟─bind
-    ║ ├○ lexical .strLit :decl(var)
-    ║ └─:Block  ««"{ '\"' ~ nqp::escape($s) ~ '\"' }"
-    ║   ╟○ lexical $s :decl(param)  ««"$s"
-    ║   ╙─concat  ««"~"
-    ║     ├─concat  ««"~"
-    ║     │ ├◙ SVal "\""
-    ║     │ └─escape  ««"nqp::escape($s)"
-    ║     │   └○ lexical $s
-    ║     └◙ SVal "\""
     ╟─bind
     ║ ├○ lexical .strOut :decl(var)
     ║ └─:Block  ««"{\n    typecase(force($v),\n        :λ(-> $lambda {"...
