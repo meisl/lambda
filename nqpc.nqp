@@ -89,22 +89,26 @@ sub dump($node, $indent = '', :$isLastChild = 2, :$isBlockChild = 0) {
         $extraStr := $extraStr ~ ' :flat(' ~ $node.flat ~ ')' if $node.flat;
         $extraStr := $extraStr ~ ' :named("' ~ nqp::escape($node.named) ~ '")' if $node.named;
     }
+    $extraStr := $extraStr ?? ' ' ~ $extraStr !! '';
     if $clsStr eq 'Op' {
+        $extraStr := nqp::substr($extraStr, 1);
         $clsStr := $extraStr;
         $extraStr := '';
         $prefix := $prefix ~ '─';
     } elsif $clsStr eq 'Var' {
-        $clsStr := $extraStr;
         $clsStr := '';
-        $prefix := $prefix ~ '─○';
+        #$extraStr := nqp::substr($extraStr, 1);
+        $prefix := $prefix ~ '○';
+    } elsif nqp::substr($clsStr, 1, 3) eq 'Val' {
+        $prefix := $prefix ~ '■ ';
     } elsif $clsStr eq 'Block' {
-        $prefix := $prefix ~ '◄';
+        $prefix := $prefix ~ '─:';
     } elsif nqp::substr($clsStr, 0, 4) eq 'Stmt' {
-        $prefix := $prefix ~ '◄';
+        $prefix := $prefix ~ '─:';
     } else {
         $prefix := $prefix ~ '─';
     }
-    my @lines := [$prefix ~ $clsStr ~ ($extraStr ?? ' ' ~ $extraStr !! '') ~ $nodesNodeStr];
+    my @lines := [$prefix ~ $clsStr ~ $extraStr ~ $nodesNodeStr];
     #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
     my $i := nqp::elems($node.list);
     my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
