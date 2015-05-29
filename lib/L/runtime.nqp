@@ -33,7 +33,7 @@ sub sublist(@list, int $from) is export {
         $to := $n
     }
     while $from < $to {
-        nqp::push(@out, @list[$from]);
+        @out.push(@list[$from]);
         $from++;
     }
     @out;
@@ -60,7 +60,7 @@ sub lam2info($lambda) {
     my $namesIt := nqp::iterator(%rawInfo<freeVarNames>);
     my %fvs     := {};
     while $varsIt {
-        %fvs{nqp::shift($namesIt)} := nqp::shift($varsIt);
+        %fvs{nqp::shift($namesIt)} := nqp::shift($varsIt);  # nqpc would convert a methodcall .shift
     }
     %out<freeVars> := %fvs;
     %out;
@@ -114,10 +114,9 @@ sub strOut($v, str $indent = '', %done = {}) {
         :λ(-> $lambda { # compiler should see that this needs not be a closure
             my %info := lam2info($lambda);
             my $src := %info<src>;
-            my %fvs := %info<freeVars>;
-            for %fvs {
-                my $fvName  := nqp::iterkey_s($_);
-                my $fv      := nqp::iterval($_);
+            for %info<freeVars> {
+                my $fvName  := $_.key;
+                my $fv      := $_.value;
                 my $pre     := "# where $fvName = ";
                 my $flatVal := typecase($fv,
                     :λ(-> $x { nqp::null }), # compiler should see that this needs not be a closure
@@ -159,7 +158,7 @@ sub say(*@args) {
     my $s  := '';
     my $_;
     while $it {
-        $_ := nqp::shift($it);
+        $_ := nqp::shift($it);  # nqpc would convert a methodcall .shift
         $s := $s ~ (nqp::isstr($_)
             ?? $_
             !! strOut($_));

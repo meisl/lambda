@@ -430,8 +430,35 @@ sub findDef($ast, str $name, @pathUp = []) {
     );
 }
 
+sub inline_simple_methods($node) {
+    nqp::die('inline_simple_methods expects a QAST::Node - got ' ~ whatsit($node) )
+        unless nqp::istype($node, QAST::Node);
+    # first, recurse:
+    for $node.list {
+        inline_simple_methods($_);
+    }
+
+    if nqp::istype($node, QAST::Op) && $node.op eq 'callmethod' {
+        my $meth := $node.name;
+        if $meth {
+            if nqp::index('push pop shift unshift', $meth) > -1 {
+                $node.op($meth);
+                $node.name(nqp::null_s);
+            } elsif $meth eq 'key' {
+                $node.op('iterkey_s');
+                $node.name(nqp::null_s);
+            } elsif $meth eq 'value' {
+                $node.op('iterval');
+                $node.name(nqp::null_s);
+            }
+        }
+    }
+    
+    $node;
+}
+
 sub replace_assoc_and_pos_scoped($node) {
-    nqp::die('replace_assoc_and_pos_scoped expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
+    nqp::die('replace_assoc_and_pos_scoped expects a QAST::Node - got ' ~ whatsit($node) )
         unless nqp::istype($node, QAST::Node);
 
     # first, recurse:
@@ -561,7 +588,10 @@ class SmartCompiler is NQP::Compiler {
         $ast := remove_bogusOpNames($ast);
         #$ast := remove_MAIN($ast);
         $ast := repair_null_decl_attrs_of_vars($ast);
+        
+        # from here it's rather optimization...
         $ast := replace_assoc_and_pos_scoped($ast);
+        $ast := inline_simple_methods($ast);
 
         $ast := renameVars($ast, -> $s {
             my str $fst := nqp::substr($s, 0, 1);
