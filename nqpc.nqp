@@ -300,10 +300,10 @@ sub repair_null_decl_attrs_of_vars($ast) {
         unless nqp::istype($ast, QAST::Node);
     if nqp::istype($ast, QAST::Var) && !$ast.decl {
         $ast.decl(nqp::null_s);
-    } else {
-        for $ast.list {
-            repair_null_decl_attrs_of_vars($_);
-        }
+    }
+    # recurse in any case, since it could be a VarWithFallback (which does have children)
+    for $ast.list {
+        repair_null_decl_attrs_of_vars($_);
     }
     $ast;
 }
@@ -430,12 +430,66 @@ sub findDef($ast, str $name, @pathUp = []) {
     );
 }
 
+sub replace_assoc_and_pos_scoped($node) {
+    nqp::die('replace_assoc_and_pos_scoped expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
+        unless nqp::istype($node, QAST::Node);
+
+    # first, recurse:
+    my $i := 0;
+    my @children := $node.list;
+    for @children {
+        @children[$i] := replace_assoc_and_pos_scoped($_);
+        $i++;
+    }
+
+    if nqp::istype($node, QAST::Op) && ($node.op eq 'bind') && !nqp::istype($node[0], QAST::Var) {
+        # then our 1st child was just transformed to an 'atkey' or 'atpos'
+        my $child1 := $node.shift;
+        nqp::die("ooops: " ~ dump($child1, :oneLine))
+            unless nqp::istype($child1, QAST::Op);
+        my $which := nqp::substr($child1.op, 0, 5); # substr to allow for typed variants _i, _s, etc
+        nqp::die("ooops: cannot handle op $which: " ~ dump($child1, :oneLine))
+            unless $which eq 'atpos' || $which eq 'atkey';
+        $node.op('bind' ~ nqp::substr($child1.op, 2));
+        $node.node($child1.node);
+        $node.flat($child1.flat);
+        $node.named($child1.named);
+        $node.unshift($child1[1]);
+        $node.unshift($child1[0]);
+    } elsif nqp::istype($node, QAST::VarWithFallback) {
+        my $fallback := $node.fallback;
+        if nqp::isnull($fallback) || istypeAny($fallback, NQPMu) {
+            $fallback := nqp::null;
+        } else {
+            nqp::die('cannot handle fallback ' ~ whatsit($node.fallback))
+        }
+        my $scope := $node.scope;
+        my $op;
+        if $scope eq 'positional' {
+            $op := 'atpos';
+        } elsif $scope eq 'associative' {
+            $op := 'atkey';
+        }
+        if $op {
+            my $out := QAST::Op.new(:$op,
+                :node($node.node),
+                :named($node.named),
+                :flat($node.flat),
+                |$node.list
+            );
+            say("\n", ~$node.node, dump($node, :indent('# ')), "\n", dump($out, :indent('# ')));
+            $node := $out;
+        }
+    }
+    $node;
+}
+
 
 sub renameVars($ast, $map?) {
-    nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ nqp::reprname($ast) )
+    nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ whatsit($ast) )
         unless nqp::istype($ast, QAST::Node);
     if nqp::defined($map) {
-        nqp::die('renameVars expects a unary fn as 2nd arg(optional) - got ' ~ nqp::reprname($map) )
+        nqp::die('renameVars expects a unary fn as 2nd arg(optional) - got ' ~ whatsit($map) )
             unless nqp::isinvokable($map);
     } else {
         $map := -> str $name { $name };
@@ -505,9 +559,10 @@ class SmartCompiler is NQP::Compiler {
         
         $ast := drop_Stmts($ast);
         $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
-        $ast := repair_null_decl_attrs_of_vars($ast);
         $ast := remove_bogusOpNames($ast);
-        $ast := remove_MAIN($ast);
+        #$ast := remove_MAIN($ast);
+        $ast := repair_null_decl_attrs_of_vars($ast);
+        $ast := replace_assoc_and_pos_scoped($ast);
 
         $ast := renameVars($ast, -> $s {
             my str $fst := nqp::substr($s, 0, 1);

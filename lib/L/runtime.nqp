@@ -33,7 +33,7 @@ sub sublist(@list, int $from) is export {
         $to := $n
     }
     while $from < $to {
-        nqp::push(@out, nqp::atpos(@list, $from));
+        nqp::push(@out, @list[$from]);
         $from++;
     }
     @out;
@@ -111,7 +111,7 @@ sub num2str(num $n) { ~$n }
 sub strLit(str $s) { '"' ~ nqp::escape($s) ~ '"' }
 
 
-sub strOut($v, str $indent = (1 ?? '' !! 'asdf' ~ 'z'), %done = {}) {
+sub strOut($v, str $indent = '', %done = {}) {
     typecase(force($v),
         :λ(-> $lambda { # compiler should see that this needs not be a closure
             my %info := lam2info($lambda);
