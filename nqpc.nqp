@@ -106,6 +106,10 @@ sub dump($node, $indent = '', $parent?, :$isLastChild = 2, :$isBlockChild = 0) {
     } elsif $clsStr eq 'Var' {
         $clsStr := '';
         $prefix := $prefix ~ '○';
+        $specialStr := $specialStr ~ ' :slurpy(' ~ $node.slurpy ~ ')'
+            if $node.slurpy;
+        $specialStr := $specialStr ~ ' :default(...)'
+            unless $node.default =:= NO_VALUE;
     } elsif nqp::substr($clsStr, 1, 3) eq 'Val' {
         $prefix := $prefix ~ '◙ ';
         if nqp::istype($node, QAST::SVal) {

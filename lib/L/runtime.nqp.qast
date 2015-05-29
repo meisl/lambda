@@ -1,9 +1,9 @@
 ──CompUnit+{StrByDump}
   └─:Block
-    ╟○ lexical @ARGS :decl(param)
-    ╟○ lexical GLOBALish :decl(static)
-    ╟○ lexical $?PACKAGE :decl(static)
-    ╟○ lexical EXPORT :decl(static)
+    ╟○ lexical @ARGS :decl(param) :slurpy(1)
+    ╟○ lexical GLOBALish :decl(static) :default(...)
+    ╟○ lexical $?PACKAGE :decl(static) :default(...)
+    ╟○ lexical EXPORT :decl(static) :default(...)
     ╟○ lexical .λsrc :decl(var)
     ╟○ lexical %info :decl(var)
     ╟─bind
@@ -203,7 +203,7 @@
     ║ ├○ lexical .typecase :decl(var)
     ║ └─:Block  ««"{\n    say('>>>typecase(', nqp::reprname($subject),"...
     ║   ╟○ lexical $subject :decl(param)  ««"$subject"
-    ║   ╟○ lexical %callbacks :decl(param) :named(1)  ««"%callbacks"
+    ║   ╟○ lexical %callbacks :decl(param) :named(1) :slurpy(1)  ««"%callbacks"
     ║   ╟○ lexical $otherwise :decl(var)
     ║   ╟─bind  ««"$cbKey"
     ║   ║ ├○ lexical $cbKey :decl(var)
@@ -323,8 +323,8 @@
     ║ ├○ lexical .strOut :decl(var)
     ║ └─:Block  ««"{\n    typecase(force($v),\n        :λ(-> $lambda {"...
     ║   ╟○ lexical $v :decl(param)  ««"$v"
-    ║   ╟○ lexical $indent :decl(param)  ««"$indent"
-    ║   ╟○ lexical %done :decl(param)  ««"%done"
+    ║   ╟○ lexical $indent :decl(param) :default(...)  ««"$indent"
+    ║   ╟○ lexical %done :decl(param) :default(...)  ««"%done"
     ║   ╙─call .typecase  ««"force($v),\n        :λ(-> $lambda { # compiler shou"...
     ║     ├─call .force  ««"$v"
     ║     │ └○ lexical $v
@@ -469,7 +469,7 @@
     ╟─bind
     ║ ├○ lexical .say :decl(var)
     ║ └─:Block  ««"{\n    my $s := '';\n    for @args {\n        $s :="...
-    ║   ╟○ lexical @args :decl(param)  ««"@args"
+    ║   ╟○ lexical @args :decl(param) :slurpy(1)  ««"@args"
     ║   ╟○ lexical $s :decl(var)
     ║   ╟─bind  ««"$s := ''"
     ║   ║ ├○ lexical $s
