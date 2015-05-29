@@ -83,6 +83,7 @@ sub dump($node, $indent = '', $parent?, :$isLastChild = 2, :$isBlockChild = 0) {
     } else {
         $prefix := $prefix ~ ($isLastChild ?? ($isLastChild == 2 ?? '─' !! '└') !! '├' );
     }
+    $extraStr := $extraStr ?? ' ' ~ $extraStr !! '';
     
     my $specialStr := '';
     if nqp::istype($node, QAST::SpecialArg) {
@@ -97,19 +98,29 @@ sub dump($node, $indent = '', $parent?, :$isLastChild = 2, :$isBlockChild = 0) {
             }
         }
     }
-    $extraStr := $extraStr ?? ' ' ~ $extraStr !! '';
+
+    my @children := $node.list;
+
     if $clsStr eq 'Op' {
         $extraStr := nqp::substr($extraStr, 1);
         $clsStr := $extraStr;
         $extraStr := '';
         $prefix := $prefix ~ '─';
-    } elsif $clsStr eq 'Var' {
+    } elsif nqp::istype($node, QAST::Var) {
         $clsStr := '';
         $prefix := $prefix ~ '○';
         $specialStr := $specialStr ~ ' :slurpy(' ~ $node.slurpy ~ ')'
             if $node.slurpy;
-        $specialStr := $specialStr ~ ' :default(...)'
-            unless $node.default =:= NO_VALUE;
+        if $node.default {
+            $specialStr := $specialStr ~ ' :default(...)';
+            @children := nqp::clone(@children);
+            @children.unshift(QAST::Op.new(:op<default>, $node.default));
+        }
+        if nqp::istype($node, QAST::VarWithFallback) && $node.fallback {
+            $specialStr := $specialStr ~ ' :fallback(...)';
+            @children := nqp::clone(@children);
+            @children.unshift(QAST::Op.new(:op<fallback>, $node.fallback));
+        }
     } elsif nqp::substr($clsStr, 1, 3) eq 'Val' {
         $prefix := $prefix ~ '◙ ';
         if nqp::istype($node, QAST::SVal) {
@@ -126,10 +137,10 @@ sub dump($node, $indent = '', $parent?, :$isLastChild = 2, :$isBlockChild = 0) {
     }
     my @lines := [$prefix ~ $clsStr ~ $extraStr ~ $specialStr ~ $nodesNodeStr];
     #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
-    my $i := nqp::elems($node.list);
+    my $i := nqp::elems(@children);
     my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
     my $iamblock := nqp::istype($node, QAST::Block);
-    for $node.list {
+    for @children {
         @lines.push(dump($_, $childIndent, :isLastChild(--$i == 0), :isBlockChild($iamblock)));
     }
     nqp::join("\n", @lines);

@@ -1,9 +1,9 @@
 ──CompUnit+{StrByDump}
   └─:Block
     ╟○ lexical @ARGS :decl(param) :slurpy(1)
-    ╟○ lexical GLOBALish :decl(static) :default(...)
-    ╟○ lexical $?PACKAGE :decl(static) :default(...)
-    ╟○ lexical EXPORT :decl(static) :default(...)
+    ╟○ lexical GLOBALish :decl(static)
+    ╟○ lexical $?PACKAGE :decl(static)
+    ╟○ lexical EXPORT :decl(static)
     ╟○ lexical .λsrc :decl(var)
     ╟○ lexical %info :decl(var)
     ╟─bind
@@ -82,7 +82,9 @@
     ║   ║ ├─:Stmts  ««"{\n        @out.push(@list[$from]);\n        $from+"...
     ║   ║ │ ├─callmethod push  ««"@list[$from]"
     ║   ║ │ │ ├○ lexical @out
-    ║   ║ │ │ └─VarWithFallback positional 
+    ║   ║ │ │ └○ positional  :fallback(...)
+    ║   ║ │ │   ├─fallback
+    ║   ║ │ │   │ └◙ WVal NQPMu
     ║   ║ │ │   ├○ lexical @list :decl()
     ║   ║ │ │   └○ lexical $from :decl()
     ║   ║ │ └─postinc  ««"++"
@@ -137,8 +139,12 @@
     ║   ║   └◙ IVal 0
     ║   ╟─bind  ««"%rawInfo := %info<λ>[$idx]"
     ║   ║ ├○ lexical %rawInfo
-    ║   ║ └─VarWithFallback positional 
-    ║   ║   ├─VarWithFallback associative  :decl()
+    ║   ║ └○ positional  :fallback(...)
+    ║   ║   ├─fallback
+    ║   ║   │ └◙ WVal NQPMu
+    ║   ║   ├○ associative  :decl() :fallback(...)
+    ║   ║   │ ├─fallback
+    ║   ║   │ │ └◙ WVal NQPMu
     ║   ║   │ ├○ lexical %info :decl()
     ║   ║   │ └◙ SVal "λ"
     ║   ║   └○ lexical $idx :decl()
@@ -150,20 +156,28 @@
     ║   ║   ├◙ SVal "idx"
     ║   ║   ├○ lexical $idx
     ║   ║   ├◙ SVal "from"
-    ║   ║   ├─VarWithFallback associative 
+    ║   ║   ├○ associative  :fallback(...)
+    ║   ║   │ ├─fallback
+    ║   ║   │ │ └◙ WVal NQPMu
     ║   ║   │ ├○ lexical %rawInfo :decl()
     ║   ║   │ └◙ SVal "from"
     ║   ║   ├◙ SVal "length"
-    ║   ║   ├─VarWithFallback associative 
+    ║   ║   ├○ associative  :fallback(...)
+    ║   ║   │ ├─fallback
+    ║   ║   │ │ └◙ WVal NQPMu
     ║   ║   │ ├○ lexical %rawInfo :decl()
     ║   ║   │ └◙ SVal "length"
     ║   ║   ├◙ SVal "src"
     ║   ║   └─substr  ««"nqp::substr($λsrc, %rawInfo<from>, %rawInfo<length>)"
     ║   ║     ├○ lexical .λsrc
-    ║   ║     ├─VarWithFallback associative 
+    ║   ║     ├○ associative  :fallback(...)
+    ║   ║     │ ├─fallback
+    ║   ║     │ │ └◙ WVal NQPMu
     ║   ║     │ ├○ lexical %rawInfo :decl()
     ║   ║     │ └◙ SVal "from"
-    ║   ║     └─VarWithFallback associative 
+    ║   ║     └○ associative  :fallback(...)
+    ║   ║       ├─fallback
+    ║   ║       │ └◙ WVal NQPMu
     ║   ║       ├○ lexical %rawInfo :decl()
     ║   ║       └◙ SVal "length"
     ║   ╟─bind  ««"@fvs     := lam2fvs($lambda)"
@@ -175,7 +189,9 @@
     ║   ║ └─hash  ««"nqp::hash()"
     ║   ╟─bind  ««"@fvns := %rawInfo<freeVarNames>"
     ║   ║ ├○ lexical @fvns
-    ║   ║ └─VarWithFallback associative 
+    ║   ║ └○ associative  :fallback(...)
+    ║   ║   ├─fallback
+    ║   ║   │ └◙ WVal NQPMu
     ║   ║   ├○ lexical %rawInfo :decl()
     ║   ║   └◙ SVal "freeVarNames"
     ║   ╟─bind  ««"$i := 0"
@@ -188,7 +204,9 @@
     ║   ║ │ ╟─bindkey  ««"nqp::bindkey(%fvs, $_, @fvs[$i])"
     ║   ║ │ ║ ├○ lexical %fvs
     ║   ║ │ ║ ├○ lexical $_
-    ║   ║ │ ║ └─VarWithFallback positional 
+    ║   ║ │ ║ └○ positional  :fallback(...)
+    ║   ║ │ ║   ├─fallback
+    ║   ║ │ ║   │ └◙ WVal NQPMu
     ║   ║ │ ║   ├○ lexical @fvs :decl()
     ║   ║ │ ║   └○ lexical $i :decl()
     ║   ║ │ ╙─postinc  ««"++"
@@ -217,7 +235,9 @@
     ║   ╟─bind  ««"$otherwise := nqp::defor(\n        %callbacks<other"...
     ║   ║ ├○ lexical $otherwise
     ║   ║ └─defor  ««"nqp::defor(\n        %callbacks<otherwise>,\n      "...
-    ║   ║   ├─VarWithFallback associative 
+    ║   ║   ├○ associative  :fallback(...)
+    ║   ║   │ ├─fallback
+    ║   ║   │ │ └◙ WVal NQPMu
     ║   ║   │ ├○ lexical %callbacks :decl()
     ║   ║   │ └◙ SVal "otherwise"
     ║   ║   └─:Block  ««"{ # compiler should see that this needs not be a cl"...
@@ -289,7 +309,9 @@
     ║   ╟─bind  ««"$cb := nqp::defor(%callbacks{$cbKey}, $otherwise)"
     ║   ║ ├○ lexical $cb
     ║   ║ └─defor  ««"nqp::defor(%callbacks{$cbKey}, $otherwise)"
-    ║   ║   ├─VarWithFallback associative 
+    ║   ║   ├○ associative  :fallback(...)
+    ║   ║   │ ├─fallback
+    ║   ║   │ │ └◙ WVal NQPMu
     ║   ║   │ ├○ lexical %callbacks :decl()
     ║   ║   │ └○ lexical $cbKey :decl()
     ║   ║   └○ lexical $otherwise
@@ -323,7 +345,11 @@
     ║ └─:Block  ««"{\n    typecase(force($v),\n        :λ(-> $lambda {"...
     ║   ╟○ lexical $v :decl(param)  ««"$v"
     ║   ╟○ lexical $indent :decl(param) :default(...)  ««"$indent"
+    ║   ║ └─default
+    ║   ║   └◙ SVal ""
     ║   ╟○ lexical %done :decl(param) :default(...)  ««"%done"
+    ║   ║ └─default
+    ║   ║   └─hash
     ║   ╙─call .typecase  ««"force($v),\n        :λ(-> $lambda { # compiler shou"...
     ║     ├─call .force  ««"$v"
     ║     │ └○ lexical $v
@@ -338,12 +364,16 @@
     ║     │ ║   └○ lexical $lambda
     ║     │ ╟─bind  ««"$src := %info<src>"
     ║     │ ║ ├○ lexical $src
-    ║     │ ║ └─VarWithFallback associative 
+    ║     │ ║ └○ associative  :fallback(...)
+    ║     │ ║   ├─fallback
+    ║     │ ║   │ └◙ WVal NQPMu
     ║     │ ║   ├○ lexical %info :decl()
     ║     │ ║   └◙ SVal "src"
     ║     │ ╟─bind  ««"%fvs := %info<freeVars>"
     ║     │ ║ ├○ lexical %fvs
-    ║     │ ║ └─VarWithFallback associative 
+    ║     │ ║ └○ associative  :fallback(...)
+    ║     │ ║   ├─fallback
+    ║     │ ║   │ └◙ WVal NQPMu
     ║     │ ║   ├○ lexical %info :decl()
     ║     │ ║   └◙ SVal "freeVars"
     ║     │ ╟─for  ««"%fvs {\n                my $fvName  := nqp::iterkey"...
@@ -393,12 +423,16 @@
     ║     │ ║ │ ║     ├○ lexical $pre
     ║     │ ║ │ ║     └○ lexical $flatVal
     ║     │ ║ │ ╙─unless  ««"%done{$doneKey} {\n                    %done{$doneK"...
-    ║     │ ║ │   ├─VarWithFallback associative 
+    ║     │ ║ │   ├○ associative  :fallback(...)
+    ║     │ ║ │   │ ├─fallback
+    ║     │ ║ │   │ │ └◙ WVal NQPMu
     ║     │ ║ │   │ ├○ lexical %done :decl()
     ║     │ ║ │   │ └○ lexical $doneKey :decl()
     ║     │ ║ │   └─:Stmts  ««"{\n                    %done{$doneKey} := 1;\n     "...
     ║     │ ║ │     ├─bind  ««":="
-    ║     │ ║ │     │ ├─VarWithFallback associative 
+    ║     │ ║ │     │ ├○ associative  :fallback(...)
+    ║     │ ║ │     │ │ ├─fallback
+    ║     │ ║ │     │ │ │ └◙ WVal NQPMu
     ║     │ ║ │     │ │ ├○ lexical %done :decl()
     ║     │ ║ │     │ │ └○ lexical $doneKey :decl()
     ║     │ ║ │     │ └◙ IVal 1
