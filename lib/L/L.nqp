@@ -16,13 +16,11 @@ class LCompiler is SmartCompiler {
         return self;
     }
 
-    method compiler_progname($value = NO_VALUE) { 'Lc' }
-
     method mkRuntime($src) {
         my $nqpc := NQPCompiler.new();
         $nqpc.addstage('ast_clean', :before<ast_save>);
         my $rtQAST := $nqpc.compileFile('runTime', :lib('lib/L'), :target('ast_save'));
-        self.log('mkRuntime: ~> ', whatsit(~$rtQAST));
+        say("# [Lc] mkRuntime ~> " ~ whatsit($rtQAST));
         return $src;
     }
 

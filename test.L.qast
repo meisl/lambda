@@ -650,36 +650,36 @@
       ║   │ │ │ │ │ │ │ ├─list
       ║   │ │ │ │ │ │ │ │ ├◙ SVal "λ31"
       ║   │ │ │ │ │ │ │ │ └─:Block  ««"λU.λM.λC.λB.λS.λK.λI.\n    (λY.\n        # Lists:\n"...
-      ║   │ │ │ │ │ │ │ │   ╟○ lexical U :decl(param)  ««"U"
+      ║   │ │ │ │ │ │ │ │   ╟○ lexical U :decl(param)
       ║   │ │ │ │ │ │ │ │   ╙─list
       ║   │ │ │ │ │ │ │ │     ├◙ SVal "λ30"
       ║   │ │ │ │ │ │ │ │     ├─:Block  ««"λM.λC.λB.λS.λK.λI.\n    (λY.\n        # Lists:\n   "...
-      ║   │ │ │ │ │ │ │ │     │ ╟○ lexical M :decl(param)  ««"M"
+      ║   │ │ │ │ │ │ │ │     │ ╟○ lexical M :decl(param)
       ║   │ │ │ │ │ │ │ │     │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   ├◙ SVal "λ29"
       ║   │ │ │ │ │ │ │ │     │   ├─:Block  ««"λC.λB.λS.λK.λI.\n    (λY.\n        # Lists:\n      "...
-      ║   │ │ │ │ │ │ │ │     │   │ ╟○ lexical C :decl(param)  ««"C"
+      ║   │ │ │ │ │ │ │ │     │   │ ╟○ lexical C :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   ├◙ SVal "λ28"
       ║   │ │ │ │ │ │ │ │     │   │   ├─:Block  ««"λB.λS.λK.λI.\n    (λY.\n        # Lists:\n        ("...
-      ║   │ │ │ │ │ │ │ │     │   │   │ ╟○ lexical B :decl(param)  ««"B"
+      ║   │ │ │ │ │ │ │ │     │   │   │ ╟○ lexical B :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   ├◙ SVal "λ27"
       ║   │ │ │ │ │ │ │ │     │   │   │   ├─:Block  ««"λS.λK.λI.\n    (λY.\n        # Lists:\n        (λni"...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │ ╟○ lexical S :decl(param)  ««"S"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │ ╟○ lexical S :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   ├◙ SVal "λ26"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   ├─:Block  ««"λK.λI.\n    (λY.\n        # Lists:\n        (λnil.λ"...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │ ╟○ lexical K :decl(param)  ««"K"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │ ╟○ lexical K :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   ├◙ SVal "λ25"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   ├─:Block  ««"λI.\n    (λY.\n        # Lists:\n        (λnil.λcon"...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │ ╟○ lexical I :decl(param)  ««"I"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │ ╟○ lexical I :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │ ╙─call .apply1  ««"\n    (λY.\n        # Lists:\n        (λnil.λcons.λ"...
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   ├─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │ ├◙ SVal "λ24"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │ └─:Block  ««"λY.\n        # Lists:\n        (λnil.λcons.λcar.λcd"...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │   ╟○ lexical Y :decl(param)  ««"Y"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │   ╟○ lexical Y :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │   ╙─call .apply1  ««"\n        # Lists:\n        (λnil.λcons.λcar.λcdr.λ"...
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     ├─call .apply1
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ ├─call .apply1
@@ -688,28 +688,28 @@
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ ├─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │ ├◙ SVal "λ5"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │ └─:Block  ««"λnil.λcons.λcar.λcdr.λfoldl.\n            (λxs.\n  "...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │   ╟○ lexical nil :decl(param)  ««"nil"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │   ╟○ lexical nil :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │   ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     ├◙ SVal "λ4"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     ├─:Block  ««"λcons.λcar.λcdr.λfoldl.\n            (λxs.\n       "...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │ ╟○ lexical cons :decl(param)  ««"cons"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │ ╟○ lexical cons :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   ├◙ SVal "λ3"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   ├─:Block  ««"λcar.λcdr.λfoldl.\n            (λxs.\n             "...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │ ╟○ lexical car :decl(param)  ««"car"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │ ╟○ lexical car :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   ├◙ SVal "λ2"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   ├─:Block  ««"λcdr.λfoldl.\n            (λxs.\n                #n"...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │ ╟○ lexical cdr :decl(param)  ««"cdr"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │ ╟○ lexical cdr :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   ├◙ SVal "λ1"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   ├─:Block  ««"λfoldl.\n            (λxs.\n                #nil\n "...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │ ╟○ lexical foldl :decl(param)  ««"foldl"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │ ╟○ lexical foldl :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │ ╙─call .apply1  ««"\n            (λxs.\n                #nil\n        "...
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   ├─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │ ├◙ SVal "λ0"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │ └─:Block  ««"λxs.\n                #nil\n                #car xs"...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │   ╟○ lexical xs :decl(param)  ««"xs"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │   ╟○ lexical xs :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │   ╙─call .apply1  ««"\n                #nil\n                #car xs    "...
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │     ├◙ SVal "foo"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │     └◙ SVal "bar"
@@ -717,77 +717,77 @@
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │     └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │       ╙─call .apply1  ««"cons \"a\" (cons \"b\" (cons \"c\" nil))"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │         ├─call .apply1
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │         │ ├○ lexical cons  ««"cons"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │         │ ├○ lexical cons
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │         │ └◙ SVal "a"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │         └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │           └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │             ╙─call .apply1  ««"cons \"b\" (cons \"c\" nil)"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │               ├─call .apply1
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │               │ ├○ lexical cons  ««"cons"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │               │ ├○ lexical cons
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │               │ └◙ SVal "b"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │               └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │                 └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │                   ╙─call .apply1  ««"cons \"c\" nil"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │                     ├─call .apply1
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │                     │ ├○ lexical cons  ««"cons"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │                     │ ├○ lexical cons
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │                     │ └◙ SVal "c"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │                     └○ lexical nil  ««"nil"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   ├○ lexical cons  ««"cons"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   └○ lexical nil  ««"nil"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   ├○ lexical cons  ««"cons"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   └○ lexical nil  ««"nil"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   ├○ lexical cons  ««"cons"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   └○ lexical nil  ««"nil"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     └○ lexical nil  ««"nil"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │                     └○ lexical nil
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   ├○ lexical cons
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   └○ lexical nil
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   ├○ lexical cons
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   └○ lexical nil
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   ├○ lexical cons
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   └○ lexical nil
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     └○ lexical nil
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │   └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │     ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │       ├◙ SVal "λ7"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │       └─:Block  ««"λonNil.λonCons.onNil"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │         ╟○ lexical onNil :decl(param)  ««"onNil"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │         ╟○ lexical onNil :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │         ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │           ├◙ SVal "λ6"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │           ├─:Block  ««"λonCons.onNil"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │           │ ╟○ lexical onCons :decl(param)  ««"onCons"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │           │ ╙○ lexical onNil  ««"onNil"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │           └○ lexical onNil  ««"onNil"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │           │ ╟○ lexical onCons :decl(param)
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │           │ ╙○ lexical onNil
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │           └○ lexical onNil
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │   └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │     ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │       ├◙ SVal "λ11"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │       └─:Block  ««"λx.λxs.λonNil.λonCons.onCons x xs"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │         ╟○ lexical x :decl(param)  ««"x"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │         ╟○ lexical x :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │         ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           ├◙ SVal "λ10"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           ├─:Block  ««"λxs.λonNil.λonCons.onCons x xs"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │ ╟○ lexical xs :decl(param)  ««"xs"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │ ╟○ lexical xs :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   ├◙ SVal "λ9"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   ├─:Block  ««"λonNil.λonCons.onCons x xs"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │ ╟○ lexical onNil :decl(param)  ««"onNil"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │ ╟○ lexical onNil :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   ├◙ SVal "λ8"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   ├─:Block  ««"λonCons.onCons x xs"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   │ ╟○ lexical onCons :decl(param)  ««"onCons"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   │ ╟○ lexical onCons :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   │ ╙─call .apply1  ««"onCons x xs"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   │   ├─call .apply1
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   │   │ ├○ lexical onCons  ««"onCons"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   │   │ └○ lexical x  ««"x"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   │   └○ lexical xs  ««"xs"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   ├○ lexical x  ««"x"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   └○ lexical xs  ««"xs"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   ├○ lexical x  ««"x"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   └○ lexical xs  ««"xs"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           └○ lexical x  ««"x"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   │   │ ├○ lexical onCons
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   │   │ └○ lexical x
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   │   └○ lexical xs
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   ├○ lexical x
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   │   └○ lexical xs
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   ├○ lexical x
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           │   └○ lexical xs
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │           └○ lexical x
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │   └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │     ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │       ├◙ SVal "λ14"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │       └─:Block  ««"λxs.xs (\"car\" \"nil\") (λhd.λtl.hd)"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │         ╟○ lexical xs :decl(param)  ««"xs"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │         ╟○ lexical xs :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │         ╙─call .apply1  ««"xs (\"car\" \"nil\") (λhd.λtl.hd)"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │           ├─call .apply1
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │           │ ├○ lexical xs  ««"xs"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │           │ ├○ lexical xs
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │           │ └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │           │   └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │           │     ╙─call .apply1  ««"\"car\" \"nil\""
@@ -798,22 +798,22 @@
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │               ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                 ├◙ SVal "λ13"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                 └─:Block  ««"λhd.λtl.hd"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                   ╟○ lexical hd :decl(param)  ««"hd"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                   ╟○ lexical hd :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                   ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                     ├◙ SVal "λ12"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                     ├─:Block  ««"λtl.hd"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                     │ ╟○ lexical tl :decl(param)  ««"tl"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                     │ ╙○ lexical hd  ««"hd"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                     └○ lexical hd  ««"hd"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                     │ ╟○ lexical tl :decl(param)
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                     │ ╙○ lexical hd
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │                     └○ lexical hd
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │   └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │     ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │       ├◙ SVal "λ17"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │       └─:Block  ««"λxs.xs (\"cdr\" \"nil\") (λhd.λtl.tl)"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │         ╟○ lexical xs :decl(param)  ««"xs"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │         ╟○ lexical xs :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │         ╙─call .apply1  ««"xs (\"cdr\" \"nil\") (λhd.λtl.tl)"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │           ├─call .apply1
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │           │ ├○ lexical xs  ««"xs"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │           │ ├○ lexical xs
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │           │ └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │           │   └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │           │     ╙─call .apply1  ««"\"cdr\" \"nil\""
@@ -824,205 +824,205 @@
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │               ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                 ├◙ SVal "λ16"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                 └─:Block  ««"λhd.λtl.tl"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                   ╟○ lexical hd :decl(param)  ««"hd"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                   ╟○ lexical hd :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                   ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                     ├◙ SVal "λ15"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                     └─:Block  ««"λtl.tl"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                       ╟○ lexical tl :decl(param)  ««"tl"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                       ╙○ lexical tl  ««"tl"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                       ╟○ lexical tl :decl(param)
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │                       ╙○ lexical tl
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │       └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │         ╙─call .apply1  ««"Y λself.λf.λstart.λxs.                 # foldl\n   "...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │           ├○ lexical Y  ««"Y"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │           ├○ lexical Y
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │           └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │             └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │               ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                 ├◙ SVal "λ23"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                 └─:Block  ««"λself.λf.λstart.λxs.                 # foldl\n     "...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                   ╟○ lexical self :decl(param)  ««"self"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                   ╟○ lexical self :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                   ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     ├◙ SVal "λ22"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     ├─:Block  ««"λf.λstart.λxs.                 # foldl\n           "...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │ ╟○ lexical f :decl(param)  ««"f"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │ ╟○ lexical f :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   ├◙ SVal "λ21"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   ├─:Block  ««"λstart.λxs.                 # foldl\n            xs"...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │ ╟○ lexical start :decl(param)  ««"start"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │ ╟○ lexical start :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   ├◙ SVal "λ20"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   ├─:Block  ««"λxs.                 # foldl\n            xs start\"...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │ ╟○ lexical xs :decl(param)  ««"xs"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │ ╟○ lexical xs :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │ ╙─call .apply1  ««"                 # foldl\n            xs start\n   "...
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │   ├─call .apply1
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │   │ ├○ lexical xs  ««"xs"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │   │ └○ lexical start  ««"start"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │   │ ├○ lexical xs
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │   │ └○ lexical start
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │   └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │     └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │       ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         ├◙ SVal "λ19"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         ├─:Block  ««"λhd.λtl.self f (f start hd) tl\n        "
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │ ╟○ lexical hd :decl(param)  ««"hd"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │ ╟○ lexical hd :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │ ╙─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   ├◙ SVal "λ18"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   ├─:Block  ««"λtl.self f (f start hd) tl\n        "
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │ ╟○ lexical tl :decl(param)  ««"tl"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │ ╟○ lexical tl :decl(param)
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │ ╙─call .apply1  ««"self f (f start hd) tl\n        "
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   ├─call .apply1
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │ ├─call .apply1
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │ │ ├○ lexical self  ««"self"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │ │ └○ lexical f  ««"f"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │ │ ├○ lexical self
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │ │ └○ lexical f
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │ └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │   └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │     ╙─call .apply1  ««"f start hd"
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │       ├─call .apply1
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │       │ ├○ lexical f  ««"f"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │       │ └○ lexical start  ««"start"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │       └○ lexical hd  ««"hd"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   └○ lexical tl  ««"tl"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   ├○ lexical self  ««"self"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   ├○ lexical f  ««"f"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   ├○ lexical start  ««"start"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   └○ lexical hd  ««"hd"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         ├○ lexical self  ««"self"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         ├○ lexical f  ««"f"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         └○ lexical start  ««"start"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   ├○ lexical start  ««"start"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   ├○ lexical self  ««"self"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   └○ lexical f  ««"f"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   ├○ lexical self  ««"self"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   └○ lexical f  ««"f"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     └○ lexical self  ««"self"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │       │ ├○ lexical f
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │       │ └○ lexical start
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   │       └○ lexical hd
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   │   └○ lexical tl
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   ├○ lexical self
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   ├○ lexical f
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   ├○ lexical start
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         │   └○ lexical hd
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         ├○ lexical self
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         ├○ lexical f
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   │         └○ lexical start
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   ├○ lexical start
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   ├○ lexical self
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   │   └○ lexical f
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   ├○ lexical self
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     │   └○ lexical f
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │                     └○ lexical self
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │     └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │       ╙─call .apply1  ««"U U"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │         ├○ lexical U  ««"U"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │         └○ lexical U  ««"U"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   └○ lexical U  ««"U"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   └○ lexical U  ««"U"
-      ║   │ │ │ │ │ │ │ │     │   │   │   └○ lexical U  ««"U"
-      ║   │ │ │ │ │ │ │ │     │   │   └○ lexical U  ««"U"
-      ║   │ │ │ │ │ │ │ │     │   └○ lexical U  ««"U"
-      ║   │ │ │ │ │ │ │ │     └○ lexical U  ««"U"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │         ├○ lexical U
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │         └○ lexical U
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   └○ lexical U
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   └○ lexical U
+      ║   │ │ │ │ │ │ │ │     │   │   │   └○ lexical U
+      ║   │ │ │ │ │ │ │ │     │   │   └○ lexical U
+      ║   │ │ │ │ │ │ │ │     │   └○ lexical U
+      ║   │ │ │ │ │ │ │ │     └○ lexical U
       ║   │ │ │ │ │ │ │ └─call .delayMemo
       ║   │ │ │ │ │ │ │   └─:Block
       ║   │ │ │ │ │ │ │     ╙─list
       ║   │ │ │ │ │ │ │       ├◙ SVal "λ33"
       ║   │ │ │ │ │ │ │       └─:Block  ««"λu.λf.f (u u f)"
-      ║   │ │ │ │ │ │ │         ╟○ lexical u :decl(param)  ««"u"
+      ║   │ │ │ │ │ │ │         ╟○ lexical u :decl(param)
       ║   │ │ │ │ │ │ │         ╙─list
       ║   │ │ │ │ │ │ │           ├◙ SVal "λ32"
       ║   │ │ │ │ │ │ │           ├─:Block  ««"λf.f (u u f)"
-      ║   │ │ │ │ │ │ │           │ ╟○ lexical f :decl(param)  ««"f"
+      ║   │ │ │ │ │ │ │           │ ╟○ lexical f :decl(param)
       ║   │ │ │ │ │ │ │           │ ╙─call .apply1  ««"f (u u f)"
-      ║   │ │ │ │ │ │ │           │   ├○ lexical f  ««"f"
+      ║   │ │ │ │ │ │ │           │   ├○ lexical f
       ║   │ │ │ │ │ │ │           │   └─call .delayMemo
       ║   │ │ │ │ │ │ │           │     └─:Block
       ║   │ │ │ │ │ │ │           │       ╙─call .apply1  ««"u u f"
       ║   │ │ │ │ │ │ │           │         ├─call .apply1
-      ║   │ │ │ │ │ │ │           │         │ ├○ lexical u  ««"u"
-      ║   │ │ │ │ │ │ │           │         │ └○ lexical u  ««"u"
-      ║   │ │ │ │ │ │ │           │         └○ lexical f  ««"f"
-      ║   │ │ │ │ │ │ │           └○ lexical u  ««"u"
+      ║   │ │ │ │ │ │ │           │         │ ├○ lexical u
+      ║   │ │ │ │ │ │ │           │         │ └○ lexical u
+      ║   │ │ │ │ │ │ │           │         └○ lexical f
+      ║   │ │ │ │ │ │ │           └○ lexical u
       ║   │ │ │ │ │ │ └─call .delayMemo
       ║   │ │ │ │ │ │   └─:Block
       ║   │ │ │ │ │ │     ╙─list
       ║   │ │ │ │ │ │       ├◙ SVal "λ34"
       ║   │ │ │ │ │ │       └─:Block  ««"λx.x x"
-      ║   │ │ │ │ │ │         ╟○ lexical x :decl(param)  ««"x"
+      ║   │ │ │ │ │ │         ╟○ lexical x :decl(param)
       ║   │ │ │ │ │ │         ╙─call .apply1  ««"x x"
-      ║   │ │ │ │ │ │           ├○ lexical x  ««"x"
-      ║   │ │ │ │ │ │           └○ lexical x  ««"x"
+      ║   │ │ │ │ │ │           ├○ lexical x
+      ║   │ │ │ │ │ │           └○ lexical x
       ║   │ │ │ │ │ └─call .delayMemo
       ║   │ │ │ │ │   └─:Block
       ║   │ │ │ │ │     ╙─list
       ║   │ │ │ │ │       ├◙ SVal "λ37"
       ║   │ │ │ │ │       └─:Block  ««"λf.λx.λy.f y x"
-      ║   │ │ │ │ │         ╟○ lexical f :decl(param)  ««"f"
+      ║   │ │ │ │ │         ╟○ lexical f :decl(param)
       ║   │ │ │ │ │         ╙─list
       ║   │ │ │ │ │           ├◙ SVal "λ36"
       ║   │ │ │ │ │           ├─:Block  ««"λx.λy.f y x"
-      ║   │ │ │ │ │           │ ╟○ lexical x :decl(param)  ««"x"
+      ║   │ │ │ │ │           │ ╟○ lexical x :decl(param)
       ║   │ │ │ │ │           │ ╙─list
       ║   │ │ │ │ │           │   ├◙ SVal "λ35"
       ║   │ │ │ │ │           │   ├─:Block  ««"λy.f y x"
-      ║   │ │ │ │ │           │   │ ╟○ lexical y :decl(param)  ««"y"
+      ║   │ │ │ │ │           │   │ ╟○ lexical y :decl(param)
       ║   │ │ │ │ │           │   │ ╙─call .apply1  ««"f y x"
       ║   │ │ │ │ │           │   │   ├─call .apply1
-      ║   │ │ │ │ │           │   │   │ ├○ lexical f  ««"f"
-      ║   │ │ │ │ │           │   │   │ └○ lexical y  ««"y"
-      ║   │ │ │ │ │           │   │   └○ lexical x  ««"x"
-      ║   │ │ │ │ │           │   ├○ lexical f  ««"f"
-      ║   │ │ │ │ │           │   └○ lexical x  ««"x"
-      ║   │ │ │ │ │           └○ lexical f  ««"f"
+      ║   │ │ │ │ │           │   │   │ ├○ lexical f
+      ║   │ │ │ │ │           │   │   │ └○ lexical y
+      ║   │ │ │ │ │           │   │   └○ lexical x
+      ║   │ │ │ │ │           │   ├○ lexical f
+      ║   │ │ │ │ │           │   └○ lexical x
+      ║   │ │ │ │ │           └○ lexical f
       ║   │ │ │ │ └─call .delayMemo
       ║   │ │ │ │   └─:Block
       ║   │ │ │ │     ╙─list
       ║   │ │ │ │       ├◙ SVal "λ40"
       ║   │ │ │ │       └─:Block  ««"λf.λg.λx.f (g x)"
-      ║   │ │ │ │         ╟○ lexical f :decl(param)  ««"f"
+      ║   │ │ │ │         ╟○ lexical f :decl(param)
       ║   │ │ │ │         ╙─list
       ║   │ │ │ │           ├◙ SVal "λ39"
       ║   │ │ │ │           ├─:Block  ««"λg.λx.f (g x)"
-      ║   │ │ │ │           │ ╟○ lexical g :decl(param)  ««"g"
+      ║   │ │ │ │           │ ╟○ lexical g :decl(param)
       ║   │ │ │ │           │ ╙─list
       ║   │ │ │ │           │   ├◙ SVal "λ38"
       ║   │ │ │ │           │   ├─:Block  ««"λx.f (g x)"
-      ║   │ │ │ │           │   │ ╟○ lexical x :decl(param)  ««"x"
+      ║   │ │ │ │           │   │ ╟○ lexical x :decl(param)
       ║   │ │ │ │           │   │ ╙─call .apply1  ««"f (g x)"
-      ║   │ │ │ │           │   │   ├○ lexical f  ««"f"
+      ║   │ │ │ │           │   │   ├○ lexical f
       ║   │ │ │ │           │   │   └─call .delayMemo
       ║   │ │ │ │           │   │     └─:Block
       ║   │ │ │ │           │   │       ╙─call .apply1  ««"g x"
-      ║   │ │ │ │           │   │         ├○ lexical g  ««"g"
-      ║   │ │ │ │           │   │         └○ lexical x  ««"x"
-      ║   │ │ │ │           │   ├○ lexical f  ««"f"
-      ║   │ │ │ │           │   └○ lexical g  ««"g"
-      ║   │ │ │ │           └○ lexical f  ««"f"
+      ║   │ │ │ │           │   │         ├○ lexical g
+      ║   │ │ │ │           │   │         └○ lexical x
+      ║   │ │ │ │           │   ├○ lexical f
+      ║   │ │ │ │           │   └○ lexical g
+      ║   │ │ │ │           └○ lexical f
       ║   │ │ │ └─call .delayMemo
       ║   │ │ │   └─:Block
       ║   │ │ │     ╙─list
       ║   │ │ │       ├◙ SVal "λ43"
       ║   │ │ │       └─:Block  ««"λf.λg.λx.f x (g x)"
-      ║   │ │ │         ╟○ lexical f :decl(param)  ««"f"
+      ║   │ │ │         ╟○ lexical f :decl(param)
       ║   │ │ │         ╙─list
       ║   │ │ │           ├◙ SVal "λ42"
       ║   │ │ │           ├─:Block  ««"λg.λx.f x (g x)"
-      ║   │ │ │           │ ╟○ lexical g :decl(param)  ««"g"
+      ║   │ │ │           │ ╟○ lexical g :decl(param)
       ║   │ │ │           │ ╙─list
       ║   │ │ │           │   ├◙ SVal "λ41"
       ║   │ │ │           │   ├─:Block  ««"λx.f x (g x)"
-      ║   │ │ │           │   │ ╟○ lexical x :decl(param)  ««"x"
+      ║   │ │ │           │   │ ╟○ lexical x :decl(param)
       ║   │ │ │           │   │ ╙─call .apply1  ««"f x (g x)"
       ║   │ │ │           │   │   ├─call .apply1
-      ║   │ │ │           │   │   │ ├○ lexical f  ««"f"
-      ║   │ │ │           │   │   │ └○ lexical x  ««"x"
+      ║   │ │ │           │   │   │ ├○ lexical f
+      ║   │ │ │           │   │   │ └○ lexical x
       ║   │ │ │           │   │   └─call .delayMemo
       ║   │ │ │           │   │     └─:Block
       ║   │ │ │           │   │       ╙─call .apply1  ««"g x"
-      ║   │ │ │           │   │         ├○ lexical g  ««"g"
-      ║   │ │ │           │   │         └○ lexical x  ««"x"
-      ║   │ │ │           │   ├○ lexical f  ««"f"
-      ║   │ │ │           │   └○ lexical g  ««"g"
-      ║   │ │ │           └○ lexical f  ««"f"
+      ║   │ │ │           │   │         ├○ lexical g
+      ║   │ │ │           │   │         └○ lexical x
+      ║   │ │ │           │   ├○ lexical f
+      ║   │ │ │           │   └○ lexical g
+      ║   │ │ │           └○ lexical f
       ║   │ │ └─call .delayMemo
       ║   │ │   └─:Block
       ║   │ │     ╙─list
       ║   │ │       ├◙ SVal "λ45"
       ║   │ │       └─:Block  ««"λx.λ_.x"
-      ║   │ │         ╟○ lexical x :decl(param)  ««"x"
+      ║   │ │         ╟○ lexical x :decl(param)
       ║   │ │         ╙─list
       ║   │ │           ├◙ SVal "λ44"
       ║   │ │           ├─:Block  ««"λ_.x"
-      ║   │ │           │ ╟○ lexical _ :decl(param)  ««"_"
-      ║   │ │           │ ╙○ lexical x  ««"x"
-      ║   │ │           └○ lexical x  ««"x"
+      ║   │ │           │ ╟○ lexical _ :decl(param)
+      ║   │ │           │ ╙○ lexical x
+      ║   │ │           └○ lexical x
       ║   │ └─call .delayMemo
       ║   │   └─:Block
       ║   │     ╙─list
       ║   │       ├◙ SVal "λ46"
       ║   │       └─:Block  ««"λx.x"
-      ║   │         ╟○ lexical x :decl(param)  ««"x"
-      ║   │         ╙○ lexical x  ««"x"
+      ║   │         ╟○ lexical x :decl(param)
+      ║   │         ╙○ lexical x
       ║   └◙ SVal ""
       ╟─call .say
       ║ └◙ SVal "------------------------------------------------"

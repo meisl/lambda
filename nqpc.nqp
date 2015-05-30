@@ -39,10 +39,12 @@ sub whatsit($v) is export {
         my $x := $v.dump_extra_node_info;
         return $x ?? "$s($x)" !! $s;
     #} elsif nqp::istype($v, Something) { ??? }
+    } elsif nqp::isnull($v) {
+        return $reprname;
     } elsif nqp::can($v, 'HOW') && nqp::can($v.HOW, 'name') {
         return $v.HOW.name($v);
     } else {
-        return $reprname
+        return $reprname;
     }
 }
 
@@ -86,15 +88,15 @@ sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
         }
     }
 
-    my $nodesNodeStr := '';
-    if $node.node {
-        $nodesNodeStr := nqp::escape(~$node.node);
-        if nqp::chars($nodesNodeStr) > 54 {
-            $nodesNodeStr := nqp::substr($nodesNodeStr, 0, 51) ~ '"...'
+    my $matchStr := '';
+    if $node.node && !istypeAny($node, QAST::Var, QAST::IVal, QAST::NVal, QAST::SVal) {
+        $matchStr := nqp::escape(~$node.node);
+        if nqp::chars($matchStr) > 54 {
+            $matchStr := nqp::substr($matchStr, 0, 51) ~ '"...'
         } else {
-            $nodesNodeStr := $nodesNodeStr ~ '"';
+            $matchStr := $matchStr ~ '"';
         }
-        $nodesNodeStr := '  ««"' ~ $nodesNodeStr;
+        $matchStr := '  ««"' ~ $matchStr;
     }
 
     my $extraStr := $node.dump_extra_node_info;
@@ -150,7 +152,7 @@ sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
         $prefix := $prefix ~ '─';
     }
 
-    my $suffix := $nodesNodeStr;
+    my $suffix := $matchStr;
     my $sep    := "\n";
     my $before := '';
     my $after  := '';
@@ -164,7 +166,7 @@ sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
         }
     }
     my @lines := [$prefix  ~ $clsStr ~ $extraStr ~ $specialStr ~ $suffix];
-    #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $nodesNodeStr];
+    #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $matchStr];
     my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
     for $node.list {
         @lines.push(dump($_, $node, :indent($childIndent), :$oneLine));
@@ -476,6 +478,7 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
     # on first step, prepare:
     if nqp::elems(@inlineDefs) > 0 {
         for @inlineDefs {
+            next if nqp::isnull($_);
             nqp::die("invalid def of inlineable sub: " ~ whatsit($_))
                 unless nqp::istype($_, QAST::Node);
             nqp::die("invalid def of inlineable sub: " ~ dump($_))
@@ -747,17 +750,12 @@ class SmartCompiler is NQP::Compiler {
                 !! $s;
         });
 
-        my $what := '&lam2info';  #   '&strOut';  #   '&renameVars';  #   '&ifTag';    #   
-        #$ast := findDef($ast, $what);
-        say($what, ' not found!')
-            unless $ast;
-
         $ast;
     }
     
 
     method ast_save($ast, *%adverbs) {
-        my $qastfileName := self.user-progname() ~ '.qast';
+        my $qastfileName := self.user-progname ~ '.qast';
         return $ast
             if %adverbs<output> eq $qastfileName;
         spew($qastfileName, ~$ast);
