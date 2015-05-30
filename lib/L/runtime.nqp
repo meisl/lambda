@@ -1,33 +1,3 @@
-
-# inlineables? ----------------------------------------------------------------
-
-sub LAMFIELD_ID() is export { 0 }
-sub LAMFIELD_CODE()     is export { 1 }
-sub LAMFIELD_FREEVARS() is export { 2 }
-
-sub lam2id($lam) is export { $lam[LAMFIELD_ID()] }
-sub lam2code($lam) { $lam[LAMFIELD_CODE()] }
-sub lam2fvs($lam)  { sublist($lam, LAMFIELD_FREEVARS()) }
-
-
-sub STATS_QASTSIZE()    is export { 'qastSize'    }
-sub STATS_BLOCKCOUNT()  is export { 'blockCount'  }
-sub STATS_LISTCOUNT()   is export { 'listCount'   }
-sub STATS_LAMBDACOUNT() is export { 'lambdaCount' }
-sub STATS_IVALCOUNT()   is export { 'ivalCount'   }
-sub STATS_SVALCOUNT()   is export { 'svalCount'   }
-sub STATS_SVALSIZE()    is export { 'svalSize'    }
-
-
-sub int2str(int $i) { ~$i }
-sub num2str(num $n) { ~$n }
-# did you expect `str2str`? - that's `strLit`
-sub strLit(str $s) { '"' ~ nqp::escape($s) ~ '"' }
-
-
-# -----------------------------------------------------------------------------
-
-
 my $λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)';
 my %info := nqp::hash(
     'λ', [
@@ -44,6 +14,36 @@ my %info := nqp::hash(
         STATS_SVALSIZE()    , -1, # ttl size of SVals
     ),
 );
+
+
+# inlineables? ----------------------------------------------------------------
+
+sub LAMFIELD_ID()       { 0 }
+sub LAMFIELD_CODE()     { 1 }
+sub LAMFIELD_FREEVARS() { 2 }
+
+sub lam2id($lam)    { $lam[LAMFIELD_ID()] }
+sub lam2code($lam)  { $lam[LAMFIELD_CODE()] }
+sub lam2fvs($lam)   { sublist($lam, LAMFIELD_FREEVARS()) }
+
+
+sub STATS_QASTSIZE()     { 'Node'      }   # these must match the keys of SmartCompiler's collect_stats!
+sub STATS_BLOCKCOUNT()   { 'Block'     }
+sub STATS_LISTCOUNT()    { 'list'      }
+sub STATS_LAMBDACOUNT()  { 'lambda'    }
+sub STATS_CALLISHCOUNT() { 'callish'   }
+sub STATS_IVALCOUNT()    { 'IVal'      }
+sub STATS_SVALCOUNT()    { 'SVal'      }
+sub STATS_SVALSIZE()     { 'SValChars' }
+
+
+sub int2str(int $i) { ~$i }
+sub num2str(num $n) { ~$n }
+# did you expect `str2str`? - that's `strLit`
+sub strLit(str $s) { '"' ~ nqp::escape($s) ~ '"' }
+
+
+# -----------------------------------------------------------------------------
 
 
 sub force($v) {

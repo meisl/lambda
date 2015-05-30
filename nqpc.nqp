@@ -476,6 +476,33 @@ sub findDefs($ast, $matcher) {
     @out;
 }
 
+sub findValueNodeInHash($keyPredicate, $valuePredicate, $hash = NO_VALUE) is export {
+    nqp::die('findValueNodeInHash expects a fn as 1st arg - got ' ~ whatsit($keyPredicate))
+        unless nqp::isinvokable($keyPredicate);
+    nqp::die('findValueNodeInHash expects a fn as 2nd arg - got ' ~ whatsit($valuePredicate))
+        unless nqp::isinvokable($valuePredicate);
+    
+    if $hash =:= NO_VALUE {
+        return -> $hash { findValueNodeInHash($keyPredicate, $valuePredicate, $hash) }
+    } elsif !nqp::istype($hash, QAST::Node) {
+        nqp::die('findValueNodeInHash expects a fn as (optional) 3rd arg - got ' ~ whatsit($hash));
+    }
+    my $found := nqp::null;
+    if nqp::istype($hash, QAST::Op) && $hash.op eq 'hash' {
+        my $it := nqp::iterator($hash.list);
+        while $it && !$found {
+            my $k := nqp::shift($it);
+            if $it && $keyPredicate($k) {
+                my $v := nqp::shift($it);
+                if $valuePredicate($v) {
+                    $found := $v;
+                }
+            }
+        }
+    }
+    $found;
+}
+
 sub cloneAndSubst($node, $substitution) {
     nqp::die('cloneAndSubst expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
         unless nqp::istype($node, QAST::Node);
@@ -737,7 +764,7 @@ class SmartCompiler is NQP::Compiler {
     method BUILD() {
         # in this order (!):
         self.addstage('ast_save',     :after<ast>);
-        self.addstage('optimize',    :before<ast_save>);
+        #self.addstage('optimize',    :before<ast_save>);
 
         # Add extra command line options.
         my @clo := self.commandline_options();
@@ -758,6 +785,52 @@ class SmartCompiler is NQP::Compiler {
         say($out);
     }
 
+    method collect_stats($node) {
+        my %results := {};
+        my sub doit($node) {
+            nqp::die("collect_stats expects a QAST::Node - got " ~ whatsit($node))
+                unless nqp::istype($node, QAST::Node);
+
+            my $HOWname := $node.HOW.name($node);
+    #        %results{$HOWname}++;
+
+            %results<Node>++; # size of tree
+            if nqp::istype($node, QAST::Block) {
+                %results<Block>++;
+            } elsif istypeAny($node, QAST::Stmt, QAST::Stmts) {
+                %results<Stmt(s)>++;
+            } elsif nqp::istype($node, QAST::Op) {
+                my $op := $node.op;
+    #            %results{$HOWname ~ '(' ~ $op ~ ')'}++;
+                %results<op>++;
+                %results<list>++        if  $op eq 'list';
+                %results<hash>++        if  $op eq 'hash';
+                %results<bind>++        if  $op eq 'bind';
+                %results<call>++        if  $op eq 'call';
+                %results<callstatic>++  if  $op eq 'callstatic';
+                %results<callmethod>++  if  $op eq 'callmethod';
+                %results<takeclosure>++ if  $op eq 'takeclosure';
+            } elsif nqp::istype($node, QAST::Var) {
+                %results<Var>++;
+            } elsif nqp::istype($node, QAST::IVal) {
+                %results<IVal>++;
+            } elsif nqp::istype($node, QAST::NVal) {
+                %results<NVal>++;
+            } elsif nqp::istype($node, QAST::SVal) {
+                %results<SVal>++;
+                %results<SValChars> := %results<SValChars> + nqp::chars($node.value);
+            }
+
+            for $node.list {
+                doit($_);
+            }
+        }
+        doit($node);
+        %results<callish> := %results<call> + %results<callstatic> + %results<callmethod>;
+        %results<val> := %results<IVal> + %results<NVal> + %results<SVal>;
+        %results;
+    }
+
     # override stage 'ast' and make the AST stringifiable
     
     method ast($source, *%adverbs) {
@@ -767,9 +840,10 @@ class SmartCompiler is NQP::Compiler {
         $ast.HOW.mixin($ast, StrByDump);
         $ast;
     }
+    
 
     # additional stages
-    
+
     method ast_clean($ast, *%adverbs) {
         self.log('ast_clean: ', self.user-progname, '...');
         
@@ -803,7 +877,55 @@ class SmartCompiler is NQP::Compiler {
 
         $ast;
     }
-    
+
+    method ast_stats($ast, *%adverbs) {
+        self.log('ast_stats: ', self.user-progname, '...');
+        my %stats := self.collect_stats($ast);
+
+#        for %stats { self.log('    ', nqp::iterkey_s($_), ' = ', nqp::iterval($_)) }
+
+        my @statskeys := findDefs($ast, -> $var, @pathUp {
+            nqp::index($var.name, 'STATS_') > -1;
+        });
+        my $i := 0;
+        for @statskeys {
+            @statskeys[$i++] := $_[1][0].value;
+        }
+
+        my sub svalPred($value = NO_VALUE) {
+            -> $node { nqp::istype($node, QAST::SVal) && ($value =:= NO_VALUE || $node.value eq $value) }
+        }
+
+        my sub ivalPred($value = NO_VALUE) {
+            -> $node { nqp::istype($node, QAST::IVal) && ($value =:= NO_VALUE || $node.value == $value) }
+        }
+
+        my sub opPred($op = NO_VALUE) {
+            -> $node { nqp::istype($node, QAST::Op) && ($op =:= NO_VALUE || $node.op eq $op) }
+        }
+        
+
+        my $findStatsHash := findValueNodeInHash(svalPred('stats'), opPred('hash'));
+        my $infoHashDef := findDef($ast, -> $var, @pathUp {
+            if $var.name eq '%info' {
+                $findStatsHash(@pathUp[0][1]);
+            }
+        });
+        my $infoHash := $findStatsHash($infoHashDef[1]);
+#        say(dump($infoHashDef));
+        my $findStatNode := -> $statKey {
+            findValueNodeInHash(svalPred($statKey), ivalPred(), $infoHash)
+        };
+        for @statskeys {
+            my $node := $findStatNode($_);
+            if $node && nqp::existskey(%stats, $_) {
+                $node.value(%stats{$_});
+#                say(">>>> stat $_ := ", dump($node, :oneLine));
+            }
+        }
+
+        $ast;
+    }
 
     method ast_save($ast, *%adverbs) {
         my $qastfileName := self.user-progname ~ '.qast';
@@ -834,7 +956,7 @@ class NQPCompiler is SmartCompiler {
         nqp::rethrow($error);
     }
 
-    method compileFile($file, :$lib = '.', :$target = 'mbc') {
+    method compileFile($file, :$lib = '.', :$target = 'mbc', :$stagestats) {
         my $nqpName := "$lib/$file.nqp";
         #say("<nqpc> $nqpName: target=$target ");
         my $qastName := "$nqpName.qast";
@@ -855,13 +977,11 @@ class NQPCompiler is SmartCompiler {
             return nqp::null;   # means: "not compiled (again) because it was up-to-date"
         } else {
             my @opts := [
-                #'--stagestats',
                 '--module-path=' ~ $lib,
-                '--target=' ~ $target,
             ];
             if $target eq 'mbc' {
                 @opts.push('--output=' ~ $mvmName);
-            } elsif $target eq 'ast' || $target eq 'clean_ast' || $target eq 'ast_save' {
+            } elsif $target eq 'ast' || $target eq 'ast_clean' || $target eq 'ast_save' {
                 @opts.push('--output=' ~ $qastName);    # not only write it but also prevent NQP::Compiler to dump it to stdout and return a null
             }
             my @args := nqp::clone(@opts);
@@ -875,7 +995,12 @@ class NQPCompiler is SmartCompiler {
             my $result;
             my $error;
             try {
-                $result := self.command_line(@args, :encoding('utf8'), :transcode('ascii iso-8859-1'));
+                $result := self.command_line(@args, 
+                    :encoding('utf8'), 
+                    :transcode('ascii iso-8859-1'),
+                    :$target,
+                    :$stagestats
+                );
                 CATCH {
                     $error := $_;
                 }
@@ -989,7 +1114,9 @@ sub MAIN(*@ARGS) {
 
         @ARGS.push('runtime');
         $nqpc.addstage('ast_clean', :before<ast_save>);
-        %opts<target> := '';    # ...and run it
+        #$nqpc.addstage('ast_stats', :before<ast_save>);
+        %opts<stagestats> := 1;
+        %opts<target>     := '';    # ...and run it
     }
 
 
