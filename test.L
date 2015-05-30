@@ -30,10 +30,10 @@
                 #car (cdr (cdr xs))  # "c"
                 #foldl (λx.λ_.x) "zzz" xs   # "zzz"
                 #foldl (λ_.λx.x) "zzz" xs   # "c"
-                #foldl
+                foldl
                 #Y
                 #(λy.λx.λzzz.x y x) "foo" ((λx.λu.u x) ((λa.λb.λ_.a b) "bar" "qumbl"))
-                "foo" "bar"
+                #"foo" "bar"
             ) (cons "a" (cons "b" (cons "c" nil)))
         )
         (λonNil.λonCons.onNil)                  # ctor nil

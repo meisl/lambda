@@ -146,6 +146,10 @@ sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
         }
     } elsif $clsStr eq 'Block' {
         $prefix := $prefix ~ '─:';
+        my $bt := $node.blocktype;
+        if $bt && $bt ne 'declaration' { # don't show default
+            $specialStr := $specialStr ~ ' :blocktype(' ~ $bt ~ ')';
+        }
     } elsif nqp::substr($clsStr, 0, 4) eq 'Stmt' {
         $prefix := $prefix ~ '─:';
     } else {

@@ -265,7 +265,7 @@
     ║   ╟─if  ««"nqp::islist($subject) {\n        my $id := $subject"...
     ║   ║ ├─islist  ««"nqp::islist($subject)"
     ║   ║ │ └○ lexical $subject
-    ║   ║ ├─:Block  ««"{\n        my $id := $subject[0];\n        my $tag "...
+    ║   ║ ├─:Block :blocktype(immediate)  ««"{\n        my $id := $subject[0];\n        my $tag "...
     ║   ║ │ ╟○ lexical $id :decl(var)
     ║   ║ │ ╟○ lexical $tag :decl(var)
     ║   ║ │ ╟─bind  ««"$id := $subject[0]"
@@ -357,7 +357,7 @@
     ║     │ ║ ├─atkey
     ║     │ ║ │ ├○ lexical %info
     ║     │ ║ │ └◙ SVal "freeVars"
-    ║     │ ║ ├─:Block  ««"{\n                my $fvName  := $_.key;\n        "...
+    ║     │ ║ ├─:Block :blocktype(immediate)  ««"{\n                my $fvName  := $_.key;\n        "...
     ║     │ ║ │ ╟○ lexical $fvName :decl(var)
     ║     │ ║ │ ╟○ lexical $fv :decl(var)
     ║     │ ║ │ ╟○ lexical $pre :decl(var)

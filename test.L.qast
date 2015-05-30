@@ -2,7 +2,7 @@
   └─:Block
     ╟─bind
     ║ ├○ lexical .src :decl(static)
-    ║ └◙ SVal "# ~> Compile Error: unbound variables y, z, w, u\n#(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.u \"qumbl\"\n\n# ~> (Runtime) ERROR: cannot apply \"xfo\\noö\" to λy.x y\n#(λx.λ_.(x λy.x y)) \"xfo\\noö\" \"xbar\" \"xbaz\" λz.\"qumbl\"\n\n#(λy.λz.λx.y (λy.y z)) \"y\" \"z\"\n\n# K applied to \"foo\" and something: ~> \"foo\"\n#(λx.λ_.x) \"foo\" (λf.λg.λx.f (g x))\n\n# Turing's Y:\n#(λU.U U) (λu.λf.f (u u f))\n\n# Turing's Y applied to a function that ignores param self:\n#(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)\n\n\n(λU.λM.λC.λB.λS.λK.λI.\n    (λY.\n        # Lists:\n        (λnil.λcons.λcar.λcdr.λfoldl.\n            (λxs.\n                #nil\n                #car xs              # \"a\"\n                #car nil             # ~> (Runtime) ERROR: cannot apply \"car\" to \"nil\"\n                #cdr xs              # (cons \"b\" (cons \"c\" nil))\n                #car (cdr xs)        # \"b\"\n                #cdr (cdr xs)        # (cons \"c\", nil)\n                #car (cdr (cdr xs))  # \"c\"\n                #foldl (λx.λ_.x) \"zzz\" xs   # \"zzz\"\n                #foldl (λ_.λx.x) \"zzz\" xs   # \"c\"\n                #foldl\n                #Y\n                #(λy.λx.λzzz.x y x) \"foo\" ((λx.λu.u x) ((λa.λb.λ_.a b) \"bar\" \"qumbl\"))\n                \"foo\" \"bar\"\n            ) (cons \"a\" (cons \"b\" (cons \"c\" nil)))\n        )\n        (λonNil.λonCons.onNil)                  # ctor nil\n        (λx.λxs.λonNil.λonCons.onCons x xs)     # ctor cons\n        (λxs.xs (\"car\" \"nil\") (λhd.λtl.hd))     # car   (provoke error on nil)\n        (λxs.xs (\"cdr\" \"nil\") (λhd.λtl.tl))     # cdr   (provoke error on nil)\n        (Y λself.λf.λstart.λxs.                 # foldl\n            xs start\n               λhd.λtl.self f (f start hd) tl\n        )\n    )\n    (U U)   # Y\n)\n(λu.λf.f (u u f))       # U\n(λx.x x)                # M\n(λf.λx.λy.f y x)        # C\n(λf.λg.λx.f (g x))      # B\n(λf.λg.λx.f x (g x))    # S\n(λx.λ_.x)               # K\n(λx.x)                  # I\n"
+    ║ └◙ SVal "# ~> Compile Error: unbound variables y, z, w, u\n#(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.u \"qumbl\"\n\n# ~> (Runtime) ERROR: cannot apply \"xfo\\noö\" to λy.x y\n#(λx.λ_.(x λy.x y)) \"xfo\\noö\" \"xbar\" \"xbaz\" λz.\"qumbl\"\n\n#(λy.λz.λx.y (λy.y z)) \"y\" \"z\"\n\n# K applied to \"foo\" and something: ~> \"foo\"\n#(λx.λ_.x) \"foo\" (λf.λg.λx.f (g x))\n\n# Turing's Y:\n#(λU.U U) (λu.λf.f (u u f))\n\n# Turing's Y applied to a function that ignores param self:\n#(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)\n\n\n(λU.λM.λC.λB.λS.λK.λI.\n    (λY.\n        # Lists:\n        (λnil.λcons.λcar.λcdr.λfoldl.\n            (λxs.\n                #nil\n                #car xs              # \"a\"\n                #car nil             # ~> (Runtime) ERROR: cannot apply \"car\" to \"nil\"\n                #cdr xs              # (cons \"b\" (cons \"c\" nil))\n                #car (cdr xs)        # \"b\"\n                #cdr (cdr xs)        # (cons \"c\", nil)\n                #car (cdr (cdr xs))  # \"c\"\n                #foldl (λx.λ_.x) \"zzz\" xs   # \"zzz\"\n                #foldl (λ_.λx.x) \"zzz\" xs   # \"c\"\n                foldl\n                #Y\n                #(λy.λx.λzzz.x y x) \"foo\" ((λx.λu.u x) ((λa.λb.λ_.a b) \"bar\" \"qumbl\"))\n                #\"foo\" \"bar\"\n            ) (cons \"a\" (cons \"b\" (cons \"c\" nil)))\n        )\n        (λonNil.λonCons.onNil)                  # ctor nil\n        (λx.λxs.λonNil.λonCons.onCons x xs)     # ctor cons\n        (λxs.xs (\"car\" \"nil\") (λhd.λtl.hd))     # car   (provoke error on nil)\n        (λxs.xs (\"cdr\" \"nil\") (λhd.λtl.tl))     # cdr   (provoke error on nil)\n        (Y λself.λf.λstart.λxs.                 # foldl\n            xs start\n               λhd.λtl.self f (f start hd) tl\n        )\n    )\n    (U U)   # Y\n)\n(λu.λf.f (u u f))       # U\n(λx.x x)                # M\n(λf.λx.λy.f y x)        # C\n(λf.λg.λx.f (g x))      # B\n(λf.λg.λx.f x (g x))    # S\n(λx.λ_.x)               # K\n(λx.x)                  # I\n"
     ╟─bind
     ║ ├○ lexical .λinfo :decl(static)
     ║ └─list
@@ -10,7 +10,7 @@
     ║   │ ├◙ SVal "xs"
     ║   │ ├◙ IVal 581
     ║   │ ├◙ IVal 633
-    ║   │ └◙ SVal ""
+    ║   │ └◙ SVal "foldl.2"
     ║   ├─list
     ║   │ ├◙ SVal "foldl"
     ║   │ ├◙ IVal 560
@@ -568,10 +568,9 @@
     ║ ├○ lexical .testDelay01 :decl(static)
     ║ └─call .delayMemo
     ║   └─:Block
-    ║     ╙─:Stmts
-    ║       ├─say
-    ║       │ └◙ SVal ".testDelay01 forced!!!!"
-    ║       └◙ SVal "42"
+    ║     ╟─say
+    ║     ║ └◙ SVal ".testDelay01 forced!!!!"
+    ║     ╙◙ SVal "42"
     ╟─bind
     ║ ├○ lexical .testDelay02 :decl(static)
     ║ └─:Block
@@ -587,7 +586,7 @@
     ║   ╙○ lexical memo
     ╟─bind
     ║ ├○ lexical .qastSize :decl(static)
-    ║ └◙ NVal 1029
+    ║ └◙ NVal 1028
     ╟─bind
     ║ ├○ lexical .blockCount :decl(static)
     ║ └◙ NVal 91
@@ -599,11 +598,11 @@
     ║ └◙ NVal 114
     ╟─bind
     ║ ├○ lexical .svalCount :decl(static)
-    ║ └◙ NVal 182
+    ║ └◙ NVal 180
     ╟─bind
     ║ ├○ lexical .svalSize :decl(static)
-    ║ └◙ NVal 2636
-    ╙─:Block
+    ║ └◙ NVal 2637
+    ╙─:Block :blocktype(immediate)
       ╟○ local mainResult :decl(var)
       ╟─call .say
       ║ └─concat
@@ -708,11 +707,10 @@
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │ ╙─call .apply1  ««"\n            (λxs.\n                #nil\n        "...
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   ├─list
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │ ├◙ SVal "λ0"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │ └─:Block  ««"λxs.\n                #nil\n                #car xs"...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │   ╟○ lexical xs :decl(param)
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │   ╙─call .apply1  ««"\n                #nil\n                #car xs    "...
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │     ├◙ SVal "foo"
-      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │     └◙ SVal "bar"
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │ ├─:Block  ««"λxs.\n                #nil\n                #car xs"...
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │ │ ╟○ lexical xs :decl(param)
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │ │ ╙○ lexical foldl
+      ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   │ └○ lexical foldl
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │   └─call .delayMemo
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │     └─:Block
       ║   │ │ │ │ │ │ │ │     │   │   │   │   │   │   │     │ │ │ │ │     │   │   │   │       ╙─call .apply1  ««"cons \"a\" (cons \"b\" (cons \"c\" nil))"

@@ -12,9 +12,10 @@
 # [nqpc] compiled: lib/L/L.nqp ~> "lib/L/L.moarvm"
 -----------------------------
 Stage start      :   0.000
-Stage mkRuntime  :   0.266
-Stage parse      :   0.031
+Stage mkRuntime  :   0.297
+Stage parse      :   0.047
 Stage ast        :   0.000
+Stage ast_clean  :   0.203
 Stage ast_save   :   0.047
 Stage mast       :   0.109
 Stage mbc        :   0.000
@@ -22,18 +23,18 @@ Stage moar       :   0.000
 # [nqpc] $ nqpc --module-path=lib/L --target=ast_save --output=lib/L/runTime.nqp.qast lib/L/runTime.nqp
 # [nqpc] ast_clean: lib/L/runTime.nqp...
 # [Lc] mkRuntime: ~> QAST::CompUnit+{StrByDump}
+# [Lc] ast_clean: E:\proj\perl6\Lambda\test.L...
 # [Lc] ast_save: QAST dump written to E:\proj\perl6\Lambda\test.L.qast
 47 lambdas
-1029 QAST::Node s
+1028 QAST::Node s
 91 QAST::Block s
 96 QAST::Op(list) s
 114 QAST::IVal s
-2636 chars ttl in 182 QAST::SVal s
+2637 chars ttl in 180 QAST::SVal s
 ------------------------------------------------
-Unhandled exception: >>>Error evaluating E:\proj\perl6\Lambda\test.L:
-ERROR: cannot apply "foo" to "bar"
-   at <unknown>:1  (lib\L\L.moarvm:command_line:4294967295)
- from lib/L/L.nqp:94  (lib\L\L.moarvm:MAIN:64)
- from lib/L/L.nqp:8  (lib\L\L.moarvm:<mainline>:39)
- from <unknown>:1  (lib\L\L.moarvm:<main>:8)
- from <unknown>:1  (lib\L\L.moarvm:<entry>:9)
+------------------------------------------------
+λf.λstart.λxs.                 # foldl
+            xs start
+               λhd.λtl.self f (f start hd) tl
+          # :tag("λ22")
+# where self(6) = ...
