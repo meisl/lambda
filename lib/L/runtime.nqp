@@ -9,9 +9,18 @@ my %info := nqp::hash(
 
 # inlineables? ----------------------------------------------------------------
 
-sub lam2id($lam)   { $lam[0] }
-sub lam2code($lam) { $lam[1] }
-sub lam2fvs($lam)  { sublist($lam, 2) }
+sub LAMINFO_FROM()          { 'from' }
+sub LAMINFO_LENGTH()        { 'length' }
+sub LAMINFO_FREEVARNAMES()  { 'freeVarNames' }
+
+sub LAMFIELD_ID()       { 0 }
+sub LAMFIELD_CODE()     { 1 }
+sub LAMFIELD_FREEVARS() { 2 }
+
+
+sub lam2id($lam)   { $lam[LAMFIELD_ID()] }
+sub lam2code($lam) { $lam[LAMFIELD_CODE()] }
+sub lam2fvs($lam)  { sublist($lam, LAMFIELD_FREEVARS()) }
 
 sub int2str(int $i) { ~$i }
 sub num2str(num $n) { ~$n }
@@ -59,17 +68,19 @@ sub lam2info($lambda) {
     my $id      := lam2id($lambda);
     my $idx     := nqp::radix(10, $id, 1, 0)[0];
     my %rawInfo := %info<λ>[$idx];
+    my $from    := %rawInfo{LAMINFO_FROM()};
+    my $length  := %rawInfo{LAMINFO_LENGTH()};
     my %out     := nqp::hash(
         'id',       $id,
         'idx',      $idx,
-        'from',     %rawInfo<from>,
-        'length',   %rawInfo<length>,
-        'src',      nqp::substr($λsrc, %rawInfo<from>, %rawInfo<length>),
+        'from',     $from,
+        'length',   $length,
+        'src',      nqp::substr($λsrc, $from, $length),
     );
     # --- up to here it was all the same for all instances ---
 
     my $varsIt  := nqp::iterator(lam2fvs($lambda));
-    my $namesIt := nqp::iterator(%rawInfo<freeVarNames>);
+    my $namesIt := nqp::iterator(%rawInfo{LAMINFO_FREEVARNAMES()});
     my %fvs     := {};
     while $varsIt {
         %fvs{nqp::shift($namesIt)} := nqp::shift($varsIt);  # nqpc would convert a methodcall .shift
@@ -89,7 +100,7 @@ sub typecase($subject, *%callbacks) {
             )
         }
     );
-    my $cbKey;# := nqp::null;
+    my $cbKey := nqp::null;
     if nqp::islist($subject) {
         my $id := $subject[0];
         my $tag := nqp::substr($id, 0, 1);

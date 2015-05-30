@@ -722,7 +722,7 @@ class SmartCompiler is NQP::Compiler {
     method ast_clean($ast, *%adverbs) {
         self.log('ast_clean: ', self.user-progname, '...');
         
-        $ast := drop_takeclosure($ast);  # breaks things!!!!!!
+        $ast := drop_takeclosure($ast);
         
         $ast := drop_Stmts($ast);
         $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
@@ -733,14 +733,22 @@ class SmartCompiler is NQP::Compiler {
         # from here it's rather optimization...
         $ast := replace_assoc_and_pos_scoped($ast);
         $ast := inline_simple_methods($ast);
-        $ast := inline_simple_subs($ast, [
+
+        my @inlinecandidates := [
+            findDef($ast, '&LAMINFO_FROM'),
+            findDef($ast, '&LAMINFO_LENGTH'),
+            findDef($ast, '&LAMINFO_FREEVARNAMES'),
+            findDef($ast, '&LAMFIELD_ID'),
+            findDef($ast, '&LAMFIELD_CODE'),
+            findDef($ast, '&LAMFIELD_FREEVARS'),
             findDef($ast, '&int2str'),
             findDef($ast, '&num2str'),
             findDef($ast, '&lam2id'),
             findDef($ast, '&lam2code'),
             findDef($ast, '&lam2fvs'),
             #findDef($ast, '&force'),
-        ]);
+        ];
+        $ast := inline_simple_subs($ast, @inlinecandidates);
 
         $ast := renameVars($ast, -> $s {
             my str $fst := nqp::substr($s, 0, 1);

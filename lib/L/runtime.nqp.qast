@@ -7,24 +7,48 @@
     ╟○ lexical .λsrc :decl(var)
     ╟○ lexical %info :decl(var)
     ╟─bind
+    ║ ├○ lexical .LAMINFO_FROM :decl(var)
+    ║ └─:Block  ««"{ 'from' }"
+    ║   ╙◙ SVal "from"
+    ╟─bind
+    ║ ├○ lexical .LAMINFO_LENGTH :decl(var)
+    ║ └─:Block  ««"{ 'length' }"
+    ║   ╙◙ SVal "length"
+    ╟─bind
+    ║ ├○ lexical .LAMINFO_FREEVARNAMES :decl(var)
+    ║ └─:Block  ««"{ 'freeVarNames' }"
+    ║   ╙◙ SVal "freeVarNames"
+    ╟─bind
+    ║ ├○ lexical .LAMFIELD_ID :decl(var)
+    ║ └─:Block  ««"{ 0 }"
+    ║   ╙◙ IVal 0
+    ╟─bind
+    ║ ├○ lexical .LAMFIELD_CODE :decl(var)
+    ║ └─:Block  ««"{ 1 }"
+    ║   ╙◙ IVal 1
+    ╟─bind
+    ║ ├○ lexical .LAMFIELD_FREEVARS :decl(var)
+    ║ └─:Block  ««"{ 2 }"
+    ║   ╙◙ IVal 2
+    ╟─bind
     ║ ├○ lexical .lam2id :decl(var)
-    ║ └─:Block  ««"{ $lam[0] }"
+    ║ └─:Block  ««"{ $lam[LAMFIELD_ID()] }"
     ║   ╟○ lexical $lam :decl(param)
     ║   ╙─atpos
     ║     ├○ lexical $lam
     ║     └◙ IVal 0
     ╟─bind
     ║ ├○ lexical .lam2code :decl(var)
-    ║ └─:Block  ««"{ $lam[1] }"
+    ║ └─:Block  ««"{ $lam[LAMFIELD_CODE()] }"
     ║   ╟○ lexical $lam :decl(param)
     ║   ╙─atpos
     ║     ├○ lexical $lam
     ║     └◙ IVal 1
     ╟─bind
     ║ ├○ lexical .lam2fvs :decl(var)
-    ║ └─:Block  ««"{ sublist($lam, 2) }"
+    ║ └─:Block  ««"{ sublist($lam, LAMFIELD_FREEVARS()) }"
     ║   ╟○ lexical $lam :decl(param)
-    ║   ╙─call .sublist  ««"$lam, 2"
+    ║   ╙─call .sublist  ««"$lam, LAMFIELD_FREEVARS()"
     ║     ├○ lexical $lam
     ║     └◙ IVal 2
     ╟─bind
@@ -139,6 +163,8 @@
     ║   ╟○ lexical $id :decl(var)
     ║   ╟○ lexical $idx :decl(var)
     ║   ╟○ lexical %rawInfo :decl(var)
+    ║   ╟○ lexical $from :decl(var)
+    ║   ╟○ lexical $length :decl(var)
     ║   ╟○ lexical %out :decl(var)
     ║   ╟○ lexical $varsIt :decl(var)
     ║   ╟○ lexical $namesIt :decl(var)
@@ -164,6 +190,16 @@
     ║   ║   │ ├○ lexical %info
     ║   ║   │ └◙ SVal "λ"
     ║   ║   └○ lexical $idx
+    ║   ╟─bind  ««"$from    := %rawInfo{LAMINFO_FROM()}"
+    ║   ║ ├○ lexical $from
+    ║   ║ └─atkey
+    ║   ║   ├○ lexical %rawInfo
+    ║   ║   └◙ SVal "from"
+    ║   ╟─bind  ««"$length  := %rawInfo{LAMINFO_LENGTH()}"
+    ║   ║ ├○ lexical $length
+    ║   ║ └─atkey
+    ║   ║   ├○ lexical %rawInfo
+    ║   ║   └◙ SVal "length"
     ║   ╟─bind  ««"%out     := nqp::hash(\n        'id',       $id,\n "...
     ║   ║ ├○ lexical %out
     ║   ║ └─hash  ««"nqp::hash(\n        'id',       $id,\n        'idx'"...
@@ -172,31 +208,23 @@
     ║   ║   ├◙ SVal "idx"
     ║   ║   ├○ lexical $idx
     ║   ║   ├◙ SVal "from"
-    ║   ║   ├─atkey
-    ║   ║   │ ├○ lexical %rawInfo
-    ║   ║   │ └◙ SVal "from"
+    ║   ║   ├○ lexical $from
     ║   ║   ├◙ SVal "length"
-    ║   ║   ├─atkey
-    ║   ║   │ ├○ lexical %rawInfo
-    ║   ║   │ └◙ SVal "length"
+    ║   ║   ├○ lexical $length
     ║   ║   ├◙ SVal "src"
-    ║   ║   └─substr  ««"nqp::substr($λsrc, %rawInfo<from>, %rawInfo<length>)"
+    ║   ║   └─substr  ««"nqp::substr($λsrc, $from, $length)"
     ║   ║     ├○ lexical .λsrc
-    ║   ║     ├─atkey
-    ║   ║     │ ├○ lexical %rawInfo
-    ║   ║     │ └◙ SVal "from"
-    ║   ║     └─atkey
-    ║   ║       ├○ lexical %rawInfo
-    ║   ║       └◙ SVal "length"
+    ║   ║     ├○ lexical $from
+    ║   ║     └○ lexical $length
     ║   ╟─bind  ««"$varsIt  := nqp::iterator(lam2fvs($lambda))"
     ║   ║ ├○ lexical $varsIt
     ║   ║ └─iterator  ««"nqp::iterator(lam2fvs($lambda))"
     ║   ║   └─call .sublist  ««"$lambda"
     ║   ║     ├○ lexical $lambda
     ║   ║     └◙ IVal 2
-    ║   ╟─bind  ««"$namesIt := nqp::iterator(%rawInfo<freeVarNames>)"
+    ║   ╟─bind  ««"$namesIt := nqp::iterator(%rawInfo{LAMINFO_FREEVARN"...
     ║   ║ ├○ lexical $namesIt
-    ║   ║ └─iterator  ««"nqp::iterator(%rawInfo<freeVarNames>)"
+    ║   ║ └─iterator  ««"nqp::iterator(%rawInfo{LAMINFO_FREEVARNAMES()})"
     ║   ║   └─atkey
     ║   ║     ├○ lexical %rawInfo
     ║   ║     └◙ SVal "freeVarNames"
@@ -223,9 +251,7 @@
     ║   ╟○ lexical $subject :decl(param)
     ║   ╟○ lexical %callbacks :decl(param) :named(1) :slurpy(1)
     ║   ╟○ lexical $otherwise :decl(var)
-    ║   ╟─bind  ««"$cbKey"
-    ║   ║ ├○ lexical $cbKey :decl(var)
-    ║   ║ └◙ WVal NQPMu
+    ║   ╟○ lexical $cbKey :decl(var)
     ║   ╟○ lexical $cb :decl(var)
     ║   ╟─bind  ««"$otherwise := nqp::defor(\n        %callbacks<other"...
     ║   ║ ├○ lexical $otherwise
@@ -240,6 +266,9 @@
     ║   ║         ├◙ SVal "typecase: fell through due to missing \"otherwise\"-callback: "
     ║   ║         └─reprname  ««"nqp::reprname($subject)"
     ║   ║           └○ lexical $subject
+    ║   ╟─bind  ««"$cbKey := nqp::null"
+    ║   ║ ├○ lexical $cbKey
+    ║   ║ └─null  ««"nqp::null"
     ║   ╟─if  ««"nqp::islist($subject) {\n        my $id := $subject"...
     ║   ║ ├─islist  ««"nqp::islist($subject)"
     ║   ║ │ └○ lexical $subject
