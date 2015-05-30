@@ -568,9 +568,10 @@
     ║ ├○ lexical .testDelay01 :decl(static)
     ║ └─call .delayMemo
     ║   └─:Block
-    ║     ╟─say
-    ║     ║ └◙ SVal ".testDelay01 forced!!!!"
-    ║     ╙◙ SVal "42"
+    ║     ╙─:Stmts
+    ║       ├─say
+    ║       │ └◙ SVal ".testDelay01 forced!!!!"
+    ║       └◙ SVal "42"
     ╟─bind
     ║ ├○ lexical .testDelay02 :decl(static)
     ║ └─:Block

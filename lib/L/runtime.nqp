@@ -1,22 +1,16 @@
 my $λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)';
 my %info := nqp::hash(
     'λ', [
-        nqp::hash('from',  1, 'length', 55, 'freeVarNames', ['foo', 'bar', 'baz', 'qumbl', 'self', 'self']),
-        nqp::hash('from', 59, 'length',  4, 'freeVarNames', ['foo']),
+        'binder0 1 55 foo bar baz qumbl self self',
+        'binder1 59 4 foo',
     ],
 );
 
-
 # inlineables? ----------------------------------------------------------------
 
-sub LAMINFO_FROM()          { 'from' }
-sub LAMINFO_LENGTH()        { 'length' }
-sub LAMINFO_FREEVARNAMES()  { 'freeVarNames' }
-
-sub LAMFIELD_ID()       { 0 }
-sub LAMFIELD_CODE()     { 1 }
-sub LAMFIELD_FREEVARS() { 2 }
-
+sub LAMFIELD_ID()       is export { 0 }
+sub LAMFIELD_CODE()     is export { 1 }
+sub LAMFIELD_FREEVARS() is export { 2 }
 
 sub lam2id($lam)   { $lam[LAMFIELD_ID()] }
 sub lam2code($lam) { $lam[LAMFIELD_CODE()] }
@@ -26,6 +20,7 @@ sub int2str(int $i) { ~$i }
 sub num2str(num $n) { ~$n }
 # did you expect `str2str`? - that's `strLit`
 sub strLit(str $s) { '"' ~ nqp::escape($s) ~ '"' }
+
 
 # -----------------------------------------------------------------------------
 
@@ -67,12 +62,14 @@ sub sublist(@list, int $from) is export {
 sub lam2info($lambda) {
     my $id      := lam2id($lambda);
     my $idx     := nqp::radix(10, $id, 1, 0)[0];
-    my %rawInfo := %info<λ>[$idx];
-    my $from    := %rawInfo{LAMINFO_FROM()};
-    my $length  := %rawInfo{LAMINFO_LENGTH()};
+    my $infoIt  := nqp::iterator(nqp::split(' ', %info<λ>[$idx]));
+    my $binder  := nqp::shift($infoIt);  # nqpc would convert a methodcall .shift
+    my $from    := nqp::shift($infoIt);  # nqpc would convert a methodcall .shift
+    my $length  := nqp::shift($infoIt);  # nqpc would convert a methodcall .shift
     my %out     := nqp::hash(
         'id',       $id,
         'idx',      $idx,
+        'binder',   $binder,
         'from',     $from,
         'length',   $length,
         'src',      nqp::substr($λsrc, $from, $length),
@@ -80,7 +77,7 @@ sub lam2info($lambda) {
     # --- up to here it was all the same for all instances ---
 
     my $varsIt  := nqp::iterator(lam2fvs($lambda));
-    my $namesIt := nqp::iterator(%rawInfo{LAMINFO_FREEVARNAMES()});
+    my $namesIt := $infoIt;
     my %fvs     := {};
     while $varsIt {
         %fvs{nqp::shift($namesIt)} := nqp::shift($varsIt);  # nqpc would convert a methodcall .shift

@@ -7,18 +7,6 @@
     ╟○ lexical .λsrc :decl(var)
     ╟○ lexical %info :decl(var)
     ╟─bind
-    ║ ├○ lexical .LAMINFO_FROM :decl(var)
-    ║ └─:Block  ««"{ 'from' }"
-    ║   ╙◙ SVal "from"
-    ╟─bind
-    ║ ├○ lexical .LAMINFO_LENGTH :decl(var)
-    ║ └─:Block  ««"{ 'length' }"
-    ║   ╙◙ SVal "length"
-    ╟─bind
-    ║ ├○ lexical .LAMINFO_FREEVARNAMES :decl(var)
-    ║ └─:Block  ««"{ 'freeVarNames' }"
-    ║   ╙◙ SVal "freeVarNames"
-    ╟─bind
     ║ ├○ lexical .LAMFIELD_ID :decl(var)
     ║ └─:Block  ««"{ 0 }"
     ║   ╙◙ IVal 0
@@ -162,7 +150,8 @@
     ║   ╟○ lexical $lambda :decl(param)
     ║   ╟○ lexical $id :decl(var)
     ║   ╟○ lexical $idx :decl(var)
-    ║   ╟○ lexical %rawInfo :decl(var)
+    ║   ╟○ lexical $infoIt :decl(var)
+    ║   ╟○ lexical $binder :decl(var)
     ║   ╟○ lexical $from :decl(var)
     ║   ╟○ lexical $length :decl(var)
     ║   ╟○ lexical %out :decl(var)
@@ -183,23 +172,28 @@
     ║   ║   │ ├◙ IVal 1
     ║   ║   │ └◙ IVal 0
     ║   ║   └◙ IVal 0
-    ║   ╟─bind  ««"%rawInfo := %info<λ>[$idx]"
-    ║   ║ ├○ lexical %rawInfo
-    ║   ║ └─atpos
-    ║   ║   ├─atkey
-    ║   ║   │ ├○ lexical %info
-    ║   ║   │ └◙ SVal "λ"
-    ║   ║   └○ lexical $idx
-    ║   ╟─bind  ««"$from    := %rawInfo{LAMINFO_FROM()}"
+    ║   ╟─bind  ««"$infoIt  := nqp::iterator(nqp::split(' ', %info<λ>["...
+    ║   ║ ├○ lexical $infoIt
+    ║   ║ └─iterator  ««"nqp::iterator(nqp::split(' ', %info<λ>[$idx]))"
+    ║   ║   └─split  ««"nqp::split(' ', %info<λ>[$idx])"
+    ║   ║     ├◙ SVal " "
+    ║   ║     └─atpos
+    ║   ║       ├─atkey
+    ║   ║       │ ├○ lexical %info
+    ║   ║       │ └◙ SVal "λ"
+    ║   ║       └○ lexical $idx
+    ║   ╟─bind  ««"$binder  := nqp::shift($infoIt)"
+    ║   ║ ├○ lexical $binder
+    ║   ║ └─shift  ««"nqp::shift($infoIt)"
+    ║   ║   └○ lexical $infoIt
+    ║   ╟─bind  ««"$from    := nqp::shift($infoIt)"
     ║   ║ ├○ lexical $from
-    ║   ║ └─atkey
-    ║   ║   ├○ lexical %rawInfo
-    ║   ║   └◙ SVal "from"
-    ║   ╟─bind  ««"$length  := %rawInfo{LAMINFO_LENGTH()}"
+    ║   ║ └─shift  ««"nqp::shift($infoIt)"
+    ║   ║   └○ lexical $infoIt
+    ║   ╟─bind  ««"$length  := nqp::shift($infoIt)"
     ║   ║ ├○ lexical $length
-    ║   ║ └─atkey
-    ║   ║   ├○ lexical %rawInfo
-    ║   ║   └◙ SVal "length"
+    ║   ║ └─shift  ««"nqp::shift($infoIt)"
+    ║   ║   └○ lexical $infoIt
     ║   ╟─bind  ««"%out     := nqp::hash(\n        'id',       $id,\n "...
     ║   ║ ├○ lexical %out
     ║   ║ └─hash  ««"nqp::hash(\n        'id',       $id,\n        'idx'"...
@@ -207,6 +201,8 @@
     ║   ║   ├○ lexical $id
     ║   ║   ├◙ SVal "idx"
     ║   ║   ├○ lexical $idx
+    ║   ║   ├◙ SVal "binder"
+    ║   ║   ├○ lexical $binder
     ║   ║   ├◙ SVal "from"
     ║   ║   ├○ lexical $from
     ║   ║   ├◙ SVal "length"
@@ -222,12 +218,9 @@
     ║   ║   └─call .sublist  ««"$lambda"
     ║   ║     ├○ lexical $lambda
     ║   ║     └◙ IVal 2
-    ║   ╟─bind  ««"$namesIt := nqp::iterator(%rawInfo{LAMINFO_FREEVARN"...
+    ║   ╟─bind  ««"$namesIt := $infoIt"
     ║   ║ ├○ lexical $namesIt
-    ║   ║ └─iterator  ««"nqp::iterator(%rawInfo{LAMINFO_FREEVARNAMES()})"
-    ║   ║   └─atkey
-    ║   ║     ├○ lexical %rawInfo
-    ║   ║     └◙ SVal "freeVarNames"
+    ║   ║ └○ lexical $infoIt
     ║   ╟─bind  ««"%fvs     := {}"
     ║   ║ ├○ lexical %fvs
     ║   ║ └─hash
@@ -622,32 +615,13 @@
     ╟─bind  ««"$λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f ("...
     ║ ├○ lexical .λsrc
     ║ └◙ SVal "(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)"
-    ╟─bind  ««"%info := nqp::hash(\n    'λ', [\n        nqp::hash("...
+    ╟─bind  ««"%info := nqp::hash(\n    'λ', [\n        'binder0 1"...
     ║ ├○ lexical %info
-    ║ └─hash  ««"nqp::hash(\n    'λ', [\n        nqp::hash('from',  "...
+    ║ └─hash  ««"nqp::hash(\n    'λ', [\n        'binder0 1 55 foo b"...
     ║   ├◙ SVal "λ"
     ║   └─list  ««","
-    ║     ├─hash  ««"nqp::hash('from',  1, 'length', 55, 'freeVarNames',"...
-    ║     │ ├◙ SVal "from"
-    ║     │ ├◙ IVal 1
-    ║     │ ├◙ SVal "length"
-    ║     │ ├◙ IVal 55
-    ║     │ ├◙ SVal "freeVarNames"
-    ║     │ └─list  ««","
-    ║     │   ├◙ SVal "foo"
-    ║     │   ├◙ SVal "bar"
-    ║     │   ├◙ SVal "baz"
-    ║     │   ├◙ SVal "qumbl"
-    ║     │   ├◙ SVal "self"
-    ║     │   └◙ SVal "self"
-    ║     └─hash  ««"nqp::hash('from', 59, 'length',  4, 'freeVarNames',"...
-    ║       ├◙ SVal "from"
-    ║       ├◙ IVal 59
-    ║       ├◙ SVal "length"
-    ║       ├◙ IVal 4
-    ║       ├◙ SVal "freeVarNames"
-    ║       └─list
-    ║         └◙ SVal "foo"
+    ║     ├◙ SVal "binder0 1 55 foo bar baz qumbl self self"
+    ║     └◙ SVal "binder1 59 4 foo"
     ╙─if
       ├○ lexical @ARGS
       └─call .MAIN

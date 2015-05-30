@@ -741,6 +741,7 @@ class SmartCompiler is NQP::Compiler {
             findDef($ast, '&LAMFIELD_ID'),
             findDef($ast, '&LAMFIELD_CODE'),
             findDef($ast, '&LAMFIELD_FREEVARS'),
+            findDef($ast, '&getRawLambdaInfo'),
             findDef($ast, '&int2str'),
             findDef($ast, '&num2str'),
             findDef($ast, '&lam2id'),

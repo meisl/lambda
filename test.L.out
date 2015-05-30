@@ -12,18 +12,16 @@
 # [nqpc] compiled: lib/L/L.nqp ~> "lib/L/L.moarvm"
 -----------------------------
 Stage start      :   0.000
-Stage mkRuntime  :   0.281
+Stage mkRuntime  :   0.266
 Stage parse      :   0.031
 Stage ast        :   0.000
-Stage ast_clean  :   0.219
-Stage ast_save   :   0.031
-Stage mast       :   0.078
-Stage mbc        :   0.016
+Stage ast_save   :   0.047
+Stage mast       :   0.109
+Stage mbc        :   0.000
 Stage moar       :   0.000
 # [nqpc] $ nqpc --module-path=lib/L --target=ast_save --output=lib/L/runTime.nqp.qast lib/L/runTime.nqp
 # [nqpc] ast_clean: lib/L/runTime.nqp...
 # [Lc] mkRuntime: ~> QAST::CompUnit+{StrByDump}
-# [Lc] ast_clean: E:\proj\perl6\Lambda\test.L...
 # [Lc] ast_save: QAST dump written to E:\proj\perl6\Lambda\test.L.qast
 47 lambdas
 1029 QAST::Node s
