@@ -487,6 +487,7 @@
     ║   ╟─bind  ««"$s  := ''"
     ║   ║ ├○ lexical $s
     ║   ║ └◙ SVal ""
+    ║   ╟○ lexical $_
     ║   ╟─while  ««"$it {\n        $_ := nqp::shift($it);  # nqpc would"...
     ║   ║ ├○ lexical $it
     ║   ║ ├─:Stmts  ««"{\n        $_ := nqp::shift($it);  # nqpc would con"...
@@ -622,6 +623,24 @@
     ║   └─list  ««","
     ║     ├◙ SVal "binder0 1 55 foo bar baz qumbl self self"
     ║     └◙ SVal "binder1 59 4 foo"
+    ╟○ lexical .LAMFIELD_ID
+    ╟○ lexical .LAMFIELD_CODE
+    ╟○ lexical .LAMFIELD_FREEVARS
+    ╟○ lexical .lam2id
+    ╟○ lexical .lam2code
+    ╟○ lexical .lam2fvs
+    ╟○ lexical .int2str
+    ╟○ lexical .num2str
+    ╟○ lexical .strLit
+    ╟○ lexical .force
+    ╟○ lexical .delayMemo
+    ╟○ lexical .sublist
+    ╟○ lexical .lam2info
+    ╟○ lexical .typecase
+    ╟○ lexical .strOut
+    ╟○ lexical .apply1
+    ╟○ lexical .say
+    ╟○ lexical .MAIN
     ╙─if
       ├○ lexical @ARGS
       └─call .MAIN

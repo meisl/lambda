@@ -475,6 +475,36 @@ sub cloneAndSubst($node, $substitution) {
 }
 
 
+sub collect_params_and_body($node, %results = hash(:arity(0), :params({}), :stmts([]))) {
+    my $arity  := %results<arity>;
+    my %params := %results<params>;
+    my @stmts  := %results<stmts>;
+    for $node.list {
+        if nqp::istype($_, QAST::Var) {
+            my $varName := $_.name;
+            if $_.decl {
+                if $_.decl eq 'param' {
+                    nqp::die("cannot handle :named parameter $varName: " ~ dump($_))
+                        if $_.named;
+                    nqp::die("cannot handle :slurpy parameter $varName: " ~ dump($_))
+                        if $_.slurpy;
+                    %params{$varName} := $arity;
+                    $arity++;
+                } else {
+                    nqp::die('cannot handle :decl(' ~ $_.decl ~ ')');
+                }
+            } else {
+                @stmts.push($_);
+            }
+        } else {
+            @stmts.push($_);
+        }
+    }
+    %results<arity> := $arity;
+    %results;
+}
+
+
 sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
     nqp::die('inline_simple_subs expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
         unless nqp::istype($node, QAST::Node);
@@ -491,29 +521,20 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
                     && nqp::istype($_[1], QAST::Block);
             my $name   := $_[0].name;
             my $block  := $_[1];
-            my %params := {};
-            my $arity  := 0;
-            my @stmts  := [];
-            for $block.list {
-                if nqp::istype($_, QAST::Var) {
-                    if $_.decl {
-                        if $_.decl eq 'param' {
-                            nqp::die("cannot handle :named parameter $name: " ~ dump($_))
-                                if $_.named;
-                            nqp::die("cannot handle :slurpy parameter $name: " ~ dump($_))
-                                if $_.slurpy;
-                            %params{$_.name} := $arity;
-                            $arity++;
-                        } else {
-                            nqp::die('cannot handle :decl(' ~ $_.decl ~ ')');
-                        }
-                    } else {
-                        @stmts.push($_);
-                    }
-                } else {
-                    @stmts.push($_);
+            my %results;
+            if istypeAny($block[0], QAST::Stmt, QAST::Stmts) {
+                my $it := nqp::iterator($block.list);
+                %results := collect_params_and_body(nqp::shift($it));
+                while $it {
+                    %results := collect_params_and_body(nqp::shift($it), %results);
                 }
+            } else {
+                %results := collect_params_and_body($block);
             }
+            my $arity  := %results<arity>;
+            my %params := %results<params>;
+            my @stmts  := %results<stmts>;
+
 
             if nqp::elems(@stmts) == 0 {
                 nqp::die("no statements found in inlineable $name: " ~ dump($block));
@@ -728,7 +749,7 @@ class SmartCompiler is NQP::Compiler {
         
         $ast := drop_takeclosure($ast);
         
-        $ast := drop_Stmts($ast);
+        #$ast := drop_Stmts($ast);
         $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
         $ast := remove_bogusOpNames($ast);
         #$ast := remove_MAIN($ast);
@@ -737,6 +758,7 @@ class SmartCompiler is NQP::Compiler {
         # from here it's rather optimization...
         $ast := replace_assoc_and_pos_scoped($ast);
         $ast := inline_simple_methods($ast);
+        $ast := drop_Stmts($ast);
 
         my @inlinecandidates := [
             findDef($ast, '&LAMINFO_FROM'),
