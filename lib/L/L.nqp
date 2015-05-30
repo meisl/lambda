@@ -13,14 +13,17 @@ class LCompiler is SmartCompiler {
         self.parseactions(LActions.new);
         
         self.addstage('mkRuntime', :after<start>);
+        self.addstage('ast_clean', :after<ast>);
         return self;
     }
+
+    method compiler_progname($value = NO_VALUE) { 'Lc' }
 
     method mkRuntime($src) {
         my $nqpc := NQPCompiler.new();
         $nqpc.addstage('ast_clean', :before<ast_save>);
         my $rtQAST := $nqpc.compileFile('runTime', :lib('lib/L'), :target('ast_save'));
-        say("# [Lc] mkRuntime ~> " ~ whatsit($rtQAST));
+        self.log('mkRuntime: ~> ', whatsit($rtQAST));
         return $src;
     }
 
