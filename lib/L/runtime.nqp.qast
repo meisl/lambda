@@ -40,6 +40,34 @@
     ║     ├○ lexical $lam
     ║     └◙ IVal 2
     ╟─bind
+    ║ ├○ lexical .STATS_QASTSIZE :decl(var)
+    ║ └─:Block  ««"{ 'qastSize'    }"
+    ║   ╙◙ SVal "qastSize"
+    ╟─bind
+    ║ ├○ lexical .STATS_BLOCKCOUNT :decl(var)
+    ║ └─:Block  ««"{ 'blockCount'  }"
+    ║   ╙◙ SVal "blockCount"
+    ╟─bind
+    ║ ├○ lexical .STATS_LISTCOUNT :decl(var)
+    ║ └─:Block  ««"{ 'listCount'   }"
+    ║   ╙◙ SVal "listCount"
+    ╟─bind
+    ║ ├○ lexical .STATS_LAMBDACOUNT :decl(var)
+    ║ └─:Block  ««"{ 'lambdaCount' }"
+    ║   ╙◙ SVal "lambdaCount"
+    ╟─bind
+    ║ ├○ lexical .STATS_IVALCOUNT :decl(var)
+    ║ └─:Block  ««"{ 'ivalCount'   }"
+    ║   ╙◙ SVal "ivalCount"
+    ╟─bind
+    ║ ├○ lexical .STATS_SVALCOUNT :decl(var)
+    ║ └─:Block  ««"{ 'svalCount'   }"
+    ║   ╙◙ SVal "svalCount"
+    ╟─bind
+    ║ ├○ lexical .STATS_SVALSIZE :decl(var)
+    ║ └─:Block  ««"{ 'svalSize'    }"
+    ║   ╙◙ SVal "svalSize"
+    ╟─bind
     ║ ├○ lexical .int2str :decl(var)
     ║ └─:Block  ««"{ ~$i }"
     ║   ╟○ lexical $i :decl(param)
@@ -472,42 +500,106 @@
     ║   ╙─call .force  ««"$result"
     ║     └○ lexical $result
     ╟─bind
-    ║ ├○ lexical .say :decl(var)
-    ║ └─:Block  ««"{\n    my $it := nqp::iterator(@args);\n    my $s  "...
-    ║   ╟○ lexical @args :decl(param) :slurpy(1)
-    ║   ╟○ lexical $it :decl(var)
-    ║   ╟○ lexical $s :decl(var)
+    ║ ├○ lexical .join :decl(var)
+    ║ └─:Block  ««"{\n    my $_;\n    my $i := nqp::iterator(@pieces);"...
+    ║   ╟○ lexical $sep :decl(param)
+    ║   ╟○ lexical @pieces :decl(param)
     ║   ╟─bind  ««"$_"
     ║   ║ ├○ lexical $_ :decl(var)
     ║   ║ └◙ WVal NQPMu
-    ║   ╟─bind  ««"$it := nqp::iterator(@args)"
-    ║   ║ ├○ lexical $it
-    ║   ║ └─iterator  ««"nqp::iterator(@args)"
-    ║   ║   └○ lexical @args
-    ║   ╟─bind  ««"$s  := ''"
+    ║   ╟○ lexical $i :decl(var)
+    ║   ╟○ lexical $s :decl(var)
+    ║   ╟─bind  ««"$i := nqp::iterator(@pieces)"
+    ║   ║ ├○ lexical $i
+    ║   ║ └─iterator  ««"nqp::iterator(@pieces)"
+    ║   ║   └○ lexical @pieces
+    ║   ╟─bind  ««"$s := ''"
     ║   ║ ├○ lexical $s
     ║   ║ └◙ SVal ""
-    ║   ╟○ lexical $_
-    ║   ╟─while  ««"$it {\n        $_ := nqp::shift($it);  # nqpc would"...
-    ║   ║ ├○ lexical $it
-    ║   ║ ├─:Stmts  ««"{\n        $_ := nqp::shift($it);  # nqpc would con"...
-    ║   ║ │ ├─bind  ««":="
-    ║   ║ │ │ ├○ lexical $_
-    ║   ║ │ │ └─shift  ««"nqp::shift($it)"
-    ║   ║ │ │   └○ lexical $it
-    ║   ║ │ └─bind  ««":="
-    ║   ║ │   ├○ lexical $s
-    ║   ║ │   └─concat  ««"~"
-    ║   ║ │     ├○ lexical $s
-    ║   ║ │     └─if  ««"?? $_\n            !!"
-    ║   ║ │       ├─isstr  ««"nqp::isstr($_)"
-    ║   ║ │       │ └○ lexical $_
-    ║   ║ │       ├○ lexical $_
-    ║   ║ │       └─call .strOut  ««"$_"
-    ║   ║ │         └○ lexical $_
-    ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╙─say  ««"nqp::say($s)"
-    ║     └○ lexical $s
+    ║   ╟─if  ««"$i {\n        $s := nqp::shift($i);  # nqpc would c"...
+    ║   ║ ├○ lexical $i
+    ║   ║ └─:Stmts  ««"{\n        $s := nqp::shift($i);  # nqpc would conv"...
+    ║   ║   ├─bind  ««":="
+    ║   ║   │ ├○ lexical $s
+    ║   ║   │ └─shift  ««"nqp::shift($i)"
+    ║   ║   │   └○ lexical $i
+    ║   ║   ├─unless  ««"$s := strOut($s)\n            unless nqp::isstr($s)"
+    ║   ║   │ ├─isstr  ««"nqp::isstr($s)"
+    ║   ║   │ │ └○ lexical $s
+    ║   ║   │ └─bind  ««":="
+    ║   ║   │   ├○ lexical $s
+    ║   ║   │   └─call .strOut  ««"$s"
+    ║   ║   │     └○ lexical $s
+    ║   ║   └─while  ««"$i {\n            $_ := nqp::shift($i);  # nqpc wou"...
+    ║   ║     ├○ lexical $i
+    ║   ║     ├─:Stmts  ««"{\n            $_ := nqp::shift($i);  # nqpc would "...
+    ║   ║     │ ├─bind  ««":="
+    ║   ║     │ │ ├○ lexical $_
+    ║   ║     │ │ └─shift  ««"nqp::shift($i)"
+    ║   ║     │ │   └○ lexical $i
+    ║   ║     │ └─bind  ««":="
+    ║   ║     │   ├○ lexical $s
+    ║   ║     │   └─concat  ««"~"
+    ║   ║     │     ├─concat  ««"~"
+    ║   ║     │     │ ├○ lexical $s
+    ║   ║     │     │ └○ lexical $sep
+    ║   ║     │     └─if  ««"?? $_\n                !!"
+    ║   ║     │       ├─isstr  ««"nqp::isstr($_)"
+    ║   ║     │       │ └○ lexical $_
+    ║   ║     │       ├○ lexical $_
+    ║   ║     │       └─call .strOut  ««"$_"
+    ║   ║     │         └○ lexical $_
+    ║   ║     └◙ IVal 1 :named("nohandler")
+    ║   ╙○ lexical $s
+    ╟─bind
+    ║ ├○ lexical .say :decl(var)
+    ║ └─:Block  ««"{\n    nqp::say(join('', @args));\n}"
+    ║   ╟○ lexical @args :decl(param) :slurpy(1)
+    ║   ╙─say  ««"nqp::say(join('', @args))"
+    ║     └─call .join  ««"'', @args"
+    ║       ├◙ SVal ""
+    ║       └○ lexical @args
+    ╟─bind
+    ║ ├○ lexical .stats :decl(var)
+    ║ └─:Block  ««"{\n    my %stats := %info<stats>;\n    join('', [\n"...
+    ║   ╟○ lexical %stats :decl(var)
+    ║   ╟─bind  ««"%stats := %info<stats>"
+    ║   ║ ├○ lexical %stats
+    ║   ║ └─atkey
+    ║   ║   ├○ lexical %info
+    ║   ║   └◙ SVal "stats"
+    ║   ╙─call .join  ««"'', [\n        %stats{STATS_LAMBDACOUNT() }, \" lam"...
+    ║     ├◙ SVal ""
+    ║     └─list  ««","
+    ║       ├─atkey
+    ║       │ ├○ lexical %stats
+    ║       │ └◙ SVal "lambdaCount"
+    ║       ├◙ SVal " lambdas\n"
+    ║       ├─atkey
+    ║       │ ├○ lexical %stats
+    ║       │ └◙ SVal "qastSize"
+    ║       ├◙ SVal " QAST::Node s\n"
+    ║       ├─atkey
+    ║       │ ├○ lexical %stats
+    ║       │ └◙ SVal "blockCount"
+    ║       ├◙ SVal " QAST::Block s\n"
+    ║       ├─atkey
+    ║       │ ├○ lexical %stats
+    ║       │ └◙ SVal "listCount"
+    ║       ├◙ SVal " QAST::Op(list) s\n"
+    ║       ├─atkey
+    ║       │ ├○ lexical %stats
+    ║       │ └◙ SVal "ivalCount"
+    ║       ├◙ SVal " QAST::IVal s\n"
+    ║       ├─atkey
+    ║       │ ├○ lexical %stats
+    ║       │ └◙ SVal "svalSize"
+    ║       ├◙ SVal " chars ttl in "
+    ║       ├─atkey
+    ║       │ ├○ lexical %stats
+    ║       │ └◙ SVal "svalCount"
+    ║       ├◙ SVal " QAST::SVal s\n"
+    ║       └◙ SVal "------------------------------------------------"
     ╟─bind
     ║ ├○ lexical .MAIN :decl(var)
     ║ └─:Block  ««"{\n    my $n := 0;\n    my $b := { $n := $n + 1; };"...
@@ -598,9 +690,11 @@
     ║   ╟─push  ««"$lambda1"
     ║   ║ ├○ lexical $lambda1
     ║   ║ └○ lexical $lambda1
-    ║   ╙─call .say  ««"strOut($lambda1)"
-    ║     └─call .strOut  ««"$lambda1"
-    ║       └○ lexical $lambda1
+    ║   ╟─call .say  ««"strOut($lambda1)"
+    ║   ║ └─call .strOut  ««"$lambda1"
+    ║   ║   └○ lexical $lambda1
+    ║   ╙─call .say  ««"stats()"
+    ║     └─call .stats  ««""
     ╟─bind
     ║ ├○ local ctxsave :decl(var)
     ║ └○ contextual $*CTXSAVE
@@ -620,27 +714,25 @@
     ║ ├○ lexical %info
     ║ └─hash  ««"nqp::hash(\n    'λ', [\n        'binder0 1 55 foo b"...
     ║   ├◙ SVal "λ"
-    ║   └─list  ««","
-    ║     ├◙ SVal "binder0 1 55 foo bar baz qumbl self self"
-    ║     └◙ SVal "binder1 59 4 foo"
-    ╟○ lexical .LAMFIELD_ID
-    ╟○ lexical .LAMFIELD_CODE
-    ╟○ lexical .LAMFIELD_FREEVARS
-    ╟○ lexical .lam2id
-    ╟○ lexical .lam2code
-    ╟○ lexical .lam2fvs
-    ╟○ lexical .int2str
-    ╟○ lexical .num2str
-    ╟○ lexical .strLit
-    ╟○ lexical .force
-    ╟○ lexical .delayMemo
-    ╟○ lexical .sublist
-    ╟○ lexical .lam2info
-    ╟○ lexical .typecase
-    ╟○ lexical .strOut
-    ╟○ lexical .apply1
-    ╟○ lexical .say
-    ╟○ lexical .MAIN
+    ║   ├─list  ««","
+    ║   │ ├◙ SVal "binder0 1 55 foo bar baz qumbl self self"
+    ║   │ └◙ SVal "binder1 59 4 foo"
+    ║   ├◙ SVal "stats"
+    ║   └─hash  ««"nqp::hash( # to be filled in by compiler\n        S"...
+    ║     ├◙ SVal "qastSize"
+    ║     ├◙ IVal -1
+    ║     ├◙ SVal "blockCount"
+    ║     ├◙ IVal -1
+    ║     ├◙ SVal "listCount"
+    ║     ├◙ IVal -1
+    ║     ├◙ SVal "lambdaCount"
+    ║     ├◙ IVal -1
+    ║     ├◙ SVal "ivalCount"
+    ║     ├◙ IVal -1
+    ║     ├◙ SVal "svalCount"
+    ║     ├◙ IVal -1
+    ║     ├◙ SVal "svalSize"
+    ║     └◙ IVal -1
     ╙─if
       ├○ lexical @ARGS
       └─call .MAIN

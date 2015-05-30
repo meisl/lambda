@@ -4,7 +4,17 @@ my %info := nqp::hash(
         'binder0 1 55 foo bar baz qumbl self self',
         'binder1 59 4 foo',
     ],
+    'stats', nqp::hash( # to be filled in by compiler
+        STATS_QASTSIZE()    , -1, # size of tree
+        STATS_BLOCKCOUNT()  , -1, # nr of Blocks
+        STATS_LISTCOUNT()   , -1, # nr of Op(list)s
+        STATS_LAMBDACOUNT() , -1, # nr of λs parsed
+        STATS_IVALCOUNT()   , -1, # nr of IVals
+        STATS_SVALCOUNT()   , -1, # nr of SVals
+        STATS_SVALSIZE()    , -1, # ttl size of SVals
+    ),
 );
+
 
 # inlineables? ----------------------------------------------------------------
 
@@ -15,6 +25,16 @@ sub LAMFIELD_FREEVARS() is export { 2 }
 sub lam2id($lam)   { $lam[LAMFIELD_ID()] }
 sub lam2code($lam) { $lam[LAMFIELD_CODE()] }
 sub lam2fvs($lam)  { sublist($lam, LAMFIELD_FREEVARS()) }
+
+
+sub STATS_QASTSIZE()    is export { 'qastSize'    }
+sub STATS_BLOCKCOUNT()  is export { 'blockCount'  }
+sub STATS_LISTCOUNT()   is export { 'listCount'   }
+sub STATS_LAMBDACOUNT() is export { 'lambdaCount' }
+sub STATS_IVALCOUNT()   is export { 'ivalCount'   }
+sub STATS_SVALCOUNT()   is export { 'svalCount'   }
+sub STATS_SVALSIZE()    is export { 'svalSize'    }
+
 
 sub int2str(int $i) { ~$i }
 sub num2str(num $n) { ~$n }
@@ -167,17 +187,41 @@ sub apply1($f, $a1) {
     force($result);
 }
 
-sub say(*@args) {
-    my $it := nqp::iterator(@args);
-    my $s  := '';
+sub join($sep, @pieces) {
     my $_;
-    while $it {
-        $_ := nqp::shift($it);  # nqpc would convert a methodcall .shift
-        $s := $s ~ (nqp::isstr($_)
-            ?? $_
-            !! strOut($_));
+    my $i := nqp::iterator(@pieces);
+    my $s := '';
+    if $i {
+        $s := nqp::shift($i);  # nqpc would convert a methodcall .shift
+        $s := strOut($s)
+            unless nqp::isstr($s);
+        while $i {
+            $_ := nqp::shift($i);  # nqpc would convert a methodcall .shift
+            $s := $s ~ $sep ~ (nqp::isstr($_)
+                ?? $_
+                !! strOut($_));
+        }
     }
-    nqp::say($s);
+    $s;
+}
+
+
+sub say(*@args) {
+    nqp::say(join('', @args));
+}
+
+sub stats() {
+    my %stats := %info<stats>;
+    join('', [
+        %stats{STATS_LAMBDACOUNT() }, " lambdas\n",
+        %stats{STATS_QASTSIZE()    }, " QAST::Node s\n",
+        %stats{STATS_BLOCKCOUNT()  }, " QAST::Block s\n",
+        %stats{STATS_LISTCOUNT()   }, " QAST::Op(list) s\n",
+        %stats{STATS_IVALCOUNT()   }, " QAST::IVal s\n",
+        %stats{STATS_SVALSIZE()    }, " chars ttl in ",
+        %stats{STATS_SVALCOUNT()   }, " QAST::SVal s\n",
+        "------------------------------------------------",
+    ]);
 }
 
 
@@ -207,5 +251,6 @@ sub MAIN(*@ARGS) {
     $lambda1.push($lambda1);    # add a self (recursive) ref
     
     say(strOut($lambda1));
+    say(stats());
 }
 

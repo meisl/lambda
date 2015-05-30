@@ -749,7 +749,7 @@ class SmartCompiler is NQP::Compiler {
         
         $ast := drop_takeclosure($ast);
         
-        #$ast := drop_Stmts($ast);
+        $ast := drop_Stmts($ast);
         $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
         $ast := remove_bogusOpNames($ast);
         #$ast := remove_MAIN($ast);
@@ -758,21 +758,23 @@ class SmartCompiler is NQP::Compiler {
         # from here it's rather optimization...
         $ast := replace_assoc_and_pos_scoped($ast);
         $ast := inline_simple_methods($ast);
-        $ast := drop_Stmts($ast);
 
         my @inlinecandidates := [
-            findDef($ast, '&LAMINFO_FROM'),
-            findDef($ast, '&LAMINFO_LENGTH'),
-            findDef($ast, '&LAMINFO_FREEVARNAMES'),
+            findDef($ast, '&STATS_QASTSIZE'),
+            findDef($ast, '&STATS_BLOCKCOUNT'),
+            findDef($ast, '&STATS_LISTCOUNT'),
+            findDef($ast, '&STATS_LAMBDACOUNT'),
+            findDef($ast, '&STATS_IVALCOUNT'),
+            findDef($ast, '&STATS_SVALCOUNT'),
+            findDef($ast, '&STATS_SVALSIZE'),
             findDef($ast, '&LAMFIELD_ID'),
             findDef($ast, '&LAMFIELD_CODE'),
             findDef($ast, '&LAMFIELD_FREEVARS'),
-            findDef($ast, '&getRawLambdaInfo'),
-            findDef($ast, '&int2str'),
-            findDef($ast, '&num2str'),
             findDef($ast, '&lam2id'),
             findDef($ast, '&lam2code'),
             findDef($ast, '&lam2fvs'),
+            findDef($ast, '&int2str'),
+            findDef($ast, '&num2str'),
             #findDef($ast, '&force'),
         ];
         $ast := inline_simple_subs($ast, @inlinecandidates);
