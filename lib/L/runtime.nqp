@@ -1,28 +1,11 @@
-my $λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)';
-my %info := nqp::hash(
-    'λ', [
-        'binder0 1 55 foo bar baz qumbl self self',
-        'binder1 59 4 foo',
-    ],
-    'stats', nqp::hash( # to be filled in by compiler
-        STATS_QASTSIZE()    , -1, # size of tree
-        STATS_BLOCKCOUNT()  , -1, # nr of Blocks
-        STATS_LISTCOUNT()   , -1, # nr of Op(list)s
-        STATS_LAMBDACOUNT() , -1, # nr of λs parsed
-        STATS_IVALCOUNT()   , -1, # nr of IVals
-        STATS_SVALCOUNT()   , -1, # nr of SVals
-        STATS_SVALSIZE()    , -1, # ttl size of SVals
-    ),
-);
-
 
 # inlineables? ----------------------------------------------------------------
 
-sub LAMFIELD_ID()       is export { 0 }
+sub LAMFIELD_ID() is export { 0 }
 sub LAMFIELD_CODE()     is export { 1 }
 sub LAMFIELD_FREEVARS() is export { 2 }
 
-sub lam2id($lam)   { $lam[LAMFIELD_ID()] }
+sub lam2id($lam) is export { $lam[LAMFIELD_ID()] }
 sub lam2code($lam) { $lam[LAMFIELD_CODE()] }
 sub lam2fvs($lam)  { sublist($lam, LAMFIELD_FREEVARS()) }
 
@@ -43,6 +26,24 @@ sub strLit(str $s) { '"' ~ nqp::escape($s) ~ '"' }
 
 
 # -----------------------------------------------------------------------------
+
+
+my $λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)';
+my %info := nqp::hash(
+    'λ', [
+        'binder0 1 55 foo bar baz qumbl self self',
+        'binder1 59 4 foo',
+    ],
+    'stats', nqp::hash( # to be filled in by compiler
+        STATS_QASTSIZE()    , -1, # size of tree
+        STATS_BLOCKCOUNT()  , -1, # nr of Blocks
+        STATS_LISTCOUNT()   , -1, # nr of Op(list)s
+        STATS_LAMBDACOUNT() , -1, # nr of λs parsed
+        STATS_IVALCOUNT()   , -1, # nr of IVals
+        STATS_SVALCOUNT()   , -1, # nr of SVals
+        STATS_SVALSIZE()    , -1, # ttl size of SVals
+    ),
+);
 
 
 sub force($v) {

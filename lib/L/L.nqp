@@ -13,7 +13,7 @@ class LCompiler is SmartCompiler {
         self.parseactions(LActions.new);
         
         self.addstage('mkRuntime', :after<start>);
-        self.addstage('ast_clean', :after<ast>);
+        #self.addstage('ast_clean', :after<ast>);
         return self;
     }
 

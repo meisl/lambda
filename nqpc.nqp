@@ -419,7 +419,7 @@ sub findPath(&test, $node, @pathUp = []) {
         if $res =:= $node || !nqp::istype($res, QAST::Node) {    # just truthy to indicate that $node should be returned
             return $node
         } else {
-            while !($res =:= @pathUp.shift) {
+            while !($res =:= @pathUp.shift) {   # eat path up till we find the node
             }
             return $res;
         }
@@ -428,14 +428,18 @@ sub findPath(&test, $node, @pathUp = []) {
 }
 
 
-sub findDef($ast, str $name, @pathUp = []) {
+sub findDef($ast, $matcher, @pathUp = []) {
+    if nqp::isstr($matcher) {
+        my $name := $matcher;
+        $matcher := -> $var, @pathUp { $var.name eq $name && $var.decl };
+    }
     findPath(
         -> $node, @pathUp {
             my $parent := nqp::elems(@pathUp) > 0 ?? @pathUp[0] !! nqp::null;
             if nqp::isnull($parent) || nqp::istype($parent, QAST::CompUnit) {
                 $node.list;
             } elsif nqp::istype($parent, QAST::Op) && nqp::istype($node, QAST::Var) {
-                 $parent.op eq 'bind' && $node.name eq $name && $node.decl
+                 $parent.op eq 'bind' && $matcher($node, @pathUp)
                     ?? $parent
                     !! nqp::null;
             } elsif istypeAny($parent, QAST::Block, QAST::Stmts, QAST::Stmt, QAST::Op) {
@@ -449,6 +453,28 @@ sub findDef($ast, str $name, @pathUp = []) {
     );
 }
 
+sub findDefs($ast, $matcher) {
+    my @out := [];
+    my $current := 1;
+    while $current {
+        $current := findDef($ast, -> $var, @pathUp {
+            my $takeit := 0;
+            if $matcher($var, @pathUp) {
+                $takeit := 1;
+                my $i := nqp::iterator(@out);
+                while $i && $takeit {
+                    $takeit := !(nqp::shift($i)[0] =:= $var);   # we're storing the parent ('bind')
+                }
+            }
+            $takeit;
+        });
+        unless nqp::isnull($current) {
+#            say(nqp::elems(@out), ': ', dump($current[0], :oneLine));
+            @out.push($current);
+        }
+    }
+    @out;
+}
 
 sub cloneAndSubst($node, $substitution) {
     nqp::die('cloneAndSubst expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
@@ -572,7 +598,7 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
         $i++;
     }
 
-    if nqp::istype($node, QAST::Op) && $node.op eq 'call' {
+    if nqp::istype($node, QAST::Op) && ($node.op eq 'call' || $node.op eq 'callstatic') {
         my $codeMaker := %inlineables{$node.name};
         if $codeMaker {
             my $out := $codeMaker($node.list);
@@ -711,7 +737,7 @@ class SmartCompiler is NQP::Compiler {
     method BUILD() {
         # in this order (!):
         self.addstage('ast_save',     :after<ast>);
-        #self.addstage('optimize',    :before<ast_save>);
+        self.addstage('optimize',    :before<ast_save>);
 
         # Add extra command line options.
         my @clo := self.commandline_options();
@@ -759,24 +785,12 @@ class SmartCompiler is NQP::Compiler {
         $ast := replace_assoc_and_pos_scoped($ast);
         $ast := inline_simple_methods($ast);
 
-        my @inlinecandidates := [
-            findDef($ast, '&STATS_QASTSIZE'),
-            findDef($ast, '&STATS_BLOCKCOUNT'),
-            findDef($ast, '&STATS_LISTCOUNT'),
-            findDef($ast, '&STATS_LAMBDACOUNT'),
-            findDef($ast, '&STATS_IVALCOUNT'),
-            findDef($ast, '&STATS_SVALCOUNT'),
-            findDef($ast, '&STATS_SVALSIZE'),
-            findDef($ast, '&LAMFIELD_ID'),
-            findDef($ast, '&LAMFIELD_CODE'),
-            findDef($ast, '&LAMFIELD_FREEVARS'),
-            findDef($ast, '&lam2id'),
-            findDef($ast, '&lam2code'),
-            findDef($ast, '&lam2fvs'),
-            findDef($ast, '&int2str'),
-            findDef($ast, '&num2str'),
-            #findDef($ast, '&force'),
-        ];
+        my @inlinecandidates;
+        @inlinecandidates := findDefs($ast, -> $var, @pathUp {
+               (nqp::index($var.name, '&STATS_') > -1)
+            || (nqp::index($var.name, '&LAMFIELD_') > -1)
+            || (nqp::index('&lam2id &lam2code &lam2fvs &int2str &num2str', $var.name) > -1)
+        });
         $ast := inline_simple_subs($ast, @inlinecandidates);
 
         $ast := renameVars($ast, -> $s {
