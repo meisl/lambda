@@ -76,11 +76,13 @@ class LActions is HLL::Actions {
     }
 
     my sub locVar(str $name, *%adverbs) {
-        QAST::Var.new(:name($name), :scope<local>,   |%adverbs);
+        # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
+        QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<local>,   |%adverbs);
     }
 
     my sub lexVar(str $name, *%adverbs) {
-        QAST::Var.new(:name($name), :scope<lexical>, |%adverbs);
+        # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
+        QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<lexical>, |%adverbs);
     }
 
     my sub mkDeclV($var, *%adverbs) {
