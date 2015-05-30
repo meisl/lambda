@@ -61,10 +61,7 @@ sub linesFrom(str $filename, $from = 1, $count?) is export {
     @out;
 }
 
-# -----------------------------------------------
-
-
-sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) {
+sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
     my $clsStr := nqp::substr($node.HOW.name($node), 6);
     
     my $isBlockChild := nqp::istype($parent, QAST::Block);
@@ -174,6 +171,9 @@ sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) {
     }
     $before ~ nqp::join($sep, @lines) ~ $after;
 }
+
+
+# -----------------------------------------------
 
 
 
@@ -696,6 +696,14 @@ class SmartCompiler is NQP::Compiler {
         @clo.push('optimize=s');
     }
 
+    method log($msg, *@moreMsgPieces) {
+        my str $out := '# [' ~ self.compiler_progname ~ '] ' ~ $msg;
+        for @moreMsgPieces {
+            $out := $out ~ $_;
+        }
+        say($out);
+    }
+
     # override stage 'ast' and make the AST stringifiable
     
     method ast($source, *%adverbs) {
@@ -709,7 +717,7 @@ class SmartCompiler is NQP::Compiler {
     # additional stages
     
     method ast_clean($ast, *%adverbs) {
-        say(">>>ast_clean ", self.user-progname(), '...');
+        self.log('ast_clean: ', self.user-progname, '...');
         
         $ast := drop_takeclosure($ast);  # breaks things!!!!!!
         
@@ -753,7 +761,7 @@ class SmartCompiler is NQP::Compiler {
         return $ast
             if %adverbs<output> eq $qastfileName;
         spew($qastfileName, ~$ast);
-        say(">>>ast_save: QAST dump written to ", $qastfileName);
+        self.log('ast_save: QAST dump written to ', $qastfileName);
         $ast;
     }
 
@@ -768,10 +776,10 @@ class NQPCompiler is SmartCompiler {
         self.language('nqp');
         self.parsegrammar(NQP::Grammar);
         self.parseactions(NQP::Actions);
-
         return self;
     }
 
+    method compiler_progname($value = NO_VALUE) { 'nqpc' }
 
     method handle-exception($error) {
         nqp::rethrow($error);
@@ -812,7 +820,7 @@ class NQPCompiler is SmartCompiler {
             @args.push($nqpName);
             #say($mvmName, '...');
 
-            say("<nqpc> ", nqp::join(' ', @args));
+            self.log('$ ', nqp::join(' ', @args));
             #say(nqp::x('-', 29));
             my $*USER_FILE := $nqpName;
             my $result;
@@ -919,7 +927,7 @@ sub MAIN(*@ARGS) {
     my $cwd := nqp::cwd();
     my $lib := 'lib/L';    #   '.';     #   
     my $ext := '.nqp';
-    my $sep := '# [nqpc] ' ~ nqp::x('-', 29);
+    my $sep := nqp::x('-', 29);
     my $nqpc := NQPCompiler.new();
     my %opts := hash();
 
@@ -941,21 +949,19 @@ sub MAIN(*@ARGS) {
         my $result := $_ eq 'nqpc'
             ?? $nqpc.compileFile($_, :lib('.'),  |%opts)
             !! $nqpc.compileFile($_, :lib($lib), |%opts);
-        say(nqp::isnull($result)
-            ?? "# [nqpc] uptodate: $lib/$file"
-            !! "# [nqpc] compiled: $lib/$file ~> " ~ whatsit($result)
-        );
+        if nqp::isnull($result) {
+            $nqpc.log("uptodate: $lib/$file");
+        } else {
+            $nqpc.log("compiled: $lib/$file ~> " ~ whatsit($result));
+        }
         CATCH {
-            my $msg := nqp::join('', [
-                  "# [nqpc] ", "   ERROR: $lib/$file",
-                "\n", $sep,
-                "\n# [nqpc] ", "     CWD: $cwd",
-                "\n# [nqpc] ", "     lib: $lib",
-                "\n# [nqpc] ", '    ARGS: ', nqp::join(' ', @ARGS),
-                "\n# [nqpc] ",
-                "\n# [nqpc] ", ~$_,
-            ]);
-            say($msg);
+            $nqpc.log("ERROR: $lib/$file");
+            $nqpc.log($sep);
+            $nqpc.log("  CWD: $cwd");
+            $nqpc.log("  lib: $lib");
+            $nqpc.log(' ARGS: ', nqp::join(' ', @ARGS));
+            $nqpc.log('');
+            $nqpc.log(~$_);
             nqp::exit(1);
             
             #nqp::die($msg);    # cannot do this: sometimes "Memory allocation failed; could not allocate zu bytes"

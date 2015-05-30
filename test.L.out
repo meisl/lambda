@@ -1,28 +1,28 @@
-<nqpc> nqpc --module-path=. --target=mbc --output=./nqpc.moarvm ./nqpc.nqp
->>>ast_save: QAST dump written to ./nqpc.nqp.qast
+# [nqpc] $ nqpc --module-path=. --target=mbc --output=./nqpc.moarvm ./nqpc.nqp
+# [nqpc] ast_save: QAST dump written to ./nqpc.nqp.qast
 # [nqpc] compiled: lib/L/nqpc.nqp ~> "./nqpc.moarvm"
-<nqpc> nqpc --module-path=lib/L --target=mbc --output=lib/L/LGrammar.moarvm lib/L/LGrammar.nqp
->>>ast_save: QAST dump written to lib/L/LGrammar.nqp.qast
+# [nqpc] $ nqpc --module-path=lib/L --target=mbc --output=lib/L/LGrammar.moarvm lib/L/LGrammar.nqp
+# [nqpc] ast_save: QAST dump written to lib/L/LGrammar.nqp.qast
 # [nqpc] compiled: lib/L/LGrammar.nqp ~> "lib/L/LGrammar.moarvm"
-<nqpc> nqpc --module-path=lib/L --target=mbc --output=lib/L/LActions.moarvm lib/L/LActions.nqp
->>>ast_save: QAST dump written to lib/L/LActions.nqp.qast
+# [nqpc] $ nqpc --module-path=lib/L --target=mbc --output=lib/L/LActions.moarvm lib/L/LActions.nqp
+# [nqpc] ast_save: QAST dump written to lib/L/LActions.nqp.qast
 # [nqpc] compiled: lib/L/LActions.nqp ~> "lib/L/LActions.moarvm"
-<nqpc> nqpc --module-path=lib/L --target=mbc --output=lib/L/L.moarvm lib/L/L.nqp
->>>ast_save: QAST dump written to lib/L/L.nqp.qast
+# [nqpc] $ nqpc --module-path=lib/L --target=mbc --output=lib/L/L.moarvm lib/L/L.nqp
+# [nqpc] ast_save: QAST dump written to lib/L/L.nqp.qast
 # [nqpc] compiled: lib/L/L.nqp ~> "lib/L/L.moarvm"
-# [nqpc] -----------------------------
+-----------------------------
 Stage start      :   0.000
 Stage mkRuntime  :   0.281
 Stage parse      :   0.031
 Stage ast        :   0.000
 Stage ast_save   :   0.031
-Stage mast       :   0.125
+Stage mast       :   0.094
 Stage mbc        :   0.000
 Stage moar       :   0.000
-<nqpc> nqpc --module-path=lib/L --target=ast_save --output=lib/L/runTime.nqp.qast lib/L/runTime.nqp
->>>ast_clean lib/L/runTime.nqp...
-# [Lc] mkRuntime ~> QAST::CompUnit+{StrByDump}
->>>ast_save: QAST dump written to E:\proj\perl6\Lambda\test.L.qast
+# [nqpc] $ nqpc --module-path=lib/L --target=ast_save --output=lib/L/runTime.nqp.qast lib/L/runTime.nqp
+# [nqpc] ast_clean: lib/L/runTime.nqp...
+# [Lc] mkRuntime: ~> "──CompUnit+{StrByDump}\n  └─:Block\n    ╟○ lexi" ~ ... ~ "└○ lexical @ARGS :flat(1)"
+# [Lc] ast_save: QAST dump written to E:\proj\perl6\Lambda\test.L.qast
 47 lambdas
 1029 QAST::Node s
 91 QAST::Block s
@@ -33,7 +33,7 @@ Stage moar       :   0.000
 Unhandled exception: >>>Error evaluating E:\proj\perl6\Lambda\test.L:
 ERROR: cannot apply "foo" to "bar"
    at <unknown>:1  (lib\L\L.moarvm:command_line:4294967295)
- from lib/L/L.nqp:91  (lib\L\L.moarvm:MAIN:64)
+ from lib/L/L.nqp:93  (lib\L\L.moarvm:MAIN:64)
  from lib/L/L.nqp:8  (lib\L\L.moarvm:<mainline>:39)
  from <unknown>:1  (lib\L\L.moarvm:<main>:8)
  from <unknown>:1  (lib\L\L.moarvm:<entry>:9)
