@@ -9,9 +9,9 @@ my %info := nqp::hash(
 
 # inlineables? ----------------------------------------------------------------
 
-sub lam2id($lambda)   { $lambda[0] }
-sub lam2code($lambda) { $lambda[1] }
-sub lam2fvs($lambda)  { sublist($lambda, 2) }
+sub lam2id($lam)   { $lam[0] }
+sub lam2code($lam) { $lam[1] }
+sub lam2fvs($lam)  { sublist($lam, 2) }
 
 sub int2str(int $i) { ~$i }
 sub num2str(num $n) { ~$n }

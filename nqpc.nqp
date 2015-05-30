@@ -39,7 +39,7 @@ sub whatsit($v) is export {
         my $x := $v.dump_extra_node_info;
         return $x ?? "$s($x)" !! $s;
     #} elsif nqp::istype($v, Something) { ??? }
-    } elsif nqp::can($v.HOW, 'name') {
+    } elsif nqp::can($v, 'HOW') && nqp::can($v.HOW, 'name') {
         return $v.HOW.name($v);
     } else {
         return $reprname
@@ -67,6 +67,28 @@ sub linesFrom(str $filename, $from = 1, $count?) is export {
 sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) {
     my $clsStr := nqp::substr($node.HOW.name($node), 6);
     
+    my $isBlockChild := nqp::istype($parent, QAST::Block);
+    my $isOrphan     := nqp::isnull($parent);
+    my $siblingCount := $isOrphan ?? 0 !! nqp::elems($parent.list) - 1;
+    my $isLastChild  := $isOrphan || ($parent.list[$siblingCount] =:= $node);
+    my $prefix := $indent;
+    if $isOrphan {
+        $prefix := $prefix ~ '─'
+    } elsif $isBlockChild {
+        $prefix := $prefix ~ ($isLastChild ?? '╙' !! '╟' );
+    } else {
+        $prefix := $prefix ~ ($isLastChild ?? '└' !! '├' );
+    }
+
+    unless nqp::istype($node, QAST::Node) && nqp::defor($node, 0) {
+        #nqp::die("cannot dump " ~ whatsit($node));
+        if $oneLine {
+            return '(' ~ whatsit($node) ~ ')';
+        } else {
+            return $prefix ~ '► ' ~ whatsit($node);
+        }
+    }
+
     my $nodesNodeStr := '';
     if $node.node {
         $nodesNodeStr := nqp::escape(~$node.node);
@@ -78,19 +100,7 @@ sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) {
         $nodesNodeStr := '  ««"' ~ $nodesNodeStr;
     }
 
-    my $isBlockChild := nqp::istype($parent, QAST::Block);
-    my $isOrphan     := nqp::isnull($parent);
-    my $siblingCount := $isOrphan ?? 0 !! nqp::elems($parent.list) - 1;
-    my $isLastChild  := $isOrphan || ($parent.list[$siblingCount] =:= $node);
     my $extraStr := $node.dump_extra_node_info;
-    my $prefix := $indent;
-    if $isOrphan {
-        $prefix := $prefix ~ '─'
-    } elsif $isBlockChild {
-        $prefix := $prefix ~ ($isLastChild ?? '╙' !! '╟' );
-    } else {
-        $prefix := $prefix ~ ($isLastChild ?? '└' !! '├' );
-    }
     $extraStr := $extraStr ?? ' ' ~ $extraStr !! '';
     
     my $specialStr := '';
@@ -117,10 +127,13 @@ sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) {
             ?? '┬' ~ $clsStr
             !! '';
         $prefix := $prefix ~ '○';
-        $specialStr := $specialStr ~ ' :slurpy(' ~ $node.slurpy ~ ')'
-            if $node.slurpy;
-        if $node.default {
-            $specialStr := $specialStr ~ ' :default' ~ dump($node.default, :oneLine(1));
+        if $node.slurpy {
+            $specialStr := $specialStr ~ ' :slurpy(' ~ $node.slurpy ~ ')'
+        }
+        unless ($node.default =:= NO_VALUE) {
+            $specialStr := $specialStr 
+                ~ ' :default' ~ dump($node.value, :oneLine(1));
+                #~ ' :default(' ~ whatsit($node.value) ~ ')';
         }
         if nqp::istype($node, QAST::VarWithFallback) && $node.fallback {
             $specialStr := $specialStr ~ ' :fallback' ~ dump($node.fallback, :oneLine(1));
@@ -430,9 +443,126 @@ sub findDef($ast, str $name, @pathUp = []) {
     );
 }
 
+
+sub cloneAndSubst($node, $substitution) {
+    nqp::die('cloneAndSubst expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
+        unless nqp::istype($node, QAST::Node);
+    nqp::die('cloneAndSubst expects a function as 2nd arg - got ' ~ whatsit($substitution) )
+        unless nqp::isinvokable($substitution);
+    
+    #return $substitution(nqp::clone($node))    # strange: this actually prevents any recursion...!?!
+    #    unless nqp::istype($node, QAST::Children);
+
+    $node := $node.shallow_clone;   # also makes a shallow clone of the children's list
+    my @children := $node.list;
+    my $i := 0;
+    for @children {
+        my $child := cloneAndSubst($_, $substitution);
+        unless nqp::isnull($child) {
+            @children[$i] := $child;
+            $i++;
+        }
+    }
+    nqp::setelems(@children, $i);
+    
+    $substitution($node);
+}
+
+
+sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
+    nqp::die('inline_simple_subs expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
+        unless nqp::istype($node, QAST::Node);
+
+    # on first step, prepare:
+    if nqp::elems(@inlineDefs) > 0 {
+        for @inlineDefs {
+            nqp::die("invalid def of inlineable sub: " ~ whatsit($_))
+                unless nqp::istype($_, QAST::Node);
+            nqp::die("invalid def of inlineable sub: " ~ dump($_))
+                unless nqp::istype($_, QAST::Op) && $_.op eq 'bind'
+                    && nqp::istype($_[0], QAST::Var)
+                    && nqp::istype($_[1], QAST::Block);
+            my $name   := $_[0].name;
+            my $block  := $_[1];
+            my %params := {};
+            my $arity  := 0;
+            my @stmts  := [];
+            for $block.list {
+                if nqp::istype($_, QAST::Var) {
+                    if $_.decl {
+                        if $_.decl eq 'param' {
+                            nqp::die("cannot handle :named parameter $name: " ~ dump($_))
+                                if $_.named;
+                            nqp::die("cannot handle :slurpy parameter $name: " ~ dump($_))
+                                if $_.slurpy;
+                            %params{$_.name} := $arity;
+                            $arity++;
+                        } else {
+                            nqp::die('cannot handle :decl(' ~ $_.decl ~ ')');
+                        }
+                    } else {
+                        @stmts.push($_);
+                    }
+                } else {
+                    @stmts.push($_);
+                }
+            }
+
+            if nqp::elems(@stmts) == 0 {
+                nqp::die("no statements found in inlineable $name: " ~ dump($block));
+            } elsif nqp::elems(@stmts) == 1 {
+                $block := @stmts[0];
+            } else {
+                $block := QAST::Stmts.new(|@stmts);
+            }
+
+            %inlineables{$name} := -> @arguments {
+                my $argCount := nqp::elems(@arguments);
+                nqp::die("cannot inline call with $argCount args to $arity" ~ "-arity fn $name")
+                    unless $argCount == $arity;
+                my $out := cloneAndSubst($block, -> $n {
+#                    say('####', dump($n));
+                    if nqp::istype($n, QAST::Var) && nqp::existskey(%params, $n.name) {
+                        my $out := @arguments[%params{$n.name}];
+#                        say('#### substituted ', dump($out, :oneLine), ' for ', dump($n, :oneLine));
+                        $out;
+                    } else {
+                        $n;
+                    }
+                });
+                $out;
+            };
+        }
+        return inline_simple_subs($node, [], %inlineables);
+    }
+
+    # next, recurse into children:
+    my $i := 0;
+    my @children := $node.list;
+    for @children {
+        @children[$i] := inline_simple_subs($_, [], %inlineables);
+        $i++;
+    }
+
+    if nqp::istype($node, QAST::Op) && $node.op eq 'call' {
+        my $codeMaker := %inlineables{$node.name};
+        if $codeMaker {
+            my $out := $codeMaker($node.list);
+#            say('>>>> inlined ', dump($out), "\n>>>> for ", dump($node));
+            $out.node($node.node);
+            $out.flat($node.flat);
+            $out.named($node.named);
+            $node := $out;
+        }
+    }
+    
+    $node;
+}
+
 sub inline_simple_methods($node) {
     nqp::die('inline_simple_methods expects a QAST::Node - got ' ~ whatsit($node) )
         unless nqp::istype($node, QAST::Node);
+
     # first, recurse:
     for $node.list {
         inline_simple_methods($_);
@@ -592,6 +722,14 @@ class SmartCompiler is NQP::Compiler {
         # from here it's rather optimization...
         $ast := replace_assoc_and_pos_scoped($ast);
         $ast := inline_simple_methods($ast);
+        $ast := inline_simple_subs($ast, [
+            findDef($ast, '&int2str'),
+            findDef($ast, '&num2str'),
+            findDef($ast, '&lam2id'),
+            findDef($ast, '&lam2code'),
+            findDef($ast, '&lam2fvs'),
+            #findDef($ast, '&force'),
+        ]);
 
         $ast := renameVars($ast, -> $s {
             my str $fst := nqp::substr($s, 0, 1);
