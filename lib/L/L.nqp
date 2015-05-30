@@ -14,6 +14,7 @@ class LCompiler is SmartCompiler {
         
         self.addstage('mkRuntime', :after<start>);
         #self.addstage('ast_clean', :after<ast>);
+        self.addstage('ast_stats', :before<ast_save>);
         return self;
     }
 

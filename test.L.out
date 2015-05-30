@@ -13,10 +13,11 @@
 -----------------------------
 Stage start      :   0.000
 Stage mkRuntime  :   0.344
-Stage parse      :   0.047
+Stage parse      :   0.031
 Stage ast        :   0.000
-Stage ast_save   :   0.047
-Stage mast       :   0.094
+Stage ast_stats  :   0.063
+Stage ast_save   :   0.016
+Stage mast       :   0.078
 Stage mbc        :   0.000
 Stage moar       :   0.000
 # [nqpc] $ nqpc --module-path=lib/L --output=lib/L/runTime.nqp.qast lib/L/runTime.nqp

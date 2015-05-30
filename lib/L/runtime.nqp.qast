@@ -724,19 +724,19 @@
     ║   ├◙ SVal "stats"
     ║   └─hash  ««"nqp::hash( # to be filled in by compiler\n        S"...
     ║     ├◙ SVal "Node"
-    ║     ├◙ IVal -1
+    ║     ├◙ IVal 743
     ║     ├◙ SVal "Block"
-    ║     ├◙ IVal -1
+    ║     ├◙ IVal 39
     ║     ├◙ SVal "list"
-    ║     ├◙ IVal -1
+    ║     ├◙ IVal 5
     ║     ├◙ SVal "lambda"
     ║     ├◙ IVal -1
     ║     ├◙ SVal "IVal"
-    ║     ├◙ IVal -1
+    ║     ├◙ IVal 42
     ║     ├◙ SVal "SVal"
-    ║     ├◙ IVal -1
+    ║     ├◙ IVal 80
     ║     ├◙ SVal "SValChars"
-    ║     └◙ IVal -1
+    ║     └◙ IVal 848
     ╙─if
       ├○ lexical @ARGS
       └─call .MAIN

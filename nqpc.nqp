@@ -840,7 +840,6 @@ class SmartCompiler is NQP::Compiler {
         $ast.HOW.mixin($ast, StrByDump);
         $ast;
     }
-    
 
     # additional stages
 
@@ -879,10 +878,7 @@ class SmartCompiler is NQP::Compiler {
     }
 
     method ast_stats($ast, *%adverbs) {
-        self.log('ast_stats: ', self.user-progname, '...');
         my %stats := self.collect_stats($ast);
-
-#        for %stats { self.log('    ', nqp::iterkey_s($_), ' = ', nqp::iterval($_)) }
 
         my @statskeys := findDefs($ast, -> $var, @pathUp {
             nqp::index($var.name, 'STATS_') > -1;
@@ -912,15 +908,23 @@ class SmartCompiler is NQP::Compiler {
             }
         });
         my $infoHash := $findStatsHash($infoHashDef[1]);
-#        say(dump($infoHashDef));
-        my $findStatNode := -> $statKey {
-            findValueNodeInHash(svalPred($statKey), ivalPred(), $infoHash)
-        };
-        for @statskeys {
-            my $node := $findStatNode($_);
-            if $node && nqp::existskey(%stats, $_) {
-                $node.value(%stats{$_});
-#                say(">>>> stat $_ := ", dump($node, :oneLine));
+        if $infoHash {
+#            say(dump($infoHashDef));
+            my $findStatNode := -> $statKey {
+                findValueNodeInHash(svalPred($statKey), ivalPred(), $infoHash)
+            };
+            for @statskeys {
+                my $node := $findStatNode($_);
+                if $node && nqp::existskey(%stats, $_) {
+                    $node.value(%stats{$_});
+#                    say(">>>> stat $_ := ", dump($node, :oneLine));
+                }
+            }
+        } else {
+            self.log('ast_stats WARNING: no %info hash found in AST of ', self.user-progname);
+            self.log('ast_stats WARNING: ...dunno how to insert actual stats - which are:');
+            for %stats {
+                self.log('    ', nqp::iterkey_s($_), ' = ', nqp::iterval($_))
             }
         }
 
@@ -1114,7 +1118,7 @@ sub MAIN(*@ARGS) {
 
         @ARGS.push('runtime');
         $nqpc.addstage('ast_clean', :before<ast_save>);
-        #$nqpc.addstage('ast_stats', :before<ast_save>);
+        $nqpc.addstage('ast_stats', :before<ast_save>);
         %opts<stagestats> := 1;
         %opts<target>     := '';    # ...and run it
     }
