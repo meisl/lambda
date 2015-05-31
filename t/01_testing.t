@@ -12,22 +12,60 @@ use testing;
 # The latter meaning: by how much should it be advanced in a certain
 # situtation, if at all?
 
-plan(91);
+plan(95);
 
 
-# is `ok` ok?
+# Handy thing for keeping an eye on the test_counter.
+# Note that we're not (yet) using `is` but rather do it all by hand,
+# relying only on `ok`.
+my int $tc;
+sub testcounter_ok(int $how_many_more, $desc = 'test_counter') {
+    my int $actual := $test_counter;
+    my int $expected := $tc + $how_many_more;
+    my $result;
+
+    #$result := is($actual, $expected, $desc);  # if we were to rely on `is` already
+    
+    $result := $actual == $expected;
+    if $result {
+        ok(1, $desc);
+    } else {
+        ok(0, "$desc\n  # expected (==): $expected"     # same as `is` would do,
+                 ~ "\n  #           got: $actual"       # but simplified since we know it's ints
+        );
+    }
+    $tc := $test_counter;   # update for next use
+    $result;    # need to return this, *not* $tc!
+}
+
+
+
+
+# But: is `ok` really ok?
 diag('sanity checks:');
 
 my @arr := [];
+$tc := $test_counter;   # initialize before first use
 ok(@arr ?? 0 !! 1, 'empty array is falsey');
+testcounter_ok(1, '`ok` advances test_counter by 1');
+
 @arr.push(0);
 ok(@arr ?? 1 !! 0, 'non-empty array is truthy');
+testcounter_ok(1, '`ok` advances test_counter by 1');
+
 @arr.pop;
 ok(@arr ?? 0 !! 1, 'empty-again array is falsey');
+testcounter_ok(1, '`ok` advances test_counter by 1');
 
-# Start off with check for failure/passing of normal tests,
+# Hmm, `diag` isn't really a test fn, so:
+diag('just calling diag to see if it (NOT!) advances the test_counter...');
+testcounter_ok(0, '`diag` does not advance test_counter');
+
+
+# Start off by checking for failure/passing of normal tests,
 # keeping an eye on the test_counter:
 diag('fails_ok/passes_ok on normal tests that actual pass or fail:');
+diag('"ok XX test_counter" means from now on: "inner tests are not counted on the outside (= as it should be)"');
 
 my $passingS := 'ok(1, "foo")';
 my $passing := { ok(1, "foo") };
@@ -36,15 +74,8 @@ my $failingS := 'ok(0, "bar")';
 my $failing := { ok(0, "bar") };
 
 
-my $tc;
-sub testcounter_ok($how_many_more, $desc = 'test_counter') {
-    is($test_counter, $tc + $how_many_more, $desc);
-    $tc := $test_counter;
-}
-
-$tc := $test_counter;
 passes_ok($passing, "'$passingS'");
-testcounter_ok(1, 'test_counter ok: inner tests are not counted on the outside');
+testcounter_ok(1);
 
 fails_ok($failing, "'$failingS'");
 testcounter_ok(1);

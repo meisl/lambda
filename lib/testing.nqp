@@ -17,7 +17,7 @@ class Testing {
 
 
     method diag($msg) {
-        self.say("#  $msg");
+        self.say("# $msg");
     }
 
     method describe($x) {
