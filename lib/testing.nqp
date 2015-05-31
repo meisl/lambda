@@ -1,3 +1,5 @@
+#!nqp
+
 use NQPHLL;
 
 #my $test_counter := 0;
