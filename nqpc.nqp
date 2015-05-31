@@ -880,12 +880,15 @@ class SmartCompiler is NQP::Compiler {
     method ast_stats($ast, *%adverbs) {
         my %stats := self.collect_stats($ast);
 
-        my @statskeys := findDefs($ast, -> $var, @pathUp {
+        my @statskeyDefs := findDefs($ast, -> $var, @pathUp {
             nqp::index($var.name, 'STATS_') > -1;
         });
-        my $i := 0;
-        for @statskeys {
-            @statskeys[$i++] := $_[1][0].value;
+        my @statskeys := [];
+        for @statskeyDefs {
+            my $v := $_[1][0];
+            if istypeAny($v, QAST::SVal, QAST::IVal, QAST::NVal) {
+                 @statskeys.push($v.value);
+            }
         }
 
         my sub svalPred($value = NO_VALUE) {
@@ -1103,7 +1106,7 @@ class NQPCompiler is SmartCompiler {
 
 sub MAIN(*@ARGS) {
     my $cwd := nqp::cwd();
-    my $lib := 'lib/L';    #   '.';     #   
+    my $lib;
     my $ext := '.nqp';
     my $sep := nqp::x('-', 29);
     my $nqpc := NQPCompiler.new();
@@ -1126,9 +1129,15 @@ sub MAIN(*@ARGS) {
 
     for @ARGS {
         my $file := $_ ~ $ext;
-        my $result := $_ eq 'nqpc'
-            ?? $nqpc.compileFile($_, :lib('.'),  |%opts)
-            !! $nqpc.compileFile($_, :lib($lib), |%opts);
+        
+        # XXX FIXME: lib
+           if $_ eq 'nqpc'      { $lib := '.' }
+        elsif $_ eq 'testing'   { $lib := 'lib' }
+        else {
+            $lib := 'lib/L'
+        }
+        
+        my $result := $nqpc.compileFile($_, :$lib,  |%opts);
         if nqp::isnull($result) {
             $nqpc.log("uptodate: $lib/$file");
         } else {
