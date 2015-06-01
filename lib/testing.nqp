@@ -1,8 +1,6 @@
 #!nqp
 
-use NQPHLL;
-
-#my $test_counter := 0;
+#my $test_counter := 0; # [cannot redeclare]
 my @*TEST_OF_TEST := [];
 
 class Testing {
@@ -140,6 +138,54 @@ class Testing {
         self.ok($result, $desc);
     }
 
+    method invokeNullaryChecked($code) {
+        my $error := NO_VALUE;
+        my $returnValue;
+        my $becauseNonNullary;
+        try {
+            my $x;
+            # In order to tell apart whether
+            #   a) $code is not nullary (and therefore throws) or
+            #   b) $code *is* nullary but an exception is thrown from within it
+            # ...we provoke a "Too few positionals..."-exception ourselves,
+            # right here, catch and store it in $x. If calling $code with no args
+            # does indeed die we compare its backtrace and msg to those of $x.
+            # 
+            # So: >>>> the following *MUST BE KEPT ON THE VERY SAME LINE!* <<<<
+            try { -> $_ {}(); CATCH { $x := $! } }; $returnValue := $code();
+            
+            CATCH {
+                # store the error from calling $code with no args
+                $error := $!;
+                
+                # get info of the relevant backtrace frames
+                my $mine := nqp::backtrace($x)[0]<annotations>;
+                my $them := nqp::backtrace($!)[1]<annotations>; # one more frame on top for our call
+                
+                # use file plus line plus message to identify where and what was thrown
+                $mine := $mine<file> ~ ':' ~ $mine<line> ~ ':"' ~ nqp::escape(~$x) ~ '"';
+                $them := $them<file> ~ ':' ~ $them<line> ~ ':"' ~ nqp::escape(~$!) ~ '"';
+                
+                # Finally, their being equal we take as indication that it was our call with no args
+                # that triggered the exception (meaning that $code indeed expects args).
+                # Note: it is still possible that $code indeed is nullary but contains a literal
+                #       `nqp::die("Too few positionals passed; expected 1 argument but got 0"`
+                #       on the top level - in which case it is simply lying, and we just cannot tell.
+                $becauseNonNullary := $mine eq $them;
+            }
+        }
+        if $error =:= NO_VALUE { # calling $code did NOT yield an exception -> must have a return value
+            return hash(
+                :error(nqp::null),
+                :returned($returnValue),
+            );
+        } else {    # calling $code DID yield an exception -> explain why
+            return hash(
+                :error($error),
+                :$becauseNonNullary
+            );
+        }
+    }
 
 
     method passes_ok($block, $desc) {
@@ -149,62 +195,50 @@ class Testing {
         my $tc := $test_counter;
         my $depth := +@*TEST_OF_TEST;
         @*TEST_OF_TEST.push('passes_ok');                                       # REFACTOR: "fails_ok" -> "passes_ok"
+        
         $desc := $desc ~ ' passes';                                             # REFACTOR: "fails" -> "passes"
-        my $result := NO_VALUE;
-        my $error  := NO_VALUE;
-        my $inner_returned;
-        my $x;
-        my $isMisuse;
-        try {
-            # In order to tell apart
-            #   a) $block itself is not nullary (~> passes_ok should throw) and
-            #   b) $block is nullary but throws an exception from within it
-            # ...we make an exception ourselves, right here - then compare backtrace and msg
-            # So: >>>> MUST keep the following *ON THE SAME LINE!* <<<<
-            try { -> $x {}(); CATCH { $x := $! } }; $inner_returned := $block();
-            
-            CATCH {
+        my $result;
+        
+        my %block_outcome := self.invokeNullaryChecked($block);
+        my $error := %block_outcome<error>;
+        if $error {
+            if %block_outcome<becauseNonNullary> { # we've been passed an inappropriate $block
+                # cleanup 
+                nqp::setelems(@*TEST_OF_TEST, $depth);
+                $test_counter := $tc;
+                # ...and complain
+                nqp::die('passes_ok expects a nullary invokable as first arg - "' ~ nqp::escape($error) ~ '"');
+            } else { # $block died inside it -> we fail with appropriate message
                 $result := 0;
-                $error  := $!;
-                my $mine := nqp::backtrace($x)[0]<annotations>;
-                my $them := nqp::backtrace($!)[1]<annotations>; # one more frame on top for our call
-                $mine := $mine<file> ~ ':' ~ $mine<line> ~ ':"' ~ nqp::escape(~$x) ~ '"';
-                $them := $them<file> ~ ':' ~ $them<line> ~ ':"' ~ nqp::escape(~$!) ~ '"';
-                $isMisuse := $mine eq $them;
-                
                 $desc := "$desc\n  # should pass but died: '"                   # REFACTOR: "fail" -> "pass"
-                                     ~ nqp::escape($error) ~ "'"
-                            #~ "\n    # theirs: " ~ nqp::join("\n    # theirs: ", nqp::backtracestrings($!))
-                            ~ "\n    # theirs: " ~ $them
-                            #~ "\n    #   mine: " ~ $x
-                            #~ "\n    #   mine: " ~ nqp::join("\n    #   mine: ", nqp::backtracestrings($x))
-                            ~ "\n    #   mine: " ~ $mine
-                            ~ "\n"
-                ;            }
-        }
-        if $result =:= NO_VALUE { # did not throw
-            my $inner_outcome := (+@*TEST_OF_TEST == $depth + 1) && @*TEST_OF_TEST.pop;
-            if nqp::ishash($inner_outcome) {
-                if !$inner_returned {                                           # REFACTOR: $inner_returned -> !$inner_returned
-                    $result := 0;
+                                     ~ nqp::escape($error) ~ "'" # TODO: should we show its backtrace?
+                ;
+            }
+        } else { # $block did not die -> must have returned something
+            my $block_returned := %block_outcome<returned>;
+            # Now check if there were tests and if so, whether they passed
+            my $inner_tests_outcome := (+@*TEST_OF_TEST == $depth + 1) && @*TEST_OF_TEST.pop;
+            if nqp::ishash($inner_tests_outcome) {  # $block actually did contain tests
+                if !$block_returned {                                           # REFACTOR: $block_returned -> !$block_returned
+                    $result := 0;   # we fail if test(s) in $block failed
                     $desc := "$desc\n  # should pass but failed: "              # REFACTOR: "fail but passed" -> "pass but failed"
-                           ~ '"' ~ nqp::escape($inner_outcome<output>) ~ '"'
+                           ~ '"' ~ nqp::escape($inner_tests_outcome<output>) ~ '"'
                     ;
                 } else {
-                    $result := 1;
+                    $result := 1;   # we pass if test(s) in $block passed
                 }
-            } else {
-                $result := 0;
-                if $tc == $test_counter {
+            } else {    # looks like no tests in $block
+                $result := 0;   # we fail, for sure
+                if $tc == $test_counter {   # seems $block simply did not contain any test code
                     $desc := $desc
                         ~ "\n  # should pass but no tests"                      # REFACTOR: "fail" -> "pass"
-                        ~ "\n  # returned: '" ~ self.describe($inner_returned)
+                        ~ "\n  # returned: '" ~ self.describe($block_returned)
                     ;
-                } else {
+                } else {    # worse: something's deeply broken with the test-of-test protocol - or we're being fooled...
                     $desc := $desc
                         ~ "\n  # should pass but broke test-of-test protocol"   # REFACTOR: "fail" -> "pass"
                         ~ "\n  # inner tests: " ~ ($test_counter - $tc) ~ ' (it seems...)'
-                        ~ "\n  #    returned: " ~ self.describe($inner_returned)
+                        ~ "\n  #    returned: " ~ self.describe($block_returned)
                         ~ "\n  # testoftests: " ~ $depth
                     ;
                 }
@@ -214,8 +248,7 @@ class Testing {
         # clean up
         nqp::setelems(@*TEST_OF_TEST, $depth);
         $test_counter := $tc;
-        nqp::die('passes_ok expects a nullary invokable as first arg - "' ~ nqp::escape($error) ~ '"')
-            if $isMisuse;
+
         self.ok($result, $desc);
     }
 
