@@ -12,14 +12,16 @@ use testing;
 # The latter meaning: by how much should it be advanced in a certain
 # situtation, if at all?
 
-plan(95);
+plan(119);
 
 
 # Handy thing for keeping an eye on the test_counter.
 # Note that we're not (yet) using `is` but rather do it all by hand,
 # relying only on `ok`.
 my int $tc;
-sub testcounter_ok(int $how_many_more, $desc = 'test_counter') {
+sub testcounter_ok(int $how_many_more, $desc = NO_VALUE) {
+    $desc := "test_counter+$how_many_more"
+        if $desc =:= NO_VALUE;
     my int $actual := $test_counter;
     my int $expected := $tc + $how_many_more;
     my $result;
@@ -37,8 +39,6 @@ sub testcounter_ok(int $how_many_more, $desc = 'test_counter') {
     $tc := $test_counter;   # update for next use
     $result;    # need to return this, *not* $tc!
 }
-
-
 
 
 # But: is `ok` really ok?
@@ -65,7 +65,7 @@ testcounter_ok(0, '`diag` does not advance test_counter');
 # Start off by checking for failure/passing of normal tests,
 # keeping an eye on the test_counter:
 diag('fails_ok/passes_ok on normal tests that actual pass or fail:');
-diag('"ok XX test_counter" means from now on: "inner tests are not counted on the outside (= as it should be)"');
+diag('"ok XX test_counter+Y" means from now on: "inner tests are not counted on the outside (= as it should be)"');
 
 my $passingS := 'ok(1, "foo")';
 my $passing := { ok(1, "foo") };
@@ -268,10 +268,80 @@ fails_ok({ lives_ok($failingThenDying, "'$failingThenDyingS'") }, "'lives_ok($fa
 testcounter_ok(1);
 
 
+# Stop the toying now, here's when fails_ok/passes should throw:
+diag('fails_ok/passes_ok should throw when given non-invokable 1st arg:');
+# TODO: check error msgs (should say it's not invokable)
+
+dies_ok({ fails_ok(0, "literal 0") },               "'fails_ok(0, ...)'");
+testcounter_ok(1);
+
+dies_ok({ fails_ok(1, "literal 1") },               "'fails_ok(1, ...)'");
+testcounter_ok(1);
+
+dies_ok({ fails_ok("foo", "literal \"foo\"") },     "'fails_ok(\"foo\", ...)'");
+testcounter_ok(1);
+
+dies_ok({ fails_ok(nqp::null, "nqp::null") },       "'fails_ok(nqp::null, ...)'");
+testcounter_ok(1);
+# --------vvvvv---------------------------------------vvvvvv
+dies_ok({ passes_ok(0, "literal 0") },              "'passes_ok(0, ...)'");
+testcounter_ok(1);
+
+dies_ok({ passes_ok(1, "literal 1") },              "'passes_ok(1, ...)'");
+testcounter_ok(1);
+
+dies_ok({ passes_ok("foo", "literal \"foo\"") },    "'passes_ok(\"foo\", ...)'");
+testcounter_ok(1);
+
+dies_ok({ passes_ok(nqp::null, "nqp::null") },      "'passes_ok(nqp::null, ...)'");
+testcounter_ok(1);
 
 
+diag('fails_ok/passes_ok should throw when given invokable 1st arg which is non-0-arity:');
+# TODO: check error msgs (should say it's not invokable)
 
-#fails_ok({ nqp::die("fuck") }, "asdf");
+my $unaryS := '-> $x { $x }';
+my $unary  :=  -> $x { $x };
+
+# We should be able to differentiate between the above (plain misuse of fails_ok/passes/ok)
+# and a proper nullary, which, when called with no args throws *from within it*:
+my $nullaryBoomS := '-> { nqp::die("boom!") }';
+my $nullaryBoom  :=  -> { nqp::die("boom!") };
+
+# Also, it could be a proper nullary, which when called with no args, 
+# triggers *within it* a 'Too few positionals passed; ...':
+my $nullaryTrickyBoomS := "-> \{ $unaryS() }";
+my $nullaryTrickyBoom  :=  ->  { $unary()  };
+
+# Finally, a proper nullary could, when called with no args, 
+# literally throw a 'Too few positionals passed; expected 1 argument but got 0'
+# - right there (thereby lying, kind of).
+# Well, that's the point where we have to give up...
+my $nullaryViciousBoomS := '-> { nqp::die("Too few positionals passed; expected 1 argument but got 0") }';
+my $nullaryViciousBoom  :=  -> { nqp::die("Too few positionals passed; expected 1 argument but got 0") }; 
+
+
+##passes_ok($unary, "'$unaryS'");    # dies as it should
+dies_ok({ passes_ok($unary, "'$unaryS'") }, "'passes_ok($unaryS, ...)'");
+testcounter_ok(1);
+
+##passes_ok($nullaryBoom, "'$nullaryBoomS'");    # fails as it should
+fails_ok({ passes_ok($nullaryBoom, "'$nullaryBoomS'") }, "'passes_ok($nullaryBoomS, ...)'");
+testcounter_ok(1);
+
+##passes_ok($nullaryTrickyBoom, "'$nullaryTrickyBoomS'");    # fails as it should
+fails_ok({ passes_ok($nullaryTrickyBoom, "'$nullaryTrickyBoomS'") }, "'passes_ok($nullaryTrickyBoomS, ...)'");
+testcounter_ok(1);
+
+## Here we must give up - it is simply lying!
+##passes_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'");   # dies as if we passed a non-nullary
+dies_ok({ passes_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'") }, "'passes_ok($nullaryViciousBoomS, ...)'");
+testcounter_ok(1);
+
+# TODO: same with fails_ok, then dies_ok and lives_ok, too
+# --------vvvvv---------------------------------------vvvvvv
+
+
 
 #is_eq("asdf", "asdf", "should fail");
 #is_eq(1, "asdf", "should throw");

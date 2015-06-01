@@ -30,6 +30,16 @@ class Testing {
             $out := '"' ~ nqp::escape($x) ~ '" (str)';
         } elsif nqp::isnull($x) {
             $out := 'nqp::null';
+        } elsif nqp::ishash($x) {
+            $out := 'nqp::hash(';
+            my @pairs := [];
+            for $x {
+                my $k := nqp::iterkey_s($_);
+                my $v := nqp::iterval($_);
+                @pairs.push($k);
+                @pairs.push(self.describe($v));
+            }
+            $out := $out ~ nqp::join(', ', @pairs) ~ ')';
         } else {
             if nqp::can($x, 'HOW') && nqp::can($x.HOW, 'name') {
                 $out := $x.HOW.name;
@@ -74,6 +84,9 @@ class Testing {
     }
 
     method fails_ok($block, $desc) {
+        nqp::die('fails_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
+            unless nqp::isinvokable($block);
+        
         my $tc := $test_counter;
         my $depth := +@*TEST_OF_TEST;
         @*TEST_OF_TEST.push('fails_ok');
@@ -86,7 +99,10 @@ class Testing {
             CATCH {
                 $result := 0;
                 $error  := $!;
-                $desc := "$desc\n  # should fail but died: '" ~ nqp::escape($error) ~ "'";
+                $desc := "$desc\n  # should fail but died: '" 
+                                     ~ nqp::escape($error) ~ "'" 
+                            ~ "\n    # " ~ nqp::join("\n    # ", nqp::backtracestrings($!))
+                ;
             }
         }
         if $result =:= NO_VALUE { # did not throw
@@ -127,6 +143,9 @@ class Testing {
 
 
     method passes_ok($block, $desc) {
+        nqp::die('passes_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
+            unless nqp::isinvokable($block);
+
         my $tc := $test_counter;
         my $depth := +@*TEST_OF_TEST;
         @*TEST_OF_TEST.push('passes_ok');                                       # REFACTOR: "fails_ok" -> "passes_ok"
@@ -134,14 +153,34 @@ class Testing {
         my $result := NO_VALUE;
         my $error  := NO_VALUE;
         my $inner_returned;
+        my $x;
+        my $isMisuse;
         try {
-            $inner_returned := $block();
+            # In order to tell apart
+            #   a) $block itself is not nullary (~> passes_ok should throw) and
+            #   b) $block is nullary but throws an exception from within it
+            # ...we make an exception ourselves, right here - then compare backtrace and msg
+            # So: >>>> MUST keep the following *ON THE SAME LINE!* <<<<
+            try { -> $x {}(); CATCH { $x := $! } }; $inner_returned := $block();
+            
             CATCH {
                 $result := 0;
                 $error  := $!;
+                my $mine := nqp::backtrace($x)[0]<annotations>;
+                my $them := nqp::backtrace($!)[1]<annotations>; # one more frame on top for our call
+                $mine := $mine<file> ~ ':' ~ $mine<line> ~ ':"' ~ nqp::escape(~$x) ~ '"';
+                $them := $them<file> ~ ':' ~ $them<line> ~ ':"' ~ nqp::escape(~$!) ~ '"';
+                $isMisuse := $mine eq $them;
+                
                 $desc := "$desc\n  # should pass but died: '"                   # REFACTOR: "fail" -> "pass"
-                    ~ nqp::escape(~$error) ~ "'";
-            }
+                                     ~ nqp::escape($error) ~ "'"
+                            #~ "\n    # theirs: " ~ nqp::join("\n    # theirs: ", nqp::backtracestrings($!))
+                            ~ "\n    # theirs: " ~ $them
+                            #~ "\n    #   mine: " ~ $x
+                            #~ "\n    #   mine: " ~ nqp::join("\n    #   mine: ", nqp::backtracestrings($x))
+                            ~ "\n    #   mine: " ~ $mine
+                            ~ "\n"
+                ;            }
         }
         if $result =:= NO_VALUE { # did not throw
             my $inner_outcome := (+@*TEST_OF_TEST == $depth + 1) && @*TEST_OF_TEST.pop;
@@ -175,6 +214,8 @@ class Testing {
         # clean up
         nqp::setelems(@*TEST_OF_TEST, $depth);
         $test_counter := $tc;
+        nqp::die('passes_ok expects a nullary invokable as first arg - "' ~ nqp::escape($error) ~ '"')
+            if $isMisuse;
         self.ok($result, $desc);
     }
 
@@ -271,7 +312,6 @@ class Testing {
     }
 
 }
-
 
 
 sub diag($msg)                      is export { Testing.diag($msg) }
