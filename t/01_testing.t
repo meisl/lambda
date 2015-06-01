@@ -12,7 +12,7 @@ use testing;
 # The latter meaning: by how much should it be advanced in a certain
 # situtation, if at all?
 
-plan(119);
+plan(134);
 
 
 # Handy thing for keeping an eye on the test_counter.
@@ -57,13 +57,86 @@ testcounter_ok(1, '`ok` advances test_counter by 1');
 ok(@arr ?? 0 !! 1, 'empty-again array is falsey');
 testcounter_ok(1, '`ok` advances test_counter by 1');
 
+
 # Hmm, `diag` isn't really a test fn, so:
+$tc := $test_counter;   # reset it once more
 diag('just calling diag to see if it (NOT!) advances the test_counter...');
 testcounter_ok(0, '`diag` does not advance test_counter');
 
 
-# Start off by checking for failure/passing of normal tests,
-# keeping an eye on the test_counter:
+# Need to be able to give helpful descriptions of things, particulary in error msgs.
+# Note: these would be a lot more convenient (concise) if we were to use `is`...
+diag('describe:');
+my $d;
+# int
+$d := describe(0);
+testcounter_ok(0, '`describe` does not advance test_counter');
+
+ok($d eq '0 (int)', "0 is described as '0 (int)'")
+    || diag("actual: $d");
+
+$d := describe(23);
+ok($d eq '23 (int)', "23 is described as '23 (int)'")
+    || diag("actual: $d");
+
+# num
+$d := describe(3.1415);
+ok($d eq '3.1415 (num)', "3.1415 is described as '3.1415 (num)'")
+    || diag("actual: $d");
+
+$d := describe(0.0);
+ok($d eq '0 (num)', "0.0 is described as '0 (num)'")
+    || diag("actual: $d");
+
+# str
+$d := describe("");
+ok($d eq '"" (str)', '"" (empty string) is described as \'"" (str)\'')
+    || diag("actual: $d");
+
+$d := describe("foo");
+ok($d eq '"foo" (str)', '"foo" is described as \'"foo" (str)\'')
+    || diag("actual: $d");
+
+# just to be sure:
+ok(nqp::isstr(nqp::null_s), 'nqp::null_s is a str');
+ok(!nqp::isstr(nqp::null), 'nqp::null is NOT a str');
+ok(!nqp::isnull(nqp::null_s), '...and nqp::null_s does NOT pass the nqp::isnull test');
+
+$d := nqp::null_s;
+$d := describe(nqp::null_s);
+ok($d eq 'nqp::null_s (str)', 'nqp::null_s is described as \'nqp::null_s (str)\'')
+    || diag("actual: $d");
+
+# null
+$d := describe(nqp::null);
+ok($d eq 'nqp::null', "nqp::null is described as 'nqp::null'")
+    || diag("actual: $d");
+
+# type object
+$d := describe(NQPMu);
+ok($d eq '(NQPMu, Type object)', "NQPMu is described as '(NQPMu, Type object)'")
+    || diag("actual: $d");
+
+## gives 'NQPMu, Type object)' ... !?
+#$d := describe(NO_VALUE);
+#ok($d eq '(NO_VALUE, Type object)', "NO_VALUE is described as '(NO_VALUE, Type object)'")
+#    || diag("actual: $d");
+
+# invokable
+$d := describe(-> { 5 });
+ok($d eq '(BOOTCode, invokable)', "-> \{ 5 } is described as '(BOOTCode, invokable)'")
+    || diag("actual: $d");
+
+$d := describe(sub foo($x) { $x });
+ok($d eq '(BOOTCode, invokable)', "sub foo(\$x) \{ \$x } is described as '(BOOTCode, invokable)'")
+    || diag("actual: $d");
+
+# TODO: other cases like hash and list; also instances
+
+
+
+# About real test fns: start off by checking for failure/passing
+# of normal tests, keeping an eye on the test_counter:
 diag('fails_ok/passes_ok on normal tests that actual pass or fail:');
 diag('"ok XX test_counter+Y" means from now on: "inner tests are not counted on the outside (= as it should be)"');
 

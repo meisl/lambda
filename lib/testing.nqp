@@ -25,8 +25,12 @@ class Testing {
         } elsif nqp::isnum($x) {
             $out := "$x (num)";
         } elsif nqp::isstr($x) {
-            $out := '"' ~ nqp::escape($x) ~ '" (str)';
-        } elsif nqp::isnull($x) {
+            if nqp::isnull_s($x) {
+                $out := 'nqp::null_s (str)';
+            } else {
+                $out := '"' ~ nqp::escape($x) ~ '" (str)';
+            }
+        } elsif nqp::isnull($x) {   # note: nqp::null_s would NOT pass the nqp::isnull test
             $out := 'nqp::null';
         } elsif nqp::ishash($x) {
             $out := 'nqp::hash(';
@@ -39,16 +43,20 @@ class Testing {
             }
             $out := $out ~ nqp::join(', ', @pairs) ~ ')';
         } else {
-            if nqp::can($x, 'HOW') && nqp::can($x.HOW, 'name') {
-                $out := $x.HOW.name;
+            my $how := nqp::how($x);
+            if $how {
+                $out := $how.name($x);
             } else {
                 $out := nqp::reprname($x);
             }
-            $out := $out ~ ', Type object'
-                unless nqp::isconcrete($x);
-            $out := $out ~ ', invokable'
-                if nqp::isinvokable($x);
-            $out := (nqp::can($x, 'Str') ?? $x.Str !! '???') ~ " ($out)";
+            
+            unless nqp::isconcrete($x) {
+                $out := $out ~ ', Type object'
+            }
+            if nqp::isinvokable($x) {
+                $out := $out ~ ', invokable';
+            }
+            $out := (nqp::can($x, 'Str') ?? $x.Str ~ ' ' !! '') ~ "($out)";
         }
         $out;
     }
@@ -355,4 +363,3 @@ sub passes_ok($block, $desc?)       is export { Testing.passes_ok($block, $desc)
 sub lives_ok($block, $desc?)        is export { Testing.lives_ok($block, $desc) }
 sub dies_ok($block, $desc?)         is export { Testing.dies_ok($block, $desc) }
 sub is($actual, $expected, $desc?)  is export { Testing.is($actual, $expected, $desc) }
-
