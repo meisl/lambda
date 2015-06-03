@@ -41,10 +41,13 @@ sub whatsit($v) is export {
     #} elsif nqp::istype($v, Something) { ??? }
     } elsif nqp::isnull($v) {
         return $reprname;
-    } elsif nqp::can($v, 'HOW') && nqp::can($v.HOW, 'name') {
-        return $v.HOW.name($v);
     } else {
-        return $reprname;
+        my $how := nqp::how($v);
+        if $how {
+            return $how.name($v);
+        } else {
+            return $reprname;
+        }
     }
 }
 
@@ -115,6 +118,12 @@ sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
             }
         }
     }
+
+    my %annotations := nqp::getattr($node, QAST::Node, '%!annotations');
+    if %annotations {
+        $specialStr := $specialStr ~ ' :annotations(' ~ whatsit(%annotations) ~ ')';
+    }
+
 
     if $clsStr eq 'Op' {
         $extraStr := nqp::substr($extraStr, 1);
@@ -485,7 +494,7 @@ sub findValueNodeInHash($keyPredicate, $valuePredicate, $hash = NO_VALUE) is exp
     if $hash =:= NO_VALUE {
         return -> $hash { findValueNodeInHash($keyPredicate, $valuePredicate, $hash) }
     } elsif !nqp::istype($hash, QAST::Node) {
-        nqp::die('findValueNodeInHash expects a fn as (optional) 3rd arg - got ' ~ whatsit($hash));
+        nqp::die('findValueNodeInHash expects a QAST::Node as (optional) 3rd arg - got ' ~ whatsit($hash));
     }
     my $found := nqp::null;
     if nqp::istype($hash, QAST::Op) && $hash.op eq 'hash' {
@@ -866,13 +875,13 @@ class SmartCompiler is NQP::Compiler {
         });
         $ast := inline_simple_subs($ast, @inlinecandidates);
 
-        $ast := renameVars($ast, -> $s {
-            my str $fst := nqp::substr($s, 0, 1);
-            my str $snd := nqp::substr($s, 1, 1);
-            $fst eq '&' || $snd eq 'λ'
-                ??  '.' ~ nqp::substr($s, 1)
-                !! $s;
-        });
+        #$ast := renameVars($ast, -> $s {
+        #    my str $fst := nqp::substr($s, 0, 1);
+        #    my str $snd := nqp::substr($s, 1, 1);
+        #    $fst eq '&' || $snd eq 'λ'
+        #        ??  '.' ~ nqp::substr($s, 1)
+        #        !! $s;
+        #});
 
         $ast;
     }
@@ -911,8 +920,9 @@ class SmartCompiler is NQP::Compiler {
             }
         });
         my $infoHash := $findStatsHash($infoHashDef[1]);
-        if $infoHash {
-#            say(dump($infoHashDef));
+        say('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' ~ nqp::istype($infoHash, QAST::Op));
+        if nqp::istype($infoHash, QAST::Op) && ($infoHash.op eq 'hash') {
+            say(dump($infoHashDef));
             my $findStatNode := -> $statKey {
                 findValueNodeInHash(svalPred($statKey), ivalPred(), $infoHash)
             };
@@ -945,6 +955,71 @@ class SmartCompiler is NQP::Compiler {
 
 }
 
+class NQPActions is NQP::Actions {
+    
+    method statement_control:sym<use>($/) {
+        my $out;
+
+        my @expPathUp := [];
+        my $export := findPath(-> $node, @pathUp {
+            nqp::istype($node, QAST::Var) && ($node.name eq 'EXPORT') && $node.decl eq 'static'
+                || $node.list;
+        }, $*UNIT, @expPathUp);
+
+        if $export {
+            my $deps := findPath(-> $node, @pathUp {
+                if (+@pathUp > 1) && @pathUp[1] =:= @expPathUp[0] {
+                    my $parent := @pathUp[0];
+                    my $brother := $parent[0];
+                    nqp::istype($node, QAST::Op) && $node.op eq 'list'
+                        && nqp::istype($parent, QAST::Op) && $parent.op eq 'bind'
+                        && nqp::istype($brother, QAST::Var) && ($brother.name eq '@?DEPENDENCIES')
+                        || $node.list;
+                } else {
+                    $node.list
+                }
+            }, $*UNIT);
+
+            
+
+            unless $deps {
+                $deps := QAST::Op.new(:op<list>);
+                my $depsBinding := QAST::Op.new(:op<bind>,
+                    QAST::Var.new(
+                        :name('@?DEPENDENCIES'),
+                        :scope<lexical>,
+                        :decl<static>,
+                    ),
+                    $deps
+                );
+                @expPathUp[0].push($depsBinding);
+                say(dump(@expPathUp[0]));
+            }
+
+            $deps.push(QAST::SVal.new(:value($/<name>), :node($/)));
+
+            say('>>>>>> dependency: "' ~ $/<name> ~ '"');
+        }
+
+        my $super := nqp::findmethod(NQP::Actions, 'statement_control:sym<use>');
+        $out := $super(self, $/);
+        #$out := QAST::Stmts.new();
+
+        #my $glob := findPath(-> $node, @pathUp {
+        #    nqp::istype($node, QAST::Var) && ($node.name eq 'GLOBALish')
+        #        || $node.list;
+        #}, $*UNIT);
+        #say('>>>>>> ', dump($glob));
+        #say('>>>>>> ', whatsit(nqp::who($glob.default)));
+        
+        $out.node($/);
+        $out.annotate('use', ~$/<name>);
+        say(dump($out));
+        make $out;
+    }
+}
+
+
 
 my $needsCompilation := 0;
 
@@ -953,7 +1028,7 @@ class NQPCompiler is SmartCompiler {
     method BUILD() {
         self.language('nqp');
         self.parsegrammar(NQP::Grammar);
-        self.parseactions(NQP::Actions);
+        self.parseactions(NQPActions);
         return self;
     }
 
@@ -967,7 +1042,7 @@ class NQPCompiler is SmartCompiler {
         my $nqpName := "$lib/$file.nqp";
         #say("<nqpc> $nqpName: target=$target ");
         my $qastName := "$nqpName.qast";
-        my $mvmName := "$lib/$file.moarvm";
+        my $mvmName := "blib/$file.moarvm";
         if !nqp::filereadable($nqpName) {
             nqp::die("no such file: $nqpName");
         }
@@ -1031,7 +1106,7 @@ class NQPCompiler is SmartCompiler {
                 $from := nqp::index($msglc, '\'') + 1;
                 $to   := nqp::index($msglc, '\'', $from);
                 my $file := nqp::substr($msg, $from, $to - $from);
-                say('Error: missing module "', $file ~ '"');
+                say('Error: missing module "', $file ~ '" (original error: "' ~ nqp::escape($msg) ~ '")');
             } elsif nqp::index($msglc, 'unable to write bytecode') > -1 {
                 $from := nqp::index($msglc, '\'') + 1;
                 $to   := nqp::index($msglc, '\'', $from);
@@ -1119,11 +1194,17 @@ sub MAIN(*@ARGS) {
         #@ARGS.push('LActions');
         #@ARGS.push('L');
 
-        @ARGS.push('runtime');
-        $nqpc.addstage('ast_clean', :before<ast_save>);
-        $nqpc.addstage('ast_stats', :before<ast_save>);
+        #@ARGS.push('runtime');
+        ##$nqpc.addstage('ast_clean', :before<ast_save>);
+        #$nqpc.addstage('ast_stats', :before<ast_save>);
+        #%opts<stagestats> := 1;
+        #%opts<target>     := '';    # ...and run it
+
+        @ARGS.push('testing');
+        #$nqpc.addstage('ast_stats', :before<ast_save>);
+        #$nqpc.addstage('optimize', :before<ast_save>);
         %opts<stagestats> := 1;
-        %opts<target>     := '';    # ...and run it
+        #%opts<target>     := '';    #   ast_save';
     }
 
 
