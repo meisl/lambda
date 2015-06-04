@@ -89,6 +89,57 @@ class Testing {
         $condition ?? 1 !! 0;
     }
 
+
+    method invokeNullaryChecked($code) {
+        my $error := NO_VALUE;
+        my $returnValue;
+        my $becauseNonNullary;
+        try {
+            my $x;
+            # In order to tell apart whether
+            #   a) $code is not nullary (and therefore throws) or
+            #   b) $code *is* nullary but an exception is thrown from within it
+            # ...we provoke a "Too few positionals..."-exception ourselves,
+            # right here, and catch and store it in $x.
+            # The we call $code with no args and if that indeed dies we compare 
+            # its backtrace and msg with those of $x.
+            # 
+            # So: >>>> the following *MUST BE KEPT ON THE VERY SAME LINE!* <<<<
+            try { -> $_ {}(); CATCH { $x := $! } }; $returnValue := $code();
+            
+            CATCH {
+                # store the error from calling $code with no args
+                $error := $!;
+                
+                # get info of the relevant backtrace frames
+                my $mine := nqp::backtrace($x)[0]<annotations>;
+                my $them := nqp::backtrace($!)[1]<annotations>; # one more frame on top for our call
+                
+                # use file plus line plus message to identify where and what was thrown
+                $mine := $mine<file> ~ ':' ~ $mine<line> ~ ':"' ~ nqp::escape(~$x) ~ '"';
+                $them := $them<file> ~ ':' ~ $them<line> ~ ':"' ~ nqp::escape(~$!) ~ '"';
+                
+                # Finally, their being equal we take as indication that it was our call with no args
+                # that triggered the exception (meaning that $code indeed expects args).
+                # Note: it is still possible that $code is actually nullary but contains a literal
+                #       `nqp::die("Too few positionals passed; expected 1 argument but got 0)"`
+                #       on the top level - in which case it is simply lying, and we just cannot tell.
+                $becauseNonNullary := $mine eq $them;
+            }
+        }
+        if $error =:= NO_VALUE { # calling $code did NOT yield an exception -> must have a return value
+            return hash(
+                :error(nqp::null),
+                :returned($returnValue),
+            );
+        } else {    # calling $code DID yield an exception -> tell why
+            return hash(
+                :error($error),
+                :$becauseNonNullary
+            );
+        }
+    }
+
     method fails_ok($block, $desc) {
         nqp::die('fails_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
             unless nqp::isinvokable($block);
@@ -145,56 +196,6 @@ class Testing {
         $test_counter := $tc;
         self.ok($result, $desc);
     }
-
-    method invokeNullaryChecked($code) {
-        my $error := NO_VALUE;
-        my $returnValue;
-        my $becauseNonNullary;
-        try {
-            my $x;
-            # In order to tell apart whether
-            #   a) $code is not nullary (and therefore throws) or
-            #   b) $code *is* nullary but an exception is thrown from within it
-            # ...we provoke a "Too few positionals..."-exception ourselves,
-            # right here, catch and store it in $x. If calling $code with no args
-            # does indeed die we compare its backtrace and msg to those of $x.
-            # 
-            # So: >>>> the following *MUST BE KEPT ON THE VERY SAME LINE!* <<<<
-            try { -> $_ {}(); CATCH { $x := $! } }; $returnValue := $code();
-            
-            CATCH {
-                # store the error from calling $code with no args
-                $error := $!;
-                
-                # get info of the relevant backtrace frames
-                my $mine := nqp::backtrace($x)[0]<annotations>;
-                my $them := nqp::backtrace($!)[1]<annotations>; # one more frame on top for our call
-                
-                # use file plus line plus message to identify where and what was thrown
-                $mine := $mine<file> ~ ':' ~ $mine<line> ~ ':"' ~ nqp::escape(~$x) ~ '"';
-                $them := $them<file> ~ ':' ~ $them<line> ~ ':"' ~ nqp::escape(~$!) ~ '"';
-                
-                # Finally, their being equal we take as indication that it was our call with no args
-                # that triggered the exception (meaning that $code indeed expects args).
-                # Note: it is still possible that $code indeed is nullary but contains a literal
-                #       `nqp::die("Too few positionals passed; expected 1 argument but got 0"`
-                #       on the top level - in which case it is simply lying, and we just cannot tell.
-                $becauseNonNullary := $mine eq $them;
-            }
-        }
-        if $error =:= NO_VALUE { # calling $code did NOT yield an exception -> must have a return value
-            return hash(
-                :error(nqp::null),
-                :returned($returnValue),
-            );
-        } else {    # calling $code DID yield an exception -> explain why
-            return hash(
-                :error($error),
-                :$becauseNonNullary
-            );
-        }
-    }
-
 
     method passes_ok($block, $desc) {
         nqp::die('passes_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
