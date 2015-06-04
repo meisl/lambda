@@ -43,7 +43,15 @@ $v.scope('lexical');
 is(dump($v), '─○ lexical foo', 'dump Var with explicit scope');
 
 $b.push($v);
-is(dump($b), "──:Block\n  ╟─null\n  ╙○ lexical foo", 'dump Block with children');
-is(dump($b, :indent('# ')), "# ──:Block\n#   ╟─null\n#   ╙○ lexical foo", 'dump Block with children with indent');
+is(dump($b), 
+         "──:Block"
+     ~ "\n  ╟─null"
+     ~ "\n  ╙○ lexical foo", 
+'dump Block with children');
+is(dump($b, :indent('# ')), 
+        "# ──:Block"
+    ~ "\n#   ╟─null"
+    ~ "\n#   ╙○ lexical foo", 
+'dump Block with children with indent');
 is(dump($b, :oneLine), "((Block) (null) ( lexical foo))", 'dump Block with children on one line');
 
