@@ -115,18 +115,6 @@ sub drop_bogusVars($ast, $parent = nqp::null) {
     $ast;
 }
 
-sub repair_null_decl_attrs_of_vars($ast) {
-    nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
-        unless istype($ast, QAST::Node);
-    if istype($ast, QAST::Var) && !$ast.decl {
-        $ast.decl(nqp::null_s);
-    }
-    # recurse in any case, since it could be a VarWithFallback (which does have children)
-    for $ast.list {
-        repair_null_decl_attrs_of_vars($_);
-    }
-    $ast;
-}
 
 sub remove_bogusOpNames($ast) {
     nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
@@ -494,15 +482,12 @@ sub replace_assoc_and_pos_scoped($node) {
 }
 
 
-sub renameVars($ast, $map?) {
+sub renameVars($ast, $map) {
     nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ whatsit($ast) )
         unless istype($ast, QAST::Node);
-    if nqp::defined($map) {
-        nqp::die('renameVars expects a unary fn as 2nd arg(optional) - got ' ~ whatsit($map) )
-            unless nqp::isinvokable($map);
-    } else {
-        $map := -> str $name { $name };
-    }
+    nqp::die('renameVars expects a unary fn as 2nd arg(optional) - got ' ~ whatsit($map) )
+        unless nqp::isinvokable($map);
+
     if istype($ast, QAST::Var) 
        || (
           istype($ast, QAST::Op)
@@ -515,10 +500,8 @@ sub renameVars($ast, $map?) {
         }
     }
     #if istype($ast, QAST::Children) {
-    if nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
-        for $ast.list {
-            renameVars($_, $map);
-        }
+    for $ast.list {
+        renameVars($_, $map);
     }
     $ast;
 }
@@ -535,8 +518,9 @@ class SmartCompiler is NQP::Compiler {
 
     method BUILD() {
         # in this order (!):
-        self.addstage('ast_save',     :after<ast>);
-        #self.addstage('optimize',    :before<ast_save>);
+        self.addstage('ast_save',           :after<ast>);
+        self.addstage('fix_var_null_decls', :after<ast>);  # TODO: 
+        #self.addstage('optimize',           :before<ast_save>);
 
         # Add extra command line options.
         my @clo := self.commandline_options();
@@ -674,6 +658,21 @@ class SmartCompiler is NQP::Compiler {
 
     # additional stages
 
+    method fix_var_null_decls($ast) { # TODO: write in terms of TreeWalk
+        #nqp::die('fix_var_null_decls expects a QAST::Node - got ' ~ whatsit($ast) )
+        #    unless istype($ast, QAST::Node);
+        if istype($ast, QAST::Var) && !$ast.decl {
+            $ast.decl(nqp::null_s);
+        }
+
+        if istype($ast, QAST::Node) {
+            for $ast.list {
+                self.fix_var_null_decls($_);
+            }
+        }
+        $ast;
+    }
+
     method ast_clean($ast, *%adverbs) {
         self.log('ast_clean: ', self.user-progname, '...');
         
@@ -683,7 +682,6 @@ class SmartCompiler is NQP::Compiler {
         $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
         $ast := remove_bogusOpNames($ast);
         #$ast := remove_MAIN($ast);
-        $ast := repair_null_decl_attrs_of_vars($ast);
         
         # from here it's rather optimization...
         $ast := replace_assoc_and_pos_scoped($ast);
