@@ -1326,6 +1326,7 @@ sub MAIN(*@ARGS) {
     my $nqpc := NQPCompiler.new();
     my %opts := hash();
     say('CWD=', whatsit($cwd), "\n@ARGS=", whatsit(@ARGS));
+    
     nqp::exit(0);
 
     @ARGS.shift;  # first is program name

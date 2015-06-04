@@ -15,15 +15,43 @@ sub m2bin(str $m) { fixslashes('blib/' ~ m2path($m) ~'.moarvm') }
 sub needsCompilation($m) {
     my $bin := m2bin($m);
     my $src := m2src($m);
+    #say("$src: ", fileexists($bin) ?? filemtime($bin) - filemtime($src) !! -1);
     !fileexists($bin) || (filemtime($bin) < filemtime($src));
 }
 
+sub who($predicate, @xs) {
+    my @out := [];
+    for @xs {
+        @out.push($_) if $predicate($_);
+    }
+    @out;
+}
+
 sub any($predicate, @xs) {
-    for @xs { return 1 if $predicate($_) }
-    0;
+    nqp::elems(who($predicate, @xs)) > 0;
+}
+
+sub exec(*@pieces, :$whatwedo = NO_VALUE) {
+    my $cwd := nqp::cwd();
+    my $cmd := nqp::join(' ', @pieces);
+    #say("> $cmd");
+    my $out := nqp::shell($cmd, $cwd, nqp::getenvhash());
+    if $out {
+        $whatwedo := 'compiling ' ~ @pieces.pop
+           if $whatwedo =:= NO_VALUE;
+        nqp::sayfh(nqp::getstderr,
+               nqp::x('-', 40)
+             ~ "\nnqpc-bootstrap: ERROR $whatwedo -> return code $out"
+             ~ "\nnqpc-bootstrap: CWD=$cwd"
+             ~ "\nnqpc-bootstrap: cmd=$cmd"
+        );
+        nqp::exit($out);
+    }
 }
 
 sub compileAll(@ms) {
+    my $main    := @ms.pop; # last one assumed to be nqpc itself, will be run on itself
+    my $mainsrc := '"' ~ m2src($main) ~ '"';   
     my $rakudo  := nqp::backendconfig()<prefix>;
     my $moarexe := fixslashes($rakudo ~ '/bin/moar.exe');
     my $nqplibs := fixslashes($rakudo ~ '/languages/nqp/lib');
@@ -33,18 +61,25 @@ sub compileAll(@ms) {
     my $cwd     := nqp::cwd();
     my @ss := [];
     for @ms {
-        my $opts := '--target=mbc --output="' ~ m2bin($_) ~ '"';
         my $src  := '"' ~ m2src($_) ~ '"';
         @ss.push($src);
-        my $cmd := "$nqp $opts $src";
-        #say("> $cmd");
-        my $out := nqp::shell($cmd, $cwd, nqp::getenvhash());
-        nqp::die("nqpc-bootstrap: ERROR compiling $src"
-             ~ "\nnqpc-bootstrap: CWD=$cwd"
-             ~ "\nnqpc-bootstrap: cmd=$cmd"
-            ) if $out;
+        exec($nqp, '--target=mbc', '--output="' ~ m2bin($_) ~ '"', $src);
     }
-    say('nqpc-bootstrap: recompiled ' ~ nqp::join(', ', @ss));
+    @ms.push($main);
+    @ss.push($mainsrc);
+    exec($nqp, $mainsrc, $mainsrc, :whatwedo("running $mainsrc (interpreted) on itself"));
+    my $ss := nqp::join(', ', @ss);
+    my @problems := who(&needsCompilation, @ms);
+    if @problems {
+        nqp::sayfh(nqp::getstderr,
+               nqp::x('-', 40)
+             ~ "\nnqpc-bootstrap: ERROR bootstrapping from $ss"
+             ~ "\nnqpc-bootstrap: CWD=$cwd"
+             ~ "\nnqpc-bootstrap: still not up-to-date: " ~ nqp::join(', ', @problems)
+        );
+        nqp::exit(1);
+    }
+    say("nqpc-bootstrap: recompiled $ss");
 }
 
 my @ms := <testing L::LGrammar nqpc>;
