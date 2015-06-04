@@ -4,7 +4,7 @@ use QAST;   # that is, nqp'S
 use testing;
 use Util::QAST;
 
-plan(19);
+plan(24);
 
 
 my $s := QAST::SVal.new(:value<bar>);
@@ -17,21 +17,10 @@ my $n := QAST::NVal.new(:value(3.1415));
 is(dump($n), '─◙ NVal 3.1415', 'dump num constant');
 is(dump(QAST::NVal.new(:value(nqp::inf))), '─◙ NVal Inf', 'dump num constant with value inf');
 
-
-my $b := QAST::Block.new();
-is(dump($b), '──:Block', 'dump Block');
-is(dump($b, :indent('    ')), '    ──:Block', 'dump Block with indent');
-is(dump($b, :oneLine), '(Block)', 'dump Block on one line');
-
 my $nullop := QAST::Op.new(:op<null>);
 is(dump($nullop), '──null', 'dump Op null');
 is(dump($nullop, :indent('    ')), '    ──null', 'dump Op null with indent');
 is(dump($nullop, :oneLine), '(null)', 'dump Op null on one line');
-
-$b.push($nullop);
-is(dump($b), "──:Block\n  ╙─null", 'dump Block with child Op null');
-is(dump($b, :indent('# ')), "# ──:Block\n#   ╙─null", 'dump Block with child Op null with indent');
-is(dump($b, :oneLine), "((Block) (null))", 'dump Block with child Op null on one line');
 
 
 my $v := QAST::Var.new(:name<foo>);
@@ -42,16 +31,51 @@ is(dump($v), '─○  foo', 'dump Var w/out explicit scope and :decl set to null
 $v.scope('lexical');
 is(dump($v), '─○ lexical foo', 'dump Var with explicit scope');
 
+
+my $stmts := QAST::Stmts.new($nullop, $v);
+is(dump($stmts),
+         "──:Stmts"
+     ~ "\n  ├─null"
+     ~ "\n  └○ lexical foo", 
+'dump Stmts with children uses single vertical line to connect children');
+dies_ok( { ~$stmts }, 'stringifying QAST::Stmts as is');
+$stmts.HOW.mixin($stmts, StrByDump);
+is(~$stmts, 
+         "──:Stmts+\{StrByDump}"
+     ~ "\n  ├─null"
+     ~ "\n  └○ lexical foo", 
+'with role StrByDump mixed in it uses dump to stringify');
+
+my $b := QAST::Block.new();
+is(dump($b), '──:Block', 'dump Block');
+is(dump($b, :indent('    ')), '    ──:Block', 'dump Block with indent');
+is(dump($b, :oneLine), '(Block)', 'dump Block on one line');
+
+$b.push($nullop);
+is(dump($b), "──:Block\n  ╙─null", 'dump Block with child uses double vertical line to connect child');
+is(dump($b, :indent('# ')), "# ──:Block\n#   ╙─null", 'dump Block with child with indent');
+is(dump($b, :oneLine), "((Block) (null))", 'dump Block with child on one line');
+
 $b.push($v);
 is(dump($b), 
          "──:Block"
      ~ "\n  ╟─null"
      ~ "\n  ╙○ lexical foo", 
-'dump Block with children');
+'dump Block with children uses double vertical line to connect children');
 is(dump($b, :indent('# ')), 
         "# ──:Block"
     ~ "\n#   ╟─null"
     ~ "\n#   ╙○ lexical foo", 
-'dump Block with children with indent');
+'dump Block with children with indent uses double vertical line to connect children');
 is(dump($b, :oneLine), "((Block) (null) ( lexical foo))", 'dump Block with children on one line');
 
+
+
+# role StrByDump
+dies_ok( { ~$b }, 'stringifying QAST::Block as is');
+$b.HOW.mixin($b, StrByDump);
+is(~$b,  "──:Block+\{StrByDump}"
+     ~ "\n  ╟─null"
+     ~ "\n  ╙○ lexical foo", 
+'with role StrByDump mixed in it uses dump to stringify')
+    || diag("\n$b");

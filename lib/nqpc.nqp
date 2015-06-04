@@ -572,10 +572,6 @@ sub renameVars($ast, $map?) {
 
 
 
-role StrByDump {
-    method Str() { dump(self) }
-}
-
 class SmartCompiler is NQP::Compiler {
 
     # Where to search for user source files.

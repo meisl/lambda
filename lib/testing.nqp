@@ -3,6 +3,9 @@
 #my $test_counter := 0; # [cannot redeclare]
 my @*TEST_OF_TEST := [];
 
+
+# Don't export this - only a workaround for the weird problems with exporting subs
+# (can call them from outside but then they in turn cannot call themselves)
 class Testing {
 
     method say(*@pieces) {

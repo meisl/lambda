@@ -4,6 +4,12 @@ use QAST;   # that is, nqp's
 use Util;
 
 
+role StrByDump is export {
+    method Str() { dump(self) }
+}
+
+# Don't export this - only a workaround for the weird problems with exporting subs
+# (can call them from outside but then they in turn cannot call themselves)
 class Util::QAST {
     
     method dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) {
@@ -93,18 +99,18 @@ class Util::QAST {
             } elsif istypeAny($node, QAST::IVal, QAST::NVal) {
                 $extraStr := ' ' ~ ~$node.value;
             }
-        } elsif $clsStr eq 'Block' {
+        } elsif nqp::istype($node, QAST::Block) {
             $prefix := $prefix ~ '─:';
             my $bt := $node.blocktype;
             if $bt && $bt ne 'declaration' { # don't show default
                 $specialStr := $specialStr ~ ' :blocktype(' ~ $bt ~ ')';
             }
-        } elsif nqp::substr($clsStr, 0, 4) eq 'Stmt' {
+        } elsif nqp::istype($node, Stmts) {
             $prefix := $prefix ~ '─:';
         } else {
             $prefix := $prefix ~ '─';
         }
-
+        
         my $suffix := $matchStr;
         my $sep    := "\n";
         my $before := '';
