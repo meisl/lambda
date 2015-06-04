@@ -770,6 +770,10 @@ role StrByDump {
 
 class SmartCompiler is NQP::Compiler {
 
+    # Where to search for user source files.
+    # Must use forward slash '/' as dir separator & must NOT end in one!
+    has @!user_srcpaths;
+
     method BUILD() {
         # in this order (!):
         self.addstage('ast_save',     :after<ast>);
@@ -784,6 +788,19 @@ class SmartCompiler is NQP::Compiler {
         @clo.push('no-regex-lib');
         @clo.push('stable-sc');
         @clo.push('optimize=s');
+
+        # XXX don't hard-code this!
+        @!user_srcpaths := <. lib lib/L>;
+    }
+
+    # called "user-progname" (with a dash instead of an underscore) in HLL::Compiler
+    # which doesn't fit well with "compiler_progname"
+    method user_progname() {
+        self.user_progname();
+    }
+
+    method user_srcpaths() {
+        @!user_srcpaths;
     }
 
     method log($msg, *@moreMsgPieces) {
@@ -792,6 +809,52 @@ class SmartCompiler is NQP::Compiler {
             $out := $out ~ $_;
         }
         say($out);
+    }
+
+    method find_file($module_name, @search_paths, :$ext!) {
+        my $path;
+        my $file_name := nqp::join('/', nqp::split('::', $module_name)) ~ ".$ext";
+        for @search_paths {
+            $path := "$_/$file_name";
+            last if nqp::stat($path, nqp::const::STAT_EXISTS)
+                 #&& nqp::filereadable($path)
+            ;
+            $path := nqp::null;
+        }
+        $path;
+    }
+
+    method find_src(str $module_name, :$ext!) {
+        self.find_file($module_name, @!user_srcpaths, :$ext);
+    }
+    
+    method find_bytecode($module_name, :$ext!, :$with-nqplib) {
+            my $loader := nqp::getcurhllsym('ModuleLoader');
+            my @module_paths := $loader.search_path('module-path'); # path from opt --module-path=s, if any
+            if $with-nqplib {
+                @module_paths.unshift(nqp::backendconfig()<prefix> ~ '/languages/nqp/lib');
+            }
+            self.find_file($module_name, @module_paths, :$ext);
+    }
+
+    method compileDependency(str $module_name, @on_behalf) {
+        my $out;
+        my $src_path := self.find_src($module_name, :ext<nqp>);
+        if $src_path {
+            my $bc_path := self.find_bytecode($module_name, :ext<moarvm>);
+            if $bc_path {
+                my $src_time := nqp::stat($src_path, nqp::const::STAT_MODIFYTIME);
+                my $bc_time  := nqp::stat($bc_path,  nqp::const::STAT_MODIFYTIME);
+                if $src_time < $bc_time {
+                    return $bc_path; # up-to-date, no need to recompile
+                }
+            }
+            my $clone := nqp::clone(self);
+            return $clone.compileFile($src_path, :target<mbc>);
+
+        } else { # no src file, so maybe it's a module from the NQP language directory?
+            return self.find_bytecode($module_name, :ext<moarvm>, :with-nqplib);
+        }
     }
 
     method collect_stats($node) {
@@ -999,9 +1062,10 @@ class NQPActions is NQP::Actions {
             $deps.push(QAST::SVal.new(:value($/<name>), :node($/)));
 
             say('>>>>>> dependency: "' ~ $/<name> ~ '"');
+            say('>>>>>> ' ~ whatsit($*COMPILER.compileDependency(~$/<name>, [])));
         }
 
-        my $super := nqp::findmethod(NQP::Actions, 'statement_control:sym<use>');
+        my $super := nqp::findmethod(self.HOW.mro(self)[1], 'statement_control:sym<use>');
         $out := $super(self, $/);
         #$out := QAST::Stmts.new();
 
@@ -1032,55 +1096,112 @@ class NQPCompiler is SmartCompiler {
         return self;
     }
 
+    method parse($source, *%adverbs) {
+        my $*COMPILER := self;
+        my $parse := nqp::findmethod(self.HOW.mro(self)[1], 'parse');
+        $parse(self, $source, |%adverbs);
+    }
+    
+
     method compiler_progname($value = NO_VALUE) { 'nqpc' }
 
     method handle-exception($error) {
         nqp::rethrow($error);
     }
 
-    method compileFile($file, :$lib = '.', :$target = 'mbc', :$stagestats) {
-        my $nqpName := "$lib/$file.nqp";
-        #say("<nqpc> $nqpName: target=$target ");
-        my $qastName := "$nqpName.qast";
-        my $mvmName := "blib/$file.moarvm";
-        if !nqp::filereadable($nqpName) {
-            nqp::die("no such file: $nqpName");
+    method compileFile($src_path, :$target = 'mbc', :$stagestats) {
+        # replace all backslashes with slashes
+        $src_path := nqp::join('/', nqp::split('\\', $src_path));
+        if !nqp::filereadable($src_path) {
+            #self.panic("no such file: $src_path");
         }
-        if nqp::stat($mvmName, nqp::const::STAT_EXISTS) && !nqp::filewritable($mvmName) {
-            nqp::die("cannot write to file: $mvmName");
+        # strip off working dir prefix from $src_path, if any
+        my $cwd := nqp::join('/', nqp::split('\\', nqp::cwd));
+        if nqp::index($src_path, $cwd) == 0 {
+            $src_path := nqp::substr($src_path, nqp::chars($cwd) + 1);
         }
-        my $nqpTime := nqp::stat($nqpName, nqp::const::STAT_MODIFYTIME);
-        my $mvmTime := nqp::filewritable($mvmName)
-            ?? nqp::stat($mvmName, nqp::const::STAT_MODIFYTIME)
-            !! 0
-        ;
+        # strip off './' prefix from $src_path, if any
+        if nqp::index($src_path, './') == 0 {
+            $src_path := nqp::substr($src_path, 2);
+        }
+
+        my $l := nqp::chars($src_path);
+        
+        # source file extension (without the dot)
+        my $x := nqp::rindex($src_path, '.');
+        if $x <= 0 {    # yes, also files like ".gitignore", for example
+            self.panic("invalid source file (no extension): $src_path");
+        }
+        my $src_ext := nqp::substr($src_path, $x + 1);
+        
+        # source file name (without path prefix and extension)
+        my $i := nqp::rindex($src_path, '/');
+        my $src_name := nqp::substr($src_path, $i + 1, $x - $i - 1);
+        
+        # $src_dir will contain the relative path from $cwd 
+        # to (the folder representing) $src_lib, which in turn contains $src_name.$src_ext
+        my $src_dir := nqp::substr($src_path, 0, max(0, $i));
+        my $src_lib := '';
+        # strip off any user_srcpath prefix
+        for self.user_srcpaths {
+            if nqp::index($src_dir, $_) == 0 {
+                $src_lib := nqp::substr($src_dir, nqp::chars($_) + 1);
+                $src_dir := $_;
+                last;
+            }
+        }
+        unless $src_dir {
+            $src_dir := '.';
+        }
+        my $vm_ext  := 'moarvm';
+        my $vm_dir  := 'blib';
+        my $vm_path;
+        if $src_lib {
+            $src_path := "$src_dir/$src_lib/$src_name.$src_ext";
+            $vm_path := "$vm_dir/$src_lib/$src_name.$vm_ext";
+            #$src_lib := nqp::join('::', nqp::split('/', $src_lib));
+        } else {
+            $src_path := "$src_dir/$src_name.$src_ext";
+            $vm_path := "$vm_dir/$src_name.$vm_ext";
+        }
+
+        my $ast_path := "$src_path.qast";
+
+#        nqp::say(whatsit(hash(:$src_path, :$src_dir, :$src_lib, :$vm_path, :$src_name, :$src_ext, :$ast_path)));
+
+
+
         $needsCompilation := 1; #$needsCompilation || ($nqpTime > $mvmTime);
         if !$needsCompilation {
             return nqp::null;   # means: "not compiled (again) because it was up-to-date"
         } else {
             my @opts := [
-                '--module-path=' ~ $lib,
+                #'--module-path=L',
             ];
+            @opts.push("--target=$target") if $target;
+
             if $target eq 'mbc' {
-                @opts.push('--output=' ~ $mvmName);
+                if nqp::stat($vm_path, nqp::const::STAT_EXISTS) && !nqp::filewritable($vm_path) {
+                    nqp::die("cannot write to file: $vm_path");
+                }
+                @opts.push('--output=' ~ $vm_path);
             } elsif $target eq 'ast' || $target eq 'ast_clean' || $target eq 'ast_save' {
-                @opts.push('--output=' ~ $qastName);    # not only write it but also prevent NQP::Compiler to dump it to stdout and return a null
+                @opts.push('--output=' ~ $ast_path);    # not only write it but also prevent NQP::Compiler to dump it to stdout and return a null
             }
             my @args := nqp::clone(@opts);
             @args.unshift('nqpc');  # give it a program name (for command_line)
-            @args.push($nqpName);
-            #say($mvmName, '...');
+            @args.push($src_path);
+            #say($vm_path, '...');
 
             self.log('$ ', nqp::join(' ', @args));
             #say(nqp::x('-', 29));
-            my $*USER_FILE := $nqpName;
+            my $*USER_FILE := $src_path;
             my $result;
             my $error;
             try {
                 $result := self.command_line(@args, 
                     :encoding('utf8'), 
                     :transcode('ascii iso-8859-1'),
-                    :$target,
                     :$stagestats
                 );
                 CATCH {
@@ -1090,9 +1211,9 @@ class NQPCompiler is SmartCompiler {
             unless $error {
                 if nqp::isnull($result) {   # returning non-null means: "yes, we did compile and write it to disk"
                     if $target eq 'mbc' {
-                        $result := $mvmName;
+                        $result := $vm_path;
                     } else {
-                        nqp::die("??? - successfully compiled $nqpName to target $target - but got null result...!?");
+                        nqp::die("??? - successfully compiled $src_path to target $target - but got null result...!?");
                     }
                 }
                 return $result;
@@ -1114,7 +1235,7 @@ class NQPCompiler is SmartCompiler {
                 my $line := 1;
                 $msg := nqp::join('', [
                           'Error: ', $msg,
-                    "\n", '  at ', $nqpName, ':', ~$line,
+                    "\n", '  at ', $src_path, ':', ~$line,
                     "\n"
                 ]);
             } elsif nqp::index($msglc, 'confused') > -1 {
@@ -1126,7 +1247,7 @@ class NQPCompiler is SmartCompiler {
                 $msg := nqp::substr($msg, 0, $from) ~ $line ~ nqp::substr($msg, $to);
                 $msg := nqp::join('', [
                           'Error: ', $msg,
-                    "\n", '  at ', $nqpName, ':', ~$line,
+                    "\n", '  at ', $src_path, ':', ~$line,
                     "\n"
                 ]);
             } elsif nqp::index($msglc, 'assignment ("=") not supported ') > -1 {
@@ -1135,7 +1256,7 @@ class NQPCompiler is SmartCompiler {
                 $to   := nqp::findnotcclass(nqp::const::CCLASS_NUMERIC, $msglc, $from, nqp::chars($msglc) - $from);
                 my $line := nqp::substr($msg, $from, $to - $from);
                 $line := max(1, $line - 1);
-                my @lines := linesFrom($nqpName, $line, 2);
+                my @lines := linesFrom($src_path, $line, 2);
                 my $i := 0;
                 my $n := nqp::elems(@lines);
                 my $column;
@@ -1153,7 +1274,7 @@ class NQPCompiler is SmartCompiler {
                 $msg := nqp::substr($msg, 0, $from) ~ $line ~ nqp::substr($msg, $to);
                 $msg := nqp::join('', [
                           'Error: ', $msg,
-                    "\n", '   at ', $nqpName, ':', ~$line, ($column ?? ':' ~ $column !! ''),
+                    "\n", '   at ', $src_path, ':', ~$line, ($column ?? ':' ~ $column !! ''),
                     "\n",
                ]);
             # TODO: Unable to parse expression in blockoid; couldn't find final '}'  at line 143, near "$msg := $m"
@@ -1164,7 +1285,7 @@ class NQPCompiler is SmartCompiler {
                 my $column;
                 $msg := nqp::join('', [
                           'ERROR: ', $msg,
-                    "\n", '   at ', $nqpName, ':', ~$line, ($column ?? ':' ~ $column !! ''),
+                    "\n", '   at ', $src_path, ':', ~$line, ($column ?? ':' ~ $column !! ''),
                     "\n",
                ]);
             } else {
@@ -1178,57 +1299,74 @@ class NQPCompiler is SmartCompiler {
 }
 
 
+sub flatten($args) {
+    return [$args]
+        unless nqp::islist($args);
+    my @out := [];
+    for $args -> $_ {
+        if nqp::islist($_) {
+            for flatten($_) -> $_ {
+                @out.push($_);
+            }
+        } else {
+            @out.push($_);
+        }
+    }
+    @out;
+}
+
+
+
 
 sub MAIN(*@ARGS) {
+    @ARGS := flatten(@ARGS);
+
     my $cwd := nqp::cwd();
-    my $lib;
-    my $ext := '.nqp';
     my $sep := nqp::x('-', 29);
     my $nqpc := NQPCompiler.new();
     my %opts := hash();
+    say('CWD=', whatsit($cwd), "\n@ARGS=", whatsit(@ARGS));
+    nqp::exit(0);
 
     @ARGS.shift;  # first is program name
 
     if nqp::elems(@ARGS) == 0 {
-        #@ARGS.push('LGrammar');
-        #@ARGS.push('LActions');
-        #@ARGS.push('L');
+        #@ARGS.push('L/LGrammar.nqp');
+        #@ARGS.push('L/LActions.nqp');
+        #@ARGS.push('L/L.nqp');
 
-        #@ARGS.push('runtime');
+        #@ARGS.push('L/runtime.nqp');
         ##$nqpc.addstage('ast_clean', :before<ast_save>);
         #$nqpc.addstage('ast_stats', :before<ast_save>);
         #%opts<stagestats> := 1;
         #%opts<target>     := '';    # ...and run it
 
-        @ARGS.push('testing');
+        @ARGS.push('nqpc.nqp');
         #$nqpc.addstage('ast_stats', :before<ast_save>);
         #$nqpc.addstage('optimize', :before<ast_save>);
-        %opts<stagestats> := 1;
         #%opts<target>     := '';    #   ast_save';
     }
+        %opts<stagestats> := 1;
 
 
     for @ARGS {
-        my $file := $_ ~ $ext;
+        my $file := $_;
         
-        # XXX FIXME: lib
-           if $_ eq 'nqpc'      { $lib := '.' }
-        elsif $_ eq 'testing'   { $lib := 'lib' }
-        else {
-            $lib := 'lib/L'
-        }
-        
-        my $result := $nqpc.compileFile($_, :$lib,  |%opts);
+        my $result := $nqpc.compileFile($file, |%opts);
+        #my $result := $nqpc.compileFile("$cwd/./nqpc.nqp", |%opts);
+        #my $result := $nqpc.compileFile("$cwd/lib/testing.nqp", |%opts);
+        #my $result := $nqpc.compileFile("$cwd/./lib/testing.nqp", |%opts);
+        #my $result := $nqpc.compileFile("$cwd/lib/L/runtime.nqp", |%opts);
+
         if nqp::isnull($result) {
-            $nqpc.log("uptodate: $lib/$file");
+            $nqpc.log("uptodate: $file");
         } else {
-            $nqpc.log("compiled: $lib/$file ~> " ~ whatsit($result));
+            $nqpc.log("compiled: $file ~> " ~ whatsit($result));
         }
         CATCH {
-            $nqpc.log("ERROR: $lib/$file");
+            $nqpc.log("ERROR: $file");
             $nqpc.log($sep);
             $nqpc.log("  CWD: $cwd");
-            $nqpc.log("  lib: $lib");
             $nqpc.log(' ARGS: ', nqp::join(' ', @ARGS));
             $nqpc.log('');
             $nqpc.log(~$_);
