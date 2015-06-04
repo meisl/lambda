@@ -15,7 +15,7 @@ class Util::QAST {
     method dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) {
         my $clsStr := nqp::substr($node.HOW.name($node), 6);
         
-        my $isBlockChild := nqp::istype($parent, QAST::Block);
+        my $isBlockChild := istype($parent, QAST::Block);
         my $isOrphan     := nqp::isnull($parent);
         my $siblingCount := $isOrphan ?? 0 !! nqp::elems($parent.list) - 1;
         my $isLastChild  := $isOrphan || ($parent.list[$siblingCount] =:= $node);
@@ -28,7 +28,7 @@ class Util::QAST {
             $prefix := $prefix ~ ($isLastChild ?? '└' !! '├' );
         }
 
-        unless nqp::istype($node, QAST::Node) && nqp::defor($node, 0) {
+        unless istype($node, QAST::Node) && nqp::defor($node, 0) {
             #nqp::die("cannot dump " ~ whatsit($node));
             if $oneLine {
                 return '(' ~ whatsit($node) ~ ')';
@@ -52,7 +52,7 @@ class Util::QAST {
         $extraStr := $extraStr ?? ' ' ~ $extraStr !! '';
         
         my $specialStr := '';
-        if nqp::istype($node, QAST::SpecialArg) {
+        if istype($node, QAST::SpecialArg) {
             $clsStr := nqp::substr($clsStr, 0, nqp::index($clsStr, '+{'));
             $specialStr := $specialStr ~ ' :flat(' ~ $node.flat ~ ')' if $node.flat;
             my $nm := $node.named;
@@ -76,8 +76,8 @@ class Util::QAST {
             $clsStr := $extraStr;
             $extraStr := '';
             $prefix := $prefix ~ '─';
-        } elsif nqp::istype($node, QAST::Var) {
-            $clsStr := nqp::istype($node, QAST::VarWithFallback)
+        } elsif istype($node, QAST::Var) {
+            $clsStr := istype($node, QAST::VarWithFallback)
                 ?? '┬' ~ $clsStr
                 !! '';
             $prefix := $prefix ~ '○';
@@ -89,23 +89,23 @@ class Util::QAST {
                     ~ ' :default' ~ dump($node.value, :oneLine(1));
                     #~ ' :default(' ~ whatsit($node.value) ~ ')';
             }
-            if nqp::istype($node, QAST::VarWithFallback) && $node.fallback {
+            if istype($node, QAST::VarWithFallback) && $node.fallback {
                 $specialStr := $specialStr ~ ' :fallback' ~ dump($node.fallback, :oneLine(1));
             }
         } elsif nqp::substr($clsStr, 1, 3) eq 'Val' {
             $prefix := $prefix ~ '◙ ';
-            if nqp::istype($node, QAST::SVal) {
+            if istype($node, QAST::SVal) {
                 $extraStr := ' "' ~ nqp::escape($node.value) ~ '"';
             } elsif istype($node, QAST::IVal, QAST::NVal) {
                 $extraStr := ' ' ~ ~$node.value;
             }
-        } elsif nqp::istype($node, QAST::Block) {
+        } elsif istype($node, QAST::Block) {
             $prefix := $prefix ~ '─:';
             my $bt := $node.blocktype;
             if $bt && $bt ne 'declaration' { # don't show default
                 $specialStr := $specialStr ~ ' :blocktype(' ~ $bt ~ ')';
             }
-        } elsif nqp::istype($node, Stmts) {
+        } elsif istype($node, Stmts) {
             $prefix := $prefix ~ '─:';
         } else {
             $prefix := $prefix ~ '─';

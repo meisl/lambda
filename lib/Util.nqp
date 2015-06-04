@@ -34,11 +34,11 @@ class Util {
                 @out.push(self.whatsit($_));
             }
             return '[' ~ nqp::join(', ', @out) ~ ']';
-        } elsif nqp::istype($v, QAST::Node) {
+        } elsif istype($v, QAST::Node) {
             my $s := $v.HOW.name($v);
             my $x := $v.dump_extra_node_info;
             return $x ?? "$s($x)" !! $s;
-        #} elsif nqp::istype($v, Something) { ??? }
+        #} elsif istype($v, Something) { ??? }
         } elsif nqp::isnull($v) {
             return $reprname;
         } else {

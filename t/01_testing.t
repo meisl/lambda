@@ -59,12 +59,11 @@ testcounter_ok(1, '`ok` advances test_counter by 1');
 
 
 # Hmm, `diag` isn't really a test fn, so:
-$tc := Testing.test_counter;   # reset it once more
 diag('just calling diag to see if it (NOT!) advances the test_counter...');
 testcounter_ok(0, '`diag` does not advance test_counter');
 
 
-# Need to be able to give helpful descriptions of things, particulary in error msgs.
+# describe: Need to be able to give helpful descriptions of things, particulary in error msgs.
 # Note: these would be a lot more convenient (concise) if we were to use `is`...
 diag('describe:');
 my $d;
@@ -139,6 +138,7 @@ ok($d eq '(BOOTCode, invokable)', "sub foo(\$x) \{ \$x } is described as '(BOOTC
 # of normal tests, keeping an eye on the test_counter:
 diag('fails_ok/passes_ok on normal tests that actual pass or fail:');
 diag('"ok XX test_counter+Y" means from now on: "inner tests are not counted on the outside (= as it should be)"');
+$tc := Testing.test_counter;   # reset it once more
 
 my $passingS := 'ok(1, "foo")';
 my $passing := { ok(1, "foo") };

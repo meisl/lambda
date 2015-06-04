@@ -173,9 +173,8 @@ class Testing {
             CATCH {
                 $result := 0;
                 $error  := $!;
-                $desc := "$desc\n  # should fail but died: '" 
-                                     ~ nqp::escape($error) ~ "'" 
-                            ~ "\n    # " ~ nqp::join("\n    # ", nqp::backtracestrings($!))
+                $desc := "$desc\n  # should fail but died: '" ~ nqp::escape($error) ~ "'" 
+                            ~ "\n    # " ~ nqp::join("\n    # ", nqp::backtracestrings($error))
                 ;
             }
         }
@@ -237,7 +236,8 @@ class Testing {
             } else { # $block died inside it -> we fail with appropriate message
                 $result := 0;
                 $desc := "$desc\n  # should pass but died: '"                   # REFACTOR: "fail" -> "pass"
-                                     ~ nqp::escape($error) ~ "'" # TODO: should we show its backtrace?
+                                     ~ nqp::escape($error) ~ "'"
+                            ~ "\n    # " ~ nqp::join("\n    # ", nqp::backtracestrings($error))
                 ;
             }
         } else { # $block did not die -> must have returned something

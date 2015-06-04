@@ -11,7 +11,7 @@ use Util::QAST;
 
 sub qastChildren($ast, *@types) {
     nqp::die('qastChildren expects a QAST::Node as 1st arg - got ' ~ nqp::reprname($ast) )
-        unless nqp::istype($ast, QAST::Node);
+        unless istype($ast, QAST::Node);
     my @out := [];
     if nqp::elems(@types) == 0 {
         @types := [QAST::Node];
@@ -26,16 +26,16 @@ sub qastChildren($ast, *@types) {
 
 sub drop_takeclosure($ast) {
     nqp::die('drop_takeclosure expects a QAST::Node - got ' ~ nqp::reprname($ast) )
-        unless nqp::istype($ast, QAST::Node);
-    if nqp::istype($ast, QAST::Op) && $ast.op eq 'takeclosure' {
+        unless istype($ast, QAST::Node);
+    if istype($ast, QAST::Op) && $ast.op eq 'takeclosure' {
         my $child := drop_takeclosure($ast[0]);  # recurse!
-        if nqp::istype($ast, QAST::SpecialArg) {
+        if istype($ast, QAST::SpecialArg) {
             $child.HOW.mixin($child, QAST::SpecialArg);
             $child.flat($ast.flat);
             $child.named($ast.named);
         }
         $ast := $child;
-    #} elsif nqp::istype($ast, QAST::Children) {
+    #} elsif istype($ast, QAST::Children) {
     } elsif nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
         my @children := [];
         for $ast.list {
@@ -52,7 +52,7 @@ sub drop_takeclosure($ast) {
 
 sub _drop_Stmts($ast, $parent) {
     nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) ~ (nqp::isstr($ast) ?? ' "' ~ nqp::escape($ast) ~ '"' !! '') )
-        unless nqp::istype($ast, QAST::Node);
+        unless istype($ast, QAST::Node);
 
     if nqp::can($ast, 'resultchild') && nqp::isint($ast.resultchild) {
         return [$ast];   # don't muck with that...
@@ -64,7 +64,7 @@ sub _drop_Stmts($ast, $parent) {
             @children.push($_);
         }
     }
-    if nqp::istype($ast, QAST::Stmts)
+    if istype($ast, QAST::Stmts)
         && (
               istype($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) 
            || (nqp::elems(@children) < 2)
@@ -103,7 +103,7 @@ sub isinResultPosition($node, $parent) {
 
 
 sub drop_bogusVars($ast, $parent = nqp::null) {
-    if nqp::istype($ast, QAST::Var) && !$ast.decl {
+    if istype($ast, QAST::Var) && !$ast.decl {
         if istype($parent, QAST::Block, QAST::Stmt, QAST::Stmts) {
             unless isinResultPosition($ast, $parent) {
                 #nqp::print(whatsit($parent) ~ ' ' ~ $ast.dump);
@@ -133,8 +133,8 @@ sub drop_bogusVars($ast, $parent = nqp::null) {
 
 sub repair_null_decl_attrs_of_vars($ast) {
     nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
-        unless nqp::istype($ast, QAST::Node);
-    if nqp::istype($ast, QAST::Var) && !$ast.decl {
+        unless istype($ast, QAST::Node);
+    if istype($ast, QAST::Var) && !$ast.decl {
         $ast.decl(nqp::null_s);
     }
     # recurse in any case, since it could be a VarWithFallback (which does have children)
@@ -146,8 +146,8 @@ sub repair_null_decl_attrs_of_vars($ast) {
 
 sub remove_bogusOpNames($ast) {
     nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
-        unless nqp::istype($ast, QAST::Node);
-    if nqp::istype($ast, QAST::Op) && ($ast.op ne 'call') && ($ast.op ne 'callstatic') && ($ast.op ne 'callmethod') && ($ast.op ne 'lexotic') {
+        unless istype($ast, QAST::Node);
+    if istype($ast, QAST::Op) && ($ast.op ne 'call') && ($ast.op ne 'callstatic') && ($ast.op ne 'callmethod') && ($ast.op ne 'lexotic') {
         #say('>>>Op(', $ast.op, ' ', $ast.dump_extra_node_info, ')')
         #    unless nqp::index('x radix can postinc preinc add_n sub_n stringify bind bindkey concat atpos atkey die reprname defor isnull iseq_s iseq_n isgt_n islt_n isinvokable isstr isint isnum islist ishash substr if unless for while elems chars escape list hash iterkey_s iterval', $ast.op) >= 0;
         $ast.name(nqp::null_s);
@@ -199,13 +199,13 @@ sub remove_MAIN($ast) {
     say(whatsit(@path), "\n", whatsit($MAIN));
     @path := [];
     my $MAINcall := findPath(-> $node, @pathUp {
-            if nqp::istype($node, QAST::Op) && ($node.op eq 'call') && ($node.name eq '&MAIN' || (nqp::istype($node[0], QAST::Var) && $node[0].name eq '&MAIN')) {
+            if istype($node, QAST::Op) && ($node.op eq 'call') && ($node.name eq '&MAIN' || (istype($node[0], QAST::Var) && $node[0].name eq '&MAIN')) {
                 my $parent := @pathUp[0];
-                if nqp::istype($parent, QAST::Op) && $parent.op eq 'if' {
+                if istype($parent, QAST::Op) && $parent.op eq 'if' {
                     $parent;
                 } elsif istype($parent, QAST::Stmt, QAST::Stmts) {
                     $parent := @pathUp[0];
-                    if nqp::istype($parent, QAST::Op) && $parent.op eq 'if' {
+                    if istype($parent, QAST::Op) && $parent.op eq 'if' {
                         $parent;
                     } else {
                         $node
@@ -233,7 +233,7 @@ sub findPath(&test, $node, @pathUp = []) {
         }
         @pathUp.shift();
     } elsif $res {
-        if $res =:= $node || !nqp::istype($res, QAST::Node) {    # just truthy to indicate that $node should be returned
+        if $res =:= $node || !istype($res, QAST::Node) {    # just truthy to indicate that $node should be returned
             return $node
         } else {
             while !($res =:= @pathUp.shift) {   # eat path up till we find the node
@@ -253,9 +253,9 @@ sub findDef($ast, $matcher, @pathUp = []) {
     findPath(
         -> $node, @pathUp {
             my $parent := nqp::elems(@pathUp) > 0 ?? @pathUp[0] !! nqp::null;
-            if nqp::isnull($parent) || nqp::istype($parent, QAST::CompUnit) {
+            if nqp::isnull($parent) || istype($parent, QAST::CompUnit) {
                 $node.list;
-            } elsif nqp::istype($parent, QAST::Op) && nqp::istype($node, QAST::Var) {
+            } elsif istype($parent, QAST::Op) && istype($node, QAST::Var) {
                  $parent.op eq 'bind' && $matcher($node, @pathUp)
                     ?? $parent
                     !! nqp::null;
@@ -301,11 +301,11 @@ sub findValueNodeInHash($keyPredicate, $valuePredicate, $hash = NO_VALUE) is exp
     
     if $hash =:= NO_VALUE {
         return -> $hash { findValueNodeInHash($keyPredicate, $valuePredicate, $hash) }
-    } elsif !nqp::istype($hash, QAST::Node) {
+    } elsif !istype($hash, QAST::Node) {
         nqp::die('findValueNodeInHash expects a QAST::Node as (optional) 3rd arg - got ' ~ whatsit($hash));
     }
     my $found := nqp::null;
-    if nqp::istype($hash, QAST::Op) && $hash.op eq 'hash' {
+    if istype($hash, QAST::Op) && $hash.op eq 'hash' {
         my $it := nqp::iterator($hash.list);
         while $it && !$found {
             my $k := nqp::shift($it);
@@ -322,12 +322,12 @@ sub findValueNodeInHash($keyPredicate, $valuePredicate, $hash = NO_VALUE) is exp
 
 sub cloneAndSubst($node, $substitution) {
     nqp::die('cloneAndSubst expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
-        unless nqp::istype($node, QAST::Node);
+        unless istype($node, QAST::Node);
     nqp::die('cloneAndSubst expects a function as 2nd arg - got ' ~ whatsit($substitution) )
         unless nqp::isinvokable($substitution);
     
     #return $substitution(nqp::clone($node))    # strange: this actually prevents any recursion...!?!
-    #    unless nqp::istype($node, QAST::Children);
+    #    unless istype($node, QAST::Children);
 
     $node := $node.shallow_clone;   # also makes a shallow clone of the children's list
     my @children := $node.list;
@@ -350,7 +350,7 @@ sub collect_params_and_body($node, %results = hash(:arity(0), :params({}), :stmt
     my %params := %results<params>;
     my @stmts  := %results<stmts>;
     for $node.list {
-        if nqp::istype($_, QAST::Var) {
+        if istype($_, QAST::Var) {
             my $varName := $_.name;
             if $_.decl {
                 if $_.decl eq 'param' {
@@ -377,18 +377,18 @@ sub collect_params_and_body($node, %results = hash(:arity(0), :params({}), :stmt
 
 sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
     nqp::die('inline_simple_subs expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
-        unless nqp::istype($node, QAST::Node);
+        unless istype($node, QAST::Node);
 
     # on first step, prepare:
     if nqp::elems(@inlineDefs) > 0 {
         for @inlineDefs {
             next if nqp::isnull($_);
             nqp::die("invalid def of inlineable sub: " ~ whatsit($_))
-                unless nqp::istype($_, QAST::Node);
+                unless istype($_, QAST::Node);
             nqp::die("invalid def of inlineable sub: " ~ dump($_))
-                unless nqp::istype($_, QAST::Op) && $_.op eq 'bind'
-                    && nqp::istype($_[0], QAST::Var)
-                    && nqp::istype($_[1], QAST::Block);
+                unless istype($_, QAST::Op) && $_.op eq 'bind'
+                    && istype($_[0], QAST::Var)
+                    && istype($_[1], QAST::Block);
             my $name   := $_[0].name;
             my $block  := $_[1];
             my %results;
@@ -420,7 +420,7 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
                     unless $argCount == $arity;
                 my $out := cloneAndSubst($block, -> $n {
 #                    say('####', dump($n));
-                    if nqp::istype($n, QAST::Var) && nqp::existskey(%params, $n.name) {
+                    if istype($n, QAST::Var) && nqp::existskey(%params, $n.name) {
                         my $out := @arguments[%params{$n.name}];
 #                        say('#### substituted ', dump($out, :oneLine), ' for ', dump($n, :oneLine));
                         $out;
@@ -442,7 +442,7 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
         $i++;
     }
 
-    if nqp::istype($node, QAST::Op) && ($node.op eq 'call' || $node.op eq 'callstatic') {
+    if istype($node, QAST::Op) && ($node.op eq 'call' || $node.op eq 'callstatic') {
         my $codeMaker := %inlineables{$node.name};
         if $codeMaker {
             my $out := $codeMaker($node.list);
@@ -459,14 +459,14 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
 
 sub inline_simple_methods($node) {
     nqp::die('inline_simple_methods expects a QAST::Node - got ' ~ whatsit($node) )
-        unless nqp::istype($node, QAST::Node);
+        unless istype($node, QAST::Node);
 
     # first, recurse:
     for $node.list {
         inline_simple_methods($_);
     }
 
-    if nqp::istype($node, QAST::Op) && $node.op eq 'callmethod' {
+    if istype($node, QAST::Op) && $node.op eq 'callmethod' {
         my $meth := $node.name;
         if $meth {
             if nqp::index('push pop shift unshift', $meth) > -1 {
@@ -487,7 +487,7 @@ sub inline_simple_methods($node) {
 
 sub replace_assoc_and_pos_scoped($node) {
     nqp::die('replace_assoc_and_pos_scoped expects a QAST::Node - got ' ~ whatsit($node) )
-        unless nqp::istype($node, QAST::Node);
+        unless istype($node, QAST::Node);
 
     # first, recurse:
     my $i := 0;
@@ -497,11 +497,11 @@ sub replace_assoc_and_pos_scoped($node) {
         $i++;
     }
 
-    if nqp::istype($node, QAST::Op) && ($node.op eq 'bind') && !nqp::istype($node[0], QAST::Var) {
+    if istype($node, QAST::Op) && ($node.op eq 'bind') && !istype($node[0], QAST::Var) {
         # then our 1st child was just transformed to an 'atkey' or 'atpos'
         my $child1 := $node.shift;
         nqp::die("ooops: " ~ dump($child1, :oneLine))
-            unless nqp::istype($child1, QAST::Op);
+            unless istype($child1, QAST::Op);
         my $which := nqp::substr($child1.op, 0, 5); # substr to allow for typed variants _i, _s, etc
         nqp::die("ooops: cannot handle op $which: " ~ dump($child1, :oneLine))
             unless $which eq 'atpos' || $which eq 'atkey';
@@ -511,7 +511,7 @@ sub replace_assoc_and_pos_scoped($node) {
         $node.named($child1.named);
         $node.unshift($child1[1]);
         $node.unshift($child1[0]);
-    } elsif nqp::istype($node, QAST::VarWithFallback) {
+    } elsif istype($node, QAST::VarWithFallback) {
         my $fallback := $node.fallback;
         if nqp::isnull($fallback) || istype($fallback, NQPMu) {
             $fallback := nqp::null;
@@ -541,16 +541,16 @@ sub replace_assoc_and_pos_scoped($node) {
 
 sub renameVars($ast, $map?) {
     nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ whatsit($ast) )
-        unless nqp::istype($ast, QAST::Node);
+        unless istype($ast, QAST::Node);
     if nqp::defined($map) {
         nqp::die('renameVars expects a unary fn as 2nd arg(optional) - got ' ~ whatsit($map) )
             unless nqp::isinvokable($map);
     } else {
         $map := -> str $name { $name };
     }
-    if nqp::istype($ast, QAST::Var) 
+    if istype($ast, QAST::Var) 
        || (
-          nqp::istype($ast, QAST::Op)
+          istype($ast, QAST::Op)
           && (($ast.op eq 'call') || ($ast.op eq 'callstatic'))
         ) {
         my str $old := $ast.name;
@@ -559,7 +559,7 @@ sub renameVars($ast, $map?) {
             $ast.name($new);
         }
     }
-    #if nqp::istype($ast, QAST::Children) {
+    #if istype($ast, QAST::Children) {
     if nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
         for $ast.list {
             renameVars($_, $map);
@@ -665,17 +665,17 @@ class SmartCompiler is NQP::Compiler {
         my %results := {};
         my sub doit($node) {
             nqp::die("collect_stats expects a QAST::Node - got " ~ whatsit($node))
-                unless nqp::istype($node, QAST::Node);
+                unless istype($node, QAST::Node);
 
             my $HOWname := $node.HOW.name($node);
     #        %results{$HOWname}++;
 
             %results<Node>++; # size of tree
-            if nqp::istype($node, QAST::Block) {
+            if istype($node, QAST::Block) {
                 %results<Block>++;
             } elsif istype($node, QAST::Stmt, QAST::Stmts) {
                 %results<Stmt(s)>++;
-            } elsif nqp::istype($node, QAST::Op) {
+            } elsif istype($node, QAST::Op) {
                 my $op := $node.op;
     #            %results{$HOWname ~ '(' ~ $op ~ ')'}++;
                 %results<op>++;
@@ -686,13 +686,13 @@ class SmartCompiler is NQP::Compiler {
                 %results<callstatic>++  if  $op eq 'callstatic';
                 %results<callmethod>++  if  $op eq 'callmethod';
                 %results<takeclosure>++ if  $op eq 'takeclosure';
-            } elsif nqp::istype($node, QAST::Var) {
+            } elsif istype($node, QAST::Var) {
                 %results<Var>++;
-            } elsif nqp::istype($node, QAST::IVal) {
+            } elsif istype($node, QAST::IVal) {
                 %results<IVal>++;
-            } elsif nqp::istype($node, QAST::NVal) {
+            } elsif istype($node, QAST::NVal) {
                 %results<NVal>++;
-            } elsif nqp::istype($node, QAST::SVal) {
+            } elsif istype($node, QAST::SVal) {
                 %results<SVal>++;
                 %results<SValChars> := %results<SValChars> + nqp::chars($node.value);
             }
@@ -768,15 +768,15 @@ class SmartCompiler is NQP::Compiler {
         }
 
         my sub svalPred($value = NO_VALUE) {
-            -> $node { nqp::istype($node, QAST::SVal) && ($value =:= NO_VALUE || $node.value eq $value) }
+            -> $node { istype($node, QAST::SVal) && ($value =:= NO_VALUE || $node.value eq $value) }
         }
 
         my sub ivalPred($value = NO_VALUE) {
-            -> $node { nqp::istype($node, QAST::IVal) && ($value =:= NO_VALUE || $node.value == $value) }
+            -> $node { istype($node, QAST::IVal) && ($value =:= NO_VALUE || $node.value == $value) }
         }
 
         my sub opPred($op = NO_VALUE) {
-            -> $node { nqp::istype($node, QAST::Op) && ($op =:= NO_VALUE || $node.op eq $op) }
+            -> $node { istype($node, QAST::Op) && ($op =:= NO_VALUE || $node.op eq $op) }
         }
         
 
@@ -787,8 +787,8 @@ class SmartCompiler is NQP::Compiler {
             }
         });
         my $infoHash := $findStatsHash($infoHashDef[1]);
-        say('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' ~ nqp::istype($infoHash, QAST::Op));
-        if nqp::istype($infoHash, QAST::Op) && ($infoHash.op eq 'hash') {
+        say('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' ~ istype($infoHash, QAST::Op));
+        if istype($infoHash, QAST::Op) && ($infoHash.op eq 'hash') {
             say(dump($infoHashDef));
             my $findStatNode := -> $statKey {
                 findValueNodeInHash(svalPred($statKey), ivalPred(), $infoHash)
@@ -829,7 +829,7 @@ class NQPActions is NQP::Actions {
 
         my @expPathUp := [];
         my $export := findPath(-> $node, @pathUp {
-            nqp::istype($node, QAST::Var) && ($node.name eq 'EXPORT') && $node.decl eq 'static'
+            istype($node, QAST::Var) && ($node.name eq 'EXPORT') && $node.decl eq 'static'
                 || $node.list;
         }, $*UNIT, @expPathUp);
 
@@ -838,9 +838,9 @@ class NQPActions is NQP::Actions {
                 if (+@pathUp > 1) && @pathUp[1] =:= @expPathUp[0] {
                     my $parent := @pathUp[0];
                     my $brother := $parent[0];
-                    nqp::istype($node, QAST::Op) && $node.op eq 'list'
-                        && nqp::istype($parent, QAST::Op) && $parent.op eq 'bind'
-                        && nqp::istype($brother, QAST::Var) && ($brother.name eq '@?DEPENDENCIES')
+                    istype($node, QAST::Op) && $node.op eq 'list'
+                        && istype($parent, QAST::Op) && $parent.op eq 'bind'
+                        && istype($brother, QAST::Var) && ($brother.name eq '@?DEPENDENCIES')
                         || $node.list;
                 } else {
                     $node.list
@@ -874,7 +874,7 @@ class NQPActions is NQP::Actions {
         #$out := QAST::Stmts.new();
 
         #my $glob := findPath(-> $node, @pathUp {
-        #    nqp::istype($node, QAST::Var) && ($node.name eq 'GLOBALish')
+        #    istype($node, QAST::Var) && ($node.name eq 'GLOBALish')
         #        || $node.list;
         #}, $*UNIT);
         #say('>>>>>> ', dump($glob));
