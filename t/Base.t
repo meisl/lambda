@@ -8,7 +8,7 @@ use Lambda::BaseP6;
 
 # module under test:
 use Lambda::Base;
-plan 49;
+plan 48;
 
 
 { # I, aka id

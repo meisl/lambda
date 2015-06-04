@@ -79,3 +79,6 @@ is(~$b,  "──:Block+\{StrByDump}"
      ~ "\n  ╙○ lexical foo", 
 'with role StrByDump mixed in it uses dump to stringify')
     || diag("\n$b");
+
+
+done;

@@ -1,12 +1,16 @@
 #!nqp
 
-#my $test_counter := 0; # [cannot redeclare]
 my @*TEST_OF_TEST := [];
 
 
 # Don't export this - only a workaround for the weird problems with exporting subs
 # (can call them from outside but then they in turn cannot call themselves)
 class Testing {
+    
+    my $tests_planned := 0;
+    my $test_counter := 0;
+
+    method test_counter() { $test_counter }
 
     method say(*@pieces) {
         my $s := '';
@@ -64,6 +68,17 @@ class Testing {
         $out;
     }
 
+    method plan(int $nr_of_tests) {
+        $tests_planned := $nr_of_tests;
+        self.say("1..$nr_of_tests");
+    }
+
+    method done() {
+        unless $test_counter == $tests_planned {
+            self.diag("Looks like you planned $tests_planned tests, but ran $test_counter");
+        }
+    }
+
     method ok($condition, $desc?) {
         $test_counter++;    # yes, even if +@*TEST_OF_TEST - so we can tell apart proper tests and other stuff (possibly returning 1)
 
@@ -91,7 +106,6 @@ class Testing {
         }
         $condition ?? 1 !! 0;
     }
-
 
     method invokeNullaryChecked($code) {
         my $error := NO_VALUE;
@@ -361,6 +375,8 @@ class Testing {
 
 sub diag($msg)                      is export { Testing.diag($msg) }
 sub describe($x)                    is export { Testing.describe($x) }
+sub plan($nr_of_tests)              is export { Testing.plan($nr_of_tests) }
+sub done()                          is export { Testing.done() }
 sub ok($condition, $desc?)          is export { Testing.ok($condition, $desc) }
 sub fails_ok($block, $desc?)        is export { Testing.fails_ok($block, $desc) }
 sub passes_ok($block, $desc?)       is export { Testing.passes_ok($block, $desc) }

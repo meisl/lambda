@@ -22,7 +22,7 @@ my int $tc;
 sub testcounter_ok(int $how_many_more, $desc = NO_VALUE) {
     $desc := "test_counter+$how_many_more"
         if $desc =:= NO_VALUE;
-    my int $actual := $test_counter;
+    my int $actual := Testing.test_counter;
     my int $expected := $tc + $how_many_more;
     my $result;
 
@@ -36,7 +36,7 @@ sub testcounter_ok(int $how_many_more, $desc = NO_VALUE) {
                  ~ "\n  #           got: $actual"       # but simplified since we know it's ints
         );
     }
-    $tc := $test_counter;   # update for next use
+    $tc := Testing.test_counter;   # update for next use
     $result;    # need to return this, *not* $tc!
 }
 
@@ -45,7 +45,7 @@ sub testcounter_ok(int $how_many_more, $desc = NO_VALUE) {
 diag('sanity checks:');
 
 my @arr := [];
-$tc := $test_counter;   # initialize before first use
+$tc := Testing.test_counter;   # initialize before first use
 ok(@arr ?? 0 !! 1, 'empty array is falsey');
 testcounter_ok(1, '`ok` advances test_counter by 1');
 
@@ -59,7 +59,7 @@ testcounter_ok(1, '`ok` advances test_counter by 1');
 
 
 # Hmm, `diag` isn't really a test fn, so:
-$tc := $test_counter;   # reset it once more
+$tc := Testing.test_counter;   # reset it once more
 diag('just calling diag to see if it (NOT!) advances the test_counter...');
 testcounter_ok(0, '`diag` does not advance test_counter');
 
@@ -418,3 +418,6 @@ testcounter_ok(1);
 
 #is_eq("asdf", "asdf", "should fail");
 #is_eq(1, "asdf", "should throw");
+
+
+done;
