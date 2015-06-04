@@ -1327,7 +1327,7 @@ sub MAIN(*@ARGS) {
     my %opts := hash();
     say('CWD=', whatsit($cwd), "\n@ARGS=", whatsit(@ARGS));
     
-    nqp::exit(0);
+    #nqp::exit(0);
 
     @ARGS.shift;  # first is program name
 

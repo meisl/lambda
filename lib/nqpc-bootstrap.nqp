@@ -50,6 +50,7 @@ sub exec(*@pieces, :$whatwedo = NO_VALUE) {
 }
 
 sub compileAll(@ms) {
+    return 0 unless @ms;
     my $main    := @ms.pop; # last one assumed to be nqpc itself, will be run on itself
     my $mainsrc := '"' ~ m2src($main) ~ '"';   
     my $rakudo  := nqp::backendconfig()<prefix>;
@@ -74,7 +75,6 @@ sub compileAll(@ms) {
         nqp::sayfh(nqp::getstderr,
                nqp::x('-', 40)
              ~ "\nnqpc-bootstrap: ERROR bootstrapping from $ss"
-             ~ "\nnqpc-bootstrap: CWD=$cwd"
              ~ "\nnqpc-bootstrap: still not up-to-date: " ~ nqp::join(', ', @problems)
         );
         nqp::exit(1);
@@ -83,6 +83,6 @@ sub compileAll(@ms) {
 }
 
 my @ms := <testing L::LGrammar nqpc>;
-compileAll(@ms)
-    if any(&needsCompilation, @ms);
+
+compileAll(@ms) if any(&needsCompilation, @ms);
 
