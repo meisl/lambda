@@ -1,70 +1,8 @@
 use nqp;
 use NQPHLL;
 
+use Util;
 
-sub max($a, $b) is export { $a > $b ?? $a !! $b }
-sub min($a, $b) is export { $a < $b ?? $a !! $b }
-
-sub whatsit($v) is export {
-    my $reprname := nqp::reprname($v);
-
-    if nqp::isstr($v) {
-        my $length := nqp::chars($v);
-        if $length > 80 {
-            return '"' ~ nqp::escape(nqp::substr($v, 0, 45)) ~ '"'
-                 ~ ' ~ ... ~ '
-                 ~ '"' ~ nqp::escape(nqp::substr($v, $length - 25)) ~ '"'
-           ;
-        } else {
-            return '"' ~ nqp::escape($v) ~ '"';
-        }
-    } elsif nqp::isint($v) || nqp::isnum($v) {
-        return $reprname ~ ' ' ~ $v;
-    } elsif nqp::ishash($v) {
-        my @kvs := [];
-        for $v {
-            my $k := nqp::iterkey_s($_);
-            my $v := nqp::iterval($_);
-            @kvs.push(":$k(" ~ whatsit($v) ~ ')');
-        }
-        return 'hash(' ~ nqp::join(', ', @kvs) ~ ')';
-    } elsif nqp::islist($v) {
-        my @out := [];
-        for $v {
-            @out.push(whatsit($_));
-        }
-        return '[' ~ nqp::join(', ', @out) ~ ']';
-    } elsif nqp::istype($v, QAST::Node) {
-        my $s := $v.HOW.name($v);
-        my $x := $v.dump_extra_node_info;
-        return $x ?? "$s($x)" !! $s;
-    #} elsif nqp::istype($v, Something) { ??? }
-    } elsif nqp::isnull($v) {
-        return $reprname;
-    } else {
-        my $how := nqp::how($v);
-        if $how {
-            return $how.name($v);
-        } else {
-            return $reprname;
-        }
-    }
-}
-
-sub linesFrom(str $filename, $from = 1, $count?) is export {
-    my $to := $from + nqp::defor($count, nqp::inf());
-    my @out := [];
-    my $fh := nqp::open($filename, 'r');
-    nqp::setinputlinesep($fh, "\n");
-    my $linesRead := 0;
-    while !nqp::eoffh($fh) && ($linesRead < $to) {
-        my $line := nqp::readlinefh($fh);
-        $linesRead++;
-        @out.push($line) unless $linesRead < $from;
-    }
-    nqp::closefh($fh);
-    @out;
-}
 
 sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
     my $clsStr := nqp::substr($node.HOW.name($node), 6);
@@ -187,18 +125,7 @@ sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
     $before ~ nqp::join($sep, @lines) ~ $after;
 }
 
-
 # -----------------------------------------------
-
-
-
-
-sub istypeAny($subject, *@types) {
-    for @types {
-        return 1 if nqp::istype($subject, $_);
-    }
-    return 0;
-}
 
 
 sub qastChildren($ast, *@types) {
@@ -1336,16 +1263,11 @@ sub MAIN(*@ARGS) {
         #@ARGS.push('L/LActions.nqp');
         #@ARGS.push('L/L.nqp');
 
-        #@ARGS.push('L/runtime.nqp');
+        @ARGS.push('L/runtime.nqp');
         ##$nqpc.addstage('ast_clean', :before<ast_save>);
         #$nqpc.addstage('ast_stats', :before<ast_save>);
         #%opts<stagestats> := 1;
         #%opts<target>     := '';    # ...and run it
-
-        @ARGS.push('nqpc.nqp');
-        #$nqpc.addstage('ast_stats', :before<ast_save>);
-        #$nqpc.addstage('optimize', :before<ast_save>);
-        #%opts<target>     := '';    #   ast_save';
     }
         %opts<stagestats> := 1;
 

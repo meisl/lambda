@@ -82,7 +82,7 @@ sub compileAll(@ms) {
     say("nqpc-bootstrap: recompiled $ss");
 }
 
-my @ms := <testing L::LGrammar nqpc>;
+my @ms := <util nqpc>;
 
 compileAll(@ms) if any(&needsCompilation, @ms);
 
