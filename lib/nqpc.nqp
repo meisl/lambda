@@ -8,22 +8,6 @@ use Util::QAST;
 
 # -----------------------------------------------
 
-
-sub qastChildren($ast, *@types) {
-    nqp::die('qastChildren expects a QAST::Node as 1st arg - got ' ~ nqp::reprname($ast) )
-        unless istype($ast, QAST::Node);
-    my @out := [];
-    if nqp::elems(@types) == 0 {
-        @types := [QAST::Node];
-    }
-    for $ast.list {
-        if istype($_, |@types) {
-            @out.push($_);
-        }
-    }
-    @out;
-}
-
 sub drop_takeclosure($ast) {
     nqp::die('drop_takeclosure expects a QAST::Node - got ' ~ nqp::reprname($ast) )
         unless istype($ast, QAST::Node);
@@ -156,35 +140,6 @@ sub remove_bogusOpNames($ast) {
         remove_bogusOpNames($_);
     }
     $ast;
-}
-
-sub removeChild($parent, $child) {
-    my @children := nqp::islist($parent) ?? $parent !! $parent.list;
-    my @foundAt := [];
-    my $i := 0;
-    my $n := nqp::elems(@children);
-    for @children {
-        if $_ =:= $child {
-            @foundAt.push($i);
-        }
-        $i++;
-    }
-    unless +@foundAt {
-        nqp::die("could not find child " ~ whatsit($child) ~ ' under ' ~ $parent.dump);
-    }
-
-    my @removed := [];
-    @foundAt.push($n);
-    $i := @foundAt.shift;
-    my $k := $i + 1;
-    for @foundAt {
-        while $k < $_ {
-            @children[$i++] := @children[$k++];
-        }
-        @removed.push(@children[$k++]);
-    }
-    nqp::setelems(@children, $n - nqp::elems(@removed));
-    $parent;
 }
 
 

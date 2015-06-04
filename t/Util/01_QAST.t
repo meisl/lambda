@@ -82,4 +82,22 @@ is(~$b,
     || diag("\n$b");
 
 
+# removeChild
+
+my $barVar := QAST::Var.new(:name<bar>);
+my $block := QAST::Block.new(
+    QAST::Var.new(:name<qumbl>),
+    $barVar,
+    QAST::Var.new(:name<foo>),
+);
+is(nqp::elems($block.list), 3, 'nr of children before removing one');
+dies_ok( { removeChild($block, QAST::Var.new(:name<baz>)) }, 'removing non-existent child');
+dies_ok( { removeChild($block, QAST::Var.new(:name<bar>)) }, 'removing non-existent child (even if looks like one)');
+lives_ok( { removeChild($block, $barVar) }, 'removing existent child');
+is(nqp::elems($block.list), 2, 'nr of children after removing one');
+is($block[0].name, 'qumbl', 'preceding sibling untouched');
+is($block[1].name, 'foo', 'follwing sibling untouched');
+
+
+
 done;

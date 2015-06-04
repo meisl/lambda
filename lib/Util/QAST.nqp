@@ -133,10 +133,57 @@ class Util::QAST {
         $before ~ nqp::join($sep, @lines) ~ $after;
     }
 
+    method qastChildren($ast, *@types) {
+        nqp::die('qastChildren expects a QAST::Node as 1st arg - got ' ~ nqp::reprname($ast) )
+            unless self.istype($ast, QAST::Node);
+        my @out := [];
+        if nqp::elems(@types) == 0 {
+            @types := [QAST::Node];
+        }
+        for $ast.list {
+            if self.istype($_, |@types) {
+                @out.push($_);
+            }
+        }
+        @out;
+    }
+
+    method removeChild($parent, $child) {
+        my @children := nqp::islist($parent) ?? $parent !! $parent.list;
+        my @foundAt := [];
+        my $i := 0;
+        my $n := nqp::elems(@children);
+        for @children {
+            if $_ =:= $child {
+                @foundAt.push($i);
+            }
+            $i++;
+        }
+        unless +@foundAt {
+            nqp::die("could not find child " ~ whatsit($child) ~ ' under ' ~ $parent.dump);
+        }
+
+        my @removed := [];
+        @foundAt.push($n);
+        $i := @foundAt.shift;
+        my $k := $i + 1;
+        for @foundAt {
+            while $k < $_ {
+                @children[$i++] := @children[$k++];
+            }
+            @removed.push(@children[$k++]);
+        }
+        nqp::setelems(@children, $n - nqp::elems(@removed));
+        $parent;
+    }
+
 }
 
 
 sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
     Util::QAST.dump($node, $parent, :$indent, :$oneLine);
 }
+
+sub qastChildren($ast, *@types)     is export { Util::QAST.qastChildren($ast, |@types) }
+sub removeChild($parent, $child)    is export { Util::QAST.removeChild($parent, $child) }
 
