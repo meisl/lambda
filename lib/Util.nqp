@@ -66,11 +66,16 @@ class Util {
         @out;
     }
 
-    method istypeAny($subject, *@types) {
+    method istype($subject, *@types) {
+        nqp::die("istype expects at least one type argument after subject - got none")
+            unless @types;
+        my $out := 0;
         for @types {
-            return 1 if nqp::istype($subject, $_);
+            nqp::die("istype expects only type arguments after subject - encountered " ~ self.whatsit($_))
+                if nqp::isconcrete($_);
+            $out := 1 if nqp::istype($subject, $_);
         }
-        return 0;
+        return $out;
     }
 }
 
@@ -79,5 +84,6 @@ sub min($a, $b) is export { Util.min($a, $b) }
 sub max($a, $b) is export { Util.max($a, $b) }
 sub whatsit($v) is export { Util.whatsit($v) }
 
-sub istypeAny($subject, *@types)                 is export { Util.istypeAny($subject, |@types) }
+sub istype($subject, *@types)                    is export { Util.istype($subject, |@types) }
+
 sub linesFrom(str $filename, $from = 1, $count?) is export { Util.linesFrom($filename, $from, $count) }

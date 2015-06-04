@@ -33,9 +33,10 @@ is(whatsit(["foo", 1, ['hello', 'world'], 3.1415]),
     "[\"foo\", P6int 1, [\"hello\", \"world\"], P6num 3.1415]", 'whatsit(...)');
 
 
-is(istypeAny(nqp::null                  ), 0, 'istypeAny(nqp::null                  )');
-is(istypeAny(nqp::null, NQPMu           ), 0, 'istypeAny(nqp::null, NQPMu           )');
-is(istypeAny(nqp::null, NQPMu, nqp::null), 0, 'istypeAny(nqp::null, NQPMu, nqp::null)');
+dies_ok( { istype() }, 'istype with no arg');
+dies_ok( { istype(nqp::null) }, 'istype with only one arg');
+is(istype(nqp::null, NQPMu           ), 0, 'istype(nqp::null, NQPMu           )');
+is(istype(nqp::null, NQPMu, nqp::null), 0, 'istype(nqp::null, NQPMu, nqp::null)');
 
 my class Foo {}
 my class Bar is Foo {}
@@ -45,84 +46,87 @@ my $bar := Bar.new;
 my $baz := Bar.new;
 $baz.HOW.mixin($baz, Baz);
 
-is(istypeAny(Foo                   ), 0, 'istypeAny(Foo                   )');
-is(istypeAny(Foo, NQPMu            ), 1, 'istypeAny(Foo, NQPMu            )');
-is(istypeAny(Foo, NQPMu, nqp::null ), 1, 'istypeAny(Foo, NQPMu, nqp::null )');
-is(istypeAny(Foo, NQPMu, Foo       ), 1, 'istypeAny(Foo, NQPMu, Foo       )');
-is(istypeAny(Foo, Foo              ), 1, 'istypeAny(Foo, Foo              )');
-is(istypeAny(Foo, Bar              ), 0, 'istypeAny(Foo, Bar              )');
-is(istypeAny(Foo, Foo, Bar         ), 1, 'istypeAny(Foo, Foo, Bar         )');
-is(istypeAny(Foo, Bar, Foo         ), 1, 'istypeAny(Foo, Bar, Foo         )');
-is(istypeAny(Foo, Bar, Bar         ), 0, 'istypeAny(Foo, Bar, Bar         )');
 
-is(istypeAny(Foo, Baz              ), 0, 'istypeAny(Foo, Baz              )');
-is(istypeAny(Foo, Foo, Baz         ), 1, 'istypeAny(Foo, Foo, Baz         )');
-is(istypeAny(Foo, Baz, Foo         ), 1, 'istypeAny(Foo, Baz, Foo         )');
-is(istypeAny(Foo, Baz, Baz         ), 0, 'istypeAny(Foo, Baz, Baz         )');
+dies_ok( { istype(Foo) }, 'istype with only one arg');
+dies_ok( { istype(Foo, $foo) }, 'istype with non-type arg as type');
 
+is(istype(Foo, NQPMu            ), 1, 'istype(Foo, NQPMu            )');
+is(istype(Foo, NQPMu, nqp::null ), 1, 'istype(Foo, NQPMu, nqp::null )');
+is(istype(Foo, NQPMu, Foo       ), 1, 'istype(Foo, NQPMu, Foo       )');
+is(istype(Foo, Foo              ), 1, 'istype(Foo, Foo              )');
+is(istype(Foo, Bar              ), 0, 'istype(Foo, Bar              )');
+is(istype(Foo, Foo, Bar         ), 1, 'istype(Foo, Foo, Bar         )');
+is(istype(Foo, Bar, Foo         ), 1, 'istype(Foo, Bar, Foo         )');
+is(istype(Foo, Bar, Bar         ), 0, 'istype(Foo, Bar, Bar         )');
 
-is(istypeAny($foo                  ), 0, 'istypeAny(Foo.new                  )');
-is(istypeAny($foo, NQPMu           ), 1, 'istypeAny(Foo.new, NQPMu           )');
-is(istypeAny($foo, NQPMu, nqp::null), 1, 'istypeAny(Foo.new, NQPMu, nqp::null)');
-is(istypeAny($foo, NQPMu, Foo      ), 1, 'istypeAny(Foo.new, NQPMu, Foo      )');
-is(istypeAny($foo, Foo             ), 1, 'istypeAny(Foo.new, Foo             )');
-is(istypeAny($foo, Bar             ), 0, 'istypeAny(Foo.new, Bar             )');
-is(istypeAny($foo, Foo, Bar        ), 1, 'istypeAny(Foo.new, Foo, Bar        )');
-is(istypeAny($foo, Bar, Foo        ), 1, 'istypeAny(Foo.new, Bar, Foo        )');
-is(istypeAny($foo, Bar, Bar        ), 0, 'istypeAny(Foo.new, Bar, Bar        )');
-
-is(istypeAny($foo, Baz             ), 0, 'istypeAny($foo, Baz            )');
-is(istypeAny($foo, Foo, Baz        ), 1, 'istypeAny($foo, Foo, Baz       )');
-is(istypeAny($foo, Baz, Foo        ), 1, 'istypeAny($foo, Baz, Foo       )');
-is(istypeAny($foo, Baz, Baz        ), 0, 'istypeAny($foo, Baz, Baz       )');
+is(istype(Foo, Baz              ), 0, 'istype(Foo, Baz              )');
+is(istype(Foo, Foo, Baz         ), 1, 'istype(Foo, Foo, Baz         )');
+is(istype(Foo, Baz, Foo         ), 1, 'istype(Foo, Baz, Foo         )');
+is(istype(Foo, Baz, Baz         ), 0, 'istype(Foo, Baz, Baz         )');
 
 
-is(istypeAny(Bar                   ), 0, 'istypeAny(Bar                  )');
-is(istypeAny(Bar, NQPMu            ), 1, 'istypeAny(Bar, NQPMu           )');
-is(istypeAny(Bar, NQPMu, nqp::null ), 1, 'istypeAny(Bar, NQPMu, nqp::null)');
-is(istypeAny(Bar, NQPMu, Foo       ), 1, 'istypeAny(Bar, NQPMu, Foo      )');
-is(istypeAny(Bar, Foo              ), 1, 'istypeAny(Bar, Foo             )');
-is(istypeAny(Bar, Bar              ), 1, 'istypeAny(Bar, Bar             )');
-is(istypeAny(Bar, Foo, Bar         ), 1, 'istypeAny(Bar, Foo, Bar        )');
-is(istypeAny(Bar, Bar, Foo         ), 1, 'istypeAny(Bar, Bar, Foo        )');
-is(istypeAny(Bar, Bar, Bar         ), 1, 'istypeAny(Bar, Bar, Bar        )');
+dies_ok( { istype($foo) }, 'istype with only one arg');
+is(istype($foo, NQPMu           ), 1, 'istype(Foo.new, NQPMu           )');
+is(istype($foo, NQPMu, nqp::null), 1, 'istype(Foo.new, NQPMu, nqp::null)');
+is(istype($foo, NQPMu, Foo      ), 1, 'istype(Foo.new, NQPMu, Foo      )');
+is(istype($foo, Foo             ), 1, 'istype(Foo.new, Foo             )');
+is(istype($foo, Bar             ), 0, 'istype(Foo.new, Bar             )');
+is(istype($foo, Foo, Bar        ), 1, 'istype(Foo.new, Foo, Bar        )');
+is(istype($foo, Bar, Foo        ), 1, 'istype(Foo.new, Bar, Foo        )');
+is(istype($foo, Bar, Bar        ), 0, 'istype(Foo.new, Bar, Bar        )');
 
-is(istypeAny(Bar, Baz              ), 0, 'istypeAny(Bar, Baz             )');
-is(istypeAny(Bar, Foo, Baz         ), 1, 'istypeAny(Bar, Foo, Baz        )');
-is(istypeAny(Bar, Baz, Foo         ), 1, 'istypeAny(Bar, Baz, Foo        )');
-is(istypeAny(Bar, Baz, Baz         ), 0, 'istypeAny(Bar, Baz, Baz        )');
-
-
-is(istypeAny($bar                  ), 0, 'istypeAny(Bar.new                  )');
-is(istypeAny($bar, NQPMu           ), 1, 'istypeAny(Bar.new, NQPMu           )');
-is(istypeAny($bar, NQPMu, nqp::null), 1, 'istypeAny(Bar.new, NQPMu, nqp::null)');
-is(istypeAny($bar, NQPMu, Foo      ), 1, 'istypeAny(Bar.new, NQPMu, Foo      )');
-is(istypeAny($bar, Foo             ), 1, 'istypeAny(Bar.new, Foo             )');
-is(istypeAny($bar, Bar             ), 1, 'istypeAny(Bar.new, Bar             )');
-is(istypeAny($bar, Foo, Bar        ), 1, 'istypeAny(Bar.new, Foo, Bar        )');
-is(istypeAny($bar, Bar, Foo        ), 1, 'istypeAny(Bar.new, Bar, Foo        )');
-is(istypeAny($bar, Bar, Bar        ), 1, 'istypeAny(Bar.new, Bar, Bar        )');
-
-is(istypeAny($bar, Baz             ), 0, 'istypeAny($bar, Baz             )');
-is(istypeAny($bar, Foo, Baz        ), 1, 'istypeAny($bar, Foo, Baz        )');
-is(istypeAny($bar, Baz, Foo        ), 1, 'istypeAny($bar, Baz, Foo        )');
-is(istypeAny($bar, Baz, Baz        ), 0, 'istypeAny($bar, Baz, Baz        )');
+is(istype($foo, Baz             ), 0, 'istype($foo, Baz            )');
+is(istype($foo, Foo, Baz        ), 1, 'istype($foo, Foo, Baz       )');
+is(istype($foo, Baz, Foo        ), 1, 'istype($foo, Baz, Foo       )');
+is(istype($foo, Baz, Baz        ), 0, 'istype($foo, Baz, Baz       )');
 
 
-is(istypeAny($baz                  ), 0, 'istypeAny(Bar.new does Baz                  )');
-is(istypeAny($baz, NQPMu           ), 1, 'istypeAny(Bar.new does Baz, NQPMu           )');
-is(istypeAny($baz, NQPMu, nqp::null), 1, 'istypeAny(Bar.new does Baz, NQPMu, nqp::null)');
-is(istypeAny($baz, NQPMu, Foo      ), 1, 'istypeAny(Bar.new does Baz, NQPMu, Foo      )');
-is(istypeAny($baz, Foo             ), 1, 'istypeAny(Bar.new does Baz, Foo             )');
-is(istypeAny($baz, Bar             ), 1, 'istypeAny(Bar.new does Baz, Bar             )');
-is(istypeAny($baz, Foo, Bar        ), 1, 'istypeAny(Bar.new does Baz, Foo, Bar        )');
-is(istypeAny($baz, Bar, Foo        ), 1, 'istypeAny(Bar.new does Baz, Bar, Foo        )');
-is(istypeAny($baz, Bar, Bar        ), 1, 'istypeAny(Bar.new does Baz, Bar, Bar        )');
+dies_ok( { istype(Bar) }, 'istype with only one arg');
+is(istype(Bar, NQPMu            ), 1, 'istype(Bar, NQPMu           )');
+is(istype(Bar, NQPMu, nqp::null ), 1, 'istype(Bar, NQPMu, nqp::null)');
+is(istype(Bar, NQPMu, Foo       ), 1, 'istype(Bar, NQPMu, Foo      )');
+is(istype(Bar, Foo              ), 1, 'istype(Bar, Foo             )');
+is(istype(Bar, Bar              ), 1, 'istype(Bar, Bar             )');
+is(istype(Bar, Foo, Bar         ), 1, 'istype(Bar, Foo, Bar        )');
+is(istype(Bar, Bar, Foo         ), 1, 'istype(Bar, Bar, Foo        )');
+is(istype(Bar, Bar, Bar         ), 1, 'istype(Bar, Bar, Bar        )');
 
-is(istypeAny($baz, Baz             ), 1, 'istypeAny($baz, Baz             )');
-is(istypeAny($baz, Foo, Baz        ), 1, 'istypeAny($baz, Foo, Baz        )');
-is(istypeAny($baz, Baz, Foo        ), 1, 'istypeAny($baz, Baz, Foo        )');
-is(istypeAny($baz, Baz, Baz        ), 1, 'istypeAny($baz, Baz, Baz        )');
+is(istype(Bar, Baz              ), 0, 'istype(Bar, Baz             )');
+is(istype(Bar, Foo, Baz         ), 1, 'istype(Bar, Foo, Baz        )');
+is(istype(Bar, Baz, Foo         ), 1, 'istype(Bar, Baz, Foo        )');
+is(istype(Bar, Baz, Baz         ), 0, 'istype(Bar, Baz, Baz        )');
+
+
+dies_ok( { istype($bar) }, 'istype with only one arg');
+is(istype($bar, NQPMu           ), 1, 'istype(Bar.new, NQPMu           )');
+is(istype($bar, NQPMu, nqp::null), 1, 'istype(Bar.new, NQPMu, nqp::null)');
+is(istype($bar, NQPMu, Foo      ), 1, 'istype(Bar.new, NQPMu, Foo      )');
+is(istype($bar, Foo             ), 1, 'istype(Bar.new, Foo             )');
+is(istype($bar, Bar             ), 1, 'istype(Bar.new, Bar             )');
+is(istype($bar, Foo, Bar        ), 1, 'istype(Bar.new, Foo, Bar        )');
+is(istype($bar, Bar, Foo        ), 1, 'istype(Bar.new, Bar, Foo        )');
+is(istype($bar, Bar, Bar        ), 1, 'istype(Bar.new, Bar, Bar        )');
+
+is(istype($bar, Baz             ), 0, 'istype($bar, Baz             )');
+is(istype($bar, Foo, Baz        ), 1, 'istype($bar, Foo, Baz        )');
+is(istype($bar, Baz, Foo        ), 1, 'istype($bar, Baz, Foo        )');
+is(istype($bar, Baz, Baz        ), 0, 'istype($bar, Baz, Baz        )');
+
+
+dies_ok( { istype($baz) }, 'istype with only one arg');
+is(istype($baz, NQPMu           ), 1, 'istype(Bar.new does Baz, NQPMu           )');
+is(istype($baz, NQPMu, nqp::null), 1, 'istype(Bar.new does Baz, NQPMu, nqp::null)');
+is(istype($baz, NQPMu, Foo      ), 1, 'istype(Bar.new does Baz, NQPMu, Foo      )');
+is(istype($baz, Foo             ), 1, 'istype(Bar.new does Baz, Foo             )');
+is(istype($baz, Bar             ), 1, 'istype(Bar.new does Baz, Bar             )');
+is(istype($baz, Foo, Bar        ), 1, 'istype(Bar.new does Baz, Foo, Bar        )');
+is(istype($baz, Bar, Foo        ), 1, 'istype(Bar.new does Baz, Bar, Foo        )');
+is(istype($baz, Bar, Bar        ), 1, 'istype(Bar.new does Baz, Bar, Bar        )');
+
+is(istype($baz, Baz             ), 1, 'istype($baz, Baz             )');
+is(istype($baz, Foo, Baz        ), 1, 'istype($baz, Foo, Baz        )');
+is(istype($baz, Baz, Foo        ), 1, 'istype($baz, Baz, Foo        )');
+is(istype($baz, Baz, Baz        ), 1, 'istype($baz, Baz, Baz        )');
 
 my @lines;
 lives_ok( { @lines := linesFrom('t/02_Util.t', 1) }, 'linesFrom this test file, all');

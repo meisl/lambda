@@ -34,17 +34,17 @@ is(dump($v), '─○ lexical foo', 'dump Var with explicit scope');
 
 my $stmts := QAST::Stmts.new($nullop, $v);
 is(dump($stmts),
-         "──:Stmts"
-     ~ "\n  ├─null"
-     ~ "\n  └○ lexical foo", 
-'dump Stmts with children uses single vertical line to connect children');
+             "──:Stmts"
+         ~ "\n  ├─null"
+         ~ "\n  └○ lexical foo", 
+    'dump Stmts with children uses single vertical line to connect children');
 dies_ok( { ~$stmts }, 'stringifying QAST::Stmts as is');
 $stmts.HOW.mixin($stmts, StrByDump);
 is(~$stmts, 
-         "──:Stmts+\{StrByDump}"
-     ~ "\n  ├─null"
-     ~ "\n  └○ lexical foo", 
-'with role StrByDump mixed in it uses dump to stringify');
+             "──:Stmts+\{StrByDump}"
+         ~ "\n  ├─null"
+         ~ "\n  └○ lexical foo", 
+    'with role StrByDump mixed in it uses dump to stringify');
 
 my $b := QAST::Block.new();
 is(dump($b), '──:Block', 'dump Block');
@@ -58,15 +58,15 @@ is(dump($b, :oneLine), "((Block) (null))", 'dump Block with child on one line');
 
 $b.push($v);
 is(dump($b), 
-         "──:Block"
-     ~ "\n  ╟─null"
-     ~ "\n  ╙○ lexical foo", 
-'dump Block with children uses double vertical line to connect children');
+             "──:Block"
+         ~ "\n  ╟─null"
+         ~ "\n  ╙○ lexical foo", 
+    'dump Block with children uses double vertical line to connect children');
 is(dump($b, :indent('# ')), 
-        "# ──:Block"
-    ~ "\n#   ╟─null"
-    ~ "\n#   ╙○ lexical foo", 
-'dump Block with children with indent uses double vertical line to connect children');
+            "# ──:Block"
+        ~ "\n#   ╟─null"
+        ~ "\n#   ╙○ lexical foo", 
+    'dump Block with children with indent uses double vertical line to connect children');
 is(dump($b, :oneLine), "((Block) (null) ( lexical foo))", 'dump Block with children on one line');
 
 
@@ -74,10 +74,11 @@ is(dump($b, :oneLine), "((Block) (null) ( lexical foo))", 'dump Block with child
 # role StrByDump
 dies_ok( { ~$b }, 'stringifying QAST::Block as is');
 $b.HOW.mixin($b, StrByDump);
-is(~$b,  "──:Block+\{StrByDump}"
-     ~ "\n  ╟─null"
-     ~ "\n  ╙○ lexical foo", 
-'with role StrByDump mixed in it uses dump to stringify')
+is(~$b,  
+           "──:Block+\{StrByDump}"
+         ~ "\n  ╟─null"
+         ~ "\n  ╙○ lexical foo", 
+    'with role StrByDump mixed in it uses dump to stringify')
     || diag("\n$b");
 
 

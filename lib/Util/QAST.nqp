@@ -38,7 +38,7 @@ class Util::QAST {
         }
 
         my $matchStr := '';
-        if $node.node && !istypeAny($node, QAST::Var, QAST::IVal, QAST::NVal, QAST::SVal) {
+        if $node.node && !istype($node, QAST::Var, QAST::IVal, QAST::NVal, QAST::SVal) {
             $matchStr := nqp::escape(~$node.node);
             if nqp::chars($matchStr) > 54 {
                 $matchStr := nqp::substr($matchStr, 0, 51) ~ '"...'
@@ -96,7 +96,7 @@ class Util::QAST {
             $prefix := $prefix ~ '◙ ';
             if nqp::istype($node, QAST::SVal) {
                 $extraStr := ' "' ~ nqp::escape($node.value) ~ '"';
-            } elsif istypeAny($node, QAST::IVal, QAST::NVal) {
+            } elsif istype($node, QAST::IVal, QAST::NVal) {
                 $extraStr := ' ' ~ ~$node.value;
             }
         } elsif nqp::istype($node, QAST::Block) {

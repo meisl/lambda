@@ -17,7 +17,7 @@ sub qastChildren($ast, *@types) {
         @types := [QAST::Node];
     }
     for $ast.list {
-        if istypeAny($_, |@types) {
+        if istype($_, |@types) {
             @out.push($_);
         }
     }
@@ -66,7 +66,7 @@ sub _drop_Stmts($ast, $parent) {
     }
     if nqp::istype($ast, QAST::Stmts)
         && (
-              istypeAny($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) 
+              istype($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) 
            || (nqp::elems(@children) < 2)
         )
     {
@@ -104,7 +104,7 @@ sub isinResultPosition($node, $parent) {
 
 sub drop_bogusVars($ast, $parent = nqp::null) {
     if nqp::istype($ast, QAST::Var) && !$ast.decl {
-        if istypeAny($parent, QAST::Block, QAST::Stmt, QAST::Stmts) {
+        if istype($parent, QAST::Block, QAST::Stmt, QAST::Stmts) {
             unless isinResultPosition($ast, $parent) {
                 #nqp::print(whatsit($parent) ~ ' ' ~ $ast.dump);
                 return nqp::null;
@@ -203,7 +203,7 @@ sub remove_MAIN($ast) {
                 my $parent := @pathUp[0];
                 if nqp::istype($parent, QAST::Op) && $parent.op eq 'if' {
                     $parent;
-                } elsif istypeAny($parent, QAST::Stmt, QAST::Stmts) {
+                } elsif istype($parent, QAST::Stmt, QAST::Stmts) {
                     $parent := @pathUp[0];
                     if nqp::istype($parent, QAST::Op) && $parent.op eq 'if' {
                         $parent;
@@ -259,7 +259,7 @@ sub findDef($ast, $matcher, @pathUp = []) {
                  $parent.op eq 'bind' && $matcher($node, @pathUp)
                     ?? $parent
                     !! nqp::null;
-            } elsif istypeAny($parent, QAST::Block, QAST::Stmts, QAST::Stmt, QAST::Op) {
+            } elsif istype($parent, QAST::Block, QAST::Stmts, QAST::Stmt, QAST::Op) {
                 my @next := qastChildren($node, QAST::Block, QAST::Stmts, QAST::Stmt, QAST::Var, QAST::Op); # TODO: put Op nodes first
                 @next;
             } else {
@@ -392,7 +392,7 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
             my $name   := $_[0].name;
             my $block  := $_[1];
             my %results;
-            if istypeAny($block[0], QAST::Stmt, QAST::Stmts) {
+            if istype($block[0], QAST::Stmt, QAST::Stmts) {
                 my $it := nqp::iterator($block.list);
                 %results := collect_params_and_body(nqp::shift($it));
                 while $it {
@@ -513,7 +513,7 @@ sub replace_assoc_and_pos_scoped($node) {
         $node.unshift($child1[0]);
     } elsif nqp::istype($node, QAST::VarWithFallback) {
         my $fallback := $node.fallback;
-        if nqp::isnull($fallback) || istypeAny($fallback, NQPMu) {
+        if nqp::isnull($fallback) || istype($fallback, NQPMu) {
             $fallback := nqp::null;
         } else {
             nqp::die('cannot handle fallback ' ~ whatsit($node.fallback))
@@ -673,7 +673,7 @@ class SmartCompiler is NQP::Compiler {
             %results<Node>++; # size of tree
             if nqp::istype($node, QAST::Block) {
                 %results<Block>++;
-            } elsif istypeAny($node, QAST::Stmt, QAST::Stmts) {
+            } elsif istype($node, QAST::Stmt, QAST::Stmts) {
                 %results<Stmt(s)>++;
             } elsif nqp::istype($node, QAST::Op) {
                 my $op := $node.op;
@@ -762,7 +762,7 @@ class SmartCompiler is NQP::Compiler {
         my @statskeys := [];
         for @statskeyDefs {
             my $v := $_[1][0];
-            if istypeAny($v, QAST::SVal, QAST::IVal, QAST::NVal) {
+            if istype($v, QAST::SVal, QAST::IVal, QAST::NVal) {
                  @statskeys.push($v.value);
             }
         }

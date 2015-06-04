@@ -292,8 +292,9 @@ class Testing {
             CATCH {
                 $result := 0;
                 $error  := $!;
-                $desc := "$desc\n  # should live but died: '"
-                    ~ nqp::escape(~$error) ~ "'";
+                $desc := "$desc\n  # should live but died: '" ~ nqp::escape(~$error) ~ "'"
+                            ~ "\n    # " ~ nqp::join("\n    # ", nqp::backtracestrings($error))
+                ;
             }
         }
 
