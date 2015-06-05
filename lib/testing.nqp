@@ -512,9 +512,6 @@ class Testing {
         }
 
         method init(:$raw_frame!, :$raw_framestring!, :$sub!, :$file_src!, :$line_src!) {
-            # make some synonyms:
-            %!fields<file> := $file_src;
-            %!fields<line> := $line_src;
 
             # XXX: rather hacky from here on...
             my $s := nqp::substr($raw_framestring, 6); # ignore "   at "/" from " prefix
@@ -530,6 +527,11 @@ class Testing {
             %!fields<line_bin> := @parts.pop;
             %!fields<sub_name> := @parts.pop;
             %!fields<file_bin> := nqp::join(':', @parts);
+            %!fields<file_src> := $file_src_alt;
+            
+            # make some synonyms:
+            %!fields<file> := %!fields<file_src>;
+            %!fields<line> := %!fields<line_src>;
             self;
         }
 
@@ -565,17 +567,25 @@ class Testing {
     class Backtrace {
         has @!frames is positional_delegate;
 
-        method BUILD(:$error = NO_VALUE) {
+        method BUILD(:$error = NO_VALUE, int :$skip = 0) {
             if $error =:= NO_VALUE {
-                #$error := Testing.invokeNullaryChecked({ nqp::die('WE ARE HERE') })<error>;
                 try { nqp::die('WE ARE HERE'); CATCH { $error := $! } }
+                $skip := $skip + 4; # if made here, then ignore
+                                    # ...the try block above   
+                                    # ...the call from BUILDALL
+                                    # ...the call from bless   
+                                    # ...the call from new     
             }
             my $backtrace := nqp::iterator(nqp::backtrace($error));
+            my @backtracestrings := nqp::backtracestrings($error);
             @!frames := [];
-            for nqp::backtracestrings($error) -> $raw_framestring {
+            for @backtracestrings -> $raw_framestring {
                 my $raw_frame := nqp::shift($backtrace);
-                @!frames.push(BacktraceFrame.new(:$raw_frame, :$raw_framestring));
+                @!frames.push(BacktraceFrame.new(:$raw_frame, :$raw_framestring))
+                    unless $skip > 0;
+                $skip--;
             }
+            self;
         }
 
         method list() { @!frames }
@@ -589,7 +599,7 @@ class Testing {
 
     my $HERE;
     method HERE() {
-        $HERE := Backtrace.new() unless $HERE;
+        $HERE := Backtrace.new unless $HERE;
         $HERE;
     }
 
