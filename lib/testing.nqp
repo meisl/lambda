@@ -20,9 +20,58 @@ class Testing {
         nqp::say($s);
     }
 
+    method join(str $sep, *@pieces, :$prefix1st = 0, :$filter, :$map) {
+        my $n := nqp::elems(@pieces);
+        if $n == 0 {
+            nqp::die("cannot join nothing");
+        } elsif ($n == 1) || nqp::islist(@pieces[0]) {
+            @pieces := @pieces[0];
+            $n := nqp::elems(@pieces);
+        }
+        return ''
+            unless $n;
 
-    method diag($msg) {
-        self.say("# $msg");
+        $filter  := -> $x { 1 }  unless $filter;
+        $map     := -> $x { $x } unless $map;
+        my $map1 := -> $x { my $y := $map($x); nqp::isstr($y) ?? $y !! self.describe($y) };
+        my @strs := [];
+        for @pieces {
+            @strs.push($map1($_)) 
+                if $filter($_);
+        }
+        my $out := nqp::join($sep, @strs);
+        $prefix1st ?? $sep ~ $out !! $out;
+    }
+    
+
+    method diag($thing) {
+        my $msg;
+        if nqp::isstr($thing) {
+            $msg := $thing;
+        } else {
+            $msg := self.describe($thing);
+        }
+        my @lines := nqp::split("\n", $msg);
+        say('# ' ~ self.join("\n# ", @lines));
+        #self.say("# $msg");
+    }
+
+    method describe_fallback($x) {
+        my $out;
+        my $how := nqp::how($x);
+        if $how {
+            $out := $how.name($x);
+        } else {
+            $out := nqp::reprname($x);
+        }
+        
+        unless nqp::isconcrete($x) {
+            $out := $out ~ ', Type object'
+        }
+        if nqp::isinvokable($x) {
+            $out := $out ~ ', invokable';
+        }
+        $out;
     }
 
     method describe($x) {
@@ -40,30 +89,25 @@ class Testing {
         } elsif nqp::isnull($x) {   # note: nqp::null_s would NOT pass the nqp::isnull test
             $out := 'nqp::null';
         } elsif nqp::ishash($x) {
-            $out := 'nqp::hash(';
             my @pairs := [];
             for $x {
-                my $k := nqp::iterkey_s($_);
-                my $v := nqp::iterval($_);
-                @pairs.push($k);
-                @pairs.push(self.describe($v));
+                @pairs.push('"' ~ nqp::escape(nqp::iterkey_s($_)) ~ '"');
+                @pairs.push(self.describe(nqp::iterval($_)));
             }
-            $out := $out ~ nqp::join(', ', @pairs) ~ ')';
+            $out := '#`{' ~ self.describe_fallback($x) ~ ':}nqp::hash( ' ~ nqp::join(', ', @pairs) ~ ' )';
+        } elsif nqp::islist($x) {
+            my @out := [];
+            for $x {
+                @out.push(self.describe($_));
+            }
+            $out := '#`{' ~ self.describe_fallback($x) ~ ':}[ ' ~ nqp::join(', ', @out) ~ ' ]';
         } else {
-            my $how := nqp::how($x);
-            if $how {
-                $out := $how.name($x);
+            $out := self.describe_fallback($x);
+            if nqp::can($x, 'Str') {
+                $out := '#`{(' ~ $out ~ ').Str:}"' ~ nqp::escape($x.Str) ~ '"';
             } else {
-                $out := nqp::reprname($x);
+                $out := "($out)";
             }
-            
-            unless nqp::isconcrete($x) {
-                $out := $out ~ ', Type object'
-            }
-            if nqp::isinvokable($x) {
-                $out := $out ~ ', invokable';
-            }
-            $out := (nqp::can($x, 'Str') ?? $x.Str ~ ' ' !! '') ~ "($out)";
         }
         $out;
     }
@@ -79,6 +123,74 @@ class Testing {
         }
     }
 
+    method marked_backtrace($exc, :$keepThisFile = 0) {
+        my $bt  := nqp::backtrace($exc);
+        my @bts := nqp::backtracestrings($exc);
+        my @skip := [
+            'NQPCORE.setting',
+            'NQPHLL.nqp',
+            'NQP.nqp',
+            nqp::backendconfig()<prefix>,
+        ];
+        @skip.push(self.FILE)
+            unless $keepThisFile;
+        my $i := 0;
+        for $bt {
+            my %ann := $_<annotations>;
+            my $f := %ann<file>;
+            for @skip -> $skip {
+                if $skip && (nqp::index($f, $skip) > -1) {  # ignore falsey entries in @skip
+                    $_<skip> := 1;
+                    last;
+                }
+            }
+            my $s := @bts[$i];
+            my $pre := nqp::substr($s, 0, 6);
+            $_<str> := ($pre eq '   at ') || ($pre eq ' from ')
+                ?? nqp::substr($s, 6)
+                !! $s
+            ;
+            $i++;
+        }
+        $bt;
+    }
+
+    method filtered_backtrace($exc, :$keepThisFile = 0) {
+        my @out := [];
+        for self.marked_backtrace($exc, :$keepThisFile) {
+            @out.push($_) unless $_<skip>
+        }
+        @out;
+    }
+
+    method filtered_backtracestrings($exc, :$keepThisFile = 0, :$prefix = '') {
+        my @out := [];
+        my $prefix0 := "$prefix   at ";
+        $prefix     := "$prefix from ";
+        my $i := 0;
+
+        for self.filtered_backtrace($exc, :$keepThisFile) {
+            @out.push(
+                  ($i ?? $prefix !! $prefix0) 
+                ~ ($_<str> ~ '   ' ~ ($_<annotations><file> ~ ':' ~ $_<annotations><line>))
+            );
+            $i++;
+        }
+        @out;
+    }
+
+    method format_backtrace(@bt, :$prefix = '') {
+        my @out := [];
+        for @bt {
+            unless $_<skip> {
+                @out.push($_<str>
+                    || $_<annotations><file> ~ ':' ~ $_<annotations><line>
+                ); 
+            }
+        }
+        "$prefix   at " ~ nqp::join("\n$prefix from ", @out);
+    }
+
     method ok($condition, $desc?) {
         $test_counter++;    # yes, even if +@*TEST_OF_TEST - so we can tell apart proper tests and other stuff (possibly returning 1)
 
@@ -90,18 +202,31 @@ class Testing {
         if $desc {
             @output.push(" - $desc");
         }
-        if $test_counter <= $todo_upto_test_num {
-            @output.push($todo_reason);
+        my $failureat;
+        unless $condition {
+            # does not work:
+            #$failureat := self.invokeNullaryChecked({ nqp::die('WE ARE HERE') })<error>;
+            try { nqp::die('FAIL!'); CATCH { $failureat := $! } }
         }
         if @*TEST_OF_TEST {
             my $from := @*TEST_OF_TEST.pop;
-            @*TEST_OF_TEST.push(hash(
+            my %outcome := hash(
                 :$from,
                 :$condition,
                 :description($desc),
                 :output(nqp::join('', @output)),
-            ));
+            );
+            unless $condition {
+                %outcome<failureat> := $failureat;
+            }
+            
+            @*TEST_OF_TEST.push(%outcome);
         } else {
+            unless $condition {
+                for self.filtered_backtracestrings($failureat, :keepThisFile(1), :prefix("\n  #")) {
+                    @output.push($_);
+                }
+            }
             self.say(|@output);
         }
         $condition ?? 1 !! 0;
@@ -165,20 +290,22 @@ class Testing {
         my $depth := +@*TEST_OF_TEST;
         @*TEST_OF_TEST.push('fails_ok');
         $desc := $desc ~ ' fails';
-        my $result := NO_VALUE;
         my $error  := NO_VALUE;
         my $inner_returned;
         try {
             $inner_returned := $block();
             CATCH {
-                $result := 0;
-                $error  := $!;
-                $desc := "$desc\n  # should fail but died: '" ~ nqp::escape($error) ~ "'" 
-                            ~ "\n    # " ~ nqp::join("\n    # ", nqp::backtracestrings($error))
-                ;
+                $error := $!;
             }
         }
-        if $result =:= NO_VALUE { # did not throw
+        my $result;
+        if $error {
+            $result := 0;
+            $desc := "$desc\n  # should fail but died: '" ~ nqp::escape($error) ~ "'" 
+                        ~ "\n  # #" ~ nqp::join("\n  # #", nqp::backtracestrings($error))
+                        #~ nqp::join("\n  # #", self.filtered_backtracestrings($error, :prefix("\n  # #"), :keepThisFile($depth)))
+            ;
+        } else { # did not throw
             my $inner_outcome := (+@*TEST_OF_TEST == $depth + 1) && @*TEST_OF_TEST.pop;
             if nqp::ishash($inner_outcome) {
                 if $inner_returned {
@@ -223,6 +350,7 @@ class Testing {
         
         $desc := $desc ~ ' passes';                                             # REFACTOR: "fails" -> "passes"
         my $result;
+        my @descX := [];
         
         my %block_outcome := self.invokeNullaryChecked($block);
         my $error := %block_outcome<error>;
@@ -235,10 +363,8 @@ class Testing {
                 nqp::die('passes_ok expects a nullary invokable as first arg - "' ~ nqp::escape($error) ~ '"');
             } else { # $block died inside it -> we fail with appropriate message
                 $result := 0;
-                $desc := "$desc\n  # should pass but died: '"                   # REFACTOR: "fail" -> "pass"
-                                     ~ nqp::escape($error) ~ "'"
-                            ~ "\n    # " ~ nqp::join("\n    # ", nqp::backtracestrings($error))
-                ;
+                @descX := self.filtered_backtracestrings($error, :keepThisFile($depth), :prefix(' #'));
+                @descX.unshift("should pass but died: '" ~ nqp::escape($error) ~ "'");
             }
         } else { # $block did not die -> must have returned something
             my $block_returned := %block_outcome<returned>;
@@ -247,26 +373,25 @@ class Testing {
             if nqp::ishash($inner_tests_outcome) {  # $block actually did contain tests
                 if !$block_returned {                                           # REFACTOR: $block_returned -> !$block_returned
                     $result := 0;   # we fail if test(s) in $block failed
-                    $desc := "$desc\n  # should pass but failed: "              # REFACTOR: "fail but passed" -> "pass but failed"
-                           ~ '"' ~ nqp::escape($inner_tests_outcome<output>) ~ '"'
-                    ;
+                    @descX := self.filtered_backtracestrings($inner_tests_outcome<failureat>, :keepThisFile($depth), :prefix(' #'));
+                    @descX.unshift('should pass but failed: "' ~ nqp::escape($inner_tests_outcome<output>) ~ '"');
                 } else {
                     $result := 1;   # we pass if test(s) in $block passed
                 }
             } else {    # looks like no tests in $block
                 $result := 0;   # we fail, for sure
                 if $tc == $test_counter {   # seems $block simply did not contain any test code
-                    $desc := $desc
-                        ~ "\n  # should pass but no tests"                      # REFACTOR: "fail" -> "pass"
-                        ~ "\n  # returned: '" ~ self.describe($block_returned)
-                    ;
+                    @descX := [
+                        "should pass but no tests",                      # REFACTOR: "fail" -> "pass"
+                        "returned: '" ~ self.describe($block_returned),
+                    ];
                 } else {    # worse: something's deeply broken with the test-of-test protocol - or we're being fooled...
-                    $desc := $desc
-                        ~ "\n  # should pass but broke test-of-test protocol"   # REFACTOR: "fail" -> "pass"
-                        ~ "\n  # inner tests: " ~ ($test_counter - $tc) ~ ' (it seems...)'
-                        ~ "\n  #    returned: " ~ self.describe($block_returned)
-                        ~ "\n  # testoftests: " ~ $depth
-                    ;
+                    @descX := [
+                        "should pass but broke test-of-test protocol",   # REFACTOR: "fail" -> "pass"
+                        "inner tests: " ~ ($test_counter - $tc) ~ ' (it seems...)',
+                        "   returned: " ~ self.describe($block_returned),
+                        "testoftests: " ~ $depth,
+                    ];
                 }
             }
         }
@@ -274,8 +399,8 @@ class Testing {
         # clean up
         nqp::setelems(@*TEST_OF_TEST, $depth);
         $test_counter := $tc;
-
-        self.ok($result, $desc);
+        @descX.unshift('');
+        self.ok($result, $desc ~ nqp::join("\n  # ", @descX));
     }
 
     method lives_ok($block, $desc) {
@@ -371,6 +496,106 @@ class Testing {
         }
     }
 
+
+    class BacktraceFrame {
+        has %!fields is associative_delegate;
+
+        method BUILD(:$raw_frame!, :$raw_framestring!) {
+            %!fields := hash(
+                :$raw_frame,
+                :$raw_framestring,
+                :sub($raw_frame<sub>),
+                :file_src($raw_frame<annotations><file>),
+                :line_src($raw_frame<annotations><line>),
+            );
+            self.init(|%!fields);
+        }
+
+        method init(:$raw_frame!, :$raw_framestring!, :$sub!, :$file_src!, :$line_src!) {
+            # make some synonyms:
+            %!fields<file> := $file_src;
+            %!fields<line> := $line_src;
+
+            # XXX: rather hacky from here on...
+            my $s := nqp::substr($raw_framestring, 6); # ignore "   at "/" from " prefix
+            my @parts := nqp::split(':' ~ $line_src ~ '  (', $s);
+            my $file_src_alt := @parts[0];
+            my str $bin_part := nqp::split(')', @parts[1])[0];
+            
+            @parts := nqp::split(':', $bin_part);
+            # work backwards now (via pop) in order to not get confused by ':' in file name (on Windows)
+            unless +@parts {
+                nqp::die('>>>> ' ~ Testing.describe($bin_part) ~ '|' ~ Testing.describe($raw_framestring) ~ '|' ~ @parts[1]);
+            }
+            %!fields<line_bin> := @parts.pop;
+            %!fields<sub_name> := @parts.pop;
+            %!fields<file_bin> := nqp::join(':', @parts);
+            self;
+        }
+
+        method Str(:$strip_cwd = 1) {
+            my $fs := self<file_src>;
+            my $fb := self<file_bin>;
+            if $strip_cwd {
+                my $cwd := nqp::cwd;
+                my $n := nqp::chars($cwd) + 1; # one more for path separator
+                my $i;
+                $i := nqp::index($fs, $cwd);
+                $fs := nqp::substr($fs, $n) unless $i;
+                
+                $i := nqp::index($fb, $cwd);
+                $fb := nqp::substr($fb, $n) unless $i;
+            }
+            Testing.join('', :map(-> $x { ~$x }),
+                $fs,
+                ':',
+                self<line_src>,
+                '  (',
+                $fb,
+                ':',
+                self<sub_name>,
+                ':',
+                self<line_bin>,
+                ')'
+            )
+        }
+        
+    }
+
+    class Backtrace {
+        has @!frames is positional_delegate;
+
+        method BUILD(:$error = NO_VALUE) {
+            if $error =:= NO_VALUE {
+                #$error := Testing.invokeNullaryChecked({ nqp::die('WE ARE HERE') })<error>;
+                try { nqp::die('WE ARE HERE'); CATCH { $error := $! } }
+            }
+            my $backtrace := nqp::iterator(nqp::backtrace($error));
+            @!frames := [];
+            for nqp::backtracestrings($error) -> $raw_framestring {
+                my $raw_frame := nqp::shift($backtrace);
+                @!frames.push(BacktraceFrame.new(:$raw_frame, :$raw_framestring));
+            }
+        }
+
+        method list() { @!frames }
+
+        method Str(:$strip_cwd = 1) {
+            '   at ' ~ Testing.join("\n from ", @!frames, :map(-> $frame { $frame.Str(:$strip_cwd) }))
+        }
+
+    }
+
+
+    my $HERE;
+    method HERE() {
+        $HERE := Backtrace.new() unless $HERE;
+        $HERE;
+    }
+
+    method FILE() {
+        self.HERE[0]<file>;
+    }
 }
 
 
@@ -384,3 +609,7 @@ sub passes_ok($block, $desc?)       is export { Testing.passes_ok($block, $desc)
 sub lives_ok($block, $desc?)        is export { Testing.lives_ok($block, $desc) }
 sub dies_ok($block, $desc?)         is export { Testing.dies_ok($block, $desc) }
 sub is($actual, $expected, $desc?)  is export { Testing.is($actual, $expected, $desc) }
+
+
+diag("Testing.HERE:\n" ~ Testing.HERE);
+ok(0, '"ok(0)"');
