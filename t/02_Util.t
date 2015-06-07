@@ -4,7 +4,7 @@ use testing;
 
 use Util;
 
-plan(92);
+plan(94);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -138,4 +138,4 @@ is(nqp::elems(@lines), 1, 'nr of strings returned from linesFrom(..., 2, 1)')
 is(@lines[0], "#^^^^ DON'T REMOVE OR CHANGE THIS FIRST LINE - NOR THIS ONE!!!\n", , 'linesFrom this test file, 2nd');
 
 
-done;
+done();

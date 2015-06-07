@@ -4,7 +4,7 @@ use QAST;   # that is, nqp'S
 use testing;
 use Util::QAST;
 
-plan(24);
+plan(31);
 
 
 my $s := QAST::SVal.new(:value<bar>);
@@ -100,4 +100,4 @@ is($block[1].name, 'foo', 'follwing sibling untouched');
 
 
 
-done;
+done();

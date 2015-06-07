@@ -161,7 +161,7 @@ class Testing {
             unless $condition {
                 $failureat := $failureat.filter();
                 # TODO: filter out frames from this file - under circumstances (...!)
-                #$failureat := $failureat.filter(-> $f {$f<file> ne Testing.FILE});
+                #$failureat := $failureat.filter(-> $f {$f<file> ne self.FILE});
                 @output.push("\n" ~ $failureat.Str(:prefix("  #"), :prefix1st));
                 @tests_failed.push(hash(
                     :nr($test_counter),
