@@ -152,7 +152,7 @@ class Testing {
         self.diag(nqp::join("\n", @out));
     }
 
-    method ok($condition, $desc?) {
+    method ok($condition, $desc, *@descX) {
         $test_counter++;    # yes, even if +@*TEST_OF_TEST - so we can tell apart proper tests and other stuff (possibly returning 1)
 
         my @output;
@@ -165,6 +165,16 @@ class Testing {
         if $desc {
             @output.push(" - $desc");
         }
+
+        @descX.unshift('');
+        @output.push(self.join(
+            "\n  # ", @descX,
+            :map(-> $x { nqp::istype($x, Backtrace)
+                            ?? '#' ~ $x.filter.Str(:prefix("  # #"))
+                            !! ~$x;
+            }),
+        ));
+
         if @*TEST_OF_TEST {
             my $from := @*TEST_OF_TEST.pop;
             my %outcome := hash(
@@ -195,6 +205,13 @@ class Testing {
         $condition ?? 1 !! 0;
     }
 
+    # In order to tell apart whether
+    #   a) $code is not nullary (and therefore throws) or
+    #   b) $code *is* nullary but an exception is thrown from within it
+    # ...we provoke a "Too few positionals..."-exception ourselves,
+    # right here, and catch and store it in $myX.
+    # Then we call $code with no args and if that indeed dies we compare
+    # its exception ($theirX) with $myX.
     method invokeNullaryChecked($code) {
         my $returnValue;
         my $becauseNonNullary;
@@ -203,13 +220,6 @@ class Testing {
         my $theirBacktrace;
         my $myBacktrace;
         try {
-            # In order to tell apart whether
-            #   a) $code is not nullary (and therefore throws) or
-            #   b) $code *is* nullary but an exception is thrown from within it
-            # ...we provoke a "Too few positionals..."-exception ourselves,
-            # right here, and catch and store it in $x.
-            # The we call $code with no args and if that indeed dies we compare 
-            # its backtrace and msg with those of $x.
             # 
             # So: >>>> the following *MUST BE KEPT ON THE VERY SAME LINE!* <<<<
             try { -> $_ {}(); CATCH { $myX := $! } }; $returnValue := $code(); 
@@ -311,14 +321,8 @@ class Testing {
         # clean up
         nqp::setelems(@*TEST_OF_TEST, $depth);
         $test_counter := $tc;
-        @descX.unshift('');
-        self.ok($result, $desc ~ self.join(
-            "\n  # ", @descX,
-            :map(-> $x { nqp::istype($x, Backtrace)
-                            ?? '#' ~ $x.filter.Str(:prefix("  # #"))
-                            !! ~$x;
-            }),
-        ));
+
+        self.ok($result, $desc, |@descX);
     }
 
     method passes_ok($block, $desc) {
@@ -384,20 +388,14 @@ class Testing {
         # clean up
         nqp::setelems(@*TEST_OF_TEST, $depth);
         $test_counter := $tc;
-        @descX.unshift('');
-        self.ok($result, $desc ~ self.join(
-            "\n  # ", @descX,
-            :map(-> $x { nqp::istype($x, Backtrace)
-                            ?? '#' ~ $x.filter.Str(:prefix("  # #"))
-                            !! ~$x;
-            }),
-        ));
+
+        self.ok($result, $desc, |@descX);
     }
 
     method lives_ok($block, $desc) {
         my $tc := $test_counter;
         my $depth := +@*TEST_OF_TEST;
-        @*TEST_OF_TEST.push('passes_ok');   # REFACTOR!
+        @*TEST_OF_TEST.push('lives_ok');   # REFACTOR!
         $desc := $desc ~ ' lives';
         my $result := NO_VALUE;
         my $error  := NO_VALUE;
@@ -423,7 +421,7 @@ class Testing {
     method dies_ok($block, $desc) {
         my $tc := $test_counter;
         my $depth := +@*TEST_OF_TEST;
-        @*TEST_OF_TEST.push('passes_ok');   # REFACTOR!
+        @*TEST_OF_TEST.push('dies_ok');   # REFACTOR!
         $desc := $desc ~ ' dies';
         my $result := NO_VALUE;
         my $error  := NO_VALUE;
@@ -621,16 +619,16 @@ class Testing {
 }
 
 
-sub diag($msg)                      is export { Testing.diag($msg) }
-sub describe($x)                    is export { Testing.describe($x) }
-sub plan($nr_of_tests)              is export { Testing.plan($nr_of_tests) }
-sub done()                          is export { Testing.done() }
-sub ok($condition, $desc?)          is export { Testing.ok($condition, $desc) }
-sub fails_ok($block, $desc?)        is export { Testing.fails_ok($block, $desc) }
-sub passes_ok($block, $desc?)       is export { Testing.passes_ok($block, $desc) }
-sub lives_ok($block, $desc?)        is export { Testing.lives_ok($block, $desc) }
-sub dies_ok($block, $desc?)         is export { Testing.dies_ok($block, $desc) }
-sub is($actual, $expected, $desc?)  is export { Testing.is($actual, $expected, $desc) }
+sub diag($msg)                          is export { Testing.diag($msg) }
+sub describe($x)                        is export { Testing.describe($x) }
+sub plan($nr_of_tests)                  is export { Testing.plan($nr_of_tests) }
+sub done()                              is export { Testing.done() }
+sub ok($condition, $desc = NO_VALUE)    is export { Testing.ok($condition, $desc) }
+sub fails_ok($block, $desc?)            is export { Testing.fails_ok($block, $desc) }
+sub passes_ok($block, $desc?)           is export { Testing.passes_ok($block, $desc) }
+sub lives_ok($block, $desc?)            is export { Testing.lives_ok($block, $desc) }
+sub dies_ok($block, $desc?)             is export { Testing.dies_ok($block, $desc) }
+sub is($actual, $expected, $desc?)      is export { Testing.is($actual, $expected, $desc) }
 
 
 #diag("Testing.HERE:\n" ~ Testing.HERE);
@@ -644,8 +642,9 @@ sub is($actual, $expected, $desc?)  is export { Testing.is($actual, $expected, $
 #say('');
 #say($bt.filter(-> $x { $x<file> ne Testing.FILE }));
 
-#my $boom := { nqp::die("BOOM!") };
-#my $bang := -> $x { "BANG!" };
-#fails_ok($boom);
-#passes_ok($boom);
-#done();
+my $boom := { nqp::die("BOOM!") };
+my $bang := -> $x { "BANG!" };
+fails_ok($boom);
+passes_ok($boom);
+done();
+
