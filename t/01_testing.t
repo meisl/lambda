@@ -1,6 +1,7 @@
 #!nqp
 
 use testing;
+use Util;
 
 # Well, the testing stuff itself needs testing...
 #
@@ -12,7 +13,38 @@ use testing;
 # The latter meaning: by how much should it be advanced in a certain
 # situtation, if at all?
 
-plan(134);
+plan(136);
+
+=begin
+sub dodo($test) {
+    $test();
+}
+
+my $wearehere := { nqp::die('WE ARE HERE') };
+my $cannotinvoke := { i_should_not_exist() };
+my $cannotstringify := { say([]) };
+my $fails_ok_fails  := { fails_ok({ ok(1) }, 'it') };
+my $boom := { nqp::die("BOOM!") };
+my $bang := -> $x { "BANG!" };
+
+ok(0, '"ok(0)"');
+passes_ok(
+    { ok(0, 'it') }, 
+    '"ok(0)"');
+
+passes_ok($boom, 'nqp::die("BOOM!")');
+#passes_ok($bang, 'bang()');
+nqp::exit(0);
+
+dodo({ fails_ok({ ok(1, 'it') }, 'ok(1)') });
+dodo(
+    { 
+        fails_ok($boom, 'nqp::die("BOOM!")')
+    }
+);
+
+nqp::exit(0);
+=end
 
 
 # Handy thing for keeping an eye on the test_counter.
@@ -136,7 +168,7 @@ ok($d eq '(BOOTCode, invokable)', "sub foo(\$x) \{ \$x } is described as '(BOOTC
 
 # About real test fns: start off by checking for failure/passing
 # of normal tests, keeping an eye on the test_counter:
-diag('fails_ok/passes_ok on normal tests that actual pass or fail:');
+diag('fails_ok/passes_ok on normal tests that actually pass or fail:');
 diag('"ok XX test_counter+Y" means from now on: "inner tests are not counted on the outside (= as it should be)"');
 $tc := Testing.test_counter;   # reset it once more
 
@@ -160,8 +192,14 @@ diag('fails_ok/passes_ok on normal tests, nested 1 level:');
 passes_ok({ passes_ok($passing, "'$passingS'") }, "'passes_ok(\{ $passingS })'");
 testcounter_ok(1);
 
-fails_ok({ passes_ok($failing, "'$failingS'") }, "'passes_ok(\{ $failingS })'");
+ok(0);
 testcounter_ok(1);
+
+fails_ok(
+    { passes_ok($failing, "'$failingS'") }, "'passes_ok(\{ $failingS })'");
+testcounter_ok(1);
+
+#nqp::exit(1); # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 fails_ok({ fails_ok($passing, "'$passingS'") }, "'fails_ok(\{ $passingS })'");
 testcounter_ok(1);
@@ -174,7 +212,7 @@ testcounter_ok(1);
 # Error msgs are becoming *real* fun now - try it by changing the outermost (top-level) assertion.
 diag('fails_ok/passes_ok on normal tests, nested 2 levels:');
 
-passes_ok({ passes_ok({ passes_ok($passing, "...") }, "...") }, "'passes_ok(\{ passes_ok(\{ $passingS }) })'");
+fails_ok({ passes_ok({ passes_ok($passing, "...") }, "...") }, "'passes_ok(\{ passes_ok(\{ $passingS }) })'");
 testcounter_ok(1);
 
 fails_ok({ passes_ok({ passes_ok($failing, "...") }, "...") },  "'passes_ok(\{ passes_ok(\{ $failingS }) })'");
@@ -420,4 +458,4 @@ testcounter_ok(1);
 #is_eq(1, "asdf", "should throw");
 
 
-done;
+done();
