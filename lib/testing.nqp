@@ -254,48 +254,54 @@ class Testing {
     method fails_ok($block, $desc) {
         nqp::die('fails_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
             unless nqp::isinvokable($block);
-        
+
         my $tc := $test_counter;
         my $depth := +@*TEST_OF_TEST;
-        @*TEST_OF_TEST.push('fails_ok');
-        $desc := $desc ~ ' fails';
-        my $error  := NO_VALUE;
-        my $inner_returned;
-        try {
-            $inner_returned := $block();
-            CATCH {
-                $error := $!;
-            }
-        }
+        @*TEST_OF_TEST.push('fails_ok');                                       # REFACTOR: "fails_ok" -> "passes_ok"
+        
+        $desc := $desc ~ ' fails';                                             # REFACTOR: "fails" -> "passes"
         my $result;
         my @descX := [];
+        
+        my %block_outcome := self.invokeNullaryChecked($block);
+        my $error := %block_outcome<error>;
         if $error {
-            $result := 0;
-            @descX := [
-                "should fail but died: '" ~ nqp::escape($error) ~ "'",
-                Backtrace.new($error)
-            ];
-        } else { # did not throw
-            my $inner_outcome := (+@*TEST_OF_TEST == $depth + 1) && @*TEST_OF_TEST.pop;
-            if nqp::ishash($inner_outcome) {
-                if $inner_returned {
+            if %block_outcome<becauseNonNullary> { # we've been passed an inappropriate $block
+                # cleanup 
+                nqp::setelems(@*TEST_OF_TEST, $depth);
+                $test_counter := $tc;
+                # ...and complain
+                nqp::die('fails_ok expects a nullary invokable as first arg - "' ~ nqp::escape($error) ~ '"');
+            } else { # $block died inside it -> we fail with appropriate message
+                $result := 0;
+                @descX := [
+                    "should fail but died: '"  ~ nqp::escape($error) ~ "'",
+                    %block_outcome<backtrace>,
+                ];
+            }
+        } else { # $block did not die -> must have returned something
+            my $block_returned := %block_outcome<returned>;
+            # Now check if there were tests and if so, whether they passed
+            my $inner_tests_outcome := (+@*TEST_OF_TEST == $depth + 1) && @*TEST_OF_TEST.pop;
+            if nqp::ishash($inner_tests_outcome) {  # $block actually did contain tests
+                if $block_returned {
                     $result := 0;
-                    @descX := [ "should fail but passed: '" ~ nqp::escape($inner_outcome<output>) ~ "'" ];
+                    @descX := [ "should fail but passed: '" ~ nqp::escape($inner_tests_outcome<output>) ~ "'" ];
                 } else {
                     $result := 1;
                 }
-            } else {
+            } else {    # looks like no tests in $block
                 $result := 0;
                 if $tc == $test_counter {
                     @descX := [
                         "should fail but no tests",
-                        "returned: '" ~ self.describe($inner_returned),
+                        "returned: '" ~ self.describe($block_returned),
                     ];
                 } else {
                     @descX := [
                         "should fail but broke test-of-test protocol",
                         "inner tests: " ~ ($test_counter - $tc) ~ ' (it seems...)',
-                        "   returned: " ~ self.describe($inner_returned),
+                        "   returned: " ~ self.describe($block_returned),
                         "testoftests: " ~ $depth,
                     ];
                 }

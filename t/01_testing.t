@@ -13,7 +13,7 @@ use Util;
 # The latter meaning: by how much should it be advanced in a certain
 # situtation, if at all?
 
-plan(134);
+plan(142);
 
 =begin
 sub dodo($test) {
@@ -195,8 +195,6 @@ testcounter_ok(1);
 fails_ok(
     { passes_ok($failing, "'$failingS'") }, "'passes_ok(\{ $failingS })'");
 testcounter_ok(1);
-
-#nqp::exit(1); # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 fails_ok({ fails_ok($passing, "'$passingS'") }, "'fails_ok(\{ $passingS })'");
 testcounter_ok(1);
@@ -429,15 +427,12 @@ my $nullaryViciousBoomS := '-> { nqp::die("Too few positionals passed; expected 
 my $nullaryViciousBoom  :=  -> { nqp::die("Too few positionals passed; expected 1 argument but got 0") }; 
 
 
-##passes_ok($unary, "'$unaryS'");    # dies as it should
 dies_ok({ passes_ok($unary, "'$unaryS'") }, "'passes_ok($unaryS, ...)'");
 testcounter_ok(1);
 
-##passes_ok($nullaryBoom, "'$nullaryBoomS'");    # fails as it should
 fails_ok({ passes_ok($nullaryBoom, "'$nullaryBoomS'") }, "'passes_ok($nullaryBoomS, ...)'");
 testcounter_ok(1);
 
-##passes_ok($nullaryTrickyBoom, "'$nullaryTrickyBoomS'");    # fails as it should
 fails_ok({ passes_ok($nullaryTrickyBoom, "'$nullaryTrickyBoomS'") }, "'passes_ok($nullaryTrickyBoomS, ...)'");
 testcounter_ok(1);
 
@@ -446,10 +441,26 @@ testcounter_ok(1);
 dies_ok({ passes_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'") }, "'passes_ok($nullaryViciousBoomS, ...)'");
 testcounter_ok(1);
 
+# same with fails_ok:
+# --------vvvvv---------------------------------------vvvvvv
+dies_ok({ fails_ok($unary, "'$unaryS'") }, "'fails_ok($unaryS, ...)'");
+testcounter_ok(1);
+
+fails_ok({ fails_ok($nullaryBoom, "'$nullaryBoomS'") }, "'fails_ok($nullaryBoomS, ...)'");
+testcounter_ok(1);
+
+fails_ok({ fails_ok($nullaryTrickyBoom, "'$nullaryTrickyBoomS'") }, "'fails_ok($nullaryTrickyBoomS, ...)'");
+testcounter_ok(1);
+
+## Here we must give up - it is simply lying!
+##fails_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'");   # dies as if we passed a non-nullary
+dies_ok({ fails_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'") }, "'fails_ok($nullaryViciousBoomS, ...)'");
+testcounter_ok(1);
+
+
+
 # TODO: same with fails_ok, then dies_ok and lives_ok, too
 # --------vvvvv---------------------------------------vvvvvv
-
-
 
 #is_eq("asdf", "asdf", "should fail");
 #is_eq(1, "asdf", "should throw");
