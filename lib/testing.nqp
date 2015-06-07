@@ -10,8 +10,9 @@ my @*TEST_OF_TEST := [];
 # (can call them from outside but then they in turn cannot call themselves)
 class Testing {
     
+    my $test_counter  := 0;
     my $tests_planned := 0;
-    my $test_counter := 0;
+    my @tests_failed  := [];
 
     method test_counter() { $test_counter }
 
@@ -123,12 +124,31 @@ class Testing {
     method done() {
         my @out := ['', ''];
         if $test_counter == $tests_planned {
-            @out[1] := "ran $test_counter tests";
+            @out[1] := "Ran $test_counter tests";
         } else {
             @out[1] := "Looks like you planned $tests_planned tests, but ran $test_counter";
         }
-
+        if @tests_failed {
+            @out[1] := @out[1] ~ " - of which {+@tests_failed} FAILED:";
+        } else {
+            @out[1] := @out[1] ~ " (all passed).";
+        }
         @out[0] := nqp::x('=', nqp::chars(@out[1]));
+        if @tests_failed {
+            my @numbers := [];
+            for @tests_failed {
+                @numbers.push(~$_<nr>);
+                my $desc := $_<description> // '';
+                if $desc {
+                    my $firstNL := nqp::index($desc, "\n");
+                    $firstNL := nqp::chars($desc) if $firstNL < 0;
+                    $desc := ' - ' ~ nqp::substr($desc, 0, $firstNL);
+                }
+                my $frame := $_<backtrace>[$_<backtrace>.list - 1];
+                @out.push($_<nr> ~ ' at ' ~ $frame ~ $desc);
+            }
+            @out[1] := @out[1] ~ ' ' ~ nqp::join(', ', @numbers);
+        }
         self.diag(nqp::join("\n", @out));
     }
 
@@ -136,16 +156,14 @@ class Testing {
         $test_counter++;    # yes, even if +@*TEST_OF_TEST - so we can tell apart proper tests and other stuff (possibly returning 1)
 
         my @output;
+        my $failureat;
         unless $condition {
             @output.push("not ");
+            $failureat := Backtrace.new(:skip(+@*TEST_OF_TEST == 0 ?? 1 !! 0));
         }
         @output.push("ok $test_counter");
         if $desc {
             @output.push(" - $desc");
-        }
-        my $failureat;
-        unless $condition {
-            $failureat := Backtrace.new(:skip(+@*TEST_OF_TEST == 0 ?? 1 !! 0));
         }
         if @*TEST_OF_TEST {
             my $from := @*TEST_OF_TEST.pop;
@@ -166,6 +184,11 @@ class Testing {
                 # TODO: filter out frames from this file - under circumstances (...!)
                 #$failureat := $failureat.filter(-> $f {$f<file> ne Testing.FILE});
                 @output.push("\n" ~ $failureat.Str(:prefix("  #"), :prefix1st));
+                @tests_failed.push(hash(
+                    :nr($test_counter),
+                    :backtrace($failureat),
+                    :description($desc),
+                ));
             }
             self.say(|@output);
         }
@@ -618,3 +641,5 @@ sub is($actual, $expected, $desc?)  is export { Testing.is($actual, $expected, $
 #my $boom := { nqp::die("BOOM!") };
 #my $bang := -> $x { "BANG!" };
 #fails_ok($boom);
+#passes_ok($boom);
+#done();

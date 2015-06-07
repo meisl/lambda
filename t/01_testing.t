@@ -13,7 +13,7 @@ use Util;
 # The latter meaning: by how much should it be advanced in a certain
 # situtation, if at all?
 
-plan(136);
+plan(134);
 
 =begin
 sub dodo($test) {
@@ -192,9 +192,6 @@ diag('fails_ok/passes_ok on normal tests, nested 1 level:');
 passes_ok({ passes_ok($passing, "'$passingS'") }, "'passes_ok(\{ $passingS })'");
 testcounter_ok(1);
 
-ok(0);
-testcounter_ok(1);
-
 fails_ok(
     { passes_ok($failing, "'$failingS'") }, "'passes_ok(\{ $failingS })'");
 testcounter_ok(1);
@@ -212,7 +209,7 @@ testcounter_ok(1);
 # Error msgs are becoming *real* fun now - try it by changing the outermost (top-level) assertion.
 diag('fails_ok/passes_ok on normal tests, nested 2 levels:');
 
-fails_ok({ passes_ok({ passes_ok($passing, "...") }, "...") }, "'passes_ok(\{ passes_ok(\{ $passingS }) })'");
+passes_ok({ passes_ok({ passes_ok($passing, "...") }, "...") }, "'passes_ok(\{ passes_ok(\{ $passingS }) })'");
 testcounter_ok(1);
 
 fails_ok({ passes_ok({ passes_ok($failing, "...") }, "...") },  "'passes_ok(\{ passes_ok(\{ $failingS }) })'");

@@ -5,6 +5,10 @@ class Util {
     method min($a, $b) { $a < $b ?? $a !! $b }
     method max($a, $b) { $a > $b ?? $a !! $b }
 
+    method unixify(str $path) {
+        nqp::join('/', nqp::split('\\', $path));
+    }
+
     method whatsit($v) {
         my $reprname := nqp::reprname($v);
 
@@ -80,9 +84,10 @@ class Util {
 }
 
 
-sub min($a, $b) is export { Util.min($a, $b) }
-sub max($a, $b) is export { Util.max($a, $b) }
-sub whatsit($v) is export { Util.whatsit($v) }
+sub min($a, $b)         is export { Util.min($a, $b)    }
+sub max($a, $b)         is export { Util.max($a, $b)    }
+sub unixify(str $path)  is export { Util.unixify($path) }
+sub whatsit($v)         is export { Util.whatsit($v)    }
 
 sub istype($subject, *@types)                    is export { Util.istype($subject, |@types) }
 
