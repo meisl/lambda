@@ -4,7 +4,7 @@ use testing;
 
 use Util;
 
-plan(94);
+plan(100);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -29,9 +29,26 @@ is(min( -23,   42),  -23, 'min( -23,   42)');
 is(min(  42,  -23),  -23, 'min(  42,  -23)');
 
 
-is(whatsit(["foo", 1, ['hello', 'world'], 3.1415]), 
-    "[\"foo\", P6int 1, [\"hello\", \"world\"], P6num 3.1415]", 'whatsit(...)');
+# - unixify -------------------------------------------------------------------
 
+is(unixify('C:\rakudo\languages\nqp'), 'C:/rakudo/languages/nqp', 'unixify 1');
+is(unixify('C:\rakudo/languages/nqp'), 'C:/rakudo/languages/nqp', 'unixify 2');
+
+# - describe ------------------------------------------------------------------
+
+is(describe(["foo", 1, ['hello', 'world'], 3.1415]), 
+    '#`{NQPArray:}[ "foo" (str), 1 (int), #`{NQPArray:}[ "hello" (str), "world" (str) ], 3.1415 (num) ]',
+    'describe(...)');
+
+my $longstring := nqp::x('foobar', 100);
+is(nqp::chars($longstring), 600, 'long str with 600 chars');
+my $described := describe($longstring);
+is(nqp::substr($described, 0, 7), '"foobar', 'str returned from describe starts with quoted prefix');
+my $length := nqp::chars($described);
+is(nqp::substr($described, $length - 13, 13), 'foobar" (str)', 'str returned from describe ends with quoted suffix');
+ok($length < 600, 'str returned from describe is limited in length (< 600)');
+
+# - istype ------------------------------------------------------------------
 
 dies_ok( { istype() }, 'istype with no arg');
 dies_ok( { istype(nqp::null) }, 'istype with only one arg');
@@ -128,6 +145,8 @@ is(istype($baz, Foo, Baz        ), 1, 'istype($baz, Foo, Baz        )');
 is(istype($baz, Baz, Foo        ), 1, 'istype($baz, Baz, Foo        )');
 is(istype($baz, Baz, Baz        ), 1, 'istype($baz, Baz, Baz        )');
 
+# - linesFrom -----------------------------------------------------------------
+
 my @lines;
 lives_ok( { @lines := linesFrom('t/02_Util.t', 1) }, 'linesFrom this test file, all');
 is(@lines[0], "#!nqp\n", , 'linesFrom this test file, 1st');
@@ -136,6 +155,7 @@ lives_ok( { @lines := linesFrom('t/02_Util.t', 2, 1) }, 'linesFrom this test fil
 is(nqp::elems(@lines), 1, 'nr of strings returned from linesFrom(..., 2, 1)')
     || diag(' got: ' ~ whatsit(@lines));
 is(@lines[0], "#^^^^ DON'T REMOVE OR CHANGE THIS FIRST LINE - NOR THIS ONE!!!\n", , 'linesFrom this test file, 2nd');
+
 
 
 done();

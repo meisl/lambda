@@ -37,7 +37,7 @@ class Testing {
 
         $filter  := -> $x { 1 }  unless $filter;
         $map     := -> $x { $x } unless $map;
-        my $map1 := -> $x { my $y := $map($x); nqp::isstr($y) ?? $y !! self.describe($y) };
+        my $map1 := -> $x { my $y := $map($x); nqp::isstr($y) ?? $y !! describe($y) };
         my @strs := [];
         for @pieces {
             @strs.push($map1($_)) 
@@ -53,67 +53,11 @@ class Testing {
         if nqp::isstr($thing) {
             $msg := $thing;
         } else {
-            $msg := self.describe($thing);
+            $msg := describe($thing);
         }
         my @lines := nqp::split("\n", $msg);
         say('# ' ~ self.join("\n# ", @lines));
         #self.say("# $msg");
-    }
-
-    method describe_fallback($x) {
-        my $out;
-        my $how := nqp::how($x);
-        if $how {
-            $out := $how.name($x);
-        } else {
-            $out := nqp::reprname($x);
-        }
-        
-        unless nqp::isconcrete($x) {
-            $out := $out ~ ', Type object'
-        }
-        if nqp::isinvokable($x) {
-            $out := $out ~ ', invokable';
-        }
-        $out;
-    }
-
-    method describe($x) {
-        my $out;
-        if nqp::isint($x) {
-            $out := "$x (int)";
-        } elsif nqp::isnum($x) {
-            $out := "$x (num)";
-        } elsif nqp::isstr($x) {
-            if nqp::isnull_s($x) {
-                $out := 'nqp::null_s (str)';
-            } else {
-                $out := '"' ~ nqp::escape($x) ~ '" (str)';
-            }
-        } elsif nqp::isnull($x) {   # note: nqp::null_s would NOT pass the nqp::isnull test
-            $out := 'nqp::null';
-        } elsif nqp::ishash($x) {
-            my @pairs := [];
-            for $x {
-                @pairs.push('"' ~ nqp::escape(nqp::iterkey_s($_)) ~ '"');
-                @pairs.push(self.describe(nqp::iterval($_)));
-            }
-            $out := '#`{' ~ self.describe_fallback($x) ~ ':}nqp::hash( ' ~ nqp::join(', ', @pairs) ~ ' )';
-        } elsif nqp::islist($x) {
-            my @out := [];
-            for $x {
-                @out.push(self.describe($_));
-            }
-            $out := '#`{' ~ self.describe_fallback($x) ~ ':}[ ' ~ nqp::join(', ', @out) ~ ' ]';
-        } else {
-            $out := self.describe_fallback($x);
-            if nqp::can($x, 'Str') {
-                $out := '#`{(' ~ $out ~ ').Str:}"' ~ nqp::escape($x.Str) ~ '"';
-            } else {
-                $out := "($out)";
-            }
-        }
-        $out;
     }
 
     method plan(int $nr_of_tests) {
@@ -262,7 +206,7 @@ class Testing {
     }
 
     method fails_ok($block, $desc) {
-        nqp::die('fails_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
+        nqp::die('fails_ok expects an invokable object as first arg - got: ' ~ describe($block))
             unless nqp::isinvokable($block);
 
         my $tc := $test_counter;
@@ -305,13 +249,13 @@ class Testing {
                 if $tc == $test_counter {
                     @descX := [
                         "should fail but no tests",
-                        "returned: '" ~ self.describe($block_returned),
+                        "returned: '" ~ describe($block_returned),
                     ];
                 } else {
                     @descX := [
                         "should fail but broke test-of-test protocol",
                         "inner tests: " ~ ($test_counter - $tc) ~ ' (it seems...)',
-                        "   returned: " ~ self.describe($block_returned),
+                        "   returned: " ~ describe($block_returned),
                         "testoftests: " ~ $depth,
                     ];
                 }
@@ -326,7 +270,7 @@ class Testing {
     }
 
     method passes_ok($block, $desc) {
-        nqp::die('passes_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
+        nqp::die('passes_ok expects an invokable object as first arg - got: ' ~ describe($block))
             unless nqp::isinvokable($block);
 
         my $tc := $test_counter;
@@ -372,13 +316,13 @@ class Testing {
                 if $tc == $test_counter {   # seems $block simply did not contain any test code
                     @descX := [
                         "should pass but no tests",                      # REFACTOR: "fail" -> "pass"
-                        "returned: '" ~ self.describe($block_returned),
+                        "returned: '" ~ describe($block_returned),
                     ];
                 } else {    # worse: something's deeply broken with the test-of-test protocol - or we're being fooled...
                     @descX := [
                         "should pass but broke test-of-test protocol",   # REFACTOR: "fail" -> "pass"
                         "inner tests: " ~ ($test_counter - $tc) ~ ' (it seems...)',
-                        "   returned: " ~ self.describe($block_returned),
+                        "   returned: " ~ describe($block_returned),
                         "testoftests: " ~ $depth,
                     ];
                 }
@@ -393,7 +337,7 @@ class Testing {
     }
 
     method lives_ok($block, $desc) {
-        nqp::die('lives_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
+        nqp::die('lives_ok expects an invokable object as first arg - got: ' ~ describe($block))
             unless nqp::isinvokable($block);
 
         my $tc := $test_counter;
@@ -432,7 +376,7 @@ class Testing {
     }
 
     method dies_ok($block, $desc) {
-        nqp::die('dies_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
+        nqp::die('dies_ok expects an invokable object as first arg - got: ' ~ describe($block))
             unless nqp::isinvokable($block);
         
         my $tc := $test_counter;
@@ -457,7 +401,7 @@ class Testing {
             }
         } else {
             $result := 0;
-            @descX := ['should die but returned: ' ~ self.describe(%block_outcome<returned>)];
+            @descX := ['should die but returned: ' ~ describe(%block_outcome<returned>)];
         }
 
         # clean up
@@ -484,8 +428,8 @@ class Testing {
             $comp := '=:=';
         }
         unless $result {
-            $desc := $desc ~ "\n  # expected ($comp): " ~ self.describe($expected)
-                           ~ "\n  #" ~ nqp::x(' ', nqp::chars($comp) + 9) ~ "got: " ~ self.describe($actual)
+            $desc := $desc ~ "\n  # expected ($comp): " ~ describe($expected)
+                           ~ "\n  #" ~ nqp::x(' ', nqp::chars($comp) + 9) ~ "got: " ~ describe($actual)
             ;
         }
         self.ok($result, $desc);
@@ -645,7 +589,6 @@ class Testing {
 
 
 sub diag($msg)                          is export { Testing.diag($msg) }
-sub describe($x)                        is export { Testing.describe($x) }
 sub plan($nr_of_tests)                  is export { Testing.plan($nr_of_tests) }
 sub done()                              is export { Testing.done() }
 sub ok($condition, $desc = NO_VALUE)    is export { Testing.ok($condition, $desc) }

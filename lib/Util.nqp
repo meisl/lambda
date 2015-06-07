@@ -9,6 +9,73 @@ class Util {
         nqp::join('/', nqp::split('\\', $path));
     }
 
+
+    method describe_fallback($x) {
+        my $out;
+        my $how := nqp::how($x);
+        if $how {
+            $out := $how.name($x);
+        } else {
+            $out := nqp::reprname($x);
+        }
+        
+        unless nqp::isconcrete($x) {
+            $out := $out ~ ', Type object'
+        }
+        if nqp::isinvokable($x) {
+            $out := $out ~ ', invokable';
+        }
+        $out;
+    }
+
+    method describe($x) {
+        my $out;
+        if nqp::isint($x) {
+            $out := "$x (int)";
+        } elsif nqp::isnum($x) {
+            $out := "$x (num)";
+        } elsif nqp::isstr($x) {
+            if nqp::isnull_s($x) {
+                $out := 'nqp::null_s (str)';
+            } else {
+                my $length := nqp::chars($x);
+                if $length > 80 {
+                    $out := '"' ~ nqp::escape(nqp::substr($x, 0, 45)) ~ '"'
+                         ~ ' ~ ... ~ '
+                         ~ '"' ~ nqp::escape(nqp::substr($x, $length - 25)) ~ '"'
+                         ~ ' (str)'
+                   ;
+                } else {
+                    $out := '"' ~ nqp::escape($x) ~ '" (str)';
+                }
+            }
+        } elsif nqp::isnull($x) {   # note: nqp::null_s would NOT pass the nqp::isnull test
+            $out := 'nqp::null';
+        } elsif nqp::ishash($x) {
+            my @pairs := [];
+            for $x {
+                @pairs.push('"' ~ nqp::escape(nqp::iterkey_s($_)) ~ '"');
+                @pairs.push(self.describe(nqp::iterval($_)));
+            }
+            $out := '#`{' ~ self.describe_fallback($x) ~ ':}nqp::hash( ' ~ nqp::join(', ', @pairs) ~ ' )';
+        } elsif nqp::islist($x) {
+            my @out := [];
+            for $x {
+                @out.push(self.describe($_));
+            }
+            $out := '#`{' ~ self.describe_fallback($x) ~ ':}[ ' ~ nqp::join(', ', @out) ~ ' ]';
+        } else {
+            $out := self.describe_fallback($x);
+            if 0 && nqp::can($x, 'Str') {
+                $out := '#`{(' ~ $out ~ ').Str:}"';
+                $out := $out ~ nqp::escape($x.Str) ~ '"';
+            } else {
+                $out := "($out)";
+            }
+        }
+        $out;
+    }
+
     method whatsit($v) {
         my $reprname := nqp::reprname($v);
 
@@ -87,7 +154,8 @@ class Util {
 sub min($a, $b)         is export { Util.min($a, $b)    }
 sub max($a, $b)         is export { Util.max($a, $b)    }
 sub unixify(str $path)  is export { Util.unixify($path) }
-sub whatsit($v)         is export { Util.whatsit($v)    }
+sub whatsit($v)         is export { Util.describe($v)   }
+sub describe($x)        is export { Util.describe($x)   }
 
 sub istype($subject, *@types)                    is export { Util.istype($subject, |@types) }
 

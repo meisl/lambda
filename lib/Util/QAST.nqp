@@ -29,11 +29,11 @@ class Util::QAST {
         }
 
         unless istype($node, QAST::Node) && nqp::defor($node, 0) {
-            #nqp::die("cannot dump " ~ whatsit($node));
+            #nqp::die("cannot dump " ~ describe($node));
             if $oneLine {
-                return '(' ~ whatsit($node) ~ ')';
+                return '(' ~ describe($node) ~ ')';
             } else {
-                return $prefix ~ '► ' ~ whatsit($node);
+                return $prefix ~ '► ' ~ describe($node);
             }
         }
 
@@ -67,7 +67,7 @@ class Util::QAST {
 
         my %annotations := nqp::getattr($node, QAST::Node, '%!annotations');
         if %annotations {
-            $specialStr := $specialStr ~ ' :annotations(' ~ whatsit(%annotations) ~ ')';
+            $specialStr := $specialStr ~ ' :annotations(' ~ describe(%annotations) ~ ')';
         }
 
 
@@ -86,11 +86,11 @@ class Util::QAST {
             }
             unless ($node.default =:= NO_VALUE) {
                 $specialStr := $specialStr 
-                    ~ ' :default' ~ dump($node.value, :oneLine(1));
-                    #~ ' :default(' ~ whatsit($node.value) ~ ')';
+                    ~ ' :default' ~ self.dump($node.value, :oneLine(1));
+                    #~ ' :default(' ~ describe($node.value) ~ ')';
             }
             if istype($node, QAST::VarWithFallback) && $node.fallback {
-                $specialStr := $specialStr ~ ' :fallback' ~ dump($node.fallback, :oneLine(1));
+                $specialStr := $specialStr ~ ' :fallback' ~ self.dump($node.fallback, :oneLine(1));
             }
         } elsif nqp::substr($clsStr, 1, 3) eq 'Val' {
             $prefix := $prefix ~ '◙ ';
@@ -128,7 +128,7 @@ class Util::QAST {
         #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $matchStr];
         my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
         for $node.list {
-            @lines.push(dump($_, $node, :indent($childIndent), :$oneLine));
+            @lines.push(self.dump($_, $node, :indent($childIndent), :$oneLine));
         }
         $before ~ nqp::join($sep, @lines) ~ $after;
     }
@@ -160,7 +160,7 @@ class Util::QAST {
             $i++;
         }
         unless +@foundAt {
-            nqp::die("could not find child " ~ whatsit($child) ~ ' under ' ~ $parent.dump);
+            nqp::die("could not find child " ~ describe($child) ~ ' under ' ~ self.dump($parent));
         }
 
         my @removed := [];
