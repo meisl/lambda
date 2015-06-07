@@ -13,7 +13,7 @@ use Util;
 # The latter meaning: by how much should it be advanced in a certain
 # situtation, if at all?
 
-plan(142);
+plan(174);
 
 =begin
 sub dodo($test) {
@@ -374,8 +374,8 @@ fails_ok({ lives_ok($failingThenDying, "'$failingThenDyingS'") }, "'lives_ok($fa
 testcounter_ok(1);
 
 
-# Stop the toying now, here's when fails_ok/passes should throw:
-diag('fails_ok/passes_ok should throw when given non-invokable 1st arg:');
+# Stop the toying now, here's when fails_ok/passes_ok/dies_ok/lives_ok should throw:
+diag('fails_ok/passes_ok/dies_ok/lives_ok should throw when given non-invokable 1st arg:');
 # TODO: check error msgs (should say it's not invokable)
 
 dies_ok({ fails_ok(0, "literal 0") },               "'fails_ok(0, ...)'");
@@ -401,9 +401,33 @@ testcounter_ok(1);
 
 dies_ok({ passes_ok(nqp::null, "nqp::null") },      "'passes_ok(nqp::null, ...)'");
 testcounter_ok(1);
+# --------vvvvv--------------------------------------vvvvv
+dies_ok({ lives_ok(0, "literal 0") },              "'lives_ok(0, ...)'");
+testcounter_ok(1);
+
+dies_ok({ lives_ok(1, "literal 1") },              "'lives_ok(1, ...)'");
+testcounter_ok(1);
+
+dies_ok({ lives_ok("foo", "literal \"foo\"") },    "'lives_ok(\"foo\", ...)'");
+testcounter_ok(1);
+
+dies_ok({ lives_ok(nqp::null, "nqp::null") },      "'lives_ok(nqp::null, ...)'");
+testcounter_ok(1);
+# --------vvvv--------------------------------------vvvv
+dies_ok({ dies_ok(0, "literal 0") },              "'dies_ok(0, ...)'");
+testcounter_ok(1);
+
+dies_ok({ dies_ok(1, "literal 1") },              "'dies_ok(1, ...)'");
+testcounter_ok(1);
+
+dies_ok({ dies_ok("foo", "literal \"foo\"") },    "'dies_ok(\"foo\", ...)'");
+testcounter_ok(1);
+
+dies_ok({ dies_ok(nqp::null, "nqp::null") },      "'dies_ok(nqp::null, ...)'");
+testcounter_ok(1);
 
 
-diag('fails_ok/passes_ok should throw when given invokable 1st arg which is non-0-arity:');
+diag('fails_ok/passes_ok/dies_ok/lives_ok should also throw when given invokable 1st arg which is non-0-arity:');
 # TODO: check error msgs (should say it's not invokable)
 
 my $unaryS := '-> $x { $x }';
@@ -442,7 +466,7 @@ dies_ok({ passes_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'") }, "'passes_o
 testcounter_ok(1);
 
 # same with fails_ok:
-# --------vvvvv---------------------------------------vvvvvv
+# --------vvvvv------------------------------vvvvv
 dies_ok({ fails_ok($unary, "'$unaryS'") }, "'fails_ok($unaryS, ...)'");
 testcounter_ok(1);
 
@@ -457,10 +481,38 @@ testcounter_ok(1);
 dies_ok({ fails_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'") }, "'fails_ok($nullaryViciousBoomS, ...)'");
 testcounter_ok(1);
 
+# same with dies_ok:
+# --------vvvv------------------------------vvvv
+dies_ok({ dies_ok($unary, "'$unaryS'") }, "'dies_ok($unaryS, ...)'");
+testcounter_ok(1);
 
+passes_ok({ dies_ok($nullaryBoom, "'$nullaryBoomS'") }, "'dies_ok($nullaryBoomS, ...)'");
+testcounter_ok(1);
 
-# TODO: same with fails_ok, then dies_ok and lives_ok, too
-# --------vvvvv---------------------------------------vvvvvv
+passes_ok({ dies_ok($nullaryTrickyBoom, "'$nullaryTrickyBoomS'") }, "'dies_ok($nullaryTrickyBoomS, ...)'");
+testcounter_ok(1);
+
+## Here we must give up - it is simply lying!
+##dies_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'");   # dies as if we passed a non-nullary
+dies_ok({ dies_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'") }, "'dies_ok($nullaryViciousBoomS, ...)'");
+testcounter_ok(1);
+
+# same with lives_ok:
+# --------vvvvv------------------------------vvvvv
+dies_ok({ lives_ok($unary, "'$unaryS'") }, "'lives_ok($unaryS, ...)'");
+testcounter_ok(1);
+
+fails_ok({ lives_ok($nullaryBoom, "'$nullaryBoomS'") }, "'lives_ok($nullaryBoomS, ...)'");
+testcounter_ok(1);
+
+fails_ok({ lives_ok($nullaryTrickyBoom, "'$nullaryTrickyBoomS'") }, "'lives_ok($nullaryTrickyBoomS, ...)'");
+testcounter_ok(1);
+
+## Here we must give up - it is simply lying!
+##lives_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'");   # dies as if we passed a non-nullary
+dies_ok({ lives_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'") }, "'lives_ok($nullaryViciousBoomS, ...)'");
+testcounter_ok(1);
+
 
 #is_eq("asdf", "asdf", "should fail");
 #is_eq(1, "asdf", "should throw");

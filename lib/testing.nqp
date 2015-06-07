@@ -393,53 +393,78 @@ class Testing {
     }
 
     method lives_ok($block, $desc) {
+        nqp::die('lives_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
+            unless nqp::isinvokable($block);
+
         my $tc := $test_counter;
         my $depth := +@*TEST_OF_TEST;
-        @*TEST_OF_TEST.push('lives_ok');   # REFACTOR!
+        @*TEST_OF_TEST.push('lives_ok');
+        
         $desc := $desc ~ ' lives';
-        my $result := NO_VALUE;
-        my $error  := NO_VALUE;
-        my $inner_returned;
-        try {
-            $inner_returned := $block();
-            $result := 1;
-            CATCH {
-                $result := 0;
-                $error  := $!;
-                $desc := "$desc\n  # should live but died: '" ~ nqp::escape(~$error) ~ "'"
-                            ~ "\n    # " ~ nqp::join("\n    # ", nqp::backtracestrings($error))
-                ;
+        my $result;
+        my @descX := [];
+        
+        my %block_outcome := self.invokeNullaryChecked($block);
+        my $error := %block_outcome<error>;
+        if $error {
+            $result := 0;
+            if %block_outcome<becauseNonNullary> { # we've been passed an inappropriate $block
+                # cleanup 
+                nqp::setelems(@*TEST_OF_TEST, $depth);
+                $test_counter := $tc;
+                # ...and complain
+                nqp::die('lives_ok expects a nullary invokable as first arg - "' ~ nqp::escape($error) ~ '"');
+            } else { # $block died inside it -> we fail with appropriate message
+                @descX := [
+                    "should live but died: '"  ~ nqp::escape($error) ~ "'",
+                    %block_outcome<backtrace>,
+                ];
             }
+        } else {
+            $result := 1;
         }
-
+        
         # clean up
         nqp::setelems(@*TEST_OF_TEST, $depth);
         $test_counter := $tc;
-        self.ok($result, $desc);
+        
+        self.ok($result, $desc, |@descX);
     }
 
     method dies_ok($block, $desc) {
+        nqp::die('dies_ok expects an invokable object as first arg - got: ' ~ self.describe($block))
+            unless nqp::isinvokable($block);
+        
         my $tc := $test_counter;
         my $depth := +@*TEST_OF_TEST;
-        @*TEST_OF_TEST.push('dies_ok');   # REFACTOR!
+        @*TEST_OF_TEST.push('dies_ok');
+        
         $desc := $desc ~ ' dies';
-        my $result := NO_VALUE;
-        my $error  := NO_VALUE;
-        my $inner_returned;
-        try {
-            $inner_returned := $block();
-            $result := 0;
-            $desc := "$desc\n  # should die but returned: " ~ self.describe($inner_returned);
-            CATCH {
+        my $result;
+        my @descX := [];
+        
+        my %block_outcome := self.invokeNullaryChecked($block);
+        my $error := %block_outcome<error>;
+        if $error {
+            if %block_outcome<becauseNonNullary> { # we've been passed an inappropriate $block
+                # cleanup 
+                nqp::setelems(@*TEST_OF_TEST, $depth);
+                $test_counter := $tc;
+                # ...and complain
+                nqp::die('dies_ok expects a nullary invokable as first arg - "' ~ nqp::escape($error) ~ '"');
+            } else { # $block died inside it -> we pass
                 $result := 1;
-                $error  := $!;
             }
+        } else {
+            $result := 0;
+            @descX := ['should die but returned: ' ~ self.describe(%block_outcome<returned>)];
         }
 
         # clean up
         nqp::setelems(@*TEST_OF_TEST, $depth);
         $test_counter := $tc;
-        self.ok($result, $desc);
+
+        self.ok($result, $desc, |@descX);
     }
 
     method is($actual, $expected, $desc) {
@@ -631,20 +656,22 @@ sub dies_ok($block, $desc?)             is export { Testing.dies_ok($block, $des
 sub is($actual, $expected, $desc?)      is export { Testing.is($actual, $expected, $desc) }
 
 
-#diag("Testing.HERE:\n" ~ Testing.HERE);
-#ok(0, '"ok(0)"');
-#passes_ok(
-#    { ok(0, '"ok(0)"') }, 
-#    'ok(0)');
+sub MAIN(*@ARGS) {
+    #diag("Testing.HERE:\n" ~ Testing.HERE);
+    #ok(0, '"ok(0)"');
+    #passes_ok(
+    #    { ok(0, '"ok(0)"') }, 
+    #    'ok(0)');
 
-#my $bt := Testing::Backtrace.new(:skip(0));
-#say($bt);
-#say('');
-#say($bt.filter(-> $x { $x<file> ne Testing.FILE }));
+    #my $bt := Testing::Backtrace.new(:skip(0));
+    #say($bt);
+    #say('');
+    #say($bt.filter(-> $x { $x<file> ne Testing.FILE }));
 
-my $boom := { nqp::die("BOOM!") };
-my $bang := -> $x { "BANG!" };
-fails_ok($boom);
-passes_ok($boom);
-done();
+    my $boom := { nqp::die("BOOM!") };
+    my $bang := -> $x { "BANG!" };
+    fails_ok($boom);
+    passes_ok($boom);
+    done();
+}
 
