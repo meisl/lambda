@@ -121,37 +121,6 @@ class Testing {
         self.say("1..$nr_of_tests");
     }
 
-    method done() {
-        my @out := ['', ''];
-        if $test_counter == $tests_planned {
-            @out[1] := "Ran $test_counter tests";
-        } else {
-            @out[1] := "Looks like you planned $tests_planned tests, but ran $test_counter";
-        }
-        if @tests_failed {
-            @out[1] := @out[1] ~ " - of which {+@tests_failed} FAILED:";
-        } else {
-            @out[1] := @out[1] ~ " (all passed).";
-        }
-        @out[0] := nqp::x('=', nqp::chars(@out[1]));
-        if @tests_failed {
-            my @numbers := [];
-            for @tests_failed {
-                @numbers.push(~$_<nr>);
-                my $desc := $_<description> // '';
-                if $desc {
-                    my $firstNL := nqp::index($desc, "\n");
-                    $firstNL := nqp::chars($desc) if $firstNL < 0;
-                    $desc := ' - ' ~ nqp::substr($desc, 0, $firstNL);
-                }
-                my $frame := $_<backtrace>[$_<backtrace>.list - 1];
-                @out.push($_<nr> ~ ' at ' ~ $frame ~ $desc);
-            }
-            @out[1] := @out[1] ~ ' ' ~ nqp::join(', ', @numbers);
-        }
-        self.diag(nqp::join("\n", @out));
-    }
-
     method ok($condition, $desc, *@descX) {
         $test_counter++;    # yes, even if +@*TEST_OF_TEST - so we can tell apart proper tests and other stuff (possibly returning 1)
 
@@ -203,6 +172,37 @@ class Testing {
             self.say(|@output);
         }
         $condition ?? 1 !! 0;
+    }
+
+    method done() {
+        my @out := ['', ''];
+        if $test_counter == $tests_planned {
+            @out[1] := "Ran $test_counter tests";
+        } else {
+            @out[1] := "Looks like you planned $tests_planned tests, but ran $test_counter";
+        }
+        if @tests_failed {
+            @out[1] := @out[1] ~ " - of which {+@tests_failed} FAILED:";
+        } else {
+            @out[1] := @out[1] ~ " (all passed).";
+        }
+        @out[0] := nqp::x('=', nqp::chars(@out[1]));
+        if @tests_failed {
+            my @numbers := [];
+            for @tests_failed {
+                @numbers.push(~$_<nr>);
+                my $desc := $_<description> // '';
+                if $desc {
+                    my $firstNL := nqp::index($desc, "\n");
+                    $firstNL := nqp::chars($desc) if $firstNL < 0;
+                    $desc := ' - ' ~ nqp::substr($desc, 0, $firstNL);
+                }
+                my $frame := $_<backtrace>[$_<backtrace>.list - 1];
+                @out.push($_<nr> ~ ' at ' ~ $frame ~ $desc);
+            }
+            @out[1] := @out[1] ~ ' ' ~ nqp::join(', ', @numbers);
+        }
+        self.diag(nqp::join("\n", @out));
     }
 
     # In order to tell apart whether
