@@ -16,22 +16,8 @@ class Testing {
 
     method test_counter() { $test_counter }
 
-    method say(*@pieces) {
-        my $s := '';
-        for @pieces {
-            $s := $s ~ $_;
-        }
-        nqp::say($s);
-    }
-
-    method join(str $sep, *@pieces, :$prefix1st = 0, :$filter, :$map) {
+    method join(str $sep, @pieces, :$prefix1st = 0, :$filter, :$map) {
         my $n := nqp::elems(@pieces);
-        if $n == 0 {
-            nqp::die("cannot join nothing");
-        } elsif ($n == 1) || nqp::islist(@pieces[0]) {
-            @pieces := @pieces[0];
-            $n := nqp::elems(@pieces);
-        }
         return ''
             unless $n;
 
@@ -46,7 +32,10 @@ class Testing {
         my $out := nqp::join($sep, @strs);
         $prefix1st ?? $sep ~ $out !! $out;
     }
-    
+
+    method say(*@pieces) {
+        nqp::say(self.join('', @pieces));
+    }
 
     method diag($thing) {
         my $msg;
@@ -56,7 +45,7 @@ class Testing {
             $msg := describe($thing);
         }
         my @lines := nqp::split("\n", $msg);
-        say('# ' ~ self.join("\n# ", @lines));
+        say('# ' ~ nqp::join("\n# ", @lines));
         #self.say("# $msg");
     }
 
@@ -506,7 +495,7 @@ class Testing {
                 $i := nqp::index($fb, $cwd);
                 $fb := nqp::substr($fb, $n) unless $i;
             }
-            Testing.join('', :map(-> $x { ~$x }),
+            Testing.join('', :map(-> $x { ~$x }), [
                 $fs,
                 ':',
                 self<line_src>,
@@ -517,7 +506,7 @@ class Testing {
                 ':',
                 self<line_bin>,
                 ')'
-            )
+            ])
         }
         
     }

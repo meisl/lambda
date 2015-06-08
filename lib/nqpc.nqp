@@ -82,7 +82,7 @@ sub isinResultPosition($node, $parent) {
         return 0 if $node =:= $parent[$n];
     }
 
-    nqp::die(whatsit($node) ~ ' not a child of ' ~ whatsit($parent));
+    nqp::die(describe($node) ~ ' not a child of ' ~ describe($parent));
 }
 
 
@@ -90,12 +90,12 @@ sub drop_bogusVars($ast, $parent = nqp::null) {
     if istype($ast, QAST::Var) && !$ast.decl {
         if istype($parent, QAST::Block, QAST::Stmt, QAST::Stmts) {
             unless isinResultPosition($ast, $parent) {
-                #nqp::print(whatsit($parent) ~ ' ' ~ $ast.dump);
+                #nqp::print(describe($parent) ~ ' ' ~ $ast.dump);
                 return nqp::null;
             }
         }
     } elsif +$ast.list { # workaround - not all nodes with children actually do that role
-        #say('  >> ', whatsit($ast), ' ', nqp::elems($ast.list));
+        #say('  >> ', describe($ast), ' ', nqp::elems($ast.list));
         my @children := [];
         my $changed := 0;
         for $ast.list {
@@ -139,7 +139,7 @@ sub remove_MAIN($ast) {
     my @path := [];
     my $MAIN := findDef($ast, '&MAIN', @path);
     removeChild(@path[0], $MAIN);
-    say(whatsit(@path), "\n", whatsit($MAIN));
+    say(describe(@path), "\n", describe($MAIN));
     @path := [];
     my $MAINcall := findPath(-> $node, @pathUp {
             if istype($node, QAST::Op) && ($node.op eq 'call') && ($node.name eq '&MAIN' || (istype($node[0], QAST::Var) && $node[0].name eq '&MAIN')) {
@@ -161,7 +161,7 @@ sub remove_MAIN($ast) {
         $ast, @path
     );
     removeChild(@path[0], $MAINcall);
-    #say(whatsit(@path), ' ', $MAINcall.dump);
+    #say(describe(@path), ' ', $MAINcall.dump);
     $ast;
 }
 
@@ -237,15 +237,15 @@ sub findDefs($ast, $matcher) {
 }
 
 sub findValueNodeInHash($keyPredicate, $valuePredicate, $hash = NO_VALUE) is export {
-    nqp::die('findValueNodeInHash expects a fn as 1st arg - got ' ~ whatsit($keyPredicate))
+    nqp::die('findValueNodeInHash expects a fn as 1st arg - got ' ~ describe($keyPredicate))
         unless nqp::isinvokable($keyPredicate);
-    nqp::die('findValueNodeInHash expects a fn as 2nd arg - got ' ~ whatsit($valuePredicate))
+    nqp::die('findValueNodeInHash expects a fn as 2nd arg - got ' ~ describe($valuePredicate))
         unless nqp::isinvokable($valuePredicate);
     
     if $hash =:= NO_VALUE {
         return -> $hash { findValueNodeInHash($keyPredicate, $valuePredicate, $hash) }
     } elsif !istype($hash, QAST::Node) {
-        nqp::die('findValueNodeInHash expects a QAST::Node as (optional) 3rd arg - got ' ~ whatsit($hash));
+        nqp::die('findValueNodeInHash expects a QAST::Node as (optional) 3rd arg - got ' ~ describe($hash));
     }
     my $found := nqp::null;
     if istype($hash, QAST::Op) && $hash.op eq 'hash' {
@@ -264,9 +264,9 @@ sub findValueNodeInHash($keyPredicate, $valuePredicate, $hash = NO_VALUE) is exp
 }
 
 sub cloneAndSubst($node, $substitution) {
-    nqp::die('cloneAndSubst expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
+    nqp::die('cloneAndSubst expects a QAST::Node as 1st arg - got ' ~ describe($node) )
         unless istype($node, QAST::Node);
-    nqp::die('cloneAndSubst expects a function as 2nd arg - got ' ~ whatsit($substitution) )
+    nqp::die('cloneAndSubst expects a function as 2nd arg - got ' ~ describe($substitution) )
         unless nqp::isinvokable($substitution);
     
     #return $substitution(nqp::clone($node))    # strange: this actually prevents any recursion...!?!
@@ -319,14 +319,14 @@ sub collect_params_and_body($node, %results = hash(:arity(0), :params({}), :stmt
 
 
 sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
-    nqp::die('inline_simple_subs expects a QAST::Node as 1st arg - got ' ~ whatsit($node) )
+    nqp::die('inline_simple_subs expects a QAST::Node as 1st arg - got ' ~ describe($node) )
         unless istype($node, QAST::Node);
 
     # on first step, prepare:
     if nqp::elems(@inlineDefs) > 0 {
         for @inlineDefs {
             next if nqp::isnull($_);
-            nqp::die("invalid def of inlineable sub: " ~ whatsit($_))
+            nqp::die("invalid def of inlineable sub: " ~ describe($_))
                 unless istype($_, QAST::Node);
             nqp::die("invalid def of inlineable sub: " ~ dump($_))
                 unless istype($_, QAST::Op) && $_.op eq 'bind'
@@ -401,7 +401,7 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
 }
 
 sub inline_simple_methods($node) {
-    nqp::die('inline_simple_methods expects a QAST::Node - got ' ~ whatsit($node) )
+    nqp::die('inline_simple_methods expects a QAST::Node - got ' ~ describe($node) )
         unless istype($node, QAST::Node);
 
     # first, recurse:
@@ -429,7 +429,7 @@ sub inline_simple_methods($node) {
 }
 
 sub replace_assoc_and_pos_scoped($node) {
-    nqp::die('replace_assoc_and_pos_scoped expects a QAST::Node - got ' ~ whatsit($node) )
+    nqp::die('replace_assoc_and_pos_scoped expects a QAST::Node - got ' ~ describe($node) )
         unless istype($node, QAST::Node);
 
     # first, recurse:
@@ -459,7 +459,7 @@ sub replace_assoc_and_pos_scoped($node) {
         if nqp::isnull($fallback) || istype($fallback, NQPMu) {
             $fallback := nqp::null;
         } else {
-            nqp::die('cannot handle fallback ' ~ whatsit($node.fallback))
+            nqp::die('cannot handle fallback ' ~ describe($node.fallback))
         }
         my $scope := $node.scope;
         my $op;
@@ -483,9 +483,9 @@ sub replace_assoc_and_pos_scoped($node) {
 
 
 sub renameVars($ast, $map) {
-    nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ whatsit($ast) )
+    nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ describe($ast) )
         unless istype($ast, QAST::Node);
-    nqp::die('renameVars expects a unary fn as 2nd arg(optional) - got ' ~ whatsit($map) )
+    nqp::die('renameVars expects a unary fn as 2nd arg(optional) - got ' ~ describe($map) )
         unless nqp::isinvokable($map);
 
     if istype($ast, QAST::Var) 
@@ -603,7 +603,7 @@ class SmartCompiler is NQP::Compiler {
     method collect_stats($node) {
         my %results := {};
         my sub doit($node) {
-            nqp::die("collect_stats expects a QAST::Node - got " ~ whatsit($node))
+            nqp::die("collect_stats expects a QAST::Node - got " ~ describe($node))
                 unless istype($node, QAST::Node);
 
             my $HOWname := $node.HOW.name($node);
@@ -659,7 +659,7 @@ class SmartCompiler is NQP::Compiler {
     # additional stages
 
     method fix_var_null_decls($ast) { # TODO: write in terms of TreeWalk
-        #nqp::die('fix_var_null_decls expects a QAST::Node - got ' ~ whatsit($ast) )
+        #nqp::die('fix_var_null_decls expects a QAST::Node - got ' ~ describe($ast) )
         #    unless istype($ast, QAST::Node);
         if istype($ast, QAST::Var) && !$ast.decl {
             $ast.decl(nqp::null_s);
@@ -819,7 +819,7 @@ class NQPActions is NQP::Actions {
             $deps.push(QAST::SVal.new(:value($/<name>), :node($/)));
 
             say('>>>>>> dependency: "' ~ $/<name> ~ '"');
-            say('>>>>>> ' ~ whatsit($*COMPILER.compileDependency(~$/<name>, [])));
+            say('>>>>>> ' ~ describe($*COMPILER.compileDependency(~$/<name>, [])));
         }
 
         my $super := nqp::findmethod(self.HOW.mro(self)[1], 'statement_control:sym<use>');
@@ -831,7 +831,7 @@ class NQPActions is NQP::Actions {
         #        || $node.list;
         #}, $*UNIT);
         #say('>>>>>> ', dump($glob));
-        #say('>>>>>> ', whatsit(nqp::who($glob.default)));
+        #say('>>>>>> ', describe(nqp::who($glob.default)));
         
         $out.node($/);
         $out.annotate('use', ~$/<name>);
@@ -924,7 +924,7 @@ class NQPCompiler is SmartCompiler {
 
         my $ast_path := "$src_path.qast";
 
-#        nqp::say(whatsit(hash(:$src_path, :$src_dir, :$src_lib, :$vm_path, :$src_name, :$src_ext, :$ast_path)));
+#        nqp::say(describe(hash(:$src_path, :$src_dir, :$src_lib, :$vm_path, :$src_name, :$src_ext, :$ast_path)));
 
 
 
@@ -1082,7 +1082,7 @@ sub MAIN(*@ARGS) {
     my $sep := nqp::x('-', 29);
     my $nqpc := NQPCompiler.new();
     my %opts := hash();
-    say('CWD=', whatsit($cwd), "\n@ARGS=", whatsit(@ARGS));
+    say('CWD=', describe($cwd), "\n@ARGS=", describe(@ARGS));
     
     #nqp::exit(0);
 
@@ -1114,7 +1114,7 @@ sub MAIN(*@ARGS) {
         if nqp::isnull($result) {
             $nqpc.log("uptodate: $file");
         } else {
-            $nqpc.log("compiled: $file ~> " ~ whatsit($result));
+            $nqpc.log("compiled: $file ~> " ~ describe($result));
         }
         CATCH {
             $nqpc.log("ERROR: $file");

@@ -163,9 +163,8 @@ is(@lines[0], "#!nqp\n", , 'linesFrom this test file, 1st');
 
 lives_ok( { @lines := linesFrom('t/02_Util.t', 2, 1) }, 'linesFrom this test file, only 2nd');
 is(nqp::elems(@lines), 1, 'nr of strings returned from linesFrom(..., 2, 1)')
-    || diag(' got: ' ~ whatsit(@lines));
+    || diag(' got: ' ~ describe(@lines));
 is(@lines[0], "#^^^^ DON'T REMOVE OR CHANGE THIS FIRST LINE - NOR THIS ONE!!!\n", , 'linesFrom this test file, 2nd');
-
 
 
 done();
