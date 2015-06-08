@@ -9,7 +9,6 @@ class Util {
         nqp::join('/', nqp::split('\\', $path));
     }
 
-
     method describe_fallback($x) {
         my $out;
         my $how := nqp::how($x);
@@ -80,6 +79,39 @@ class Util {
         $out;
     }
 
+    method join(str $sep, @pieces, :$prefix1st = 0, :$filter, :$map) {
+        my $n := nqp::elems(@pieces);
+        return ''
+            unless $n;
+
+        $filter  := -> $x { 1 }  unless $filter;
+        $map     := -> $x { $x } unless $map;
+        my $map1 := -> $x { my $y := $map($x); nqp::isstr($y) ?? $y !! self.describe($y) };
+        my @strs := [];
+        for @pieces {
+            @strs.push($map1($_)) 
+                if $filter($_);
+        }
+        my $out := nqp::join($sep, @strs);
+        $prefix1st ?? $sep ~ $out !! $out;
+    }
+
+    method say(*@pieces) {
+        nqp::say(self.join(
+            '', 
+            @pieces, 
+            :map(-> $x { # make it behave like normal nqp::say
+                if nqp::isnull($x) || nqp::isnull_s($x) { # must test this 1st because nqp::isstr(nqp::null_s) is true
+                    ''
+                } elsif nqp::isstr($x) || nqp::isint($x) || nqp::isnum($x) {
+                    ~$x
+                } else {
+                    $x
+                }
+            })
+        ));
+    }
+
     method linesFrom(str $filename, $from = 1, $count?) {
         my $to := $from - 1 + nqp::defor($count, nqp::inf());
         my @out := [];
@@ -113,7 +145,17 @@ sub min($a, $b)         is export { Util.min($a, $b)    }
 sub max($a, $b)         is export { Util.max($a, $b)    }
 sub unixify(str $path)  is export { Util.unixify($path) }
 sub describe($x)        is export { Util.describe($x)   }
+sub say(*@pieces)       is export { Util.say(|@pieces)  }
+
+sub join(str $sep, @pieces, :$prefix1st = 0, :$filter, :$map) is export { Util.join($sep, @pieces, :$prefix1st, :$filter, :$map) }
 
 sub istype($subject, *@types)                    is export { Util.istype($subject, |@types) }
 
 sub linesFrom(str $filename, $from = 1, $count?) is export { Util.linesFrom($filename, $from, $count) }
+
+sub MAIN(*@ARGS) {
+    say("asdf");
+    say('|', nqp::null, '|', nqp::null_s, '|', 23, '|', 3.14, '|', 'foo', '|', Util, '|');
+    nqp::say(join('#', ["a", "b", "c"], :map(-> $x { $x ~ $x })));
+    nqp::say(join('#', ["a", "b", "c"], :map(&describe)));
+}

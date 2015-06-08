@@ -16,27 +16,6 @@ class Testing {
 
     method test_counter() { $test_counter }
 
-    method join(str $sep, @pieces, :$prefix1st = 0, :$filter, :$map) {
-        my $n := nqp::elems(@pieces);
-        return ''
-            unless $n;
-
-        $filter  := -> $x { 1 }  unless $filter;
-        $map     := -> $x { $x } unless $map;
-        my $map1 := -> $x { my $y := $map($x); nqp::isstr($y) ?? $y !! describe($y) };
-        my @strs := [];
-        for @pieces {
-            @strs.push($map1($_)) 
-                if $filter($_);
-        }
-        my $out := nqp::join($sep, @strs);
-        $prefix1st ?? $sep ~ $out !! $out;
-    }
-
-    method say(*@pieces) {
-        nqp::say(self.join('', @pieces));
-    }
-
     method diag($thing) {
         my $msg;
         if nqp::isstr($thing) {
@@ -46,12 +25,12 @@ class Testing {
         }
         my @lines := nqp::split("\n", $msg);
         say('# ' ~ nqp::join("\n# ", @lines));
-        #self.say("# $msg");
+        #say("# $msg");
     }
 
     method plan(int $nr_of_tests) {
         $tests_planned := $nr_of_tests;
-        self.say("1..$nr_of_tests");
+        say("1..$nr_of_tests");
     }
 
     method ok($condition, $desc, *@descX) {
@@ -69,7 +48,7 @@ class Testing {
         }
 
         @descX.unshift('');
-        @output.push(self.join(
+        @output.push(join(
             "\n  # ", @descX,
             :map(-> $x { nqp::istype($x, Backtrace)
                             ?? '#' ~ $x.filter.Str(:prefix("  # #"))
@@ -102,7 +81,7 @@ class Testing {
                     :description($desc),
                 ));
             }
-            self.say(|@output);
+            say(|@output);
         }
         $condition ?? 1 !! 0;
     }
@@ -495,7 +474,7 @@ class Testing {
                 $i := nqp::index($fb, $cwd);
                 $fb := nqp::substr($fb, $n) unless $i;
             }
-            Testing.join('', :map(-> $x { ~$x }), [
+            join('', :map(-> $x { ~$x }), [
                 $fs,
                 ':',
                 self<line_src>,
@@ -558,7 +537,7 @@ class Testing {
             my @frames := self.list;
             "$prefix1st   at " ~ 
                 (+@frames
-                    ?? Testing.join("\n$prefix from ", @frames, :map(-> $frame { $frame.Str(:$strip_cwd) }))
+                    ?? join("\n$prefix from ", @frames, :map(-> $frame { $frame.Str(:$strip_cwd) }))
                     !! '<empty backtrace>')
         }
 

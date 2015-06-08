@@ -4,7 +4,7 @@ use testing;
 
 use Util;
 
-plan(105);
+plan(111);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -57,6 +57,19 @@ my $var := QAST::Var.new(:name<foo>, :scope<lexical>, :decl<var>);
 is(describe($var), 'QAST::Var(lexical foo :decl(var))', 'a QAST::Var is described as...');
 $block.push($var);
 is(describe($block), 'QAST::Block', 'a QAST::Block is described without children');
+
+# - join --------------------------------------------------------------------
+
+is(join('#', ["a", "b", "c"]), 'a#b#c', 'basic join');
+is(join('#', ["a", "b", "c"], :prefix1st), '#a#b#c', 'join with :prefix1st');
+is(join('#', ["a", "b", "c"], :map(-> $x { $x ~ $x })), 'aa#bb#cc', 'join with :map');
+is(join('|', [1, "b", 2]), '1 (int)|b|2 (int)', 'join uses describe as fallback for non-strings');
+dies_ok( { nqp::join('|', [1, "b", 2]) }, '...wheras nqp::join dies when it encounters non-strings');
+
+# - say -----------------------------------------------------------------------
+
+my class FooBar {}
+lives_ok( { say('# ', "b", 4711, nqp::null, nqp::null_s, FooBar) }, 'say can take any nr of args and uses describe when it encounters non-strings');
 
 # - istype ------------------------------------------------------------------
 
