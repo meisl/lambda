@@ -64,6 +64,10 @@ class Util {
                 @out.push(self.describe($_));
             }
             $out := '#`{' ~ self.describe_fallback($x) ~ ':}[ ' ~ nqp::join(', ', @out) ~ ' ]';
+        } elsif nqp::istype($x, QAST::Node) {
+            $out := $x.HOW.name($x);
+            my $extra := $x.dump_extra_node_info;
+            $out := "$out($extra)" if $extra;
         } else {
             $out := self.describe_fallback($x);
             if 0 && nqp::can($x, 'Str') {
@@ -154,7 +158,7 @@ class Util {
 sub min($a, $b)         is export { Util.min($a, $b)    }
 sub max($a, $b)         is export { Util.max($a, $b)    }
 sub unixify(str $path)  is export { Util.unixify($path) }
-sub whatsit($v)         is export { Util.describe($v)   }
+sub whatsit($v)         is export { Util.whatsit($v)   }
 sub describe($x)        is export { Util.describe($x)   }
 
 sub istype($subject, *@types)                    is export { Util.istype($subject, |@types) }

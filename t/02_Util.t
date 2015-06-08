@@ -4,7 +4,7 @@ use testing;
 
 use Util;
 
-plan(100);
+plan(105);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -36,6 +36,9 @@ is(unixify('C:\rakudo/languages/nqp'), 'C:/rakudo/languages/nqp', 'unixify 2');
 
 # - describe ------------------------------------------------------------------
 
+is(describe(nqp::null), 'nqp::null', 'null is described as...');
+is(describe(nqp::null_s), 'nqp::null_s (str)', 'null_s is described as...');
+
 is(describe(["foo", 1, ['hello', 'world'], 3.1415]), 
     '#`{NQPArray:}[ "foo" (str), 1 (int), #`{NQPArray:}[ "hello" (str), "world" (str) ], 3.1415 (num) ]',
     'describe(...)');
@@ -47,6 +50,13 @@ is(nqp::substr($described, 0, 7), '"foobar', 'str returned from describe starts 
 my $length := nqp::chars($described);
 is(nqp::substr($described, $length - 13, 13), 'foobar" (str)', 'str returned from describe ends with quoted suffix');
 ok($length < 600, 'str returned from describe is limited in length (< 600)');
+
+my $block := QAST::Block.new;
+is(describe($block), 'QAST::Block', 'a QAST::Block is described as...');
+my $var := QAST::Var.new(:name<foo>, :scope<lexical>, :decl<var>);
+is(describe($var), 'QAST::Var(lexical foo :decl(var))', 'a QAST::Var is described as...');
+$block.push($var);
+is(describe($block), 'QAST::Block', 'a QAST::Block is described without children');
 
 # - istype ------------------------------------------------------------------
 
