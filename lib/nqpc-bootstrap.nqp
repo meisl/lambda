@@ -82,7 +82,7 @@ sub compileAll(@ms) {
     say("nqpc-bootstrap: recompiled $ss");
 }
 
-my @ms := <Util testing Util::QAST nqpc>;
+my @ms := <Util Backtrace testing Util::QAST nqpc>;
 
 compileAll(@ms) if any(&needsCompilation, @ms);
 

@@ -153,9 +153,9 @@ sub istype($subject, *@types)                    is export { Util.istype($subjec
 
 sub linesFrom(str $filename, $from = 1, $count?) is export { Util.linesFrom($filename, $from, $count) }
 
+
+
+
 sub MAIN(*@ARGS) {
-    say("asdf");
-    say('|', nqp::null, '|', nqp::null_s, '|', 23, '|', 3.14, '|', 'foo', '|', Util, '|');
-    nqp::say(join('#', ["a", "b", "c"], :map(-> $x { $x ~ $x })));
-    nqp::say(join('#', ["a", "b", "c"], :map(&describe)));
 }
+
