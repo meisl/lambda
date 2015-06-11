@@ -135,13 +135,13 @@ class Util::QAST {
 
     method qastChildren($ast, *@types) {
         nqp::die('qastChildren expects a QAST::Node as 1st arg - got ' ~ nqp::reprname($ast) )
-            unless self.istype($ast, QAST::Node);
+            unless istype($ast, QAST::Node);
         my @out := [];
         if nqp::elems(@types) == 0 {
             @types := [QAST::Node];
         }
         for $ast.list {
-            if self.istype($_, |@types) {
+            if istype($_, |@types) {
                 @out.push($_);
             }
         }

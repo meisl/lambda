@@ -11,6 +11,7 @@ sub m2path($m) { fixslashes(nqp::join('/', nqp::split('::', $m))) }
 
 sub m2src(str $m) { fixslashes('lib/' ~ m2path($m) ~ '.nqp') }
 sub m2bin(str $m) { fixslashes('blib/' ~ m2path($m) ~'.moarvm') }
+sub m2tmp(str $m) { fixslashes('blib_tmp/' ~ m2path($m) ~'.moarvm') }
 
 sub needsCompilation($m) {
     my $bin := m2bin($m);
@@ -51,24 +52,40 @@ sub exec(*@pieces, :$whatwedo = NO_VALUE) {
 
 sub compileAll(@ms) {
     return 0 unless @ms;
+
+    for @ms {
+        nqp::unlink(m2bin($_)) 
+            if nqp::stat(m2bin($_), nqp::const::STAT_EXISTS);
+    }
+
     my $main    := @ms.pop; # last one assumed to be nqpc itself, will be run on itself
     my $mainsrc := '"' ~ m2src($main) ~ '"';   
     my $rakudo  := nqp::backendconfig()<prefix>;
     my $moarexe := fixslashes($rakudo ~ '/bin/moar.exe');
     my $nqplibs := fixslashes($rakudo ~ '/languages/nqp/lib');
-    my $libpath := fixslashes('--libpath="' ~ $nqplibs ~ '"');
+    my $libpath := fixslashes('--libpath="' ~ $nqplibs );
     my $moar    := fixslashes("$moarexe $libpath");
-    my $nqp     := fixslashes($moar ~ ' "' ~ $nqplibs ~ '/nqp.moarvm"');
+    my $nqp     := fixslashes($moar ~ '" --libpath="blib_tmp"' ~ ' "' ~ $nqplibs ~ '/nqp.moarvm"');
     my $cwd     := nqp::cwd();
+
+    nqp::mkdir('blib_tmp/Util', 0o777);
     my @ss := [];
     for @ms {
         my $src  := '"' ~ m2src($_) ~ '"';
         @ss.push($src);
-        exec($nqp, '--target=mbc', '--output="' ~ m2bin($_) ~ '"', $src);
+        exec($nqp, '--target=mbc', '--output="' ~ m2tmp($_) ~ '"', $src);
     }
+
+    exec($nqp, $mainsrc, $mainsrc, :whatwedo("running $mainsrc (interpreted) on itself"));
+
+    for @ms {
+        nqp::unlink(m2tmp($_));
+    }
+    nqp::rmdir('blib_tmp/Util');
+    nqp::rmdir('blib_tmp');
+
     @ms.push($main);
     @ss.push($mainsrc);
-    exec($nqp, $mainsrc, $mainsrc, :whatwedo("running $mainsrc (interpreted) on itself"));
     my $ss := nqp::join(', ', @ss);
     my @problems := who(&needsCompilation, @ms);
     if @problems {
@@ -82,7 +99,7 @@ sub compileAll(@ms) {
     say("nqpc-bootstrap: recompiled $ss");
 }
 
-my @ms := <Util Backtrace testing Util::QAST nqpc>;
+my @ms := <Util Util::QAST nqpc>;
 
 compileAll(@ms) if any(&needsCompilation, @ms);
 

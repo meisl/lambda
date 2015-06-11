@@ -516,6 +516,8 @@ class SmartCompiler is NQP::Compiler {
     # Must use forward slash '/' as dir separator & must NOT end in one!
     has @!user_srcpaths;
 
+    has $!user_binname;
+
     method BUILD() {
         # in this order (!):
         self.addstage('ast_save',           :after<ast>);
@@ -539,7 +541,12 @@ class SmartCompiler is NQP::Compiler {
     # called "user-progname" (with a dash instead of an underscore) in HLL::Compiler
     # which doesn't fit well with "compiler_progname"
     method user_progname() {
-        self.user_progname();
+        self.user-progname();
+    }
+
+    method user_binname($v = NO_VALUE) {
+        $!user_binname := $v unless $v =:= NO_VALUE;
+        $!user_binname;
     }
 
     method user_srcpaths() {
@@ -742,7 +749,6 @@ class SmartCompiler is NQP::Compiler {
         my $infoHash := $findStatsHash($infoHashDef[1]);
         say('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' ~ istype($infoHash, QAST::Op));
         if istype($infoHash, QAST::Op) && ($infoHash.op eq 'hash') {
-            say(dump($infoHashDef));
             my $findStatNode := -> $statKey {
                 findValueNodeInHash(svalPred($statKey), ivalPred(), $infoHash)
             };
@@ -753,6 +759,7 @@ class SmartCompiler is NQP::Compiler {
 #                    say(">>>> stat $_ := ", dump($node, :oneLine));
                 }
             }
+            say(dump($infoHashDef));
         } else {
             self.log('ast_stats WARNING: no %info hash found in AST of ', self.user-progname);
             self.log('ast_stats WARNING: ...dunno how to insert actual stats - which are:');
@@ -769,8 +776,23 @@ class SmartCompiler is NQP::Compiler {
         return $ast
             if %adverbs<output> eq $qastfileName;
         spew($qastfileName, ~$ast);
-        self.log('ast_save: QAST dump written to ', $qastfileName);
+        #self.log('ast_save: QAST dump written to ', $qastfileName);
         $ast;
+    }
+
+    method write_bytecode($mast, *%adverbs) {
+        #self.log('write_bytecode: adverbs=' ~ describe(%adverbs));
+        if %adverbs<target> eq 'mbc' && %adverbs<output> {
+            self.log('write_bytecode: omitted because of'
+                ~ ' :target("' ~ %adverbs<target> ~ '")'
+                ~ ' and :output("' ~ %adverbs<output> ~ '")'
+            );
+        } else {
+            my $assmbler := nqp::getcomp('MAST');
+            $assmbler.assemble_to_file($mast, self.user_binname);
+            self.log('write_bytecode: ' ~ describe($mast) ~ ' ~> ' ~ self.user_binname);
+        }
+        $mast;
     }
 
 }
@@ -813,13 +835,14 @@ class NQPActions is NQP::Actions {
                     $deps
                 );
                 @expPathUp[0].push($depsBinding);
-                say(dump(@expPathUp[0]));
+                #say(dump(@expPathUp[0]));
             }
 
             $deps.push(QAST::SVal.new(:value($/<name>), :node($/)));
 
-            say('>>>>>> dependency: "' ~ $/<name> ~ '"');
-            say('>>>>>> ' ~ describe($*COMPILER.compileDependency(~$/<name>, [])));
+            $*COMPILER.log($*COMPILER.user_progname, ' dependency: "' ~ $/<name> ~ '"');
+            my $depOut := $*COMPILER.compileDependency(~$/<name>, []);
+            #say('>>>>>> ' ~ describe($depOut));
         }
 
         my $super := nqp::findmethod(self.HOW.mro(self)[1], 'statement_control:sym<use>');
@@ -835,7 +858,7 @@ class NQPActions is NQP::Actions {
         
         $out.node($/);
         $out.annotate('use', ~$/<name>);
-        say(dump($out));
+        #say(dump($out));
         make $out;
     }
 }
@@ -921,6 +944,7 @@ class NQPCompiler is SmartCompiler {
             $src_path := "$src_dir/$src_name.$src_ext";
             $vm_path := "$vm_dir/$src_name.$vm_ext";
         }
+        self.user_binname($vm_path);
 
         my $ast_path := "$src_path.qast";
 
@@ -1082,7 +1106,7 @@ sub MAIN(*@ARGS) {
     my $sep := nqp::x('-', 29);
     my $nqpc := NQPCompiler.new();
     my %opts := hash();
-    say('CWD=', describe($cwd), "\n@ARGS=", describe(@ARGS));
+    #say('CWD=', describe($cwd), "\n@ARGS=", describe(@ARGS));
     
     #nqp::exit(0);
 
@@ -1093,13 +1117,14 @@ sub MAIN(*@ARGS) {
         #@ARGS.push('L/LActions.nqp');
         #@ARGS.push('L/L.nqp');
 
-        @ARGS.push('L/runtime.nqp');
+        @ARGS.push('lib/L/runtime.nqp');
         ##$nqpc.addstage('ast_clean', :before<ast_save>);
         #$nqpc.addstage('ast_stats', :before<ast_save>);
         #%opts<stagestats> := 1;
         #%opts<target>     := '';    # ...and run it
     }
-        %opts<stagestats> := 1;
+        #%opts<stagestats> := 1;
+        $nqpc.addstage('write_bytecode', :before<mbc>);
 
 
     for @ARGS {

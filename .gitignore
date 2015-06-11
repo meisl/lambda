@@ -1,3 +1,5 @@
 *.bak
 *.moarvm
 *.qast
+
+/blib_tmp
