@@ -1,4 +1,6 @@
-use NQPHLL;
+#!nqp
+
+use Util;
 
 
 class TreeWalkDo {
@@ -77,6 +79,35 @@ class TreeWalkDo {
     method break  (:$take = NO_VALUE) { do('break',   $take, self ?? $!howtocontinue !! self) }
     method halt   (:$take = NO_VALUE) { do('halt',    $take, self ?? $!howtocontinue !! self) }
 }
+
+
+
+class TreeWalk {
+
+    my sub _children($n) { nqp::islist($n) ?? $n !! (nqp::can($n, 'list') ?? $n.list !! []) }
+    
+    method dfs-up(&probe, &consumer, $node, @pathUp = [], :&children = &_children) {
+        my $x := &probe($node, @pathUp);
+        my $y := TreeWalkDo.return;
+        if $x.recurse {
+            @pathUp.unshift($node);
+            for &children($node) {
+                $y := self.dfs-up(&probe, &consumer, $_, @pathUp);
+                last if $y.last || $y.break || $y.halt;
+            }
+            @pathUp.shift;
+        }
+        if $x.take && !$y.halt {
+            &consumer($node, @pathUp);
+        }
+        if $y.break || $y.halt {
+            $y;
+        } else {
+            $x;
+        }
+    }
+}
+
 
 
 sub MAIN(*@ARGS) {
