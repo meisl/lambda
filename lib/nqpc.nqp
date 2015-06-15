@@ -644,19 +644,8 @@ class SmartCompiler is NQP::Compiler {
 
     # additional stages
 
-    method fix_var_null_decls($ast) { # TODO: write in terms of TreeWalk
-        #nqp::die('fix_var_null_decls expects a QAST::Node - got ' ~ describe($ast) )
-        #    unless istype($ast, QAST::Node);
-        if istype($ast, QAST::Var) && !$ast.decl {
-            $ast.decl(nqp::null_s);
-        }
-
-        if istype($ast, QAST::Node) {
-            for $ast.list {
-                self.fix_var_null_decls($_);
-            }
-        }
-        $ast;
+    method fix_var_null_decls($ast) {
+        fix_var_null_decls($ast);
     }
 
     method ast_clean($ast, *%adverbs) {

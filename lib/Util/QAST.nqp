@@ -199,22 +199,30 @@ class Util::QAST {
         return nqp::null;
     }
 
-    method findPaths(&test, $node) {
+    method findPaths(&test, $ast) {
         my @out := [];
         TreeWalk.dfs-up(
-            -> $node, @pathUp { # probe
-                TreeWalkDo.recurse(:take(&test($node, @pathUp)));
+            -> $n, @p { # probe
+                TreeWalkDo.recurse(:take(&test($n, @p)));
             },
-            -> $node, @pathUp { # consume
-                my @path := nqp::clone(@pathUp);
-                @path.unshift($node);
+            -> $n, @p { # consume
+                my @path := nqp::clone(@p);
+                @path.unshift($n);
                 @out.push(@path);
             },
-            $node
+            $ast
         );
         @out;
     }
 
+    method fix_var_null_decls($ast) {
+        TreeWalk.dfs-up(
+            -> $n, @p { TreeWalkDo.recurse(:take(istype($n, QAST::Var) && !$n.decl)) },
+            -> $n, @p { $n.decl(nqp::null_s) },
+            $ast
+        );
+        $ast;
+    }
 }
 
 
@@ -226,4 +234,5 @@ sub qastChildren($ast, *@types)     is export { Util::QAST.qastChildren($ast, |@
 sub removeChild($parent, $child)    is export { Util::QAST.removeChild($parent, $child) }
 sub findPath(&test, $node, @pathUp = []) is export { Util::QAST.findPath(&test, $node, @pathUp) }
 
-sub findPaths(&test, $node)         is export { Util::QAST.findPaths(&test, $node) }
+sub findPaths(&test, $ast)          is export { Util::QAST.findPaths(&test, $ast) }
+sub fix_var_null_decls($ast)        is export { Util::QAST.fix_var_null_decls($ast) }

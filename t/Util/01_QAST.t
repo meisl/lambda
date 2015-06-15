@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(36);
+plan(42);
 
 
 my $s := QAST::SVal.new(:value<bar>);
@@ -98,7 +98,7 @@ dies_ok( { removeChild($block, QAST::Var.new(:name<bar>)) }, 'removing non-exist
 lives_ok( { removeChild($block, $barVar) }, 'removing existent child');
 is(nqp::elems($block.list), 2, 'nr of children after removing one');
 is($block[0].name, 'qumbl', 'preceding sibling untouched');
-is($block[1].name, 'foo', 'follwing sibling untouched');
+is($block[1].name, 'foo', 'following sibling untouched');
 
 
 # findPaths
@@ -116,8 +116,16 @@ my $mainBinding := QAST::Op.new(:op<bind>,
 my $fooBinding := QAST::Op.new(:op<bind>,
     QAST::Var.new(:name('&foo'), :scope<lexical>, :decl<var>),
     QAST::Block.new(
-        QAST::Stmts.new(),
-        QAST::Stmts.new(),
+        QAST::Stmts.new(
+            QAST::Var.new(:name('$bar'), :scope<lexical>, :decl<param>),
+            QAST::Var.new(:name('$baz'), :scope<lexical>, :decl<var>),
+        ),
+        QAST::Stmts.new(
+            QAST::Op.new(:op<eqaddr>,
+                QAST::Var.new(:name('$bar'), :scope<lexical>),
+                QAST::Var.new(:name('$baz'), :scope<lexical>),
+            ),
+        ),
     ),
 );
 
@@ -135,11 +143,11 @@ my $ast := QAST::CompUnit.new(
 diag(dump($ast));
 
 my @paths := findPaths(
-    -> $node, @pathUp {
-        if +@pathUp > 0 {
-            my $parent := @pathUp[0];
+    -> $n, @p {
+        if @p {
+            my $parent := @p[0];
             istype($parent, QAST::Op) && ($parent.op eq 'bind')
-                && istype($node, QAST::Var) && $node.decl
+                && istype($n, QAST::Var) && $n.decl
         } else {
             0;
         }
@@ -153,6 +161,22 @@ is(@paths[0][0], $fooBinding[0],  '1st elem of 1st path found');
 is(@paths[0][1], $fooBinding,     '2nd elem of 1st path found');
 is(@paths[1][0], $mainBinding[0], '1st elem of 2nd path found');
 is(@paths[1][1], $mainBinding,    '2nd elem of 2nd path found');
+
+
+# fix_var_null_decls
+
+@paths := findPaths(-> $n, @p { istype($n, QAST::Var) && !$n.decl }, $ast);
+is(+@paths, 2, 'nr of paths to non-decl vars')
+    || diag(@paths);
+is(@paths[0][0].dump_extra_node_info, 'lexical $bar :decl()', 'var 1 before fix_var_null_decls');
+is(@paths[1][0].dump_extra_node_info, 'lexical $baz :decl()', 'var 2 before fix_var_null_decls');
+
+my $out := fix_var_null_decls($ast);
+is($out, $ast, 'fix_var_null_decls returns its arg');
+
+is(@paths[0][0].dump_extra_node_info, 'lexical $bar', 'var 1 after fix_var_null_decls');
+is(@paths[1][0].dump_extra_node_info, 'lexical $baz', 'var 2 after fix_var_null_decls');
+
 
 
 done();
