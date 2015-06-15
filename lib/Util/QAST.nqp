@@ -227,7 +227,7 @@ class Util::QAST {
         nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) ~ (nqp::isstr($ast) ?? ' "' ~ nqp::escape($ast) ~ '"' !! '') )
             unless istype($ast, QAST::Node);
 
-        if nqp::can($ast, 'resultchild') && nqp::isint($ast.resultchild) && (nqp::elems($ast.list) != $ast.resultchild + 1) {
+        if nqp::can($ast, 'resultchild') && nqp::isint($ast.resultchild) && nqp::elems($ast.list) != $ast.resultchild + 1 {
             return [$ast];   # don't muck with that...
         }
 
@@ -237,7 +237,7 @@ class Util::QAST {
                 @children.push($_);
             }
         }
-        if istype($ast, QAST::Stmts)
+        if istype($ast, QAST::Stmts)    # do not remove Stmt!
             && (
                   istype($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) 
                || (nqp::elems(@children) < 2)
@@ -249,6 +249,9 @@ class Util::QAST {
             my @list := $ast.list;
             while +@list { @list.pop }
             for @children { @list.push($_) }
+            if istype($ast, QAST::Stmts) && nqp::isint($ast.resultchild) {  # fixup :resultchild if necessary
+                $ast.resultchild(nqp::elems(@children) - 1);
+            }
         }
 
         return [$ast];
@@ -260,7 +263,7 @@ class Util::QAST {
             ?? @out[0]
             !! QAST::Stmts.new(|@out);
     }
-    
+
 }
 
 
