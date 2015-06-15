@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(62);
+plan(64);
 
 
 my $s := QAST::SVal.new(:value<bar>);
@@ -251,12 +251,15 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     $stmts_needed.annotate('NOTE', ':resultchild needs fixup if inner Stmts is dropped');
 
-    my $ast := QAST::Block.new(
-        QAST::Var.new(:name<$x>, :decl<param>),
-        QAST::Op.new(:op<say>,
-            $stmts_needed
-        ),
+    my $stmts_topmost := QAST::Stmts.new(
+        QAST::Block.new(
+            QAST::Var.new(:name<$x>, :decl<param>),
+            QAST::Op.new(:op<say>,
+                $stmts_needed
+            ),
+        )
     );
+    my $ast := $stmts_topmost;
 
     diag('check :resultChild fixup in ' ~ $STMT_KIND.HOW.name($STMT_KIND) ~ "\n" ~ dump($ast));
 
@@ -276,9 +279,11 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     is(resultterm($stmts_needed), $stmts_inner, 'result term of the outer Stmts')
         || diag(dump($stmts_needed));
 
-    drop_Stmts($ast);
+    $ast := drop_Stmts($ast);
 
-    is($ast[1][0], $stmts_needed, 'Stmts under `say` is not dropped')
+    is($ast, $stmts_topmost, 'topmost Stmts is not dropped');
+
+    is($ast[0][1][0], $stmts_needed, 'Stmts under `say` is not dropped')
         || diag(dump($ast));
     is(resultterm($stmts_needed), $resultVar, 'either :resultchild is set to correct value or deleted')
         || diag(dump($ast));

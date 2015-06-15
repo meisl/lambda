@@ -238,6 +238,7 @@ class Util::QAST {
             }
         }
         if istype($ast, QAST::Stmts)    # do not remove Stmt!
+            && !nqp::isnull($parent)
             && (
                   istype($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) 
                || (nqp::elems(@children) < 2)
@@ -259,10 +260,7 @@ class Util::QAST {
     }
 
     method drop_Stmts($ast) {
-        my @out := _drop_Stmts($ast, nqp::null);
-        nqp::elems(@out) == 1
-            ?? @out[0]
-            !! QAST::Stmts.new(|@out);
+        _drop_Stmts($ast, nqp::null)[0];
     }
 
 }
