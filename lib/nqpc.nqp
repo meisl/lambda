@@ -462,7 +462,7 @@ class SmartCompiler is NQP::Compiler {
     method BUILD() {
         # in this order (!):
         self.addstage('ast_save',           :after<ast>);
-        self.addstage('fix_var_null_decls', :after<ast>);  # TODO: 
+        self.addstage('fix_var_attrs',      :after<ast>);
         #self.addstage('optimize',           :before<ast_save>);
 
         # Add extra command line options.
@@ -606,8 +606,8 @@ class SmartCompiler is NQP::Compiler {
 
     # additional stages
 
-    method fix_var_null_decls($ast) {
-        fix_var_null_decls($ast);
+    method fix_var_attrs($ast) {
+        fix_var_attrs($ast);
     }
 
     method ast_clean($ast, *%adverbs) {

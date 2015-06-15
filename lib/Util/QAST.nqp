@@ -215,10 +215,15 @@ class Util::QAST {
         @out;
     }
 
-    method fix_var_null_decls($ast) {
+    method fix_var_attrs($ast) {
         TreeWalk.dfs-up(
-            -> $n, @p { TreeWalkDo.recurse(:take(istype($n, QAST::Var) && !$n.decl)) },
-            -> $n, @p { $n.decl(nqp::null_s) },
+            -> $n, @p { TreeWalkDo.recurse(:take(istype($n, QAST::Var))) },
+            -> $n, @p {
+                $n.decl(nqp::null_s)
+                    unless $n.decl;
+                $n.scope('lexical')     # (at least) QASTCompilerMAST expects var (decl)s to have explicit scope
+                    unless $n.scope;
+            },
             $ast
         );
     }
@@ -275,5 +280,5 @@ sub removeChild($parent, $child)    is export { Util::QAST.removeChild($parent, 
 sub findPath(&test, $node, @pathUp = []) is export { Util::QAST.findPath(&test, $node, @pathUp) }
 
 sub findPaths(&test, $ast)          is export { Util::QAST.findPaths(&test, $ast) }
-sub fix_var_null_decls($ast)        is export { Util::QAST.fix_var_null_decls($ast) }
+sub fix_var_attrs($ast)             is export { Util::QAST.fix_var_attrs($ast) }
 sub drop_Stmts($ast)                is export { Util::QAST.drop_Stmts($ast) }

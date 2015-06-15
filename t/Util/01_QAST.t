@@ -9,6 +9,7 @@ use Util::QAST;
 plan(64);
 
 
+
 my $s := QAST::SVal.new(:value<bar>);
 is(dump($s), '─◙ SVal "bar"', 'dump str constant');
 
@@ -188,25 +189,25 @@ is(@paths[1][0], $mainBinding[0], '1st elem of 2nd path found');
 is(@paths[1][1], $mainBinding,    '2nd elem of 2nd path found');
 
 
-# fix_var_null_decls
+# fix_var_attrs
 
 @paths := findPaths(-> $n, @p { istype($n, QAST::Var) && !$n.decl }, $ast);
 is(+@paths, 5, 'nr of paths to non-decl vars')
     || diag(@paths);
-is(@paths[0][0].dump_extra_node_info, 'lexical $bar :decl()', 'var 1 before fix_var_null_decls');
-is(@paths[1][0].dump_extra_node_info, 'lexical $baz :decl()', 'var 2 before fix_var_null_decls');
-is(@paths[2][0].dump_extra_node_info, 'lexical $bar :decl()', 'var 3 before fix_var_null_decls');
-is(@paths[3][0].dump_extra_node_info, 'lexical @ARGS :decl()', 'var 4 before fix_var_null_decls');
-is(@paths[4][0].dump_extra_node_info, 'lexical @ARGS :decl()', 'var 5 before fix_var_null_decls');
+is(@paths[0][0].dump_extra_node_info, 'lexical $bar :decl()', 'var 1 before fix_var_attrs');
+is(@paths[1][0].dump_extra_node_info, 'lexical $baz :decl()', 'var 2 before fix_var_attrs');
+is(@paths[2][0].dump_extra_node_info, 'lexical $bar :decl()', 'var 3 before fix_var_attrs');
+is(@paths[3][0].dump_extra_node_info, 'lexical @ARGS :decl()', 'var 4 before fix_var_attrs');
+is(@paths[4][0].dump_extra_node_info, 'lexical @ARGS :decl()', 'var 5 before fix_var_attrs');
 
-my $out := fix_var_null_decls($ast);
-is($out, $ast, 'fix_var_null_decls returns its arg');
+my $out := fix_var_attrs($ast);
+is($out, $ast, 'fix_var_attrs returns its arg');
 
-is(@paths[0][0].dump_extra_node_info, 'lexical $bar', 'var 1 after fix_var_null_decls');
-is(@paths[1][0].dump_extra_node_info, 'lexical $baz', 'var 2 after fix_var_null_decls');
-is(@paths[2][0].dump_extra_node_info, 'lexical $bar', 'var 3 after fix_var_null_decls');
-is(@paths[3][0].dump_extra_node_info, 'lexical @ARGS', 'var 4 after fix_var_null_decls');
-is(@paths[4][0].dump_extra_node_info, 'lexical @ARGS', 'var 5 after fix_var_null_decls');
+is(@paths[0][0].dump_extra_node_info, 'lexical $bar', 'var 1 after fix_var_attrs');
+is(@paths[1][0].dump_extra_node_info, 'lexical $baz', 'var 2 after fix_var_attrs');
+is(@paths[2][0].dump_extra_node_info, 'lexical $bar', 'var 3 after fix_var_attrs');
+is(@paths[3][0].dump_extra_node_info, 'lexical @ARGS', 'var 4 after fix_var_attrs');
+is(@paths[4][0].dump_extra_node_info, 'lexical @ARGS', 'var 5 after fix_var_attrs');
 
 
 # drop_Stmts
