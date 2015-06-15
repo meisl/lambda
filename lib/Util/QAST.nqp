@@ -2,6 +2,7 @@
 use QAST;   # that is, nqp's
 
 use Util;
+use Util::TreeWalk;
 
 
 role StrByDump is export {
@@ -177,6 +178,43 @@ class Util::QAST {
         $parent;
     }
 
+    method findPath(&test, $node, @pathUp = []) {
+        my $res := &test($node, @pathUp);
+        if nqp::islist($res) {
+            @pathUp.unshift($node);
+            for $res {
+                my $res2 := self.findPath(&test, $_, @pathUp);
+                return $res2 if $res2;  # ie. if truthy (list, 1 or a node)
+            }
+            @pathUp.shift();
+        } elsif $res {
+            if $res =:= $node || !istype($res, QAST::Node) {    # just truthy to indicate that $node should be returned
+                return $node
+            } else {
+                while !($res =:= @pathUp.shift) {   # eat path up till we find the node
+                }
+                return $res;
+            }
+        }
+        return nqp::null;
+    }
+
+    method findPaths(&test, $node) {
+        my @out := [];
+        TreeWalk.dfs-up(
+            -> $node, @pathUp { # probe
+                TreeWalkDo.recurse(:take(&test($node, @pathUp)));
+            },
+            -> $node, @pathUp { # consume
+                my @path := nqp::clone(@pathUp);
+                @path.unshift($node);
+                @out.push(@path);
+            },
+            $node
+        );
+        @out;
+    }
+
 }
 
 
@@ -186,4 +224,6 @@ sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
 
 sub qastChildren($ast, *@types)     is export { Util::QAST.qastChildren($ast, |@types) }
 sub removeChild($parent, $child)    is export { Util::QAST.removeChild($parent, $child) }
+sub findPath(&test, $node, @pathUp = []) is export { Util::QAST.findPath(&test, $node, @pathUp) }
 
+sub findPaths(&test, $node)         is export { Util::QAST.findPaths(&test, $node) }

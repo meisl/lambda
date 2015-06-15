@@ -2,9 +2,11 @@
 use QAST;   # that is, nqp'S
 
 use testing;
+use Util;
+
 use Util::QAST;
 
-plan(31);
+plan(36);
 
 
 my $s := QAST::SVal.new(:value<bar>);
@@ -98,6 +100,59 @@ is(nqp::elems($block.list), 2, 'nr of children after removing one');
 is($block[0].name, 'qumbl', 'preceding sibling untouched');
 is($block[1].name, 'foo', 'follwing sibling untouched');
 
+
+# findPaths
+
+my $mainBinding := QAST::Op.new(:op<bind>,
+    QAST::Var.new(:name('&MAIN'), :scope<lexical>, :decl<var>),
+    QAST::Block.new(
+        QAST::Stmts.new(
+            QAST::Var.new(:name('@ARGS'), :scope<lexical>, :decl<param>, :slurpy(1)),
+        ),
+        QAST::Stmts.new(),
+    ),
+);
+
+my $fooBinding := QAST::Op.new(:op<bind>,
+    QAST::Var.new(:name('&foo'), :scope<lexical>, :decl<var>),
+    QAST::Block.new(
+        QAST::Stmts.new(),
+        QAST::Stmts.new(),
+    ),
+);
+
+my $ast := QAST::CompUnit.new(
+    QAST::Block.new(
+        QAST::Var.new(:name('@ARGS'), :scope<lexical>, :decl<param>, :slurpy(1)),
+        QAST::Stmts.new(
+            $fooBinding,
+            $mainBinding,
+        ),
+        QAST::Stmts.new(),
+    )
+);
+
+diag(dump($ast));
+
+my @paths := findPaths(
+    -> $node, @pathUp {
+        if +@pathUp > 0 {
+            my $parent := @pathUp[0];
+            istype($parent, QAST::Op) && ($parent.op eq 'bind')
+                && istype($node, QAST::Var) && $node.decl
+        } else {
+            0;
+        }
+    },
+    $ast
+);
+
+is(+@paths, 2, 'nr of paths to defs')
+    || diag(@paths);
+is(@paths[0][0], $fooBinding[0],  '1st elem of 1st path found');
+is(@paths[0][1], $fooBinding,     '2nd elem of 1st path found');
+is(@paths[1][0], $mainBinding[0], '1st elem of 2nd path found');
+is(@paths[1][1], $mainBinding,    '2nd elem of 2nd path found');
 
 
 done();

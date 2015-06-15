@@ -5,7 +5,7 @@ use Util::QAST;
 
 use Util::TreeWalk;
 
-plan(36);
+plan(184);
 
 
 
@@ -338,14 +338,6 @@ is(           @ccalls[3][1][1], $tree1[1],      'consumer call 4 arg pathUp[1]')
 is(           @ccalls[3][1][2], $tree1,         'consumer call 4 arg pathUp[2]');
 
 
-
-my $tree2 := QAST::CompUnit.new(
-    QAST::Block.new(
-        QAST::Stmts.new(),
-        QAST::Stmts.new(),
-    ),
-);
-nqp::exit(0);
 
 
 my $do1 := TreeWalkDo.recurse(:take);

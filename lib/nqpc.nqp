@@ -166,27 +166,6 @@ sub remove_MAIN($ast) {
 }
 
 
-sub findPath(&test, $node, @pathUp = []) {
-    my $res := &test($node, @pathUp);
-    if nqp::islist($res) {
-        @pathUp.unshift($node);
-        for $res {
-            my $res2 := findPath(&test, $_, @pathUp);
-            return $res2 if $res2;  # ie. if truthy (list, 1 or a node)
-        }
-        @pathUp.shift();
-    } elsif $res {
-        if $res =:= $node || !istype($res, QAST::Node) {    # just truthy to indicate that $node should be returned
-            return $node
-        } else {
-            while !($res =:= @pathUp.shift) {   # eat path up till we find the node
-            }
-            return $res;
-        }
-    }
-    return nqp::null;
-}
-
 
 sub findDef($ast, $matcher, @pathUp = []) {
     if nqp::isstr($matcher) {
