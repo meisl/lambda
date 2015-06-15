@@ -227,7 +227,7 @@ class Util::QAST {
         nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) ~ (nqp::isstr($ast) ?? ' "' ~ nqp::escape($ast) ~ '"' !! '') )
             unless istype($ast, QAST::Node);
 
-        if nqp::can($ast, 'resultchild') && nqp::isint($ast.resultchild) {
+        if nqp::can($ast, 'resultchild') && nqp::isint($ast.resultchild) && (nqp::elems($ast.list) != $ast.resultchild + 1) {
             return [$ast];   # don't muck with that...
         }
 
