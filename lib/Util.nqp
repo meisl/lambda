@@ -30,13 +30,13 @@ class Util {
     method describe($x) {
         my $out;
         if nqp::isint($x) {
-            $out := "$x (int)";
+            $out := nqp::isconcrete($x) ?? "$x (int)" !! '(' ~ self.describe_fallback($x) ~ ')';
         } elsif nqp::isnum($x) {
-            $out := "$x (num)";
+            $out := nqp::isconcrete($x) ?? "$x (num)" !! '(' ~ self.describe_fallback($x) ~ ')';
         } elsif nqp::isstr($x) {
             if nqp::isnull_s($x) {
                 $out := 'nqp::null_s (str)';
-            } else {
+            } elsif nqp::isconcrete($x) {
                 my $length := nqp::chars($x);
                 if $length > 80 {
                     $out := '"' ~ nqp::escape(nqp::substr($x, 0, 45)) ~ '"'
@@ -47,6 +47,8 @@ class Util {
                 } else {
                     $out := '"' ~ nqp::escape($x) ~ '" (str)';
                 }
+            } else {
+                $out := '(' ~ self.describe_fallback($x) ~ ')';
             }
         } elsif nqp::isnull($x) {   # note: nqp::null_s would NOT pass the nqp::isnull test
             $out := 'nqp::null';

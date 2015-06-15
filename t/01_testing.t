@@ -13,7 +13,7 @@ use Util;
 # The latter meaning: by how much should it be advanced in a certain
 # situtation, if at all?
 
-plan(174);
+plan(186);
 
 =begin
 sub dodo($test) {
@@ -147,6 +147,20 @@ ok($d eq 'nqp::null', "nqp::null is described as 'nqp::null'")
 $d := describe(NQPMu);
 ok($d eq '(NQPMu, Type object)', "NQPMu is described as '(NQPMu, Type object)'")
     || diag("actual: $d");
+
+$d := describe(int);
+ok($d eq '(int, Type object)', "int is described as '(int, Type object)'")
+    || diag("actual: $d");
+
+$d := describe(num);
+ok($d eq '(num, Type object)', "num is described as '(num, Type object)'")
+    || diag("actual: $d");
+
+$d := describe(str);
+ok($d eq '(str, Type object)', "str is described as '(str, Type object)'")
+    || diag("actual: $d");
+
+
 
 ## gives 'NQPMu, Type object)' ... !?
 #$d := describe(NO_VALUE);
