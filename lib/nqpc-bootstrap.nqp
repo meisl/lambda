@@ -79,7 +79,14 @@ sub compileAll(@ms) {
     exec($nqp, $mainsrc, $mainsrc, :whatwedo("running $mainsrc (interpreted) on itself"));
 
     for @ms {
-        nqp::unlink(m2tmp($_));
+        {
+            my $path := m2tmp($_);
+            nqp::unlink($path);
+            CATCH {
+                note('nqpc-bootstrap: ' ~ nqp::getmessage($!) ~ ' "' ~ $path ~ '" - trying again...');
+                nqp::unlink($path);
+            }
+        }
     }
     nqp::rmdir('blib_tmp/Util');
     nqp::rmdir('blib_tmp');
@@ -100,6 +107,7 @@ sub compileAll(@ms) {
 }
 
 my @ms := <Util Util::TreeWalk Util::QAST nqpc>;
+
 
 compileAll(@ms) if any(&needsCompilation, @ms);
 
