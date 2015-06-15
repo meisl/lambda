@@ -221,7 +221,6 @@ class Util::QAST {
             -> $n, @p { $n.decl(nqp::null_s) },
             $ast
         );
-        $ast;
     }
 }
 

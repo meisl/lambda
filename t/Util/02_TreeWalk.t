@@ -5,7 +5,7 @@ use Util::QAST;
 
 use Util::TreeWalk;
 
-plan(184);
+plan(186);
 
 
 
@@ -26,7 +26,12 @@ my &consumer := -> $node, @pathUp {
 };
 
 
-TreeWalk.dfs-up(&probe, &consumer, $tree1);
+dies_ok({ TreeWalk.dfs-up(&probe, &consumer, $tree1, []) }, 'TreeWalk.dfs-up, when given an additional array arg,');
+
+my $out := TreeWalk.dfs-up(&probe, &consumer, $tree1);
+
+is($out, $tree1, 'TreeWalk.dfs-up returns the tree that it received');
+
 
 is(nqp::elems(@pcalls), 6, 'nr of calls to &probe')
     || diag(@pcalls);

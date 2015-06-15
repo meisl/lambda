@@ -86,13 +86,13 @@ class TreeWalk {
 
     my sub _children($n) { nqp::islist($n) ?? $n !! (nqp::can($n, 'list') ?? $n.list !! []) }
     
-    method dfs-up(&probe, &consumer, $node, @pathUp = [], :&children = &_children) {
+    my sub _dfs-up(&probe, &consumer, $node, @pathUp, &children) {
         my $x := &probe($node, @pathUp);
         my $y := TreeWalkDo.return;
         if $x.recurse {
             @pathUp.unshift($node);
             for &children($node) {
-                $y := self.dfs-up(&probe, &consumer, $_, @pathUp);
+                $y := _dfs-up(&probe, &consumer, $_, @pathUp, &children);
                 last if $y.last || $y.break || $y.halt;
             }
             @pathUp.shift;
@@ -105,6 +105,11 @@ class TreeWalk {
         } else {
             $x;
         }
+    }
+    
+    method dfs-up(&probe, &consumer, $node, :&children = &_children) {
+        _dfs-up(&probe, &consumer, $node, [], &children);
+        $node;
     }
 }
 
