@@ -65,7 +65,7 @@ class Util {
                 @out.push(self.describe($_));
             }
             $out := '#`{' ~ self.describe_fallback($x) ~ ':}[ ' ~ nqp::join(', ', @out) ~ ' ]';
-        } elsif nqp::istype($x, QAST::Node) {
+        } elsif nqp::istype($x, QAST::Node) && nqp::isconcrete($x) {
             $out := $x.HOW.name($x);
             my $extra := $x.dump_extra_node_info;
             $out := "$out($extra)" if $extra;

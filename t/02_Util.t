@@ -4,7 +4,7 @@ use testing;
 
 use Util;
 
-plan(111);
+plan(112);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -38,6 +38,9 @@ is(unixify('C:\rakudo/languages/nqp'), 'C:/rakudo/languages/nqp', 'unixify 2');
 
 is(describe(nqp::null), 'nqp::null', 'null is described as...');
 is(describe(nqp::null_s), 'nqp::null_s (str)', 'null_s is described as...');
+
+is(describe(QAST::Stmts), '(QAST::Stmts, Type object)', 'QAST::Stmts (type) is described as...');
+
 
 is(describe(["foo", 1, ['hello', 'world'], 3.1415]), 
     '#`{NQPArray:}[ "foo" (str), 1 (int), #`{NQPArray:}[ "hello" (str), "world" (str) ], 3.1415 (num) ]',
