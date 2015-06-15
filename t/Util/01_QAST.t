@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(57);
+plan(62);
 
 
 my $s := QAST::SVal.new(:value<bar>);
@@ -224,67 +224,69 @@ is(@stmts_left[1][0], $stmts_needed_main, '2nd Stmts node left in')
     || diag(dump(@stmts_left[1][0]));
 
 
-my $resultVar := QAST::Var.new(:name<$x>);
-my $stmts_inner := QAST::Stmts.new(
-    QAST::Op.new(:op<bind>,
-        QAST::Var.new(:name<$x>),
-        QAST::Op.new(:op<add_i>,
+for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
+
+    my $resultVar := QAST::Var.new(:name<$x>);
+    my $stmts_inner := QAST::Stmts.new(
+        QAST::Op.new(:op<bind>,
             QAST::Var.new(:name<$x>),
-            QAST::IVal.new(:value(1)),
+            QAST::Op.new(:op<add_i>,
+                QAST::Var.new(:name<$x>),
+                QAST::IVal.new(:value(1)),
+            ),
         ),
-    ),
-    $resultVar,
-);
+        $resultVar,
+    );
 
-my $stmt := QAST::Stmt.new( # singular!
-    QAST::Op.new(:op<say>,
-        QAST::Var.new(:name<$x>),
-    )
-);
-$stmt.annotate('NOTE', 'Stmt (singular!) is not dropped');
+    my $stmt := QAST::Stmt.new( # singular!
+        QAST::Op.new(:op<say>,
+            QAST::Var.new(:name<$x>),
+        )
+    );
+    $stmt.annotate('NOTE', 'Stmt (singular!) is not dropped');
 
-my $stmts_needed := QAST::Stmts.new(:resultchild(1),
-    $stmt,
-    $stmts_inner,
-);
-$stmts_needed.annotate('NOTE', ':resultchild needs fixup if inner Stmts is dropped');
+    my $stmts_needed := $STMT_KIND.new(:resultchild(1),
+        $stmt,
+        $stmts_inner,
+    );
+    $stmts_needed.annotate('NOTE', ':resultchild needs fixup if inner Stmts is dropped');
 
-$ast := QAST::Block.new(
-    QAST::Var.new(:name<$x>, :decl<param>),
-    QAST::Op.new(:op<say>,
-        $stmts_needed
-    ),
-);
+    my $ast := QAST::Block.new(
+        QAST::Var.new(:name<$x>, :decl<param>),
+        QAST::Op.new(:op<say>,
+            $stmts_needed
+        ),
+    );
 
-diag("check :resultChild fixup:\n" ~ dump($ast));
+    diag('check :resultChild fixup in ' ~ $STMT_KIND.HOW.name($STMT_KIND) ~ "\n" ~ dump($ast));
 
-sub resultterm($node) {
-    nqp::die('"resultterm expects either a Block, Stmts or Stmt - got ' ~ describe($node))
-        unless istype($node, QAST::Block, QAST::Stmts, QAST::Stmt);
-    my $i := istype($node, QAST::Block) || !nqp::isint($node.resultchild)
-        ?? nqp::elems($node.list) - 1
-        !! $node.resultchild;
-    $i < 0
-        ?? NQPMu
-        !! $node[$i];
+    sub resultterm($node) {
+        nqp::die('"resultterm expects either a Block, Stmts or Stmt - got ' ~ describe($node))
+            unless istype($node, QAST::Block, QAST::Stmts, QAST::Stmt);
+        my $i := istype($node, QAST::Block) || !nqp::isint($node.resultchild)
+            ?? nqp::elems($node.list) - 1
+            !! $node.resultchild;
+        $i < 0
+            ?? NQPMu
+            !! $node[$i];
+    }
+
+    is(resultterm($stmts_inner), $resultVar, 'result term of the inner Stmts')
+        || diag(dump($stmts_inner));
+    is(resultterm($stmts_needed), $stmts_inner, 'result term of the outer Stmts')
+        || diag(dump($stmts_needed));
+
+    drop_Stmts($ast);
+
+    is($ast[1][0], $stmts_needed, 'Stmts under `say` is not dropped')
+        || diag(dump($ast));
+    is(resultterm($stmts_needed), $resultVar, 'either :resultchild is set to correct value or deleted')
+        || diag(dump($ast));
+    is($stmts_needed[0], $stmt, 'Stmt (singular!) nodes are not dropped')
+        || diag(dump($ast));
+
+    #diag(dump($ast));
 }
-
-is(resultterm($stmts_inner), $resultVar, 'result term of the inner Stmts')
-    || diag(dump($stmts_inner));
-is(resultterm($stmts_needed), $stmts_inner, 'result term of the outer Stmts')
-    || diag(dump($stmts_needed));
-
-drop_Stmts($ast);
-
-is($ast[1][0], $stmts_needed, 'Stmts under `say` is not dropped')
-    || diag(dump($ast));
-is(resultterm($stmts_needed), $resultVar, 'either :resultchild is set to correct value or deleted')
-    || diag(dump($ast));
-is($stmts_needed[0], $stmt, 'Stmt (singular!) nodes are not dropped')
-    || diag(dump($ast));
-
-#diag(dump($ast));
-
 
 
 done();

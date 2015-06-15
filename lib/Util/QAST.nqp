@@ -249,8 +249,9 @@ class Util::QAST {
             my @list := $ast.list;
             while +@list { @list.pop }
             for @children { @list.push($_) }
-            if istype($ast, QAST::Stmts) && nqp::isint($ast.resultchild) {  # fixup :resultchild if necessary
-                $ast.resultchild(nqp::elems(@children) - 1);
+            if istype($ast, QAST::Stmts, QAST::Stmt) && nqp::isint($ast.resultchild) {  # fixup :resultchild if necessary
+                #$ast.resultchild(nqp::elems(@children) - 1);
+                nqp::bindattr($ast, QAST::Stmts, '$!resultchild', NO_VALUE);
             }
         }
 
