@@ -6,19 +6,35 @@ use Util;
 
 use Util::QAST;
 
-plan(64);
+plan(72);
 
 
+
+my $w := QAST::WVal.new(:value(NQPMu));
+is(dump($w), '─◙ WVal NQPMu', 'dump world value NQPMu');
+
+my $vwf := QAST::VarWithFallback.new(:scope<positional>, :fallback(QAST::WVal.new(:value(NQPMu))), :decl(nqp::null_s));
+is(dump($vwf), '─○┬VarWithFallback positional :fallback(WVal NQPMu)', 'dump VarWithFallback');
+is(dump($vwf, :oneLine), '(VarWithFallback positional :fallback(WVal NQPMu))', 'dump VarWithFallback :oneLine');
+
+# TODO: ○┬VarWithFallback contextual $*UNIT :fallback((ifnull) ((┬VarWithFallback associative  :decl() :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$UNIT")) ((die_s) (SVal "Contextual $*UNIT not found")))
 
 my $s := QAST::SVal.new(:value<bar>);
-is(dump($s), '─◙ SVal "bar"', 'dump str constant');
+is(dump($s), '─◙ SVal "bar"', 'dump str constant "bar"');
+$s.value('');
+is(dump($s), '─◙ SVal ""', 'dump str constant ""');
 
 my $i := QAST::IVal.new(:value(23));
-is(dump($i), '─◙ IVal 23', 'dump int constant');
+is(dump($i), '─◙ IVal 23', 'dump int constant 23');
+$i.value(0);
+is(dump($i), '─◙ IVal 0', 'dump int constant 0');
 
 my $n := QAST::NVal.new(:value(3.1415));
-is(dump($n), '─◙ NVal 3.1415', 'dump num constant');
-is(dump(QAST::NVal.new(:value(nqp::inf))), '─◙ NVal Inf', 'dump num constant with value inf');
+is(dump($n), '─◙ NVal 3.1415', 'dump num constant 3.1415');
+$n.value(nqp::inf);
+is(dump($n), '─◙ NVal Inf', 'dump num constant inf');
+$n.value(0.0);
+is(dump($n), '─◙ NVal 0', 'dump num constant 0.0');
 
 my $nullop := QAST::Op.new(:op<null>);
 is(dump($nullop), '──null', 'dump Op null');
@@ -27,26 +43,32 @@ is(dump($nullop, :oneLine), '(null)', 'dump Op null on one line');
 
 
 my $v := QAST::Var.new(:name<foo>);
-is(dump($v), '─○  foo :decl()', 'dump Var w/out explicit scope');
+is(dump($v), '─○ foo :decl()', 'dump Var w/out explicit scope');
 $v.decl(nqp::null_s);   # bug in QAST::Var
-is(dump($v), '─○  foo', 'dump Var w/out explicit scope and :decl set to null_s');
+is(dump($v), '─○ foo', 'dump Var w/out explicit scope and :decl set to null_s');
+
+$v.scope('contextual');
+is(dump($v), '─○ contextual foo', 'dump Var with explicit scope "contextual"');
+
+$v.scope('local');
+is(dump($v), '─○ local foo', 'dump Var with explicit scope "local"');
 
 $v.scope('lexical');
-is(dump($v), '─○ lexical foo', 'dump Var with explicit scope');
+is(dump($v), '─○ foo', 'dump Var with explicit scope "lexical"');
 
 
 my $stmts := QAST::Stmts.new($nullop, $v);
 is(dump($stmts),
              "──:Stmts"
          ~ "\n  ├─null"
-         ~ "\n  └○ lexical foo", 
+         ~ "\n  └○ foo", 
     'dump Stmts with children uses single vertical line to connect children');
 dies_ok( { ~$stmts }, 'stringifying QAST::Stmts as is');
 $stmts.HOW.mixin($stmts, StrByDump);
 is(~$stmts, 
              "──:Stmts+\{StrByDump}"
          ~ "\n  ├─null"
-         ~ "\n  └○ lexical foo", 
+         ~ "\n  └○ foo", 
     'with role StrByDump mixed in it uses dump to stringify');
 
 my $b := QAST::Block.new();
@@ -63,14 +85,14 @@ $b.push($v);
 is(dump($b), 
              "──:Block"
          ~ "\n  ╟─null"
-         ~ "\n  ╙○ lexical foo", 
+         ~ "\n  ╙○ foo", 
     'dump Block with children uses double vertical line to connect children');
 is(dump($b, :indent('# ')), 
             "# ──:Block"
         ~ "\n#   ╟─null"
-        ~ "\n#   ╙○ lexical foo", 
+        ~ "\n#   ╙○ foo", 
     'dump Block with children with indent uses double vertical line to connect children');
-is(dump($b, :oneLine), "((Block) (null) ( lexical foo))", 'dump Block with children on one line');
+is(dump($b, :oneLine), "((Block) (null) (foo))", 'dump Block with children on one line');
 
 
 
@@ -80,7 +102,7 @@ $b.HOW.mixin($b, StrByDump);
 is(~$b,  
            "──:Block+\{StrByDump}"
          ~ "\n  ╟─null"
-         ~ "\n  ╙○ lexical foo", 
+         ~ "\n  ╙○ foo", 
     'with role StrByDump mixed in it uses dump to stringify')
     || diag("\n$b");
 
