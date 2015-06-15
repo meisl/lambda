@@ -514,8 +514,22 @@ dies_ok({ lives_ok($nullaryViciousBoom, "'$nullaryViciousBoomS'") }, "'lives_ok(
 testcounter_ok(1);
 
 
+# assertion `is` --------------------------------------------------------------
+
+passes_ok({ is('', '') },                       "`is('', '')`");
+passes_ok({ is('x', 'x') },                     "`is('x', 'x')`");
+fails_ok( { is('', 'x') },                      "`is('', 'x')`");
+fails_ok( { is('x', '') },                      "`is('x', '')`");
+fails_ok( { is('', nqp::null_s) },              "`is('', nqp::null_s)`");
+fails_ok( { is('x', nqp::null_s) },             "`is('x', nqp::null_s)`");
+fails_ok( { is(nqp::null_s, '') },              "`is(nqp::null_s), ''`");
+fails_ok( { is(nqp::null_s, 'x') },             "`is(nqp::null_s), 'x'`");
+passes_ok({ is(nqp::null_s, nqp::null_s) },     "`is(nqp::null_s), nqp::null_s`");
+
+
 #is_eq("asdf", "asdf", "should fail");
 #is_eq(1, "asdf", "should throw");
+
 
 
 done();

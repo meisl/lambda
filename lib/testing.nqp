@@ -384,7 +384,13 @@ class Testing {
         my $result;
         my $comp;
         if nqp::isstr($expected) {
-            $result := nqp::isstr($actual) && $actual eq $expected;
+            if nqp::isnull_s($expected) {
+                $result := nqp::isnull_s($actual);
+            } elsif nqp::isnull_s($actual) {
+                $result := 0;
+            } else {
+                $result := nqp::isstr($actual) && $actual eq $expected;
+            }
             $comp := 'eq';
         } elsif nqp::isint($expected) {
             $result := (nqp::isint($actual) || nqp::isnum($actual)) && $actual == $expected;
