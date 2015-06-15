@@ -34,44 +34,6 @@ sub drop_takeclosure($ast) {
     $ast;
 }
 
-sub _drop_Stmts($ast, $parent) {
-    nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) ~ (nqp::isstr($ast) ?? ' "' ~ nqp::escape($ast) ~ '"' !! '') )
-        unless istype($ast, QAST::Node);
-
-    if nqp::can($ast, 'resultchild') && nqp::isint($ast.resultchild) {
-        return [$ast];   # don't muck with that...
-    }
-
-    my @children := [];
-    for $ast.list {
-        for _drop_Stmts($_, $ast) {
-            @children.push($_);
-        }
-    }
-    if istype($ast, QAST::Stmts)
-        && (
-              istype($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) 
-           || (nqp::elems(@children) < 2)
-        )
-    {
-        return @children; # return the Stmts' children as is, dropping the Stmts node
-    } else {
-        #$ast.set_children(@children);
-        my @list := $ast.list;
-        while +@list { @list.pop }
-        for @children { @list.push($_) }
-    }
-
-    return [$ast];
-}
-
-sub drop_Stmts($ast) {
-    my @out := _drop_Stmts($ast, nqp::null);
-    nqp::elems(@out) == 1
-        ?? @out[0]
-        !! QAST::Stmts.new(|@out);
-}
-
 sub isinResultPosition($node, $parent) {
     my $n := nqp::elems($parent) - 1;
     if ($parent[$n] =:= $node) || (nqp::can($parent, 'resultchild') && $parent[$parent.resultchild] =:= $node) {

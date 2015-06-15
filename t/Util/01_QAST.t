@@ -178,5 +178,15 @@ is(@paths[0][0].dump_extra_node_info, 'lexical $bar', 'var 1 after fix_var_null_
 is(@paths[1][0].dump_extra_node_info, 'lexical $baz', 'var 2 after fix_var_null_decls');
 
 
+# drop_Stmts
+
+$out := drop_Stmts($ast);
+
+is($out, $ast, 'drop_Stmts returns its arg');
+my @stmts_left := findPaths(-> $n, @p { istype($n, QAST::Stmts) }, $ast);
+is(+@stmts_left, 0, 'drop_Stmts removed all Stmts nodes')
+  || diag(dump($ast));
+
+
 
 done();
