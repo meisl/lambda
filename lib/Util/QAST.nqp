@@ -49,28 +49,25 @@ class Util::QAST {
             $matchStr := '  ««"' ~ $matchStr;
         }
 
-        my $extraStr := $node.dump_extra_node_info;
-        while nqp::eqat($extraStr, ' ', 0) {
-            $extraStr := nqp::substr($extraStr, 1);
-        }
+        my $extraStr := trim($node.dump_extra_node_info);
         
-        my $specialStr := '';
+        my @specials := [];
         if istype($node, QAST::SpecialArg) {
             $clsStr := nqp::substr($clsStr, 0, nqp::index($clsStr, '+{'));
-            $specialStr := $specialStr ~ ' :flat(' ~ $node.flat ~ ')' if $node.flat;
+            @specials.push(':flat(' ~ $node.flat ~ ')') if $node.flat;
             my $nm := $node.named;
             if $nm {
                 if nqp::isstr($nm) {
-                    $specialStr := $specialStr ~ ' :named("' ~ nqp::escape($nm) ~ '")';
+                    @specials.push(':named("' ~ nqp::escape($nm) ~ '")');
                 } else {
-                    $specialStr := $specialStr ~ ' :named(' ~ $nm ~ ')';
+                    @specials.push(':named(' ~ $nm ~ ')');
                 }
             }
         }
 
         my %annotations := nqp::getattr($node, QAST::Node, '%!annotations');
         if %annotations {
-            $specialStr := $specialStr ~ ' :annotations(' ~ describe(%annotations) ~ ')';
+            @specials.push(':annotations(' ~ describe(%annotations) ~ ')');
         }
 
 
@@ -80,25 +77,23 @@ class Util::QAST {
             $prefix := $prefix ~ '─';
         } elsif istype($node, QAST::Var) {
             if istype($node, QAST::VarWithFallback) {
+                $prefix := $prefix ~ '○';
                 $clsStr := '┬' ~ $clsStr unless $oneLine;
             } else {
+                $prefix := $prefix ~ '○ ';
                 $clsStr := '';
             }
-            $prefix := $prefix ~ '○';
             if $node.slurpy {
-                $specialStr := $specialStr ~ ' :slurpy(' ~ $node.slurpy ~ ')'
+                @specials.push(':slurpy(' ~ $node.slurpy ~ ')');
             }
             unless ($node.default =:= NO_VALUE) {
-                $specialStr := $specialStr 
-                    ~ ' :default' ~ self.dump($node.value, :oneLine);
-                    #~ ' :default(' ~ describe($node.value) ~ ')';
+                @specials.push(':default' ~ self.dump($node.value, :oneLine));
             }
             if nqp::eqat($extraStr, 'lexical ', 0) {
                 $extraStr := nqp::substr($extraStr, 8);
             }
             if istype($node, QAST::VarWithFallback) && $node.fallback {
-                $specialStr := $specialStr ~ ' ' if $specialStr;
-                $specialStr := $specialStr ~ ':fallback' ~ self.dump($node.fallback, :oneLine);
+                @specials.push(':fallback' ~ self.dump($node.fallback, :oneLine));
             }
         } elsif nqp::substr($clsStr, 1, 3) eq 'Val' {
             $prefix := $prefix ~ '◙ ';
@@ -111,7 +106,7 @@ class Util::QAST {
             $prefix := $prefix ~ '─:';
             my $bt := $node.blocktype;
             if $bt && $bt ne 'declaration' { # don't show default
-                $specialStr := $specialStr ~ ' :blocktype(' ~ $bt ~ ')';
+                @specials.push(':blocktype(' ~ $bt ~ ')');
             }
         } elsif istype($node, Stmts) {
             $prefix := $prefix ~ '─:';
@@ -132,9 +127,9 @@ class Util::QAST {
                 $after  := ')';
             }
         }
-        $extraStr := ' ' ~ $extraStr 
-            if ($extraStr ne '') && !nqp::eqat($extraStr, ' ', 0);
-        my @lines := [$prefix ~ $clsStr ~ $extraStr ~ $specialStr ~ $suffix];
+        $extraStr := ' ' ~ $extraStr
+            if $extraStr ne '';
+        my @lines := [$prefix ~ trim($clsStr ~ $extraStr ~ join(' ', @specials, :prefix1st)) ~ $suffix];
         #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $matchStr];
         my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
         for $node.list {

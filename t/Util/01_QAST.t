@@ -18,6 +18,7 @@ is(dump($vwf), '─○┬VarWithFallback positional :fallback(WVal NQPMu)', 'dum
 is(dump($vwf, :oneLine), '(VarWithFallback positional :fallback(WVal NQPMu))', 'dump VarWithFallback :oneLine');
 
 # TODO: ○┬VarWithFallback contextual $*UNIT :fallback((ifnull) ((┬VarWithFallback associative  :decl() :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$UNIT")) ((die_s) (SVal "Contextual $*UNIT not found")))
+# TODO: ├○ $hash :decl(param) :default((VarWithFallback associative  :decl():fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ( $?PACKAGE :decl())) (SVal "NO_VALUE"))
 
 my $s := QAST::SVal.new(:value<bar>);
 is(dump($s), '─◙ SVal "bar"', 'dump str constant "bar"');
