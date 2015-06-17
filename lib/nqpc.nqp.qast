@@ -803,7 +803,7 @@
     ║ │   ╟─:Stmts
     ║ │   ║ ├○ $keyPredicate :decl(param)
     ║ │   ║ ├○ $valuePredicate :decl(param)
-    ║ │   ║ ├○ $hash :decl(param) :default((VarWithFallback associative  :decl() :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE :decl())) (SVal "NO_VALUE"))
+    ║ │   ║ ├○ $hash :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ │   ║ └○ $found :decl(var)
     ║ │   ╙─lexotic RETURN
     ║ │     └─:Stmts  ««"\n    nqp::die('findValueNodeInHash expects a fn as"...
@@ -2311,7 +2311,7 @@
     ║ │     │ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        $!user_binname := $v unless $v =:= NO_VA"...
     ║ │     │   ╟─:Stmts
     ║ │     │   ║ ├○ self :decl(param)
-    ║ │     │   ║ └○ $v :decl(param) :default((VarWithFallback associative  :decl() :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE :decl())) (SVal "NO_VALUE"))
+    ║ │     │   ║ └○ $v :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ │     │   ╙─:Stmts  ««"\n        $!user_binname := $v unless $v =:= NO_VAL"...
     ║ │     │     ├─:Stmts
     ║ │     │     │ └─unless  ««"$!user_binname := $v unless $v =:= NO_VALUE"
@@ -2989,7 +2989,7 @@
     ║ │     │   ║ │ ├○ &svalPred :decl(var)
     ║ │     │   ║ │ └─:Block  ««"{\n            -> $node { istype($node, QAST::SVal)"...
     ║ │     │   ║ │   ╟─:Stmts
-    ║ │     │   ║ │   ║ └○ $value :decl(param) :default((VarWithFallback associative  :decl() :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE :decl())) (SVal "NO_VALUE"))
+    ║ │     │   ║ │   ║ └○ $value :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ │     │   ║ │   ╙─:Stmts  ««"\n            -> $node { istype($node, QAST::SVal) "...
     ║ │     │   ║ │     └─:Stmts
     ║ │     │   ║ │       └─takeclosure
@@ -3017,7 +3017,7 @@
     ║ │     │   ║ │ ├○ &ivalPred :decl(var)
     ║ │     │   ║ │ └─:Block  ««"{\n            -> $node { istype($node, QAST::IVal)"...
     ║ │     │   ║ │   ╟─:Stmts
-    ║ │     │   ║ │   ║ └○ $value :decl(param) :default((VarWithFallback associative  :decl() :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE :decl())) (SVal "NO_VALUE"))
+    ║ │     │   ║ │   ║ └○ $value :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ │     │   ║ │   ╙─:Stmts  ««"\n            -> $node { istype($node, QAST::IVal) "...
     ║ │     │   ║ │     └─:Stmts
     ║ │     │   ║ │       └─takeclosure
@@ -3045,7 +3045,7 @@
     ║ │     │   ║ │ ├○ &opPred :decl(var)
     ║ │     │   ║ │ └─:Block  ««"{\n            -> $node { istype($node, QAST::Op) &"...
     ║ │     │   ║ │   ╟─:Stmts
-    ║ │     │   ║ │   ║ └○ $op :decl(param) :default((VarWithFallback associative  :decl() :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE :decl())) (SVal "NO_VALUE"))
+    ║ │     │   ║ │   ║ └○ $op :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ │     │   ║ │   ╙─:Stmts  ««"\n            -> $node { istype($node, QAST::Op) &&"...
     ║ │     │   ║ │     └─:Stmts
     ║ │     │   ║ │       └─takeclosure
@@ -3448,7 +3448,7 @@
     ║ │           │     │         │   └◙ SVal "static"
     ║ │           │     │         └─callmethod list  ««".list"
     ║ │           │     │           └○ $node
-    ║ │           │     ├○┬VarWithFallback contextual $*UNIT :fallback((ifnull) ((VarWithFallback associative  :decl() :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$UNIT")) ((die_s) (SVal "Contextual $*UNIT not found")))
+    ║ │           │     ├○┬VarWithFallback contextual $*UNIT :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$UNIT")) ((die_s) (SVal "Contextual $*UNIT not found")))
     ║ │           │     └○ @expPathUp
     ║ │           ├─:Stmts
     ║ │           │ └─if  ««"$export {\n            my $deps := findPath(-> $nod"...
@@ -3535,7 +3535,7 @@
     ║ │           │       │     │             └─:Stmts
     ║ │           │       │     │               └─callmethod list  ««".list"
     ║ │           │       │     │                 └○ $node
-    ║ │           │       │     └○┬VarWithFallback contextual $*UNIT :fallback((ifnull) ((VarWithFallback associative  :decl() :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$UNIT")) ((die_s) (SVal "Contextual $*UNIT not found")))
+    ║ │           │       │     └○┬VarWithFallback contextual $*UNIT :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$UNIT")) ((die_s) (SVal "Contextual $*UNIT not found")))
     ║ │           │       ├─:Stmts
     ║ │           │       │ └─unless  ««"$deps {\n                $deps := QAST::Op.new(:op<"...
     ║ │           │       │   ├○ $deps
@@ -3578,9 +3578,9 @@
     ║ │           │       │     └○ $/ :named("node")
     ║ │           │       ├─:Stmts
     ║ │           │       │ └─callmethod log  ««"$*COMPILER.user_progname, ' dependency: \"' ~ $/<na"...
-    ║ │           │       │   ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative  :decl() :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
+    ║ │           │       │   ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
     ║ │           │       │   ├─callmethod user_progname  ««".user_progname"
-    ║ │           │       │   │ └○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative  :decl() :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
+    ║ │           │       │   │ └○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
     ║ │           │       │   └─concat &infix:<~>  ««"~"
     ║ │           │       │     ├─concat &infix:<~>  ««"~"
     ║ │           │       │     │ ├◙ SVal " dependency: \""
@@ -3592,7 +3592,7 @@
     ║ │           │         └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$depOut := $*COMPILER.compileDependency(~$/<name>, [])"
     ║ │           │           ├○ $depOut
     ║ │           │           └─callmethod compileDependency  ««"~$/<name>, []"
-    ║ │           │             ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative  :decl() :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
+    ║ │           │             ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
     ║ │           │             ├─stringify &prefix:<~>  ««"~"
     ║ │           │             │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ │           │             │   ├○ $/
@@ -3681,7 +3681,7 @@
     ║ │     │   ╙─:Stmts  ««"\n        my $*COMPILER := self;\n        my $parse"...
     ║ │     │     ├─:Stmts
     ║ │     │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$*COMPILER := self"
-    ║ │     │     │   ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative  :decl() :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
+    ║ │     │     │   ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
     ║ │     │     │   └─decont
     ║ │     │     │     └○ self
     ║ │     │     ├─:Stmts
@@ -3708,7 +3708,7 @@
     ║ │     │ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{ 'nqpc' }"
     ║ │     │   ╟─:Stmts
     ║ │     │   ║ ├○ self :decl(param)
-    ║ │     │   ║ └○ $value :decl(param) :default((VarWithFallback associative  :decl() :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE :decl())) (SVal "NO_VALUE"))
+    ║ │     │   ║ └○ $value :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ │     │   ╙─:Stmts  ««" 'nqpc' "
     ║ │     │     └─:Stmts
     ║ │     │       └◙ SVal "nqpc"
@@ -4121,7 +4121,7 @@
     ║ │                     │     └○ @args
     ║ │                     ├─:Stmts
     ║ │                     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$*USER_FILE := $src_path"
-    ║ │                     │   ├○┬VarWithFallback contextual $*USER_FILE :fallback((ifnull) ((VarWithFallback associative  :decl() :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$USER_FILE")) ((die_s) (SVal "Contextual $*USER_FILE not found")))
+    ║ │                     │   ├○┬VarWithFallback contextual $*USER_FILE :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$USER_FILE")) ((die_s) (SVal "Contextual $*USER_FILE not found")))
     ║ │                     │   └○ $src_path
     ║ │                     ├─:Stmts
     ║ │                     │ └○ $result

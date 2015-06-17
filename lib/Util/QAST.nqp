@@ -89,7 +89,7 @@ class Util::QAST {
             unless ($node.default =:= NO_VALUE) {
                 @specials.push(':default' ~ self.dump($node.value, :oneLine));
             }
-            if nqp::eqat($extraStr, 'lexical ', 0) {
+            if nqp::eqat($extraStr, 'lexical ', 0) { # don't show default :decl
                 $extraStr := nqp::substr($extraStr, 8);
             }
             if istype($node, QAST::VarWithFallback) && $node.fallback {
@@ -105,7 +105,7 @@ class Util::QAST {
         } elsif istype($node, QAST::Block) {
             $prefix := $prefix ~ '─:';
             my $bt := $node.blocktype;
-            if $bt && $bt ne 'declaration' { # don't show default
+            if $bt && $bt ne 'declaration' { # don't show default :blocktype
                 @specials.push(':blocktype(' ~ $bt ~ ')');
             }
         } elsif istype($node, Stmts) {
@@ -223,11 +223,28 @@ class Util::QAST {
         TreeWalk.dfs-up(
             -> $n, @p { TreeWalkDo.recurse(:take(istype($n, QAST::Var))) },
             -> $n, @p {
+                $n.name(nqp::null_s)
+                    unless $n.name;
                 $n.decl(nqp::null_s)
                     unless $n.decl;
                 $n.scope('lexical')     # (at least) QASTCompilerMAST expects var (decl)s to have explicit scope
                     unless $n.scope;
             },
+            :children(-> $n {
+                if istype($n, QAST::Node) {
+                    my @out := $n.list;
+                    if istype($n, QAST::Var) && istype($n.default, QAST::Node) || istype($n, QAST::VarWithFallback) && istype($n.fallback, QAST::Node) {
+                        @out := nqp::clone(@out);
+                        @out.push($n.default)
+                            if istype($n.default, QAST::Node);
+                        @out.push($n.fallback)
+                            if istype($n, QAST::VarWithFallback) && istype($n.fallback, QAST::Node);
+                    }
+                    @out;
+                } else {
+                    [];
+                }
+            }),
             $ast
         );
     }

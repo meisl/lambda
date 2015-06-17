@@ -6,8 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(72);
-
+plan(69);
 
 
 my $w := QAST::WVal.new(:value(NQPMu));
@@ -16,9 +15,6 @@ is(dump($w), '─◙ WVal NQPMu', 'dump world value NQPMu');
 my $vwf := QAST::VarWithFallback.new(:scope<positional>, :fallback(QAST::WVal.new(:value(NQPMu))), :decl(nqp::null_s));
 is(dump($vwf), '─○┬VarWithFallback positional :fallback(WVal NQPMu)', 'dump VarWithFallback');
 is(dump($vwf, :oneLine), '(VarWithFallback positional :fallback(WVal NQPMu))', 'dump VarWithFallback :oneLine');
-
-# TODO: ○┬VarWithFallback contextual $*UNIT :fallback((ifnull) ((┬VarWithFallback associative  :decl() :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$UNIT")) ((die_s) (SVal "Contextual $*UNIT not found")))
-# TODO: ├○ $hash :decl(param) :default((VarWithFallback associative  :decl():fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ( $?PACKAGE :decl())) (SVal "NO_VALUE"))
 
 my $s := QAST::SVal.new(:value<bar>);
 is(dump($s), '─◙ SVal "bar"', 'dump str constant "bar"');
@@ -161,10 +157,27 @@ my $mainBinding := QAST::Op.new(:op<bind>,
 
 my $stmts_needed_foo := QAST::Stmts.new(:resultchild(0),    # this Stmts *cannot* be dropped due to its :resultchild
     QAST::Op.new(:op<eqaddr>,
-        QAST::Var.new(:name('$bar'), :scope<lexical>),
+        QAST::Var.new(:name('$bar')),   # bug in QAST::Var: not giving explicit scope yields scope "" (rather than nqp::null_s or the default "lexical")
         QAST::Var.new(:name('$baz'), :scope<lexical>),
     ),
     QAST::Var.new(:name('$bar'), :scope<lexical>),
+    QAST::VarWithFallback.new(
+        :scope<contextual>, 
+        :name('$*UNIT'), 
+        :fallback(
+            QAST::Op.new(:op<ifnull>,
+                QAST::VarWithFallback.new(
+                    :scope<associative>, 
+                    :fallback(QAST::WVal.new(:value(NQPMu))),
+                    QAST::Op.new(:op<who>, QAST::WVal.new(:value(GLOBALish))),
+                    QAST::SVal.new(:value('$UNIT'))
+                ),
+                QAST::Op.new(:op<die_s>,
+                    SVal.new(:value('Contextual $*UNIT not found'))
+                )
+            )
+        )
+    )
 );
 
 my $fooBinding := QAST::Op.new(:op<bind>,
@@ -215,13 +228,9 @@ is(@paths[1][1], $mainBinding,    '2nd elem of 2nd path found');
 # fix_var_attrs
 
 @paths := findPaths(-> $n, @p { istype($n, QAST::Var) && !$n.decl }, $ast);
-is(+@paths, 5, 'nr of paths to non-decl vars')
+is(+@paths, 6, 'nr of paths to non-decl vars')
     || diag(@paths);
-is(@paths[0][0].dump_extra_node_info, 'lexical $bar :decl()', 'var 1 before fix_var_attrs');
-is(@paths[1][0].dump_extra_node_info, 'lexical $baz :decl()', 'var 2 before fix_var_attrs');
-is(@paths[2][0].dump_extra_node_info, 'lexical $bar :decl()', 'var 3 before fix_var_attrs');
-is(@paths[3][0].dump_extra_node_info, 'lexical @ARGS :decl()', 'var 4 before fix_var_attrs');
-is(@paths[4][0].dump_extra_node_info, 'lexical @ARGS :decl()', 'var 5 before fix_var_attrs');
+
 
 my $out := fix_var_attrs($ast);
 is($out, $ast, 'fix_var_attrs returns its arg');
@@ -229,8 +238,10 @@ is($out, $ast, 'fix_var_attrs returns its arg');
 is(@paths[0][0].dump_extra_node_info, 'lexical $bar', 'var 1 after fix_var_attrs');
 is(@paths[1][0].dump_extra_node_info, 'lexical $baz', 'var 2 after fix_var_attrs');
 is(@paths[2][0].dump_extra_node_info, 'lexical $bar', 'var 3 after fix_var_attrs');
-is(@paths[3][0].dump_extra_node_info, 'lexical @ARGS', 'var 4 after fix_var_attrs');
+is(@paths[3][0].dump_extra_node_info, 'contextual $*UNIT', 'var 4 after fix_var_attrs');
+is(@paths[3][0].fallback[0].dump_extra_node_info, 'associative', ' fix_var_attrs recurses into :fallback (inside var 4\'s fallback)');
 is(@paths[4][0].dump_extra_node_info, 'lexical @ARGS', 'var 5 after fix_var_attrs');
+is(@paths[5][0].dump_extra_node_info, 'lexical @ARGS', 'var 6 after fix_var_attrs');
 
 
 # drop_Stmts
