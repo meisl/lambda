@@ -4,7 +4,7 @@ use testing;
 
 use Util;
 
-plan(112);
+plan(129);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -27,6 +27,27 @@ is(min(4711, 4710), 4710, 'min(4711, 4710)');
 is(min(4711, 4711), 4711, 'min(4711, 4711)');
 is(min( -23,   42),  -23, 'min( -23,   42)');
 is(min(  42,  -23),  -23, 'min(  42,  -23)');
+
+
+# - trim ----------------------------------------------------------------------
+
+is(trim(''),        '',     'trim empty string');
+is(trim(' '),       '',     'trim " "');
+is(trim('  '),      '',     'trim "  "');
+is(trim('x'),       'x',    'trim "x"');
+is(trim('x '),      'x',    'trim "x "');
+is(trim(' x'),      'x',    'trim " x"');
+is(trim('x  '),     'x',    'trim "x  "');
+is(trim(' x '),     'x',    'trim " x "');
+is(trim('  x'),     'x',    'trim "  x"');
+is(trim('xy'),      'xy',   'trim "xy"');
+is(trim('xy  '),    'xy',   'trim "xy  "');
+is(trim(' xy '),    'xy',   'trim " xy "');
+is(trim('  xy'),    'xy',   'trim "  xy"');
+is(trim('x y'),     'x y',  'trim "x y"');
+is(trim('x y  '),   'x y',  'trim "x y  "');
+is(trim(' x y '),   'x y',  'trim " x y "');
+is(trim('  x y'),   'x y',  'trim "  x y"');
 
 
 # - unixify -------------------------------------------------------------------

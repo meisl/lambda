@@ -81,6 +81,23 @@ class Util {
         $out;
     }
 
+    method trim(str $s) {
+        my int $n := nqp::chars($s);
+        my int $i := 0;
+        while nqp::eqat($s, ' ', $i) && ($i < $n) {
+            $i++;
+        }
+        if $i == $n {
+            '';
+        } else {
+            $n--;
+            while nqp::eqat($s, ' ', $n) {
+                $n--;
+            }
+            nqp::substr($s, $i, $n - $i + 1);
+        }
+    }
+
     method join(str $sep, @pieces, :$prefix1st = 0, :$filter, :$map) {
         my $n := nqp::elems(@pieces);
         return ''
@@ -148,6 +165,7 @@ sub max($a, $b)         is export { Util.max($a, $b)    }
 sub unixify(str $path)  is export { Util.unixify($path) }
 sub describe($x)        is export { Util.describe($x)   }
 sub say(*@pieces)       is export { Util.say(|@pieces)  }
+sub trim(str $s)        is export { Util.trim($s)       }
 
 sub join(str $sep, @pieces, :$prefix1st = 0, :$filter, :$map) is export { Util.join($sep, @pieces, :$prefix1st, :$filter, :$map) }
 
