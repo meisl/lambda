@@ -290,6 +290,60 @@ class Util::QAST {
         _drop_Stmts($ast, nqp::null)[0];
     }
 
+    method replace_assoc_and_pos_scoped($node) {
+        nqp::die('replace_assoc_and_pos_scoped expects a QAST::Node - got ' ~ describe($node) )
+            unless istype($node, QAST::Node);
+
+        # first, recurse:
+        my $i := 0;
+        my @children := $node.list;
+        for @children {
+            @children[$i] := self.replace_assoc_and_pos_scoped($_);
+            $i++;
+        }
+
+        if istype($node, QAST::Op) && ($node.op eq 'bind') && !istype($node[0], QAST::Var) {
+            # then our 1st child was just transformed to an 'atkey' or 'atpos'
+            my $child1 := $node.shift;
+            nqp::die("ooops: " ~ dump($child1, :oneLine))
+                unless istype($child1, QAST::Op);
+            my $which := nqp::substr($child1.op, 0, 5); # substr to allow for typed variants _i, _s, etc
+            nqp::die("ooops: cannot handle op $which: " ~ dump($child1, :oneLine))
+                unless $which eq 'atpos' || $which eq 'atkey';
+            $node.op('bind' ~ nqp::substr($child1.op, 2));
+            $node.node($child1.node);
+            $node.flat($child1.flat);
+            $node.named($child1.named);
+            $node.unshift($child1[1]);
+            $node.unshift($child1[0]);
+        } elsif istype($node, QAST::VarWithFallback) {
+            my $fallback := $node.fallback;
+            if nqp::isnull($fallback) || istype($fallback, NQPMu) {
+                $fallback := nqp::null;
+            } else {
+                nqp::die('cannot handle fallback ' ~ describe($node.fallback))
+            }
+            my $scope := $node.scope;
+            my $op;
+            if $scope eq 'positional' {
+                $op := 'atpos';
+            } elsif $scope eq 'associative' {
+                $op := 'atkey';
+            }
+            if $op {
+                $node := QAST::Op.new(:$op,
+                    :node($node.node),
+                    :named($node.named),
+                    :flat($node.flat),
+                    |$node.list
+                );
+                #$node := $out;
+            }
+        }
+        $node;
+    }
+
+
 }
 
 
@@ -301,6 +355,8 @@ sub qastChildren($ast, *@types)     is export { Util::QAST.qastChildren($ast, |@
 sub removeChild($parent, $child)    is export { Util::QAST.removeChild($parent, $child) }
 sub findPath(&test, $node, @pathUp = []) is export { Util::QAST.findPath(&test, $node, @pathUp) }
 
-sub findPaths(&test, $ast)          is export { Util::QAST.findPaths(&test, $ast) }
-sub fix_var_attrs($ast)             is export { Util::QAST.fix_var_attrs($ast) }
-sub drop_Stmts($ast)                is export { Util::QAST.drop_Stmts($ast) }
+sub findPaths(&test, $ast)              is export { Util::QAST.findPaths(&test, $ast) }
+sub fix_var_attrs($ast)                 is export { Util::QAST.fix_var_attrs($ast) }
+sub drop_Stmts($ast)                    is export { Util::QAST.drop_Stmts($ast) }
+sub replace_assoc_and_pos_scoped($ast)  is export { Util::QAST.replace_assoc_and_pos_scoped($ast) }
+

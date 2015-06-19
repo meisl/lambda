@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(70);
+plan(74);
 
 
 my $w := QAST::WVal.new(:value(NQPMu));
@@ -407,6 +407,38 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
 
 }
 
+{ # replace_assoc_and_pos_scoped ----------------------------------------------
+    my $ast;
+    
+    $ast := QAST::Stmts.new(    # `say(@xs[0])`
+        QAST::Op.new(:op<say>,
+            QAST::VarWithFallback.new(:scope<positional>, :fallback(QAST::WVal.new(:value(NQPMu))),
+                QAST::Var.new(:name('@xs')),
+                QAST::IVal.new(:value(0))
+            )
+        )
+    );
+    #diag(dump($ast));
+    replace_assoc_and_pos_scoped($ast);
+    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'atpos', '"positional" scoped VarWithFallback is replaced by Op atpos')
+        || diag(describe($ast[0][0]));
+    ok( !istype($ast[0][0], QAST::SpecialArg), 'filled in Op should not be SpecialArg when original wasn\'t one')
+        || diag(describe($ast[0][0]));
 
+    $ast := QAST::Stmts.new(    # `say(%xs<somekey>)`
+        QAST::Op.new(:op<say>,
+            QAST::VarWithFallback.new(:scope<associative>, :fallback(QAST::WVal.new(:value(NQPMu))),
+                QAST::Var.new(:name('%xs')),
+                QAST::SVal.new(:value<somekey>)
+            )
+        )
+    );
+    #diag(dump($ast));
+    replace_assoc_and_pos_scoped($ast);
+    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'atkey', '"associative" scoped VarWithFallback is replaced by Op atpos')
+        || diag(describe($ast[0][0]));
+    ok( !istype($ast[0][0], QAST::SpecialArg), 'filled in Op should not be SpecialArg when original wasn\'t one')
+        || diag(describe($ast[0][0]));
+}
 
 done();
