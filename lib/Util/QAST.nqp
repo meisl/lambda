@@ -250,7 +250,8 @@ class Util::QAST {
     }
 
     my sub _drop_Stmts($ast, $parent) {
-        nqp::die('dropStmts expects a QAST::Node - got ' ~ nqp::reprname($ast) ~ (nqp::isstr($ast) ?? ' "' ~ nqp::escape($ast) ~ '"' !! '') )
+        #nqp::die('dropStmts expects a QAST::Node - got ' ~ describe($ast) )
+        return [$ast]
             unless istype($ast, QAST::Node);
 
         if nqp::can($ast, 'resultchild') && nqp::isint($ast.resultchild) && nqp::elems($ast.list) != $ast.resultchild + 1 {
@@ -274,7 +275,7 @@ class Util::QAST {
         } else {
             #$ast.set_children(@children);
             my @list := $ast.list;
-            while +@list { @list.pop }
+            while ?@list { @list.pop }
             for @children { @list.push($_) }
             if istype($ast, QAST::Stmts, QAST::Stmt) && nqp::isint($ast.resultchild) {  # fixup :resultchild if necessary
                 #$ast.resultchild(nqp::elems(@children) - 1);

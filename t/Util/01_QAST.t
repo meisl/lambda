@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(69);
+plan(70);
 
 
 my $w := QAST::WVal.new(:value(NQPMu));
@@ -244,7 +244,7 @@ is(@paths[4][0].dump_extra_node_info, 'lexical @ARGS', 'var 5 after fix_var_attr
 is(@paths[5][0].dump_extra_node_info, 'lexical @ARGS', 'var 6 after fix_var_attrs');
 
 
-# drop_Stmts
+# drop_Stmts ------------------------------------------------------------------
 
 $out := drop_Stmts($ast);
 
@@ -327,6 +327,86 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
 
     #diag(dump($ast));
 }
+
+
+{
+    # {
+    #   nqp::die('BOOM!');
+    #   CATCH {
+    #       nqp::say($!);
+    #   }
+    # }
+
+    # ...gets compiled to:
+
+    my $ast := QAST::Op.new(:op<handle>,
+        QAST::Stmts.new(
+            QAST::Stmts.new(
+                QAST::Op.new(:op<die>,
+                    QAST::SVal.new(:value('BOOM!'))
+                )
+            ),
+            QAST::Stmts.new(
+                QAST::WVal.new(:value(NQPMu))
+            )
+        ),
+        "CATCH",    # <--- yes, a literal str (rather than an SVal or such)
+        QAST::Stmts.new(
+            QAST::Op.new(:op<call>,
+                QAST::Block.new(
+                    QAST::Var.new(:name('$_'), :decl<param>),
+                    QAST::Op.new(:op<bind>,
+                        QAST::Var.new(:name('$!'), :decl<var>),
+                        QAST::Var.new(:name('$_'), :decl(nqp::null_s)),
+                    ),
+                    QAST::Stmts.new(),
+                    QAST::Stmts.new(
+                        QAST::Stmts.new(
+                            QAST::Op.new(:op<say>,
+                                QAST::Var.new(:name('$!'), :decl(nqp::null_s))
+                            )
+                        )
+                    ),
+                ),
+                QAST::Op.new(:op<exception>),
+            ),
+            QAST::VM.new(),
+            QAST::WVal.new(:value(NQPMu))
+        )
+    );
+
+    # BEFORE:                               # AFTER:                    
+    #
+    #──handle                               # ──handle                  
+    #  ├─:Stmts                             #   ├─:Stmts                
+    #  │ ├─:Stmts
+    #  │ │ └─die                            #   │ ├─die                 
+    #  │ │   └◙ SVal "BOOM!"                #   │ │ └◙ SVal "BOOM!"     
+    #  │ └─:Stmts
+    #  │   └◙ WVal NQPMu                    #   │ └◙ WVal NQPMu         
+    #  ├► "CATCH" (str)                     #   ├► "CATCH" (str)        
+    #  └─:Stmts                             #   └─:Stmts                
+    #    ├─call                             #     ├─call                
+    #    │ ├─:Block                         #     │ ├─:Block            
+    #    │ │ ╟○ $_ :decl(param)             #     │ │ ╟○ $_ :decl(param)
+    #    │ │ ╟─bind                         #     │ │ ╟─bind            
+    #    │ │ ║ ├○ $! :decl(var)             #     │ │ ║ ├○ $! :decl(var)
+    #    │ │ ║ └○ $_                        #     │ │ ║ └○ $_           
+    #    │ │ ╟─:Stmts
+    #    │ │ ╙─:Stmts
+    #    │ │   └─:Stmts
+    #    │ │     └─say                      #     │ │ ╙─say             
+    #    │ │       └○ $!                    #     │ │   └○ $!           
+    #    │ └─exception                      #     │ └─exception         
+    #    ├─:VM                              #     ├─:VM                 
+    #    └◙ WVal NQPMu                      #     └◙ WVal NQPMu         
+
+    my $out;
+    lives_ok({ $out := drop_Stmts($ast) }, 'drop_Stmts can cope with exception handlers')
+        || diag(dump($ast));
+
+}
+
 
 
 done();
