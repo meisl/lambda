@@ -46,11 +46,11 @@ sub strLit(str $s) { '"' ~ nqp::escape($s) ~ '"' }
 # -----------------------------------------------------------------------------
 
 
-sub force($v) {
+sub force($v) is export {
     nqp::isinvokable($v) ?? $v() !! $v;
 }
 
-sub delayMemo($block) {
+sub delayMemo($block) is export {
     my int $wasRun := 0;
     my $result := nqp::null;
     my $out := {
@@ -227,15 +227,6 @@ sub stats() {
 
 
 sub MAIN(*@ARGS) {
-    my $n := 0;
-    my $b := { $n := $n + 1; };
-    my $d := delayMemo($b);
-    nqp::die('not ok: .delayMemo') unless $n == 0;
-    nqp::die('not ok: .delayMemo') unless force($d) == 1;
-    nqp::die('not ok: .delayMemo') unless force($d) == 1;
-    nqp::die('not ok: .delayMemo') unless force($b) == 2;
-    nqp::die('not ok: .delayMemo') unless force($b) == 3;
-    nqp::die('not ok: .delayMemo') unless force($d) == 1;
     
     
     my $lambda2 := [

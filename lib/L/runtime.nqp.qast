@@ -1,743 +1,980 @@
-──CompUnit+{StrByDump}
+──:CompUnit+{StrByDump}
   └─:Block
-    ╟○ lexical @ARGS :decl(param) :slurpy(1)
-    ╟○ lexical GLOBALish :decl(static) :default(P6opaque)
-    ╟○ lexical $?PACKAGE :decl(static) :default(P6opaque)
-    ╟○ lexical EXPORT :decl(static) :default(P6opaque)
-    ╟○ lexical .λsrc :decl(var)
-    ╟○ lexical %info :decl(var)
-    ╟─bind
-    ║ ├○ lexical .LAMFIELD_ID :decl(var)
-    ║ └─:Block  ««"{ 0 }"
-    ║   ╙◙ IVal 0
-    ╟─bind
-    ║ ├○ lexical .LAMFIELD_CODE :decl(var)
-    ║ └─:Block  ««"{ 1 }"
-    ║   ╙◙ IVal 1
-    ╟─bind
-    ║ ├○ lexical .LAMFIELD_FREEVARS :decl(var)
-    ║ └─:Block  ««"{ 2 }"
-    ║   ╙◙ IVal 2
-    ╟─bind
-    ║ ├○ lexical .lam2id :decl(var)
-    ║ └─:Block  ««"{ $lam[LAMFIELD_ID()] }"
-    ║   ╟○ lexical $lam :decl(param)
-    ║   ╙─atpos
-    ║     ├○ lexical $lam
-    ║     └◙ IVal 0
-    ╟─bind
-    ║ ├○ lexical .lam2code :decl(var)
-    ║ └─:Block  ««"{ $lam[LAMFIELD_CODE()] }"
-    ║   ╟○ lexical $lam :decl(param)
-    ║   ╙─atpos
-    ║     ├○ lexical $lam
-    ║     └◙ IVal 1
-    ╟─bind
-    ║ ├○ lexical .lam2fvs :decl(var)
-    ║ └─:Block  ««"{ sublist($lam, LAMFIELD_FREEVARS()) }"
-    ║   ╟○ lexical $lam :decl(param)
-    ║   ╙─call .sublist  ««"$lam, LAMFIELD_FREEVARS()"
-    ║     ├○ lexical $lam
-    ║     └◙ IVal 2
-    ╟─bind
-    ║ ├○ lexical .STATS_QASTSIZE :decl(var)
-    ║ └─:Block  ««"{ 'Node'      }"
-    ║   ╙◙ SVal "Node"
-    ╟─bind
-    ║ ├○ lexical .STATS_BLOCKCOUNT :decl(var)
-    ║ └─:Block  ««"{ 'Block'     }"
-    ║   ╙◙ SVal "Block"
-    ╟─bind
-    ║ ├○ lexical .STATS_LISTCOUNT :decl(var)
-    ║ └─:Block  ««"{ 'list'      }"
-    ║   ╙◙ SVal "list"
-    ╟─bind
-    ║ ├○ lexical .STATS_LAMBDACOUNT :decl(var)
-    ║ └─:Block  ««"{ 'lambda'    }"
-    ║   ╙◙ SVal "lambda"
-    ╟─bind
-    ║ ├○ lexical .STATS_CALLISHCOUNT :decl(var)
-    ║ └─:Block  ««"{ 'callish'   }"
-    ║   ╙◙ SVal "callish"
-    ╟─bind
-    ║ ├○ lexical .STATS_IVALCOUNT :decl(var)
-    ║ └─:Block  ««"{ 'IVal'      }"
-    ║   ╙◙ SVal "IVal"
-    ╟─bind
-    ║ ├○ lexical .STATS_SVALCOUNT :decl(var)
-    ║ └─:Block  ««"{ 'SVal'      }"
-    ║   ╙◙ SVal "SVal"
-    ╟─bind
-    ║ ├○ lexical .STATS_SVALSIZE :decl(var)
-    ║ └─:Block  ««"{ 'SValChars' }"
-    ║   ╙◙ SVal "SValChars"
-    ╟─bind
-    ║ ├○ lexical .int2str :decl(var)
-    ║ └─:Block  ««"{ ~$i }"
-    ║   ╟○ lexical $i :decl(param)
-    ║   ╙─stringify  ««"~"
-    ║     └○ lexical $i
-    ╟─bind
-    ║ ├○ lexical .num2str :decl(var)
-    ║ └─:Block  ««"{ ~$n }"
-    ║   ╟○ lexical $n :decl(param)
-    ║   ╙─stringify  ««"~"
-    ║     └○ lexical $n
-    ╟─bind
-    ║ ├○ lexical .strLit :decl(var)
-    ║ └─:Block  ««"{ '\"' ~ nqp::escape($s) ~ '\"' }"
-    ║   ╟○ lexical $s :decl(param)
-    ║   ╙─concat  ««"~"
-    ║     ├─concat  ««"~"
-    ║     │ ├◙ SVal "\""
-    ║     │ └─escape  ««"nqp::escape($s)"
-    ║     │   └○ lexical $s
-    ║     └◙ SVal "\""
-    ╟─bind
-    ║ ├○ lexical .force :decl(var)
-    ║ └─:Block  ««"{\n    nqp::isinvokable($v) ?? $v() !! $v;\n}"
-    ║   ╟○ lexical $v :decl(param)
-    ║   ╙─if  ««"?? $v() !!"
-    ║     ├─isinvokable  ««"nqp::isinvokable($v)"
-    ║     │ └○ lexical $v
-    ║     ├─call  ««""
-    ║     │ └○ lexical $v
-    ║     └○ lexical $v
-    ╟─bind
-    ║ ├○ lexical .delayMemo :decl(var)
-    ║ └─:Block  ««"{\n    my int $wasRun := 0;\n    my $result := nqp:"...
-    ║   ╟○ lexical $block :decl(param)
-    ║   ╟○ lexical $wasRun :decl(var)
-    ║   ╟○ lexical $result :decl(var)
-    ║   ╟○ lexical $out :decl(var)
-    ║   ╟─bind  ««"int $wasRun := 0"
-    ║   ║ ├○ lexical $wasRun
-    ║   ║ └◙ IVal 0
-    ║   ╟─bind  ««"$result := nqp::null"
-    ║   ║ ├○ lexical $result
-    ║   ║ └─null  ««"nqp::null"
-    ║   ╟─bind  ««"$out := {\n        if $wasRun {\n            $resul"...
-    ║   ║ ├○ lexical $out
-    ║   ║ └─:Block  ««"{\n        if $wasRun {\n            $result;\n    "...
-    ║   ║   ╙─if  ««"$wasRun {\n            $result;\n        }"
-    ║   ║     ├○ lexical $wasRun
-    ║   ║     ├○ lexical $result
-    ║   ║     └─:Stmts  ««"{\n            $wasRun := 1;\n            $result :"...
-    ║   ║       ├─bind  ««":="
-    ║   ║       │ ├○ lexical $wasRun
-    ║   ║       │ └◙ IVal 1
-    ║   ║       └─bind  ««":="
-    ║   ║         ├○ lexical $result
-    ║   ║         └─call  ««""
-    ║   ║           └○ lexical $block
-    ║   ╙○ lexical $out
-    ╟─bind
-    ║ ├○ lexical .sublist :decl(var)
-    ║ └─:Block  ««"{\n    my int $n     := nqp::elems(@list);\n    my "...
-    ║   ╟○ lexical @list :decl(param)
-    ║   ╟○ lexical $from :decl(param)
-    ║   ╟○ lexical $n :decl(var)
-    ║   ╟○ lexical $count :decl(var)
-    ║   ╟○ lexical $to :decl(var)
-    ║   ╟○ lexical @out :decl(var)
-    ║   ╟─bind  ««"int $n     := nqp::elems(@list)"
-    ║   ║ ├○ lexical $n
-    ║   ║ └─elems  ««"nqp::elems(@list)"
-    ║   ║   └○ lexical @list
-    ║   ╟─bind  ««"int $count := $n"
-    ║   ║ ├○ lexical $count
-    ║   ║ └○ lexical $n
-    ║   ╟─bind  ««"int $to    := $from + $count"
-    ║   ║ ├○ lexical $to
-    ║   ║ └─add_n  ««"+"
-    ║   ║   ├○ lexical $from
-    ║   ║   └○ lexical $count
-    ║   ╟─bind  ««"@out   := []"
-    ║   ║ ├○ lexical @out
-    ║   ║ └─list
-    ║   ╟─if  ««"$to > $n {\n        $to := $n\n    }"
-    ║   ║ ├─isgt_n  ««">"
-    ║   ║ │ ├○ lexical $to
-    ║   ║ │ └○ lexical $n
-    ║   ║ └─bind  ««":="
-    ║   ║   ├○ lexical $to
-    ║   ║   └○ lexical $n
-    ║   ╟─while  ««"$from < $to {\n        @out.push(@list[$from]);\n  "...
-    ║   ║ ├─islt_n  ««"<"
-    ║   ║ │ ├○ lexical $from
-    ║   ║ │ └○ lexical $to
-    ║   ║ ├─:Stmts  ««"{\n        @out.push(@list[$from]);\n        $from+"...
-    ║   ║ │ ├─push  ««"@list[$from]"
-    ║   ║ │ │ ├○ lexical @out
-    ║   ║ │ │ └─atpos
-    ║   ║ │ │   ├○ lexical @list
-    ║   ║ │ │   └○ lexical $from
-    ║   ║ │ └─postinc  ««"++"
-    ║   ║ │   └○ lexical $from
-    ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╙○ lexical @out
-    ╟─bind
-    ║ ├○ lexical .lam2info :decl(var)
-    ║ └─:Block  ««"{\n    my $id      := lam2id($lambda);\n    my $idx"...
-    ║   ╟○ lexical $lambda :decl(param)
-    ║   ╟○ lexical $id :decl(var)
-    ║   ╟○ lexical $idx :decl(var)
-    ║   ╟○ lexical $infoIt :decl(var)
-    ║   ╟○ lexical $binder :decl(var)
-    ║   ╟○ lexical $from :decl(var)
-    ║   ╟○ lexical $length :decl(var)
-    ║   ╟○ lexical %out :decl(var)
-    ║   ╟○ lexical $varsIt :decl(var)
-    ║   ╟○ lexical $namesIt :decl(var)
-    ║   ╟○ lexical %fvs :decl(var)
-    ║   ╟─bind  ««"$id      := lam2id($lambda)"
-    ║   ║ ├○ lexical $id
-    ║   ║ └─atpos  ««"$lambda"
-    ║   ║   ├○ lexical $lambda
-    ║   ║   └◙ IVal 0
-    ║   ╟─bind  ««"$idx     := nqp::radix(10, $id, 1, 0)[0]"
-    ║   ║ ├○ lexical $idx
-    ║   ║ └─atpos
-    ║   ║   ├─radix  ««"nqp::radix(10, $id, 1, 0)"
-    ║   ║   │ ├◙ IVal 10
-    ║   ║   │ ├○ lexical $id
-    ║   ║   │ ├◙ IVal 1
-    ║   ║   │ └◙ IVal 0
-    ║   ║   └◙ IVal 0
-    ║   ╟─bind  ««"$infoIt  := nqp::iterator(nqp::split(' ', %info<λ>["...
-    ║   ║ ├○ lexical $infoIt
-    ║   ║ └─iterator  ««"nqp::iterator(nqp::split(' ', %info<λ>[$idx]))"
-    ║   ║   └─split  ««"nqp::split(' ', %info<λ>[$idx])"
-    ║   ║     ├◙ SVal " "
-    ║   ║     └─atpos
-    ║   ║       ├─atkey
-    ║   ║       │ ├○ lexical %info
-    ║   ║       │ └◙ SVal "λ"
-    ║   ║       └○ lexical $idx
-    ║   ╟─bind  ««"$binder  := nqp::shift($infoIt)"
-    ║   ║ ├○ lexical $binder
-    ║   ║ └─shift  ««"nqp::shift($infoIt)"
-    ║   ║   └○ lexical $infoIt
-    ║   ╟─bind  ««"$from    := nqp::shift($infoIt)"
-    ║   ║ ├○ lexical $from
-    ║   ║ └─shift  ««"nqp::shift($infoIt)"
-    ║   ║   └○ lexical $infoIt
-    ║   ╟─bind  ««"$length  := nqp::shift($infoIt)"
-    ║   ║ ├○ lexical $length
-    ║   ║ └─shift  ««"nqp::shift($infoIt)"
-    ║   ║   └○ lexical $infoIt
-    ║   ╟─bind  ««"%out     := nqp::hash(\n        'id',       $id,\n "...
-    ║   ║ ├○ lexical %out
-    ║   ║ └─hash  ««"nqp::hash(\n        'id',       $id,\n        'idx'"...
-    ║   ║   ├◙ SVal "id"
-    ║   ║   ├○ lexical $id
-    ║   ║   ├◙ SVal "idx"
-    ║   ║   ├○ lexical $idx
-    ║   ║   ├◙ SVal "binder"
-    ║   ║   ├○ lexical $binder
-    ║   ║   ├◙ SVal "from"
-    ║   ║   ├○ lexical $from
-    ║   ║   ├◙ SVal "length"
-    ║   ║   ├○ lexical $length
-    ║   ║   ├◙ SVal "src"
-    ║   ║   └─substr  ««"nqp::substr($λsrc, $from, $length)"
-    ║   ║     ├○ lexical .λsrc
-    ║   ║     ├○ lexical $from
-    ║   ║     └○ lexical $length
-    ║   ╟─bind  ««"$varsIt  := nqp::iterator(lam2fvs($lambda))"
-    ║   ║ ├○ lexical $varsIt
-    ║   ║ └─iterator  ««"nqp::iterator(lam2fvs($lambda))"
-    ║   ║   └─call .sublist  ««"$lambda"
-    ║   ║     ├○ lexical $lambda
-    ║   ║     └◙ IVal 2
-    ║   ╟─bind  ««"$namesIt := $infoIt"
-    ║   ║ ├○ lexical $namesIt
-    ║   ║ └○ lexical $infoIt
-    ║   ╟─bind  ««"%fvs     := {}"
-    ║   ║ ├○ lexical %fvs
-    ║   ║ └─hash
-    ║   ╟─while  ««"$varsIt {\n        %fvs{nqp::shift($namesIt)} := nq"...
-    ║   ║ ├○ lexical $varsIt
-    ║   ║ ├─bindkey
-    ║   ║ │ ├○ lexical %fvs
-    ║   ║ │ ├─shift  ««"nqp::shift($namesIt)"
-    ║   ║ │ │ └○ lexical $namesIt
-    ║   ║ │ └─shift  ««"nqp::shift($varsIt)"
-    ║   ║ │   └○ lexical $varsIt
-    ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╟─bindkey
-    ║   ║ ├○ lexical %out
-    ║   ║ ├◙ SVal "freeVars"
-    ║   ║ └○ lexical %fvs
-    ║   ╙○ lexical %out
-    ╟─bind
-    ║ ├○ lexical .typecase :decl(var)
-    ║ └─:Block  ««"{\n    #say('>>>typecase(', nqp::reprname($subject)"...
-    ║   ╟○ lexical $subject :decl(param)
-    ║   ╟○ lexical %callbacks :decl(param) :named(1) :slurpy(1)
-    ║   ╟○ lexical $otherwise :decl(var)
-    ║   ╟○ lexical $cbKey :decl(var)
-    ║   ╟○ lexical $cb :decl(var)
-    ║   ╟─bind  ««"$otherwise := nqp::defor(\n        %callbacks<other"...
-    ║   ║ ├○ lexical $otherwise
-    ║   ║ └─defor  ««"nqp::defor(\n        %callbacks<otherwise>,\n      "...
-    ║   ║   ├─atkey
-    ║   ║   │ ├○ lexical %callbacks
-    ║   ║   │ └◙ SVal "otherwise"
-    ║   ║   └─:Block  ««"{ # compiler should see that this needs not be a cl"...
-    ║   ║     ╟○ lexical $x :decl(param)
-    ║   ║     ╙─die  ««"nqp::die('typecase: fell through due to missing \"o"...
-    ║   ║       └─concat  ««"~"
-    ║   ║         ├◙ SVal "typecase: fell through due to missing \"otherwise\"-callback: "
-    ║   ║         └─reprname  ««"nqp::reprname($subject)"
-    ║   ║           └○ lexical $subject
-    ║   ╟─bind  ««"$cbKey := nqp::null"
-    ║   ║ ├○ lexical $cbKey
-    ║   ║ └─null  ««"nqp::null"
-    ║   ╟─if  ««"nqp::islist($subject) {\n        my $id := $subject"...
-    ║   ║ ├─islist  ««"nqp::islist($subject)"
-    ║   ║ │ └○ lexical $subject
-    ║   ║ ├─:Block :blocktype(immediate)  ««"{\n        my $id := $subject[0];\n        my $tag "...
-    ║   ║ │ ╟○ lexical $id :decl(var)
-    ║   ║ │ ╟○ lexical $tag :decl(var)
-    ║   ║ │ ╟─bind  ««"$id := $subject[0]"
-    ║   ║ │ ║ ├○ lexical $id
-    ║   ║ │ ║ └─atpos
-    ║   ║ │ ║   ├○ lexical $subject
-    ║   ║ │ ║   └◙ IVal 0
-    ║   ║ │ ╟─bind  ««"$tag := nqp::substr($id, 0, 1)"
-    ║   ║ │ ║ ├○ lexical $tag
-    ║   ║ │ ║ └─substr  ««"nqp::substr($id, 0, 1)"
-    ║   ║ │ ║   ├○ lexical $id
-    ║   ║ │ ║   ├◙ IVal 0
-    ║   ║ │ ║   └◙ IVal 1
-    ║   ║ │ ╙─if  ««"$tag eq 'λ' {\n            $cbKey := $tag;\n        }"
-    ║   ║ │   ├─iseq_s  ««"eq"
-    ║   ║ │   │ ├○ lexical $tag
-    ║   ║ │   │ └◙ SVal "λ"
-    ║   ║ │   ├─bind  ««":="
-    ║   ║ │   │ ├○ lexical $cbKey
-    ║   ║ │   │ └○ lexical $tag
-    ║   ║ │   └─if  ««"nqp::elems($subject) == 0 {\n                nqp::d"...
-    ║   ║ │     ├─iseq_n  ««"=="
-    ║   ║ │     │ ├─elems  ««"nqp::elems($subject)"
-    ║   ║ │     │ │ └○ lexical $subject
-    ║   ║ │     │ └◙ IVal 0
-    ║   ║ │     ├─die  ««"nqp::die('typecase: unsupported low-level list type"...
-    ║   ║ │     │ └◙ SVal "typecase: unsupported low-level list type - empty"
-    ║   ║ │     └─die  ««"nqp::die('typecase: unsupported low-level list type"...
-    ║   ║ │       └─concat  ««"~"
-    ║   ║ │         ├◙ SVal "typecase: unsupported low-level list type - invalid tag "
-    ║   ║ │         └─reprname  ««"nqp::reprname($tag)"
-    ║   ║ │           └○ lexical $tag
-    ║   ║ └─if  ««"nqp::isstr($subject) { $cbKey := 'str';\n        }"
-    ║   ║   ├─isstr  ««"nqp::isstr($subject)"
-    ║   ║   │ └○ lexical $subject
-    ║   ║   ├─bind  ««":="
-    ║   ║   │ ├○ lexical $cbKey
-    ║   ║   │ └◙ SVal "str"
-    ║   ║   └─if  ««"nqp::isint($subject) { $cbKey := 'int';\n        }"
-    ║   ║     ├─isint  ««"nqp::isint($subject)"
-    ║   ║     │ └○ lexical $subject
-    ║   ║     ├─bind  ««":="
-    ║   ║     │ ├○ lexical $cbKey
-    ║   ║     │ └◙ SVal "int"
-    ║   ║     └─if  ««"nqp::isnum($subject) { $cbKey := 'num';\n        }"
-    ║   ║       ├─isnum  ««"nqp::isnum($subject)"
-    ║   ║       │ └○ lexical $subject
-    ║   ║       ├─bind  ««":="
-    ║   ║       │ ├○ lexical $cbKey
-    ║   ║       │ └◙ SVal "num"
-    ║   ║       └─die  ««"nqp::die('typecase: unsupported low-level type ' ~ "...
-    ║   ║         └─concat  ««"~"
-    ║   ║           ├◙ SVal "typecase: unsupported low-level type "
-    ║   ║           └─reprname  ««"nqp::reprname($subject)"
-    ║   ║             └○ lexical $subject
-    ║   ╟─bind  ««"$cb := nqp::defor(%callbacks{$cbKey}, $otherwise)"
-    ║   ║ ├○ lexical $cb
-    ║   ║ └─defor  ««"nqp::defor(%callbacks{$cbKey}, $otherwise)"
-    ║   ║   ├─atkey
-    ║   ║   │ ├○ lexical %callbacks
-    ║   ║   │ └○ lexical $cbKey
-    ║   ║   └○ lexical $otherwise
-    ║   ╙─call  ««"$subject"
-    ║     ├○ lexical $cb
-    ║     └○ lexical $subject
-    ╟─bind
-    ║ ├○ lexical .strOut :decl(var)
-    ║ └─:Block  ««"{\n    typecase(force($v),\n        :λ(-> $lambda {"...
-    ║   ╟○ lexical $v :decl(param)
-    ║   ╟○ lexical $indent :decl(param) :default(SVal "")
-    ║   ╟○ lexical %done :decl(param) :default(hash)
-    ║   ╙─call .typecase  ««"force($v),\n        :λ(-> $lambda { # compiler shou"...
-    ║     ├─call .force  ««"$v"
-    ║     │ └○ lexical $v
-    ║     ├─:Block :named("λ")  ««"{ # compiler should see that this needs not be a cl"...
-    ║     │ ╟○ lexical $lambda :decl(param)
-    ║     │ ╟○ lexical %info :decl(var)
-    ║     │ ╟○ lexical $src :decl(var)
-    ║     │ ╟─bind  ««"%info := lam2info($lambda)"
-    ║     │ ║ ├○ lexical %info
-    ║     │ ║ └─call .lam2info  ««"$lambda"
-    ║     │ ║   └○ lexical $lambda
-    ║     │ ╟─bind  ««"$src := %info<src>"
-    ║     │ ║ ├○ lexical $src
-    ║     │ ║ └─atkey
-    ║     │ ║   ├○ lexical %info
-    ║     │ ║   └◙ SVal "src"
-    ║     │ ╟─for  ««"%info<freeVars> {\n                my $fvName  := $"...
-    ║     │ ║ ├─atkey
-    ║     │ ║ │ ├○ lexical %info
-    ║     │ ║ │ └◙ SVal "freeVars"
-    ║     │ ║ ├─:Block :blocktype(immediate)  ««"{\n                my $fvName  := $_.key;\n        "...
-    ║     │ ║ │ ╟○ lexical $fvName :decl(var)
-    ║     │ ║ │ ╟○ lexical $fv :decl(var)
-    ║     │ ║ │ ╟○ lexical $pre :decl(var)
-    ║     │ ║ │ ╟○ lexical $flatVal :decl(var)
-    ║     │ ║ │ ╟○ lexical $doneKey :decl(var)
-    ║     │ ║ │ ╟○ lexical $_ :decl(param)
-    ║     │ ║ │ ╟─bind  ««"$fvName  := $_.key"
-    ║     │ ║ │ ║ ├○ lexical $fvName
-    ║     │ ║ │ ║ └─iterkey_s  ««".key"
-    ║     │ ║ │ ║   └○ lexical $_
-    ║     │ ║ │ ╟─bind  ««"$fv      := $_.value"
-    ║     │ ║ │ ║ ├○ lexical $fv
-    ║     │ ║ │ ║ └─iterval  ««".value"
-    ║     │ ║ │ ║   └○ lexical $_
-    ║     │ ║ │ ╟─bind  ««"$pre     := \"# where $fvName = \""
-    ║     │ ║ │ ║ ├○ lexical $pre
-    ║     │ ║ │ ║ └─concat
-    ║     │ ║ │ ║   ├─concat
-    ║     │ ║ │ ║   │ ├◙ SVal "# where "
-    ║     │ ║ │ ║   │ └○ lexical $fvName
-    ║     │ ║ │ ║   └◙ SVal " = "
-    ║     │ ║ │ ╟─bind  ««"$flatVal := typecase($fv,\n                    :λ(-"...
-    ║     │ ║ │ ║ ├○ lexical $flatVal
-    ║     │ ║ │ ║ └─call .typecase  ««"$fv,\n                    :λ(-> $x { nqp::null }), "...
-    ║     │ ║ │ ║   ├○ lexical $fv
-    ║     │ ║ │ ║   ├─:Block :named("λ")  ««"{ nqp::null }"
-    ║     │ ║ │ ║   │ ╟○ lexical $x :decl(param)
-    ║     │ ║ │ ║   │ ╙─null  ««"nqp::null"
-    ║     │ ║ │ ║   ├○ lexical .strLit :named("str")
-    ║     │ ║ │ ║   ├○ lexical .int2str :named("int")
-    ║     │ ║ │ ║   └○ lexical .num2str :named("num")
-    ║     │ ║ │ ╟─bind  ««"$doneKey := nqp::isnull($flatVal)\n                "...
-    ║     │ ║ │ ║ ├○ lexical $doneKey
-    ║     │ ║ │ ║ └─if  ««"?? $pre ~ lam2id($fv)\n                    !!"
-    ║     │ ║ │ ║   ├─isnull  ««"nqp::isnull($flatVal)"
-    ║     │ ║ │ ║   │ └○ lexical $flatVal
-    ║     │ ║ │ ║   ├─concat  ««"~"
-    ║     │ ║ │ ║   │ ├○ lexical $pre
-    ║     │ ║ │ ║   │ └─atpos  ««"$fv"
-    ║     │ ║ │ ║   │   ├○ lexical $fv
-    ║     │ ║ │ ║   │   └◙ IVal 0
-    ║     │ ║ │ ║   └─concat  ««"~"
-    ║     │ ║ │ ║     ├○ lexical $pre
-    ║     │ ║ │ ║     └○ lexical $flatVal
-    ║     │ ║ │ ╙─unless  ««"%done{$doneKey} {\n                    %done{$doneK"...
-    ║     │ ║ │   ├─atkey
-    ║     │ ║ │   │ ├○ lexical %done
-    ║     │ ║ │   │ └○ lexical $doneKey
-    ║     │ ║ │   └─:Stmts  ««"{\n                    %done{$doneKey} := 1;\n     "...
-    ║     │ ║ │     ├─bindkey
-    ║     │ ║ │     │ ├○ lexical %done
-    ║     │ ║ │     │ ├○ lexical $doneKey
-    ║     │ ║ │     │ └◙ IVal 1
-    ║     │ ║ │     └─bind  ««":="
-    ║     │ ║ │       ├○ lexical $src
-    ║     │ ║ │       └─concat  ««"~"
-    ║     │ ║ │         ├─concat  ««"~"
-    ║     │ ║ │         │ ├─concat  ««"~"
-    ║     │ ║ │         │ │ ├○ lexical $src
-    ║     │ ║ │         │ │ └◙ SVal "\n"
-    ║     │ ║ │         │ └○ lexical $indent
-    ║     │ ║ │         └─if  ««"?? $pre ~ strOut($fv, $indent ~ '#' ~ nqp::x(' ', n"...
-    ║     │ ║ │           ├─isnull  ««"nqp::isnull($flatVal)"
-    ║     │ ║ │           │ └○ lexical $flatVal
-    ║     │ ║ │           ├─concat  ««"~"
-    ║     │ ║ │           │ ├○ lexical $pre
-    ║     │ ║ │           │ └─call .strOut  ««"$fv, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre) -"...
-    ║     │ ║ │           │   ├○ lexical $fv
-    ║     │ ║ │           │   ├─concat  ««"~"
-    ║     │ ║ │           │   │ ├─concat  ««"~"
-    ║     │ ║ │           │   │ │ ├○ lexical $indent
-    ║     │ ║ │           │   │ │ └◙ SVal "#"
-    ║     │ ║ │           │   │ └─x  ««"nqp::x(' ', nqp::chars($pre) - 1)"
-    ║     │ ║ │           │   │   ├◙ SVal " "
-    ║     │ ║ │           │   │   └─sub_n  ««"-"
-    ║     │ ║ │           │   │     ├─chars  ««"nqp::chars($pre)"
-    ║     │ ║ │           │   │     │ └○ lexical $pre
-    ║     │ ║ │           │   │     └◙ IVal 1
-    ║     │ ║ │           │   └○ lexical %done
-    ║     │ ║ │           └○ lexical $doneKey
-    ║     │ ║ └◙ IVal 1 :named("nohandler")
-    ║     │ ╙○ lexical $src
-    ║     ├○ lexical .strLit :named("str")
-    ║     ├○ lexical .int2str :named("int")
-    ║     └○ lexical .num2str :named("num")
-    ╟─bind
-    ║ ├○ lexical .apply1 :decl(var)
-    ║ └─:Block  ««"{\n    my $result := typecase(force($f),\n        :"...
-    ║   ╟○ lexical $f :decl(param)
-    ║   ╟○ lexical $a1 :decl(param)
-    ║   ╟○ lexical $result :decl(var)
-    ║   ╟─bind  ««"$result := typecase(force($f),\n        :λ(&lam2cod"...
-    ║   ║ ├○ lexical $result
-    ║   ║ └─call  ««"$a1"
-    ║   ║   ├─call .typecase  ««"force($f),\n        :λ(&lam2code),\n        :otherw"...
-    ║   ║   │ ├─call .force  ««"$f"
-    ║   ║   │ │ └○ lexical $f
-    ║   ║   │ ├○ lexical .lam2code :named("λ")
-    ║   ║   │ └─:Block :named("otherwise")  ««"{\n            nqp::die('ERROR: cannot apply ' ~ st"...
-    ║   ║   │   ╟○ lexical $x :decl(param)
-    ║   ║   │   ╙─die  ««"nqp::die('ERROR: cannot apply ' ~ strOut($x) ~ ' to"...
-    ║   ║   │     └─concat  ««"~"
-    ║   ║   │       ├─concat  ««"~"
-    ║   ║   │       │ ├─concat  ««"~"
-    ║   ║   │       │ │ ├◙ SVal "ERROR: cannot apply "
-    ║   ║   │       │ │ └─call .strOut  ««"$x"
-    ║   ║   │       │ │   └○ lexical $x
-    ║   ║   │       │ └◙ SVal " to "
-    ║   ║   │       └─call .strOut  ««"$a1"
-    ║   ║   │         └○ lexical $a1
-    ║   ║   └○ lexical $a1
-    ║   ╙─call .force  ««"$result"
-    ║     └○ lexical $result
-    ╟─bind
-    ║ ├○ lexical .join :decl(var)
-    ║ └─:Block  ««"{\n    my $_;\n    my $i := nqp::iterator(@pieces);"...
-    ║   ╟○ lexical $sep :decl(param)
-    ║   ╟○ lexical @pieces :decl(param)
-    ║   ╟─bind  ««"$_"
-    ║   ║ ├○ lexical $_ :decl(var)
-    ║   ║ └◙ WVal NQPMu
-    ║   ╟○ lexical $i :decl(var)
-    ║   ╟○ lexical $s :decl(var)
-    ║   ╟─bind  ««"$i := nqp::iterator(@pieces)"
-    ║   ║ ├○ lexical $i
-    ║   ║ └─iterator  ««"nqp::iterator(@pieces)"
-    ║   ║   └○ lexical @pieces
-    ║   ╟─bind  ««"$s := ''"
-    ║   ║ ├○ lexical $s
-    ║   ║ └◙ SVal ""
-    ║   ╟─if  ««"$i {\n        $s := nqp::shift($i);  # nqpc would c"...
-    ║   ║ ├○ lexical $i
-    ║   ║ └─:Stmts  ««"{\n        $s := nqp::shift($i);  # nqpc would conv"...
-    ║   ║   ├─bind  ««":="
-    ║   ║   │ ├○ lexical $s
-    ║   ║   │ └─shift  ««"nqp::shift($i)"
-    ║   ║   │   └○ lexical $i
-    ║   ║   ├─unless  ««"$s := strOut($s)\n            unless nqp::isstr($s)"
-    ║   ║   │ ├─isstr  ««"nqp::isstr($s)"
-    ║   ║   │ │ └○ lexical $s
-    ║   ║   │ └─bind  ««":="
-    ║   ║   │   ├○ lexical $s
-    ║   ║   │   └─call .strOut  ««"$s"
-    ║   ║   │     └○ lexical $s
-    ║   ║   └─while  ««"$i {\n            $_ := nqp::shift($i);  # nqpc wou"...
-    ║   ║     ├○ lexical $i
-    ║   ║     ├─:Stmts  ««"{\n            $_ := nqp::shift($i);  # nqpc would "...
-    ║   ║     │ ├─bind  ««":="
-    ║   ║     │ │ ├○ lexical $_
-    ║   ║     │ │ └─shift  ««"nqp::shift($i)"
-    ║   ║     │ │   └○ lexical $i
-    ║   ║     │ └─bind  ««":="
-    ║   ║     │   ├○ lexical $s
-    ║   ║     │   └─concat  ««"~"
-    ║   ║     │     ├─concat  ««"~"
-    ║   ║     │     │ ├○ lexical $s
-    ║   ║     │     │ └○ lexical $sep
-    ║   ║     │     └─if  ««"?? $_\n                !!"
-    ║   ║     │       ├─isstr  ««"nqp::isstr($_)"
-    ║   ║     │       │ └○ lexical $_
-    ║   ║     │       ├○ lexical $_
-    ║   ║     │       └─call .strOut  ««"$_"
-    ║   ║     │         └○ lexical $_
-    ║   ║     └◙ IVal 1 :named("nohandler")
-    ║   ╙○ lexical $s
-    ╟─bind
-    ║ ├○ lexical .say :decl(var)
-    ║ └─:Block  ««"{\n    nqp::say(join('', @args));\n}"
-    ║   ╟○ lexical @args :decl(param) :slurpy(1)
-    ║   ╙─say  ««"nqp::say(join('', @args))"
-    ║     └─call .join  ««"'', @args"
-    ║       ├◙ SVal ""
-    ║       └○ lexical @args
-    ╟─bind
-    ║ ├○ lexical .stats :decl(var)
-    ║ └─:Block  ««"{\n    my %stats := %info<stats>;\n    join('', [\n"...
-    ║   ╟○ lexical %stats :decl(var)
-    ║   ╟─bind  ««"%stats := %info<stats>"
-    ║   ║ ├○ lexical %stats
-    ║   ║ └─atkey
-    ║   ║   ├○ lexical %info
-    ║   ║   └◙ SVal "stats"
-    ║   ╙─call .join  ««"'', [\n        %stats{STATS_LAMBDACOUNT() }, \" lam"...
-    ║     ├◙ SVal ""
-    ║     └─list  ««","
-    ║       ├─atkey
-    ║       │ ├○ lexical %stats
-    ║       │ └◙ SVal "lambda"
-    ║       ├◙ SVal " lambdas\n"
-    ║       ├─atkey
-    ║       │ ├○ lexical %stats
-    ║       │ └◙ SVal "Node"
-    ║       ├◙ SVal " QAST::Node s\n"
-    ║       ├─atkey
-    ║       │ ├○ lexical %stats
-    ║       │ └◙ SVal "Block"
-    ║       ├◙ SVal " QAST::Block s\n"
-    ║       ├─atkey
-    ║       │ ├○ lexical %stats
-    ║       │ └◙ SVal "list"
-    ║       ├◙ SVal " QAST::Op(list) s\n"
-    ║       ├─atkey
-    ║       │ ├○ lexical %stats
-    ║       │ └◙ SVal "IVal"
-    ║       ├◙ SVal " QAST::IVal s\n"
-    ║       ├─atkey
-    ║       │ ├○ lexical %stats
-    ║       │ └◙ SVal "SValChars"
-    ║       ├◙ SVal " chars ttl in "
-    ║       ├─atkey
-    ║       │ ├○ lexical %stats
-    ║       │ └◙ SVal "SVal"
-    ║       ├◙ SVal " QAST::SVal s\n"
-    ║       └◙ SVal "------------------------------------------------"
-    ╟─bind
-    ║ ├○ lexical .MAIN :decl(var)
-    ║ └─:Block  ««"{\n    my $n := 0;\n    my $b := { $n := $n + 1; };"...
-    ║   ╟○ lexical @ARGS :decl(param) :slurpy(1)
-    ║   ╟○ lexical $n :decl(var)
-    ║   ╟○ lexical $b :decl(var)
-    ║   ╟○ lexical $d :decl(var)
-    ║   ╟○ lexical $lambda2 :decl(var)
-    ║   ╟○ lexical $lambda1 :decl(var)
-    ║   ╟─bind  ««"$n := 0"
-    ║   ║ ├○ lexical $n
-    ║   ║ └◙ IVal 0
-    ║   ╟─bind  ««"$b := { $n := $n + 1; }"
-    ║   ║ ├○ lexical $b
-    ║   ║ └─:Block  ««"{ $n := $n + 1; }"
-    ║   ║   ╙─bind  ««":="
-    ║   ║     ├○ lexical $n
-    ║   ║     └─add_n  ««"+"
-    ║   ║       ├○ lexical $n
-    ║   ║       └◙ IVal 1
-    ║   ╟─bind  ««"$d := delayMemo($b)"
-    ║   ║ ├○ lexical $d
-    ║   ║ └─call .delayMemo  ««"$b"
-    ║   ║   └○ lexical $b
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless $n == 0"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├○ lexical $n
-    ║   ║ │ └◙ IVal 0
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless force($d) == 1"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├─call .force  ««"$d"
-    ║   ║ │ │ └○ lexical $d
-    ║   ║ │ └◙ IVal 1
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless force($d) == 1"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├─call .force  ««"$d"
-    ║   ║ │ │ └○ lexical $d
-    ║   ║ │ └◙ IVal 1
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless force($b) == 2"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├─call .force  ««"$b"
-    ║   ║ │ │ └○ lexical $b
-    ║   ║ │ └◙ IVal 2
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless force($b) == 3"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├─call .force  ««"$b"
-    ║   ║ │ │ └○ lexical $b
-    ║   ║ │ └◙ IVal 3
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─unless  ««"nqp::die('not ok: .delayMemo') unless force($d) == 1"
-    ║   ║ ├─iseq_n  ««"=="
-    ║   ║ │ ├─call .force  ««"$d"
-    ║   ║ │ │ └○ lexical $d
-    ║   ║ │ └◙ IVal 1
-    ║   ║ └─die  ««"nqp::die('not ok: .delayMemo')"
-    ║   ║   └◙ SVal "not ok: .delayMemo"
-    ║   ╟─bind  ««"$lambda2 := [\n        'λ1',                       "...
-    ║   ║ ├○ lexical $lambda2
-    ║   ║ └─list  ««","
-    ║   ║   ├◙ SVal "λ1"
-    ║   ║   ├─:Block  ««"{ 'λ1(...) called' }"
-    ║   ║   │ ╟○ lexical @as :decl(param) :slurpy(1)
-    ║   ║   │ ╙◙ SVal "λ1(...) called"
-    ║   ║   └◙ IVal 23
-    ║   ╟─bind  ««"$lambda1 := [\n        'λ0',                       "...
-    ║   ║ ├○ lexical $lambda1
-    ║   ║ └─list  ««","
-    ║   ║   ├◙ SVal "λ0"
-    ║   ║   ├─:Block  ««"{ 'λ0(...) called' }"
-    ║   ║   │ ╟○ lexical @as :decl(param) :slurpy(1)
-    ║   ║   │ ╙◙ SVal "λ0(...) called"
-    ║   ║   ├◙ SVal "foo"
-    ║   ║   ├◙ IVal 42
-    ║   ║   ├◙ NVal 3.14159265
-    ║   ║   └○ lexical $lambda2
-    ║   ╟─push  ««"$lambda1"
-    ║   ║ ├○ lexical $lambda1
-    ║   ║ └○ lexical $lambda1
-    ║   ╟─push  ««"$lambda1"
-    ║   ║ ├○ lexical $lambda1
-    ║   ║ └○ lexical $lambda1
-    ║   ╟─call .say  ««"strOut($lambda1)"
-    ║   ║ └─call .strOut  ««"$lambda1"
-    ║   ║   └○ lexical $lambda1
-    ║   ╙─call .say  ««"stats()"
-    ║     └─call .stats  ««""
-    ╟─bind
-    ║ ├○ local ctxsave :decl(var)
-    ║ └○ contextual $*CTXSAVE
-    ╟─unless
-    ║ ├─isnull
-    ║ │ └○ local ctxsave
+    ╟○ @ARGS :decl(param) :slurpy(1)
+    ╟─:Stmts
+    ║ ├○ GLOBALish :decl(static) :default((GLOBALish, Type object))
+    ║ ├○ $?PACKAGE :decl(static) :default((GLOBALish, Type object))
+    ║ ├○ EXPORT :decl(static) :default((EXPORT, Type object))
+    ║ ├○ $λsrc :decl(var)
+    ║ ├○ %info :decl(var)
+    ║ ├─bind
+    ║ │ ├○ &LAMFIELD_ID :decl(var)
+    ║ │ └─:Block  ««"{ 0 }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 0 "
+    ║ │     └─:Stmts
+    ║ │       └◙ IVal 0
+    ║ ├─bind
+    ║ │ ├○ &LAMFIELD_CODE :decl(var)
+    ║ │ └─:Block  ««"{ 1 }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 1 "
+    ║ │     └─:Stmts
+    ║ │       └◙ IVal 1
+    ║ ├─bind
+    ║ │ ├○ &LAMFIELD_FREEVARS :decl(var)
+    ║ │ └─:Block  ««"{ 2 }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 2 "
+    ║ │     └─:Stmts
+    ║ │       └◙ IVal 2
+    ║ ├─bind
+    ║ │ ├○ &lam2id :decl(var)
+    ║ │ └─:Block  ««"{ $lam[LAMFIELD_ID()] }"
+    ║ │   ╟─:Stmts
+    ║ │   ║ └○ $lam :decl(param)
+    ║ │   ╙─:Stmts  ««" $lam[LAMFIELD_ID()] "
+    ║ │     └─:Stmts
+    ║ │       └○┬VarWithFallback positional :fallback(WVal NQPMu)
+    ║ │         ├○ $lam
+    ║ │         └─call &LAMFIELD_ID  ««""
+    ║ ├─bind
+    ║ │ ├○ &lam2code :decl(var)
+    ║ │ └─:Block  ««"{ $lam[LAMFIELD_CODE()] }"
+    ║ │   ╟─:Stmts
+    ║ │   ║ └○ $lam :decl(param)
+    ║ │   ╙─:Stmts  ««" $lam[LAMFIELD_CODE()] "
+    ║ │     └─:Stmts
+    ║ │       └○┬VarWithFallback positional :fallback(WVal NQPMu)
+    ║ │         ├○ $lam
+    ║ │         └─call &LAMFIELD_CODE  ««""
+    ║ ├─bind
+    ║ │ ├○ &lam2fvs :decl(var)
+    ║ │ └─:Block  ««"{ sublist($lam, LAMFIELD_FREEVARS()) }"
+    ║ │   ╟─:Stmts
+    ║ │   ║ └○ $lam :decl(param)
+    ║ │   ╙─:Stmts  ««" sublist($lam, LAMFIELD_FREEVARS()) "
+    ║ │     └─:Stmts
+    ║ │       └─call &sublist  ««"$lam, LAMFIELD_FREEVARS()"
+    ║ │         ├○ $lam
+    ║ │         └─call &LAMFIELD_FREEVARS  ««""
+    ║ ├─bind
+    ║ │ ├○ &STATS_QASTSIZE :decl(var)
+    ║ │ └─:Block  ««"{ 'Node'      }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 'Node'      "
+    ║ │     └─:Stmts
+    ║ │       └◙ SVal "Node"
+    ║ ├─bind
+    ║ │ ├○ &STATS_BLOCKCOUNT :decl(var)
+    ║ │ └─:Block  ««"{ 'Block'     }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 'Block'     "
+    ║ │     └─:Stmts
+    ║ │       └◙ SVal "Block"
+    ║ ├─bind
+    ║ │ ├○ &STATS_LISTCOUNT :decl(var)
+    ║ │ └─:Block  ««"{ 'list'      }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 'list'      "
+    ║ │     └─:Stmts
+    ║ │       └◙ SVal "list"
+    ║ ├─bind
+    ║ │ ├○ &STATS_LAMBDACOUNT :decl(var)
+    ║ │ └─:Block  ««"{ 'lambda'    }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 'lambda'    "
+    ║ │     └─:Stmts
+    ║ │       └◙ SVal "lambda"
+    ║ ├─bind
+    ║ │ ├○ &STATS_CALLISHCOUNT :decl(var)
+    ║ │ └─:Block  ««"{ 'callish'   }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 'callish'   "
+    ║ │     └─:Stmts
+    ║ │       └◙ SVal "callish"
+    ║ ├─bind
+    ║ │ ├○ &STATS_IVALCOUNT :decl(var)
+    ║ │ └─:Block  ««"{ 'IVal'      }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 'IVal'      "
+    ║ │     └─:Stmts
+    ║ │       └◙ SVal "IVal"
+    ║ ├─bind
+    ║ │ ├○ &STATS_SVALCOUNT :decl(var)
+    ║ │ └─:Block  ««"{ 'SVal'      }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 'SVal'      "
+    ║ │     └─:Stmts
+    ║ │       └◙ SVal "SVal"
+    ║ ├─bind
+    ║ │ ├○ &STATS_SVALSIZE :decl(var)
+    ║ │ └─:Block  ««"{ 'SValChars' }"
+    ║ │   ╟─:Stmts
+    ║ │   ╙─:Stmts  ««" 'SValChars' "
+    ║ │     └─:Stmts
+    ║ │       └◙ SVal "SValChars"
+    ║ ├─bind
+    ║ │ ├○ &int2str :decl(var)
+    ║ │ └─:Block  ««"{ ~$i }"
+    ║ │   ╟─:Stmts
+    ║ │   ║ └○ $i :decl(param)
+    ║ │   ╙─:Stmts  ««" ~$i "
+    ║ │     └─:Stmts
+    ║ │       └─stringify &prefix:<~>  ««"~"
+    ║ │         └○ $i
+    ║ ├─bind
+    ║ │ ├○ &num2str :decl(var)
+    ║ │ └─:Block  ««"{ ~$n }"
+    ║ │   ╟─:Stmts
+    ║ │   ║ └○ $n :decl(param)
+    ║ │   ╙─:Stmts  ««" ~$n "
+    ║ │     └─:Stmts
+    ║ │       └─stringify &prefix:<~>  ««"~"
+    ║ │         └○ $n
+    ║ ├─bind
+    ║ │ ├○ &strLit :decl(var)
+    ║ │ └─:Block  ««"{ '\"' ~ nqp::escape($s) ~ '\"' }"
+    ║ │   ╟─:Stmts
+    ║ │   ║ └○ $s :decl(param)
+    ║ │   ╙─:Stmts  ««" '\"' ~ nqp::escape($s) ~ '\"' "
+    ║ │     └─:Stmts
+    ║ │       └─concat &infix:<~>  ««"~"
+    ║ │         ├─concat &infix:<~>  ««"~"
+    ║ │         │ ├◙ SVal "\""
+    ║ │         │ └─escape  ««"nqp::escape($s)"
+    ║ │         │   └○ $s
+    ║ │         └◙ SVal "\""
+    ║ ├─bind
+    ║ │ ├○ &force :decl(var)
+    ║ │ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    nqp::isinvokable($v) ?? $v() !! $v;\n}"
+    ║ │   ╟─:Stmts
+    ║ │   ║ └○ $v :decl(param)
+    ║ │   ╙─:Stmts  ««"\n    nqp::isinvokable($v) ?? $v() !! $v;\n"
+    ║ │     └─:Stmts
+    ║ │       └─if &infix:<>  ««"?? $v() !!"
+    ║ │         ├─isinvokable  ««"nqp::isinvokable($v)"
+    ║ │         │ └○ $v
+    ║ │         ├─call  ««""
+    ║ │         │ └○ $v
+    ║ │         └○ $v
+    ║ ├─bind
+    ║ │ ├○ &delayMemo :decl(var)
+    ║ │ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    my int $wasRun := 0;\n    my $result := nqp:"...
+    ║ │   ╟─:Stmts
+    ║ │   ║ ├○ $block :decl(param)
+    ║ │   ║ ├○ $wasRun :decl(var)
+    ║ │   ║ ├○ $result :decl(var)
+    ║ │   ║ └○ $out :decl(var)
+    ║ │   ╙─:Stmts  ««"\n    my int $wasRun := 0;\n    my $result := nqp::"...
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"int $wasRun := 0"
+    ║ │     │   ├○ $wasRun
+    ║ │     │   └◙ IVal 0
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$result := nqp::null"
+    ║ │     │   ├○ $result
+    ║ │     │   └─null  ««"nqp::null"
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := {\n        if $wasRun {\n            $resul"...
+    ║ │     │   ├○ $out
+    ║ │     │   └─takeclosure :annotations(#`{BOOTHash:}nqp::hash( "bareblock", 1 (int) ))
+    ║ │     │     └─:Block  ««"{\n        if $wasRun {\n            $result;\n    "...
+    ║ │     │       ╟─:Stmts
+    ║ │     │       ╙─:Stmts  ««"\n        if $wasRun {\n            $result;\n     "...
+    ║ │     │         └─:Stmts
+    ║ │     │           └─if  ««"$wasRun {\n            $result;\n        }"
+    ║ │     │             ├○ $wasRun
+    ║ │     │             ├─:Stmts  ««"{\n            $result;\n        }"
+    ║ │     │             │ ├─:Stmts
+    ║ │     │             │ └─:Stmts  ««"\n            $result;\n        "
+    ║ │     │             │   └─:Stmts
+    ║ │     │             │     └○ $result
+    ║ │     │             └─:Stmts  ««"{\n            $wasRun := 1;\n            $result :"...
+    ║ │     │               ├─:Stmts
+    ║ │     │               └─:Stmts  ««"\n            $wasRun := 1;\n            $result :="...
+    ║ │     │                 ├─:Stmts
+    ║ │     │                 │ └─bind &infix:<:=>  ««":="
+    ║ │     │                 │   ├○ $wasRun
+    ║ │     │                 │   └◙ IVal 1
+    ║ │     │                 └─:Stmts
+    ║ │     │                   └─bind &infix:<:=>  ««":="
+    ║ │     │                     ├○ $result
+    ║ │     │                     └─call  ««""
+    ║ │     │                       └○ $block
+    ║ │     └─:Stmts
+    ║ │       └○ $out
+    ║ ├─bind
+    ║ │ ├○ &sublist :decl(var)
+    ║ │ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    my int $n     := nqp::elems(@list);\n    my "...
+    ║ │   ╟─:Stmts
+    ║ │   ║ ├○ @list :decl(param)
+    ║ │   ║ ├○ $from :decl(param)
+    ║ │   ║ ├○ $n :decl(var)
+    ║ │   ║ ├○ $count :decl(var)
+    ║ │   ║ ├○ $to :decl(var)
+    ║ │   ║ └○ @out :decl(var)
+    ║ │   ╙─:Stmts  ««"\n    my int $n     := nqp::elems(@list);\n    my i"...
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"int $n     := nqp::elems(@list)"
+    ║ │     │   ├○ $n
+    ║ │     │   └─elems  ««"nqp::elems(@list)"
+    ║ │     │     └○ @list
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"int $count := $n"
+    ║ │     │   ├○ $count
+    ║ │     │   └○ $n
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"int $to    := $from + $count"
+    ║ │     │   ├○ $to
+    ║ │     │   └─add_n &infix:<+>  ««"+"
+    ║ │     │     ├○ $from
+    ║ │     │     └○ $count
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@out   := []"
+    ║ │     │   ├○ @out
+    ║ │     │   └─list &circumfix:<[ ]>
+    ║ │     ├─:Stmts
+    ║ │     │ └─if  ««"$to > $n {\n        $to := $n\n    }"
+    ║ │     │   ├─isgt_n &infix:<>>  ««">"
+    ║ │     │   │ ├○ $to
+    ║ │     │   │ └○ $n
+    ║ │     │   └─:Stmts  ««"{\n        $to := $n\n    }"
+    ║ │     │     ├─:Stmts
+    ║ │     │     └─:Stmts  ««"\n        $to := $n\n    "
+    ║ │     │       └─:Stmts
+    ║ │     │         └─bind &infix:<:=>  ««":="
+    ║ │     │           ├○ $to
+    ║ │     │           └○ $n
+    ║ │     ├─:Stmts
+    ║ │     │ └─while  ««"$from < $to {\n        @out.push(@list[$from]);\n  "...
+    ║ │     │   ├─islt_n &infix:<<>  ««"<"
+    ║ │     │   │ ├○ $from
+    ║ │     │   │ └○ $to
+    ║ │     │   ├─:Stmts  ««"{\n        @out.push(@list[$from]);\n        $from+"...
+    ║ │     │   │ ├─:Stmts
+    ║ │     │   │ └─:Stmts  ««"\n        @out.push(@list[$from]);\n        $from++"...
+    ║ │     │   │   ├─:Stmts
+    ║ │     │   │   │ └─callmethod push  ««"@list[$from]"
+    ║ │     │   │   │   ├○ @out
+    ║ │     │   │   │   └○┬VarWithFallback positional :fallback(WVal NQPMu)
+    ║ │     │   │   │     ├○ @list
+    ║ │     │   │   │     └○ $from
+    ║ │     │   │   └─:Stmts
+    ║ │     │   │     └─postinc &postfix:<++>  ««"++"
+    ║ │     │   │       └○ $from
+    ║ │     │   └◙ IVal 1 :named("nohandler")
+    ║ │     └─:Stmts
+    ║ │       └○ @out
+    ║ ├─bind
+    ║ │ ├○ &lam2info :decl(var)
+    ║ │ └─:Block  ««"{\n    my $id      := lam2id($lambda);\n    my $idx"...
+    ║ │   ╟─:Stmts
+    ║ │   ║ ├○ $lambda :decl(param)
+    ║ │   ║ ├○ $id :decl(var)
+    ║ │   ║ ├○ $idx :decl(var)
+    ║ │   ║ ├○ $infoIt :decl(var)
+    ║ │   ║ ├○ $binder :decl(var)
+    ║ │   ║ ├○ $from :decl(var)
+    ║ │   ║ ├○ $length :decl(var)
+    ║ │   ║ ├○ %out :decl(var)
+    ║ │   ║ ├○ $varsIt :decl(var)
+    ║ │   ║ ├○ $namesIt :decl(var)
+    ║ │   ║ └○ %fvs :decl(var)
+    ║ │   ╙─:Stmts  ««"\n    my $id      := lam2id($lambda);\n    my $idx "...
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$id      := lam2id($lambda)"
+    ║ │     │   ├○ $id
+    ║ │     │   └─call &lam2id  ««"$lambda"
+    ║ │     │     └○ $lambda
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$idx     := nqp::radix(10, $id, 1, 0)[0]"
+    ║ │     │   ├○ $idx
+    ║ │     │   └○┬VarWithFallback positional :fallback(WVal NQPMu)
+    ║ │     │     ├─radix  ««"nqp::radix(10, $id, 1, 0)"
+    ║ │     │     │ ├◙ IVal 10
+    ║ │     │     │ ├○ $id
+    ║ │     │     │ ├◙ IVal 1
+    ║ │     │     │ └◙ IVal 0
+    ║ │     │     └◙ IVal 0
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$infoIt  := nqp::iterator(nqp::split(' ', %info<λ>["...
+    ║ │     │   ├○ $infoIt
+    ║ │     │   └─iterator  ««"nqp::iterator(nqp::split(' ', %info<λ>[$idx]))"
+    ║ │     │     └─split  ««"nqp::split(' ', %info<λ>[$idx])"
+    ║ │     │       ├◙ SVal " "
+    ║ │     │       └○┬VarWithFallback positional :fallback(WVal NQPMu)
+    ║ │     │         ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │     │         │ ├○ %info
+    ║ │     │         │ └◙ SVal "λ"
+    ║ │     │         └○ $idx
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$binder  := nqp::shift($infoIt)"
+    ║ │     │   ├○ $binder
+    ║ │     │   └─shift  ««"nqp::shift($infoIt)"
+    ║ │     │     └○ $infoIt
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$from    := nqp::shift($infoIt)"
+    ║ │     │   ├○ $from
+    ║ │     │   └─shift  ««"nqp::shift($infoIt)"
+    ║ │     │     └○ $infoIt
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$length  := nqp::shift($infoIt)"
+    ║ │     │   ├○ $length
+    ║ │     │   └─shift  ««"nqp::shift($infoIt)"
+    ║ │     │     └○ $infoIt
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%out     := nqp::hash(\n        'id',       $id,\n "...
+    ║ │     │   ├○ %out
+    ║ │     │   └─hash  ««"nqp::hash(\n        'id',       $id,\n        'idx'"...
+    ║ │     │     ├◙ SVal "id"
+    ║ │     │     ├○ $id
+    ║ │     │     ├◙ SVal "idx"
+    ║ │     │     ├○ $idx
+    ║ │     │     ├◙ SVal "binder"
+    ║ │     │     ├○ $binder
+    ║ │     │     ├◙ SVal "from"
+    ║ │     │     ├○ $from
+    ║ │     │     ├◙ SVal "length"
+    ║ │     │     ├○ $length
+    ║ │     │     ├◙ SVal "src"
+    ║ │     │     └─substr  ««"nqp::substr($λsrc, $from, $length)"
+    ║ │     │       ├○ $λsrc
+    ║ │     │       ├○ $from
+    ║ │     │       └○ $length
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$varsIt  := nqp::iterator(lam2fvs($lambda))"
+    ║ │     │   ├○ $varsIt
+    ║ │     │   └─iterator  ««"nqp::iterator(lam2fvs($lambda))"
+    ║ │     │     └─call &lam2fvs  ««"$lambda"
+    ║ │     │       └○ $lambda
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$namesIt := $infoIt"
+    ║ │     │   ├○ $namesIt
+    ║ │     │   └○ $infoIt
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%fvs     := {}"
+    ║ │     │   ├○ %fvs
+    ║ │     │   └─hash
+    ║ │     ├─:Stmts
+    ║ │     │ └─while  ««"$varsIt {\n        %fvs{nqp::shift($namesIt)} := nq"...
+    ║ │     │   ├○ $varsIt
+    ║ │     │   ├─:Stmts  ««"{\n        %fvs{nqp::shift($namesIt)} := nqp::shift"...
+    ║ │     │   │ ├─:Stmts
+    ║ │     │   │ └─:Stmts  ««"\n        %fvs{nqp::shift($namesIt)} := nqp::shift("...
+    ║ │     │   │   └─:Stmts
+    ║ │     │   │     └─bind &infix:<:=>  ««":="
+    ║ │     │   │       ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │     │   │       │ ├○ %fvs
+    ║ │     │   │       │ └─shift  ««"nqp::shift($namesIt)"
+    ║ │     │   │       │   └○ $namesIt
+    ║ │     │   │       └─shift  ««"nqp::shift($varsIt)"
+    ║ │     │   │         └○ $varsIt
+    ║ │     │   └◙ IVal 1 :named("nohandler")
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind &infix:<:=>  ««":="
+    ║ │     │   ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │     │   │ ├○ %out
+    ║ │     │   │ └◙ SVal "freeVars"
+    ║ │     │   └○ %fvs
+    ║ │     └─:Stmts
+    ║ │       └○ %out
+    ║ ├─bind
+    ║ │ ├○ &typecase :decl(var)
+    ║ │ └─:Block  ««"{\n    #say('>>>typecase(', nqp::reprname($subject)"...
+    ║ │   ╟─:Stmts
+    ║ │   ║ ├○ $subject :decl(param)
+    ║ │   ║ ├○ %callbacks :decl(param) :named(1) :slurpy(1)
+    ║ │   ║ ├○ $otherwise :decl(var)
+    ║ │   ║ ├○ $cbKey :decl(var)
+    ║ │   ║ └○ $cb :decl(var)
+    ║ │   ╙─:Stmts  ««"\n    #say('>>>typecase(', nqp::reprname($subject),"...
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$otherwise := nqp::defor(\n        %callbacks<other"...
+    ║ │     │   ├○ $otherwise
+    ║ │     │   └─defor  ««"nqp::defor(\n        %callbacks<otherwise>,\n      "...
+    ║ │     │     ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │     │     │ ├○ %callbacks
+    ║ │     │     │ └◙ SVal "otherwise"
+    ║ │     │     └─takeclosure
+    ║ │     │       └─:Block  ««"{ # compiler should see that this needs not be a cl"...
+    ║ │     │         ╟─:Stmts
+    ║ │     │         ║ └○ $x :decl(param)
+    ║ │     │         ╙─:Stmts  ««" # compiler should see that this needs not be a clo"...
+    ║ │     │           └─:Stmts
+    ║ │     │             └─die  ««"nqp::die('typecase: fell through due to missing \"o"...
+    ║ │     │               └─concat &infix:<~>  ««"~"
+    ║ │     │                 ├◙ SVal "typecase: fell through due to missing \"otherwise\"-callback: "
+    ║ │     │                 └─reprname  ««"nqp::reprname($subject)"
+    ║ │     │                   └○ $subject
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$cbKey := nqp::null"
+    ║ │     │   ├○ $cbKey
+    ║ │     │   └─null  ««"nqp::null"
+    ║ │     ├─:Stmts
+    ║ │     │ └─if  ««"nqp::islist($subject) {\n        my $id := $subject"...
+    ║ │     │   ├─islist  ««"nqp::islist($subject)"
+    ║ │     │   │ └○ $subject
+    ║ │     │   ├─:Block :blocktype(immediate)  ««"{\n        my $id := $subject[0];\n        my $tag "...
+    ║ │     │   │ ╟─:Stmts
+    ║ │     │   │ ║ ├○ $id :decl(var)
+    ║ │     │   │ ║ └○ $tag :decl(var)
+    ║ │     │   │ ╙─:Stmts  ««"\n        my $id := $subject[0];\n        my $tag :"...
+    ║ │     │   │   ├─:Stmts
+    ║ │     │   │   │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$id := $subject[0]"
+    ║ │     │   │   │   ├○ $id
+    ║ │     │   │   │   └○┬VarWithFallback positional :fallback(WVal NQPMu)
+    ║ │     │   │   │     ├○ $subject
+    ║ │     │   │   │     └◙ IVal 0
+    ║ │     │   │   ├─:Stmts
+    ║ │     │   │   │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$tag := nqp::substr($id, 0, 1)"
+    ║ │     │   │   │   ├○ $tag
+    ║ │     │   │   │   └─substr  ««"nqp::substr($id, 0, 1)"
+    ║ │     │   │   │     ├○ $id
+    ║ │     │   │   │     ├◙ IVal 0
+    ║ │     │   │   │     └◙ IVal 1
+    ║ │     │   │   └─:Stmts
+    ║ │     │   │     └─if  ««"$tag eq 'λ' {\n            $cbKey := $tag;\n        }"
+    ║ │     │   │       ├─iseq_s &infix:<eq>  ««"eq"
+    ║ │     │   │       │ ├○ $tag
+    ║ │     │   │       │ └◙ SVal "λ"
+    ║ │     │   │       ├─:Stmts  ««"{\n            $cbKey := $tag;\n        }"
+    ║ │     │   │       │ ├─:Stmts
+    ║ │     │   │       │ └─:Stmts  ««"\n            $cbKey := $tag;\n        "
+    ║ │     │   │       │   └─:Stmts
+    ║ │     │   │       │     └─bind &infix:<:=>  ««":="
+    ║ │     │   │       │       ├○ $cbKey
+    ║ │     │   │       │       └○ $tag
+    ║ │     │   │       └─:Stmts  ««"{\n            if nqp::elems($subject) == 0 {\n    "...
+    ║ │     │   │         ├─:Stmts
+    ║ │     │   │         └─:Stmts  ««"\n            if nqp::elems($subject) == 0 {\n     "...
+    ║ │     │   │           └─:Stmts
+    ║ │     │   │             └─if  ««"nqp::elems($subject) == 0 {\n                nqp::d"...
+    ║ │     │   │               ├─iseq_n &infix:<==>  ««"=="
+    ║ │     │   │               │ ├─elems  ««"nqp::elems($subject)"
+    ║ │     │   │               │ │ └○ $subject
+    ║ │     │   │               │ └◙ IVal 0
+    ║ │     │   │               ├─:Stmts  ««"{\n                nqp::die('typecase: unsupported "...
+    ║ │     │   │               │ ├─:Stmts
+    ║ │     │   │               │ └─:Stmts  ««"\n                nqp::die('typecase: unsupported l"...
+    ║ │     │   │               │   └─:Stmts
+    ║ │     │   │               │     └─die  ««"nqp::die('typecase: unsupported low-level list type"...
+    ║ │     │   │               │       └◙ SVal "typecase: unsupported low-level list type - empty"
+    ║ │     │   │               └─:Stmts  ««"{\n                nqp::die('typecase: unsupported "...
+    ║ │     │   │                 ├─:Stmts
+    ║ │     │   │                 └─:Stmts  ««"\n                nqp::die('typecase: unsupported l"...
+    ║ │     │   │                   └─:Stmts
+    ║ │     │   │                     └─die  ««"nqp::die('typecase: unsupported low-level list type"...
+    ║ │     │   │                       └─concat &infix:<~>  ««"~"
+    ║ │     │   │                         ├◙ SVal "typecase: unsupported low-level list type - invalid tag "
+    ║ │     │   │                         └─reprname  ««"nqp::reprname($tag)"
+    ║ │     │   │                           └○ $tag
+    ║ │     │   └─:Stmts  ««"{\n             if nqp::isstr($subject) { $cbKey :="...
+    ║ │     │     ├─:Stmts
+    ║ │     │     └─:Stmts  ««"\n             if nqp::isstr($subject) { $cbKey := "...
+    ║ │     │       └─:Stmts
+    ║ │     │         └─if  ««"nqp::isstr($subject) { $cbKey := 'str';\n        }"
+    ║ │     │           ├─isstr  ««"nqp::isstr($subject)"
+    ║ │     │           │ └○ $subject
+    ║ │     │           ├─:Stmts  ««"{ $cbKey := 'str';\n        }"
+    ║ │     │           │ ├─:Stmts
+    ║ │     │           │ └─:Stmts  ««" $cbKey := 'str';\n        "
+    ║ │     │           │   └─:Stmts
+    ║ │     │           │     └─bind &infix:<:=>  ««":="
+    ║ │     │           │       ├○ $cbKey
+    ║ │     │           │       └◙ SVal "str"
+    ║ │     │           └─if  ««"nqp::isint($subject) { $cbKey := 'int';\n        }"
+    ║ │     │             ├─isint  ««"nqp::isint($subject)"
+    ║ │     │             │ └○ $subject
+    ║ │     │             ├─:Stmts  ««"{ $cbKey := 'int';\n        }"
+    ║ │     │             │ ├─:Stmts
+    ║ │     │             │ └─:Stmts  ««" $cbKey := 'int';\n        "
+    ║ │     │             │   └─:Stmts
+    ║ │     │             │     └─bind &infix:<:=>  ««":="
+    ║ │     │             │       ├○ $cbKey
+    ║ │     │             │       └◙ SVal "int"
+    ║ │     │             └─if  ««"nqp::isnum($subject) { $cbKey := 'num';\n        }"
+    ║ │     │               ├─isnum  ««"nqp::isnum($subject)"
+    ║ │     │               │ └○ $subject
+    ║ │     │               ├─:Stmts  ««"{ $cbKey := 'num';\n        }"
+    ║ │     │               │ ├─:Stmts
+    ║ │     │               │ └─:Stmts  ««" $cbKey := 'num';\n        "
+    ║ │     │               │   └─:Stmts
+    ║ │     │               │     └─bind &infix:<:=>  ««":="
+    ║ │     │               │       ├○ $cbKey
+    ║ │     │               │       └◙ SVal "num"
+    ║ │     │               └─:Stmts  ««"{\n            nqp::die('typecase: unsupported low-"...
+    ║ │     │                 ├─:Stmts
+    ║ │     │                 └─:Stmts  ««"\n            nqp::die('typecase: unsupported low-l"...
+    ║ │     │                   └─:Stmts
+    ║ │     │                     └─die  ««"nqp::die('typecase: unsupported low-level type ' ~ "...
+    ║ │     │                       └─concat &infix:<~>  ««"~"
+    ║ │     │                         ├◙ SVal "typecase: unsupported low-level type "
+    ║ │     │                         └─reprname  ««"nqp::reprname($subject)"
+    ║ │     │                           └○ $subject
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$cb := nqp::defor(%callbacks{$cbKey}, $otherwise)"
+    ║ │     │   ├○ $cb
+    ║ │     │   └─defor  ««"nqp::defor(%callbacks{$cbKey}, $otherwise)"
+    ║ │     │     ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │     │     │ ├○ %callbacks
+    ║ │     │     │ └○ $cbKey
+    ║ │     │     └○ $otherwise
+    ║ │     └─:Stmts
+    ║ │       └─call  ««"$subject"
+    ║ │         ├○ $cb
+    ║ │         └○ $subject
+    ║ ├─bind
+    ║ │ ├○ &strOut :decl(var)
+    ║ │ └─:Block  ««"{\n    typecase(force($v),\n        :λ(-> $lambda {"...
+    ║ │   ╟─:Stmts
+    ║ │   ║ ├○ $v :decl(param)
+    ║ │   ║ ├○ $indent :decl(param) :default(SVal "")
+    ║ │   ║ └○ %done :decl(param) :default(hash)
+    ║ │   ╙─:Stmts  ««"\n    typecase(force($v),\n        :λ(-> $lambda { "...
+    ║ │     └─:Stmts
+    ║ │       └─call &typecase  ««"force($v),\n        :λ(-> $lambda { # compiler shou"...
+    ║ │         ├─call &force  ««"$v"
+    ║ │         │ └○ $v
+    ║ │         ├─takeclosure :named("λ")
+    ║ │         │ └─:Block  ««"{ # compiler should see that this needs not be a cl"...
+    ║ │         │   ╟─:Stmts
+    ║ │         │   ║ ├○ $lambda :decl(param)
+    ║ │         │   ║ ├○ %info :decl(var)
+    ║ │         │   ║ └○ $src :decl(var)
+    ║ │         │   ╙─:Stmts  ««" # compiler should see that this needs not be a clo"...
+    ║ │         │     ├─:Stmts
+    ║ │         │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%info := lam2info($lambda)"
+    ║ │         │     │   ├○ %info
+    ║ │         │     │   └─call &lam2info  ««"$lambda"
+    ║ │         │     │     └○ $lambda
+    ║ │         │     ├─:Stmts
+    ║ │         │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$src := %info<src>"
+    ║ │         │     │   ├○ $src
+    ║ │         │     │   └○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │         │     │     ├○ %info
+    ║ │         │     │     └◙ SVal "src"
+    ║ │         │     ├─:Stmts
+    ║ │         │     │ └─for  ««"%info<freeVars> {\n                my $fvName  := $"...
+    ║ │         │     │   ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │         │     │   │ ├○ %info
+    ║ │         │     │   │ └◙ SVal "freeVars"
+    ║ │         │     │   ├─:Block :blocktype(immediate)  ««"{\n                my $fvName  := $_.key;\n        "...
+    ║ │         │     │   │ ╟─:Stmts
+    ║ │         │     │   │ ║ ├○ $fvName :decl(var)
+    ║ │         │     │   │ ║ ├○ $fv :decl(var)
+    ║ │         │     │   │ ║ ├○ $pre :decl(var)
+    ║ │         │     │   │ ║ ├○ $flatVal :decl(var)
+    ║ │         │     │   │ ║ ├○ $doneKey :decl(var)
+    ║ │         │     │   │ ║ └○ $_ :decl(param)
+    ║ │         │     │   │ ╙─:Stmts  ««"\n                my $fvName  := $_.key;\n         "...
+    ║ │         │     │   │   ├─:Stmts
+    ║ │         │     │   │   │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$fvName  := $_.key"
+    ║ │         │     │   │   │   ├○ $fvName
+    ║ │         │     │   │   │   └─callmethod key  ««".key"
+    ║ │         │     │   │   │     └○ $_
+    ║ │         │     │   │   ├─:Stmts
+    ║ │         │     │   │   │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$fv      := $_.value"
+    ║ │         │     │   │   │   ├○ $fv
+    ║ │         │     │   │   │   └─callmethod value  ««".value"
+    ║ │         │     │   │   │     └○ $_
+    ║ │         │     │   │   ├─:Stmts
+    ║ │         │     │   │   │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$pre     := \"# where $fvName = \""
+    ║ │         │     │   │   │   ├○ $pre
+    ║ │         │     │   │   │   └─concat
+    ║ │         │     │   │   │     ├─concat
+    ║ │         │     │   │   │     │ ├◙ SVal "# where "
+    ║ │         │     │   │   │     │ └○ $fvName
+    ║ │         │     │   │   │     └◙ SVal " = "
+    ║ │         │     │   │   ├─:Stmts
+    ║ │         │     │   │   │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$flatVal := typecase($fv,\n                    :λ(-"...
+    ║ │         │     │   │   │   ├○ $flatVal
+    ║ │         │     │   │   │   └─call &typecase  ««"$fv,\n                    :λ(-> $x { nqp::null }), "...
+    ║ │         │     │   │   │     ├○ $fv
+    ║ │         │     │   │   │     ├─takeclosure :named("λ")
+    ║ │         │     │   │   │     │ └─:Block  ««"{ nqp::null }"
+    ║ │         │     │   │   │     │   ╟─:Stmts
+    ║ │         │     │   │   │     │   ║ └○ $x :decl(param)
+    ║ │         │     │   │   │     │   ╙─:Stmts  ««" nqp::null "
+    ║ │         │     │   │   │     │     └─:Stmts
+    ║ │         │     │   │   │     │       └─null  ««"nqp::null"
+    ║ │         │     │   │   │     ├○ &strLit :named("str")
+    ║ │         │     │   │   │     ├○ &int2str :named("int")
+    ║ │         │     │   │   │     └○ &num2str :named("num")
+    ║ │         │     │   │   ├─:Stmts
+    ║ │         │     │   │   │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$doneKey := nqp::isnull($flatVal)\n                "...
+    ║ │         │     │   │   │   ├○ $doneKey
+    ║ │         │     │   │   │   └─if &infix:<>  ««"?? $pre ~ lam2id($fv)\n                    !!"
+    ║ │         │     │   │   │     ├─isnull  ««"nqp::isnull($flatVal)"
+    ║ │         │     │   │   │     │ └○ $flatVal
+    ║ │         │     │   │   │     ├─concat &infix:<~>  ««"~"
+    ║ │         │     │   │   │     │ ├○ $pre
+    ║ │         │     │   │   │     │ └─call &lam2id  ««"$fv"
+    ║ │         │     │   │   │     │   └○ $fv
+    ║ │         │     │   │   │     └─concat &infix:<~>  ««"~"
+    ║ │         │     │   │   │       ├○ $pre
+    ║ │         │     │   │   │       └○ $flatVal
+    ║ │         │     │   │   └─:Stmts
+    ║ │         │     │   │     └─unless  ««"%done{$doneKey} {\n                    %done{$doneK"...
+    ║ │         │     │   │       ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │         │     │   │       │ ├○ %done
+    ║ │         │     │   │       │ └○ $doneKey
+    ║ │         │     │   │       └─:Stmts  ««"{\n                    %done{$doneKey} := 1;\n     "...
+    ║ │         │     │   │         ├─:Stmts
+    ║ │         │     │   │         └─:Stmts  ««"\n                    %done{$doneKey} := 1;\n      "...
+    ║ │         │     │   │           ├─:Stmts
+    ║ │         │     │   │           │ └─bind &infix:<:=>  ««":="
+    ║ │         │     │   │           │   ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │         │     │   │           │   │ ├○ %done
+    ║ │         │     │   │           │   │ └○ $doneKey
+    ║ │         │     │   │           │   └◙ IVal 1
+    ║ │         │     │   │           └─:Stmts
+    ║ │         │     │   │             └─bind &infix:<:=>  ««":="
+    ║ │         │     │   │               ├○ $src
+    ║ │         │     │   │               └─concat &infix:<~>  ««"~"
+    ║ │         │     │   │                 ├─concat &infix:<~>  ««"~"
+    ║ │         │     │   │                 │ ├─concat &infix:<~>  ««"~"
+    ║ │         │     │   │                 │ │ ├○ $src
+    ║ │         │     │   │                 │ │ └◙ SVal "\n"
+    ║ │         │     │   │                 │ └○ $indent
+    ║ │         │     │   │                 └─if &infix:<>  ««"?? $pre ~ strOut($fv, $indent ~ '#' ~ nqp::x(' ', n"...
+    ║ │         │     │   │                   ├─isnull  ««"nqp::isnull($flatVal)"
+    ║ │         │     │   │                   │ └○ $flatVal
+    ║ │         │     │   │                   ├─concat &infix:<~>  ««"~"
+    ║ │         │     │   │                   │ ├○ $pre
+    ║ │         │     │   │                   │ └─call &strOut  ««"$fv, $indent ~ '#' ~ nqp::x(' ', nqp::chars($pre) -"...
+    ║ │         │     │   │                   │   ├○ $fv
+    ║ │         │     │   │                   │   ├─concat &infix:<~>  ««"~"
+    ║ │         │     │   │                   │   │ ├─concat &infix:<~>  ««"~"
+    ║ │         │     │   │                   │   │ │ ├○ $indent
+    ║ │         │     │   │                   │   │ │ └◙ SVal "#"
+    ║ │         │     │   │                   │   │ └─x  ««"nqp::x(' ', nqp::chars($pre) - 1)"
+    ║ │         │     │   │                   │   │   ├◙ SVal " "
+    ║ │         │     │   │                   │   │   └─sub_n &infix:<->  ««"-"
+    ║ │         │     │   │                   │   │     ├─chars  ««"nqp::chars($pre)"
+    ║ │         │     │   │                   │   │     │ └○ $pre
+    ║ │         │     │   │                   │   │     └◙ IVal 1
+    ║ │         │     │   │                   │   └○ %done
+    ║ │         │     │   │                   └○ $doneKey
+    ║ │         │     │   └◙ IVal 1 :named("nohandler")
+    ║ │         │     └─:Stmts
+    ║ │         │       └○ $src
+    ║ │         ├○ &strLit :named("str")
+    ║ │         ├○ &int2str :named("int")
+    ║ │         └○ &num2str :named("num")
+    ║ ├─bind
+    ║ │ ├○ &apply1 :decl(var)
+    ║ │ └─:Block  ««"{\n    my $result := typecase(force($f),\n        :"...
+    ║ │   ╟─:Stmts
+    ║ │   ║ ├○ $f :decl(param)
+    ║ │   ║ ├○ $a1 :decl(param)
+    ║ │   ║ └○ $result :decl(var)
+    ║ │   ╙─:Stmts  ««"\n    my $result := typecase(force($f),\n        :λ"...
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$result := typecase(force($f),\n        :λ(&lam2cod"...
+    ║ │     │   ├○ $result
+    ║ │     │   └─call  ««"$a1"
+    ║ │     │     ├─call &typecase  ««"force($f),\n        :λ(&lam2code),\n        :otherw"...
+    ║ │     │     │ ├─call &force  ««"$f"
+    ║ │     │     │ │ └○ $f
+    ║ │     │     │ ├○ &lam2code :named("λ")
+    ║ │     │     │ └─takeclosure :named("otherwise")
+    ║ │     │     │   └─:Block  ««"{\n            nqp::die('ERROR: cannot apply ' ~ st"...
+    ║ │     │     │     ╟─:Stmts
+    ║ │     │     │     ║ └○ $x :decl(param)
+    ║ │     │     │     ╙─:Stmts  ««"\n            nqp::die('ERROR: cannot apply ' ~ str"...
+    ║ │     │     │       └─:Stmts
+    ║ │     │     │         └─die  ««"nqp::die('ERROR: cannot apply ' ~ strOut($x) ~ ' to"...
+    ║ │     │     │           └─concat &infix:<~>  ««"~"
+    ║ │     │     │             ├─concat &infix:<~>  ««"~"
+    ║ │     │     │             │ ├─concat &infix:<~>  ««"~"
+    ║ │     │     │             │ │ ├◙ SVal "ERROR: cannot apply "
+    ║ │     │     │             │ │ └─call &strOut  ««"$x"
+    ║ │     │     │             │ │   └○ $x
+    ║ │     │     │             │ └◙ SVal " to "
+    ║ │     │     │             └─call &strOut  ««"$a1"
+    ║ │     │     │               └○ $a1
+    ║ │     │     └○ $a1
+    ║ │     └─:Stmts
+    ║ │       └─call &force  ««"$result"
+    ║ │         └○ $result
+    ║ ├─bind
+    ║ │ ├○ &join :decl(var)
+    ║ │ └─:Block  ««"{\n    my $_;\n    my $i := nqp::iterator(@pieces);"...
+    ║ │   ╟─:Stmts
+    ║ │   ║ ├○ $sep :decl(param)
+    ║ │   ║ ├○ @pieces :decl(param)
+    ║ │   ║ ├─bind  ««"$_"
+    ║ │   ║ │ ├○ $_ :decl(var)
+    ║ │   ║ │ └◙ WVal NQPMu
+    ║ │   ║ ├○ $i :decl(var)
+    ║ │   ║ └○ $s :decl(var)
+    ║ │   ╙─:Stmts  ««"\n    my $_;\n    my $i := nqp::iterator(@pieces);\"...
+    ║ │     ├─:Stmts
+    ║ │     │ └○ $_
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := nqp::iterator(@pieces)"
+    ║ │     │   ├○ $i
+    ║ │     │   └─iterator  ««"nqp::iterator(@pieces)"
+    ║ │     │     └○ @pieces
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$s := ''"
+    ║ │     │   ├○ $s
+    ║ │     │   └◙ SVal ""
+    ║ │     ├─:Stmts
+    ║ │     │ └─if  ««"$i {\n        $s := nqp::shift($i);  # nqpc would c"...
+    ║ │     │   ├○ $i
+    ║ │     │   └─:Stmts  ««"{\n        $s := nqp::shift($i);  # nqpc would conv"...
+    ║ │     │     ├─:Stmts
+    ║ │     │     └─:Stmts  ««"\n        $s := nqp::shift($i);  # nqpc would conve"...
+    ║ │     │       ├─:Stmts
+    ║ │     │       │ └─bind &infix:<:=>  ««":="
+    ║ │     │       │   ├○ $s
+    ║ │     │       │   └─shift  ««"nqp::shift($i)"
+    ║ │     │       │     └○ $i
+    ║ │     │       ├─:Stmts
+    ║ │     │       │ └─unless  ««"$s := strOut($s)\n            unless nqp::isstr($s)"
+    ║ │     │       │   ├─isstr  ««"nqp::isstr($s)"
+    ║ │     │       │   │ └○ $s
+    ║ │     │       │   └─bind &infix:<:=>  ««":="
+    ║ │     │       │     ├○ $s
+    ║ │     │       │     └─call &strOut  ««"$s"
+    ║ │     │       │       └○ $s
+    ║ │     │       └─:Stmts
+    ║ │     │         └─while  ««"$i {\n            $_ := nqp::shift($i);  # nqpc wou"...
+    ║ │     │           ├○ $i
+    ║ │     │           ├─:Stmts  ««"{\n            $_ := nqp::shift($i);  # nqpc would "...
+    ║ │     │           │ ├─:Stmts
+    ║ │     │           │ └─:Stmts  ««"\n            $_ := nqp::shift($i);  # nqpc would c"...
+    ║ │     │           │   ├─:Stmts
+    ║ │     │           │   │ └─bind &infix:<:=>  ««":="
+    ║ │     │           │   │   ├○ $_
+    ║ │     │           │   │   └─shift  ««"nqp::shift($i)"
+    ║ │     │           │   │     └○ $i
+    ║ │     │           │   └─:Stmts
+    ║ │     │           │     └─bind &infix:<:=>  ««":="
+    ║ │     │           │       ├○ $s
+    ║ │     │           │       └─concat &infix:<~>  ««"~"
+    ║ │     │           │         ├─concat &infix:<~>  ««"~"
+    ║ │     │           │         │ ├○ $s
+    ║ │     │           │         │ └○ $sep
+    ║ │     │           │         └─if &infix:<>  ««"?? $_\n                !!"
+    ║ │     │           │           ├─isstr  ««"nqp::isstr($_)"
+    ║ │     │           │           │ └○ $_
+    ║ │     │           │           ├○ $_
+    ║ │     │           │           └─call &strOut  ««"$_"
+    ║ │     │           │             └○ $_
+    ║ │     │           └◙ IVal 1 :named("nohandler")
+    ║ │     └─:Stmts
+    ║ │       └○ $s
+    ║ ├─bind
+    ║ │ ├○ &say :decl(var)
+    ║ │ └─:Block  ««"{\n    nqp::say(join('', @args));\n}"
+    ║ │   ╟─:Stmts
+    ║ │   ║ └○ @args :decl(param) :slurpy(1)
+    ║ │   ╙─:Stmts  ««"\n    nqp::say(join('', @args));\n"
+    ║ │     └─:Stmts
+    ║ │       └─say  ««"nqp::say(join('', @args))"
+    ║ │         └─call &join  ««"'', @args"
+    ║ │           ├◙ SVal ""
+    ║ │           └○ @args
+    ║ ├─bind
+    ║ │ ├○ &stats :decl(var)
+    ║ │ └─:Block  ««"{\n    my %stats := %info<stats>;\n    join('', [\n"...
+    ║ │   ╟─:Stmts
+    ║ │   ║ └○ %stats :decl(var)
+    ║ │   ╙─:Stmts  ««"\n    my %stats := %info<stats>;\n    join('', [\n "...
+    ║ │     ├─:Stmts
+    ║ │     │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%stats := %info<stats>"
+    ║ │     │   ├○ %stats
+    ║ │     │   └○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │     │     ├○ %info
+    ║ │     │     └◙ SVal "stats"
+    ║ │     └─:Stmts
+    ║ │       └─call &join  ««"'', [\n        %stats{STATS_LAMBDACOUNT() }, \" lam"...
+    ║ │         ├◙ SVal ""
+    ║ │         └─list &circumfix:<[ ]>  ««","
+    ║ │           ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │           │ ├○ %stats
+    ║ │           │ └─call &STATS_LAMBDACOUNT  ««""
+    ║ │           ├◙ SVal " lambdas\n"
+    ║ │           ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │           │ ├○ %stats
+    ║ │           │ └─call &STATS_QASTSIZE  ««""
+    ║ │           ├◙ SVal " QAST::Node s\n"
+    ║ │           ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │           │ ├○ %stats
+    ║ │           │ └─call &STATS_BLOCKCOUNT  ««""
+    ║ │           ├◙ SVal " QAST::Block s\n"
+    ║ │           ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │           │ ├○ %stats
+    ║ │           │ └─call &STATS_LISTCOUNT  ««""
+    ║ │           ├◙ SVal " QAST::Op(list) s\n"
+    ║ │           ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │           │ ├○ %stats
+    ║ │           │ └─call &STATS_IVALCOUNT  ««""
+    ║ │           ├◙ SVal " QAST::IVal s\n"
+    ║ │           ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │           │ ├○ %stats
+    ║ │           │ └─call &STATS_SVALSIZE  ««""
+    ║ │           ├◙ SVal " chars ttl in "
+    ║ │           ├○┬VarWithFallback associative :fallback(WVal NQPMu)
+    ║ │           │ ├○ %stats
+    ║ │           │ └─call &STATS_SVALCOUNT  ««""
+    ║ │           ├◙ SVal " QAST::SVal s\n"
+    ║ │           └◙ SVal "------------------------------------------------"
+    ║ └─bind
+    ║   ├○ &MAIN :decl(var)
+    ║   └─:Block  ««"{\n    \n    \n    my $lambda2 := [\n        'λ1', "...
+    ║     ╟─:Stmts
+    ║     ║ ├○ @ARGS :decl(param) :slurpy(1)
+    ║     ║ ├○ $lambda2 :decl(var)
+    ║     ║ └○ $lambda1 :decl(var)
+    ║     ╙─:Stmts  ««"\n    \n    \n    my $lambda2 := [\n        'λ1',  "...
+    ║       ├─:Stmts
+    ║       │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$lambda2 := [\n        'λ1',                       "...
+    ║       │   ├○ $lambda2
+    ║       │   └─list &circumfix:<[ ]>  ««","
+    ║       │     ├◙ SVal "λ1"
+    ║       │     ├─takeclosure
+    ║       │     │ └─:Block  ««"{ 'λ1(...) called' }"
+    ║       │     │   ╟─:Stmts
+    ║       │     │   ║ └○ @as :decl(param) :slurpy(1)
+    ║       │     │   ╙─:Stmts  ««" 'λ1(...) called' "
+    ║       │     │     └─:Stmts
+    ║       │     │       └◙ SVal "λ1(...) called"
+    ║       │     └◙ IVal 23
+    ║       ├─:Stmts
+    ║       │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$lambda1 := [\n        'λ0',                       "...
+    ║       │   ├○ $lambda1
+    ║       │   └─list &circumfix:<[ ]>  ««","
+    ║       │     ├◙ SVal "λ0"
+    ║       │     ├─takeclosure
+    ║       │     │ └─:Block  ««"{ 'λ0(...) called' }"
+    ║       │     │   ╟─:Stmts
+    ║       │     │   ║ └○ @as :decl(param) :slurpy(1)
+    ║       │     │   ╙─:Stmts  ««" 'λ0(...) called' "
+    ║       │     │     └─:Stmts
+    ║       │     │       └◙ SVal "λ0(...) called"
+    ║       │     ├◙ SVal "foo"
+    ║       │     ├◙ IVal 42
+    ║       │     ├◙ NVal 3.14159265
+    ║       │     └○ $lambda2
+    ║       ├─:Stmts
+    ║       │ └─callmethod push  ««"$lambda1"
+    ║       │   ├○ $lambda1
+    ║       │   └○ $lambda1
+    ║       ├─:Stmts
+    ║       │ └─callmethod push  ««"$lambda1"
+    ║       │   ├○ $lambda1
+    ║       │   └○ $lambda1
+    ║       ├─:Stmts
+    ║       │ └─call &say  ««"strOut($lambda1)"
+    ║       │   └─call &strOut  ««"$lambda1"
+    ║       │     └○ $lambda1
+    ║       └─:Stmts
+    ║         └─call &say  ««"stats()"
+    ║           └─call &stats  ««""
+    ╟─:Stmts
+    ║ ├─bind
+    ║ │ ├○ local ctxsave :decl(var)
+    ║ │ └○ contextual $*CTXSAVE
+    ║ └─unless
+    ║   ├─isnull
+    ║   │ └○ local ctxsave
+    ║   └─if
+    ║     ├─can
+    ║     │ ├○ local ctxsave
+    ║     │ └◙ SVal "ctxsave"
+    ║     └─callmethod ctxsave
+    ║       └○ local ctxsave
+    ╟─:Stmts  ««"my $λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self "...
+    ║ ├─:Stmts
+    ║ │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f ("...
+    ║ │   ├○ $λsrc
+    ║ │   └◙ SVal "(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)"
+    ║ ├─:Stmts
+    ║ │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%info := nqp::hash(\n    'λ', [\n        'binder0 1"...
+    ║ │   ├○ %info
+    ║ │   └─hash  ««"nqp::hash(\n    'λ', [\n        'binder0 1 55 foo b"...
+    ║ │     ├◙ SVal "λ"
+    ║ │     ├─list &circumfix:<[ ]>  ««","
+    ║ │     │ ├◙ SVal "binder0 1 55 foo bar baz qumbl self self"
+    ║ │     │ └◙ SVal "binder1 59 4 foo"
+    ║ │     ├◙ SVal "stats"
+    ║ │     └─hash  ««"nqp::hash( # to be filled in by compiler\n        S"...
+    ║ │       ├─call &STATS_QASTSIZE  ««""
+    ║ │       ├◙ IVal -1
+    ║ │       ├─call &STATS_BLOCKCOUNT  ««""
+    ║ │       ├◙ IVal -1
+    ║ │       ├─call &STATS_LISTCOUNT  ««""
+    ║ │       ├◙ IVal -1
+    ║ │       ├─call &STATS_LAMBDACOUNT  ««""
+    ║ │       ├◙ IVal -1
+    ║ │       ├─call &STATS_IVALCOUNT  ««""
+    ║ │       ├◙ IVal -1
+    ║ │       ├─call &STATS_SVALCOUNT  ««""
+    ║ │       ├◙ IVal -1
+    ║ │       ├─call &STATS_SVALSIZE  ««""
+    ║ │       └◙ IVal -1
+    ║ ├─:Stmts
+    ║ │ └○ &LAMFIELD_ID
+    ║ ├─:Stmts
+    ║ │ └○ &LAMFIELD_CODE
+    ║ ├─:Stmts
+    ║ │ └○ &LAMFIELD_FREEVARS
+    ║ ├─:Stmts
+    ║ │ └○ &lam2id
+    ║ ├─:Stmts
+    ║ │ └○ &lam2code
+    ║ ├─:Stmts
+    ║ │ └○ &lam2fvs
+    ║ ├─:Stmts
+    ║ │ └○ &STATS_QASTSIZE
+    ║ ├─:Stmts
+    ║ │ └○ &STATS_BLOCKCOUNT
+    ║ ├─:Stmts
+    ║ │ └○ &STATS_LISTCOUNT
+    ║ ├─:Stmts
+    ║ │ └○ &STATS_LAMBDACOUNT
+    ║ ├─:Stmts
+    ║ │ └○ &STATS_CALLISHCOUNT
+    ║ ├─:Stmts
+    ║ │ └○ &STATS_IVALCOUNT
+    ║ ├─:Stmts
+    ║ │ └○ &STATS_SVALCOUNT
+    ║ ├─:Stmts
+    ║ │ └○ &STATS_SVALSIZE
+    ║ ├─:Stmts
+    ║ │ └○ &int2str
+    ║ ├─:Stmts
+    ║ │ └○ &num2str
+    ║ ├─:Stmts
+    ║ │ └○ &strLit
+    ║ ├─:Stmts
+    ║ │ └○ &force
+    ║ ├─:Stmts
+    ║ │ └○ &delayMemo
+    ║ ├─:Stmts
+    ║ │ └○ &sublist
+    ║ ├─:Stmts
+    ║ │ └○ &lam2info
+    ║ ├─:Stmts
+    ║ │ └○ &typecase
+    ║ ├─:Stmts
+    ║ │ └○ &strOut
+    ║ ├─:Stmts
+    ║ │ └○ &apply1
+    ║ ├─:Stmts
+    ║ │ └○ &join
+    ║ ├─:Stmts
+    ║ │ └○ &say
+    ║ ├─:Stmts
+    ║ │ └○ &stats
+    ║ ├─:Stmts
+    ║ │ └○ &MAIN
     ║ └─if
-    ║   ├─can
-    ║   │ ├○ local ctxsave
-    ║   │ └◙ SVal "ctxsave"
-    ║   └─callmethod ctxsave
-    ║     └○ local ctxsave
-    ╟─bind  ««"$λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f ("...
-    ║ ├○ lexical .λsrc
-    ║ └◙ SVal "(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)"
-    ╟─bind  ««"%info := nqp::hash(\n    'λ', [\n        'binder0 1"...
-    ║ ├○ lexical %info
-    ║ └─hash  ««"nqp::hash(\n    'λ', [\n        'binder0 1 55 foo b"...
-    ║   ├◙ SVal "λ"
-    ║   ├─list  ««","
-    ║   │ ├◙ SVal "binder0 1 55 foo bar baz qumbl self self"
-    ║   │ └◙ SVal "binder1 59 4 foo"
-    ║   ├◙ SVal "stats"
-    ║   └─hash  ««"nqp::hash( # to be filled in by compiler\n        S"...
-    ║     ├◙ SVal "Node"
-    ║     ├◙ IVal 743
-    ║     ├◙ SVal "Block"
-    ║     ├◙ IVal 39
-    ║     ├◙ SVal "list"
-    ║     ├◙ IVal 5
-    ║     ├◙ SVal "lambda"
-    ║     ├◙ IVal -1
-    ║     ├◙ SVal "IVal"
-    ║     ├◙ IVal 42
-    ║     ├◙ SVal "SVal"
-    ║     ├◙ IVal 80
-    ║     ├◙ SVal "SValChars"
-    ║     └◙ IVal 848
-    ╙─if
-      ├○ lexical @ARGS
-      └─call .MAIN
-        └○ lexical @ARGS :flat(1)
+    ║   ├○ @ARGS
+    ║   └─call &MAIN
+    ║     └○ @ARGS :flat(1)
+    ╙─:Stmts
