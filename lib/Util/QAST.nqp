@@ -331,13 +331,15 @@ class Util::QAST {
                 $op := 'atkey';
             }
             if $op {
-                $node := QAST::Op.new(:$op,
+                my $out := QAST::Op.new(:$op,
                     :node($node.node),
-                    :named($node.named),
-                    :flat($node.flat),
                     |$node.list
                 );
-                #$node := $out;
+                if istype($node, QAST::SpecialArg) {
+                    $out.named($node.named);
+                    $out.flat($node.flat);
+                }
+                $node := $out;
             }
         }
         $node;

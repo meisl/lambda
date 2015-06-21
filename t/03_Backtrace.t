@@ -6,6 +6,7 @@ use Backtrace;
 
 plan(7);
 
+
 my $trace := Backtrace.new;
 
 ok(istype($trace, Backtrace), "Backtrace.new returns a Backtrace");
@@ -24,5 +25,6 @@ ok(istype($trace2, Backtrace), "...returns another Backtrace")
 
 
 #diag($trace.Str);
+
 
 done();
