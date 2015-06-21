@@ -312,8 +312,6 @@ class Util::QAST {
                 unless $which eq 'atpos' || $which eq 'atkey';
             $node.op('bind' ~ nqp::substr($child1.op, 2));
             $node.node($child1.node);
-            $node.flat($child1.flat);
-            $node.named($child1.named);
             $node.unshift($child1[1]);
             $node.unshift($child1[0]);
         } elsif istype($node, QAST::VarWithFallback) {
