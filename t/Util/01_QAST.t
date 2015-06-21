@@ -6,7 +6,56 @@ use Util;
 
 use Util::QAST;
 
-plan(90);
+plan(91);
+
+
+sub mkBlockWithCATCH() {
+    # {
+    #   nqp::die('BOOM!');
+    #   CATCH {
+    #       nqp::say($!);
+    #   }
+    # }
+
+    # ...gets compiled to:
+
+    QAST::Op.new(:op<handle>,
+        QAST::Stmts.new(
+            QAST::Stmts.new(
+                QAST::Op.new(:op<die>,
+                    QAST::SVal.new(:value('BOOM!'))
+                )
+            ),
+            QAST::Stmts.new(
+                QAST::WVal.new(:value(NQPMu))
+            )
+        ),
+        "CATCH",    # <--- yes, a literal str (rather than an SVal or such)
+        QAST::Stmts.new(
+            QAST::Op.new(:op<call>,
+                QAST::Block.new(
+                    QAST::Var.new(:name('$_'), :decl<param>),
+                    QAST::Op.new(:op<bind>,
+                        QAST::Var.new(:name('$!'), :decl<var>),
+                        QAST::Var.new(:name('$_'), :decl(nqp::null_s)),
+                    ),
+                    QAST::Stmts.new(),
+                    QAST::Stmts.new(
+                        QAST::Stmts.new(
+                            QAST::Op.new(:op<say>,
+                                QAST::Var.new(:name('$!'), :decl(nqp::null_s))
+                            )
+                        )
+                    ),
+                ),
+                QAST::Op.new(:op<exception>),
+            ),
+            QAST::VM.new(),
+            QAST::WVal.new(:value(NQPMu))
+        )
+    );
+}
+
 
 
 my $w := QAST::WVal.new(:value(NQPMu));
@@ -329,7 +378,9 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
 }
 
 
-{
+{ # drop_Stmts (2) ------------------------------------------------------------
+    my $ast := mkBlockWithCATCH();
+
     # {
     #   nqp::die('BOOM!');
     #   CATCH {
@@ -338,42 +389,6 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     # }
 
     # ...gets compiled to:
-
-    my $ast := QAST::Op.new(:op<handle>,
-        QAST::Stmts.new(
-            QAST::Stmts.new(
-                QAST::Op.new(:op<die>,
-                    QAST::SVal.new(:value('BOOM!'))
-                )
-            ),
-            QAST::Stmts.new(
-                QAST::WVal.new(:value(NQPMu))
-            )
-        ),
-        "CATCH",    # <--- yes, a literal str (rather than an SVal or such)
-        QAST::Stmts.new(
-            QAST::Op.new(:op<call>,
-                QAST::Block.new(
-                    QAST::Var.new(:name('$_'), :decl<param>),
-                    QAST::Op.new(:op<bind>,
-                        QAST::Var.new(:name('$!'), :decl<var>),
-                        QAST::Var.new(:name('$_'), :decl(nqp::null_s)),
-                    ),
-                    QAST::Stmts.new(),
-                    QAST::Stmts.new(
-                        QAST::Stmts.new(
-                            QAST::Op.new(:op<say>,
-                                QAST::Var.new(:name('$!'), :decl(nqp::null_s))
-                            )
-                        )
-                    ),
-                ),
-                QAST::Op.new(:op<exception>),
-            ),
-            QAST::VM.new(),
-            QAST::WVal.new(:value(NQPMu))
-        )
-    );
 
     # BEFORE:                               # AFTER:                    
     #
@@ -408,7 +423,11 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
 }
 
 { # replace_assoc_and_pos_scoped ----------------------------------------------
-    my $ast;
+    my $astx;
+
+    $ast := mkBlockWithCATCH;
+    lives_ok({ replace_assoc_and_pos_scoped($ast) }, 'replace_assoc_and_pos_scoped can cope with exception handlers')
+        || diag(dump($ast));
     
     $ast := QAST::Stmts.new(    # `say(@xs[0])`
         QAST::Op.new(:op<say>,
