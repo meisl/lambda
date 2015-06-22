@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(91);
+plan(101);
 
 
 sub mkBlockWithCATCH() {
@@ -605,7 +605,52 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
         || diag(dump($ast));
     ok($ast[0][0].flat, 'attr .flat of replacement node')
         || diag(dump($ast));
+
+
+    my $bazVar := QAST::Var.new(:name('$baz'));
+    $ast := QAST::Stmts.new(    # `qumbl(|$baz := @xs[0])`
+        QAST::Op.new(:op<call>, :name('&qumbl'),
+            QAST::Op.new(:op<bind>, :flat,
+                $bazVar,
+                QAST::VarWithFallback.new(:scope<positional>, :fallback(QAST::WVal.new(:value(NQPMu))),
+                    QAST::Var.new(:name('@xs')),
+                    QAST::IVal.new(:value(0))
+                ),
+            )
+        )
+    );
+    #diag(dump($ast));
+    replace_assoc_and_pos_scoped($ast);
+    is( $ast[0][0].op, 'bind', 'bind of normal var unchanged') || diag(dump($ast));
+    is( $ast[0][0][0], $bazVar, 'normal var in bind of normal var unchanged') || diag(dump($ast));
+    is( $ast[0][0][1].op, 'atpos', '"positional" scoped VarWithFallback ~> Op atpos') || diag(dump($ast));
+
+
+    $ast := QAST::Stmts.new(    # `qumbl(|%xs<somekey> := @xs[0])`
+        QAST::Op.new(:op<call>, :name('&qumbl'),
+            QAST::Op.new(:op<bind>, :flat,
+                QAST::VarWithFallback.new(:scope<associative>, :fallback(QAST::WVal.new(:value(NQPMu))),
+                    QAST::Var.new(:name('%xs')),
+                    QAST::SVal.new(:value<somekey>)
+                ),
+                QAST::VarWithFallback.new(:scope<positional>, :fallback(QAST::WVal.new(:value(NQPMu))),
+                    QAST::Var.new(:name('@xs')),
+                    QAST::IVal.new(:value(0))
+                ),
+            )
+        )
+    );
+    #diag(dump($ast));
+    replace_assoc_and_pos_scoped($ast);
+    is( $ast[0][0].op, 'bindkey', 'bind of "associative" VarWithFallback ~> Op bindkey') || diag(dump($ast));
+    ok( $ast[0][0].flat, 'bind of "associative" VarWithFallback ~> Op bindkey; as flat arg') || diag(dump($ast));
+    is( $ast[0][0][0].name, '%xs', '"associative" VarWithFallback, 1st child') || diag(dump($ast));
+    is( $ast[0][0][1].value, 'somekey', '"associative" VarWithFallback, 2nd child') || diag(dump($ast));
+    is( $ast[0][0][2].op, 'atpos', '"positional" VarWithFallback ~> Op atpos') || diag(dump($ast));
+    is( $ast[0][0][2][0].name, '@xs', '"positional" VarWithFallback, 1st child') || diag(dump($ast));
+    is( $ast[0][0][2][1].value, 0, '"positional" VarWithFallback, 2nd child') || diag(dump($ast));
 }
+
 
 
 
