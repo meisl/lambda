@@ -384,7 +384,7 @@ class SmartCompiler is NQP::Compiler {
     method BUILD() {
         # in this order (!):
         self.addstage('ast_save',           :after<ast>);
-        self.addstage('fix_var_attrs',      :after<ast>);
+        self.addstage('ast_clean',          :before<ast_save>);
         #self.addstage('optimize',           :before<ast_save>);
 
         # Add extra command line options.
@@ -528,33 +528,28 @@ class SmartCompiler is NQP::Compiler {
 
     # additional stages
 
-    method fix_var_attrs($ast) {
-        fix_var_attrs($ast);
-        #$ast := drop_Stmts($ast);
-        $ast;
-    }
-
     method ast_clean($ast, *%adverbs) {
         self.log('ast_clean: ', self.user-progname, '...');
         
+        $ast := fix_var_attrs($ast);
         $ast := drop_takeclosure($ast);
         
-        $ast := drop_Stmts($ast);
-        $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
-        $ast := remove_bogusOpNames($ast);
+        #$ast := drop_Stmts($ast);
+        #$ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
+        #$ast := remove_bogusOpNames($ast);
         #$ast := remove_MAIN($ast);
         
         # from here it's rather optimization...
-        $ast := replace_assoc_and_pos_scoped($ast);
-        $ast := inline_simple_methods($ast);
+        #$ast := replace_assoc_and_pos_scoped($ast);
+        #$ast := inline_simple_methods($ast);
 
-        my @inlinecandidates;
-        @inlinecandidates := findDefs($ast, -> $var, @pathUp {
-               (nqp::index($var.name, '&STATS_') > -1)
-            || (nqp::index($var.name, '&LAMFIELD_') > -1)
-            || (nqp::index('&lam2id &lam2code &lam2fvs &int2str &num2str', $var.name) > -1)
-        });
-        $ast := inline_simple_subs($ast, @inlinecandidates);
+        #my @inlinecandidates;
+        #@inlinecandidates := findDefs($ast, -> $var, @pathUp {
+        #       (nqp::index($var.name, '&STATS_') > -1)
+        #    || (nqp::index($var.name, '&LAMFIELD_') > -1)
+        #    || (nqp::index('&lam2id &lam2code &lam2fvs &int2str &num2str', $var.name) > -1)
+        #});
+        #$ast := inline_simple_subs($ast, @inlinecandidates);
 
         #$ast := renameVars($ast, -> $s {
         #    my str $fst := nqp::substr($s, 0, 1);
