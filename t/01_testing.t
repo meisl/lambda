@@ -13,7 +13,7 @@ use Util;
 # The latter meaning: by how much should it be advanced in a certain
 # situtation, if at all?
 
-plan(186);
+plan(190);
 
 =begin
 sub dodo($test) {
@@ -540,6 +540,11 @@ fails_ok( { is(nqp::null_s, '') },              "`is(nqp::null_s), ''`");
 fails_ok( { is(nqp::null_s, 'x') },             "`is(nqp::null_s), 'x'`");
 passes_ok({ is(nqp::null_s, nqp::null_s) },     "`is(nqp::null_s), nqp::null_s`");
 
+fails_ok( { is(nqp::null_s, []) }, '`is(nqp::null_s, [])`');
+fails_ok( { is([], nqp::null_s) }, '`is([], nqp::null_s)`');
+
+fails_ok( { is("foo", []) }, '`is("foo", [])`');
+fails_ok( { is([], "foo") }, '`is([], "foo")`');
 
 #is_eq("asdf", "asdf", "should fail");
 #is_eq(1, "asdf", "should throw");
