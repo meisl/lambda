@@ -290,58 +290,45 @@ class Util::QAST {
         _drop_Stmts($ast, nqp::null)[0];
     }
 
-
-    method replace_assoc_and_pos_scoped($node) {
-        if istype($node, QAST::Node) {
-            
-            # first, recurse:
-            my $i := 0;
-            my @children := $node.list;
-            for @children {
-                @children[$i] := self.replace_assoc_and_pos_scoped($_);
-                $i++;
-            }
-
-            if istype($node, QAST::Op) && ($node.op eq 'bind') && !istype($node[0], QAST::Var) {
-                # then our 1st child was just transformed to an 'atkey' or 'atpos'
-                my $child1 := $node.shift;
-                nqp::die("ooops: " ~ dump($child1, :oneLine))
-                    unless istype($child1, QAST::Op);
-                my $which := nqp::substr($child1.op, 0, 5); # substr to allow for typed variants _i, _s, etc
-                nqp::die("ooops: cannot handle op $which: " ~ dump($child1, :oneLine))
-                    unless $which eq 'atpos' || $which eq 'atkey';
-                $node.op('bind' ~ nqp::substr($child1.op, 2));
-                $node.node($child1.node);
-                $node.unshift($child1[1]);
-                $node.unshift($child1[0]);
-            } elsif istype($node, QAST::VarWithFallback) {
-                my $fallback := $node.fallback;
+    method replace_assoc_and_pos_scoped($ast) {
+        TreeWalk.dfs-up(
+            -> $n, @p { TreeWalkDo.recurse(:take(istype($n, QAST::VarWithFallback))) },
+            -> $n, @p {
+                my $fallback := $n.fallback;
                 if nqp::isnull($fallback) || istype($fallback, NQPMu) {
                     $fallback := nqp::null;
                 } else {
-                    nqp::die('cannot handle fallback ' ~ describe($node.fallback))
+                    nqp::die('cannot handle fallback ' ~ describe($n.fallback))
                 }
-                my $scope := $node.scope;
+                my $scope := $n.scope;
                 my $op;
                 if $scope eq 'positional' {
-                    $op := 'atpos';
+                    $op := 'pos';
                 } elsif $scope eq 'associative' {
-                    $op := 'atkey';
+                    $op := 'key';
                 }
+                my $out;
                 if $op {
-                    my $out := QAST::Op.new(:$op,
-                        :node($node.node),
-                        |$node.list
-                    );
-                    if istype($node, QAST::SpecialArg) {
-                        $out.named($node.named);
-                        $out.flat($node.flat);
+                    my $parent := @p[0];
+                    if istype($parent, QAST::Op) && ($parent.op eq 'bind') && ($n =:= $parent[0]) {
+                        $parent.op('bind' ~ $op);   # bindpos or bindkey
+                        $out := TreeWalk.replace(|$n.list);  # replace ourselves ($n, VarWithFallback) with our children
+                    } else {
+                        $out := QAST::Op.new(:op('at' ~ $op),
+                            :node($n.node),
+                            |$n.list
+                        );
+                        if istype($n, QAST::SpecialArg) {
+                            $out.named($n.named);
+                            $out.flat($n.flat);
+                        }
+                        $out := TreeWalk.replace($out);
                     }
-                    $node := $out;
                 }
-            }
-        }
-        $node;
+                $out;
+            },
+            $ast
+        );
     }
 
 

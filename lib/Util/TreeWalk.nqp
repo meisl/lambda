@@ -86,31 +86,58 @@ class TreeWalk {
 
     my sub _children($n) { nqp::islist($n) ?? $n !! (nqp::can($n, 'list') ?? $n.list !! []) }
     
-    my sub _dfs-up(&probe, &consumer, $node, @pathUp, &children) {
+    my sub _dfs-up(&probe, &consumer, $node, $index, @pathUp, &children) {
         my $x := &probe($node, @pathUp);
         my $y := TreeWalkDo.return;
+        my $redo := 0;
         if $x.recurse {
+            my $i := 0;
             @pathUp.unshift($node);
-            for &children($node) {
-                $y := _dfs-up(&probe, &consumer, $_, @pathUp, &children);
-                last if $y.last || $y.break || $y.halt;
+            while $i < nqp::elems(&children($node)) {
+                my @result := _dfs-up(&probe, &consumer, &children($node)[$i], $i, @pathUp, &children);
+                $y := @result[0];
+                my $redoChild := @result[1];
+                unless $redoChild {
+                    $i++;
+                    last if $y.last || $y.break || $y.halt;
+                }
             }
             @pathUp.shift;
         }
         if $x.take && !$y.halt {
-            &consumer($node, @pathUp);
+            my $z := &consumer($node, @pathUp);
+            if istype($z, TreeWalk) {
+                nqp::splice(&children(@pathUp[0]), $z.payload, $index, 1);
+                $redo := 1;
+            }
         }
         if $y.break || $y.halt {
-            $y;
+            $y, $redo;
         } else {
-            $x;
+            $x, $redo;
         }
     }
     
     method dfs-up(&probe, &consumer, $node, :&children = &_children) {
-        _dfs-up(&probe, &consumer, $node, [], &children);
+        _dfs-up(&probe, &consumer, $node, -1, [], &children);
         $node;
     }
+
+    has $!payload;
+
+    method payload() {
+        $!payload;
+    }
+
+    method replace(*@xs) {
+        TreeWalk.new(:payload(@xs));
+    }
+
+    method remove() {
+        TreeWalk.new(:payload([]));
+    }
+
+
 }
 
 
