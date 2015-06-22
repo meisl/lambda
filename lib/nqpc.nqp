@@ -533,8 +533,8 @@ class SmartCompiler is NQP::Compiler {
         
         $ast := fix_var_attrs($ast);
         $ast := drop_takeclosure($ast);
+        $ast := drop_Stmts($ast);
         
-        #$ast := drop_Stmts($ast);
         #$ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
         #$ast := remove_bogusOpNames($ast);
         #$ast := remove_MAIN($ast);
