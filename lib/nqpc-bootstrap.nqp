@@ -84,6 +84,7 @@ sub compileAll(@ms) {
             nqp::unlink($path);
             CATCH {
                 note('nqpc-bootstrap: ' ~ nqp::getmessage($!) ~ ' "' ~ $path ~ '" - trying again...');
+                nqp::sleep(0.3);
                 nqp::unlink($path);
             }
         }
