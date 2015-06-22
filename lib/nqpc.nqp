@@ -8,31 +8,6 @@ use Util::QAST;
 
 # -----------------------------------------------
 
-sub drop_takeclosure($ast) {
-    nqp::die('drop_takeclosure expects a QAST::Node - got ' ~ nqp::reprname($ast) )
-        unless istype($ast, QAST::Node);
-    if istype($ast, QAST::Op) && $ast.op eq 'takeclosure' {
-        my $child := drop_takeclosure($ast[0]);  # recurse!
-        if istype($ast, QAST::SpecialArg) {
-            $child.HOW.mixin($child, QAST::SpecialArg);
-            $child.flat($ast.flat);
-            $child.named($ast.named);
-        }
-        $ast := $child;
-    #} elsif istype($ast, QAST::Children) {
-    } elsif nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
-        my @children := [];
-        for $ast.list {
-            @children.push(drop_takeclosure($_));
-        }
-        #$ast.set_children(@children);
-        my @list := $ast.list;
-        while @list { @list.pop }
-        for @children { @list.push($_) }
-
-    }
-    $ast;
-}
 
 sub isinResultPosition($node, $parent) {
     my $n := nqp::elems($parent) - 1;

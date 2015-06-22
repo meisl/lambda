@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(107);
+plan(118);
 
 
 sub mkBlockWithCATCH() {
@@ -56,6 +56,10 @@ sub mkBlockWithCATCH() {
     );
 }
 
+my $ast := mkBlockWithCATCH();
+
+ok( istype($ast, QAST::Node), 'mkBlockWithCATCH returns a QAST::Node' )
+    || diag($ast) && nqp::exit(1);
 
 
 my $w := QAST::WVal.new(:value(NQPMu));
@@ -240,7 +244,7 @@ my $fooBinding := QAST::Op.new(:op<bind>,
     ),
 );
 
-my $ast := QAST::CompUnit.new(
+$ast := QAST::CompUnit.new(
     QAST::Block.new(
         QAST::Var.new(:name('@ARGS'), :scope<lexical>, :decl<param>, :slurpy(1)),
         QAST::Stmts.new(:resultchild(1),    # this Stmts can be dropped since its :resultchild is the last anyways
@@ -423,9 +427,9 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
 }
 
 { # replace_assoc_and_pos_scoped ----------------------------------------------
-    my $astx;
+    my $ast;
 
-    $ast := mkBlockWithCATCH;
+    $ast := mkBlockWithCATCH();
     lives_ok({ replace_assoc_and_pos_scoped($ast) }, 'replace_assoc_and_pos_scoped can cope with exception handlers')
         || diag(dump($ast));
 
@@ -676,6 +680,49 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     is( $ast[0][0][2][1].value, 0, '"positional" VarWithFallback, 2nd child') || diag(dump($ast));
 }
 
+
+{ # drop_takeclosure ----------------------------------------------------------
+    my $ast;
+    my $block1;
+    my $block2;
+
+    $ast := mkBlockWithCATCH();
+    lives_ok({ drop_takeclosure($ast) }, 'drop_takeclosure can cope with exception handlers')
+        || diag(dump($ast));
+
+
+    $block1 := QAST::Block.new(
+        QAST::Op.new(:op<iseq_s>,
+            QAST::Var.new(:name('$x')),
+            QAST::Var.new(:name('$name')),
+        )
+    );
+    $block2 := QAST::Block.new(
+        QAST::Var.new(:name('$x'), :decl<param>),
+        QAST::Op.new(:op<takeclosure>,
+            $block1
+        )
+    );
+    $ast := QAST::Op.new(:op<bind>, # &fn := -> $x { -> { $x eq $name } }
+        QAST::Var.new(:name('&fn')),
+        QAST::Op.new(:op<takeclosure>,
+            $block2
+        )
+    );
+    #diag(dump($ast));
+    $ast := drop_takeclosure($ast);
+    #diag(dump($ast));
+
+    ok( istype($ast, QAST::Op) && $ast.op eq 'bind', 'drop_takeclosure / sanity a)') || diag(dump($ast));
+    is( nqp::elems($ast), 2, 'drop_takeclosure / sanity b: childcount)') || diag(dump($ast));
+    ok( istype($ast[0], QAST::Var) && $ast[0].name eq '&fn', 'drop_takeclosure / sanity c)') || diag(dump($ast[0]));
+    is( $ast[1], $block2, 'drop_takeclosure replaces outer Op takeclosure with its child block') || diag(dump($ast[1]));
+    is( nqp::elems($ast[1]), 2, 'drop_takeclosure / sanity d: childcount of outer block)') || diag(dump($ast[1]));
+    ok( istype($ast[1][0], QAST::Var) && $ast[1][0].name eq '$x', 'drop_takeclosure / sanity e)') || diag(dump($ast[1][0]));
+    is( $ast[1][1], $block1, 'drop_takeclosure replaces inner Op takeclosure with its child block') || diag(dump($ast[1][1]));
+    is( nqp::elems($ast[1][1]), 1, 'drop_takeclosure / sanity f: childcount of inner block)') || diag(dump($ast[1][1]));
+    ok( istype($ast[1][1][0], QAST::Op) && $ast[1][1][0].op eq 'iseq_s', 'drop_takeclosure / sanity f)') || diag(dump($ast[1][1][0]));
+}
 
 
 

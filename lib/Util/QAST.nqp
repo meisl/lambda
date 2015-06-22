@@ -290,6 +290,31 @@ class Util::QAST {
         _drop_Stmts($ast, nqp::null)[0];
     }
 
+    method drop_takeclosure($ast) {
+        if istype($ast, QAST::Node) {
+            if istype($ast, QAST::Op) && $ast.op eq 'takeclosure' {
+                my $child := self.drop_takeclosure($ast[0]);  # recurse!
+                if istype($ast, QAST::SpecialArg) {
+                    $child.HOW.mixin($child, QAST::SpecialArg);
+                    $child.flat($ast.flat);
+                    $child.named($ast.named);
+                }
+                $ast := $child;
+            #} elsif istype($ast, QAST::Children) {
+            } elsif nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
+                my @children := [];
+                for $ast.list {
+                    @children.push(self.drop_takeclosure($_));
+                }
+                #$ast.set_children(@children);
+                my @list := $ast.list;
+                while @list { @list.pop }
+                for @children { @list.push($_) }
+            }
+        }
+        $ast;
+    }
+    
     method replace_assoc_and_pos_scoped($ast) {
         TreeWalk.dfs-up(
             -> $n, @p { TreeWalkDo.recurse(:take(istype($n, QAST::VarWithFallback))) },
@@ -347,4 +372,5 @@ sub findPaths(&test, $ast)              is export { Util::QAST.findPaths(&test, 
 sub fix_var_attrs($ast)                 is export { Util::QAST.fix_var_attrs($ast) }
 sub drop_Stmts($ast)                    is export { Util::QAST.drop_Stmts($ast) }
 sub replace_assoc_and_pos_scoped($ast)  is export { Util::QAST.replace_assoc_and_pos_scoped($ast) }
+sub drop_takeclosure($ast)              is export { Util::QAST.drop_takeclosure($ast) }
 
