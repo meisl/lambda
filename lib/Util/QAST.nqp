@@ -291,30 +291,23 @@ class Util::QAST {
     }
 
     method drop_takeclosure($ast) {
-        if istype($ast, QAST::Node) {
-            if istype($ast, QAST::Op) && $ast.op eq 'takeclosure' {
-                my $child := self.drop_takeclosure($ast[0]);  # recurse!
-                if istype($ast, QAST::SpecialArg) {
-                    $child.HOW.mixin($child, QAST::SpecialArg);
-                    $child.flat($ast.flat);
-                    $child.named($ast.named);
+        TreeWalk.dfs-up(
+            -> $n, @p { TreeWalkDo.recurse(:take(istype($n, QAST::Op) && $n.op eq 'takeclosure')) },
+            -> $n, @p {
+                my $child := $n[0];
+                unless (nqp::elems($n.list) == 1) && istype($child, QAST::Block) {
+                    nqp::die('cannot handle ' ~ dump($n));
                 }
-                $ast := $child;
-            #} elsif istype($ast, QAST::Children) {
-            } elsif nqp::can($ast, 'list') { # workaround - not all nodes with children actually do that role
-                my @children := [];
-                for $ast.list {
-                    @children.push(self.drop_takeclosure($_));
+                if istype($n, QAST::SpecialArg) {
+                    $child.flat($n.flat);
+                    $child.named($n.named);
                 }
-                #$ast.set_children(@children);
-                my @list := $ast.list;
-                while @list { @list.pop }
-                for @children { @list.push($_) }
-            }
-        }
-        $ast;
+                TreeWalk.replace($child);
+            },
+            $ast
+        )
     }
-    
+
     method replace_assoc_and_pos_scoped($ast) {
         TreeWalk.dfs-up(
             -> $n, @p { TreeWalkDo.recurse(:take(istype($n, QAST::VarWithFallback))) },

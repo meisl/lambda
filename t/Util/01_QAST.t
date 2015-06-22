@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(118);
+plan(123);
 
 
 sub mkBlockWithCATCH() {
@@ -722,6 +722,29 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     is( $ast[1][1], $block1, 'drop_takeclosure replaces inner Op takeclosure with its child block') || diag(dump($ast[1][1]));
     is( nqp::elems($ast[1][1]), 1, 'drop_takeclosure / sanity f: childcount of inner block)') || diag(dump($ast[1][1]));
     ok( istype($ast[1][1][0], QAST::Op) && $ast[1][1][0].op eq 'iseq_s', 'drop_takeclosure / sanity f)') || diag(dump($ast[1][1][0]));
+
+
+    $block1 := QAST::Block.new(
+        QAST::Var.new(:name('$x'), :decl<param>),
+        QAST::Op.new(:op<iseq_s>,
+            QAST::Var.new(:name('$x')),
+            QAST::Var.new(:name('$name')),
+        )
+    );
+    is( $ast[0].named, '', 'drop_takeclosure as named arg / sanity 0');
+    $ast := QAST::Op.new(:op<call>, :name('&qumbl'),    # `qumbl(:fn(-> $x { $x eq $name }))`
+        QAST::Op.new(:op<takeclosure>, :named<fn>,
+            $block1
+        )
+    );
+    #diag(dump($ast));
+    $ast := drop_takeclosure($ast);
+    #diag(dump($ast));
+
+    ok( istype($ast, QAST::Op) && $ast.op eq 'call', 'drop_takeclosure as named arg / sanity a)') || diag(dump($ast));
+    is( nqp::elems($ast), 1, 'drop_takeclosure as named arg / sanity b: child count of top node)') || diag(dump($ast));
+    is( $ast[0], $block1, 'drop_takeclosure as named arg - replaces Op takeclosure with its child');
+    is( $ast[0].named, 'fn', 'drop_takeclosure as named arg - copies .named attr if necessary');
 }
 
 

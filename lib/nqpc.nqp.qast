@@ -30,127 +30,7 @@
     ║ ├○ &fix_var_attrs :decl(static) :default((NQPRoutine, invokable))
     ║ ├○ &drop_Stmts :decl(static) :default((NQPRoutine, invokable))
     ║ ├○ &replace_assoc_and_pos_scoped :decl(static) :default((NQPRoutine, invokable))
-    ║ ├─bind
-    ║ │ ├○ &drop_takeclosure :decl(var)
-    ║ │ └─:Block  ««"{\n    nqp::die('drop_takeclosure expects a QAST::N"...
-    ║ │   ╟─:Stmts
-    ║ │   ║ └○ $ast :decl(param)
-    ║ │   ╙─:Stmts  ««"\n    nqp::die('drop_takeclosure expects a QAST::No"...
-    ║ │     ├─:Stmts
-    ║ │     │ └─unless  ««"nqp::die('drop_takeclosure expects a QAST::Node - g"...
-    ║ │     │   ├─call &istype  ««"$ast, QAST::Node"
-    ║ │     │   │ ├○ $ast
-    ║ │     │   │ └◙ WVal QAST::Node
-    ║ │     │   └─die  ««"nqp::die('drop_takeclosure expects a QAST::Node - g"...
-    ║ │     │     └─concat &infix:<~>  ««"~"
-    ║ │     │       ├◙ SVal "drop_takeclosure expects a QAST::Node - got "
-    ║ │     │       └─reprname  ««"nqp::reprname($ast)"
-    ║ │     │         └○ $ast
-    ║ │     ├─:Stmts
-    ║ │     │ └─if  ««"istype($ast, QAST::Op) && $ast.op eq 'takeclosure' "...
-    ║ │     │   ├─if &infix:<&&>  ««"&&"
-    ║ │     │   │ ├─call &istype  ««"$ast, QAST::Op"
-    ║ │     │   │ │ ├○ $ast
-    ║ │     │   │ │ └◙ WVal QAST::Op
-    ║ │     │   │ └─iseq_s &infix:<eq>  ««"eq"
-    ║ │     │   │   ├─callmethod op  ««".op"
-    ║ │     │   │   │ └○ $ast
-    ║ │     │   │   └◙ SVal "takeclosure"
-    ║ │     │   ├─:Block :blocktype(immediate)  ««"{\n        my $child := drop_takeclosure($ast[0]); "...
-    ║ │     │   │ ╟─:Stmts
-    ║ │     │   │ ║ └○ $child :decl(var)
-    ║ │     │   │ ╙─:Stmts  ««"\n        my $child := drop_takeclosure($ast[0]);  "...
-    ║ │     │   │   ├─:Stmts
-    ║ │     │   │   │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$child := drop_takeclosure($ast[0])"
-    ║ │     │   │   │   ├○ $child
-    ║ │     │   │   │   └─call &drop_takeclosure  ««"$ast[0]"
-    ║ │     │   │   │     └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║ │     │   │   │       ├○ $ast
-    ║ │     │   │   │       └◙ IVal 0
-    ║ │     │   │   ├─:Stmts
-    ║ │     │   │   │ └─if  ««"istype($ast, QAST::SpecialArg) {\n            $chil"...
-    ║ │     │   │   │   ├─call &istype  ««"$ast, QAST::SpecialArg"
-    ║ │     │   │   │   │ ├○ $ast
-    ║ │     │   │   │   │ └◙ WVal QAST::SpecialArg
-    ║ │     │   │   │   └─:Stmts  ««"{\n            $child.HOW.mixin($child, QAST::Speci"...
-    ║ │     │   │   │     ├─:Stmts
-    ║ │     │   │   │     └─:Stmts  ««"\n            $child.HOW.mixin($child, QAST::Specia"...
-    ║ │     │   │   │       ├─:Stmts
-    ║ │     │   │   │       │ └─callmethod mixin  ««"$child, QAST::SpecialArg"
-    ║ │     │   │   │       │   ├─how  ««".HOW"
-    ║ │     │   │   │       │   │ └○ $child
-    ║ │     │   │   │       │   ├○ $child
-    ║ │     │   │   │       │   └◙ WVal QAST::SpecialArg
-    ║ │     │   │   │       ├─:Stmts
-    ║ │     │   │   │       │ └─callmethod flat  ««"$ast.flat"
-    ║ │     │   │   │       │   ├○ $child
-    ║ │     │   │   │       │   └─callmethod flat  ««".flat"
-    ║ │     │   │   │       │     └○ $ast
-    ║ │     │   │   │       └─:Stmts
-    ║ │     │   │   │         └─callmethod named  ««"$ast.named"
-    ║ │     │   │   │           ├○ $child
-    ║ │     │   │   │           └─callmethod named  ««".named"
-    ║ │     │   │   │             └○ $ast
-    ║ │     │   │   └─:Stmts
-    ║ │     │   │     └─bind &infix:<:=>  ««":="
-    ║ │     │   │       ├○ $ast
-    ║ │     │   │       └○ $child
-    ║ │     │   └─if  ««"nqp::can($ast, 'list') { # workaround - not all nod"...
-    ║ │     │     ├─can  ««"nqp::can($ast, 'list')"
-    ║ │     │     │ ├○ $ast
-    ║ │     │     │ └◙ SVal "list"
-    ║ │     │     └─:Block :blocktype(immediate)  ««"{ # workaround - not all nodes with children actual"...
-    ║ │     │       ╟─:Stmts
-    ║ │     │       ║ ├○ @children :decl(var)
-    ║ │     │       ║ └○ @list :decl(var)
-    ║ │     │       ╙─:Stmts  ««" # workaround - not all nodes with children actuall"...
-    ║ │     │         ├─:Stmts
-    ║ │     │         │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@children := []"
-    ║ │     │         │   ├○ @children
-    ║ │     │         │   └─list &circumfix:<[ ]>
-    ║ │     │         ├─:Stmts
-    ║ │     │         │ └─for  ««"$ast.list {\n            @children.push(drop_takecl"...
-    ║ │     │         │   ├─callmethod list  ««".list"
-    ║ │     │         │   │ └○ $ast
-    ║ │     │         │   ├─:Block :blocktype(immediate)  ««"{\n            @children.push(drop_takeclosure($_))"...
-    ║ │     │         │   │ ╟─:Stmts
-    ║ │     │         │   │ ║ └○ $_ :decl(param)
-    ║ │     │         │   │ ╙─:Stmts  ««"\n            @children.push(drop_takeclosure($_));"...
-    ║ │     │         │   │   └─:Stmts
-    ║ │     │         │   │     └─callmethod push  ««"drop_takeclosure($_)"
-    ║ │     │         │   │       ├○ @children
-    ║ │     │         │   │       └─call &drop_takeclosure  ««"$_"
-    ║ │     │         │   │         └○ $_
-    ║ │     │         │   └◙ IVal 1 :named("nohandler")
-    ║ │     │         ├─:Stmts
-    ║ │     │         │ └─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@list := $ast.list"
-    ║ │     │         │   ├○ @list
-    ║ │     │         │   └─callmethod list  ««".list"
-    ║ │     │         │     └○ $ast
-    ║ │     │         ├─:Stmts
-    ║ │     │         │ └─while  ««"@list { @list.pop }"
-    ║ │     │         │   ├○ @list
-    ║ │     │         │   ├─:Stmts  ««"{ @list.pop }"
-    ║ │     │         │   │ ├─:Stmts
-    ║ │     │         │   │ └─:Stmts  ««" @list.pop "
-    ║ │     │         │   │   └─:Stmts
-    ║ │     │         │   │     └─callmethod pop  ««".pop"
-    ║ │     │         │   │       └○ @list
-    ║ │     │         │   └◙ IVal 1 :named("nohandler")
-    ║ │     │         └─:Stmts
-    ║ │     │           └─for  ««"@children { @list.push($_) }"
-    ║ │     │             ├○ @children
-    ║ │     │             ├─:Block :blocktype(immediate)  ««"{ @list.push($_) }"
-    ║ │     │             │ ╟─:Stmts
-    ║ │     │             │ ║ └○ $_ :decl(param)
-    ║ │     │             │ ╙─:Stmts  ««" @list.push($_) "
-    ║ │     │             │   └─:Stmts
-    ║ │     │             │     └─callmethod push  ««"$_"
-    ║ │     │             │       ├○ @list
-    ║ │     │             │       └○ $_
-    ║ │     │             └◙ IVal 1 :named("nohandler")
-    ║ │     └─:Stmts
-    ║ │       └○ $ast
+    ║ ├○ &drop_takeclosure :decl(static) :default((NQPRoutine, invokable))
     ║ ├─bind
     ║ │ ├○ &isinResultPosition :decl(var)
     ║ │ └─:Block  ««"{\n    my $n := nqp::elems($parent) - 1;\n    if ($"...
@@ -1958,8 +1838,6 @@
     ║ │ └─:Stmts :annotations(#`{BOOTHash:}nqp::hash( "use", "Util" (str) ))  ««"use Util"
     ║ ├─:Stmts
     ║ │ └─:Stmts :annotations(#`{BOOTHash:}nqp::hash( "use", "Util::QAST" (str) ))  ««"use Util::QAST"
-    ║ ├─:Stmts
-    ║ │ └○ &drop_takeclosure
     ║ ├─:Stmts
     ║ │ └○ &isinResultPosition
     ║ ├─:Stmts
