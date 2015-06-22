@@ -249,45 +249,53 @@ class Util::QAST {
         );
     }
 
-    my sub _drop_Stmts($ast, $parent) {
-        #nqp::die('dropStmts expects a QAST::Node - got ' ~ describe($ast) )
-        return [$ast]
-            unless istype($ast, QAST::Node);
-
-        if nqp::can($ast, 'resultchild') && nqp::isint($ast.resultchild) && nqp::elems($ast.list) != $ast.resultchild + 1 {
-            return [$ast];   # don't muck with that...
-        }
-
-        my @children := [];
-        for $ast.list {
-            for _drop_Stmts($_, $ast) {
-                @children.push($_);
-            }
-        }
-        if istype($ast, QAST::Stmts)    # do not remove Stmt!
-            && !nqp::isnull($parent)
-            && (
-                  istype($parent, QAST::CompUnit, QAST::Block, QAST::Stmts, QAST::Stmt) 
-               || (nqp::elems(@children) < 2)
-            )
-        {
-            return @children; # return the Stmts' children as is, dropping the Stmts node
-        } else {
-            #$ast.set_children(@children);
-            my @list := $ast.list;
-            while ?@list { @list.pop }
-            for @children { @list.push($_) }
-            if istype($ast, QAST::Stmts, QAST::Stmt) && nqp::isint($ast.resultchild) {  # fixup :resultchild if necessary
-                #$ast.resultchild(nqp::elems(@children) - 1);
-                nqp::bindattr($ast, QAST::Stmts, '$!resultchild', NO_VALUE);
-            }
-        }
-
-        return [$ast];
-    }
-
     method drop_Stmts($ast) {
-        _drop_Stmts($ast, nqp::null)[0];
+        TreeWalk.dfs-up(
+            -> $n, @p {
+                my $take := istype($n, QAST::Stmts);    # do not remove Stmt (singular, no trailing "s")!
+                if $take && nqp::isint($n.resultchild) {
+                    $take := $n.resultchild == nqp::elems($n.list) - 1;
+                }
+                TreeWalkDo.recurse(:$take);
+            },
+            -> $n, @p {
+                if @p {
+                    my $parent := @p[0];
+                    if istype($parent, QAST::Stmts, QAST::Stmt) {
+                        my $i := 0;
+                        $i++ until $n =:= $parent[$i];  # TODO: index alredy available in dfs-up...
+                        my $r := $parent.resultchild;
+                        my $s := nqp::elems($parent);
+                        # TODO: don't remove empty Stmts if in result position
+                        if nqp::isint($r) {
+                            my $l := nqp::elems($n);
+                            if $i <= $r {
+                                $r := $r + $l - 1;
+                            }
+                            if $r == $s + $l - 2 {  # new nr of parent's children
+                                nqp::bindattr(
+                                    $parent, 
+                                    istype($parent, QAST::Stmts) ?? QAST::Stmts !! QAST::Stmt, 
+                                    '$!resultchild',
+                                    nqp::null
+                                );
+                            } else {
+                                $parent.resultchild($r);
+                            }
+                        }
+                        TreeWalk.replace(|$n.list);
+                    } elsif istype($parent, QAST::CompUnit, QAST::Block) || nqp::elems($n) < 2 {
+                        # TODO: don't remove empty Stmts if in result position
+                        TreeWalk.replace(|$n.list);
+                    }
+                } else { # is topmost node
+                    if nqp::elems($n) == 1 {
+                        TreeWalk.replace($n[0]);
+                    }
+                }
+            },
+            $ast
+        )
     }
 
     method drop_takeclosure($ast) {

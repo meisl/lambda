@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(123);
+plan(129);
 
 
 sub mkBlockWithCATCH() {
@@ -339,17 +339,16 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     $stmts_needed.annotate('NOTE', ':resultchild needs fixup if inner Stmts is dropped');
 
-    my $stmts_topmost := QAST::Stmts.new(
-        QAST::Block.new(
-            QAST::Var.new(:name<$x>, :decl<param>),
-            QAST::Op.new(:op<say>,
-                $stmts_needed
-            ),
-        )
+    my $block := QAST::Block.new(
+        QAST::Var.new(:name<$x>, :decl<param>),
+        QAST::Op.new(:op<say>,
+            $stmts_needed
+        ),
     );
+    my $stmts_topmost := QAST::Stmts.new($block);
     my $ast := $stmts_topmost;
-
-    diag('check :resultChild fixup in ' ~ $STMT_KIND.HOW.name($STMT_KIND) ~ "\n" ~ dump($ast));
+    my $STMT_WHAT := $STMT_KIND.HOW.name($STMT_KIND);
+    #diag("check :resultChild fixup in $STMT_WHAT\n" ~ dump($ast));
 
     sub resultterm($node) {
         nqp::die('"resultterm expects either a Block, Stmts or Stmt - got ' ~ describe($node))
@@ -362,16 +361,16 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
             !! $node[$i];
     }
 
-    is(resultterm($stmts_inner), $resultVar, 'result term of the inner Stmts')
+    is(resultterm($stmts_inner), $resultVar, 'result term of the inner Stmts (sanity)')
         || diag(dump($stmts_inner));
-    is(resultterm($stmts_needed), $stmts_inner, 'result term of the outer Stmts')
+    is(resultterm($stmts_needed), $stmts_inner, "result term of the outer $STMT_WHAT (sanity)")
         || diag(dump($stmts_needed));
 
     $ast := drop_Stmts($ast);
 
-    is($ast, $stmts_topmost, 'topmost Stmts is not dropped');
+    is($ast, $block, 'topmost Stmts is dropped') || diag(dump($ast));
 
-    is($ast[0][1][0], $stmts_needed, 'Stmts under `say` is not dropped')
+    is($ast[1][0], $stmts_needed, "$STMT_WHAT under `say` is not dropped because it has > 1 children")
         || diag(dump($ast));
     is(resultterm($stmts_needed), $resultVar, 'either :resultchild is set to correct value or deleted')
         || diag(dump($ast));
@@ -424,7 +423,47 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     lives_ok({ $out := drop_Stmts($ast) }, 'drop_Stmts can cope with exception handlers')
         || diag(dump($ast));
 
+    my $bind1 := QAST::Op.new(:op<bind>,
+        QAST::Var.new(:name('$x')),
+        QAST::IVal.new(:value(7))
+    );
+    my $bind2 := QAST::Op.new(:op<bind>,
+        QAST::Var.new(:name('$x')),
+        QAST::Op.new(:op<add_i>,
+            QAST::Var.new(:name('$x')),
+            QAST::IVal.new(:value(42))
+        )
+    );
+    my $wval_mu := QAST::WVal.new(:value(NQPMu));
+    my $bind3 := QAST::Op.new(:op<bind>,
+        QAST::Var.new(:name('$x')),
+        QAST::Op.new(:op<sub_i>,
+            QAST::Var.new(:name('$x')),
+            QAST::IVal.new(:value(23))
+        )
+    );
+    my $outer := QAST::Stmts.new(:resultchild(1), # not removed due to resultchild
+        QAST::Stmts.new(    # to be removed - but parent's resultchild needs adjustment
+            $bind1,
+            $bind2,
+        ),
+        $wval_mu,
+        $bind3
+    );
+    $ast := QAST::CompUnit.new($outer);
+
+    #diag(dump($ast));
+    $ast := drop_Stmts($ast);
+    #diag(dump($ast));
+
+    is( $ast[0], $outer, 'outer Stmts not dropped due to :resultchild') || diag(dump($ast[0]));
+    is( $outer[0], $bind1, 'inner Stmts has been dropped (a)') || diag(dump($outer[0]));
+    is( $outer[1], $bind2, 'inner Stmts has been dropped (b)') || diag(dump($outer[1]));
+    is( $outer[2], $wval_mu, 'inner Stmts has been dropped (c)') || diag(dump($outer[2]));
+    is( $outer[3], $bind3, 'inner Stmts has been dropped (d)') || diag(dump($outer[3]));
+    is( $outer.resultchild, 2, 'resultchild of outer Stmts is fixed') || diag(dump($outer));
 }
+
 
 { # replace_assoc_and_pos_scoped ----------------------------------------------
     my $ast;
@@ -678,6 +717,7 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     is( $ast[0][0][2].op, 'atpos', '"positional" VarWithFallback ~> Op atpos') || diag(dump($ast));
     is( $ast[0][0][2][0].name, '@xs', '"positional" VarWithFallback, 1st child') || diag(dump($ast));
     is( $ast[0][0][2][1].value, 0, '"positional" VarWithFallback, 2nd child') || diag(dump($ast));
+
 }
 
 
