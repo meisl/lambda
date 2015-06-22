@@ -5,7 +5,7 @@ use Util::QAST;
 
 use Util::TreeWalk;
 
-plan(186);
+plan(197);
 
 
 
@@ -418,6 +418,55 @@ is(           @ccalls[3][1][1], $tree1[1],      'consumer call 4 arg pathUp[1]')
 is(           @ccalls[3][1][2], $tree1,         'consumer call 4 arg pathUp[2]');
 
 
+{ # TreeWalk.replace / .remove used in consumer
+    my $out;
+    my $replacement := "foo";
+
+    $out := TreeWalk.dfs-up(
+        -> $n, @p { TreeWalkDo.recurse(:take) },
+        -> $n, @p { @p ?? $n !! TreeWalk.replace($replacement) },
+        [1, 2, [3, 4], 5 ]
+    );
+    is( $out, $replacement, 'if consumer returns a (single) replacement for the top node, that is returned from dfs-up');
+
+    dies_ok( { TreeWalk.dfs-up(
+        -> $n, @p { TreeWalkDo.recurse(:take) },
+        -> $n, @p { @p ?? $n !! TreeWalk.replace($replacement, "bar") },
+        [1, 2, [3, 4], 5 ]
+    ) }, 'dfs-up dies if top node is replaced by more than one thing by consumer');
+
+    dies_ok( { TreeWalk.dfs-up(
+        -> $n, @p { TreeWalkDo.recurse(:take) },
+        -> $n, @p { @p ?? $n !! TreeWalk.remove() },
+        [1, 2, [3, 4], 5 ]
+    ) }, 'dfs-up dies if top node is replaced by nothing by consumer');
+
+    $out := TreeWalk.dfs-up(
+        -> $n, @p { TreeWalkDo.recurse(:take(nqp::isint($n))) },
+        -> $n, @p { 
+            if ($n % 2) == 0 {
+                my @out := [];
+                my $k := $n;
+                while ($k > 0) {
+                    @out.push('x' ~ $n);
+                    $k--;
+                }
+                TreeWalk.replace(|@out);
+            } else {
+                TreeWalk.remove()
+            }
+        },
+        [1, 2, [3, 4], 5]
+    );
+    is( nqp::elems($out), 3, '.replace/.removes works for inner node with dfs-up (a0)') || diag($out);
+    is( $out[0], 'x2', '.replace/.removes works for inner node with dfs-up (a1)');
+    is( $out[1], 'x2', '.replace/.removes works for inner node with dfs-up (a2)');
+    is( nqp::elems($out[2]), 4, '.replace/.removes works for inner node with dfs-up (b0)') || diag($out[2]);
+    is( $out[2][0], 'x4', '.replace/.removes works for inner node with dfs-up (b1)');
+    is( $out[2][1], 'x4', '.replace/.removes works for inner node with dfs-up (b2)');
+    is( $out[2][2], 'x4', '.replace/.removes works for inner node with dfs-up (b3)');
+    is( $out[2][3], 'x4', '.replace/.removes works for inner node with dfs-up (b4)');
+}
 
 
 

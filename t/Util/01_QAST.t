@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(101);
+plan(107);
 
 
 sub mkBlockWithCATCH() {
@@ -428,7 +428,32 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     $ast := mkBlockWithCATCH;
     lives_ok({ replace_assoc_and_pos_scoped($ast) }, 'replace_assoc_and_pos_scoped can cope with exception handlers')
         || diag(dump($ast));
-    
+
+
+    # `@xs[0]`
+    $ast := QAST::VarWithFallback.new(:scope<positional>, :fallback(QAST::WVal.new(:value(NQPMu))),
+        QAST::Var.new(:name('@xs')),
+        QAST::IVal.new(:value(0))
+    );
+    #diag(dump($ast));
+    $ast := replace_assoc_and_pos_scoped($ast);
+    ok( istype($ast, QAST::Op) && $ast.op eq 'atpos', '"positional" scoped VarWithFallback ~> Op atpos') || diag(dump($ast));
+    is( $ast[0].name, '@xs', '"positional" scoped VarWithFallback, 1st child') || diag(dump($ast));
+    is( $ast[1].value, 0, '"positional" scoped VarWithFallback, 2nd child') || diag(dump($ast));
+
+
+    # `%xs<somekey>`
+    $ast := QAST::VarWithFallback.new(:scope<associative>, :fallback(QAST::WVal.new(:value(NQPMu))),
+        QAST::Var.new(:name('%xs')),
+        QAST::SVal.new(:value<somekey>)
+    );
+    #diag(dump($ast));
+    $ast := replace_assoc_and_pos_scoped($ast);
+    ok( istype($ast, QAST::Op) && $ast.op eq 'atkey', '"associative" scoped VarWithFallback ~> Op atpos') || diag(dump($ast));
+    is( $ast[0].name, '%xs', '"associative" scoped VarWithFallback, 1st child') || diag(dump($ast));
+    is( $ast[1].value, 'somekey', '"associative" scoped VarWithFallback, 2nd child') || diag(dump($ast));
+
+
     $ast := QAST::Stmts.new(    # `say(@xs[0])`
         QAST::Op.new(:op<say>,
             QAST::VarWithFallback.new(:scope<positional>, :fallback(QAST::WVal.new(:value(NQPMu))),

@@ -107,20 +107,31 @@ class TreeWalk {
         if $x.take && !$y.halt {
             my $z := &consumer($node, @pathUp);
             if istype($z, TreeWalk) {
-                nqp::splice(&children(@pathUp[0]), $z.payload, $index, 1);
+                if @pathUp {
+                    nqp::splice(&children(@pathUp[0]), $z.payload, $index, 1);
+                } else {
+                    if nqp::elems($z.payload) == 1 {
+                        return $z.payload[0];
+                    } else {
+                        nqp::die('can return only single node as final result - got ' ~ describe($z.payload));
+                    }
+                }
                 $redo := 1;
             }
         }
-        if $y.break || $y.halt {
-            $y, $redo;
+        if @pathUp {
+            if $y.break || $y.halt {
+                $y, $redo;
+            } else {
+                $x, $redo;
+            }
         } else {
-            $x, $redo;
+            $node;
         }
     }
     
     method dfs-up(&probe, &consumer, $node, :&children = &_children) {
         _dfs-up(&probe, &consumer, $node, -1, [], &children);
-        $node;
     }
 
     has $!payload;
