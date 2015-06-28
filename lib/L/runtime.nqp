@@ -227,8 +227,6 @@ sub stats() {
 
 
 sub MAIN(*@ARGS) {
-    
-    
     my $lambda2 := [
         'λ1',                           # id: tag 'λ' and idx into %λinfo
         -> *@as { 'λ1(...) called' },   # code
