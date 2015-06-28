@@ -29,7 +29,7 @@ class Backtrace is export {
             @parts := nqp::split(':', $bin_part);
             # work backwards now (via pop) in order to not get confused by ':' in file name (on Windows)
             unless +@parts {
-                nqp::die('>>>> ' ~ Testing.describe($bin_part) ~ '|' ~ Testing.describe($raw_framestring) ~ '|' ~ @parts[1]);
+                nqp::die('>>>> ' ~ describe($bin_part) ~ '|' ~ describe($raw_framestring) ~ '|' ~ @parts[1]);
             }
             %!fields<line_bin> := @parts.pop;
             %!fields<sub_name> := @parts.pop;
