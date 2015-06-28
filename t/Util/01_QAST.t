@@ -6,7 +6,78 @@ use Util;
 
 use Util::QAST;
 
-plan(129);
+plan(184);
+
+
+
+sub isa_nok($actual, $refutedType, str $desc) {
+    my $result;
+    if $refutedType =:= str {
+        $result := !nqp::isstr($actual);
+    } elsif $refutedType =:= int {
+        $result := !nqp::isint($actual);
+    } elsif $refutedType =:= num {
+        $result := !nqp::isnum($actual);
+    } else {
+        $result := !istype($actual, $refutedType);
+    }
+    unless $result {
+        $desc := $desc ~ "\n  # expected: something other than a " ~ $refutedType.HOW.name($refutedType)
+                       ~ "\n  #      got: " ~ describe($actual)
+        ;
+    }
+    ok($result, $desc);
+}
+
+
+sub isa_ok($actual, $expectedType, str $desc, *%attributes) {
+    my $result;
+    if $expectedType =:= str {
+        $result := nqp::isstr($actual);
+    } elsif $expectedType =:= int {
+        $result := nqp::isint($actual);
+    } elsif $expectedType =:= num {
+        $result := nqp::isnum($actual);
+    } else {
+        $result := istype($actual, $expectedType);
+    }
+    if ($result && %attributes) {
+        my $attrIt := nqp::iterator(%attributes);
+        my $tests := -> {
+            while $result && $attrIt {
+                nqp::shift($attrIt);
+                my $m := $attrIt.key;
+                my $xv := $attrIt.value;
+                if nqp::can($actual, $attrIt.key) {
+                    my $av := nqp::callmethod($actual, $m);
+                    my $d:= $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
+                                    ~ " where .$m is " ~ describe($xv)
+                                  ~ "\n  #   actual: " ~ describe($actual)
+                    ;
+                    unless is($av, $xv, $d) {
+                        $desc := $d;
+                        $result := 0;
+                    }
+                } else {
+                    $desc := $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
+                                        ~ " where .$m is " ~ describe($xv)
+                                   ~ "\n  #   actual: " ~ describe($actual)
+                                   ~ "\n  #      got: \"Cannot find method $m\""
+                    ;
+                    $result := ok(0, $desc);
+                }
+            }
+            $result;
+        };
+        return passes_ok($tests, $desc);
+    } else {
+        $desc := $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
+                       ~ "\n  #      got: " ~ describe($actual)
+        ;
+        return ok($result, $desc);
+    }
+}
+
 
 
 sub mkBlockWithCATCH() {
@@ -66,7 +137,7 @@ my $w := QAST::WVal.new(:value(NQPMu));
 is(dump($w), '─◙ WVal NQPMu', 'dump world value NQPMu');
 
 my $vwf := QAST::VarWithFallback.new(:scope<positional>, :fallback(QAST::WVal.new(:value(NQPMu))), :decl(nqp::null_s));
-is(dump($vwf), '─○┬VarWithFallback positional :fallback(WVal NQPMu)', 'dump VarWithFallback');
+is(dump($vwf), '─○┬VarWithFallback positional :fallback(WVal NQPMu)', 'dump VarWithFallback') || diag(dump($vwf));
 is(dump($vwf, :oneLine), '(VarWithFallback positional :fallback(WVal NQPMu))', 'dump VarWithFallback :oneLine');
 
 my $s := QAST::SVal.new(:value<bar>);
@@ -480,10 +551,11 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     $ast := replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast, QAST::Op) && $ast.op eq 'atpos', '"positional" scoped VarWithFallback ~> Op atpos') || diag(dump($ast));
-    is( $ast[0].name, '@xs', '"positional" scoped VarWithFallback, 1st child') || diag(dump($ast));
-    is( $ast[1].value, 0, '"positional" scoped VarWithFallback, 2nd child') || diag(dump($ast));
-
+    isa_ok( $ast,       QAST::Op, :op<ifnull>,      '"positional" scoped VarWithFallback ~> Op ifnull ...') || diag(dump($ast));
+    isa_ok( $ast[0],    QAST::Op, :op<atpos>,       '"positional" scoped VarWithFallback ~> Op ifnull atpos ...') || diag(dump($ast));
+    isa_ok( $ast[1],    QAST::WVal, :value(NQPMu),  '"positional" scoped VarWithFallback ~> Op ifnull ... WVal(NQPMu)') || diag(dump($ast));
+    isa_ok( $ast[0][0], QAST::Var, :name('@xs'),    '"positional" scoped VarWithFallback, atpos\' 1st child') || diag(dump($ast));
+    isa_ok( $ast[0][1], QAST::IVal, :value(0),      '"positional" scoped VarWithFallback, atpos\' 2nd child') || diag(dump($ast));
 
     # `%xs<somekey>`
     $ast := QAST::VarWithFallback.new(:scope<associative>, :fallback(QAST::WVal.new(:value(NQPMu))),
@@ -492,10 +564,11 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     $ast := replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast, QAST::Op) && $ast.op eq 'atkey', '"associative" scoped VarWithFallback ~> Op atpos') || diag(dump($ast));
-    is( $ast[0].name, '%xs', '"associative" scoped VarWithFallback, 1st child') || diag(dump($ast));
-    is( $ast[1].value, 'somekey', '"associative" scoped VarWithFallback, 2nd child') || diag(dump($ast));
-
+    isa_ok( $ast,       QAST::Op, :op<ifnull>,       '"associative" scoped VarWithFallback ~> Op ifnull ...') || diag(dump($ast));
+    isa_ok( $ast[0],    QAST::Op, :op<atkey>,        '"associative" scoped VarWithFallback ~> Op ifnull atkey ...') || diag(dump($ast));
+    isa_ok( $ast[1],    QAST::WVal, :value(NQPMu),   '"associative" scoped VarWithFallback ~> Op ifnull ... WVal(NQPMu)') || diag(dump($ast));
+    isa_ok( $ast[0][0], QAST::Var, :name('%xs'),     '"associative" scoped VarWithFallback, atkey\'s 1st child') || diag(dump($ast));
+    isa_ok( $ast[0][1], QAST::SVal, :value<somekey>, '"associative" scoped VarWithFallback, atkey\'s 2nd child') || diag(dump($ast));
 
     $ast := QAST::Stmts.new(    # `say(@xs[0])`
         QAST::Op.new(:op<say>,
@@ -507,11 +580,15 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'atpos', '"positional" scoped VarWithFallback ~> Op atpos')
-        || diag(dump($ast));
-    ok( !istype($ast[0][0], QAST::SpecialArg), 'filled in Op should not be SpecialArg when original wasn\'t one')
-        || diag(dump($ast));
-
+    {
+        my $n := $ast[0][0];
+        isa_nok($n, QAST::SpecialArg, 'filled in Op should not be SpecialArg when original wasn\'t one') || diag(dump($ast));
+        isa_ok( $n,       QAST::Op, :op<ifnull>,     '"positional" scoped VarWithFallback ~> Op ifnull ...') || diag(dump($ast));
+        isa_ok( $n[0],    QAST::Op, :op<atpos>,      '"positional" scoped VarWithFallback ~> Op ifnull atpos ...') || diag(dump($ast));
+        isa_ok( $n[1],    QAST::WVal, :value(NQPMu), '"positional" scoped VarWithFallback ~> Op ifnull ... WVal(NQPMu)') || diag(dump($ast));
+        isa_ok( $n[0][0], QAST::Var, :name('@xs'),   '"positional" scoped VarWithFallback ~> atpos\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[0][1], QAST::IVal, :value(0),     '"positional" scoped VarWithFallback ~> atpos\'s 2nd child') || diag(dump($ast));
+    }
 
     $ast := QAST::Stmts.new(    # `say(%xs<somekey>)`
         QAST::Op.new(:op<say>,
@@ -523,11 +600,10 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'atkey', '"associative" scoped VarWithFallback ~> Op atpos')
-        || diag(dump($ast));
-    ok( !istype($ast[0][0], QAST::SpecialArg), 'filled in Op should not be SpecialArg when original wasn\'t one')
-        || diag(dump($ast));
-
+    {
+        my $n := $ast[0][0];
+        isa_nok($n, QAST::SpecialArg, 'filled in Op should not be SpecialArg when original wasn\'t one') || diag(dump($ast));
+    }
 
     $ast := QAST::Stmts.new(    # `foo(:bar(@xs[0]))`
         QAST::Op.new(:op<call>, :name('&foo'),
@@ -539,10 +615,15 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'atpos', '"positional" scoped VarWithFallback ~> Op atpos; as named arg')
-        || diag(dump($ast));
-    is($ast[0][0].named, 'bar', 'attr .named of replacement node')
-        || diag(dump($ast));
+    {
+        my $n := $ast[0][0];
+        isa_ok( $n, QAST::SpecialArg, :named<bar>, :flat(0), 'filled in Op should be SpecialArg when original was one') || diag(dump($ast));
+        isa_ok( $n,       QAST::Op, :op<ifnull>,     '"positional" scoped VarWithFallback as named arg ~> Op ifnull ...') || diag(dump($ast));
+        isa_ok( $n[0],    QAST::Op, :op<atpos>,      '"positional" scoped VarWithFallback as named arg ~> Op ifnull atpos ...') || diag(dump($ast));
+        isa_ok( $n[1],    QAST::WVal, :value(NQPMu), '"positional" scoped VarWithFallback as named arg ~> Op ifnull ... WVal(NQPMu)') || diag(dump($ast));
+        isa_ok( $n[0][0], QAST::Var, :name('@xs'),   '"positional" scoped VarWithFallback as named arg ~> atpos\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[0][1], QAST::IVal, :value(0),     '"positional" scoped VarWithFallback as named arg ~> atpos\'s 2nd child') || diag(dump($ast));
+    }
 
 
     $ast := QAST::Stmts.new(    # `foo(:bar(%xs<somekey>))`
@@ -555,10 +636,15 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'atkey', '"associative" scoped VarWithFallback ~> Op atpos; as named arg')
-        || diag(dump($ast));
-    is($ast[0][0].named, 'bar', 'attr .named of replacement node')
-        || diag(dump($ast));
+    {
+        my $n := $ast[0][0];
+        isa_ok( $n, QAST::SpecialArg, :named<bar>, :flat(0), 'filled in Op should be SpecialArg when original was one') || diag(dump($ast));
+        isa_ok( $n,       QAST::Op, :op<ifnull>,        '"associative" scoped VarWithFallback as named arg ~> Op ifnull ...') || diag(dump($ast));
+        isa_ok( $n[0],    QAST::Op, :op<atkey>,         '"associative" scoped VarWithFallback as named arg ~> Op ifnull atkey ...') || diag(dump($ast));
+        isa_ok( $n[1],    QAST::WVal, :value(NQPMu),    '"associative" scoped VarWithFallback as named arg ~> Op ifnull ... WVal(NQPMu)') || diag(dump($ast));
+        isa_ok( $n[0][0], QAST::Var, :name('%xs'),      '"associative" scoped VarWithFallback as named arg ~> atkey\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[0][1], QAST::SVal, :value<somekey>,  '"associative" scoped VarWithFallback as named arg ~> atkey\'s 2nd child') || diag(dump($ast));
+    }
 
 
     $ast := QAST::Stmts.new(    # `qumbl(|@xs[0])`
@@ -571,10 +657,15 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'atpos', '"positional" scoped VarWithFallback ~> Op atpos; as flat arg')
-        || diag(dump($ast));
-    ok($ast[0][0].flat, 'attr .flat of replacement node')
-        || diag(dump($ast));
+    {
+        my $n := $ast[0][0];
+        isa_ok( $n, QAST::SpecialArg, :named(NQPMU), :flat(1), 'filled in Op should be SpecialArg when original was one') || diag(dump($ast));
+        isa_ok( $n,       QAST::Op, :op<ifnull>,     '"positional" scoped VarWithFallback as flat arg ~> Op ifnull ...') || diag(dump($ast));
+        isa_ok( $n[0],    QAST::Op, :op<atpos>,      '"positional" scoped VarWithFallback as flat arg ~> Op ifnull atpos ...') || diag(dump($ast));
+        isa_ok( $n[1],    QAST::WVal, :value(NQPMu), '"positional" scoped VarWithFallback as flat arg ~> Op ifnull ... WVal(NQPMu)') || diag(dump($ast));
+        isa_ok( $n[0][0], QAST::Var, :name('@xs'),   '"positional" scoped VarWithFallback as flat arg ~> atpos\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[0][1], QAST::IVal, :value(0),     '"positional" scoped VarWithFallback as flat arg ~> atpos\'s 2nd child') || diag(dump($ast));
+    }
 
 
     $ast := QAST::Stmts.new(    # `qumbl(|%xs<somekey>)`
@@ -587,10 +678,15 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'atkey', '"associative" scoped VarWithFallback ~> Op atpos; as flat arg')
-        || diag(dump($ast));
-    ok($ast[0][0].flat, 'attr .flat of replacement node')
-        || diag(dump($ast));
+    {
+        my $n := $ast[0][0];
+        isa_ok( $n, QAST::SpecialArg, :named(NQPMU), :flat(1), 'filled in Op should be SpecialArg when original was one') || diag(dump($ast));
+        isa_ok( $n,       QAST::Op, :op<ifnull>,        '"associative" scoped VarWithFallback as flat arg ~> Op ifnull ...') || diag(dump($ast));
+        isa_ok( $n[0],    QAST::Op, :op<atkey>,         '"associative" scoped VarWithFallback as flat arg ~> Op ifnull atkey ...') || diag(dump($ast));
+        isa_ok( $n[1],    QAST::WVal, :value(NQPMu),    '"associative" scoped VarWithFallback as flat arg ~> Op ifnull ... WVal(NQPMu)') || diag(dump($ast));
+        isa_ok( $n[0][0], QAST::Var, :name('%xs'),      '"associative" scoped VarWithFallback as flat arg ~> atkey\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[0][1], QAST::SVal, :value<somekey>,  '"associative" scoped VarWithFallback as flat arg ~> atkey\'s 2nd child') || diag(dump($ast));
+    }
 
 
     $ast := QAST::Stmts.new(    # `qumbl(:bar(@xs[0] := 5))`
@@ -606,10 +702,14 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'bindpos', 'bind of "positional" scoped VarWithFallback as named arg ~> Op bindpos')
-        || diag(dump($ast));
-    is($ast[0][0].named, 'bar', 'attr .named of replacement node')
-        || diag(dump($ast));
+    {
+        my $n := $ast[0][0];
+        isa_ok( $n, QAST::SpecialArg, :named<bar>, :flat(0), 'filled in Op should be SpecialArg when original was one') || diag(dump($ast));
+        isa_ok( $n,     QAST::Op, :op<bindpos>,     '"positional" scoped VarWithFallback as named arg under bind ~> Op bindpos ...') || diag(dump($ast));
+        isa_ok( $n[0],  QAST::Var, :name('@xs'),    '"positional" scoped VarWithFallback as named arg under bind ~> bindpos\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[1],  QAST::IVal, :value(0),      '"positional" scoped VarWithFallback as named arg under bind ~> bindpos\'s 2nd child') || diag(dump($ast));
+        isa_ok( $n[2],  QAST::IVal, :value(5),      '"positional" scoped VarWithFallback as named arg under bind ~> bindpos\'s 3rd child') || diag(dump($ast));
+    }
 
 
     $ast := QAST::Stmts.new(    # `qumbl(:bar(%xs<somekey> := 5))`
@@ -625,10 +725,14 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'bindkey', 'bind of "associative" scoped VarWithFallback as named arg ~> Op bindkey')
-        || diag(dump($ast));
-    is($ast[0][0].named, 'bar', 'attr .named of replacement node')
-        || diag(dump($ast));
+    {
+        my $n := $ast[0][0];
+        isa_ok( $n, QAST::SpecialArg, :named<bar>, :flat(0), 'filled in Op should be SpecialArg when original was one') || diag(dump($ast));
+        isa_ok( $n,     QAST::Op, :op<bindkey>,      '"associative" scoped VarWithFallback as named arg under bind ~> Op bindkey ...') || diag(dump($ast));
+        isa_ok( $n[0],  QAST::Var, :name('%xs'),     '"associative" scoped VarWithFallback as named arg under bind ~> bindkey\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[1],  QAST::SVal, :value<somekey>, '"associative" scoped VarWithFallback as named arg under bind ~> bindkey\'s 2nd child') || diag(dump($ast));
+        isa_ok( $n[2],  QAST::IVal, :value(5),       '"associative" scoped VarWithFallback as named arg under bind ~> bindkey\'s 3rd child') || diag(dump($ast));
+    }
 
 
     $ast := QAST::Stmts.new(    # `qumbl(|@xs[0] := [23, 42]))`
@@ -647,10 +751,16 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'bindpos', 'bind of "positional" scoped VarWithFallback as flat arg ~> Op bindpos')
-        || diag(dump($ast));
-    ok($ast[0][0].flat, 'attr .flat of replacement node')
-        || diag(dump($ast));
+    {
+        my $n := $ast[0][0];
+        isa_ok( $n, QAST::SpecialArg, :named(NQPMu), :flat(1), 'filled in Op should be SpecialArg when original was one') || diag(dump($ast));
+        isa_ok( $n,         QAST::Op, :op<bindpos>,     '"positional" scoped VarWithFallback as flat arg under bind ~> Op bindpos ...') || diag(dump($ast));
+        isa_ok( $n[0],      QAST::Var, :name('@xs'),    '"positional" scoped VarWithFallback as flat arg under bind ~> bindpos\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[1],      QAST::IVal, :value(0),      '"positional" scoped VarWithFallback as flat arg under bind ~> bindpos\'s 2nd child') || diag(dump($ast));
+        isa_ok( $n[2],      QAST::Op, :op<list>,        '"positional" scoped VarWithFallback as flat arg under bind ~> bindpos\'s 3rd child') || diag(dump($ast));
+        isa_ok( $n[2][0],   QAST::IVal, :value(23),     '"positional" scoped VarWithFallback as flat arg under bind ~> lists\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[2][1],   QAST::IVal, :value(42),     '"positional" scoped VarWithFallback as flat arg under bind ~> lists\'s 2nd child') || diag(dump($ast));
+    }
 
 
     $ast := QAST::Stmts.new(    # `qumbl(|%xs<somekey> := hash(:foo(4711)))`
@@ -669,10 +779,16 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    ok( istype($ast[0][0], QAST::Op) && $ast[0][0].op eq 'bindkey', 'bind of "associative" scoped VarWithFallback as flat arg ~> Op bindkey')
-        || diag(dump($ast));
-    ok($ast[0][0].flat, 'attr .flat of replacement node')
-        || diag(dump($ast));
+    {
+        my $n := $ast[0][0];
+        isa_ok( $n, QAST::SpecialArg, :named(NQPMu), :flat(1), 'filled in Op should be SpecialArg when original was one') || diag(dump($ast));
+        isa_ok( $n,         QAST::Op, :op<bindkey>,     '"associative" scoped VarWithFallback as flat arg under bind ~> Op bindkey ...') || diag(dump($ast));
+        isa_ok( $n[0],      QAST::Var, :name('%xs'),    '"associative" scoped VarWithFallback as flat arg under bind ~> bindkey\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[1],      QAST::SVal, :value<somekey>,'"associative" scoped VarWithFallback as flat arg under bind ~> bindkey\'s 2nd child') || diag(dump($ast));
+        isa_ok( $n[2],      QAST::Op, :op<hash>,        '"associative" scoped VarWithFallback as flat arg under bind ~> bindkey\'s 3rd child') || diag(dump($ast));
+        isa_ok( $n[2][0],   QAST::SVal, :value<foo>,    '"associative" scoped VarWithFallback as flat arg under bind ~> hash\'s 1st child') || diag(dump($ast));
+        isa_ok( $n[2][1],   QAST::IVal, :value(4711),   '"associative" scoped VarWithFallback as flat arg under bind ~> hash\'s 2nd child') || diag(dump($ast));
+    }
 
 
     my $bazVar := QAST::Var.new(:name('$baz'));
@@ -689,9 +805,17 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    is( $ast[0][0].op, 'bind', 'bind of normal var unchanged') || diag(dump($ast));
-    is( $ast[0][0][0], $bazVar, 'normal var in bind of normal var unchanged') || diag(dump($ast));
-    is( $ast[0][0][1].op, 'atpos', '"positional" scoped VarWithFallback ~> Op atpos') || diag(dump($ast));
+    {
+        my $n := $ast[0][0];
+        isa_ok( $n,     QAST::SpecialArg, :named(NQPMu), :flat(1),  '"positional" scoped VarWithFallback on rhs under bind / bind stays SpecialArg if it was one') || diag(dump($ast));
+        isa_ok( $n,     QAST::Op, :op<bind>,                        '"positional" scoped VarWithFallback on rhs under bind / bind stays bind') || diag(dump($ast));
+        is(     $n[0],  $bazVar,                            '"positional" scoped VarWithFallback on rhs under bind ~> lhs unchanged') || diag(dump($ast));
+        isa_ok( $n[1],          QAST::Op, :op<ifnull>,      '"positional" scoped VarWithFallback on rhs under bind ~> Op ifnull') || diag(dump($ast));
+        isa_ok( $n[1][0],       QAST::Op, :op<atpos>,       '"positional" scoped VarWithFallback on rhs under bind ~> Op ifnull atpos ...') || diag(dump($ast));
+        isa_ok( $n[1][1],       QAST::WVal, :value(NQPMu),  '"positional" scoped VarWithFallback on rhs under bind ~> Op ifnull ... WVal(NQPMu)') || diag(dump($ast));
+        isa_ok( $n[1][0][0],    QAST::Var, :name('@xs'),    '"positional" scoped VarWithFallback on rhs under bind ~> atpos\' 1st child') || diag(dump($ast));
+        isa_ok( $n[1][0][1],    QAST::IVal, :value(0),      '"positional" scoped VarWithFallback on rhs under bind ~> atpos\' 2nd child') || diag(dump($ast));
+    }
 
 
     $ast := QAST::Stmts.new(    # `qumbl(|%xs<somekey> := @xs[0])`
@@ -710,15 +834,105 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     #diag(dump($ast));
     replace_assoc_and_pos_scoped($ast);
-    is( $ast[0][0].op, 'bindkey', 'bind of "associative" VarWithFallback ~> Op bindkey') || diag(dump($ast));
-    ok( $ast[0][0].flat, 'bind of "associative" VarWithFallback ~> Op bindkey; as flat arg') || diag(dump($ast));
-    is( $ast[0][0][0].name, '%xs', '"associative" VarWithFallback, 1st child') || diag(dump($ast));
-    is( $ast[0][0][1].value, 'somekey', '"associative" VarWithFallback, 2nd child') || diag(dump($ast));
-    is( $ast[0][0][2].op, 'atpos', '"positional" VarWithFallback ~> Op atpos') || diag(dump($ast));
-    is( $ast[0][0][2][0].name, '@xs', '"positional" VarWithFallback, 1st child') || diag(dump($ast));
-    is( $ast[0][0][2][1].value, 0, '"positional" VarWithFallback, 2nd child') || diag(dump($ast));
+    {
+        my $n := $ast[0][0];
+        isa_ok( $n,             QAST::SpecialArg, :named(NQPMu), :flat(1),  '"associative" VarWithFallback on lhs, "positional" on rhs under bind / bind stays SpecialArg if it was one') || diag(dump($ast));
+        isa_ok( $n,             QAST::Op, :op<bindkey>,         '"associative" VarWithFallback on lhs, "positional" on rhs under bind / bind ~> Op bindkey') || diag(dump($ast));
+        isa_ok( $n[0],          QAST::Var, :name('%xs'),        '"associative" VarWithFallback on lhs, "positional" on rhs under bind / lhs\' 1st child') || diag(dump($ast));
+        isa_ok( $n[1],          QAST::SVal, :value<somekey>,    '"associative" VarWithFallback on lhs, "positional" on rhs under bind / lhs\' 2nd child') || diag(dump($ast));
+        isa_ok( $n[2],          QAST::Op, :op<ifnull>,          '"associative" VarWithFallback on lhs, "positional" on rhs under bind / rhs ~> Op ifnull') || diag(dump($ast));
+        isa_ok( $n[2][0],       QAST::Op, :op<atpos>,           '"associative" VarWithFallback on lhs, "positional" on rhs under bind / rhs ~> Op ifnull atpos ...') || diag(dump($ast));
+        isa_ok( $n[2][1],       QAST::WVal, :value(NQPMu),      '"associative" VarWithFallback on lhs, "positional" on rhs under bind / rhs ~> Op ifnull ... WVal(NQPMu)') || diag(dump($ast));
+        isa_ok( $n[2][0][0],    QAST::Var, :name('@xs'),        '"associative" VarWithFallback on lhs, "positional" on rhs under bind / atpos\' 1st child') || diag(dump($ast));
+        isa_ok( $n[2][0][1],    QAST::IVal, :value(0),          '"associative" VarWithFallback on lhs, "positional" on rhs under bind / atpos\' 2nd child') || diag(dump($ast));
+    }
 
+
+    # check that non-trivial fallback is handled properly:
+    #┬VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))
+    #├─who
+    #│ └○ $?PACKAGE
+    #└◙ SVal "NO_VALUE"
+
+    my $fallback := QAST::Op.new(:op<ifnull>,
+        QAST::Op.new(:op<atkey>,
+            QAST::Op.new(:op<who>,
+                QAST::WVal.new(:value(GLOBALish)),
+                QAST::SVal.new(:value<NO_VALUE>)
+            )
+        ),
+        QAST::WVal.new(:value(NQPMu))
+    );
+
+    $ast := QAST::VarWithFallback.new(
+        :scope<associative>,
+        :$fallback,
+        QAST::Op.new(:op<who>,
+            QAST::Var.new(:name('$?PACKAGE'), :scope<lexical>)
+        ),
+        QAST::SVal.new(:value<NO_VALUE>)
+    );
+    #diag(dump($ast));
+    $ast := replace_assoc_and_pos_scoped($ast);
+    {
+        isa_ok( $ast, QAST::Op, :op<ifnull>,    '"associative" VarWithFallback with complicated fallback ~> Op ifnull ...') || diag(dump($ast));
+        isa_ok( $ast[0], QAST::Op, :op<atkey>,  '"associative" VarWithFallback with complicated fallback ~> Op ifnull atkey ...') || diag(dump($ast));
+        is(     $ast[1], $fallback,             '"associative" VarWithFallback with complicated fallback ~> Op ifnull ... <fallback>') || diag(dump($ast));
+        isa_ok( $ast[0][0], QAST::Op, :op<who>, '"associative" VarWithFallback with complicated fallback ~> atkey\'s 1st child ...') || diag(dump($ast));
+        isa_ok( $ast[0][1], QAST::SVal, :value<NO_VALUE>,  '"associative" VarWithFallback with complicated fallback ~> atkey\'s 2nd child ...') || diag(dump($ast));
+    }
+    #diag(dump($ast));
+
+    my $dummy0 := { # TODO: *IF* we could determine the type of preinc/predec (int, num, or bigint)
+                    #       ...then we could translate VarWithFallBack under preinc/predec to the following:
+        my $ast := QAST::Block.new(:blocktype<immediate>,
+            QAST::Op.new(:op<bind>,
+                QAST::Var.new(:name('%xs'), :scope<lexical>, :decl<var>),
+                QAST::Op.new(:op<hash>,
+                    QAST::SVal.new(:value<somekey>),
+                    QAST::IVal.new(:value(7)),
+                )
+            ),
+            QAST::Op.new(:op<add_i>,    # <<<<<< here's (1) were we need to know the type
+                QAST::Op.new(:op<atkey>,
+                    QAST::Var.new(:name('%xs'), :scope<lexical>),
+                    QAST::SVal.new(:value<somekey>),
+                ),
+                QAST::IVal.new(:value(1))# <<<<<< here's (2) were we need to know the type
+            ),
+        );
+        diag(dump($ast));
+        my $code := nqp::getcomp('nqp').compile(:from('ast'), $ast);
+        my $result := $code();
+        diag($result);
+    };
+
+    for <preinc predec> -> $op {
+        my $vwf := QAST::VarWithFallback.new(:scope<associative>, :fallback(WVal.new(:value(NQPMu))),
+            QAST::Var.new(:name<%xs>),
+            QAST::SVal.new(:value<somekey>)
+        );
+        my $ast := QAST::Op.new(:$op, $vwf);
+        #diag(dump($ast));
+        replace_assoc_and_pos_scoped($ast);
+        #diag(dump($ast));
+        is( $ast[0], $vwf, 'VarWithFallback "associative" under Op "' ~ $op ~ '" is untouched') || diag(dump($ast));
+    }
+
+    for <postinc postdec> -> $op {
+        my $vwf := QAST::VarWithFallback.new(:scope<associative>, :fallback(WVal.new(:value(NQPMu))),
+            QAST::Var.new(:name<%xs>),
+            QAST::SVal.new(:value<somekey>)
+        );
+        my $ast := QAST::Op.new(:$op, $vwf);
+        #diag(dump($ast));
+        replace_assoc_and_pos_scoped($ast);
+        #diag(dump($ast));
+
+        is( $ast[0], $vwf, 'VarWithFallback "associative" under Op "' ~ $op ~ '" is untouched') || diag(dump($ast));
+    }
 }
+
 
 
 { # drop_takeclosure ----------------------------------------------------------

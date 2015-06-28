@@ -534,13 +534,14 @@ class SmartCompiler is NQP::Compiler {
         $ast := fix_var_attrs($ast);
         $ast := drop_takeclosure($ast);
         $ast := drop_Stmts($ast);
+        self.log('ast_clean: ', self.user-progname, ' / drop_Stmts done.');
         
         #$ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
         #$ast := remove_bogusOpNames($ast);
         #$ast := remove_MAIN($ast);
         
         # from here it's rather optimization...
-        #$ast := replace_assoc_and_pos_scoped($ast);
+        $ast := replace_assoc_and_pos_scoped($ast);
         #$ast := inline_simple_methods($ast);
 
         #my @inlinecandidates;

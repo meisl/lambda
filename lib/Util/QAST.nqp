@@ -318,14 +318,19 @@ class Util::QAST {
 
     method replace_assoc_and_pos_scoped($ast) {
         TreeWalk.dfs-up(
-            -> $n, @p { TreeWalkDo.recurse(:take(istype($n, QAST::VarWithFallback))) },
             -> $n, @p {
-                my $fallback := $n.fallback;
-                if nqp::isnull($fallback) || istype($fallback, NQPMu) {
-                    $fallback := nqp::null;
-                } else {
-                    nqp::die('cannot handle fallback ' ~ describe($n.fallback))
+                my $take := istype($n, QAST::VarWithFallback);
+                if $take {
+                    if @p {    # ~> always visit if it's the top node - otherwise check parent:
+                        my $opn := istype(@p[0], QAST::Op) ?? @p[0].op !! nqp::null;
+                        if $opn {
+                            $take := ($opn ne 'postinc') && ($opn ne 'postdec') && ($opn ne 'preinc') && ($opn ne 'predec');
+                        }
+                   }
                 }
+                TreeWalkDo.recurse(:$take);
+            },
+            -> $n, @p {
                 my $scope := $n.scope;
                 my $op;
                 if $scope eq 'positional' {
@@ -344,6 +349,21 @@ class Util::QAST {
                             :node($n.node),
                             |$n.list
                         );
+                        my $fallback := $n.fallback;
+                        unless nqp::isnull($fallback) {
+                            #$out := QAST::Op.new(:op<if>,
+                            #    QAST::Op.new(:op('exists' ~ $op), 
+                            #        nqp::clone($n[0]),
+                            #        nqp::clone($n[1]),
+                            #    ),
+                            #    $out,
+                            #    $fallback
+                            #);
+                            $out := QAST::Op.new(:op<ifnull>,
+                                $out,
+                                $fallback
+                            );
+                        }
                         if istype($n, QAST::SpecialArg) {
                             $out.named($n.named);
                             $out.flat($n.flat);

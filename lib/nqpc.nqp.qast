@@ -47,19 +47,23 @@
     ║       ├─if  ««"($parent[$n] =:= $node) || (nqp::can($parent, 'resu"...
     ║       │ ├─unless &infix:<||>  ««"||"
     ║       │ │ ├─eqaddr &infix:<=:=>  ««"=:="
-    ║       │ │ │ ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │ │ │ │ ├○ $parent
-    ║       │ │ │ │ └○ $n
+    ║       │ │ │ ├─ifnull
+    ║       │ │ │ │ ├─atpos
+    ║       │ │ │ │ │ ├○ $parent
+    ║       │ │ │ │ │ └○ $n
+    ║       │ │ │ │ └◙ WVal NQPMu
     ║       │ │ │ └○ $node
     ║       │ │ └─if &infix:<&&>  ««"&&"
     ║       │ │   ├─can  ««"nqp::can($parent, 'resultchild')"
     ║       │ │   │ ├○ $parent
     ║       │ │   │ └◙ SVal "resultchild"
     ║       │ │   └─eqaddr &infix:<=:=>  ««"=:="
-    ║       │ │     ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │ │     │ ├○ $parent
-    ║       │ │     │ └─callmethod resultchild  ««".resultchild"
-    ║       │ │     │   └○ $parent
+    ║       │ │     ├─ifnull
+    ║       │ │     │ ├─atpos
+    ║       │ │     │ │ ├○ $parent
+    ║       │ │     │ │ └─callmethod resultchild  ««".resultchild"
+    ║       │ │     │ │   └○ $parent
+    ║       │ │     │ └◙ WVal NQPMu
     ║       │ │     └○ $node
     ║       │ └─call RETURN
     ║       │   └◙ IVal 1
@@ -71,9 +75,11 @@
     ║       │ ├─if  ««"return 0 if $node =:= $parent[$n]"
     ║       │ │ ├─eqaddr &infix:<=:=>  ««"=:="
     ║       │ │ │ ├○ $node
-    ║       │ │ │ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │ │ │   ├○ $parent
-    ║       │ │ │   └○ $n
+    ║       │ │ │ └─ifnull
+    ║       │ │ │   ├─atpos
+    ║       │ │ │   │ ├○ $parent
+    ║       │ │ │   │ └○ $n
+    ║       │ │ │   └◙ WVal NQPMu
     ║       │ │ └─call RETURN
     ║       │ │   └◙ IVal 0
     ║       │ └◙ IVal 1 :named("nohandler")
@@ -227,9 +233,11 @@
     ║   ╟○ $MAINcall :decl(var)
     ║   ╟─call &say  ««"$ast[0].cuid"
     ║   ║ └─callmethod cuid  ««".cuid"
-    ║   ║   └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║     ├○ $ast
-    ║   ║     └◙ IVal 0
+    ║   ║   └─ifnull
+    ║   ║     ├─atpos
+    ║   ║     │ ├○ $ast
+    ║   ║     │ └◙ IVal 0
+    ║   ║     └◙ WVal NQPMu
     ║   ╟─call &say  ««"\"CompUnit load: \\n\", dump($ast.load)"
     ║   ║ ├◙ SVal "CompUnit load: \n"
     ║   ║ └─call &dump  ««"$ast.load"
@@ -250,9 +258,11 @@
     ║   ║   ├◙ SVal "&MAIN"
     ║   ║   └○ @path
     ║   ╟─call &removeChild  ««"@path[0], $MAIN"
-    ║   ║ ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║ │ ├○ @path
-    ║   ║ │ └◙ IVal 0
+    ║   ║ ├─ifnull
+    ║   ║ │ ├─atpos
+    ║   ║ │ │ ├○ @path
+    ║   ║ │ │ └◙ IVal 0
+    ║   ║ │ └◙ WVal NQPMu
     ║   ║ └○ $MAIN
     ║   ╟─call &say  ««"describe(@path), \"\\n\", describe($MAIN)"
     ║   ║ ├─call &describe  ««"@path"
@@ -286,23 +296,29 @@
     ║   ║   │   │   │ └◙ SVal "&MAIN"
     ║   ║   │   │   └─if &infix:<&&>  ««"&&"
     ║   ║   │   │     ├─call &istype  ««"$node[0], QAST::Var"
-    ║   ║   │   │     │ ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║   │   │     │ │ ├○ $node
-    ║   ║   │   │     │ │ └◙ IVal 0
+    ║   ║   │   │     │ ├─ifnull
+    ║   ║   │   │     │ │ ├─atpos
+    ║   ║   │   │     │ │ │ ├○ $node
+    ║   ║   │   │     │ │ │ └◙ IVal 0
+    ║   ║   │   │     │ │ └◙ WVal NQPMu
     ║   ║   │   │     │ └◙ WVal QAST::Var
     ║   ║   │   │     └─iseq_s &infix:<eq>  ««"eq"
     ║   ║   │   │       ├─callmethod name  ««".name"
-    ║   ║   │   │       │ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║   │   │       │   ├○ $node
-    ║   ║   │   │       │   └◙ IVal 0
+    ║   ║   │   │       │ └─ifnull
+    ║   ║   │   │       │   ├─atpos
+    ║   ║   │   │       │   │ ├○ $node
+    ║   ║   │   │       │   │ └◙ IVal 0
+    ║   ║   │   │       │   └◙ WVal NQPMu
     ║   ║   │   │       └◙ SVal "&MAIN"
     ║   ║   │   ├─:Block :blocktype(immediate)  ««"{\n                my $parent := @pathUp[0];\n     "...
     ║   ║   │   │ ╟○ $parent :decl(var)
     ║   ║   │   │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$parent := @pathUp[0]"
     ║   ║   │   │ ║ ├○ $parent
-    ║   ║   │   │ ║ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║   │   │ ║   ├○ @pathUp
-    ║   ║   │   │ ║   └◙ IVal 0
+    ║   ║   │   │ ║ └─ifnull
+    ║   ║   │   │ ║   ├─atpos
+    ║   ║   │   │ ║   │ ├○ @pathUp
+    ║   ║   │   │ ║   │ └◙ IVal 0
+    ║   ║   │   │ ║   └◙ WVal NQPMu
     ║   ║   │   │ ╙─if  ««"istype($parent, QAST::Op) && $parent.op eq 'if' {\n"...
     ║   ║   │   │   ├─if &infix:<&&>  ««"&&"
     ║   ║   │   │   │ ├─call &istype  ««"$parent, QAST::Op"
@@ -321,9 +337,11 @@
     ║   ║   │   │     └─:Stmts  ««"{\n                    $parent := @pathUp[0];\n    "...
     ║   ║   │   │       ├─bind &infix:<:=>  ««":="
     ║   ║   │   │       │ ├○ $parent
-    ║   ║   │   │       │ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║   │   │       │   ├○ @pathUp
-    ║   ║   │   │       │   └◙ IVal 0
+    ║   ║   │   │       │ └─ifnull
+    ║   ║   │   │       │   ├─atpos
+    ║   ║   │   │       │   │ ├○ @pathUp
+    ║   ║   │   │       │   │ └◙ IVal 0
+    ║   ║   │   │       │   └◙ WVal NQPMu
     ║   ║   │   │       └─if  ««"istype($parent, QAST::Op) && $parent.op eq 'if' {\n"...
     ║   ║   │   │         ├─if &infix:<&&>  ««"&&"
     ║   ║   │   │         │ ├─call &istype  ««"$parent, QAST::Op"
@@ -340,9 +358,11 @@
     ║   ║   ├○ $ast
     ║   ║   └○ @path
     ║   ╟─call &removeChild  ««"@path[0], $MAINcall"
-    ║   ║ ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║ │ ├○ @path
-    ║   ║ │ └◙ IVal 0
+    ║   ║ ├─ifnull
+    ║   ║ │ ├─atpos
+    ║   ║ │ │ ├○ @path
+    ║   ║ │ │ └◙ IVal 0
+    ║   ║ │ └◙ WVal NQPMu
     ║   ║ └○ $MAINcall
     ║   ╙○ $ast
     ╟─bind
@@ -383,9 +403,11 @@
     ║     │ ║   │ ├─elems  ««"nqp::elems(@pathUp)"
     ║     │ ║   │ │ └○ @pathUp
     ║     │ ║   │ └◙ IVal 0
-    ║     │ ║   ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║     │ ║   │ ├○ @pathUp
-    ║     │ ║   │ └◙ IVal 0
+    ║     │ ║   ├─ifnull
+    ║     │ ║   │ ├─atpos
+    ║     │ ║   │ │ ├○ @pathUp
+    ║     │ ║   │ │ └◙ IVal 0
+    ║     │ ║   │ └◙ WVal NQPMu
     ║     │ ║   └─null  ««"nqp::null"
     ║     │ ╙─if  ««"nqp::isnull($parent) || istype($parent, QAST::CompU"...
     ║     │   ├─unless &infix:<||>  ««"||"
@@ -487,10 +509,12 @@
     ║   ║ │ │     ║     │ ├○ $takeit
     ║   ║ │ │     ║     │ └─falsey &prefix:<!>  ««"!"
     ║   ║ │ │     ║     │   └─eqaddr &infix:<=:=>  ««"=:="
-    ║   ║ │ │     ║     │     ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║ │ │     ║     │     │ ├─shift  ««"nqp::shift($i)"
-    ║   ║ │ │     ║     │     │ │ └○ $i
-    ║   ║ │ │     ║     │     │ └◙ IVal 0
+    ║   ║ │ │     ║     │     ├─ifnull
+    ║   ║ │ │     ║     │     │ ├─atpos
+    ║   ║ │ │     ║     │     │ │ ├─shift  ««"nqp::shift($i)"
+    ║   ║ │ │     ║     │     │ │ │ └○ $i
+    ║   ║ │ │     ║     │     │ │ └◙ IVal 0
+    ║   ║ │ │     ║     │     │ └◙ WVal NQPMu
     ║   ║ │ │     ║     │     └○ $var
     ║   ║ │ │     ║     └◙ IVal 1 :named("nohandler")
     ║   ║ │ │     ╙○ $takeit
@@ -530,10 +554,17 @@
     ║       ├─if  ««"$hash =:= NO_VALUE {\n        return -> $hash { fin"...
     ║       │ ├─eqaddr &infix:<=:=>  ««"=:="
     ║       │ │ ├○ $hash
-    ║       │ │ └○┬VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))
-    ║       │ │   ├─who
-    ║       │ │   │ └○ $?PACKAGE
-    ║       │ │   └◙ SVal "NO_VALUE"
+    ║       │ │ └─ifnull
+    ║       │ │   ├─atkey
+    ║       │ │   │ ├─who
+    ║       │ │   │ │ └○ $?PACKAGE
+    ║       │ │   │ └◙ SVal "NO_VALUE"
+    ║       │ │   └─ifnull
+    ║       │ │     ├─atkey
+    ║       │ │     │ ├─who
+    ║       │ │     │ │ └◙ WVal GLOBALish
+    ║       │ │     │ └◙ SVal "NO_VALUE"
+    ║       │ │     └◙ WVal NQPMu
     ║       │ ├─call RETURN
     ║       │ │ └─:Block  ««"{ findValueNodeInHash($keyPredicate, $valuePredicat"...
     ║       │ │   ╟○ $hash :decl(param)
@@ -651,10 +682,9 @@
     ║   ║ │   ├─isnull  ««"nqp::isnull($child)"
     ║   ║ │   │ └○ $child
     ║   ║ │   └─:Stmts  ««"{\n            @children[$i] := $child;\n          "...
-    ║   ║ │     ├─bind &infix:<:=>  ««":="
-    ║   ║ │     │ ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║ │     │ │ ├○ @children
-    ║   ║ │     │ │ └○ $i
+    ║   ║ │     ├─bindpos &infix:<:=>  ««":="
+    ║   ║ │     │ ├○ @children
+    ║   ║ │     │ ├○ $i
     ║   ║ │     │ └○ $child
     ║   ║ │     └─postinc &postfix:<++>  ««"++"
     ║   ║ │       └○ $i
@@ -675,19 +705,25 @@
     ║   ╟○ @stmts :decl(var)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$arity  := %results<arity>"
     ║   ║ ├○ $arity
-    ║   ║ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║   ├○ %results
-    ║   ║   └◙ SVal "arity"
+    ║   ║ └─ifnull
+    ║   ║   ├─atkey
+    ║   ║   │ ├○ %results
+    ║   ║   │ └◙ SVal "arity"
+    ║   ║   └◙ WVal NQPMu
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%params := %results<params>"
     ║   ║ ├○ %params
-    ║   ║ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║   ├○ %results
-    ║   ║   └◙ SVal "params"
+    ║   ║ └─ifnull
+    ║   ║   ├─atkey
+    ║   ║   │ ├○ %results
+    ║   ║   │ └◙ SVal "params"
+    ║   ║   └◙ WVal NQPMu
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@stmts  := %results<stmts>"
     ║   ║ ├○ @stmts
-    ║   ║ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║   ├○ %results
-    ║   ║   └◙ SVal "stmts"
+    ║   ║ └─ifnull
+    ║   ║   ├─atkey
+    ║   ║   │ ├○ %results
+    ║   ║   │ └◙ SVal "stmts"
+    ║   ║   └◙ WVal NQPMu
     ║   ╟─for  ««"$node.list {\n        if istype($_, QAST::Var) {\n "...
     ║   ║ ├─callmethod list  ««".list"
     ║   ║ │ └○ $node
@@ -736,10 +772,9 @@
     ║   ║ │   │   │ │ │     │ └◙ SVal ": "
     ║   ║ │   │   │ │ │     └─call &dump  ««"$_"
     ║   ║ │   │   │ │ │       └○ $_
-    ║   ║ │   │   │ │ ├─bind &infix:<:=>  ««":="
-    ║   ║ │   │   │ │ │ ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║ │   │   │ │ │ │ ├○ %params
-    ║   ║ │   │   │ │ │ │ └○ $varName
+    ║   ║ │   │   │ │ ├─bindkey &infix:<:=>  ««":="
+    ║   ║ │   │   │ │ │ ├○ %params
+    ║   ║ │   │   │ │ │ ├○ $varName
     ║   ║ │   │   │ │ │ └○ $arity
     ║   ║ │   │   │ │ └─postinc &postfix:<++>  ««"++"
     ║   ║ │   │   │ │   └○ $arity
@@ -757,10 +792,9 @@
     ║   ║ │     ├○ @stmts
     ║   ║ │     └○ $_
     ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╟─bind &infix:<:=>  ««":="
-    ║   ║ ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║ │ ├○ %results
-    ║   ║ │ └◙ SVal "arity"
+    ║   ╟─bindkey &infix:<:=>  ««":="
+    ║   ║ ├○ %results
+    ║   ║ ├◙ SVal "arity"
     ║   ║ └○ $arity
     ║   ╙○ %results
     ╟─bind
@@ -825,14 +859,18 @@
     ║       │   │   ║ │ │ │   │ └○ $_
     ║       │   │   ║ │ │ │   └◙ SVal "bind"
     ║       │   │   ║ │ │ └─call &istype  ««"$_[0], QAST::Var"
-    ║       │   │   ║ │ │   ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │   │   ║ │ │   │ ├○ $_
-    ║       │   │   ║ │ │   │ └◙ IVal 0
+    ║       │   │   ║ │ │   ├─ifnull
+    ║       │   │   ║ │ │   │ ├─atpos
+    ║       │   │   ║ │ │   │ │ ├○ $_
+    ║       │   │   ║ │ │   │ │ └◙ IVal 0
+    ║       │   │   ║ │ │   │ └◙ WVal NQPMu
     ║       │   │   ║ │ │   └◙ WVal QAST::Var
     ║       │   │   ║ │ └─call &istype  ««"$_[1], QAST::Block"
-    ║       │   │   ║ │   ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │   │   ║ │   │ ├○ $_
-    ║       │   │   ║ │   │ └◙ IVal 1
+    ║       │   │   ║ │   ├─ifnull
+    ║       │   │   ║ │   │ ├─atpos
+    ║       │   │   ║ │   │ │ ├○ $_
+    ║       │   │   ║ │   │ │ └◙ IVal 1
+    ║       │   │   ║ │   │ └◙ WVal NQPMu
     ║       │   │   ║ │   └◙ WVal QAST::Block
     ║       │   │   ║ └─die  ««"nqp::die(\"invalid def of inlineable sub: \" ~ dump"...
     ║       │   │   ║   └─concat &infix:<~>  ««"~"
@@ -842,20 +880,26 @@
     ║       │   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$name   := $_[0].name"
     ║       │   │   ║ ├○ $name
     ║       │   │   ║ └─callmethod name  ««".name"
-    ║       │   │   ║   └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │   │   ║     ├○ $_
-    ║       │   │   ║     └◙ IVal 0
+    ║       │   │   ║   └─ifnull
+    ║       │   │   ║     ├─atpos
+    ║       │   │   ║     │ ├○ $_
+    ║       │   │   ║     │ └◙ IVal 0
+    ║       │   │   ║     └◙ WVal NQPMu
     ║       │   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$block  := $_[1]"
     ║       │   │   ║ ├○ $block
-    ║       │   │   ║ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │   │   ║   ├○ $_
-    ║       │   │   ║   └◙ IVal 1
+    ║       │   │   ║ └─ifnull
+    ║       │   │   ║   ├─atpos
+    ║       │   │   ║   │ ├○ $_
+    ║       │   │   ║   │ └◙ IVal 1
+    ║       │   │   ║   └◙ WVal NQPMu
     ║       │   │   ╟○ %results
     ║       │   │   ╟─if  ««"istype($block[0], QAST::Stmt, QAST::Stmts) {\n     "...
     ║       │   │   ║ ├─call &istype  ««"$block[0], QAST::Stmt, QAST::Stmts"
-    ║       │   │   ║ │ ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │   │   ║ │ │ ├○ $block
-    ║       │   │   ║ │ │ └◙ IVal 0
+    ║       │   │   ║ │ ├─ifnull
+    ║       │   │   ║ │ │ ├─atpos
+    ║       │   │   ║ │ │ │ ├○ $block
+    ║       │   │   ║ │ │ │ └◙ IVal 0
+    ║       │   │   ║ │ │ └◙ WVal NQPMu
     ║       │   │   ║ │ ├◙ WVal QAST::Stmt
     ║       │   │   ║ │ └◙ WVal QAST::Stmts
     ║       │   │   ║ ├─:Block :blocktype(immediate)  ««"{\n                my $it := nqp::iterator($block.l"...
@@ -885,19 +929,25 @@
     ║       │   │   ║     └○ $block
     ║       │   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$arity  := %results<arity>"
     ║       │   │   ║ ├○ $arity
-    ║       │   │   ║ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║       │   │   ║   ├○ %results
-    ║       │   │   ║   └◙ SVal "arity"
+    ║       │   │   ║ └─ifnull
+    ║       │   │   ║   ├─atkey
+    ║       │   │   ║   │ ├○ %results
+    ║       │   │   ║   │ └◙ SVal "arity"
+    ║       │   │   ║   └◙ WVal NQPMu
     ║       │   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%params := %results<params>"
     ║       │   │   ║ ├○ %params
-    ║       │   │   ║ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║       │   │   ║   ├○ %results
-    ║       │   │   ║   └◙ SVal "params"
+    ║       │   │   ║ └─ifnull
+    ║       │   │   ║   ├─atkey
+    ║       │   │   ║   │ ├○ %results
+    ║       │   │   ║   │ └◙ SVal "params"
+    ║       │   │   ║   └◙ WVal NQPMu
     ║       │   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@stmts  := %results<stmts>"
     ║       │   │   ║ ├○ @stmts
-    ║       │   │   ║ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║       │   │   ║   ├○ %results
-    ║       │   │   ║   └◙ SVal "stmts"
+    ║       │   │   ║ └─ifnull
+    ║       │   │   ║   ├─atkey
+    ║       │   │   ║   │ ├○ %results
+    ║       │   │   ║   │ └◙ SVal "stmts"
+    ║       │   │   ║   └◙ WVal NQPMu
     ║       │   │   ╟─if  ««"nqp::elems(@stmts) == 0 {\n                nqp::die"...
     ║       │   │   ║ ├─iseq_n &infix:<==>  ««"=="
     ║       │   │   ║ │ ├─elems  ««"nqp::elems(@stmts)"
@@ -919,18 +969,19 @@
     ║       │   │   ║   │ └◙ IVal 1
     ║       │   │   ║   ├─bind &infix:<:=>  ««":="
     ║       │   │   ║   │ ├○ $block
-    ║       │   │   ║   │ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │   │   ║   │   ├○ @stmts
-    ║       │   │   ║   │   └◙ IVal 0
+    ║       │   │   ║   │ └─ifnull
+    ║       │   │   ║   │   ├─atpos
+    ║       │   │   ║   │   │ ├○ @stmts
+    ║       │   │   ║   │   │ └◙ IVal 0
+    ║       │   │   ║   │   └◙ WVal NQPMu
     ║       │   │   ║   └─bind &infix:<:=>  ««":="
     ║       │   │   ║     ├○ $block
     ║       │   │   ║     └─callmethod new  ««"|@stmts"
     ║       │   │   ║       ├◙ WVal QAST::Stmts
     ║       │   │   ║       └○ @stmts :flat(1)
-    ║       │   │   ╙─bind &infix:<:=>  ««":="
-    ║       │   │     ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║       │   │     │ ├○ %inlineables
-    ║       │   │     │ └○ $name
+    ║       │   │   ╙─bindkey &infix:<:=>  ««":="
+    ║       │   │     ├○ %inlineables
+    ║       │   │     ├○ $name
     ║       │   │     └─:Block  ««"{\n                my $argCount := nqp::elems(@argu"...
     ║       │   │       ╟○ @arguments :decl(param)
     ║       │   │       ╟○ $argCount :decl(var)
@@ -974,12 +1025,16 @@
     ║       │   │       ║       │ ╟○ $out :decl(var)
     ║       │   │       ║       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := @arguments[%params{$n.name}]"
     ║       │   │       ║       │ ║ ├○ $out
-    ║       │   │       ║       │ ║ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │   │       ║       │ ║   ├○ @arguments
-    ║       │   │       ║       │ ║   └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║       │   │       ║       │ ║     ├○ %params
-    ║       │   │       ║       │ ║     └─callmethod name  ««".name"
-    ║       │   │       ║       │ ║       └○ $n
+    ║       │   │       ║       │ ║ └─ifnull
+    ║       │   │       ║       │ ║   ├─atpos
+    ║       │   │       ║       │ ║   │ ├○ @arguments
+    ║       │   │       ║       │ ║   │ └─ifnull
+    ║       │   │       ║       │ ║   │   ├─atkey
+    ║       │   │       ║       │ ║   │   │ ├○ %params
+    ║       │   │       ║       │ ║   │   │ └─callmethod name  ««".name"
+    ║       │   │       ║       │ ║   │   │   └○ $n
+    ║       │   │       ║       │ ║   │   └◙ WVal NQPMu
+    ║       │   │       ║       │ ║   └◙ WVal NQPMu
     ║       │   │       ║       │ ╙○ $out
     ║       │   │       ║       └○ $n
     ║       │   │       ╙○ $out
@@ -999,10 +1054,9 @@
     ║       │ ├○ @children
     ║       │ ├─:Block :blocktype(immediate)  ««"{\n        @children[$i] := inline_simple_subs($_, "...
     ║       │ │ ╟○ $_ :decl(param)
-    ║       │ │ ╟─bind &infix:<:=>  ««":="
-    ║       │ │ ║ ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║       │ │ ║ │ ├○ @children
-    ║       │ │ ║ │ └○ $i
+    ║       │ │ ╟─bindpos &infix:<:=>  ««":="
+    ║       │ │ ║ ├○ @children
+    ║       │ │ ║ ├○ $i
     ║       │ │ ║ └─call &inline_simple_subs  ««"$_, [], %inlineables"
     ║       │ │ ║   ├○ $_
     ║       │ │ ║   ├─list &circumfix:<[ ]>
@@ -1028,10 +1082,12 @@
     ║       │   ╟○ $codeMaker :decl(var)
     ║       │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$codeMaker := %inlineables{$node.name}"
     ║       │   ║ ├○ $codeMaker
-    ║       │   ║ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║       │   ║   ├○ %inlineables
-    ║       │   ║   └─callmethod name  ««".name"
-    ║       │   ║     └○ $node
+    ║       │   ║ └─ifnull
+    ║       │   ║   ├─atkey
+    ║       │   ║   │ ├○ %inlineables
+    ║       │   ║   │ └─callmethod name  ««".name"
+    ║       │   ║   │   └○ $node
+    ║       │   ║   └◙ WVal NQPMu
     ║       │   ╙─if  ««"$codeMaker {\n            my $out := $codeMaker($no"...
     ║       │     ├○ $codeMaker
     ║       │     └─:Block :blocktype(immediate)  ««"{\n            my $out := $codeMaker($node.list);\n"...
@@ -1447,10 +1503,17 @@
     ║ ║ ╟─unless  ««"$!user_binname := $v unless $v =:= NO_VALUE"
     ║ ║ ║ ├─eqaddr &infix:<=:=>  ««"=:="
     ║ ║ ║ │ ├○ $v
-    ║ ║ ║ │ └○┬VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))
-    ║ ║ ║ │   ├─who
-    ║ ║ ║ │   │ └○ $?PACKAGE
-    ║ ║ ║ │   └◙ SVal "NO_VALUE"
+    ║ ║ ║ │ └─ifnull
+    ║ ║ ║ │   ├─atkey
+    ║ ║ ║ │   │ ├─who
+    ║ ║ ║ │   │ │ └○ $?PACKAGE
+    ║ ║ ║ │   │ └◙ SVal "NO_VALUE"
+    ║ ║ ║ │   └─ifnull
+    ║ ║ ║ │     ├─atkey
+    ║ ║ ║ │     │ ├─who
+    ║ ║ ║ │     │ │ └◙ WVal GLOBALish
+    ║ ║ ║ │     │ └◙ SVal "NO_VALUE"
+    ║ ║ ║ │     └◙ WVal NQPMu
     ║ ║ ║ └─bind &infix:<:=>  ««":="
     ║ ║ ║   ├○ attribute $!user_binname
     ║ ║ ║   │ ├─decont
@@ -1570,9 +1633,11 @@
     ║ ║ ║ └─callmethod unshift  ««"nqp::backendconfig()<prefix> ~ '/languages/nqp/lib'"
     ║ ║ ║   ├○ @module_paths
     ║ ║ ║   └─concat &infix:<~>  ««"~"
-    ║ ║ ║     ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║     │ ├─backendconfig  ««"nqp::backendconfig()"
-    ║ ║ ║     │ └◙ SVal "prefix"
+    ║ ║ ║     ├─ifnull
+    ║ ║ ║     │ ├─atkey
+    ║ ║ ║     │ │ ├─backendconfig  ««"nqp::backendconfig()"
+    ║ ║ ║     │ │ └◙ SVal "prefix"
+    ║ ║ ║     │ └◙ WVal NQPMu
     ║ ║ ║     └◙ SVal "/languages/nqp/lib"
     ║ ║ ╙─callmethod find_file  ««"$module_name, @module_paths, :$ext"
     ║ ║   ├─decont
@@ -1796,14 +1861,15 @@
     ║ ║ ║   ║               │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║               │   ├○ %results
     ║ ║ ║   ║               │   └◙ SVal "SVal"
-    ║ ║ ║   ║               └─bind &infix:<:=>  ««":="
-    ║ ║ ║   ║                 ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║   ║                 │ ├○ %results
-    ║ ║ ║   ║                 │ └◙ SVal "SValChars"
+    ║ ║ ║   ║               └─bindkey &infix:<:=>  ««":="
+    ║ ║ ║   ║                 ├○ %results
+    ║ ║ ║   ║                 ├◙ SVal "SValChars"
     ║ ║ ║   ║                 └─add_n &infix:<+>  ««"+"
-    ║ ║ ║   ║                   ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║   ║                   │ ├○ %results
-    ║ ║ ║   ║                   │ └◙ SVal "SValChars"
+    ║ ║ ║   ║                   ├─ifnull
+    ║ ║ ║   ║                   │ ├─atkey
+    ║ ║ ║   ║                   │ │ ├○ %results
+    ║ ║ ║   ║                   │ │ └◙ SVal "SValChars"
+    ║ ║ ║   ║                   │ └◙ WVal NQPMu
     ║ ║ ║   ║                   └─chars  ««"nqp::chars($node.value)"
     ║ ║ ║   ║                     └─callmethod value  ««".value"
     ║ ║ ║   ║                       └○ $node
@@ -1821,36 +1887,46 @@
     ║ ║ ╟○ &doit
     ║ ║ ╟─call &doit  ««"$node"
     ║ ║ ║ └○ $node
-    ║ ║ ╟─bind &infix:<:=>  ««":="
-    ║ ║ ║ ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║ │ ├○ %results
-    ║ ║ ║ │ └◙ SVal "callish"
+    ║ ║ ╟─bindkey &infix:<:=>  ««":="
+    ║ ║ ║ ├○ %results
+    ║ ║ ║ ├◙ SVal "callish"
     ║ ║ ║ └─add_n &infix:<+>  ««"+"
     ║ ║ ║   ├─add_n &infix:<+>  ««"+"
-    ║ ║ ║   │ ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║   │ │ ├○ %results
-    ║ ║ ║   │ │ └◙ SVal "call"
-    ║ ║ ║   │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║   │   ├○ %results
-    ║ ║ ║   │   └◙ SVal "callstatic"
-    ║ ║ ║   └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║     ├○ %results
-    ║ ║ ║     └◙ SVal "callmethod"
-    ║ ║ ╟─bind &infix:<:=>  ««":="
-    ║ ║ ║ ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║ │ ├○ %results
-    ║ ║ ║ │ └◙ SVal "val"
+    ║ ║ ║   │ ├─ifnull
+    ║ ║ ║   │ │ ├─atkey
+    ║ ║ ║   │ │ │ ├○ %results
+    ║ ║ ║   │ │ │ └◙ SVal "call"
+    ║ ║ ║   │ │ └◙ WVal NQPMu
+    ║ ║ ║   │ └─ifnull
+    ║ ║ ║   │   ├─atkey
+    ║ ║ ║   │   │ ├○ %results
+    ║ ║ ║   │   │ └◙ SVal "callstatic"
+    ║ ║ ║   │   └◙ WVal NQPMu
+    ║ ║ ║   └─ifnull
+    ║ ║ ║     ├─atkey
+    ║ ║ ║     │ ├○ %results
+    ║ ║ ║     │ └◙ SVal "callmethod"
+    ║ ║ ║     └◙ WVal NQPMu
+    ║ ║ ╟─bindkey &infix:<:=>  ««":="
+    ║ ║ ║ ├○ %results
+    ║ ║ ║ ├◙ SVal "val"
     ║ ║ ║ └─add_n &infix:<+>  ««"+"
     ║ ║ ║   ├─add_n &infix:<+>  ««"+"
-    ║ ║ ║   │ ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║   │ │ ├○ %results
-    ║ ║ ║   │ │ └◙ SVal "IVal"
-    ║ ║ ║   │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║   │   ├○ %results
-    ║ ║ ║   │   └◙ SVal "NVal"
-    ║ ║ ║   └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║     ├○ %results
-    ║ ║ ║     └◙ SVal "SVal"
+    ║ ║ ║   │ ├─ifnull
+    ║ ║ ║   │ │ ├─atkey
+    ║ ║ ║   │ │ │ ├○ %results
+    ║ ║ ║   │ │ │ └◙ SVal "IVal"
+    ║ ║ ║   │ │ └◙ WVal NQPMu
+    ║ ║ ║   │ └─ifnull
+    ║ ║ ║   │   ├─atkey
+    ║ ║ ║   │   │ ├○ %results
+    ║ ║ ║   │   │ └◙ SVal "NVal"
+    ║ ║ ║   │   └◙ WVal NQPMu
+    ║ ║ ║   └─ifnull
+    ║ ║ ║     ├─atkey
+    ║ ║ ║     │ ├○ %results
+    ║ ║ ║     │ └◙ SVal "SVal"
+    ║ ║ ║     └◙ WVal NQPMu
     ║ ║ ╙○ %results
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $ast := $source.ast();\n        self."...
     ║ ║ ╟○ self :decl(param)
@@ -1904,6 +1980,18 @@
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &drop_Stmts  ««"$ast"
     ║ ║ ║   └○ $ast
+    ║ ║ ╟─callmethod log  ««"'ast_clean: ', self.user-progname, ' / drop_Stmts d"...
+    ║ ║ ║ ├─decont
+    ║ ║ ║ │ └○ self
+    ║ ║ ║ ├◙ SVal "ast_clean: "
+    ║ ║ ║ ├─callmethod user-progname  ««".user-progname"
+    ║ ║ ║ │ └─decont
+    ║ ║ ║ │   └○ self
+    ║ ║ ║ └◙ SVal " / drop_Stmts done."
+    ║ ║ ╟─bind &infix:<:=>  ««":="
+    ║ ║ ║ ├○ $ast
+    ║ ║ ║ └─call &replace_assoc_and_pos_scoped  ««"$ast"
+    ║ ║ ║   └○ $ast
     ║ ║ ╙○ $ast
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my %stats := self.collect_stats($ast);\n"...
     ║ ║ ╟○ self :decl(param)
@@ -1925,10 +2013,17 @@
     ║ ║ ║       └─unless &infix:<||>  ««"||"
     ║ ║ ║         ├─eqaddr &infix:<=:=>  ««"=:="
     ║ ║ ║         │ ├○ $value
-    ║ ║ ║         │ └○┬VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))
-    ║ ║ ║         │   ├─who
-    ║ ║ ║         │   │ └○ $?PACKAGE
-    ║ ║ ║         │   └◙ SVal "NO_VALUE"
+    ║ ║ ║         │ └─ifnull
+    ║ ║ ║         │   ├─atkey
+    ║ ║ ║         │   │ ├─who
+    ║ ║ ║         │   │ │ └○ $?PACKAGE
+    ║ ║ ║         │   │ └◙ SVal "NO_VALUE"
+    ║ ║ ║         │   └─ifnull
+    ║ ║ ║         │     ├─atkey
+    ║ ║ ║         │     │ ├─who
+    ║ ║ ║         │     │ │ └◙ WVal GLOBALish
+    ║ ║ ║         │     │ └◙ SVal "NO_VALUE"
+    ║ ║ ║         │     └◙ WVal NQPMu
     ║ ║ ║         └─iseq_s &infix:<eq>  ««"eq"
     ║ ║ ║           ├─callmethod value  ««".value"
     ║ ║ ║           │ └○ $node
@@ -1946,10 +2041,17 @@
     ║ ║ ║       └─unless &infix:<||>  ««"||"
     ║ ║ ║         ├─eqaddr &infix:<=:=>  ««"=:="
     ║ ║ ║         │ ├○ $value
-    ║ ║ ║         │ └○┬VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))
-    ║ ║ ║         │   ├─who
-    ║ ║ ║         │   │ └○ $?PACKAGE
-    ║ ║ ║         │   └◙ SVal "NO_VALUE"
+    ║ ║ ║         │ └─ifnull
+    ║ ║ ║         │   ├─atkey
+    ║ ║ ║         │   │ ├─who
+    ║ ║ ║         │   │ │ └○ $?PACKAGE
+    ║ ║ ║         │   │ └◙ SVal "NO_VALUE"
+    ║ ║ ║         │   └─ifnull
+    ║ ║ ║         │     ├─atkey
+    ║ ║ ║         │     │ ├─who
+    ║ ║ ║         │     │ │ └◙ WVal GLOBALish
+    ║ ║ ║         │     │ └◙ SVal "NO_VALUE"
+    ║ ║ ║         │     └◙ WVal NQPMu
     ║ ║ ║         └─iseq_n &infix:<==>  ««"=="
     ║ ║ ║           ├─callmethod value  ««".value"
     ║ ║ ║           │ └○ $node
@@ -1967,10 +2069,17 @@
     ║ ║ ║       └─unless &infix:<||>  ««"||"
     ║ ║ ║         ├─eqaddr &infix:<=:=>  ««"=:="
     ║ ║ ║         │ ├○ $op
-    ║ ║ ║         │ └○┬VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))
-    ║ ║ ║         │   ├─who
-    ║ ║ ║         │   │ └○ $?PACKAGE
-    ║ ║ ║         │   └◙ SVal "NO_VALUE"
+    ║ ║ ║         │ └─ifnull
+    ║ ║ ║         │   ├─atkey
+    ║ ║ ║         │   │ ├─who
+    ║ ║ ║         │   │ │ └○ $?PACKAGE
+    ║ ║ ║         │   │ └◙ SVal "NO_VALUE"
+    ║ ║ ║         │   └─ifnull
+    ║ ║ ║         │     ├─atkey
+    ║ ║ ║         │     │ ├─who
+    ║ ║ ║         │     │ │ └◙ WVal GLOBALish
+    ║ ║ ║         │     │ └◙ SVal "NO_VALUE"
+    ║ ║ ║         │     └◙ WVal NQPMu
     ║ ║ ║         └─iseq_s &infix:<eq>  ««"eq"
     ║ ║ ║           ├─callmethod op  ««".op"
     ║ ║ ║           │ └○ $node
@@ -2007,11 +2116,15 @@
     ║ ║ ║ │ ╟○ $_ :decl(param)
     ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$v := $_[1][0]"
     ║ ║ ║ │ ║ ├○ $v
-    ║ ║ ║ │ ║ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║ ║ ║ │ ║   ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║ ║ ║ │ ║   │ ├○ $_
-    ║ ║ ║ │ ║   │ └◙ IVal 1
-    ║ ║ ║ │ ║   └◙ IVal 0
+    ║ ║ ║ │ ║ └─ifnull
+    ║ ║ ║ │ ║   ├─atpos
+    ║ ║ ║ │ ║   │ ├─ifnull
+    ║ ║ ║ │ ║   │ │ ├─atpos
+    ║ ║ ║ │ ║   │ │ │ ├○ $_
+    ║ ║ ║ │ ║   │ │ │ └◙ IVal 1
+    ║ ║ ║ │ ║   │ │ └◙ WVal NQPMu
+    ║ ║ ║ │ ║   │ └◙ IVal 0
+    ║ ║ ║ │ ║   └◙ WVal NQPMu
     ║ ║ ║ │ ╙─if  ««"istype($v, QAST::SVal, QAST::IVal, QAST::NVal) {\n "...
     ║ ║ ║ │   ├─call &istype  ««"$v, QAST::SVal, QAST::IVal, QAST::NVal"
     ║ ║ ║ │   │ ├○ $v
@@ -2047,18 +2160,24 @@
     ║ ║ ║       │ └◙ SVal "%info"
     ║ ║ ║       └─call  ««"@pathUp[0][1]"
     ║ ║ ║         ├○ $findStatsHash
-    ║ ║ ║         └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║ ║ ║           ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║ ║ ║           │ ├○ @pathUp
-    ║ ║ ║           │ └◙ IVal 0
-    ║ ║ ║           └◙ IVal 1
+    ║ ║ ║         └─ifnull
+    ║ ║ ║           ├─atpos
+    ║ ║ ║           │ ├─ifnull
+    ║ ║ ║           │ │ ├─atpos
+    ║ ║ ║           │ │ │ ├○ @pathUp
+    ║ ║ ║           │ │ │ └◙ IVal 0
+    ║ ║ ║           │ │ └◙ WVal NQPMu
+    ║ ║ ║           │ └◙ IVal 1
+    ║ ║ ║           └◙ WVal NQPMu
     ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$infoHash := $findStatsHash($infoHashDef[1])"
     ║ ║ ║ ├○ $infoHash
     ║ ║ ║ └─call  ««"$infoHashDef[1]"
     ║ ║ ║   ├○ $findStatsHash
-    ║ ║ ║   └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║ ║ ║     ├○ $infoHashDef
-    ║ ║ ║     └◙ IVal 1
+    ║ ║ ║   └─ifnull
+    ║ ║ ║     ├─atpos
+    ║ ║ ║     │ ├○ $infoHashDef
+    ║ ║ ║     │ └◙ IVal 1
+    ║ ║ ║     └◙ WVal NQPMu
     ║ ║ ╟─call &say  ««"'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' ~ istype($in"...
     ║ ║ ║ └─concat &infix:<~>  ««"~"
     ║ ║ ║   ├◙ SVal ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
@@ -2103,9 +2222,11 @@
     ║ ║ ║ │ ║ │   │   └○ $_
     ║ ║ ║ │ ║ │   └─callmethod value  ««"%stats{$_}"
     ║ ║ ║ │ ║ │     ├○ $node
-    ║ ║ ║ │ ║ │     └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║ ║ │ ║ │       ├○ %stats
-    ║ ║ ║ │ ║ │       └○ $_
+    ║ ║ ║ │ ║ │     └─ifnull
+    ║ ║ ║ │ ║ │       ├─atkey
+    ║ ║ ║ │ ║ │       │ ├○ %stats
+    ║ ║ ║ │ ║ │       │ └○ $_
+    ║ ║ ║ │ ║ │       └◙ WVal NQPMu
     ║ ║ ║ │ ║ └◙ IVal 1 :named("nohandler")
     ║ ║ ║ │ ╙─call &say  ««"dump($infoHashDef)"
     ║ ║ ║ │   └─call &dump  ««"$infoHashDef"
@@ -2153,9 +2274,11 @@
     ║ ║     │   └◙ SVal ".qast"
     ║ ║     ├─if  ««"return $ast\n            if %adverbs<output> eq $qa"...
     ║ ║     │ ├─iseq_s &infix:<eq>  ««"eq"
-    ║ ║     │ │ ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║ ║     │ │ │ ├○ %adverbs
-    ║ ║     │ │ │ └◙ SVal "output"
+    ║ ║     │ │ ├─ifnull
+    ║ ║     │ │ │ ├─atkey
+    ║ ║     │ │ │ │ ├○ %adverbs
+    ║ ║     │ │ │ │ └◙ SVal "output"
+    ║ ║     │ │ │ └◙ WVal NQPMu
     ║ ║     │ │ └○ $qastfileName
     ║ ║     │ └─call RETURN
     ║ ║     │   └○ $ast
@@ -2171,13 +2294,17 @@
     ║   ╟─if  ««"%adverbs<target> eq 'mbc' && %adverbs<output> {\n  "...
     ║   ║ ├─if &infix:<&&>  ««"&&"
     ║   ║ │ ├─iseq_s &infix:<eq>  ««"eq"
-    ║   ║ │ │ ├○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║ │ │ │ ├○ %adverbs
-    ║   ║ │ │ │ └◙ SVal "target"
+    ║   ║ │ │ ├─ifnull
+    ║   ║ │ │ │ ├─atkey
+    ║   ║ │ │ │ │ ├○ %adverbs
+    ║   ║ │ │ │ │ └◙ SVal "target"
+    ║   ║ │ │ │ └◙ WVal NQPMu
     ║   ║ │ │ └◙ SVal "mbc"
-    ║   ║ │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║ │   ├○ %adverbs
-    ║   ║ │   └◙ SVal "output"
+    ║   ║ │ └─ifnull
+    ║   ║ │   ├─atkey
+    ║   ║ │   │ ├○ %adverbs
+    ║   ║ │   │ └◙ SVal "output"
+    ║   ║ │   └◙ WVal NQPMu
     ║   ║ ├─callmethod log  ««"'write_bytecode: omitted because of'\n             "...
     ║   ║ │ ├─decont
     ║   ║ │ │ └○ self
@@ -2189,14 +2316,18 @@
     ║   ║ │   │ │ │ │ ├─concat &infix:<~>  ««"~"
     ║   ║ │   │ │ │ │ │ ├◙ SVal "write_bytecode: omitted because of"
     ║   ║ │   │ │ │ │ │ └◙ SVal " :target(\""
-    ║   ║ │   │ │ │ │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║ │   │ │ │ │   ├○ %adverbs
-    ║   ║ │   │ │ │ │   └◙ SVal "target"
+    ║   ║ │   │ │ │ │ └─ifnull
+    ║   ║ │   │ │ │ │   ├─atkey
+    ║   ║ │   │ │ │ │   │ ├○ %adverbs
+    ║   ║ │   │ │ │ │   │ └◙ SVal "target"
+    ║   ║ │   │ │ │ │   └◙ WVal NQPMu
     ║   ║ │   │ │ │ └◙ SVal "\")"
     ║   ║ │   │ │ └◙ SVal " and :output(\""
-    ║   ║ │   │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║ │   │   ├○ %adverbs
-    ║   ║ │   │   └◙ SVal "output"
+    ║   ║ │   │ └─ifnull
+    ║   ║ │   │   ├─atkey
+    ║   ║ │   │   │ ├○ %adverbs
+    ║   ║ │   │   │ └◙ SVal "output"
+    ║   ║ │   │   └◙ WVal NQPMu
     ║   ║ │   └◙ SVal "\")"
     ║   ║ └─:Block :blocktype(immediate)  ««"{\n            my $assmbler := nqp::getcomp('MAST')"...
     ║   ║   ╟○ $assmbler :decl(var)
@@ -2282,25 +2413,33 @@
     ║   ║   ║   │   │ │ │ └○ @pathUp
     ║   ║   ║   │   │ │ └◙ IVal 1
     ║   ║   ║   │   │ └─eqaddr &infix:<=:=>  ««"=:="
-    ║   ║   ║   │   │   ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║   ║   │   │   │ ├○ @pathUp
-    ║   ║   ║   │   │   │ └◙ IVal 1
-    ║   ║   ║   │   │   └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║   ║   │   │     ├○ @expPathUp
-    ║   ║   ║   │   │     └◙ IVal 0
+    ║   ║   ║   │   │   ├─ifnull
+    ║   ║   ║   │   │   │ ├─atpos
+    ║   ║   ║   │   │   │ │ ├○ @pathUp
+    ║   ║   ║   │   │   │ │ └◙ IVal 1
+    ║   ║   ║   │   │   │ └◙ WVal NQPMu
+    ║   ║   ║   │   │   └─ifnull
+    ║   ║   ║   │   │     ├─atpos
+    ║   ║   ║   │   │     │ ├○ @expPathUp
+    ║   ║   ║   │   │     │ └◙ IVal 0
+    ║   ║   ║   │   │     └◙ WVal NQPMu
     ║   ║   ║   │   ├─:Block :blocktype(immediate)  ««"{\n                    my $parent := @pathUp[0];\n "...
     ║   ║   ║   │   │ ╟○ $parent :decl(var)
     ║   ║   ║   │   │ ╟○ $brother :decl(var)
     ║   ║   ║   │   │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$parent := @pathUp[0]"
     ║   ║   ║   │   │ ║ ├○ $parent
-    ║   ║   ║   │   │ ║ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║   ║   │   │ ║   ├○ @pathUp
-    ║   ║   ║   │   │ ║   └◙ IVal 0
+    ║   ║   ║   │   │ ║ └─ifnull
+    ║   ║   ║   │   │ ║   ├─atpos
+    ║   ║   ║   │   │ ║   │ ├○ @pathUp
+    ║   ║   ║   │   │ ║   │ └◙ IVal 0
+    ║   ║   ║   │   │ ║   └◙ WVal NQPMu
     ║   ║   ║   │   │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$brother := $parent[0]"
     ║   ║   ║   │   │ ║ ├○ $brother
-    ║   ║   ║   │   │ ║ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║   ║   │   │ ║   ├○ $parent
-    ║   ║   ║   │   │ ║   └◙ IVal 0
+    ║   ║   ║   │   │ ║ └─ifnull
+    ║   ║   ║   │   │ ║   ├─atpos
+    ║   ║   ║   │   │ ║   │ ├○ $parent
+    ║   ║   ║   │   │ ║   │ └◙ IVal 0
+    ║   ║   ║   │   │ ║   └◙ WVal NQPMu
     ║   ║   ║   │   │ ╙─unless &infix:<||>  ««"||"
     ║   ║   ║   │   │   ├─if &infix:<&&>  ««"&&"
     ║   ║   ║   │   │   │ ├─if &infix:<&&>  ««"&&"
@@ -2354,17 +2493,21 @@
     ║   ║   ║   ║   │ └◙ SVal "static" :named("decl")
     ║   ║   ║   ║   └○ $deps
     ║   ║   ║   ╙─callmethod push  ««"$depsBinding"
-    ║   ║   ║     ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║   ║     │ ├○ @expPathUp
-    ║   ║   ║     │ └◙ IVal 0
+    ║   ║   ║     ├─ifnull
+    ║   ║   ║     │ ├─atpos
+    ║   ║   ║     │ │ ├○ @expPathUp
+    ║   ║   ║     │ │ └◙ IVal 0
+    ║   ║   ║     │ └◙ WVal NQPMu
     ║   ║   ║     └○ $depsBinding
     ║   ║   ╟─callmethod push  ««"QAST::SVal.new(:value($/<name>), :node($/))"
     ║   ║   ║ ├○ $deps
     ║   ║   ║ └─callmethod new  ««":value($/<name>), :node($/)"
     ║   ║   ║   ├◙ WVal QAST::SVal
-    ║   ║   ║   ├○┬VarWithFallback associative :named("value") :fallback(WVal NQPMu)
-    ║   ║   ║   │ ├○ $/
-    ║   ║   ║   │ └◙ SVal "name"
+    ║   ║   ║   ├─ifnull :named("value")
+    ║   ║   ║   │ ├─atkey
+    ║   ║   ║   │ │ ├○ $/
+    ║   ║   ║   │ │ └◙ SVal "name"
+    ║   ║   ║   │ └◙ WVal NQPMu
     ║   ║   ║   └○ $/ :named("node")
     ║   ║   ╟─callmethod log  ««"$*COMPILER.user_progname, ' dependency: \"' ~ $/<na"...
     ║   ║   ║ ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
@@ -2373,30 +2516,36 @@
     ║   ║   ║ └─concat &infix:<~>  ««"~"
     ║   ║   ║   ├─concat &infix:<~>  ««"~"
     ║   ║   ║   │ ├◙ SVal " dependency: \""
-    ║   ║   ║   │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║   ║   │   ├○ $/
-    ║   ║   ║   │   └◙ SVal "name"
+    ║   ║   ║   │ └─ifnull
+    ║   ║   ║   │   ├─atkey
+    ║   ║   ║   │   │ ├○ $/
+    ║   ║   ║   │   │ └◙ SVal "name"
+    ║   ║   ║   │   └◙ WVal NQPMu
     ║   ║   ║   └◙ SVal "\""
     ║   ║   ╙─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$depOut := $*COMPILER.compileDependency(~$/<name>, [])"
     ║   ║     ├○ $depOut
     ║   ║     └─callmethod compileDependency  ««"~$/<name>, []"
     ║   ║       ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
     ║   ║       ├─stringify &prefix:<~>  ««"~"
-    ║   ║       │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║       │   ├○ $/
-    ║   ║       │   └◙ SVal "name"
+    ║   ║       │ └─ifnull
+    ║   ║       │   ├─atkey
+    ║   ║       │   │ ├○ $/
+    ║   ║       │   │ └◙ SVal "name"
+    ║   ║       │   └◙ WVal NQPMu
     ║   ║       └─list &circumfix:<[ ]>
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$super := nqp::findmethod(self.HOW.mro(self)[1], 's"...
     ║   ║ ├○ $super
     ║   ║ └─findmethod  ««"nqp::findmethod(self.HOW.mro(self)[1], 'statement_c"...
-    ║   ║   ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║   ║   │ ├─callmethod mro  ««"self"
-    ║   ║   │ │ ├─how  ««".HOW"
+    ║   ║   ├─ifnull
+    ║   ║   │ ├─atpos
+    ║   ║   │ │ ├─callmethod mro  ««"self"
+    ║   ║   │ │ │ ├─how  ««".HOW"
+    ║   ║   │ │ │ │ └─decont
+    ║   ║   │ │ │ │   └○ self
     ║   ║   │ │ │ └─decont
     ║   ║   │ │ │   └○ self
-    ║   ║   │ │ └─decont
-    ║   ║   │ │   └○ self
-    ║   ║   │ └◙ IVal 1
+    ║   ║   │ │ └◙ IVal 1
+    ║   ║   │ └◙ WVal NQPMu
     ║   ║   └◙ SVal "statement_control:sym<use>"
     ║   ╟─bind &infix:<:=>  ««":="
     ║   ║ ├○ $out
@@ -2412,9 +2561,11 @@
     ║   ║ ├○ $out
     ║   ║ ├◙ SVal "use"
     ║   ║ └─stringify &prefix:<~>  ««"~"
-    ║   ║   └○┬VarWithFallback associative :fallback(WVal NQPMu)
-    ║   ║     ├○ $/
-    ║   ║     └◙ SVal "name"
+    ║   ║   └─ifnull
+    ║   ║     ├─atkey
+    ║   ║     │ ├○ $/
+    ║   ║     │ └◙ SVal "name"
+    ║   ║     └◙ WVal NQPMu
     ║   ╙─callmethod make  ««"make "
     ║     ├○ $/
     ║     └○ $out
@@ -2456,14 +2607,16 @@
     ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$parse := nqp::findmethod(self.HOW.mro(self)[1], 'p"...
     ║ ║ ║ ├○ $parse
     ║ ║ ║ └─findmethod  ««"nqp::findmethod(self.HOW.mro(self)[1], 'parse')"
-    ║ ║ ║   ├○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║ ║ ║   │ ├─callmethod mro  ««"self"
-    ║ ║ ║   │ │ ├─how  ««".HOW"
+    ║ ║ ║   ├─ifnull
+    ║ ║ ║   │ ├─atpos
+    ║ ║ ║   │ │ ├─callmethod mro  ««"self"
+    ║ ║ ║   │ │ │ ├─how  ««".HOW"
+    ║ ║ ║   │ │ │ │ └─decont
+    ║ ║ ║   │ │ │ │   └○ self
     ║ ║ ║   │ │ │ └─decont
     ║ ║ ║   │ │ │   └○ self
-    ║ ║ ║   │ │ └─decont
-    ║ ║ ║   │ │   └○ self
-    ║ ║ ║   │ └◙ IVal 1
+    ║ ║ ║   │ │ └◙ IVal 1
+    ║ ║ ║   │ └◙ WVal NQPMu
     ║ ║ ║   └◙ SVal "parse"
     ║ ║ ╙─call  ««"self, $source, |%adverbs"
     ║ ║   ├○ $parse
@@ -3105,9 +3258,11 @@
     ║           ║       │ ║ │ ╟○ $at :decl(var)
     ║           ║       │ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$line := @lines[$i]"
     ║           ║       │ ║ │ ║ ├○ $line
-    ║           ║       │ ║ │ ║ └○┬VarWithFallback positional :fallback(WVal NQPMu)
-    ║           ║       │ ║ │ ║   ├○ @lines
-    ║           ║       │ ║ │ ║   └○ $i
+    ║           ║       │ ║ │ ║ └─ifnull
+    ║           ║       │ ║ │ ║   ├─atpos
+    ║           ║       │ ║ │ ║   │ ├○ @lines
+    ║           ║       │ ║ │ ║   │ └○ $i
+    ║           ║       │ ║ │ ║   └◙ WVal NQPMu
     ║           ║       │ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$at := nqp::index($line, '=')"
     ║           ║       │ ║ │ ║ ├○ $at
     ║           ║       │ ║ │ ║ └─index  ««"nqp::index($line, '=')"
