@@ -402,6 +402,36 @@ class Util::QAST {
         );
     }
 
+    method inline_simple_methods($node) {
+        if istype($node, QAST::Node) {
+
+            # first, recurse:
+            for $node.list {
+                inline_simple_methods($_);
+            }
+
+            if istype($node, QAST::Op) && $node.op eq 'callmethod' {
+                my $meth := $node.name;
+                if $meth {
+                    if nqp::index('push pop shift unshift', $meth) > -1 {
+                        $node.op($meth);
+                        $node.name(nqp::null_s);
+                    } elsif $meth eq 'key' {
+                        $node.op('iterkey_s');
+                        $node.name(nqp::null_s);
+                    } elsif $meth eq 'value' {
+                        $node.op('iterval');
+                        $node.name(nqp::null_s);
+                    }
+                }
+            }
+            
+        }
+        
+        $node;
+    }
+
+
 }   # end of class Util::QAST
 
 
@@ -420,3 +450,4 @@ sub replace_assoc_and_pos_scoped($ast)  is export { Util::QAST.replace_assoc_and
 sub drop_takeclosure($ast)              is export { Util::QAST.drop_takeclosure($ast) }
 sub remove_bogusOpNames($ast)           is export { Util::QAST.remove_bogusOpNames($ast) }
 
+sub inline_simple_methods($ast)         is export { Util::QAST.inline_simple_methods($ast) }

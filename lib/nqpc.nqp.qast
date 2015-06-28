@@ -31,6 +31,7 @@
     ╟○ &replace_assoc_and_pos_scoped :decl(static) :default((NQPRoutine, invokable))
     ╟○ &drop_takeclosure :decl(static) :default((NQPRoutine, invokable))
     ╟○ &remove_bogusOpNames :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &inline_simple_methods :decl(static) :default((NQPRoutine, invokable))
     ╟─bind
     ║ ├○ &isinResultPosition :decl(var)
     ║ └─:Block  ««"{\n    my $n := nqp::elems($parent) - 1;\n    if ($"...
@@ -1067,80 +1068,6 @@
     ║       │         └○ $out
     ║       └○ $node
     ╟─bind
-    ║ ├○ &inline_simple_methods :decl(var)
-    ║ └─:Block  ««"{\n    nqp::die('inline_simple_methods expects a QA"...
-    ║   ╟○ $node :decl(param)
-    ║   ╟─unless  ««"nqp::die('inline_simple_methods expects a QAST::Nod"...
-    ║   ║ ├─call &istype  ««"$node, QAST::Node"
-    ║   ║ │ ├○ $node
-    ║   ║ │ └◙ WVal QAST::Node
-    ║   ║ └─die  ««"nqp::die('inline_simple_methods expects a QAST::Nod"...
-    ║   ║   └─concat  ««"~"
-    ║   ║     ├◙ SVal "inline_simple_methods expects a QAST::Node - got "
-    ║   ║     └─call &describe  ««"$node"
-    ║   ║       └○ $node
-    ║   ╟─for  ««"$node.list {\n        inline_simple_methods($_);\n "...
-    ║   ║ ├─callmethod list  ««".list"
-    ║   ║ │ └○ $node
-    ║   ║ ├─:Block :blocktype(immediate)  ««"{\n        inline_simple_methods($_);\n    }"
-    ║   ║ │ ╟○ $_ :decl(param)
-    ║   ║ │ ╙─call &inline_simple_methods  ««"$_"
-    ║   ║ │   └○ $_
-    ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╟─if  ««"istype($node, QAST::Op) && $node.op eq 'callmethod'"...
-    ║   ║ ├─if  ««"&&"
-    ║   ║ │ ├─call &istype  ««"$node, QAST::Op"
-    ║   ║ │ │ ├○ $node
-    ║   ║ │ │ └◙ WVal QAST::Op
-    ║   ║ │ └─iseq_s  ««"eq"
-    ║   ║ │   ├─callmethod op  ««".op"
-    ║   ║ │   │ └○ $node
-    ║   ║ │   └◙ SVal "callmethod"
-    ║   ║ └─:Block :blocktype(immediate)  ««"{\n        my $meth := $node.name;\n        if $met"...
-    ║   ║   ╟○ $meth :decl(var)
-    ║   ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$meth := $node.name"
-    ║   ║   ║ ├○ $meth
-    ║   ║   ║ └─callmethod name  ««".name"
-    ║   ║   ║   └○ $node
-    ║   ║   ╙─if  ««"$meth {\n            if nqp::index('push pop shift "...
-    ║   ║     ├○ $meth
-    ║   ║     └─if  ««"nqp::index('push pop shift unshift', $meth) > -1 {\"...
-    ║   ║       ├─isgt_n  ««">"
-    ║   ║       │ ├─index  ««"nqp::index('push pop shift unshift', $meth)"
-    ║   ║       │ │ ├◙ SVal "push pop shift unshift"
-    ║   ║       │ │ └○ $meth
-    ║   ║       │ └◙ IVal -1
-    ║   ║       ├─:Stmts  ««"{\n                $node.op($meth);\n              "...
-    ║   ║       │ ├─callmethod op  ««"$meth"
-    ║   ║       │ │ ├○ $node
-    ║   ║       │ │ └○ $meth
-    ║   ║       │ └─callmethod name  ««"nqp::null_s"
-    ║   ║       │   ├○ $node
-    ║   ║       │   └─null_s  ««"nqp::null_s"
-    ║   ║       └─if  ««"$meth eq 'key' {\n                $node.op('iterkey"...
-    ║   ║         ├─iseq_s  ««"eq"
-    ║   ║         │ ├○ $meth
-    ║   ║         │ └◙ SVal "key"
-    ║   ║         ├─:Stmts  ««"{\n                $node.op('iterkey_s');\n        "...
-    ║   ║         │ ├─callmethod op  ««"'iterkey_s'"
-    ║   ║         │ │ ├○ $node
-    ║   ║         │ │ └◙ SVal "iterkey_s"
-    ║   ║         │ └─callmethod name  ««"nqp::null_s"
-    ║   ║         │   ├○ $node
-    ║   ║         │   └─null_s  ««"nqp::null_s"
-    ║   ║         └─if  ««"$meth eq 'value' {\n                $node.op('iterv"...
-    ║   ║           ├─iseq_s  ««"eq"
-    ║   ║           │ ├○ $meth
-    ║   ║           │ └◙ SVal "value"
-    ║   ║           └─:Stmts  ««"{\n                $node.op('iterval');\n          "...
-    ║   ║             ├─callmethod op  ««"'iterval'"
-    ║   ║             │ ├○ $node
-    ║   ║             │ └◙ SVal "iterval"
-    ║   ║             └─callmethod name  ««"nqp::null_s"
-    ║   ║               ├○ $node
-    ║   ║               └─null_s  ««"nqp::null_s"
-    ║   ╙○ $node
-    ╟─bind
     ║ ├○ &renameVars :decl(var)
     ║ └─:Block  ««"{\n    nqp::die('renameVars expects a QAST::Node as"...
     ║   ╟○ $ast :decl(param)
@@ -1390,7 +1317,6 @@
     ╟○ &cloneAndSubst
     ╟○ &collect_params_and_body
     ╟○ &inline_simple_subs
-    ╟○ &inline_simple_methods
     ╟○ &renameVars
     ╟─:Block :blocktype(immediate)  ««"{\n\n    # Where to search for user source files.\n"...
     ║ ╟○ $?PACKAGE :decl(static) :default((SmartCompiler, Type object))

@@ -301,34 +301,6 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
     $node;
 }
 
-sub inline_simple_methods($node) {
-    nqp::die('inline_simple_methods expects a QAST::Node - got ' ~ describe($node) )
-        unless istype($node, QAST::Node);
-
-    # first, recurse:
-    for $node.list {
-        inline_simple_methods($_);
-    }
-
-    if istype($node, QAST::Op) && $node.op eq 'callmethod' {
-        my $meth := $node.name;
-        if $meth {
-            if nqp::index('push pop shift unshift', $meth) > -1 {
-                $node.op($meth);
-                $node.name(nqp::null_s);
-            } elsif $meth eq 'key' {
-                $node.op('iterkey_s');
-                $node.name(nqp::null_s);
-            } elsif $meth eq 'value' {
-                $node.op('iterval');
-                $node.name(nqp::null_s);
-            }
-        }
-    }
-    
-    $node;
-}
-
 
 sub renameVars($ast, $map) {
     nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ describe($ast) )
