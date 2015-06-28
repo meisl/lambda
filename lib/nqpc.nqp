@@ -53,21 +53,6 @@ sub drop_bogusVars($ast, $parent = nqp::null) {
 }
 
 
-sub remove_bogusOpNames($ast) {
-    nqp::die('remove_bogusOpNames expects a QAST::Node - got ' ~ nqp::reprname($ast) )
-        unless istype($ast, QAST::Node);
-    if istype($ast, QAST::Op) && ($ast.op ne 'call') && ($ast.op ne 'callstatic') && ($ast.op ne 'callmethod') && ($ast.op ne 'lexotic') {
-        #say('>>>Op(', $ast.op, ' ', $ast.dump_extra_node_info, ')')
-        #    unless nqp::index('x radix can postinc preinc add_n sub_n stringify bind bindkey concat atpos atkey die reprname defor isnull iseq_s iseq_n isgt_n islt_n isinvokable isstr isint isnum islist ishash substr if unless for while elems chars escape list hash iterkey_s iterval', $ast.op) >= 0;
-        $ast.name(nqp::null_s);
-    }
-    for $ast.list {
-        remove_bogusOpNames($_);
-    }
-    $ast;
-}
-
-
 sub remove_MAIN($ast) {
     say($ast[0].cuid);
     say("CompUnit load: \n", dump($ast.load));
@@ -537,7 +522,7 @@ class SmartCompiler is NQP::Compiler {
         self.log('ast_clean: ', self.user-progname, ' / drop_Stmts done.');
         
         #$ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
-        #$ast := remove_bogusOpNames($ast);
+        $ast := remove_bogusOpNames($ast);
         #$ast := remove_MAIN($ast);
         
         # from here it's rather optimization...

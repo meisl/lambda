@@ -30,6 +30,7 @@
     ╟○ &drop_Stmts :decl(static) :default((NQPRoutine, invokable))
     ╟○ &replace_assoc_and_pos_scoped :decl(static) :default((NQPRoutine, invokable))
     ╟○ &drop_takeclosure :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &remove_bogusOpNames :decl(static) :default((NQPRoutine, invokable))
     ╟─bind
     ║ ├○ &isinResultPosition :decl(var)
     ║ └─:Block  ««"{\n    my $n := nqp::elems($parent) - 1;\n    if ($"...
@@ -40,24 +41,24 @@
     ║     └─:Stmts  ««"\n    my $n := nqp::elems($parent) - 1;\n    if ($p"...
     ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$n := nqp::elems($parent) - 1"
     ║       │ ├○ $n
-    ║       │ └─sub_n &infix:<->  ««"-"
+    ║       │ └─sub_n  ««"-"
     ║       │   ├─elems  ««"nqp::elems($parent)"
     ║       │   │ └○ $parent
     ║       │   └◙ IVal 1
     ║       ├─if  ««"($parent[$n] =:= $node) || (nqp::can($parent, 'resu"...
-    ║       │ ├─unless &infix:<||>  ««"||"
-    ║       │ │ ├─eqaddr &infix:<=:=>  ««"=:="
+    ║       │ ├─unless  ««"||"
+    ║       │ │ ├─eqaddr  ««"=:="
     ║       │ │ │ ├─ifnull
     ║       │ │ │ │ ├─atpos
     ║       │ │ │ │ │ ├○ $parent
     ║       │ │ │ │ │ └○ $n
     ║       │ │ │ │ └◙ WVal NQPMu
     ║       │ │ │ └○ $node
-    ║       │ │ └─if &infix:<&&>  ««"&&"
+    ║       │ │ └─if  ««"&&"
     ║       │ │   ├─can  ««"nqp::can($parent, 'resultchild')"
     ║       │ │   │ ├○ $parent
     ║       │ │   │ └◙ SVal "resultchild"
-    ║       │ │   └─eqaddr &infix:<=:=>  ««"=:="
+    ║       │ │   └─eqaddr  ««"=:="
     ║       │ │     ├─ifnull
     ║       │ │     │ ├─atpos
     ║       │ │     │ │ ├○ $parent
@@ -68,12 +69,12 @@
     ║       │ └─call RETURN
     ║       │   └◙ IVal 1
     ║       ├─while  ««"--$n >= 0 {\n        return 0 if $node =:= $parent["...
-    ║       │ ├─isge_n &infix:<>=>  ««">="
-    ║       │ │ ├─predec &prefix:<-->  ««"--"
+    ║       │ ├─isge_n  ««">="
+    ║       │ │ ├─predec  ««"--"
     ║       │ │ │ └○ $n
     ║       │ │ └◙ IVal 0
     ║       │ ├─if  ««"return 0 if $node =:= $parent[$n]"
-    ║       │ │ ├─eqaddr &infix:<=:=>  ««"=:="
+    ║       │ │ ├─eqaddr  ««"=:="
     ║       │ │ │ ├○ $node
     ║       │ │ │ └─ifnull
     ║       │ │ │   ├─atpos
@@ -84,8 +85,8 @@
     ║       │ │   └◙ IVal 0
     ║       │ └◙ IVal 1 :named("nohandler")
     ║       └─die  ««"nqp::die(describe($node) ~ ' not a child of ' ~ des"...
-    ║         └─concat &infix:<~>  ««"~"
-    ║           ├─concat &infix:<~>  ««"~"
+    ║         └─concat  ««"~"
+    ║           ├─concat  ««"~"
     ║           │ ├─call &describe  ««"$node"
     ║           │ │ └○ $node
     ║           │ └◙ SVal " not a child of "
@@ -99,11 +100,11 @@
     ║   ╙─lexotic RETURN
     ║     └─:Stmts  ««"\n    if istype($ast, QAST::Var) && !$ast.decl {\n "...
     ║       ├─if  ««"istype($ast, QAST::Var) && !$ast.decl {\n        if"...
-    ║       │ ├─if &infix:<&&>  ««"&&"
+    ║       │ ├─if  ««"&&"
     ║       │ │ ├─call &istype  ««"$ast, QAST::Var"
     ║       │ │ │ ├○ $ast
     ║       │ │ │ └◙ WVal QAST::Var
-    ║       │ │ └─falsey &prefix:<!>  ««"!"
+    ║       │ │ └─falsey  ««"!"
     ║       │ │   └─callmethod decl  ««".decl"
     ║       │ │     └○ $ast
     ║       │ ├─if  ««"istype($parent, QAST::Block, QAST::Stmt, QAST::Stmt"...
@@ -119,7 +120,7 @@
     ║       │ │   └─call RETURN
     ║       │ │     └─null  ««"nqp::null"
     ║       │ └─if  ««"+$ast.list { # workaround - not all nodes with chil"...
-    ║       │   ├─numify &prefix:<+>  ««"+"
+    ║       │   ├─numify  ««"+"
     ║       │   │ └─callmethod list  ««".list"
     ║       │   │   └○ $ast
     ║       │   └─:Block :blocktype(immediate)  ««"{ # workaround - not all nodes with children actual"...
@@ -127,7 +128,7 @@
     ║       │     ╟○ $changed :decl(var)
     ║       │     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@children := []"
     ║       │     ║ ├○ @children
-    ║       │     ║ └─list &circumfix:<[ ]>
+    ║       │     ║ └─list
     ║       │     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$changed := 0"
     ║       │     ║ ├○ $changed
     ║       │     ║ └◙ IVal 0
@@ -145,7 +146,7 @@
     ║       │     ║ │ ╙─if  ««"nqp::isnull($child) {\n                $changed := "...
     ║       │     ║ │   ├─isnull  ««"nqp::isnull($child)"
     ║       │     ║ │   │ └○ $child
-    ║       │     ║ │   ├─bind &infix:<:=>  ««":="
+    ║       │     ║ │   ├─bind  ««":="
     ║       │     ║ │   │ ├○ $changed
     ║       │     ║ │   │ └◙ IVal 1
     ║       │     ║ │   └─callmethod push  ««"$child"
@@ -161,7 +162,7 @@
     ║       │         ║ └─callmethod list  ««".list"
     ║       │         ║   └○ $ast
     ║       │         ╟─while  ««"+@list { @list.pop }"
-    ║       │         ║ ├─numify &prefix:<+>  ««"+"
+    ║       │         ║ ├─numify  ««"+"
     ║       │         ║ │ └○ @list
     ║       │         ║ ├─callmethod pop  ««".pop"
     ║       │         ║ │ └○ @list
@@ -175,55 +176,6 @@
     ║       │           │   └○ $_
     ║       │           └◙ IVal 1 :named("nohandler")
     ║       └○ $ast
-    ╟─bind
-    ║ ├○ &remove_bogusOpNames :decl(var)
-    ║ └─:Block  ««"{\n    nqp::die('remove_bogusOpNames expects a QAST"...
-    ║   ╟○ $ast :decl(param)
-    ║   ╟─unless  ««"nqp::die('remove_bogusOpNames expects a QAST::Node "...
-    ║   ║ ├─call &istype  ««"$ast, QAST::Node"
-    ║   ║ │ ├○ $ast
-    ║   ║ │ └◙ WVal QAST::Node
-    ║   ║ └─die  ««"nqp::die('remove_bogusOpNames expects a QAST::Node "...
-    ║   ║   └─concat &infix:<~>  ««"~"
-    ║   ║     ├◙ SVal "remove_bogusOpNames expects a QAST::Node - got "
-    ║   ║     └─reprname  ««"nqp::reprname($ast)"
-    ║   ║       └○ $ast
-    ║   ╟─if  ««"istype($ast, QAST::Op) && ($ast.op ne 'call') && ($"...
-    ║   ║ ├─if &infix:<&&>  ««"&&"
-    ║   ║ │ ├─if &infix:<&&>  ««"&&"
-    ║   ║ │ │ ├─if &infix:<&&>  ««"&&"
-    ║   ║ │ │ │ ├─if &infix:<&&>  ««"&&"
-    ║   ║ │ │ │ │ ├─call &istype  ««"$ast, QAST::Op"
-    ║   ║ │ │ │ │ │ ├○ $ast
-    ║   ║ │ │ │ │ │ └◙ WVal QAST::Op
-    ║   ║ │ │ │ │ └─isne_s &infix:<ne>  ««"ne"
-    ║   ║ │ │ │ │   ├─callmethod op  ««".op"
-    ║   ║ │ │ │ │   │ └○ $ast
-    ║   ║ │ │ │ │   └◙ SVal "call"
-    ║   ║ │ │ │ └─isne_s &infix:<ne>  ««"ne"
-    ║   ║ │ │ │   ├─callmethod op  ««".op"
-    ║   ║ │ │ │   │ └○ $ast
-    ║   ║ │ │ │   └◙ SVal "callstatic"
-    ║   ║ │ │ └─isne_s &infix:<ne>  ««"ne"
-    ║   ║ │ │   ├─callmethod op  ««".op"
-    ║   ║ │ │   │ └○ $ast
-    ║   ║ │ │   └◙ SVal "callmethod"
-    ║   ║ │ └─isne_s &infix:<ne>  ««"ne"
-    ║   ║ │   ├─callmethod op  ««".op"
-    ║   ║ │   │ └○ $ast
-    ║   ║ │   └◙ SVal "lexotic"
-    ║   ║ └─callmethod name  ««"nqp::null_s"
-    ║   ║   ├○ $ast
-    ║   ║   └─null_s  ««"nqp::null_s"
-    ║   ╟─for  ««"$ast.list {\n        remove_bogusOpNames($_);\n    }"
-    ║   ║ ├─callmethod list  ««".list"
-    ║   ║ │ └○ $ast
-    ║   ║ ├─:Block :blocktype(immediate)  ««"{\n        remove_bogusOpNames($_);\n    }"
-    ║   ║ │ ╟○ $_ :decl(param)
-    ║   ║ │ ╙─call &remove_bogusOpNames  ««"$_"
-    ║   ║ │   └○ $_
-    ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╙○ $ast
     ╟─bind
     ║ ├○ &remove_MAIN :decl(var)
     ║ └─:Block  ««"{\n    say($ast[0].cuid);\n    say(\"CompUnit load:"...
@@ -250,7 +202,7 @@
     ║   ║     └○ $ast
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@path := []"
     ║   ║ ├○ @path
-    ║   ║ └─list &circumfix:<[ ]>
+    ║   ║ └─list
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$MAIN := findDef($ast, '&MAIN', @path)"
     ║   ║ ├○ $MAIN
     ║   ║ └─call &findDef  ««"$ast, '&MAIN', @path"
@@ -270,9 +222,9 @@
     ║   ║ ├◙ SVal "\n"
     ║   ║ └─call &describe  ««"$MAIN"
     ║   ║   └○ $MAIN
-    ║   ╟─bind &infix:<:=>  ««":="
+    ║   ╟─bind  ««":="
     ║   ║ ├○ @path
-    ║   ║ └─list &circumfix:<[ ]>
+    ║   ║ └─list
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$MAINcall := findPath(-> $node, @pathUp {\n        "...
     ║   ║ ├○ $MAINcall
     ║   ║ └─call &findPath  ««"-> $node, @pathUp {\n            if istype($node, Q"...
@@ -280,21 +232,21 @@
     ║   ║   │ ╟○ $node :decl(param)
     ║   ║   │ ╟○ @pathUp :decl(param)
     ║   ║   │ ╙─if  ««"istype($node, QAST::Op) && ($node.op eq 'call') && "...
-    ║   ║   │   ├─if &infix:<&&>  ««"&&"
-    ║   ║   │   │ ├─if &infix:<&&>  ««"&&"
+    ║   ║   │   ├─if  ««"&&"
+    ║   ║   │   │ ├─if  ««"&&"
     ║   ║   │   │ │ ├─call &istype  ««"$node, QAST::Op"
     ║   ║   │   │ │ │ ├○ $node
     ║   ║   │   │ │ │ └◙ WVal QAST::Op
-    ║   ║   │   │ │ └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║   │   │ │ └─iseq_s  ««"eq"
     ║   ║   │   │ │   ├─callmethod op  ««".op"
     ║   ║   │   │ │   │ └○ $node
     ║   ║   │   │ │   └◙ SVal "call"
-    ║   ║   │   │ └─unless &infix:<||>  ««"||"
-    ║   ║   │   │   ├─iseq_s &infix:<eq>  ««"eq"
+    ║   ║   │   │ └─unless  ««"||"
+    ║   ║   │   │   ├─iseq_s  ««"eq"
     ║   ║   │   │   │ ├─callmethod name  ««".name"
     ║   ║   │   │   │ │ └○ $node
     ║   ║   │   │   │ └◙ SVal "&MAIN"
-    ║   ║   │   │   └─if &infix:<&&>  ««"&&"
+    ║   ║   │   │   └─if  ««"&&"
     ║   ║   │   │     ├─call &istype  ««"$node[0], QAST::Var"
     ║   ║   │   │     │ ├─ifnull
     ║   ║   │   │     │ │ ├─atpos
@@ -302,7 +254,7 @@
     ║   ║   │   │     │ │ │ └◙ IVal 0
     ║   ║   │   │     │ │ └◙ WVal NQPMu
     ║   ║   │   │     │ └◙ WVal QAST::Var
-    ║   ║   │   │     └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║   │   │     └─iseq_s  ««"eq"
     ║   ║   │   │       ├─callmethod name  ««".name"
     ║   ║   │   │       │ └─ifnull
     ║   ║   │   │       │   ├─atpos
@@ -320,11 +272,11 @@
     ║   ║   │   │ ║   │ └◙ IVal 0
     ║   ║   │   │ ║   └◙ WVal NQPMu
     ║   ║   │   │ ╙─if  ««"istype($parent, QAST::Op) && $parent.op eq 'if' {\n"...
-    ║   ║   │   │   ├─if &infix:<&&>  ««"&&"
+    ║   ║   │   │   ├─if  ««"&&"
     ║   ║   │   │   │ ├─call &istype  ««"$parent, QAST::Op"
     ║   ║   │   │   │ │ ├○ $parent
     ║   ║   │   │   │ │ └◙ WVal QAST::Op
-    ║   ║   │   │   │ └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║   │   │   │ └─iseq_s  ««"eq"
     ║   ║   │   │   │   ├─callmethod op  ««".op"
     ║   ║   │   │   │   │ └○ $parent
     ║   ║   │   │   │   └◙ SVal "if"
@@ -335,7 +287,7 @@
     ║   ║   │   │     │ ├◙ WVal QAST::Stmt
     ║   ║   │   │     │ └◙ WVal QAST::Stmts
     ║   ║   │   │     └─:Stmts  ««"{\n                    $parent := @pathUp[0];\n    "...
-    ║   ║   │   │       ├─bind &infix:<:=>  ««":="
+    ║   ║   │   │       ├─bind  ««":="
     ║   ║   │   │       │ ├○ $parent
     ║   ║   │   │       │ └─ifnull
     ║   ║   │   │       │   ├─atpos
@@ -343,11 +295,11 @@
     ║   ║   │   │       │   │ └◙ IVal 0
     ║   ║   │   │       │   └◙ WVal NQPMu
     ║   ║   │   │       └─if  ««"istype($parent, QAST::Op) && $parent.op eq 'if' {\n"...
-    ║   ║   │   │         ├─if &infix:<&&>  ««"&&"
+    ║   ║   │   │         ├─if  ««"&&"
     ║   ║   │   │         │ ├─call &istype  ««"$parent, QAST::Op"
     ║   ║   │   │         │ │ ├○ $parent
     ║   ║   │   │         │ │ └◙ WVal QAST::Op
-    ║   ║   │   │         │ └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║   │   │         │ └─iseq_s  ««"eq"
     ║   ║   │   │         │   ├─callmethod op  ««".op"
     ║   ║   │   │         │   │ └○ $parent
     ║   ║   │   │         │   └◙ SVal "if"
@@ -379,13 +331,13 @@
     ║   ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$name := $matcher"
     ║   ║   ║ ├○ $name
     ║   ║   ║ └○ $matcher
-    ║   ║   ╙─bind &infix:<:=>  ««":="
+    ║   ║   ╙─bind  ««":="
     ║   ║     ├○ $matcher
     ║   ║     └─:Block  ««"{ $var.name eq $name && $var.decl }"
     ║   ║       ╟○ $var :decl(param)
     ║   ║       ╟○ @pathUp :decl(param)
-    ║   ║       ╙─if &infix:<&&>  ««"&&"
-    ║   ║         ├─iseq_s &infix:<eq>  ««"eq"
+    ║   ║       ╙─if  ««"&&"
+    ║   ║         ├─iseq_s  ««"eq"
     ║   ║         │ ├─callmethod name  ««".name"
     ║   ║         │ │ └○ $var
     ║   ║         │ └○ $name
@@ -398,8 +350,8 @@
     ║     │ ╟○ $parent :decl(var)
     ║     │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$parent := nqp::elems(@pathUp) > 0 ?? @pathUp[0] !!"...
     ║     │ ║ ├○ $parent
-    ║     │ ║ └─if &infix:<>  ««"?? @pathUp[0] !!"
-    ║     │ ║   ├─isgt_n &infix:<>>  ««">"
+    ║     │ ║ └─if  ««"?? @pathUp[0] !!"
+    ║     │ ║   ├─isgt_n  ««">"
     ║     │ ║   │ ├─elems  ««"nqp::elems(@pathUp)"
     ║     │ ║   │ │ └○ @pathUp
     ║     │ ║   │ └◙ IVal 0
@@ -410,7 +362,7 @@
     ║     │ ║   │ └◙ WVal NQPMu
     ║     │ ║   └─null  ««"nqp::null"
     ║     │ ╙─if  ««"nqp::isnull($parent) || istype($parent, QAST::CompU"...
-    ║     │   ├─unless &infix:<||>  ««"||"
+    ║     │   ├─unless  ««"||"
     ║     │   │ ├─isnull  ««"nqp::isnull($parent)"
     ║     │   │ │ └○ $parent
     ║     │   │ └─call &istype  ««"$parent, QAST::CompUnit"
@@ -419,16 +371,16 @@
     ║     │   ├─callmethod list  ««".list"
     ║     │   │ └○ $node
     ║     │   └─if  ««"istype($parent, QAST::Op) && istype($node, QAST::Va"...
-    ║     │     ├─if &infix:<&&>  ««"&&"
+    ║     │     ├─if  ««"&&"
     ║     │     │ ├─call &istype  ««"$parent, QAST::Op"
     ║     │     │ │ ├○ $parent
     ║     │     │ │ └◙ WVal QAST::Op
     ║     │     │ └─call &istype  ««"$node, QAST::Var"
     ║     │     │   ├○ $node
     ║     │     │   └◙ WVal QAST::Var
-    ║     │     ├─if &infix:<>  ««"?? $parent\n                    !!"
-    ║     │     │ ├─if &infix:<&&>  ««"&&"
-    ║     │     │ │ ├─iseq_s &infix:<eq>  ««"eq"
+    ║     │     ├─if  ««"?? $parent\n                    !!"
+    ║     │     │ ├─if  ««"&&"
+    ║     │     │ │ ├─iseq_s  ««"eq"
     ║     │     │ │ │ ├─callmethod op  ««".op"
     ║     │     │ │ │ │ └○ $parent
     ║     │     │ │ │ └◙ SVal "bind"
@@ -469,14 +421,14 @@
     ║   ╟○ $current :decl(var)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@out := []"
     ║   ║ ├○ @out
-    ║   ║ └─list &circumfix:<[ ]>
+    ║   ║ └─list
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$current := 1"
     ║   ║ ├○ $current
     ║   ║ └◙ IVal 1
     ║   ╟─while  ««"$current {\n        $current := findDef($ast, -> $v"...
     ║   ║ ├○ $current
     ║   ║ ├─:Stmts  ««"{\n        $current := findDef($ast, -> $var, @path"...
-    ║   ║ │ ├─bind &infix:<:=>  ««":="
+    ║   ║ │ ├─bind  ««":="
     ║   ║ │ │ ├○ $current
     ║   ║ │ │ └─call &findDef  ««"$ast, -> $var, @pathUp {\n            my $takeit :="...
     ║   ║ │ │   ├○ $ast
@@ -494,7 +446,7 @@
     ║   ║ │ │     ║ │ └○ @pathUp
     ║   ║ │ │     ║ └─:Block :blocktype(immediate)  ««"{\n                $takeit := 1;\n                m"...
     ║   ║ │ │     ║   ╟○ $i :decl(var)
-    ║   ║ │ │     ║   ╟─bind &infix:<:=>  ««":="
+    ║   ║ │ │     ║   ╟─bind  ««":="
     ║   ║ │ │     ║   ║ ├○ $takeit
     ║   ║ │ │     ║   ║ └◙ IVal 1
     ║   ║ │ │     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := nqp::iterator(@out)"
@@ -502,13 +454,13 @@
     ║   ║ │ │     ║   ║ └─iterator  ««"nqp::iterator(@out)"
     ║   ║ │ │     ║   ║   └○ @out
     ║   ║ │ │     ║   ╙─while  ««"$i && $takeit {\n                    $takeit := !(n"...
-    ║   ║ │ │     ║     ├─if &infix:<&&>  ««"&&"
+    ║   ║ │ │     ║     ├─if  ««"&&"
     ║   ║ │ │     ║     │ ├○ $i
     ║   ║ │ │     ║     │ └○ $takeit
-    ║   ║ │ │     ║     ├─bind &infix:<:=>  ««":="
+    ║   ║ │ │     ║     ├─bind  ««":="
     ║   ║ │ │     ║     │ ├○ $takeit
-    ║   ║ │ │     ║     │ └─falsey &prefix:<!>  ««"!"
-    ║   ║ │ │     ║     │   └─eqaddr &infix:<=:=>  ««"=:="
+    ║   ║ │ │     ║     │ └─falsey  ««"!"
+    ║   ║ │ │     ║     │   └─eqaddr  ««"=:="
     ║   ║ │ │     ║     │     ├─ifnull
     ║   ║ │ │     ║     │     │ ├─atpos
     ║   ║ │ │     ║     │     │ │ ├─shift  ««"nqp::shift($i)"
@@ -539,7 +491,7 @@
     ║       │ ├─isinvokable  ««"nqp::isinvokable($keyPredicate)"
     ║       │ │ └○ $keyPredicate
     ║       │ └─die  ««"nqp::die('findValueNodeInHash expects a fn as 1st a"...
-    ║       │   └─concat &infix:<~>  ««"~"
+    ║       │   └─concat  ««"~"
     ║       │     ├◙ SVal "findValueNodeInHash expects a fn as 1st arg - got "
     ║       │     └─call &describe  ««"$keyPredicate"
     ║       │       └○ $keyPredicate
@@ -547,12 +499,12 @@
     ║       │ ├─isinvokable  ««"nqp::isinvokable($valuePredicate)"
     ║       │ │ └○ $valuePredicate
     ║       │ └─die  ««"nqp::die('findValueNodeInHash expects a fn as 2nd a"...
-    ║       │   └─concat &infix:<~>  ««"~"
+    ║       │   └─concat  ««"~"
     ║       │     ├◙ SVal "findValueNodeInHash expects a fn as 2nd arg - got "
     ║       │     └─call &describe  ««"$valuePredicate"
     ║       │       └○ $valuePredicate
     ║       ├─if  ««"$hash =:= NO_VALUE {\n        return -> $hash { fin"...
-    ║       │ ├─eqaddr &infix:<=:=>  ««"=:="
+    ║       │ ├─eqaddr  ««"=:="
     ║       │ │ ├○ $hash
     ║       │ │ └─ifnull
     ║       │ │   ├─atkey
@@ -573,12 +525,12 @@
     ║       │ │     ├○ $valuePredicate
     ║       │ │     └○ $hash
     ║       │ └─if  ««"!istype($hash, QAST::Node) {\n        nqp::die('fin"...
-    ║       │   ├─falsey &prefix:<!>  ««"!"
+    ║       │   ├─falsey  ««"!"
     ║       │   │ └─call &istype  ««"$hash, QAST::Node"
     ║       │   │   ├○ $hash
     ║       │   │   └◙ WVal QAST::Node
     ║       │   └─die  ««"nqp::die('findValueNodeInHash expects a QAST::Node "...
-    ║       │     └─concat &infix:<~>  ««"~"
+    ║       │     └─concat  ««"~"
     ║       │       ├◙ SVal "findValueNodeInHash expects a QAST::Node as (optional) 3rd arg - got "
     ║       │       └─call &describe  ««"$hash"
     ║       │         └○ $hash
@@ -586,11 +538,11 @@
     ║       │ ├○ $found
     ║       │ └─null  ««"nqp::null"
     ║       ├─if  ««"istype($hash, QAST::Op) && $hash.op eq 'hash' {\n  "...
-    ║       │ ├─if &infix:<&&>  ««"&&"
+    ║       │ ├─if  ««"&&"
     ║       │ │ ├─call &istype  ««"$hash, QAST::Op"
     ║       │ │ │ ├○ $hash
     ║       │ │ │ └◙ WVal QAST::Op
-    ║       │ │ └─iseq_s &infix:<eq>  ««"eq"
+    ║       │ │ └─iseq_s  ««"eq"
     ║       │ │   ├─callmethod op  ««".op"
     ║       │ │   │ └○ $hash
     ║       │ │   └◙ SVal "hash"
@@ -602,9 +554,9 @@
     ║       │   ║   └─callmethod list  ««".list"
     ║       │   ║     └○ $hash
     ║       │   ╙─while  ««"$it && !$found {\n            my $k := nqp::shift($"...
-    ║       │     ├─if &infix:<&&>  ««"&&"
+    ║       │     ├─if  ««"&&"
     ║       │     │ ├○ $it
-    ║       │     │ └─falsey &prefix:<!>  ««"!"
+    ║       │     │ └─falsey  ««"!"
     ║       │     │   └○ $found
     ║       │     ├─:Block :blocktype(immediate)  ««"{\n            my $k := nqp::shift($it);\n         "...
     ║       │     │ ╟○ $k :decl(var)
@@ -613,7 +565,7 @@
     ║       │     │ ║ └─shift  ««"nqp::shift($it)"
     ║       │     │ ║   └○ $it
     ║       │     │ ╙─if  ««"$it && $keyPredicate($k) {\n                my $v :"...
-    ║       │     │   ├─if &infix:<&&>  ««"&&"
+    ║       │     │   ├─if  ««"&&"
     ║       │     │   │ ├○ $it
     ║       │     │   │ └─call  ««"$k"
     ║       │     │   │   ├○ $keyPredicate
@@ -628,7 +580,7 @@
     ║       │     │       ├─call  ««"$v"
     ║       │     │       │ ├○ $valuePredicate
     ║       │     │       │ └○ $v
-    ║       │     │       └─bind &infix:<:=>  ««":="
+    ║       │     │       └─bind  ««":="
     ║       │     │         ├○ $found
     ║       │     │         └○ $v
     ║       │     └◙ IVal 1 :named("nohandler")
@@ -645,7 +597,7 @@
     ║   ║ │ ├○ $node
     ║   ║ │ └◙ WVal QAST::Node
     ║   ║ └─die  ««"nqp::die('cloneAndSubst expects a QAST::Node as 1st"...
-    ║   ║   └─concat &infix:<~>  ««"~"
+    ║   ║   └─concat  ««"~"
     ║   ║     ├◙ SVal "cloneAndSubst expects a QAST::Node as 1st arg - got "
     ║   ║     └─call &describe  ««"$node"
     ║   ║       └○ $node
@@ -653,11 +605,11 @@
     ║   ║ ├─isinvokable  ««"nqp::isinvokable($substitution)"
     ║   ║ │ └○ $substitution
     ║   ║ └─die  ««"nqp::die('cloneAndSubst expects a function as 2nd a"...
-    ║   ║   └─concat &infix:<~>  ««"~"
+    ║   ║   └─concat  ««"~"
     ║   ║     ├◙ SVal "cloneAndSubst expects a function as 2nd arg - got "
     ║   ║     └─call &describe  ««"$substitution"
     ║   ║       └○ $substitution
-    ║   ╟─bind &infix:<:=>  ««":="
+    ║   ╟─bind  ««":="
     ║   ║ ├○ $node
     ║   ║ └─callmethod shallow_clone  ««".shallow_clone"
     ║   ║   └○ $node
@@ -682,11 +634,11 @@
     ║   ║ │   ├─isnull  ««"nqp::isnull($child)"
     ║   ║ │   │ └○ $child
     ║   ║ │   └─:Stmts  ««"{\n            @children[$i] := $child;\n          "...
-    ║   ║ │     ├─bindpos &infix:<:=>  ««":="
+    ║   ║ │     ├─bindpos  ««":="
     ║   ║ │     │ ├○ @children
     ║   ║ │     │ ├○ $i
     ║   ║ │     │ └○ $child
-    ║   ║ │     └─postinc &postfix:<++>  ««"++"
+    ║   ║ │     └─postinc  ««"++"
     ║   ║ │       └○ $i
     ║   ║ └◙ IVal 1 :named("nohandler")
     ║   ╟─setelems  ««"nqp::setelems(@children, $i)"
@@ -743,7 +695,7 @@
     ║   ║ │   │   ├─callmethod decl  ««".decl"
     ║   ║ │   │   │ └○ $_
     ║   ║ │   │   ├─if  ««"$_.decl eq 'param' {\n                    nqp::die("...
-    ║   ║ │   │   │ ├─iseq_s &infix:<eq>  ««"eq"
+    ║   ║ │   │   │ ├─iseq_s  ««"eq"
     ║   ║ │   │   │ │ ├─callmethod decl  ««".decl"
     ║   ║ │   │   │ │ │ └○ $_
     ║   ║ │   │   │ │ └◙ SVal "param"
@@ -752,7 +704,7 @@
     ║   ║ │   │   │ │ │ ├─callmethod named  ««".named"
     ║   ║ │   │   │ │ │ │ └○ $_
     ║   ║ │   │   │ │ │ └─die  ««"nqp::die(\"cannot handle :named parameter $varName:"...
-    ║   ║ │   │   │ │ │   └─concat &infix:<~>  ««"~"
+    ║   ║ │   │   │ │ │   └─concat  ««"~"
     ║   ║ │   │   │ │ │     ├─concat
     ║   ║ │   │   │ │ │     │ ├─concat
     ║   ║ │   │   │ │ │     │ │ ├◙ SVal "cannot handle :named parameter "
@@ -764,7 +716,7 @@
     ║   ║ │   │   │ │ │ ├─callmethod slurpy  ««".slurpy"
     ║   ║ │   │   │ │ │ │ └○ $_
     ║   ║ │   │   │ │ │ └─die  ««"nqp::die(\"cannot handle :slurpy parameter $varName"...
-    ║   ║ │   │   │ │ │   └─concat &infix:<~>  ««"~"
+    ║   ║ │   │   │ │ │   └─concat  ««"~"
     ║   ║ │   │   │ │ │     ├─concat
     ║   ║ │   │   │ │ │     │ ├─concat
     ║   ║ │   │   │ │ │     │ │ ├◙ SVal "cannot handle :slurpy parameter "
@@ -772,15 +724,15 @@
     ║   ║ │   │   │ │ │     │ └◙ SVal ": "
     ║   ║ │   │   │ │ │     └─call &dump  ««"$_"
     ║   ║ │   │   │ │ │       └○ $_
-    ║   ║ │   │   │ │ ├─bindkey &infix:<:=>  ««":="
+    ║   ║ │   │   │ │ ├─bindkey  ««":="
     ║   ║ │   │   │ │ │ ├○ %params
     ║   ║ │   │   │ │ │ ├○ $varName
     ║   ║ │   │   │ │ │ └○ $arity
-    ║   ║ │   │   │ │ └─postinc &postfix:<++>  ««"++"
+    ║   ║ │   │   │ │ └─postinc  ««"++"
     ║   ║ │   │   │ │   └○ $arity
     ║   ║ │   │   │ └─die  ««"nqp::die('cannot handle :decl(' ~ $_.decl ~ ')')"
-    ║   ║ │   │   │   └─concat &infix:<~>  ««"~"
-    ║   ║ │   │   │     ├─concat &infix:<~>  ««"~"
+    ║   ║ │   │   │   └─concat  ««"~"
+    ║   ║ │   │   │     ├─concat  ««"~"
     ║   ║ │   │   │     │ ├◙ SVal "cannot handle :decl("
     ║   ║ │   │   │     │ └─callmethod decl  ««".decl"
     ║   ║ │   │   │     │   └○ $_
@@ -792,7 +744,7 @@
     ║   ║ │     ├○ @stmts
     ║   ║ │     └○ $_
     ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╟─bindkey &infix:<:=>  ««":="
+    ║   ╟─bindkey  ««":="
     ║   ║ ├○ %results
     ║   ║ ├◙ SVal "arity"
     ║   ║ └○ $arity
@@ -812,12 +764,12 @@
     ║       │ │ ├○ $node
     ║       │ │ └◙ WVal QAST::Node
     ║       │ └─die  ««"nqp::die('inline_simple_subs expects a QAST::Node a"...
-    ║       │   └─concat &infix:<~>  ««"~"
+    ║       │   └─concat  ««"~"
     ║       │     ├◙ SVal "inline_simple_subs expects a QAST::Node as 1st arg - got "
     ║       │     └─call &describe  ««"$node"
     ║       │       └○ $node
     ║       ├─if  ««"nqp::elems(@inlineDefs) > 0 {\n        for @inlineD"...
-    ║       │ ├─isgt_n &infix:<>>  ««">"
+    ║       │ ├─isgt_n  ««">"
     ║       │ │ ├─elems  ««"nqp::elems(@inlineDefs)"
     ║       │ │ │ └○ @inlineDefs
     ║       │ │ └◙ IVal 0
@@ -843,18 +795,18 @@
     ║       │   │   ║ │ ├○ $_
     ║       │   │   ║ │ └◙ WVal QAST::Node
     ║       │   │   ║ └─die  ««"nqp::die(\"invalid def of inlineable sub: \" ~ desc"...
-    ║       │   │   ║   └─concat &infix:<~>  ««"~"
+    ║       │   │   ║   └─concat  ««"~"
     ║       │   │   ║     ├◙ SVal "invalid def of inlineable sub: "
     ║       │   │   ║     └─call &describe  ««"$_"
     ║       │   │   ║       └○ $_
     ║       │   │   ╟─unless  ««"nqp::die(\"invalid def of inlineable sub: \" ~ dump"...
-    ║       │   │   ║ ├─if &infix:<&&>  ««"&&"
-    ║       │   │   ║ │ ├─if &infix:<&&>  ««"&&"
-    ║       │   │   ║ │ │ ├─if &infix:<&&>  ««"&&"
+    ║       │   │   ║ ├─if  ««"&&"
+    ║       │   │   ║ │ ├─if  ««"&&"
+    ║       │   │   ║ │ │ ├─if  ««"&&"
     ║       │   │   ║ │ │ │ ├─call &istype  ««"$_, QAST::Op"
     ║       │   │   ║ │ │ │ │ ├○ $_
     ║       │   │   ║ │ │ │ │ └◙ WVal QAST::Op
-    ║       │   │   ║ │ │ │ └─iseq_s &infix:<eq>  ««"eq"
+    ║       │   │   ║ │ │ │ └─iseq_s  ««"eq"
     ║       │   │   ║ │ │ │   ├─callmethod op  ««".op"
     ║       │   │   ║ │ │ │   │ └○ $_
     ║       │   │   ║ │ │ │   └◙ SVal "bind"
@@ -873,7 +825,7 @@
     ║       │   │   ║ │   │ └◙ WVal NQPMu
     ║       │   │   ║ │   └◙ WVal QAST::Block
     ║       │   │   ║ └─die  ««"nqp::die(\"invalid def of inlineable sub: \" ~ dump"...
-    ║       │   │   ║   └─concat &infix:<~>  ««"~"
+    ║       │   │   ║   └─concat  ««"~"
     ║       │   │   ║     ├◙ SVal "invalid def of inlineable sub: "
     ║       │   │   ║     └─call &dump  ««"$_"
     ║       │   │   ║       └○ $_
@@ -909,21 +861,21 @@
     ║       │   │   ║ │ ║ └─iterator  ««"nqp::iterator($block.list)"
     ║       │   │   ║ │ ║   └─callmethod list  ««".list"
     ║       │   │   ║ │ ║     └○ $block
-    ║       │   │   ║ │ ╟─bind &infix:<:=>  ««":="
+    ║       │   │   ║ │ ╟─bind  ««":="
     ║       │   │   ║ │ ║ ├○ %results
     ║       │   │   ║ │ ║ └─call &collect_params_and_body  ««"nqp::shift($it)"
     ║       │   │   ║ │ ║   └─shift  ««"nqp::shift($it)"
     ║       │   │   ║ │ ║     └○ $it
     ║       │   │   ║ │ ╙─while  ««"$it {\n                    %results := collect_para"...
     ║       │   │   ║ │   ├○ $it
-    ║       │   │   ║ │   ├─bind &infix:<:=>  ««":="
+    ║       │   │   ║ │   ├─bind  ««":="
     ║       │   │   ║ │   │ ├○ %results
     ║       │   │   ║ │   │ └─call &collect_params_and_body  ««"nqp::shift($it), %results"
     ║       │   │   ║ │   │   ├─shift  ««"nqp::shift($it)"
     ║       │   │   ║ │   │   │ └○ $it
     ║       │   │   ║ │   │   └○ %results
     ║       │   │   ║ │   └◙ IVal 1 :named("nohandler")
-    ║       │   │   ║ └─bind &infix:<:=>  ««":="
+    ║       │   │   ║ └─bind  ««":="
     ║       │   │   ║   ├○ %results
     ║       │   │   ║   └─call &collect_params_and_body  ««"$block"
     ║       │   │   ║     └○ $block
@@ -949,12 +901,12 @@
     ║       │   │   ║   │ └◙ SVal "stmts"
     ║       │   │   ║   └◙ WVal NQPMu
     ║       │   │   ╟─if  ««"nqp::elems(@stmts) == 0 {\n                nqp::die"...
-    ║       │   │   ║ ├─iseq_n &infix:<==>  ««"=="
+    ║       │   │   ║ ├─iseq_n  ««"=="
     ║       │   │   ║ │ ├─elems  ««"nqp::elems(@stmts)"
     ║       │   │   ║ │ │ └○ @stmts
     ║       │   │   ║ │ └◙ IVal 0
     ║       │   │   ║ ├─die  ««"nqp::die(\"no statements found in inlineable $name:"...
-    ║       │   │   ║ │ └─concat &infix:<~>  ««"~"
+    ║       │   │   ║ │ └─concat  ««"~"
     ║       │   │   ║ │   ├─concat
     ║       │   │   ║ │   │ ├─concat
     ║       │   │   ║ │   │ │ ├◙ SVal "no statements found in inlineable "
@@ -963,23 +915,23 @@
     ║       │   │   ║ │   └─call &dump  ««"$block"
     ║       │   │   ║ │     └○ $block
     ║       │   │   ║ └─if  ««"nqp::elems(@stmts) == 1 {\n                $block :"...
-    ║       │   │   ║   ├─iseq_n &infix:<==>  ««"=="
+    ║       │   │   ║   ├─iseq_n  ««"=="
     ║       │   │   ║   │ ├─elems  ««"nqp::elems(@stmts)"
     ║       │   │   ║   │ │ └○ @stmts
     ║       │   │   ║   │ └◙ IVal 1
-    ║       │   │   ║   ├─bind &infix:<:=>  ««":="
+    ║       │   │   ║   ├─bind  ««":="
     ║       │   │   ║   │ ├○ $block
     ║       │   │   ║   │ └─ifnull
     ║       │   │   ║   │   ├─atpos
     ║       │   │   ║   │   │ ├○ @stmts
     ║       │   │   ║   │   │ └◙ IVal 0
     ║       │   │   ║   │   └◙ WVal NQPMu
-    ║       │   │   ║   └─bind &infix:<:=>  ««":="
+    ║       │   │   ║   └─bind  ««":="
     ║       │   │   ║     ├○ $block
     ║       │   │   ║     └─callmethod new  ««"|@stmts"
     ║       │   │   ║       ├◙ WVal QAST::Stmts
     ║       │   │   ║       └○ @stmts :flat(1)
-    ║       │   │   ╙─bindkey &infix:<:=>  ««":="
+    ║       │   │   ╙─bindkey  ««":="
     ║       │   │     ├○ %inlineables
     ║       │   │     ├○ $name
     ║       │   │     └─:Block  ««"{\n                my $argCount := nqp::elems(@argu"...
@@ -991,11 +943,11 @@
     ║       │   │       ║ └─elems  ««"nqp::elems(@arguments)"
     ║       │   │       ║   └○ @arguments
     ║       │   │       ╟─unless  ««"nqp::die(\"cannot inline call with $argCount args t"...
-    ║       │   │       ║ ├─iseq_n &infix:<==>  ««"=="
+    ║       │   │       ║ ├─iseq_n  ««"=="
     ║       │   │       ║ │ ├○ $argCount
     ║       │   │       ║ │ └○ $arity
     ║       │   │       ║ └─die  ««"nqp::die(\"cannot inline call with $argCount args t"...
-    ║       │   │       ║   └─concat &infix:<~>  ««"~"
+    ║       │   │       ║   └─concat  ««"~"
     ║       │   │       ║     ├─concat
     ║       │   │       ║     │ ├─concat
     ║       │   │       ║     │ │ ├─concat
@@ -1013,7 +965,7 @@
     ║       │   │       ║   └─:Block  ««"{\n#                    say('####', dump($n));\n   "...
     ║       │   │       ║     ╟○ $n :decl(param)
     ║       │   │       ║     ╙─if  ««"istype($n, QAST::Var) && nqp::existskey(%params, $n"...
-    ║       │   │       ║       ├─if &infix:<&&>  ««"&&"
+    ║       │   │       ║       ├─if  ««"&&"
     ║       │   │       ║       │ ├─call &istype  ««"$n, QAST::Var"
     ║       │   │       ║       │ │ ├○ $n
     ║       │   │       ║       │ │ └◙ WVal QAST::Var
@@ -1041,7 +993,7 @@
     ║       │   └─call RETURN
     ║       │     └─call &inline_simple_subs  ««"$node, [], %inlineables"
     ║       │       ├○ $node
-    ║       │       ├─list &circumfix:<[ ]>
+    ║       │       ├─list
     ║       │       └○ %inlineables
     ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := 0"
     ║       │ ├○ $i
@@ -1054,27 +1006,27 @@
     ║       │ ├○ @children
     ║       │ ├─:Block :blocktype(immediate)  ««"{\n        @children[$i] := inline_simple_subs($_, "...
     ║       │ │ ╟○ $_ :decl(param)
-    ║       │ │ ╟─bindpos &infix:<:=>  ««":="
+    ║       │ │ ╟─bindpos  ««":="
     ║       │ │ ║ ├○ @children
     ║       │ │ ║ ├○ $i
     ║       │ │ ║ └─call &inline_simple_subs  ««"$_, [], %inlineables"
     ║       │ │ ║   ├○ $_
-    ║       │ │ ║   ├─list &circumfix:<[ ]>
+    ║       │ │ ║   ├─list
     ║       │ │ ║   └○ %inlineables
-    ║       │ │ ╙─postinc &postfix:<++>  ««"++"
+    ║       │ │ ╙─postinc  ««"++"
     ║       │ │   └○ $i
     ║       │ └◙ IVal 1 :named("nohandler")
     ║       ├─if  ««"istype($node, QAST::Op) && ($node.op eq 'call' || $"...
-    ║       │ ├─if &infix:<&&>  ««"&&"
+    ║       │ ├─if  ««"&&"
     ║       │ │ ├─call &istype  ««"$node, QAST::Op"
     ║       │ │ │ ├○ $node
     ║       │ │ │ └◙ WVal QAST::Op
-    ║       │ │ └─unless &infix:<||>  ««"||"
-    ║       │ │   ├─iseq_s &infix:<eq>  ««"eq"
+    ║       │ │ └─unless  ««"||"
+    ║       │ │   ├─iseq_s  ««"eq"
     ║       │ │   │ ├─callmethod op  ««".op"
     ║       │ │   │ │ └○ $node
     ║       │ │   │ └◙ SVal "call"
-    ║       │ │   └─iseq_s &infix:<eq>  ««"eq"
+    ║       │ │   └─iseq_s  ««"eq"
     ║       │ │     ├─callmethod op  ««".op"
     ║       │ │     │ └○ $node
     ║       │ │     └◙ SVal "callstatic"
@@ -1110,7 +1062,7 @@
     ║       │       ║ ├○ $out
     ║       │       ║ └─callmethod named  ««".named"
     ║       │       ║   └○ $node
-    ║       │       ╙─bind &infix:<:=>  ««":="
+    ║       │       ╙─bind  ««":="
     ║       │         ├○ $node
     ║       │         └○ $out
     ║       └○ $node
@@ -1123,7 +1075,7 @@
     ║   ║ │ ├○ $node
     ║   ║ │ └◙ WVal QAST::Node
     ║   ║ └─die  ««"nqp::die('inline_simple_methods expects a QAST::Nod"...
-    ║   ║   └─concat &infix:<~>  ««"~"
+    ║   ║   └─concat  ««"~"
     ║   ║     ├◙ SVal "inline_simple_methods expects a QAST::Node - got "
     ║   ║     └─call &describe  ««"$node"
     ║   ║       └○ $node
@@ -1136,11 +1088,11 @@
     ║   ║ │   └○ $_
     ║   ║ └◙ IVal 1 :named("nohandler")
     ║   ╟─if  ««"istype($node, QAST::Op) && $node.op eq 'callmethod'"...
-    ║   ║ ├─if &infix:<&&>  ««"&&"
+    ║   ║ ├─if  ««"&&"
     ║   ║ │ ├─call &istype  ««"$node, QAST::Op"
     ║   ║ │ │ ├○ $node
     ║   ║ │ │ └◙ WVal QAST::Op
-    ║   ║ │ └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║ │ └─iseq_s  ««"eq"
     ║   ║ │   ├─callmethod op  ««".op"
     ║   ║ │   │ └○ $node
     ║   ║ │   └◙ SVal "callmethod"
@@ -1153,7 +1105,7 @@
     ║   ║   ╙─if  ««"$meth {\n            if nqp::index('push pop shift "...
     ║   ║     ├○ $meth
     ║   ║     └─if  ««"nqp::index('push pop shift unshift', $meth) > -1 {\"...
-    ║   ║       ├─isgt_n &infix:<>>  ««">"
+    ║   ║       ├─isgt_n  ««">"
     ║   ║       │ ├─index  ««"nqp::index('push pop shift unshift', $meth)"
     ║   ║       │ │ ├◙ SVal "push pop shift unshift"
     ║   ║       │ │ └○ $meth
@@ -1166,7 +1118,7 @@
     ║   ║       │   ├○ $node
     ║   ║       │   └─null_s  ««"nqp::null_s"
     ║   ║       └─if  ««"$meth eq 'key' {\n                $node.op('iterkey"...
-    ║   ║         ├─iseq_s &infix:<eq>  ««"eq"
+    ║   ║         ├─iseq_s  ««"eq"
     ║   ║         │ ├○ $meth
     ║   ║         │ └◙ SVal "key"
     ║   ║         ├─:Stmts  ««"{\n                $node.op('iterkey_s');\n        "...
@@ -1177,7 +1129,7 @@
     ║   ║         │   ├○ $node
     ║   ║         │   └─null_s  ««"nqp::null_s"
     ║   ║         └─if  ««"$meth eq 'value' {\n                $node.op('iterv"...
-    ║   ║           ├─iseq_s &infix:<eq>  ««"eq"
+    ║   ║           ├─iseq_s  ««"eq"
     ║   ║           │ ├○ $meth
     ║   ║           │ └◙ SVal "value"
     ║   ║           └─:Stmts  ««"{\n                $node.op('iterval');\n          "...
@@ -1198,7 +1150,7 @@
     ║   ║ │ ├○ $ast
     ║   ║ │ └◙ WVal QAST::Node
     ║   ║ └─die  ««"nqp::die('renameVars expects a QAST::Node as 1st ar"...
-    ║   ║   └─concat &infix:<~>  ««"~"
+    ║   ║   └─concat  ««"~"
     ║   ║     ├◙ SVal "renameVars expects a QAST::Node as 1st arg - got "
     ║   ║     └─call &describe  ««"$ast"
     ║   ║       └○ $ast
@@ -1206,25 +1158,25 @@
     ║   ║ ├─isinvokable  ««"nqp::isinvokable($map)"
     ║   ║ │ └○ $map
     ║   ║ └─die  ««"nqp::die('renameVars expects a unary fn as 2nd arg("...
-    ║   ║   └─concat &infix:<~>  ««"~"
+    ║   ║   └─concat  ««"~"
     ║   ║     ├◙ SVal "renameVars expects a unary fn as 2nd arg(optional) - got "
     ║   ║     └─call &describe  ««"$map"
     ║   ║       └○ $map
     ║   ╟─if  ««"istype($ast, QAST::Var) \n       || (\n          is"...
-    ║   ║ ├─unless &infix:<||>  ««"||"
+    ║   ║ ├─unless  ««"||"
     ║   ║ │ ├─call &istype  ««"$ast, QAST::Var"
     ║   ║ │ │ ├○ $ast
     ║   ║ │ │ └◙ WVal QAST::Var
-    ║   ║ │ └─if &infix:<&&>  ««"&&"
+    ║   ║ │ └─if  ««"&&"
     ║   ║ │   ├─call &istype  ««"$ast, QAST::Op"
     ║   ║ │   │ ├○ $ast
     ║   ║ │   │ └◙ WVal QAST::Op
-    ║   ║ │   └─unless &infix:<||>  ««"||"
-    ║   ║ │     ├─iseq_s &infix:<eq>  ««"eq"
+    ║   ║ │   └─unless  ««"||"
+    ║   ║ │     ├─iseq_s  ««"eq"
     ║   ║ │     │ ├─callmethod op  ««".op"
     ║   ║ │     │ │ └○ $ast
     ║   ║ │     │ └◙ SVal "call"
-    ║   ║ │     └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║ │     └─iseq_s  ««"eq"
     ║   ║ │       ├─callmethod op  ««".op"
     ║   ║ │       │ └○ $ast
     ║   ║ │       └◙ SVal "callstatic"
@@ -1241,7 +1193,7 @@
     ║   ║   ║   ├○ $map
     ║   ║   ║   └○ $old
     ║   ║   ╙─if  ««"$new ne $old {\n            $ast.name($new);\n     "...
-    ║   ║     ├─isne_s &infix:<ne>  ««"ne"
+    ║   ║     ├─isne_s  ««"ne"
     ║   ║     │ ├○ $new
     ║   ║     │ └○ $old
     ║   ║     └─callmethod name  ««"$new"
@@ -1272,11 +1224,11 @@
     ║       │ ├─islist  ««"nqp::islist($args)"
     ║       │ │ └○ $args
     ║       │ └─call RETURN
-    ║       │   └─list &circumfix:<[ ]>
+    ║       │   └─list
     ║       │     └○ $args
     ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@out := []"
     ║       │ ├○ @out
-    ║       │ └─list &circumfix:<[ ]>
+    ║       │ └─list
     ║       ├─for  ««"$args -> $_ {\n        if nqp::islist($_) {\n      "...
     ║       │ ├○ $args
     ║       │ ├─:Block :blocktype(immediate)  ««"{\n        if nqp::islist($_) {\n            for fl"...
@@ -1306,7 +1258,7 @@
     ║   ╟○ $sep :decl(var)
     ║   ╟○ $nqpc :decl(var)
     ║   ╟○ %opts :decl(var)
-    ║   ╟─bind &infix:<:=>  ««":="
+    ║   ╟─bind  ««":="
     ║   ║ ├○ @ARGS
     ║   ║ └─call &flatten  ««"@ARGS"
     ║   ║   └○ @ARGS
@@ -1328,7 +1280,7 @@
     ║   ╟─callmethod shift  ««".shift"
     ║   ║ └○ @ARGS
     ║   ╟─if  ««"nqp::elems(@ARGS) == 0 {\n        #@ARGS.push('L/LG"...
-    ║   ║ ├─iseq_n &infix:<==>  ««"=="
+    ║   ║ ├─iseq_n  ««"=="
     ║   ║ │ ├─elems  ««"nqp::elems(@ARGS)"
     ║   ║ │ │ └○ @ARGS
     ║   ║ │ └◙ IVal 0
@@ -1366,7 +1318,7 @@
     ║   ║ │   │ │ │   └○ $file
     ║   ║ │   │ │ └─callmethod log  ««"\"compiled: $file ~> \" ~ describe($result)"
     ║   ║ │   │ │   ├○ $nqpc
-    ║   ║ │   │ │   └─concat &infix:<~>  ««"~"
+    ║   ║ │   │ │   └─concat  ««"~"
     ║   ║ │   │ │     ├─concat
     ║   ║ │   │ │     │ ├─concat
     ║   ║ │   │ │     │ │ ├◙ SVal "compiled: "
@@ -1407,7 +1359,7 @@
     ║   ║ │     │ │ ║ └◙ SVal ""
     ║   ║ │     │ │ ╟─callmethod log  ««"~$_"
     ║   ║ │     │ │ ║ ├○ $nqpc
-    ║   ║ │     │ │ ║ └─stringify &prefix:<~>  ««"~"
+    ║   ║ │     │ │ ║ └─stringify  ««"~"
     ║   ║ │     │ │ ║   └○ $_
     ║   ║ │     │ │ ╙─exit  ««"nqp::exit(1)"
     ║   ║ │     │ │   └◙ IVal 1
@@ -1431,7 +1383,6 @@
     ║     └○ local ctxsave
     ╟○ &isinResultPosition
     ╟○ &drop_bogusVars
-    ╟○ &remove_bogusOpNames
     ╟○ &remove_MAIN
     ╟○ &findDef
     ╟○ &findDefs
@@ -1483,7 +1434,7 @@
     ║ ║ ╟─callmethod push  ««"'optimize=s'"
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └◙ SVal "optimize=s"
-    ║ ║ ╙─bind &infix:<:=>  ««":="
+    ║ ║ ╙─bind  ««":="
     ║ ║   ├○ attribute @!user_srcpaths
     ║ ║   │ ├─decont
     ║ ║   │ │ └○ self
@@ -1501,7 +1452,7 @@
     ║ ║ ╟○ self :decl(param)
     ║ ║ ╟○ $v :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ ║ ╟─unless  ««"$!user_binname := $v unless $v =:= NO_VALUE"
-    ║ ║ ║ ├─eqaddr &infix:<=:=>  ««"=:="
+    ║ ║ ║ ├─eqaddr  ««"=:="
     ║ ║ ║ │ ├○ $v
     ║ ║ ║ │ └─ifnull
     ║ ║ ║ │   ├─atkey
@@ -1514,7 +1465,7 @@
     ║ ║ ║ │     │ │ └◙ WVal GLOBALish
     ║ ║ ║ │     │ └◙ SVal "NO_VALUE"
     ║ ║ ║ │     └◙ WVal NQPMu
-    ║ ║ ║ └─bind &infix:<:=>  ««":="
+    ║ ║ ║ └─bind  ««":="
     ║ ║ ║   ├○ attribute $!user_binname
     ║ ║ ║   │ ├─decont
     ║ ║ ║   │ │ └○ self
@@ -1537,9 +1488,9 @@
     ║ ║ ╟○ $out :decl(var)
     ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"str $out := '# [' ~ self.compiler_progname ~ '] ' ~"...
     ║ ║ ║ ├○ $out
-    ║ ║ ║ └─concat &infix:<~>  ««"~"
-    ║ ║ ║   ├─concat &infix:<~>  ««"~"
-    ║ ║ ║   │ ├─concat &infix:<~>  ««"~"
+    ║ ║ ║ └─concat  ««"~"
+    ║ ║ ║   ├─concat  ««"~"
+    ║ ║ ║   │ ├─concat  ««"~"
     ║ ║ ║   │ │ ├◙ SVal "# ["
     ║ ║ ║   │ │ └─callmethod compiler_progname  ««".compiler_progname"
     ║ ║ ║   │ │   └─decont
@@ -1550,9 +1501,9 @@
     ║ ║ ║ ├○ @moreMsgPieces
     ║ ║ ║ ├─:Block :blocktype(immediate)  ««"{\n            $out := $out ~ $_;\n        }"
     ║ ║ ║ │ ╟○ $_ :decl(param)
-    ║ ║ ║ │ ╙─bind &infix:<:=>  ««":="
+    ║ ║ ║ │ ╙─bind  ««":="
     ║ ║ ║ │   ├○ $out
-    ║ ║ ║ │   └─concat &infix:<~>  ««"~"
+    ║ ║ ║ │   └─concat  ««"~"
     ║ ║ ║ │     ├○ $out
     ║ ║ ║ │     └○ $_
     ║ ║ ║ └◙ IVal 1 :named("nohandler")
@@ -1570,7 +1521,7 @@
     ║ ║ ╟○ $path
     ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$file_name := nqp::join('/', nqp::split('::', $modu"...
     ║ ║ ║ ├○ $file_name
-    ║ ║ ║ └─concat &infix:<~>  ««"~"
+    ║ ║ ║ └─concat  ««"~"
     ║ ║ ║   ├─join  ««"nqp::join('/', nqp::split('::', $module_name))"
     ║ ║ ║   │ ├◙ SVal "/"
     ║ ║ ║   │ └─split  ««"nqp::split('::', $module_name)"
@@ -1583,7 +1534,7 @@
     ║ ║ ║ ├○ @search_paths
     ║ ║ ║ └─:Block :blocktype(immediate)  ««"{\n            $path := \"$_/$file_name\";\n       "...
     ║ ║ ║   ╟○ $_ :decl(param)
-    ║ ║ ║   ╟─bind &infix:<:=>  ««":="
+    ║ ║ ║   ╟─bind  ««":="
     ║ ║ ║   ║ ├○ $path
     ║ ║ ║   ║ └─concat
     ║ ║ ║   ║   ├─concat
@@ -1595,7 +1546,7 @@
     ║ ║ ║   ║ │ ├○ $path
     ║ ║ ║   ║ │ └─const STAT_EXISTS
     ║ ║ ║   ║ └─control last
-    ║ ║ ║   ╙─bind &infix:<:=>  ««":="
+    ║ ║ ║   ╙─bind  ««":="
     ║ ║ ║     ├○ $path
     ║ ║ ║     └─null  ««"nqp::null"
     ║ ║ ╙○ $path
@@ -1632,7 +1583,7 @@
     ║ ║ ║ ├○ $with-nqplib
     ║ ║ ║ └─callmethod unshift  ««"nqp::backendconfig()<prefix> ~ '/languages/nqp/lib'"
     ║ ║ ║   ├○ @module_paths
-    ║ ║ ║   └─concat &infix:<~>  ««"~"
+    ║ ║ ║   └─concat  ««"~"
     ║ ║ ║     ├─ifnull
     ║ ║ ║     │ ├─atkey
     ║ ║ ║     │ │ ├─backendconfig  ««"nqp::backendconfig()"
@@ -1691,7 +1642,7 @@
     ║ ║       │ ║   ║   ├○ $bc_path
     ║ ║       │ ║   ║   └─const STAT_MODIFYTIME
     ║ ║       │ ║   ╙─if  ««"$src_time < $bc_time {\n                    return "...
-    ║ ║       │ ║     ├─islt_n &infix:<<>  ««"<"
+    ║ ║       │ ║     ├─islt_n  ««"<"
     ║ ║       │ ║     │ ├○ $src_time
     ║ ║       │ ║     │ └○ $bc_time
     ║ ║       │ ║     └─call RETURN
@@ -1727,7 +1678,7 @@
     ║ ║ ║   ║ │ ├○ $node
     ║ ║ ║   ║ │ └◙ WVal QAST::Node
     ║ ║ ║   ║ └─die  ««"nqp::die(\"collect_stats expects a QAST::Node - got"...
-    ║ ║ ║   ║   └─concat &infix:<~>  ««"~"
+    ║ ║ ║   ║   └─concat  ««"~"
     ║ ║ ║   ║     ├◙ SVal "collect_stats expects a QAST::Node - got "
     ║ ║ ║   ║     └─call &describe  ««"$node"
     ║ ║ ║   ║       └○ $node
@@ -1737,7 +1688,7 @@
     ║ ║ ║   ║   ├─how  ««".HOW"
     ║ ║ ║   ║   │ └○ $node
     ║ ║ ║   ║   └○ $node
-    ║ ║ ║   ╟─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ╟─postinc  ««"++"
     ║ ║ ║   ║ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║   ├○ %results
     ║ ║ ║   ║   └◙ SVal "Node"
@@ -1745,7 +1696,7 @@
     ║ ║ ║   ║ ├─call &istype  ««"$node, QAST::Block"
     ║ ║ ║   ║ │ ├○ $node
     ║ ║ ║   ║ │ └◙ WVal QAST::Block
-    ║ ║ ║   ║ ├─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║ ├─postinc  ««"++"
     ║ ║ ║   ║ │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║ │   ├○ %results
     ║ ║ ║   ║ │   └◙ SVal "Block"
@@ -1754,7 +1705,7 @@
     ║ ║ ║   ║   │ ├○ $node
     ║ ║ ║   ║   │ ├◙ WVal QAST::Stmt
     ║ ║ ║   ║   │ └◙ WVal QAST::Stmts
-    ║ ║ ║   ║   ├─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║   ├─postinc  ««"++"
     ║ ║ ║   ║   │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║   │   ├○ %results
     ║ ║ ║   ║   │   └◙ SVal "Stmt(s)"
@@ -1768,63 +1719,63 @@
     ║ ║ ║   ║     │ ║ ├○ $op
     ║ ║ ║   ║     │ ║ └─callmethod op  ««".op"
     ║ ║ ║   ║     │ ║   └○ $node
-    ║ ║ ║   ║     │ ╟─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║     │ ╟─postinc  ««"++"
     ║ ║ ║   ║     │ ║ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║     │ ║   ├○ %results
     ║ ║ ║   ║     │ ║   └◙ SVal "op"
     ║ ║ ║   ║     │ ╟─if  ««"%results<list>++        if  $op eq 'list'"
-    ║ ║ ║   ║     │ ║ ├─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║   ║     │ ║ ├─iseq_s  ««"eq"
     ║ ║ ║   ║     │ ║ │ ├○ $op
     ║ ║ ║   ║     │ ║ │ └◙ SVal "list"
-    ║ ║ ║   ║     │ ║ └─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║     │ ║ └─postinc  ««"++"
     ║ ║ ║   ║     │ ║   └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║     │ ║     ├○ %results
     ║ ║ ║   ║     │ ║     └◙ SVal "list"
     ║ ║ ║   ║     │ ╟─if  ««"%results<hash>++        if  $op eq 'hash'"
-    ║ ║ ║   ║     │ ║ ├─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║   ║     │ ║ ├─iseq_s  ««"eq"
     ║ ║ ║   ║     │ ║ │ ├○ $op
     ║ ║ ║   ║     │ ║ │ └◙ SVal "hash"
-    ║ ║ ║   ║     │ ║ └─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║     │ ║ └─postinc  ««"++"
     ║ ║ ║   ║     │ ║   └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║     │ ║     ├○ %results
     ║ ║ ║   ║     │ ║     └◙ SVal "hash"
     ║ ║ ║   ║     │ ╟─if  ««"%results<bind>++        if  $op eq 'bind'"
-    ║ ║ ║   ║     │ ║ ├─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║   ║     │ ║ ├─iseq_s  ««"eq"
     ║ ║ ║   ║     │ ║ │ ├○ $op
     ║ ║ ║   ║     │ ║ │ └◙ SVal "bind"
-    ║ ║ ║   ║     │ ║ └─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║     │ ║ └─postinc  ««"++"
     ║ ║ ║   ║     │ ║   └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║     │ ║     ├○ %results
     ║ ║ ║   ║     │ ║     └◙ SVal "bind"
     ║ ║ ║   ║     │ ╟─if  ««"%results<call>++        if  $op eq 'call'"
-    ║ ║ ║   ║     │ ║ ├─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║   ║     │ ║ ├─iseq_s  ««"eq"
     ║ ║ ║   ║     │ ║ │ ├○ $op
     ║ ║ ║   ║     │ ║ │ └◙ SVal "call"
-    ║ ║ ║   ║     │ ║ └─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║     │ ║ └─postinc  ««"++"
     ║ ║ ║   ║     │ ║   └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║     │ ║     ├○ %results
     ║ ║ ║   ║     │ ║     └◙ SVal "call"
     ║ ║ ║   ║     │ ╟─if  ««"%results<callstatic>++  if  $op eq 'callstatic'"
-    ║ ║ ║   ║     │ ║ ├─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║   ║     │ ║ ├─iseq_s  ««"eq"
     ║ ║ ║   ║     │ ║ │ ├○ $op
     ║ ║ ║   ║     │ ║ │ └◙ SVal "callstatic"
-    ║ ║ ║   ║     │ ║ └─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║     │ ║ └─postinc  ««"++"
     ║ ║ ║   ║     │ ║   └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║     │ ║     ├○ %results
     ║ ║ ║   ║     │ ║     └◙ SVal "callstatic"
     ║ ║ ║   ║     │ ╟─if  ««"%results<callmethod>++  if  $op eq 'callmethod'"
-    ║ ║ ║   ║     │ ║ ├─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║   ║     │ ║ ├─iseq_s  ««"eq"
     ║ ║ ║   ║     │ ║ │ ├○ $op
     ║ ║ ║   ║     │ ║ │ └◙ SVal "callmethod"
-    ║ ║ ║   ║     │ ║ └─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║     │ ║ └─postinc  ««"++"
     ║ ║ ║   ║     │ ║   └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║     │ ║     ├○ %results
     ║ ║ ║   ║     │ ║     └◙ SVal "callmethod"
     ║ ║ ║   ║     │ ╙─if  ««"%results<takeclosure>++ if  $op eq 'takeclosure'"
-    ║ ║ ║   ║     │   ├─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║   ║     │   ├─iseq_s  ««"eq"
     ║ ║ ║   ║     │   │ ├○ $op
     ║ ║ ║   ║     │   │ └◙ SVal "takeclosure"
-    ║ ║ ║   ║     │   └─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║     │   └─postinc  ««"++"
     ║ ║ ║   ║     │     └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║     │       ├○ %results
     ║ ║ ║   ║     │       └◙ SVal "takeclosure"
@@ -1832,7 +1783,7 @@
     ║ ║ ║   ║       ├─call &istype  ««"$node, QAST::Var"
     ║ ║ ║   ║       │ ├○ $node
     ║ ║ ║   ║       │ └◙ WVal QAST::Var
-    ║ ║ ║   ║       ├─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║       ├─postinc  ««"++"
     ║ ║ ║   ║       │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║       │   ├○ %results
     ║ ║ ║   ║       │   └◙ SVal "Var"
@@ -1840,7 +1791,7 @@
     ║ ║ ║   ║         ├─call &istype  ««"$node, QAST::IVal"
     ║ ║ ║   ║         │ ├○ $node
     ║ ║ ║   ║         │ └◙ WVal QAST::IVal
-    ║ ║ ║   ║         ├─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║         ├─postinc  ««"++"
     ║ ║ ║   ║         │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║         │   ├○ %results
     ║ ║ ║   ║         │   └◙ SVal "IVal"
@@ -1848,7 +1799,7 @@
     ║ ║ ║   ║           ├─call &istype  ««"$node, QAST::NVal"
     ║ ║ ║   ║           │ ├○ $node
     ║ ║ ║   ║           │ └◙ WVal QAST::NVal
-    ║ ║ ║   ║           ├─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║           ├─postinc  ««"++"
     ║ ║ ║   ║           │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║           │   ├○ %results
     ║ ║ ║   ║           │   └◙ SVal "NVal"
@@ -1857,14 +1808,14 @@
     ║ ║ ║   ║             │ ├○ $node
     ║ ║ ║   ║             │ └◙ WVal QAST::SVal
     ║ ║ ║   ║             └─:Stmts  ««"{\n                %results<SVal>++;\n             "...
-    ║ ║ ║   ║               ├─postinc &postfix:<++>  ««"++"
+    ║ ║ ║   ║               ├─postinc  ««"++"
     ║ ║ ║   ║               │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║               │   ├○ %results
     ║ ║ ║   ║               │   └◙ SVal "SVal"
-    ║ ║ ║   ║               └─bindkey &infix:<:=>  ««":="
+    ║ ║ ║   ║               └─bindkey  ««":="
     ║ ║ ║   ║                 ├○ %results
     ║ ║ ║   ║                 ├◙ SVal "SValChars"
-    ║ ║ ║   ║                 └─add_n &infix:<+>  ««"+"
+    ║ ║ ║   ║                 └─add_n  ««"+"
     ║ ║ ║   ║                   ├─ifnull
     ║ ║ ║   ║                   │ ├─atkey
     ║ ║ ║   ║                   │ │ ├○ %results
@@ -1887,11 +1838,11 @@
     ║ ║ ╟○ &doit
     ║ ║ ╟─call &doit  ««"$node"
     ║ ║ ║ └○ $node
-    ║ ║ ╟─bindkey &infix:<:=>  ««":="
+    ║ ║ ╟─bindkey  ««":="
     ║ ║ ║ ├○ %results
     ║ ║ ║ ├◙ SVal "callish"
-    ║ ║ ║ └─add_n &infix:<+>  ««"+"
-    ║ ║ ║   ├─add_n &infix:<+>  ««"+"
+    ║ ║ ║ └─add_n  ««"+"
+    ║ ║ ║   ├─add_n  ««"+"
     ║ ║ ║   │ ├─ifnull
     ║ ║ ║   │ │ ├─atkey
     ║ ║ ║   │ │ │ ├○ %results
@@ -1907,11 +1858,11 @@
     ║ ║ ║     │ ├○ %results
     ║ ║ ║     │ └◙ SVal "callmethod"
     ║ ║ ║     └◙ WVal NQPMu
-    ║ ║ ╟─bindkey &infix:<:=>  ««":="
+    ║ ║ ╟─bindkey  ««":="
     ║ ║ ║ ├○ %results
     ║ ║ ║ ├◙ SVal "val"
-    ║ ║ ║ └─add_n &infix:<+>  ««"+"
-    ║ ║ ║   ├─add_n &infix:<+>  ««"+"
+    ║ ║ ║ └─add_n  ««"+"
+    ║ ║ ║   ├─add_n  ««"+"
     ║ ║ ║   │ ├─ifnull
     ║ ║ ║   │ │ ├─atkey
     ║ ║ ║   │ │ │ ├○ %results
@@ -1944,7 +1895,7 @@
     ║ ║ ║ └─callmethod panic  ««"\"Unable to obtain AST from \" ~ $source.HOW.name($"...
     ║ ║ ║   ├─decont
     ║ ║ ║   │ └○ self
-    ║ ║ ║   └─concat &infix:<~>  ««"~"
+    ║ ║ ║   └─concat  ««"~"
     ║ ║ ║     ├◙ SVal "Unable to obtain AST from "
     ║ ║ ║     └─callmethod name  ««"$source"
     ║ ║ ║       ├─how  ««".HOW"
@@ -1968,15 +1919,15 @@
     ║ ║ ║ │ └─decont
     ║ ║ ║ │   └○ self
     ║ ║ ║ └◙ SVal "..."
-    ║ ║ ╟─bind &infix:<:=>  ««":="
+    ║ ║ ╟─bind  ««":="
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &fix_var_attrs  ««"$ast"
     ║ ║ ║   └○ $ast
-    ║ ║ ╟─bind &infix:<:=>  ««":="
+    ║ ║ ╟─bind  ««":="
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &drop_takeclosure  ««"$ast"
     ║ ║ ║   └○ $ast
-    ║ ║ ╟─bind &infix:<:=>  ««":="
+    ║ ║ ╟─bind  ««":="
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &drop_Stmts  ««"$ast"
     ║ ║ ║   └○ $ast
@@ -1988,7 +1939,11 @@
     ║ ║ ║ │ └─decont
     ║ ║ ║ │   └○ self
     ║ ║ ║ └◙ SVal " / drop_Stmts done."
-    ║ ║ ╟─bind &infix:<:=>  ««":="
+    ║ ║ ╟─bind  ««":="
+    ║ ║ ║ ├○ $ast
+    ║ ║ ║ └─call &remove_bogusOpNames  ««"$ast"
+    ║ ║ ║   └○ $ast
+    ║ ║ ╟─bind  ««":="
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &replace_assoc_and_pos_scoped  ««"$ast"
     ║ ║ ║   └○ $ast
@@ -2006,12 +1961,12 @@
     ║ ║ ║   ╟○ $value :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::SVal) && ($value =:= NO_VALUE"...
     ║ ║ ║     ╟○ $node :decl(param)
-    ║ ║ ║     ╙─if &infix:<&&>  ««"&&"
+    ║ ║ ║     ╙─if  ««"&&"
     ║ ║ ║       ├─call &istype  ««"$node, QAST::SVal"
     ║ ║ ║       │ ├○ $node
     ║ ║ ║       │ └◙ WVal QAST::SVal
-    ║ ║ ║       └─unless &infix:<||>  ««"||"
-    ║ ║ ║         ├─eqaddr &infix:<=:=>  ««"=:="
+    ║ ║ ║       └─unless  ««"||"
+    ║ ║ ║         ├─eqaddr  ««"=:="
     ║ ║ ║         │ ├○ $value
     ║ ║ ║         │ └─ifnull
     ║ ║ ║         │   ├─atkey
@@ -2024,7 +1979,7 @@
     ║ ║ ║         │     │ │ └◙ WVal GLOBALish
     ║ ║ ║         │     │ └◙ SVal "NO_VALUE"
     ║ ║ ║         │     └◙ WVal NQPMu
-    ║ ║ ║         └─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║         └─iseq_s  ««"eq"
     ║ ║ ║           ├─callmethod value  ««".value"
     ║ ║ ║           │ └○ $node
     ║ ║ ║           └○ $value
@@ -2034,12 +1989,12 @@
     ║ ║ ║   ╟○ $value :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::IVal) && ($value =:= NO_VALUE"...
     ║ ║ ║     ╟○ $node :decl(param)
-    ║ ║ ║     ╙─if &infix:<&&>  ««"&&"
+    ║ ║ ║     ╙─if  ««"&&"
     ║ ║ ║       ├─call &istype  ««"$node, QAST::IVal"
     ║ ║ ║       │ ├○ $node
     ║ ║ ║       │ └◙ WVal QAST::IVal
-    ║ ║ ║       └─unless &infix:<||>  ««"||"
-    ║ ║ ║         ├─eqaddr &infix:<=:=>  ««"=:="
+    ║ ║ ║       └─unless  ««"||"
+    ║ ║ ║         ├─eqaddr  ««"=:="
     ║ ║ ║         │ ├○ $value
     ║ ║ ║         │ └─ifnull
     ║ ║ ║         │   ├─atkey
@@ -2052,7 +2007,7 @@
     ║ ║ ║         │     │ │ └◙ WVal GLOBALish
     ║ ║ ║         │     │ └◙ SVal "NO_VALUE"
     ║ ║ ║         │     └◙ WVal NQPMu
-    ║ ║ ║         └─iseq_n &infix:<==>  ««"=="
+    ║ ║ ║         └─iseq_n  ««"=="
     ║ ║ ║           ├─callmethod value  ««".value"
     ║ ║ ║           │ └○ $node
     ║ ║ ║           └○ $value
@@ -2062,12 +2017,12 @@
     ║ ║ ║   ╟○ $op :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::Op) && ($op =:= NO_VALUE || $"...
     ║ ║ ║     ╟○ $node :decl(param)
-    ║ ║ ║     ╙─if &infix:<&&>  ««"&&"
+    ║ ║ ║     ╙─if  ««"&&"
     ║ ║ ║       ├─call &istype  ««"$node, QAST::Op"
     ║ ║ ║       │ ├○ $node
     ║ ║ ║       │ └◙ WVal QAST::Op
-    ║ ║ ║       └─unless &infix:<||>  ««"||"
-    ║ ║ ║         ├─eqaddr &infix:<=:=>  ««"=:="
+    ║ ║ ║       └─unless  ««"||"
+    ║ ║ ║         ├─eqaddr  ««"=:="
     ║ ║ ║         │ ├○ $op
     ║ ║ ║         │ └─ifnull
     ║ ║ ║         │   ├─atkey
@@ -2080,7 +2035,7 @@
     ║ ║ ║         │     │ │ └◙ WVal GLOBALish
     ║ ║ ║         │     │ └◙ SVal "NO_VALUE"
     ║ ║ ║         │     └◙ WVal NQPMu
-    ║ ║ ║         └─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║         └─iseq_s  ««"eq"
     ║ ║ ║           ├─callmethod op  ««".op"
     ║ ║ ║           │ └○ $node
     ║ ║ ║           └○ $op
@@ -2100,7 +2055,7 @@
     ║ ║ ║   └─:Block  ««"{\n            nqp::index($var.name, 'STATS_') > -1"...
     ║ ║ ║     ╟○ $var :decl(param)
     ║ ║ ║     ╟○ @pathUp :decl(param)
-    ║ ║ ║     ╙─isgt_n &infix:<>>  ««">"
+    ║ ║ ║     ╙─isgt_n  ««">"
     ║ ║ ║       ├─index  ««"nqp::index($var.name, 'STATS_')"
     ║ ║ ║       │ ├─callmethod name  ««".name"
     ║ ║ ║       │ │ └○ $var
@@ -2108,7 +2063,7 @@
     ║ ║ ║       └◙ IVal -1
     ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@statskeys := []"
     ║ ║ ║ ├○ @statskeys
-    ║ ║ ║ └─list &circumfix:<[ ]>
+    ║ ║ ║ └─list
     ║ ║ ╟─for  ««"@statskeyDefs {\n            my $v := $_[1][0];\n  "...
     ║ ║ ║ ├○ @statskeyDefs
     ║ ║ ║ ├─:Block :blocktype(immediate)  ««"{\n            my $v := $_[1][0];\n            if i"...
@@ -2154,7 +2109,7 @@
     ║ ║ ║     ╟○ $var :decl(param)
     ║ ║ ║     ╟○ @pathUp :decl(param)
     ║ ║ ║     ╙─if  ««"$var.name eq '%info' {\n                $findStatsH"...
-    ║ ║ ║       ├─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║       ├─iseq_s  ««"eq"
     ║ ║ ║       │ ├─callmethod name  ««".name"
     ║ ║ ║       │ │ └○ $var
     ║ ║ ║       │ └◙ SVal "%info"
@@ -2179,17 +2134,17 @@
     ║ ║ ║     │ └◙ IVal 1
     ║ ║ ║     └◙ WVal NQPMu
     ║ ║ ╟─call &say  ««"'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' ~ istype($in"...
-    ║ ║ ║ └─concat &infix:<~>  ««"~"
+    ║ ║ ║ └─concat  ««"~"
     ║ ║ ║   ├◙ SVal ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     ║ ║ ║   └─call &istype  ««"$infoHash, QAST::Op"
     ║ ║ ║     ├○ $infoHash
     ║ ║ ║     └◙ WVal QAST::Op
     ║ ║ ╟─if  ««"istype($infoHash, QAST::Op) && ($infoHash.op eq 'ha"...
-    ║ ║ ║ ├─if &infix:<&&>  ««"&&"
+    ║ ║ ║ ├─if  ««"&&"
     ║ ║ ║ │ ├─call &istype  ««"$infoHash, QAST::Op"
     ║ ║ ║ │ │ ├○ $infoHash
     ║ ║ ║ │ │ └◙ WVal QAST::Op
-    ║ ║ ║ │ └─iseq_s &infix:<eq>  ««"eq"
+    ║ ║ ║ │ └─iseq_s  ««"eq"
     ║ ║ ║ │   ├─callmethod op  ««".op"
     ║ ║ ║ │   │ └○ $infoHash
     ║ ║ ║ │   └◙ SVal "hash"
@@ -2215,7 +2170,7 @@
     ║ ║ ║ │ ║ │ ║   ├○ $findStatNode
     ║ ║ ║ │ ║ │ ║   └○ $_
     ║ ║ ║ │ ║ │ ╙─if  ««"$node && nqp::existskey(%stats, $_) {\n            "...
-    ║ ║ ║ │ ║ │   ├─if &infix:<&&>  ««"&&"
+    ║ ║ ║ │ ║ │   ├─if  ««"&&"
     ║ ║ ║ │ ║ │   │ ├○ $node
     ║ ║ ║ │ ║ │   │ └─existskey  ««"nqp::existskey(%stats, $_)"
     ║ ║ ║ │ ║ │   │   ├○ %stats
@@ -2267,13 +2222,13 @@
     ║ ║   └─:Stmts  ««"\n        my $qastfileName := self.user-progname ~ "...
     ║ ║     ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$qastfileName := self.user-progname ~ '.qast'"
     ║ ║     │ ├○ $qastfileName
-    ║ ║     │ └─concat &infix:<~>  ««"~"
+    ║ ║     │ └─concat  ««"~"
     ║ ║     │   ├─callmethod user-progname  ««".user-progname"
     ║ ║     │   │ └─decont
     ║ ║     │   │   └○ self
     ║ ║     │   └◙ SVal ".qast"
     ║ ║     ├─if  ««"return $ast\n            if %adverbs<output> eq $qa"...
-    ║ ║     │ ├─iseq_s &infix:<eq>  ««"eq"
+    ║ ║     │ ├─iseq_s  ««"eq"
     ║ ║     │ │ ├─ifnull
     ║ ║     │ │ │ ├─atkey
     ║ ║     │ │ │ │ ├○ %adverbs
@@ -2284,7 +2239,7 @@
     ║ ║     │   └○ $ast
     ║ ║     ├─call &spew  ««"$qastfileName, ~$ast"
     ║ ║     │ ├○ $qastfileName
-    ║ ║     │ └─stringify &prefix:<~>  ««"~"
+    ║ ║     │ └─stringify  ««"~"
     ║ ║     │   └○ $ast
     ║ ║     └○ $ast
     ║ ╙─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        #self.log('write_bytecode: adverbs=' ~ d"...
@@ -2292,8 +2247,8 @@
     ║   ╟○ $mast :decl(param)
     ║   ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║   ╟─if  ««"%adverbs<target> eq 'mbc' && %adverbs<output> {\n  "...
-    ║   ║ ├─if &infix:<&&>  ««"&&"
-    ║   ║ │ ├─iseq_s &infix:<eq>  ««"eq"
+    ║   ║ ├─if  ««"&&"
+    ║   ║ │ ├─iseq_s  ««"eq"
     ║   ║ │ │ ├─ifnull
     ║   ║ │ │ │ ├─atkey
     ║   ║ │ │ │ │ ├○ %adverbs
@@ -2308,12 +2263,12 @@
     ║   ║ ├─callmethod log  ««"'write_bytecode: omitted because of'\n             "...
     ║   ║ │ ├─decont
     ║   ║ │ │ └○ self
-    ║   ║ │ └─concat &infix:<~>  ««"~"
-    ║   ║ │   ├─concat &infix:<~>  ««"~"
-    ║   ║ │   │ ├─concat &infix:<~>  ««"~"
-    ║   ║ │   │ │ ├─concat &infix:<~>  ««"~"
-    ║   ║ │   │ │ │ ├─concat &infix:<~>  ««"~"
-    ║   ║ │   │ │ │ │ ├─concat &infix:<~>  ««"~"
+    ║   ║ │ └─concat  ««"~"
+    ║   ║ │   ├─concat  ««"~"
+    ║   ║ │   │ ├─concat  ««"~"
+    ║   ║ │   │ │ ├─concat  ««"~"
+    ║   ║ │   │ │ │ ├─concat  ««"~"
+    ║   ║ │   │ │ │ │ ├─concat  ««"~"
     ║   ║ │   │ │ │ │ │ ├◙ SVal "write_bytecode: omitted because of"
     ║   ║ │   │ │ │ │ │ └◙ SVal " :target(\""
     ║   ║ │   │ │ │ │ └─ifnull
@@ -2344,9 +2299,9 @@
     ║   ║   ╙─callmethod log  ««"'write_bytecode: ' ~ describe($mast) ~ ' ~> ' ~ sel"...
     ║   ║     ├─decont
     ║   ║     │ └○ self
-    ║   ║     └─concat &infix:<~>  ««"~"
-    ║   ║       ├─concat &infix:<~>  ««"~"
-    ║   ║       │ ├─concat &infix:<~>  ««"~"
+    ║   ║     └─concat  ««"~"
+    ║   ║       ├─concat  ««"~"
+    ║   ║       │ ├─concat  ««"~"
     ║   ║       │ │ ├◙ SVal "write_bytecode: "
     ║   ║       │ │ └─call &describe  ««"$mast"
     ║   ║       │ │   └○ $mast
@@ -2370,24 +2325,24 @@
     ║   ╟○ $out
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@expPathUp := []"
     ║   ║ ├○ @expPathUp
-    ║   ║ └─list &circumfix:<[ ]>
+    ║   ║ └─list
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$export := findPath(-> $node, @pathUp {\n          "...
     ║   ║ ├○ $export
     ║   ║ └─call &findPath  ««"-> $node, @pathUp {\n            istype($node, QAST"...
     ║   ║   ├─:Block  ««"{\n            istype($node, QAST::Var) && ($node.n"...
     ║   ║   │ ╟○ $node :decl(param)
     ║   ║   │ ╟○ @pathUp :decl(param)
-    ║   ║   │ ╙─unless &infix:<||>  ««"||"
-    ║   ║   │   ├─if &infix:<&&>  ««"&&"
-    ║   ║   │   │ ├─if &infix:<&&>  ««"&&"
+    ║   ║   │ ╙─unless  ««"||"
+    ║   ║   │   ├─if  ««"&&"
+    ║   ║   │   │ ├─if  ««"&&"
     ║   ║   │   │ │ ├─call &istype  ««"$node, QAST::Var"
     ║   ║   │   │ │ │ ├○ $node
     ║   ║   │   │ │ │ └◙ WVal QAST::Var
-    ║   ║   │   │ │ └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║   │   │ │ └─iseq_s  ««"eq"
     ║   ║   │   │ │   ├─callmethod name  ««".name"
     ║   ║   │   │ │   │ └○ $node
     ║   ║   │   │ │   └◙ SVal "EXPORT"
-    ║   ║   │   │ └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║   │   │ └─iseq_s  ««"eq"
     ║   ║   │   │   ├─callmethod decl  ««".decl"
     ║   ║   │   │   │ └○ $node
     ║   ║   │   │   └◙ SVal "static"
@@ -2407,12 +2362,12 @@
     ║   ║   ║   │ ╟○ $node :decl(param)
     ║   ║   ║   │ ╟○ @pathUp :decl(param)
     ║   ║   ║   │ ╙─if  ««"(+@pathUp > 1) && @pathUp[1] =:= @expPathUp[0] {\n "...
-    ║   ║   ║   │   ├─if &infix:<&&>  ««"&&"
-    ║   ║   ║   │   │ ├─isgt_n &infix:<>>  ««">"
-    ║   ║   ║   │   │ │ ├─numify &prefix:<+>  ««"+"
+    ║   ║   ║   │   ├─if  ««"&&"
+    ║   ║   ║   │   │ ├─isgt_n  ««">"
+    ║   ║   ║   │   │ │ ├─numify  ««"+"
     ║   ║   ║   │   │ │ │ └○ @pathUp
     ║   ║   ║   │   │ │ └◙ IVal 1
-    ║   ║   ║   │   │ └─eqaddr &infix:<=:=>  ««"=:="
+    ║   ║   ║   │   │ └─eqaddr  ««"=:="
     ║   ║   ║   │   │   ├─ifnull
     ║   ║   ║   │   │   │ ├─atpos
     ║   ║   ║   │   │   │ │ ├○ @pathUp
@@ -2440,30 +2395,30 @@
     ║   ║   ║   │   │ ║   │ ├○ $parent
     ║   ║   ║   │   │ ║   │ └◙ IVal 0
     ║   ║   ║   │   │ ║   └◙ WVal NQPMu
-    ║   ║   ║   │   │ ╙─unless &infix:<||>  ««"||"
-    ║   ║   ║   │   │   ├─if &infix:<&&>  ««"&&"
-    ║   ║   ║   │   │   │ ├─if &infix:<&&>  ««"&&"
-    ║   ║   ║   │   │   │ │ ├─if &infix:<&&>  ««"&&"
-    ║   ║   ║   │   │   │ │ │ ├─if &infix:<&&>  ««"&&"
-    ║   ║   ║   │   │   │ │ │ │ ├─if &infix:<&&>  ««"&&"
+    ║   ║   ║   │   │ ╙─unless  ««"||"
+    ║   ║   ║   │   │   ├─if  ««"&&"
+    ║   ║   ║   │   │   │ ├─if  ««"&&"
+    ║   ║   ║   │   │   │ │ ├─if  ««"&&"
+    ║   ║   ║   │   │   │ │ │ ├─if  ««"&&"
+    ║   ║   ║   │   │   │ │ │ │ ├─if  ««"&&"
     ║   ║   ║   │   │   │ │ │ │ │ ├─call &istype  ««"$node, QAST::Op"
     ║   ║   ║   │   │   │ │ │ │ │ │ ├○ $node
     ║   ║   ║   │   │   │ │ │ │ │ │ └◙ WVal QAST::Op
-    ║   ║   ║   │   │   │ │ │ │ │ └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║   ║   │   │   │ │ │ │ │ └─iseq_s  ««"eq"
     ║   ║   ║   │   │   │ │ │ │ │   ├─callmethod op  ««".op"
     ║   ║   ║   │   │   │ │ │ │ │   │ └○ $node
     ║   ║   ║   │   │   │ │ │ │ │   └◙ SVal "list"
     ║   ║   ║   │   │   │ │ │ │ └─call &istype  ««"$parent, QAST::Op"
     ║   ║   ║   │   │   │ │ │ │   ├○ $parent
     ║   ║   ║   │   │   │ │ │ │   └◙ WVal QAST::Op
-    ║   ║   ║   │   │   │ │ │ └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║   ║   │   │   │ │ │ └─iseq_s  ««"eq"
     ║   ║   ║   │   │   │ │ │   ├─callmethod op  ««".op"
     ║   ║   ║   │   │   │ │ │   │ └○ $parent
     ║   ║   ║   │   │   │ │ │   └◙ SVal "bind"
     ║   ║   ║   │   │   │ │ └─call &istype  ««"$brother, QAST::Var"
     ║   ║   ║   │   │   │ │   ├○ $brother
     ║   ║   ║   │   │   │ │   └◙ WVal QAST::Var
-    ║   ║   ║   │   │   │ └─iseq_s &infix:<eq>  ««"eq"
+    ║   ║   ║   │   │   │ └─iseq_s  ««"eq"
     ║   ║   ║   │   │   │   ├─callmethod name  ««".name"
     ║   ║   ║   │   │   │   │ └○ $brother
     ║   ║   ║   │   │   │   └◙ SVal "@?DEPENDENCIES"
@@ -2476,7 +2431,7 @@
     ║   ║   ║ ├○ $deps
     ║   ║   ║ └─:Block :blocktype(immediate)  ««"{\n                $deps := QAST::Op.new(:op<list>)"...
     ║   ║   ║   ╟○ $depsBinding :decl(var)
-    ║   ║   ║   ╟─bind &infix:<:=>  ««":="
+    ║   ║   ║   ╟─bind  ««":="
     ║   ║   ║   ║ ├○ $deps
     ║   ║   ║   ║ └─callmethod new  ««":op<list>"
     ║   ║   ║   ║   ├◙ WVal QAST::Op
@@ -2513,8 +2468,8 @@
     ║   ║   ║ ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
     ║   ║   ║ ├─callmethod user_progname  ««".user_progname"
     ║   ║   ║ │ └○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
-    ║   ║   ║ └─concat &infix:<~>  ««"~"
-    ║   ║   ║   ├─concat &infix:<~>  ««"~"
+    ║   ║   ║ └─concat  ««"~"
+    ║   ║   ║   ├─concat  ««"~"
     ║   ║   ║   │ ├◙ SVal " dependency: \""
     ║   ║   ║   │ └─ifnull
     ║   ║   ║   │   ├─atkey
@@ -2526,13 +2481,13 @@
     ║   ║     ├○ $depOut
     ║   ║     └─callmethod compileDependency  ««"~$/<name>, []"
     ║   ║       ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
-    ║   ║       ├─stringify &prefix:<~>  ««"~"
+    ║   ║       ├─stringify  ««"~"
     ║   ║       │ └─ifnull
     ║   ║       │   ├─atkey
     ║   ║       │   │ ├○ $/
     ║   ║       │   │ └◙ SVal "name"
     ║   ║       │   └◙ WVal NQPMu
-    ║   ║       └─list &circumfix:<[ ]>
+    ║   ║       └─list
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$super := nqp::findmethod(self.HOW.mro(self)[1], 's"...
     ║   ║ ├○ $super
     ║   ║ └─findmethod  ««"nqp::findmethod(self.HOW.mro(self)[1], 'statement_c"...
@@ -2547,7 +2502,7 @@
     ║   ║   │ │ └◙ IVal 1
     ║   ║   │ └◙ WVal NQPMu
     ║   ║   └◙ SVal "statement_control:sym<use>"
-    ║   ╟─bind &infix:<:=>  ««":="
+    ║   ╟─bind  ««":="
     ║   ║ ├○ $out
     ║   ║ └─call  ««"self, $/"
     ║   ║   ├○ $super
@@ -2560,7 +2515,7 @@
     ║   ╟─callmethod annotate  ««"'use', ~$/<name>"
     ║   ║ ├○ $out
     ║   ║ ├◙ SVal "use"
-    ║   ║ └─stringify &prefix:<~>  ««"~"
+    ║   ║ └─stringify  ««"~"
     ║   ║   └─ifnull
     ║   ║     ├─atkey
     ║   ║     │ ├○ $/
@@ -2654,7 +2609,7 @@
     ║   ╟○ $ast_path :decl(var)
     ║   ╙─lexotic RETURN
     ║     └─:Stmts  ««"\n        # replace all backslashes with slashes\n "...
-    ║       ├─bind &infix:<:=>  ««":="
+    ║       ├─bind  ««":="
     ║       │ ├○ $src_path
     ║       │ └─join  ««"nqp::join('/', nqp::split('\\\\', $src_path))"
     ║       │   ├◙ SVal "/"
@@ -2662,7 +2617,7 @@
     ║       │     ├◙ SVal "\\"
     ║       │     └○ $src_path
     ║       ├─if  ««"!nqp::filereadable($src_path) {\n            #self."...
-    ║       │ ├─falsey &prefix:<!>  ««"!"
+    ║       │ ├─falsey  ««"!"
     ║       │ │ └─filereadable  ««"nqp::filereadable($src_path)"
     ║       │ │   └○ $src_path
     ║       │ └◙ WVal NQPMu
@@ -2674,26 +2629,26 @@
     ║       │     ├◙ SVal "\\"
     ║       │     └─cwd  ««"nqp::cwd"
     ║       ├─if  ««"nqp::index($src_path, $cwd) == 0 {\n            $sr"...
-    ║       │ ├─iseq_n &infix:<==>  ««"=="
+    ║       │ ├─iseq_n  ««"=="
     ║       │ │ ├─index  ««"nqp::index($src_path, $cwd)"
     ║       │ │ │ ├○ $src_path
     ║       │ │ │ └○ $cwd
     ║       │ │ └◙ IVal 0
-    ║       │ └─bind &infix:<:=>  ««":="
+    ║       │ └─bind  ««":="
     ║       │   ├○ $src_path
     ║       │   └─substr  ««"nqp::substr($src_path, nqp::chars($cwd) + 1)"
     ║       │     ├○ $src_path
-    ║       │     └─add_n &infix:<+>  ««"+"
+    ║       │     └─add_n  ««"+"
     ║       │       ├─chars  ««"nqp::chars($cwd)"
     ║       │       │ └○ $cwd
     ║       │       └◙ IVal 1
     ║       ├─if  ««"nqp::index($src_path, './') == 0 {\n            $sr"...
-    ║       │ ├─iseq_n &infix:<==>  ««"=="
+    ║       │ ├─iseq_n  ««"=="
     ║       │ │ ├─index  ««"nqp::index($src_path, './')"
     ║       │ │ │ ├○ $src_path
     ║       │ │ │ └◙ SVal "./"
     ║       │ │ └◙ IVal 0
-    ║       │ └─bind &infix:<:=>  ««":="
+    ║       │ └─bind  ««":="
     ║       │   ├○ $src_path
     ║       │   └─substr  ««"nqp::substr($src_path, 2)"
     ║       │     ├○ $src_path
@@ -2708,7 +2663,7 @@
     ║       │   ├○ $src_path
     ║       │   └◙ SVal "."
     ║       ├─if  ««"$x <= 0 {    # yes, also files like \".gitignore\","...
-    ║       │ ├─isle_n &infix:<<=>  ««"<="
+    ║       │ ├─isle_n  ««"<="
     ║       │ │ ├○ $x
     ║       │ │ └◙ IVal 0
     ║       │ └─callmethod panic  ««"\"invalid source file (no extension): $src_path\""
@@ -2721,7 +2676,7 @@
     ║       │ ├○ $src_ext
     ║       │ └─substr  ««"nqp::substr($src_path, $x + 1)"
     ║       │   ├○ $src_path
-    ║       │   └─add_n &infix:<+>  ««"+"
+    ║       │   └─add_n  ««"+"
     ║       │     ├○ $x
     ║       │     └◙ IVal 1
     ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := nqp::rindex($src_path, '/')"
@@ -2733,11 +2688,11 @@
     ║       │ ├○ $src_name
     ║       │ └─substr  ««"nqp::substr($src_path, $i + 1, $x - $i - 1)"
     ║       │   ├○ $src_path
-    ║       │   ├─add_n &infix:<+>  ««"+"
+    ║       │   ├─add_n  ««"+"
     ║       │   │ ├○ $i
     ║       │   │ └◙ IVal 1
-    ║       │   └─sub_n &infix:<->  ««"-"
-    ║       │     ├─sub_n &infix:<->  ««"-"
+    ║       │   └─sub_n  ««"-"
+    ║       │     ├─sub_n  ««"-"
     ║       │     │ ├○ $x
     ║       │     │ └○ $i
     ║       │     └◙ IVal 1
@@ -2759,27 +2714,27 @@
     ║       │ └─:Block :blocktype(immediate)  ««"{\n            if nqp::index($src_dir, $_) == 0 {\n"...
     ║       │   ╟○ $_ :decl(param)
     ║       │   ╙─if  ««"nqp::index($src_dir, $_) == 0 {\n                $s"...
-    ║       │     ├─iseq_n &infix:<==>  ««"=="
+    ║       │     ├─iseq_n  ««"=="
     ║       │     │ ├─index  ««"nqp::index($src_dir, $_)"
     ║       │     │ │ ├○ $src_dir
     ║       │     │ │ └○ $_
     ║       │     │ └◙ IVal 0
     ║       │     └─:Stmts  ««"{\n                $src_lib := nqp::substr($src_dir"...
-    ║       │       ├─bind &infix:<:=>  ««":="
+    ║       │       ├─bind  ««":="
     ║       │       │ ├○ $src_lib
     ║       │       │ └─substr  ««"nqp::substr($src_dir, nqp::chars($_) + 1)"
     ║       │       │   ├○ $src_dir
-    ║       │       │   └─add_n &infix:<+>  ««"+"
+    ║       │       │   └─add_n  ««"+"
     ║       │       │     ├─chars  ««"nqp::chars($_)"
     ║       │       │     │ └○ $_
     ║       │       │     └◙ IVal 1
-    ║       │       ├─bind &infix:<:=>  ««":="
+    ║       │       ├─bind  ««":="
     ║       │       │ ├○ $src_dir
     ║       │       │ └○ $_
     ║       │       └─control last
     ║       ├─unless  ««"$src_dir {\n            $src_dir := '.';\n        }"
     ║       │ ├○ $src_dir
-    ║       │ └─bind &infix:<:=>  ««":="
+    ║       │ └─bind  ««":="
     ║       │   ├○ $src_dir
     ║       │   └◙ SVal "."
     ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$vm_ext  := 'moarvm'"
@@ -2792,7 +2747,7 @@
     ║       ├─if  ««"$src_lib {\n            $src_path := \"$src_dir/$sr"...
     ║       │ ├○ $src_lib
     ║       │ ├─:Stmts  ««"{\n            $src_path := \"$src_dir/$src_lib/$sr"...
-    ║       │ │ ├─bind &infix:<:=>  ««":="
+    ║       │ │ ├─bind  ««":="
     ║       │ │ │ ├○ $src_path
     ║       │ │ │ └─concat
     ║       │ │ │   ├─concat
@@ -2807,7 +2762,7 @@
     ║       │ │ │   │ │ └○ $src_name
     ║       │ │ │   │ └◙ SVal "."
     ║       │ │ │   └○ $src_ext
-    ║       │ │ └─bind &infix:<:=>  ««":="
+    ║       │ │ └─bind  ««":="
     ║       │ │   ├○ $vm_path
     ║       │ │   └─concat
     ║       │ │     ├─concat
@@ -2823,7 +2778,7 @@
     ║       │ │     │ └◙ SVal "."
     ║       │ │     └○ $vm_ext
     ║       │ └─:Stmts  ««"{\n            $src_path := \"$src_dir/$src_name.$s"...
-    ║       │   ├─bind &infix:<:=>  ««":="
+    ║       │   ├─bind  ««":="
     ║       │   │ ├○ $src_path
     ║       │   │ └─concat
     ║       │   │   ├─concat
@@ -2834,7 +2789,7 @@
     ║       │   │   │ │ └○ $src_name
     ║       │   │   │ └◙ SVal "."
     ║       │   │   └○ $src_ext
-    ║       │   └─bind &infix:<:=>  ««":="
+    ║       │   └─bind  ««":="
     ║       │     ├○ $vm_path
     ║       │     └─concat
     ║       │       ├─concat
@@ -2854,11 +2809,11 @@
     ║       │ └─concat
     ║       │   ├○ $src_path
     ║       │   └◙ SVal ".qast"
-    ║       ├─bind &infix:<:=>  ««":="
+    ║       ├─bind  ««":="
     ║       │ ├○ $needsCompilation
     ║       │ └◙ IVal 1
     ║       └─if  ««"!$needsCompilation {\n            return nqp::null;"...
-    ║         ├─falsey &prefix:<!>  ««"!"
+    ║         ├─falsey  ««"!"
     ║         │ └○ $needsCompilation
     ║         ├─call RETURN
     ║         │ └─null  ««"nqp::null"
@@ -2882,7 +2837,7 @@
     ║           ║ └◙ WVal NQPMu
     ║           ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@opts := [\n                #'--module-path=L',\n  "...
     ║           ║ ├○ @opts
-    ║           ║ └─list &circumfix:<[ ]>
+    ║           ║ └─list
     ║           ╟─if  ««"@opts.push(\"--target=$target\") if $target"
     ║           ║ ├○ $target
     ║           ║ └─callmethod push  ««"\"--target=$target\""
@@ -2891,16 +2846,16 @@
     ║           ║     ├◙ SVal "--target="
     ║           ║     └○ $target
     ║           ╟─if  ««"$target eq 'mbc' {\n                if nqp::stat($v"...
-    ║           ║ ├─iseq_s &infix:<eq>  ««"eq"
+    ║           ║ ├─iseq_s  ««"eq"
     ║           ║ │ ├○ $target
     ║           ║ │ └◙ SVal "mbc"
     ║           ║ ├─:Stmts  ««"{\n                if nqp::stat($vm_path, nqp::cons"...
     ║           ║ │ ├─if  ««"nqp::stat($vm_path, nqp::const::STAT_EXISTS) && !nq"...
-    ║           ║ │ │ ├─if &infix:<&&>  ««"&&"
+    ║           ║ │ │ ├─if  ««"&&"
     ║           ║ │ │ │ ├─stat  ««"nqp::stat($vm_path, nqp::const::STAT_EXISTS)"
     ║           ║ │ │ │ │ ├○ $vm_path
     ║           ║ │ │ │ │ └─const STAT_EXISTS
-    ║           ║ │ │ │ └─falsey &prefix:<!>  ««"!"
+    ║           ║ │ │ │ └─falsey  ««"!"
     ║           ║ │ │ │   └─filewritable  ««"nqp::filewritable($vm_path)"
     ║           ║ │ │ │     └○ $vm_path
     ║           ║ │ │ └─die  ««"nqp::die(\"cannot write to file: $vm_path\")"
@@ -2909,24 +2864,24 @@
     ║           ║ │ │     └○ $vm_path
     ║           ║ │ └─callmethod push  ««"'--output=' ~ $vm_path"
     ║           ║ │   ├○ @opts
-    ║           ║ │   └─concat &infix:<~>  ««"~"
+    ║           ║ │   └─concat  ««"~"
     ║           ║ │     ├◙ SVal "--output="
     ║           ║ │     └○ $vm_path
     ║           ║ └─if  ««"$target eq 'ast' || $target eq 'ast_clean' || $targ"...
-    ║           ║   ├─unless &infix:<||>  ««"||"
-    ║           ║   │ ├─unless &infix:<||>  ««"||"
-    ║           ║   │ │ ├─iseq_s &infix:<eq>  ««"eq"
+    ║           ║   ├─unless  ««"||"
+    ║           ║   │ ├─unless  ««"||"
+    ║           ║   │ │ ├─iseq_s  ««"eq"
     ║           ║   │ │ │ ├○ $target
     ║           ║   │ │ │ └◙ SVal "ast"
-    ║           ║   │ │ └─iseq_s &infix:<eq>  ««"eq"
+    ║           ║   │ │ └─iseq_s  ««"eq"
     ║           ║   │ │   ├○ $target
     ║           ║   │ │   └◙ SVal "ast_clean"
-    ║           ║   │ └─iseq_s &infix:<eq>  ««"eq"
+    ║           ║   │ └─iseq_s  ««"eq"
     ║           ║   │   ├○ $target
     ║           ║   │   └◙ SVal "ast_save"
     ║           ║   └─callmethod push  ««"'--output=' ~ $ast_path"
     ║           ║     ├○ @opts
-    ║           ║     └─concat &infix:<~>  ««"~"
+    ║           ║     └─concat  ««"~"
     ║           ║       ├◙ SVal "--output="
     ║           ║       └○ $ast_path
     ║           ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@args := nqp::clone(@opts)"
@@ -2954,7 +2909,7 @@
     ║           ╟─handle
     ║           ║ ├─handle
     ║           ║ │ ├─:Stmts  ««"\n                $result := self.command_line(@arg"...
-    ║           ║ │ │ ├─bind &infix:<:=>  ««":="
+    ║           ║ │ │ ├─bind  ««":="
     ║           ║ │ │ │ ├○ $result
     ║           ║ │ │ │ └─callmethod command_line  ««"@args, \n                    :encoding('utf8'), \n "...
     ║           ║ │ │ │   ├─decont
@@ -2972,7 +2927,7 @@
     ║           ║ │   │ │ ╟─bind
     ║           ║ │   │ │ ║ ├○ $! :decl(var)
     ║           ║ │   │ │ ║ └○ $_
-    ║           ║ │   │ │ ╙─bind &infix:<:=>  ««":="
+    ║           ║ │   │ │ ╙─bind  ««":="
     ║           ║ │   │ │   ├○ $error
     ║           ║ │   │ │   └○ $_
     ║           ║ │   │ └─exception
@@ -2989,10 +2944,10 @@
     ║           ║   │ ├─isnull  ««"nqp::isnull($result)"
     ║           ║   │ │ └○ $result
     ║           ║   │ └─if  ««"$target eq 'mbc' {\n                        $result"...
-    ║           ║   │   ├─iseq_s &infix:<eq>  ««"eq"
+    ║           ║   │   ├─iseq_s  ««"eq"
     ║           ║   │   │ ├○ $target
     ║           ║   │   │ └◙ SVal "mbc"
-    ║           ║   │   ├─bind &infix:<:=>  ««":="
+    ║           ║   │   ├─bind  ««":="
     ║           ║   │   │ ├○ $result
     ║           ║   │   │ └○ $vm_path
     ║           ║   │   └─die  ««"nqp::die(\"??? - successfully compiled $src_path to"...
@@ -3018,21 +2973,21 @@
     ║           ╟○ $from
     ║           ╟○ $to
     ║           ╟─if  ««"nqp::index($msglc, 'no such file') > -1 {\n        "...
-    ║           ║ ├─isgt_n &infix:<>>  ««">"
+    ║           ║ ├─isgt_n  ««">"
     ║           ║ │ ├─index  ««"nqp::index($msglc, 'no such file')"
     ║           ║ │ │ ├○ $msglc
     ║           ║ │ │ └◙ SVal "no such file"
     ║           ║ │ └◙ IVal -1
     ║           ║ ├─:Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, '\\'"...
     ║           ║ │ ╟○ $file :decl(var)
-    ║           ║ │ ╟─bind &infix:<:=>  ««":="
+    ║           ║ │ ╟─bind  ««":="
     ║           ║ │ ║ ├○ $from
-    ║           ║ │ ║ └─add_n &infix:<+>  ««"+"
+    ║           ║ │ ║ └─add_n  ««"+"
     ║           ║ │ ║   ├─index  ««"nqp::index($msglc, '\\'')"
     ║           ║ │ ║   │ ├○ $msglc
     ║           ║ │ ║   │ └◙ SVal "'"
     ║           ║ │ ║   └◙ IVal 1
-    ║           ║ │ ╟─bind &infix:<:=>  ««":="
+    ║           ║ │ ╟─bind  ««":="
     ║           ║ │ ║ ├○ $to
     ║           ║ │ ║ └─index  ««"nqp::index($msglc, '\\'', $from)"
     ║           ║ │ ║   ├○ $msglc
@@ -3043,21 +2998,21 @@
     ║           ║ │ ║ └─substr  ««"nqp::substr($msg, $from, $to - $from)"
     ║           ║ │ ║   ├○ $msg
     ║           ║ │ ║   ├○ $from
-    ║           ║ │ ║   └─sub_n &infix:<->  ««"-"
+    ║           ║ │ ║   └─sub_n  ««"-"
     ║           ║ │ ║     ├○ $to
     ║           ║ │ ║     └○ $from
     ║           ║ │ ╙─call &say  ««"'Error: missing module \"', $file ~ '\" (original e"...
     ║           ║ │   ├◙ SVal "Error: missing module \""
-    ║           ║ │   └─concat &infix:<~>  ««"~"
-    ║           ║ │     ├─concat &infix:<~>  ««"~"
-    ║           ║ │     │ ├─concat &infix:<~>  ««"~"
+    ║           ║ │   └─concat  ««"~"
+    ║           ║ │     ├─concat  ««"~"
+    ║           ║ │     │ ├─concat  ««"~"
     ║           ║ │     │ │ ├○ $file
     ║           ║ │     │ │ └◙ SVal "\" (original error: \""
     ║           ║ │     │ └─escape  ««"nqp::escape($msg)"
     ║           ║ │     │   └○ $msg
     ║           ║ │     └◙ SVal "\")"
     ║           ║ └─if  ««"nqp::index($msglc, 'unable to write bytecode') > -1"...
-    ║           ║   ├─isgt_n &infix:<>>  ««">"
+    ║           ║   ├─isgt_n  ««">"
     ║           ║   │ ├─index  ««"nqp::index($msglc, 'unable to write bytecode')"
     ║           ║   │ │ ├○ $msglc
     ║           ║   │ │ └◙ SVal "unable to write bytecode"
@@ -3065,14 +3020,14 @@
     ║           ║   ├─:Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, '\\'"...
     ║           ║   │ ╟○ $file :decl(var)
     ║           ║   │ ╟○ $line :decl(var)
-    ║           ║   │ ╟─bind &infix:<:=>  ««":="
+    ║           ║   │ ╟─bind  ««":="
     ║           ║   │ ║ ├○ $from
-    ║           ║   │ ║ └─add_n &infix:<+>  ««"+"
+    ║           ║   │ ║ └─add_n  ««"+"
     ║           ║   │ ║   ├─index  ««"nqp::index($msglc, '\\'')"
     ║           ║   │ ║   │ ├○ $msglc
     ║           ║   │ ║   │ └◙ SVal "'"
     ║           ║   │ ║   └◙ IVal 1
-    ║           ║   │ ╟─bind &infix:<:=>  ««":="
+    ║           ║   │ ╟─bind  ««":="
     ║           ║   │ ║ ├○ $to
     ║           ║   │ ║ └─index  ««"nqp::index($msglc, '\\'', $from)"
     ║           ║   │ ║   ├○ $msglc
@@ -3083,58 +3038,58 @@
     ║           ║   │ ║ └─substr  ««"nqp::substr($msg, $from, $to - $from)"
     ║           ║   │ ║   ├○ $msg
     ║           ║   │ ║   ├○ $from
-    ║           ║   │ ║   └─sub_n &infix:<->  ««"-"
+    ║           ║   │ ║   └─sub_n  ««"-"
     ║           ║   │ ║     ├○ $to
     ║           ║   │ ║     └○ $from
     ║           ║   │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$line := 1"
     ║           ║   │ ║ ├○ $line
     ║           ║   │ ║ └◙ IVal 1
-    ║           ║   │ ╙─bind &infix:<:=>  ««":="
+    ║           ║   │ ╙─bind  ««":="
     ║           ║   │   ├○ $msg
     ║           ║   │   └─join  ««"nqp::join('', [\n                          'Error: "...
     ║           ║   │     ├◙ SVal ""
-    ║           ║   │     └─list &circumfix:<[ ]>  ««","
+    ║           ║   │     └─list  ««","
     ║           ║   │       ├◙ SVal "Error: "
     ║           ║   │       ├○ $msg
     ║           ║   │       ├◙ SVal "\n"
     ║           ║   │       ├◙ SVal "  at "
     ║           ║   │       ├○ $src_path
     ║           ║   │       ├◙ SVal ":"
-    ║           ║   │       ├─stringify &prefix:<~>  ««"~"
+    ║           ║   │       ├─stringify  ««"~"
     ║           ║   │       │ └○ $line
     ║           ║   │       └◙ SVal "\n"
     ║           ║   └─if  ««"nqp::index($msglc, 'confused') > -1 {\n            "...
-    ║           ║     ├─isgt_n &infix:<>>  ««">"
+    ║           ║     ├─isgt_n  ««">"
     ║           ║     │ ├─index  ««"nqp::index($msglc, 'confused')"
     ║           ║     │ │ ├○ $msglc
     ║           ║     │ │ └◙ SVal "confused"
     ║           ║     │ └◙ IVal -1
     ║           ║     ├─:Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, 'at "...
     ║           ║     │ ╟○ $line :decl(var)
-    ║           ║     │ ╟─bind &infix:<:=>  ««":="
+    ║           ║     │ ╟─bind  ««":="
     ║           ║     │ ║ ├○ $from
-    ║           ║     │ ║ └─add_n &infix:<+>  ««"+"
+    ║           ║     │ ║ └─add_n  ««"+"
     ║           ║     │ ║   ├─index  ««"nqp::index($msglc, 'at line')"
     ║           ║     │ ║   │ ├○ $msglc
     ║           ║     │ ║   │ └◙ SVal "at line"
     ║           ║     │ ║   └◙ IVal 1
-    ║           ║     │ ╟─bind &infix:<:=>  ««":="
+    ║           ║     │ ╟─bind  ««":="
     ║           ║     │ ║ ├○ $from
     ║           ║     │ ║ └─findcclass  ««"nqp::findcclass(nqp::const::CCLASS_NUMERIC, $msglc,"...
     ║           ║     │ ║   ├─const CCLASS_NUMERIC
     ║           ║     │ ║   ├○ $msglc
     ║           ║     │ ║   ├○ $from
-    ║           ║     │ ║   └─sub_n &infix:<->  ««"-"
+    ║           ║     │ ║   └─sub_n  ««"-"
     ║           ║     │ ║     ├─chars  ««"nqp::chars($msglc)"
     ║           ║     │ ║     │ └○ $msglc
     ║           ║     │ ║     └○ $from
-    ║           ║     │ ╟─bind &infix:<:=>  ««":="
+    ║           ║     │ ╟─bind  ««":="
     ║           ║     │ ║ ├○ $to
     ║           ║     │ ║ └─findnotcclass  ««"nqp::findnotcclass(nqp::const::CCLASS_NUMERIC, $msg"...
     ║           ║     │ ║   ├─const CCLASS_NUMERIC
     ║           ║     │ ║   ├○ $msglc
     ║           ║     │ ║   ├○ $from
-    ║           ║     │ ║   └─sub_n &infix:<->  ««"-"
+    ║           ║     │ ║   └─sub_n  ««"-"
     ║           ║     │ ║     ├─chars  ««"nqp::chars($msglc)"
     ║           ║     │ ║     │ └○ $msglc
     ║           ║     │ ║     └○ $from
@@ -3143,20 +3098,20 @@
     ║           ║     │ ║ └─substr  ««"nqp::substr($msg, $from, $to - $from)"
     ║           ║     │ ║   ├○ $msg
     ║           ║     │ ║   ├○ $from
-    ║           ║     │ ║   └─sub_n &infix:<->  ««"-"
+    ║           ║     │ ║   └─sub_n  ««"-"
     ║           ║     │ ║     ├○ $to
     ║           ║     │ ║     └○ $from
-    ║           ║     │ ╟─bind &infix:<:=>  ««":="
+    ║           ║     │ ╟─bind  ««":="
     ║           ║     │ ║ ├○ $line
     ║           ║     │ ║ └─call &max  ««"1, $line - 1"
     ║           ║     │ ║   ├◙ IVal 1
-    ║           ║     │ ║   └─sub_n &infix:<->  ««"-"
+    ║           ║     │ ║   └─sub_n  ««"-"
     ║           ║     │ ║     ├○ $line
     ║           ║     │ ║     └◙ IVal 1
-    ║           ║     │ ╟─bind &infix:<:=>  ««":="
+    ║           ║     │ ╟─bind  ««":="
     ║           ║     │ ║ ├○ $msg
-    ║           ║     │ ║ └─concat &infix:<~>  ««"~"
-    ║           ║     │ ║   ├─concat &infix:<~>  ««"~"
+    ║           ║     │ ║ └─concat  ««"~"
+    ║           ║     │ ║   ├─concat  ««"~"
     ║           ║     │ ║   │ ├─substr  ««"nqp::substr($msg, 0, $from)"
     ║           ║     │ ║   │ │ ├○ $msg
     ║           ║     │ ║   │ │ ├◙ IVal 0
@@ -3165,22 +3120,22 @@
     ║           ║     │ ║   └─substr  ««"nqp::substr($msg, $to)"
     ║           ║     │ ║     ├○ $msg
     ║           ║     │ ║     └○ $to
-    ║           ║     │ ╙─bind &infix:<:=>  ««":="
+    ║           ║     │ ╙─bind  ««":="
     ║           ║     │   ├○ $msg
     ║           ║     │   └─join  ««"nqp::join('', [\n                          'Error: "...
     ║           ║     │     ├◙ SVal ""
-    ║           ║     │     └─list &circumfix:<[ ]>  ««","
+    ║           ║     │     └─list  ««","
     ║           ║     │       ├◙ SVal "Error: "
     ║           ║     │       ├○ $msg
     ║           ║     │       ├◙ SVal "\n"
     ║           ║     │       ├◙ SVal "  at "
     ║           ║     │       ├○ $src_path
     ║           ║     │       ├◙ SVal ":"
-    ║           ║     │       ├─stringify &prefix:<~>  ««"~"
+    ║           ║     │       ├─stringify  ««"~"
     ║           ║     │       │ └○ $line
     ║           ║     │       └◙ SVal "\n"
     ║           ║     └─if  ««"nqp::index($msglc, 'assignment (\"=\") not supporte"...
-    ║           ║       ├─isgt_n &infix:<>>  ««">"
+    ║           ║       ├─isgt_n  ««">"
     ║           ║       │ ├─index  ««"nqp::index($msglc, 'assignment (\"=\") not supporte"...
     ║           ║       │ │ ├○ $msglc
     ║           ║       │ │ └◙ SVal "assignment (\"=\") not supported "
@@ -3193,30 +3148,30 @@
     ║           ║       │ ╟─bind  ««"$column"
     ║           ║       │ ║ ├○ $column :decl(var)
     ║           ║       │ ║ └◙ WVal NQPMu
-    ║           ║       │ ╟─bind &infix:<:=>  ««":="
+    ║           ║       │ ╟─bind  ««":="
     ║           ║       │ ║ ├○ $from
-    ║           ║       │ ║ └─add_n &infix:<+>  ««"+"
+    ║           ║       │ ║ └─add_n  ««"+"
     ║           ║       │ ║   ├─index  ««"nqp::index($msglc, 'at line')"
     ║           ║       │ ║   │ ├○ $msglc
     ║           ║       │ ║   │ └◙ SVal "at line"
     ║           ║       │ ║   └◙ IVal 1
-    ║           ║       │ ╟─bind &infix:<:=>  ««":="
+    ║           ║       │ ╟─bind  ««":="
     ║           ║       │ ║ ├○ $from
     ║           ║       │ ║ └─findcclass  ««"nqp::findcclass(nqp::const::CCLASS_NUMERIC, $msglc,"...
     ║           ║       │ ║   ├─const CCLASS_NUMERIC
     ║           ║       │ ║   ├○ $msglc
     ║           ║       │ ║   ├○ $from
-    ║           ║       │ ║   └─sub_n &infix:<->  ««"-"
+    ║           ║       │ ║   └─sub_n  ««"-"
     ║           ║       │ ║     ├─chars  ««"nqp::chars($msglc)"
     ║           ║       │ ║     │ └○ $msglc
     ║           ║       │ ║     └○ $from
-    ║           ║       │ ╟─bind &infix:<:=>  ««":="
+    ║           ║       │ ╟─bind  ««":="
     ║           ║       │ ║ ├○ $to
     ║           ║       │ ║ └─findnotcclass  ««"nqp::findnotcclass(nqp::const::CCLASS_NUMERIC, $msg"...
     ║           ║       │ ║   ├─const CCLASS_NUMERIC
     ║           ║       │ ║   ├○ $msglc
     ║           ║       │ ║   ├○ $from
-    ║           ║       │ ║   └─sub_n &infix:<->  ««"-"
+    ║           ║       │ ║   └─sub_n  ««"-"
     ║           ║       │ ║     ├─chars  ««"nqp::chars($msglc)"
     ║           ║       │ ║     │ └○ $msglc
     ║           ║       │ ║     └○ $from
@@ -3225,14 +3180,14 @@
     ║           ║       │ ║ └─substr  ««"nqp::substr($msg, $from, $to - $from)"
     ║           ║       │ ║   ├○ $msg
     ║           ║       │ ║   ├○ $from
-    ║           ║       │ ║   └─sub_n &infix:<->  ««"-"
+    ║           ║       │ ║   └─sub_n  ««"-"
     ║           ║       │ ║     ├○ $to
     ║           ║       │ ║     └○ $from
-    ║           ║       │ ╟─bind &infix:<:=>  ««":="
+    ║           ║       │ ╟─bind  ««":="
     ║           ║       │ ║ ├○ $line
     ║           ║       │ ║ └─call &max  ««"1, $line - 1"
     ║           ║       │ ║   ├◙ IVal 1
-    ║           ║       │ ║   └─sub_n &infix:<->  ««"-"
+    ║           ║       │ ║   └─sub_n  ««"-"
     ║           ║       │ ║     ├○ $line
     ║           ║       │ ║     └◙ IVal 1
     ║           ║       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@lines := linesFrom($src_path, $line, 2)"
@@ -3250,7 +3205,7 @@
     ║           ║       │ ║   └○ @lines
     ║           ║       │ ╟○ $column
     ║           ║       │ ╟─while  ««"$i < $n {\n                    my $line := @lines[$"...
-    ║           ║       │ ║ ├─islt_n &infix:<<>  ««"<"
+    ║           ║       │ ║ ├─islt_n  ««"<"
     ║           ║       │ ║ │ ├○ $i
     ║           ║       │ ║ │ └○ $n
     ║           ║       │ ║ ├─:Block :blocktype(immediate)  ««"{\n                    my $line := @lines[$i];\n   "...
@@ -3269,28 +3224,28 @@
     ║           ║       │ ║ │ ║   ├○ $line
     ║           ║       │ ║ │ ║   └◙ SVal "="
     ║           ║       │ ║ │ ╙─if  ««"$at > -1 {\n                        $column := $at "...
-    ║           ║       │ ║ │   ├─isgt_n &infix:<>>  ««">"
+    ║           ║       │ ║ │   ├─isgt_n  ««">"
     ║           ║       │ ║ │   │ ├○ $at
     ║           ║       │ ║ │   │ └◙ IVal -1
     ║           ║       │ ║ │   ├─:Stmts  ««"{\n                        $column := $at + 1;\n   "...
-    ║           ║       │ ║ │   │ ├─bind &infix:<:=>  ««":="
+    ║           ║       │ ║ │   │ ├─bind  ««":="
     ║           ║       │ ║ │   │ │ ├○ $column
-    ║           ║       │ ║ │   │ │ └─add_n &infix:<+>  ««"+"
+    ║           ║       │ ║ │   │ │ └─add_n  ««"+"
     ║           ║       │ ║ │   │ │   ├○ $at
     ║           ║       │ ║ │   │ │   └◙ IVal 1
-    ║           ║       │ ║ │   │ └─bind &infix:<:=>  ««":="
+    ║           ║       │ ║ │   │ └─bind  ««":="
     ║           ║       │ ║ │   │   ├○ $i
     ║           ║       │ ║ │   │   └○ $n
     ║           ║       │ ║ │   └─:Stmts  ««"{\n                        $i++;\n                 "...
-    ║           ║       │ ║ │     ├─postinc &postfix:<++>  ««"++"
+    ║           ║       │ ║ │     ├─postinc  ««"++"
     ║           ║       │ ║ │     │ └○ $i
-    ║           ║       │ ║ │     └─postinc &postfix:<++>  ««"++"
+    ║           ║       │ ║ │     └─postinc  ««"++"
     ║           ║       │ ║ │       └○ $line
     ║           ║       │ ║ └◙ IVal 1 :named("nohandler")
-    ║           ║       │ ╟─bind &infix:<:=>  ««":="
+    ║           ║       │ ╟─bind  ««":="
     ║           ║       │ ║ ├○ $msg
-    ║           ║       │ ║ └─concat &infix:<~>  ««"~"
-    ║           ║       │ ║   ├─concat &infix:<~>  ««"~"
+    ║           ║       │ ║ └─concat  ««"~"
+    ║           ║       │ ║   ├─concat  ««"~"
     ║           ║       │ ║   │ ├─substr  ««"nqp::substr($msg, 0, $from)"
     ║           ║       │ ║   │ │ ├○ $msg
     ║           ║       │ ║   │ │ ├◙ IVal 0
@@ -3299,22 +3254,22 @@
     ║           ║       │ ║   └─substr  ««"nqp::substr($msg, $to)"
     ║           ║       │ ║     ├○ $msg
     ║           ║       │ ║     └○ $to
-    ║           ║       │ ╙─bind &infix:<:=>  ««":="
+    ║           ║       │ ╙─bind  ««":="
     ║           ║       │   ├○ $msg
     ║           ║       │   └─join  ««"nqp::join('', [\n                          'Error: "...
     ║           ║       │     ├◙ SVal ""
-    ║           ║       │     └─list &circumfix:<[ ]>  ««","
+    ║           ║       │     └─list  ««","
     ║           ║       │       ├◙ SVal "Error: "
     ║           ║       │       ├○ $msg
     ║           ║       │       ├◙ SVal "\n"
     ║           ║       │       ├◙ SVal "   at "
     ║           ║       │       ├○ $src_path
     ║           ║       │       ├◙ SVal ":"
-    ║           ║       │       ├─stringify &prefix:<~>  ««"~"
+    ║           ║       │       ├─stringify  ««"~"
     ║           ║       │       │ └○ $line
-    ║           ║       │       ├─if &infix:<>  ««"?? ':' ~ $column !!"
+    ║           ║       │       ├─if  ««"?? ':' ~ $column !!"
     ║           ║       │       │ ├○ $column
-    ║           ║       │       │ ├─concat &infix:<~>  ««"~"
+    ║           ║       │       │ ├─concat  ««"~"
     ║           ║       │       │ │ ├◙ SVal ":"
     ║           ║       │       │ │ └○ $column
     ║           ║       │       │ └◙ SVal ""
@@ -3330,29 +3285,29 @@
     ║           ║         │ ║ ├○ $line
     ║           ║         │ ║ └◙ IVal 1
     ║           ║         │ ╟○ $column
-    ║           ║         │ ╙─bind &infix:<:=>  ««":="
+    ║           ║         │ ╙─bind  ««":="
     ║           ║         │   ├○ $msg
     ║           ║         │   └─join  ««"nqp::join('', [\n                          'ERROR: "...
     ║           ║         │     ├◙ SVal ""
-    ║           ║         │     └─list &circumfix:<[ ]>  ««","
+    ║           ║         │     └─list  ««","
     ║           ║         │       ├◙ SVal "ERROR: "
     ║           ║         │       ├○ $msg
     ║           ║         │       ├◙ SVal "\n"
     ║           ║         │       ├◙ SVal "   at "
     ║           ║         │       ├○ $src_path
     ║           ║         │       ├◙ SVal ":"
-    ║           ║         │       ├─stringify &prefix:<~>  ««"~"
+    ║           ║         │       ├─stringify  ««"~"
     ║           ║         │       │ └○ $line
-    ║           ║         │       ├─if &infix:<>  ««"?? ':' ~ $column !!"
+    ║           ║         │       ├─if  ««"?? ':' ~ $column !!"
     ║           ║         │       │ ├○ $column
-    ║           ║         │       │ ├─concat &infix:<~>  ««"~"
+    ║           ║         │       │ ├─concat  ««"~"
     ║           ║         │       │ │ ├◙ SVal ":"
     ║           ║         │       │ │ └○ $column
     ║           ║         │       │ └◙ SVal ""
     ║           ║         │       └◙ SVal "\n"
-    ║           ║         └─bind &infix:<:=>  ««":="
+    ║           ║         └─bind  ««":="
     ║           ║           ├○ $msg
-    ║           ║           └─concat &infix:<~>  ««"~"
+    ║           ║           └─concat  ««"~"
     ║           ║             ├○ $msg
     ║           ║             └─join  ««"nqp::join(\"\\n\", nqp::backtracestrings($error))"
     ║           ║               ├◙ SVal "\n"

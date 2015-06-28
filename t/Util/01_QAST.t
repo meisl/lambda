@@ -6,7 +6,7 @@ use Util;
 
 use Util::QAST;
 
-plan(184);
+plan(193);
 
 
 
@@ -125,7 +125,51 @@ sub mkBlockWithCATCH() {
             QAST::WVal.new(:value(NQPMu))
         )
     );
+};
+
+
+{ # remove_bogusOpNames--------------------------------------------------------
+    my $ast;
+    my $block1;
+    my $block2;
+
+    $ast := mkBlockWithCATCH();
+    lives_ok({ remove_bogusOpNames($ast) }, 'remove_bogusOpNames can cope with exception handlers')
+        || diag(dump($ast));
+
+    $ast := QAST::Op.new(:op<bind>, :name('&infix:<:=>'),
+        QAST::Var.new(:name<foo>),
+        QAST::SVal.new(:value<bar>)
+    );
+    $ast := remove_bogusOpNames($ast);
+    isa_ok($ast, QAST::Op, :op<bind>, 'remove_bogusOpNames/bind operator stays the same');
+    is($ast.name, '', 'remove_bogusOpNames/bind: attr .name unset');
+
+    $ast := QAST::Op.new(:op<const>, :name('STAT_EXISTS'));
+    $ast := remove_bogusOpNames($ast);
+    isa_ok($ast, QAST::Op, :op<const>, :name('STAT_EXISTS'), 'remove_bogusOpNames/const untouched') || diag(dump($ast));
+
+    $ast := QAST::Op.new(:op<lexotic>, :name('RETURN'));
+    $ast := remove_bogusOpNames($ast);
+    isa_ok($ast, QAST::Op, :op<lexotic>, :name('RETURN'), 'remove_bogusOpNames/lexotic untouched') || diag(dump($ast));
+
+    $ast := QAST::Op.new(:op<control>, :name('last'));
+    $ast := remove_bogusOpNames($ast);
+    isa_ok($ast, QAST::Op, :op<control>, :name('last'), 'remove_bogusOpNames/control untouched') || diag(dump($ast));
+
+    $ast := QAST::Op.new(:op<call>, :name('&foo'));
+    $ast := remove_bogusOpNames($ast);
+    isa_ok($ast, QAST::Op, :op<call>, :name('&foo'), 'remove_bogusOpNames/call untouched') || diag(dump($ast));
+
+    $ast := QAST::Op.new(:op<callstatic>, :name('&foo'));
+    $ast := remove_bogusOpNames($ast);
+    isa_ok($ast, QAST::Op, :op<callstatic>, :name('&foo'), 'remove_bogusOpNames/callstatic untouched') || diag(dump($ast));
+
+    $ast := QAST::Op.new(:op<callmethod>, :name('&foo'), QAST::Op.new(:op<null>));
+    $ast := remove_bogusOpNames($ast);
+    isa_ok($ast, QAST::Op, :op<callmethod>, :name('&foo'), 'remove_bogusOpNames/callmethod untouched') || diag(dump($ast));
 }
+
 
 my $ast := mkBlockWithCATCH();
 

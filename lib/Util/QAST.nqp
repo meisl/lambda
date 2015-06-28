@@ -378,6 +378,31 @@ class Util::QAST {
     }
 
 
+    method remove_bogusOpNames($ast) {
+        TreeWalk.dfs-up(
+            -> $n, @p {
+                my $take := istype($n, QAST::Op)
+                    && ($n.op ne 'call')
+                    && ($n.op ne 'callstatic')
+                    && ($n.op ne 'callmethod')
+                    && ($n.op ne 'lexotic')
+                    && ($n.op ne 'control')
+                    && ($n.op ne 'const')
+                ;
+                TreeWalkDo.recurse(:$take);
+            },
+            -> $n, @p {
+                say('>>>Op(', $n.dump_extra_node_info, ')')
+                    unless 0 <= nqp::index(
+                        'how who inf eqat eqaddr open exit say shift iterator setelems stat exception eoffh closefh setinputlinesep readlinefh flushfh filewritable filereadable backtracestrings getstdout getstderr clone lc join split splice index rindex findcclass findnotcclass decont handle x radix can postinc preinc postdec predec add_n sub_n stringify bind bindkey concat atpos atkey die reprname defor ifnull istype isnull isnull_s iseq_s iseq_n isgt_n islt_n isle_n isgt_n isge_n iseq_s isne_s isconcrete isinvokable isstr isint isnum islist ishash substr falsey if unless for while until elems chars escape list hash iterkey_s iterval existskey existspos numify findmethod getattr bindattr getmessage rethrow cwd getcomp getcurhllsym curlexpad backendconfig',
+                        $n.op
+                    );
+                $n.name(nqp::null_s);
+            },
+            $ast
+        );
+    }
+
 }   # end of class Util::QAST
 
 
@@ -394,4 +419,5 @@ sub fix_var_attrs($ast)                 is export { Util::QAST.fix_var_attrs($as
 sub drop_Stmts($ast)                    is export { Util::QAST.drop_Stmts($ast) }
 sub replace_assoc_and_pos_scoped($ast)  is export { Util::QAST.replace_assoc_and_pos_scoped($ast) }
 sub drop_takeclosure($ast)              is export { Util::QAST.drop_takeclosure($ast) }
+sub remove_bogusOpNames($ast)           is export { Util::QAST.remove_bogusOpNames($ast) }
 
