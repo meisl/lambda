@@ -1,5 +1,4 @@
 #!nqp
-use QAST;   # that is, nqp's
 
 use testing;
 use Util;

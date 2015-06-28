@@ -1,5 +1,4 @@
 #!nqp
-use QAST;   # that is, nqp's
 
 use Util;
 use Util::TreeWalk;
