@@ -413,15 +413,19 @@ class Util::QAST {
             if istype($node, QAST::Op) && $node.op eq 'callmethod' {
                 my $meth := $node.name;
                 if $meth {
-                    if nqp::index('push pop shift unshift', $meth) > -1 {
+                    if $meth eq 'push'
+                    || $meth eq 'pop'
+                    || $meth eq 'shift'
+                    || $meth eq 'unshift'
+                    {
                         $node.op($meth);
                         $node.name(nqp::null_s);
                     } elsif $meth eq 'key' {
                         $node.op('iterkey_s');
                         $node.name(nqp::null_s);
-                    } elsif $meth eq 'value' {
-                        $node.op('iterval');
-                        $node.name(nqp::null_s);
+                    #} elsif $meth eq 'value' { # clashes eg with QAST::SVal.value
+                    #    $node.op('iterval');
+                    #    $node.name(nqp::null_s);
                     }
                 }
             }

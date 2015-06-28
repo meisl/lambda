@@ -5,7 +5,7 @@ use Util;
 
 use Util::QAST;
 
-plan(193);
+plan(201);
 
 
 
@@ -127,10 +127,8 @@ sub mkBlockWithCATCH() {
 };
 
 
-{ # remove_bogusOpNames--------------------------------------------------------
+{ # remove_bogusOpNames -------------------------------------------------------
     my $ast;
-    my $block1;
-    my $block2;
 
     $ast := mkBlockWithCATCH();
     lives_ok({ remove_bogusOpNames($ast) }, 'remove_bogusOpNames can cope with exception handlers')
@@ -167,6 +165,64 @@ sub mkBlockWithCATCH() {
     $ast := QAST::Op.new(:op<callmethod>, :name('&foo'), QAST::Op.new(:op<null>));
     $ast := remove_bogusOpNames($ast);
     isa_ok($ast, QAST::Op, :op<callmethod>, :name('&foo'), 'remove_bogusOpNames/callmethod untouched') || diag(dump($ast));
+}
+
+
+{ # inline_simple_methods -----------------------------------------------------
+    my $ast;
+
+    $ast := mkBlockWithCATCH();
+    lives_ok({ inline_simple_methods($ast) }, 'inline_simple_methods can cope with exception handlers')
+        || diag(dump($ast));
+
+    $ast := QAST::Op.new(:op<callmethod>, :name<op>,
+        QAST::Var.new(:name('$node'))
+    );
+    $ast := inline_simple_methods($ast);
+    isa_ok($ast, QAST::Op, :op<callmethod>, :name<op>, 'inline_simple_methods/call to method .op left untouched');
+
+    $ast := QAST::Op.new(:op<callmethod>, :name<pop>,
+        QAST::Var.new(:name('@xs'))
+    );
+    $ast := inline_simple_methods($ast);
+    isa_ok($ast, QAST::Op, :op<pop>, :name(''), 'inline_simple_methods/call to method .pop ~> Op pop');
+
+    $ast := QAST::Op.new(:op<callmethod>, :name<push>,
+        QAST::Var.new(:name('@xs')),
+        QAST::SVal.new(:value<foo>)
+    );
+    $ast := inline_simple_methods($ast);
+    isa_ok($ast, QAST::Op, :op<push>, :name(''), 'inline_simple_methods/call to method .push ~> Op push');
+
+    $ast := QAST::Op.new(:op<callmethod>, :name<shift>,
+        QAST::Var.new(:name('@xs'))
+    );
+    $ast := inline_simple_methods($ast);
+    isa_ok($ast, QAST::Op, :op<shift>, :name(''), 'inline_simple_methods/call to method .shift ~> Op shift');
+
+    $ast := QAST::Op.new(:op<callmethod>, :name<unshift>,
+        QAST::Var.new(:name('@xs')),
+        QAST::SVal.new(:value<foo>)
+    );
+    $ast := inline_simple_methods($ast);
+    isa_ok($ast, QAST::Op, :op<unshift>, :name(''), 'inline_simple_methods/call to method .unshift ~> Op unshift');
+
+    $ast := QAST::Op.new(:op<callmethod>, :name<key>,
+        QAST::Op.new(:op<iterator>, 
+            QAST::Var.new(:name('%xs'))
+        )
+    );
+    $ast := inline_simple_methods($ast);
+    isa_ok($ast, QAST::Op, :op<iterkey_s>, :name(''), 'inline_simple_methods/call to method .key ~> Op iterkey_s');
+
+    $ast := QAST::Op.new(:op<callmethod>, :name<value>,
+        QAST::Op.new(:op<iterator>, 
+            QAST::Var.new(:name('%xs'))
+        )
+    );
+    $ast := inline_simple_methods($ast);
+    isa_ok($ast, QAST::Op, :op<callmethod>, :name<value>, 'inline_simple_methods/call to method .value *untouched* (!)');
+
 }
 
 

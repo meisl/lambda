@@ -190,8 +190,8 @@ sub apply1($f, $a1) {
 
 sub join($sep, @pieces) {
     my $_;
+    my str $s := '';
     my $i := nqp::iterator(@pieces);
-    my $s := '';
     if $i {
         $s := nqp::shift($i);  # nqpc would convert a methodcall .shift
         $s := strOut($s)

@@ -171,7 +171,7 @@
     ║   ║ │ ├○ $from
     ║   ║ │ └○ $to
     ║   ║ ├─:Stmts  ««"{\n        @out.push(@list[$from]);\n        $from+"...
-    ║   ║ │ ├─callmethod push  ««"@list[$from]"
+    ║   ║ │ ├─push  ««"@list[$from]"
     ║   ║ │ │ ├○ @out
     ║   ║ │ │ └─ifnull
     ║   ║ │ │   ├─atpos
@@ -418,7 +418,7 @@
     ║     │ ║ │ ╟○ $_ :decl(param)
     ║     │ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$fvName  := $_.key"
     ║     │ ║ │ ║ ├○ $fvName
-    ║     │ ║ │ ║ └─callmethod key  ««".key"
+    ║     │ ║ │ ║ └─iterkey_s  ««".key"
     ║     │ ║ │ ║   └○ $_
     ║     │ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$fv      := $_.value"
     ║     │ ║ │ ║ ├○ $fv
@@ -526,22 +526,22 @@
     ║     └○ $result
     ╟─bind
     ║ ├○ &join :decl(var)
-    ║ └─:Block  ««"{\n    my $_;\n    my $i := nqp::iterator(@pieces);"...
+    ║ └─:Block  ««"{\n    my $_;\n    my str $s := '';\n    my $i := n"...
     ║   ╟○ $sep :decl(param)
     ║   ╟○ @pieces :decl(param)
     ║   ╟─bind  ««"$_"
     ║   ║ ├○ $_ :decl(var)
     ║   ║ └◙ WVal NQPMu
-    ║   ╟○ $i :decl(var)
     ║   ╟○ $s :decl(var)
+    ║   ╟○ $i :decl(var)
     ║   ╟○ $_
+    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"str $s := ''"
+    ║   ║ ├○ $s
+    ║   ║ └◙ SVal ""
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := nqp::iterator(@pieces)"
     ║   ║ ├○ $i
     ║   ║ └─iterator  ««"nqp::iterator(@pieces)"
     ║   ║   └○ @pieces
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$s := ''"
-    ║   ║ ├○ $s
-    ║   ║ └◙ SVal ""
     ║   ╟─if  ««"$i {\n        $s := nqp::shift($i);  # nqpc would c"...
     ║   ║ ├○ $i
     ║   ║ └─:Stmts  ««"{\n        $s := nqp::shift($i);  # nqpc would conv"...
@@ -667,10 +667,10 @@
     ║   ║   ├◙ IVal 42
     ║   ║   ├◙ NVal 3.14159265
     ║   ║   └○ $lambda2
-    ║   ╟─callmethod push  ««"$lambda1"
+    ║   ╟─push  ««"$lambda1"
     ║   ║ ├○ $lambda1
     ║   ║ └○ $lambda1
-    ║   ╟─callmethod push  ««"$lambda1"
+    ║   ╟─push  ««"$lambda1"
     ║   ║ ├○ $lambda1
     ║   ║ └○ $lambda1
     ║   ╟─call &say  ««"strOut($lambda1)"

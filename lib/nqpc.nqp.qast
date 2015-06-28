@@ -150,7 +150,7 @@
     ║       │     ║ │   ├─bind  ««":="
     ║       │     ║ │   │ ├○ $changed
     ║       │     ║ │   │ └◙ IVal 1
-    ║       │     ║ │   └─callmethod push  ««"$child"
+    ║       │     ║ │   └─push  ««"$child"
     ║       │     ║ │     ├○ @children
     ║       │     ║ │     └○ $child
     ║       │     ║ └◙ IVal 1 :named("nohandler")
@@ -165,14 +165,14 @@
     ║       │         ╟─while  ««"+@list { @list.pop }"
     ║       │         ║ ├─numify  ««"+"
     ║       │         ║ │ └○ @list
-    ║       │         ║ ├─callmethod pop  ««".pop"
+    ║       │         ║ ├─pop  ««".pop"
     ║       │         ║ │ └○ @list
     ║       │         ║ └◙ IVal 1 :named("nohandler")
     ║       │         ╙─for  ««"@children { @list.push($_) }"
     ║       │           ├○ @children
     ║       │           ├─:Block :blocktype(immediate)  ««"{ @list.push($_) }"
     ║       │           │ ╟○ $_ :decl(param)
-    ║       │           │ ╙─callmethod push  ««"$_"
+    ║       │           │ ╙─push  ««"$_"
     ║       │           │   ├○ @list
     ║       │           │   └○ $_
     ║       │           └◙ IVal 1 :named("nohandler")
@@ -474,7 +474,7 @@
     ║   ║ │ └─unless  ««"nqp::isnull($current) {\n#            say(nqp::elem"...
     ║   ║ │   ├─isnull  ««"nqp::isnull($current)"
     ║   ║ │   │ └○ $current
-    ║   ║ │   └─callmethod push  ««"$current"
+    ║   ║ │   └─push  ««"$current"
     ║   ║ │     ├○ @out
     ║   ║ │     └○ $current
     ║   ║ └◙ IVal 1 :named("nohandler")
@@ -738,10 +738,10 @@
     ║   ║ │   │   │     │ └─callmethod decl  ««".decl"
     ║   ║ │   │   │     │   └○ $_
     ║   ║ │   │   │     └◙ SVal ")"
-    ║   ║ │   │   └─callmethod push  ««"$_"
+    ║   ║ │   │   └─push  ««"$_"
     ║   ║ │   │     ├○ @stmts
     ║   ║ │   │     └○ $_
-    ║   ║ │   └─callmethod push  ««"$_"
+    ║   ║ │   └─push  ««"$_"
     ║   ║ │     ├○ @stmts
     ║   ║ │     └○ $_
     ║   ║ └◙ IVal 1 :named("nohandler")
@@ -1168,11 +1168,11 @@
     ║       │ │   │ │ └○ $_
     ║       │ │   │ ├─:Block :blocktype(immediate)  ««"{\n                @out.push($_);\n            }"
     ║       │ │   │ │ ╟○ $_ :decl(param)
-    ║       │ │   │ │ ╙─callmethod push  ««"$_"
+    ║       │ │   │ │ ╙─push  ««"$_"
     ║       │ │   │ │   ├○ @out
     ║       │ │   │ │   └○ $_
     ║       │ │   │ └◙ IVal 1 :named("nohandler")
-    ║       │ │   └─callmethod push  ««"$_"
+    ║       │ │   └─push  ««"$_"
     ║       │ │     ├○ @out
     ║       │ │     └○ $_
     ║       │ └◙ IVal 1 :named("nohandler")
@@ -1204,14 +1204,14 @@
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%opts := hash()"
     ║   ║ ├○ %opts
     ║   ║ └─call &hash  ««""
-    ║   ╟─callmethod shift  ««".shift"
+    ║   ╟─shift  ««".shift"
     ║   ║ └○ @ARGS
     ║   ╟─if  ««"nqp::elems(@ARGS) == 0 {\n        #@ARGS.push('L/LG"...
     ║   ║ ├─iseq_n  ««"=="
     ║   ║ │ ├─elems  ««"nqp::elems(@ARGS)"
     ║   ║ │ │ └○ @ARGS
     ║   ║ │ └◙ IVal 0
-    ║   ║ └─callmethod push  ««"'lib/L/runtime.nqp'"
+    ║   ║ └─push  ««"'lib/L/runtime.nqp'"
     ║   ║   ├○ @ARGS
     ║   ║   └◙ SVal "lib/L/runtime.nqp"
     ║   ╟─callmethod addstage  ««"'write_bytecode', :before<mbc>"
@@ -1339,25 +1339,25 @@
     ║ ║ ║ └─callmethod commandline_options  ««""
     ║ ║ ║   └─decont
     ║ ║ ║     └○ self
-    ║ ║ ╟─callmethod push  ««"'parsetrace'"
+    ║ ║ ╟─push  ««"'parsetrace'"
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └◙ SVal "parsetrace"
-    ║ ║ ╟─callmethod push  ««"'setting=s'"
+    ║ ║ ╟─push  ««"'setting=s'"
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └◙ SVal "setting=s"
-    ║ ║ ╟─callmethod push  ««"'setting-path=s'"
+    ║ ║ ╟─push  ««"'setting-path=s'"
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └◙ SVal "setting-path=s"
-    ║ ║ ╟─callmethod push  ««"'module-path=s'"
+    ║ ║ ╟─push  ««"'module-path=s'"
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └◙ SVal "module-path=s"
-    ║ ║ ╟─callmethod push  ««"'no-regex-lib'"
+    ║ ║ ╟─push  ««"'no-regex-lib'"
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └◙ SVal "no-regex-lib"
-    ║ ║ ╟─callmethod push  ««"'stable-sc'"
+    ║ ║ ╟─push  ««"'stable-sc'"
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └◙ SVal "stable-sc"
-    ║ ║ ╟─callmethod push  ««"'optimize=s'"
+    ║ ║ ╟─push  ««"'optimize=s'"
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └◙ SVal "optimize=s"
     ║ ║ ╙─bind  ««":="
@@ -1507,7 +1507,7 @@
     ║ ║ ║   └◙ SVal "module-path"
     ║ ║ ╟─if  ««"$with-nqplib {\n                @module_paths.unshi"...
     ║ ║ ║ ├○ $with-nqplib
-    ║ ║ ║ └─callmethod unshift  ««"nqp::backendconfig()<prefix> ~ '/languages/nqp/lib'"
+    ║ ║ ║ └─unshift  ««"nqp::backendconfig()<prefix> ~ '/languages/nqp/lib'"
     ║ ║ ║   ├○ @module_paths
     ║ ║ ║   └─concat  ««"~"
     ║ ║ ║     ├─ifnull
@@ -1873,6 +1873,10 @@
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &replace_assoc_and_pos_scoped  ««"$ast"
     ║ ║ ║   └○ $ast
+    ║ ║ ╟─bind  ««":="
+    ║ ║ ║ ├○ $ast
+    ║ ║ ║ └─call &inline_simple_methods  ««"$ast"
+    ║ ║ ║   └○ $ast
     ║ ║ ╙○ $ast
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my %stats := self.collect_stats($ast);\n"...
     ║ ║ ╟○ self :decl(param)
@@ -2012,7 +2016,7 @@
     ║ ║ ║ │   │ ├◙ WVal QAST::SVal
     ║ ║ ║ │   │ ├◙ WVal QAST::IVal
     ║ ║ ║ │   │ └◙ WVal QAST::NVal
-    ║ ║ ║ │   └─callmethod push  ««"$v.value"
+    ║ ║ ║ │   └─push  ««"$v.value"
     ║ ║ ║ │     ├○ @statskeys
     ║ ║ ║ │     └─callmethod value  ««".value"
     ║ ║ ║ │       └○ $v
@@ -2373,14 +2377,14 @@
     ║   ║   ║   ║   │ ├◙ SVal "lexical" :named("scope")
     ║   ║   ║   ║   │ └◙ SVal "static" :named("decl")
     ║   ║   ║   ║   └○ $deps
-    ║   ║   ║   ╙─callmethod push  ««"$depsBinding"
+    ║   ║   ║   ╙─push  ««"$depsBinding"
     ║   ║   ║     ├─ifnull
     ║   ║   ║     │ ├─atpos
     ║   ║   ║     │ │ ├○ @expPathUp
     ║   ║   ║     │ │ └◙ IVal 0
     ║   ║   ║     │ └◙ WVal NQPMu
     ║   ║   ║     └○ $depsBinding
-    ║   ║   ╟─callmethod push  ««"QAST::SVal.new(:value($/<name>), :node($/))"
+    ║   ║   ╟─push  ««"QAST::SVal.new(:value($/<name>), :node($/))"
     ║   ║   ║ ├○ $deps
     ║   ║   ║ └─callmethod new  ««":value($/<name>), :node($/)"
     ║   ║   ║   ├◙ WVal QAST::SVal
@@ -2766,7 +2770,7 @@
     ║           ║ └─list
     ║           ╟─if  ««"@opts.push(\"--target=$target\") if $target"
     ║           ║ ├○ $target
-    ║           ║ └─callmethod push  ««"\"--target=$target\""
+    ║           ║ └─push  ««"\"--target=$target\""
     ║           ║   ├○ @opts
     ║           ║   └─concat
     ║           ║     ├◙ SVal "--target="
@@ -2788,7 +2792,7 @@
     ║           ║ │ │   └─concat
     ║           ║ │ │     ├◙ SVal "cannot write to file: "
     ║           ║ │ │     └○ $vm_path
-    ║           ║ │ └─callmethod push  ««"'--output=' ~ $vm_path"
+    ║           ║ │ └─push  ««"'--output=' ~ $vm_path"
     ║           ║ │   ├○ @opts
     ║           ║ │   └─concat  ««"~"
     ║           ║ │     ├◙ SVal "--output="
@@ -2805,7 +2809,7 @@
     ║           ║   │ └─iseq_s  ««"eq"
     ║           ║   │   ├○ $target
     ║           ║   │   └◙ SVal "ast_save"
-    ║           ║   └─callmethod push  ««"'--output=' ~ $ast_path"
+    ║           ║   └─push  ««"'--output=' ~ $ast_path"
     ║           ║     ├○ @opts
     ║           ║     └─concat  ««"~"
     ║           ║       ├◙ SVal "--output="
@@ -2814,10 +2818,10 @@
     ║           ║ ├○ @args
     ║           ║ └─clone  ««"nqp::clone(@opts)"
     ║           ║   └○ @opts
-    ║           ╟─callmethod unshift  ««"'nqpc'"
+    ║           ╟─unshift  ««"'nqpc'"
     ║           ║ ├○ @args
     ║           ║ └◙ SVal "nqpc"
-    ║           ╟─callmethod push  ««"$src_path"
+    ║           ╟─push  ««"$src_path"
     ║           ║ ├○ @args
     ║           ║ └○ $src_path
     ║           ╟─callmethod log  ««"'$ ', nqp::join(' ', @args)"

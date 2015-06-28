@@ -499,7 +499,7 @@ class SmartCompiler is NQP::Compiler {
         
         # from here it's rather optimization...
         $ast := replace_assoc_and_pos_scoped($ast);
-        #$ast := inline_simple_methods($ast);
+        $ast := inline_simple_methods($ast);
 
         #my @inlinecandidates;
         #@inlinecandidates := findDefs($ast, -> $var, @pathUp {
