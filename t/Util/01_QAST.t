@@ -5,7 +5,7 @@ use Util;
 
 use Util::QAST;
 
-plan(201);
+plan(218);
 
 
 
@@ -40,7 +40,7 @@ sub isa_ok($actual, $expectedType, str $desc, *%attributes) {
     } else {
         $result := istype($actual, $expectedType);
     }
-    if ($result && %attributes) {
+    if $result && %attributes {
         my $attrIt := nqp::iterator(%attributes);
         my $tests := -> {
             while $result && $attrIt {
@@ -72,7 +72,7 @@ sub isa_ok($actual, $expectedType, str $desc, *%attributes) {
     } else {
         $desc := $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
                        ~ "\n  #      got: " ~ describe($actual)
-        ;
+            unless $result;
         return ok($result, $desc);
     }
 }
@@ -1100,6 +1100,43 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     is( $ast[0].named, 'fn', 'drop_takeclosure as named arg - copies .named attr if necessary');
 }
 
+
+
+{ # cloneAndSubst -------------------------------------------------------------
+    my $ast;
+    my $out;
+
+    $ast := mkBlockWithCATCH();
+    lives_ok({ cloneAndSubst($ast, -> $x { $x }) }, 'cloneAndSubst can cope with exception handlers')
+        || diag(dump($ast));
+
+    my $xVar := QAST::Var.new(:name<x>, :decl<var>);
+    my $yVar := QAST::Var.new(:name<y>, :decl<var>);
+    $ast := QAST::Block.new($xVar, $yVar);
+    lives_ok( { $out := cloneAndSubst($ast) }, 'cloneAndSubst without 2nd arg `&substitution`') || diag(dump($ast));
+    isa_ok($out, QAST::Block, 'cloneAndSubst without 2nd arg returns clone of 1st arg (a)') || diag(dump($out));
+    ok( !($out =:= $ast), 'cloneAndSubst without 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
+    isa_ok($out[0], QAST::Var, :name<x>, :decl<var>, 'cloneAndSubst without 2nd arg returns *deep" clone of 1st arg (a)') || diag(dump($out));
+    ok( !($out[0] =:= $xVar), 'cloneAndSubst without 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
+    isa_ok($out[1], QAST::Var, :name<y>, :decl<var>, 'cloneAndSubst without 2nd arg returns *deep" clone of 1st arg (c)') || diag(dump($out));
+    ok( !($out[1] =:= $yVar), 'cloneAndSubst without 2nd arg returns clone of 1st arg (d)') || diag(dump($out));
+
+    my @cb-calls := [];
+    my &callback := -> $n {
+        @cb-calls.push($n);
+        $n;
+    };
+    $ast := QAST::Block.new($xVar, $yVar);
+    lives_ok( { $out := cloneAndSubst($ast, &callback) }, 'cloneAndSubst with 2nd arg `&substitution`') || diag(dump($ast));
+    isa_ok( $out, QAST::Block, 'cloneAndSubst with 2nd arg returns clone of 1st arg (a)') || diag(dump($out));
+    ok(     !($out =:= $ast), 'cloneAndSubst with 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
+    isa_ok( $out[0], QAST::Var, :name<x>, :decl<var>, 'cloneAndSubst with 2nd arg returns *deep" clone of 1st arg (a)') || diag(dump($out));
+    ok(     !($out[0] =:= $xVar), 'cloneAndSubst with 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
+    isa_ok( $out[1], QAST::Var, :name<y>, :decl<var>, 'cloneAndSubst with 2nd arg returns *deep" clone of 1st arg (c)') || diag(dump($out));
+    ok(     !($out[1] =:= $yVar), 'cloneAndSubst with 2nd arg returns clone of 1st arg (d)') || diag(dump($out));
+    is(     +@cb-calls, 3, 'cloneAndSubst with 2nd arg calls back that 2nd arg') || diag(dump($out));
+    is(     $out, @cb-calls[2], 'cloneAndSubst with 2nd arg calls cb with *deep* clones, in a dfs-up manner') || diag(dump($out));
+}
 
 
 done();

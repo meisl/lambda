@@ -436,6 +436,33 @@ class Util::QAST {
     }
 
 
+    method cloneAndSubst($node, &substitution) {
+        nqp::die('cloneAndSubst expects a function as 2nd arg - got ' ~ describe(&substitution) )
+            unless nqp::isinvokable(&substitution);
+        if istype($node, QAST::Node) {
+            
+            #return &substitution(nqp::clone($node))    # strange: this actually prevents any recursion...!?!
+            #    unless istype($node, QAST::Children);
+
+            $node := $node.shallow_clone;   # also makes a shallow clone of the children's list
+            my @children := $node.list;
+            my $i := 0;
+            for @children {
+                my $child := self.cloneAndSubst($_, &substitution);
+                unless nqp::isnull($child) {
+                    @children[$i] := $child;
+                    $i++;
+                }
+            }
+            nqp::setelems(@children, $i);
+            
+            &substitution($node);
+        } else {
+            &substitution(nqp::clone($node));
+        }
+    }
+
+
 }   # end of class Util::QAST
 
 
@@ -455,3 +482,4 @@ sub drop_takeclosure($ast)              is export { Util::QAST.drop_takeclosure(
 sub remove_bogusOpNames($ast)           is export { Util::QAST.remove_bogusOpNames($ast) }
 
 sub inline_simple_methods($ast)         is export { Util::QAST.inline_simple_methods($ast) }
+sub cloneAndSubst($ast, &substitution?)  is export { Util::QAST.cloneAndSubst($ast, &substitution // -> $x { $x }) }

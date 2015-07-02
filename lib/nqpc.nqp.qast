@@ -32,6 +32,7 @@
     ╟○ &drop_takeclosure :decl(static) :default((NQPRoutine, invokable))
     ╟○ &remove_bogusOpNames :decl(static) :default((NQPRoutine, invokable))
     ╟○ &inline_simple_methods :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &cloneAndSubst :decl(static) :default((NQPRoutine, invokable))
     ╟─bind
     ║ ├○ &isinResultPosition :decl(var)
     ║ └─:Block  ««"{\n    my $n := nqp::elems($parent) - 1;\n    if ($"...
@@ -587,68 +588,6 @@
     ║       │     └◙ IVal 1 :named("nohandler")
     ║       └○ $found
     ╟─bind
-    ║ ├○ &cloneAndSubst :decl(var)
-    ║ └─:Block  ««"{\n    nqp::die('cloneAndSubst expects a QAST::Node"...
-    ║   ╟○ $node :decl(param)
-    ║   ╟○ $substitution :decl(param)
-    ║   ╟○ @children :decl(var)
-    ║   ╟○ $i :decl(var)
-    ║   ╟─unless  ««"nqp::die('cloneAndSubst expects a QAST::Node as 1st"...
-    ║   ║ ├─call &istype  ««"$node, QAST::Node"
-    ║   ║ │ ├○ $node
-    ║   ║ │ └◙ WVal QAST::Node
-    ║   ║ └─die  ««"nqp::die('cloneAndSubst expects a QAST::Node as 1st"...
-    ║   ║   └─concat  ««"~"
-    ║   ║     ├◙ SVal "cloneAndSubst expects a QAST::Node as 1st arg - got "
-    ║   ║     └─call &describe  ««"$node"
-    ║   ║       └○ $node
-    ║   ╟─unless  ««"nqp::die('cloneAndSubst expects a function as 2nd a"...
-    ║   ║ ├─isinvokable  ««"nqp::isinvokable($substitution)"
-    ║   ║ │ └○ $substitution
-    ║   ║ └─die  ««"nqp::die('cloneAndSubst expects a function as 2nd a"...
-    ║   ║   └─concat  ««"~"
-    ║   ║     ├◙ SVal "cloneAndSubst expects a function as 2nd arg - got "
-    ║   ║     └─call &describe  ««"$substitution"
-    ║   ║       └○ $substitution
-    ║   ╟─bind  ««":="
-    ║   ║ ├○ $node
-    ║   ║ └─callmethod shallow_clone  ««".shallow_clone"
-    ║   ║   └○ $node
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@children := $node.list"
-    ║   ║ ├○ @children
-    ║   ║ └─callmethod list  ««".list"
-    ║   ║   └○ $node
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := 0"
-    ║   ║ ├○ $i
-    ║   ║ └◙ IVal 0
-    ║   ╟─for  ««"@children {\n        my $child := cloneAndSubst($_,"...
-    ║   ║ ├○ @children
-    ║   ║ ├─:Block :blocktype(immediate)  ««"{\n        my $child := cloneAndSubst($_, $substitu"...
-    ║   ║ │ ╟○ $child :decl(var)
-    ║   ║ │ ╟○ $_ :decl(param)
-    ║   ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$child := cloneAndSubst($_, $substitution)"
-    ║   ║ │ ║ ├○ $child
-    ║   ║ │ ║ └─call &cloneAndSubst  ««"$_, $substitution"
-    ║   ║ │ ║   ├○ $_
-    ║   ║ │ ║   └○ $substitution
-    ║   ║ │ ╙─unless  ««"nqp::isnull($child) {\n            @children[$i] :="...
-    ║   ║ │   ├─isnull  ««"nqp::isnull($child)"
-    ║   ║ │   │ └○ $child
-    ║   ║ │   └─:Stmts  ««"{\n            @children[$i] := $child;\n          "...
-    ║   ║ │     ├─bindpos  ««":="
-    ║   ║ │     │ ├○ @children
-    ║   ║ │     │ ├○ $i
-    ║   ║ │     │ └○ $child
-    ║   ║ │     └─postinc  ««"++"
-    ║   ║ │       └○ $i
-    ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╟─setelems  ««"nqp::setelems(@children, $i)"
-    ║   ║ ├○ @children
-    ║   ║ └○ $i
-    ║   ╙─call  ««"$node"
-    ║     ├○ $substitution
-    ║     └○ $node
-    ╟─bind
     ║ ├○ &collect_params_and_body :decl(var)
     ║ └─:Block  ««"{\n    my $arity  := %results<arity>;\n    my %para"...
     ║   ╟○ $node :decl(param)
@@ -752,320 +691,316 @@
     ║   ╙○ %results
     ╟─bind
     ║ ├○ &inline_simple_subs :decl(var)
-    ║ └─:Block  ««"{\n    nqp::die('inline_simple_subs expects a QAST:"...
+    ║ └─:Block  ««"{\n    if istype($node, QAST::Node) {\n\n        # "...
     ║   ╟○ $node :decl(param)
     ║   ╟○ @inlineDefs :decl(param)
     ║   ╟○ %inlineables :decl(param) :default(hash)
-    ║   ╟○ $i :decl(var)
-    ║   ╟○ @children :decl(var)
     ║   ╙─lexotic RETURN
-    ║     └─:Stmts  ««"\n    nqp::die('inline_simple_subs expects a QAST::"...
-    ║       ├─unless  ««"nqp::die('inline_simple_subs expects a QAST::Node a"...
+    ║     └─:Stmts  ««"\n    if istype($node, QAST::Node) {\n\n        # o"...
+    ║       ├─if  ««"istype($node, QAST::Node) {\n\n        # on first s"...
     ║       │ ├─call &istype  ««"$node, QAST::Node"
     ║       │ │ ├○ $node
     ║       │ │ └◙ WVal QAST::Node
-    ║       │ └─die  ««"nqp::die('inline_simple_subs expects a QAST::Node a"...
-    ║       │   └─concat  ««"~"
-    ║       │     ├◙ SVal "inline_simple_subs expects a QAST::Node as 1st arg - got "
-    ║       │     └─call &describe  ««"$node"
-    ║       │       └○ $node
-    ║       ├─if  ««"nqp::elems(@inlineDefs) > 0 {\n        for @inlineD"...
-    ║       │ ├─isgt_n  ««">"
-    ║       │ │ ├─elems  ««"nqp::elems(@inlineDefs)"
-    ║       │ │ │ └○ @inlineDefs
-    ║       │ │ └◙ IVal 0
-    ║       │ └─:Stmts  ««"{\n        for @inlineDefs {\n            next if n"...
-    ║       │   ├─for  ««"@inlineDefs {\n            next if nqp::isnull($_);"...
-    ║       │   │ ├○ @inlineDefs
-    ║       │   │ └─:Block :blocktype(immediate)  ««"{\n            next if nqp::isnull($_);\n          "...
-    ║       │   │   ╟○ $name :decl(var)
-    ║       │   │   ╟○ $block :decl(var)
-    ║       │   │   ╟─bind  ««"%results"
-    ║       │   │   ║ ├○ %results :decl(var)
-    ║       │   │   ║ └─hash
-    ║       │   │   ╟○ $arity :decl(var)
-    ║       │   │   ╟○ %params :decl(var)
-    ║       │   │   ╟○ @stmts :decl(var)
-    ║       │   │   ╟○ $_ :decl(param)
-    ║       │   │   ╟─if  ««"next if nqp::isnull($_)"
-    ║       │   │   ║ ├─isnull  ««"nqp::isnull($_)"
-    ║       │   │   ║ │ └○ $_
-    ║       │   │   ║ └─control next
-    ║       │   │   ╟─unless  ««"nqp::die(\"invalid def of inlineable sub: \" ~ desc"...
-    ║       │   │   ║ ├─call &istype  ««"$_, QAST::Node"
-    ║       │   │   ║ │ ├○ $_
-    ║       │   │   ║ │ └◙ WVal QAST::Node
-    ║       │   │   ║ └─die  ««"nqp::die(\"invalid def of inlineable sub: \" ~ desc"...
-    ║       │   │   ║   └─concat  ««"~"
-    ║       │   │   ║     ├◙ SVal "invalid def of inlineable sub: "
-    ║       │   │   ║     └─call &describe  ««"$_"
-    ║       │   │   ║       └○ $_
-    ║       │   │   ╟─unless  ««"nqp::die(\"invalid def of inlineable sub: \" ~ dump"...
-    ║       │   │   ║ ├─if  ««"&&"
-    ║       │   │   ║ │ ├─if  ««"&&"
-    ║       │   │   ║ │ │ ├─if  ««"&&"
-    ║       │   │   ║ │ │ │ ├─call &istype  ««"$_, QAST::Op"
-    ║       │   │   ║ │ │ │ │ ├○ $_
-    ║       │   │   ║ │ │ │ │ └◙ WVal QAST::Op
-    ║       │   │   ║ │ │ │ └─iseq_s  ««"eq"
-    ║       │   │   ║ │ │ │   ├─callmethod op  ««".op"
-    ║       │   │   ║ │ │ │   │ └○ $_
-    ║       │   │   ║ │ │ │   └◙ SVal "bind"
-    ║       │   │   ║ │ │ └─call &istype  ««"$_[0], QAST::Var"
-    ║       │   │   ║ │ │   ├─ifnull
-    ║       │   │   ║ │ │   │ ├─atpos
-    ║       │   │   ║ │ │   │ │ ├○ $_
-    ║       │   │   ║ │ │   │ │ └◙ IVal 0
-    ║       │   │   ║ │ │   │ └◙ WVal NQPMu
-    ║       │   │   ║ │ │   └◙ WVal QAST::Var
-    ║       │   │   ║ │ └─call &istype  ««"$_[1], QAST::Block"
-    ║       │   │   ║ │   ├─ifnull
-    ║       │   │   ║ │   │ ├─atpos
-    ║       │   │   ║ │   │ │ ├○ $_
-    ║       │   │   ║ │   │ │ └◙ IVal 1
-    ║       │   │   ║ │   │ └◙ WVal NQPMu
-    ║       │   │   ║ │   └◙ WVal QAST::Block
-    ║       │   │   ║ └─die  ««"nqp::die(\"invalid def of inlineable sub: \" ~ dump"...
-    ║       │   │   ║   └─concat  ««"~"
-    ║       │   │   ║     ├◙ SVal "invalid def of inlineable sub: "
-    ║       │   │   ║     └─call &dump  ««"$_"
-    ║       │   │   ║       └○ $_
-    ║       │   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$name   := $_[0].name"
-    ║       │   │   ║ ├○ $name
-    ║       │   │   ║ └─callmethod name  ««".name"
-    ║       │   │   ║   └─ifnull
-    ║       │   │   ║     ├─atpos
-    ║       │   │   ║     │ ├○ $_
-    ║       │   │   ║     │ └◙ IVal 0
-    ║       │   │   ║     └◙ WVal NQPMu
-    ║       │   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$block  := $_[1]"
-    ║       │   │   ║ ├○ $block
-    ║       │   │   ║ └─ifnull
-    ║       │   │   ║   ├─atpos
-    ║       │   │   ║   │ ├○ $_
-    ║       │   │   ║   │ └◙ IVal 1
-    ║       │   │   ║   └◙ WVal NQPMu
-    ║       │   │   ╟○ %results
-    ║       │   │   ╟─if  ««"istype($block[0], QAST::Stmt, QAST::Stmts) {\n     "...
-    ║       │   │   ║ ├─call &istype  ««"$block[0], QAST::Stmt, QAST::Stmts"
-    ║       │   │   ║ │ ├─ifnull
-    ║       │   │   ║ │ │ ├─atpos
-    ║       │   │   ║ │ │ │ ├○ $block
-    ║       │   │   ║ │ │ │ └◙ IVal 0
-    ║       │   │   ║ │ │ └◙ WVal NQPMu
-    ║       │   │   ║ │ ├◙ WVal QAST::Stmt
-    ║       │   │   ║ │ └◙ WVal QAST::Stmts
-    ║       │   │   ║ ├─:Block :blocktype(immediate)  ««"{\n                my $it := nqp::iterator($block.l"...
-    ║       │   │   ║ │ ╟○ $it :decl(var)
-    ║       │   │   ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$it := nqp::iterator($block.list)"
-    ║       │   │   ║ │ ║ ├○ $it
-    ║       │   │   ║ │ ║ └─iterator  ««"nqp::iterator($block.list)"
-    ║       │   │   ║ │ ║   └─callmethod list  ««".list"
-    ║       │   │   ║ │ ║     └○ $block
-    ║       │   │   ║ │ ╟─bind  ««":="
-    ║       │   │   ║ │ ║ ├○ %results
-    ║       │   │   ║ │ ║ └─call &collect_params_and_body  ««"nqp::shift($it)"
-    ║       │   │   ║ │ ║   └─shift  ««"nqp::shift($it)"
-    ║       │   │   ║ │ ║     └○ $it
-    ║       │   │   ║ │ ╙─while  ««"$it {\n                    %results := collect_para"...
-    ║       │   │   ║ │   ├○ $it
-    ║       │   │   ║ │   ├─bind  ««":="
-    ║       │   │   ║ │   │ ├○ %results
-    ║       │   │   ║ │   │ └─call &collect_params_and_body  ««"nqp::shift($it), %results"
-    ║       │   │   ║ │   │   ├─shift  ««"nqp::shift($it)"
-    ║       │   │   ║ │   │   │ └○ $it
-    ║       │   │   ║ │   │   └○ %results
-    ║       │   │   ║ │   └◙ IVal 1 :named("nohandler")
-    ║       │   │   ║ └─bind  ««":="
-    ║       │   │   ║   ├○ %results
-    ║       │   │   ║   └─call &collect_params_and_body  ««"$block"
-    ║       │   │   ║     └○ $block
-    ║       │   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$arity  := %results<arity>"
-    ║       │   │   ║ ├○ $arity
-    ║       │   │   ║ └─ifnull
-    ║       │   │   ║   ├─atkey
-    ║       │   │   ║   │ ├○ %results
-    ║       │   │   ║   │ └◙ SVal "arity"
-    ║       │   │   ║   └◙ WVal NQPMu
-    ║       │   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%params := %results<params>"
-    ║       │   │   ║ ├○ %params
-    ║       │   │   ║ └─ifnull
-    ║       │   │   ║   ├─atkey
-    ║       │   │   ║   │ ├○ %results
-    ║       │   │   ║   │ └◙ SVal "params"
-    ║       │   │   ║   └◙ WVal NQPMu
-    ║       │   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@stmts  := %results<stmts>"
-    ║       │   │   ║ ├○ @stmts
-    ║       │   │   ║ └─ifnull
-    ║       │   │   ║   ├─atkey
-    ║       │   │   ║   │ ├○ %results
-    ║       │   │   ║   │ └◙ SVal "stmts"
-    ║       │   │   ║   └◙ WVal NQPMu
-    ║       │   │   ╟─if  ««"nqp::elems(@stmts) == 0 {\n                nqp::die"...
-    ║       │   │   ║ ├─iseq_n  ««"=="
-    ║       │   │   ║ │ ├─elems  ««"nqp::elems(@stmts)"
-    ║       │   │   ║ │ │ └○ @stmts
-    ║       │   │   ║ │ └◙ IVal 0
-    ║       │   │   ║ ├─die  ««"nqp::die(\"no statements found in inlineable $name:"...
-    ║       │   │   ║ │ └─concat  ««"~"
-    ║       │   │   ║ │   ├─concat
-    ║       │   │   ║ │   │ ├─concat
-    ║       │   │   ║ │   │ │ ├◙ SVal "no statements found in inlineable "
-    ║       │   │   ║ │   │ │ └○ $name
-    ║       │   │   ║ │   │ └◙ SVal ": "
-    ║       │   │   ║ │   └─call &dump  ««"$block"
-    ║       │   │   ║ │     └○ $block
-    ║       │   │   ║ └─if  ««"nqp::elems(@stmts) == 1 {\n                $block :"...
-    ║       │   │   ║   ├─iseq_n  ««"=="
-    ║       │   │   ║   │ ├─elems  ««"nqp::elems(@stmts)"
-    ║       │   │   ║   │ │ └○ @stmts
-    ║       │   │   ║   │ └◙ IVal 1
-    ║       │   │   ║   ├─bind  ««":="
-    ║       │   │   ║   │ ├○ $block
-    ║       │   │   ║   │ └─ifnull
-    ║       │   │   ║   │   ├─atpos
-    ║       │   │   ║   │   │ ├○ @stmts
-    ║       │   │   ║   │   │ └◙ IVal 0
-    ║       │   │   ║   │   └◙ WVal NQPMu
-    ║       │   │   ║   └─bind  ««":="
-    ║       │   │   ║     ├○ $block
-    ║       │   │   ║     └─callmethod new  ««"|@stmts"
-    ║       │   │   ║       ├◙ WVal QAST::Stmts
-    ║       │   │   ║       └○ @stmts :flat(1)
-    ║       │   │   ╙─bindkey  ««":="
-    ║       │   │     ├○ %inlineables
-    ║       │   │     ├○ $name
-    ║       │   │     └─:Block  ««"{\n                my $argCount := nqp::elems(@argu"...
-    ║       │   │       ╟○ @arguments :decl(param)
-    ║       │   │       ╟○ $argCount :decl(var)
-    ║       │   │       ╟○ $out :decl(var)
-    ║       │   │       ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$argCount := nqp::elems(@arguments)"
-    ║       │   │       ║ ├○ $argCount
-    ║       │   │       ║ └─elems  ««"nqp::elems(@arguments)"
-    ║       │   │       ║   └○ @arguments
-    ║       │   │       ╟─unless  ««"nqp::die(\"cannot inline call with $argCount args t"...
-    ║       │   │       ║ ├─iseq_n  ««"=="
-    ║       │   │       ║ │ ├○ $argCount
-    ║       │   │       ║ │ └○ $arity
-    ║       │   │       ║ └─die  ««"nqp::die(\"cannot inline call with $argCount args t"...
-    ║       │   │       ║   └─concat  ««"~"
-    ║       │   │       ║     ├─concat
-    ║       │   │       ║     │ ├─concat
-    ║       │   │       ║     │ │ ├─concat
-    ║       │   │       ║     │ │ │ ├◙ SVal "cannot inline call with "
-    ║       │   │       ║     │ │ │ └○ $argCount
-    ║       │   │       ║     │ │ └◙ SVal " args to "
-    ║       │   │       ║     │ └○ $arity
-    ║       │   │       ║     └─concat
-    ║       │   │       ║       ├◙ SVal "-arity fn "
-    ║       │   │       ║       └○ $name
-    ║       │   │       ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := cloneAndSubst($block, -> $n {\n#           "...
-    ║       │   │       ║ ├○ $out
-    ║       │   │       ║ └─call &cloneAndSubst  ««"$block, -> $n {\n#                    say('####', d"...
-    ║       │   │       ║   ├○ $block
-    ║       │   │       ║   └─:Block  ««"{\n#                    say('####', dump($n));\n   "...
-    ║       │   │       ║     ╟○ $n :decl(param)
-    ║       │   │       ║     ╙─if  ««"istype($n, QAST::Var) && nqp::existskey(%params, $n"...
-    ║       │   │       ║       ├─if  ««"&&"
-    ║       │   │       ║       │ ├─call &istype  ««"$n, QAST::Var"
-    ║       │   │       ║       │ │ ├○ $n
-    ║       │   │       ║       │ │ └◙ WVal QAST::Var
-    ║       │   │       ║       │ └─existskey  ««"nqp::existskey(%params, $n.name)"
-    ║       │   │       ║       │   ├○ %params
-    ║       │   │       ║       │   └─callmethod name  ««".name"
-    ║       │   │       ║       │     └○ $n
-    ║       │   │       ║       ├─:Block :blocktype(immediate)  ««"{\n                        my $out := @arguments[%p"...
-    ║       │   │       ║       │ ╟○ $out :decl(var)
-    ║       │   │       ║       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := @arguments[%params{$n.name}]"
-    ║       │   │       ║       │ ║ ├○ $out
-    ║       │   │       ║       │ ║ └─ifnull
-    ║       │   │       ║       │ ║   ├─atpos
-    ║       │   │       ║       │ ║   │ ├○ @arguments
-    ║       │   │       ║       │ ║   │ └─ifnull
-    ║       │   │       ║       │ ║   │   ├─atkey
-    ║       │   │       ║       │ ║   │   │ ├○ %params
-    ║       │   │       ║       │ ║   │   │ └─callmethod name  ««".name"
-    ║       │   │       ║       │ ║   │   │   └○ $n
-    ║       │   │       ║       │ ║   │   └◙ WVal NQPMu
-    ║       │   │       ║       │ ║   └◙ WVal NQPMu
-    ║       │   │       ║       │ ╙○ $out
-    ║       │   │       ║       └○ $n
-    ║       │   │       ╙○ $out
-    ║       │   └─call RETURN
-    ║       │     └─call &inline_simple_subs  ««"$node, [], %inlineables"
-    ║       │       ├○ $node
-    ║       │       ├─list
-    ║       │       └○ %inlineables
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := 0"
-    ║       │ ├○ $i
-    ║       │ └◙ IVal 0
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@children := $node.list"
-    ║       │ ├○ @children
-    ║       │ └─callmethod list  ««".list"
-    ║       │   └○ $node
-    ║       ├─for  ««"@children {\n        @children[$i] := inline_simple"...
-    ║       │ ├○ @children
-    ║       │ ├─:Block :blocktype(immediate)  ««"{\n        @children[$i] := inline_simple_subs($_, "...
-    ║       │ │ ╟○ $_ :decl(param)
-    ║       │ │ ╟─bindpos  ««":="
-    ║       │ │ ║ ├○ @children
-    ║       │ │ ║ ├○ $i
-    ║       │ │ ║ └─call &inline_simple_subs  ««"$_, [], %inlineables"
-    ║       │ │ ║   ├○ $_
-    ║       │ │ ║   ├─list
-    ║       │ │ ║   └○ %inlineables
-    ║       │ │ ╙─postinc  ««"++"
-    ║       │ │   └○ $i
-    ║       │ └◙ IVal 1 :named("nohandler")
-    ║       ├─if  ««"istype($node, QAST::Op) && ($node.op eq 'call' || $"...
-    ║       │ ├─if  ««"&&"
-    ║       │ │ ├─call &istype  ««"$node, QAST::Op"
-    ║       │ │ │ ├○ $node
-    ║       │ │ │ └◙ WVal QAST::Op
-    ║       │ │ └─unless  ««"||"
-    ║       │ │   ├─iseq_s  ««"eq"
-    ║       │ │   │ ├─callmethod op  ««".op"
-    ║       │ │   │ │ └○ $node
-    ║       │ │   │ └◙ SVal "call"
-    ║       │ │   └─iseq_s  ««"eq"
-    ║       │ │     ├─callmethod op  ««".op"
-    ║       │ │     │ └○ $node
-    ║       │ │     └◙ SVal "callstatic"
-    ║       │ └─:Block :blocktype(immediate)  ««"{\n        my $codeMaker := %inlineables{$node.name"...
-    ║       │   ╟○ $codeMaker :decl(var)
-    ║       │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$codeMaker := %inlineables{$node.name}"
-    ║       │   ║ ├○ $codeMaker
-    ║       │   ║ └─ifnull
-    ║       │   ║   ├─atkey
-    ║       │   ║   │ ├○ %inlineables
-    ║       │   ║   │ └─callmethod name  ««".name"
-    ║       │   ║   │   └○ $node
-    ║       │   ║   └◙ WVal NQPMu
-    ║       │   ╙─if  ««"$codeMaker {\n            my $out := $codeMaker($no"...
-    ║       │     ├○ $codeMaker
-    ║       │     └─:Block :blocktype(immediate)  ««"{\n            my $out := $codeMaker($node.list);\n"...
-    ║       │       ╟○ $out :decl(var)
-    ║       │       ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := $codeMaker($node.list)"
-    ║       │       ║ ├○ $out
-    ║       │       ║ └─call  ««"$node.list"
-    ║       │       ║   ├○ $codeMaker
-    ║       │       ║   └─callmethod list  ««".list"
-    ║       │       ║     └○ $node
-    ║       │       ╟─callmethod node  ««"$node.node"
-    ║       │       ║ ├○ $out
-    ║       │       ║ └─callmethod node  ««".node"
-    ║       │       ║   └○ $node
-    ║       │       ╟─callmethod flat  ««"$node.flat"
-    ║       │       ║ ├○ $out
-    ║       │       ║ └─callmethod flat  ««".flat"
-    ║       │       ║   └○ $node
-    ║       │       ╟─callmethod named  ««"$node.named"
-    ║       │       ║ ├○ $out
-    ║       │       ║ └─callmethod named  ««".named"
-    ║       │       ║   └○ $node
-    ║       │       ╙─bind  ««":="
-    ║       │         ├○ $node
-    ║       │         └○ $out
+    ║       │ └─:Block :blocktype(immediate)  ««"{\n\n        # on first step, prepare:\n        if "...
+    ║       │   ╟○ $i :decl(var)
+    ║       │   ╟○ @children :decl(var)
+    ║       │   ╟─if  ««"nqp::elems(@inlineDefs) > 0 {\n            for @inl"...
+    ║       │   ║ ├─isgt_n  ««">"
+    ║       │   ║ │ ├─elems  ««"nqp::elems(@inlineDefs)"
+    ║       │   ║ │ │ └○ @inlineDefs
+    ║       │   ║ │ └◙ IVal 0
+    ║       │   ║ └─:Stmts  ««"{\n            for @inlineDefs {\n                n"...
+    ║       │   ║   ├─for  ««"@inlineDefs {\n                next if nqp::isnull("...
+    ║       │   ║   │ ├○ @inlineDefs
+    ║       │   ║   │ └─:Block :blocktype(immediate)  ««"{\n                next if nqp::isnull($_);\n      "...
+    ║       │   ║   │   ╟○ $name :decl(var)
+    ║       │   ║   │   ╟○ $block :decl(var)
+    ║       │   ║   │   ╟─bind  ««"%results"
+    ║       │   ║   │   ║ ├○ %results :decl(var)
+    ║       │   ║   │   ║ └─hash
+    ║       │   ║   │   ╟○ $arity :decl(var)
+    ║       │   ║   │   ╟○ %params :decl(var)
+    ║       │   ║   │   ╟○ @stmts :decl(var)
+    ║       │   ║   │   ╟○ $_ :decl(param)
+    ║       │   ║   │   ╟─if  ««"next if nqp::isnull($_)"
+    ║       │   ║   │   ║ ├─isnull  ««"nqp::isnull($_)"
+    ║       │   ║   │   ║ │ └○ $_
+    ║       │   ║   │   ║ └─control next
+    ║       │   ║   │   ╟─unless  ««"nqp::die(\"invalid def of inlineable sub: \" ~ desc"...
+    ║       │   ║   │   ║ ├─call &istype  ««"$_, QAST::Node"
+    ║       │   ║   │   ║ │ ├○ $_
+    ║       │   ║   │   ║ │ └◙ WVal QAST::Node
+    ║       │   ║   │   ║ └─die  ««"nqp::die(\"invalid def of inlineable sub: \" ~ desc"...
+    ║       │   ║   │   ║   └─concat  ««"~"
+    ║       │   ║   │   ║     ├◙ SVal "invalid def of inlineable sub: "
+    ║       │   ║   │   ║     └─call &describe  ««"$_"
+    ║       │   ║   │   ║       └○ $_
+    ║       │   ║   │   ╟─unless  ««"nqp::die(\"invalid def of inlineable sub: \" ~ dump"...
+    ║       │   ║   │   ║ ├─if  ««"&&"
+    ║       │   ║   │   ║ │ ├─if  ««"&&"
+    ║       │   ║   │   ║ │ │ ├─if  ««"&&"
+    ║       │   ║   │   ║ │ │ │ ├─call &istype  ««"$_, QAST::Op"
+    ║       │   ║   │   ║ │ │ │ │ ├○ $_
+    ║       │   ║   │   ║ │ │ │ │ └◙ WVal QAST::Op
+    ║       │   ║   │   ║ │ │ │ └─iseq_s  ««"eq"
+    ║       │   ║   │   ║ │ │ │   ├─callmethod op  ««".op"
+    ║       │   ║   │   ║ │ │ │   │ └○ $_
+    ║       │   ║   │   ║ │ │ │   └◙ SVal "bind"
+    ║       │   ║   │   ║ │ │ └─call &istype  ««"$_[0], QAST::Var"
+    ║       │   ║   │   ║ │ │   ├─ifnull
+    ║       │   ║   │   ║ │ │   │ ├─atpos
+    ║       │   ║   │   ║ │ │   │ │ ├○ $_
+    ║       │   ║   │   ║ │ │   │ │ └◙ IVal 0
+    ║       │   ║   │   ║ │ │   │ └◙ WVal NQPMu
+    ║       │   ║   │   ║ │ │   └◙ WVal QAST::Var
+    ║       │   ║   │   ║ │ └─call &istype  ««"$_[1], QAST::Block"
+    ║       │   ║   │   ║ │   ├─ifnull
+    ║       │   ║   │   ║ │   │ ├─atpos
+    ║       │   ║   │   ║ │   │ │ ├○ $_
+    ║       │   ║   │   ║ │   │ │ └◙ IVal 1
+    ║       │   ║   │   ║ │   │ └◙ WVal NQPMu
+    ║       │   ║   │   ║ │   └◙ WVal QAST::Block
+    ║       │   ║   │   ║ └─die  ««"nqp::die(\"invalid def of inlineable sub: \" ~ dump"...
+    ║       │   ║   │   ║   └─concat  ««"~"
+    ║       │   ║   │   ║     ├◙ SVal "invalid def of inlineable sub: "
+    ║       │   ║   │   ║     └─call &dump  ««"$_"
+    ║       │   ║   │   ║       └○ $_
+    ║       │   ║   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$name   := $_[0].name"
+    ║       │   ║   │   ║ ├○ $name
+    ║       │   ║   │   ║ └─callmethod name  ««".name"
+    ║       │   ║   │   ║   └─ifnull
+    ║       │   ║   │   ║     ├─atpos
+    ║       │   ║   │   ║     │ ├○ $_
+    ║       │   ║   │   ║     │ └◙ IVal 0
+    ║       │   ║   │   ║     └◙ WVal NQPMu
+    ║       │   ║   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$block  := $_[1]"
+    ║       │   ║   │   ║ ├○ $block
+    ║       │   ║   │   ║ └─ifnull
+    ║       │   ║   │   ║   ├─atpos
+    ║       │   ║   │   ║   │ ├○ $_
+    ║       │   ║   │   ║   │ └◙ IVal 1
+    ║       │   ║   │   ║   └◙ WVal NQPMu
+    ║       │   ║   │   ╟○ %results
+    ║       │   ║   │   ╟─if  ««"istype($block[0], QAST::Stmt, QAST::Stmts) {\n     "...
+    ║       │   ║   │   ║ ├─call &istype  ««"$block[0], QAST::Stmt, QAST::Stmts"
+    ║       │   ║   │   ║ │ ├─ifnull
+    ║       │   ║   │   ║ │ │ ├─atpos
+    ║       │   ║   │   ║ │ │ │ ├○ $block
+    ║       │   ║   │   ║ │ │ │ └◙ IVal 0
+    ║       │   ║   │   ║ │ │ └◙ WVal NQPMu
+    ║       │   ║   │   ║ │ ├◙ WVal QAST::Stmt
+    ║       │   ║   │   ║ │ └◙ WVal QAST::Stmts
+    ║       │   ║   │   ║ ├─:Block :blocktype(immediate)  ««"{\n                    my $it := nqp::iterator($blo"...
+    ║       │   ║   │   ║ │ ╟○ $it :decl(var)
+    ║       │   ║   │   ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$it := nqp::iterator($block.list)"
+    ║       │   ║   │   ║ │ ║ ├○ $it
+    ║       │   ║   │   ║ │ ║ └─iterator  ««"nqp::iterator($block.list)"
+    ║       │   ║   │   ║ │ ║   └─callmethod list  ««".list"
+    ║       │   ║   │   ║ │ ║     └○ $block
+    ║       │   ║   │   ║ │ ╟─bind  ««":="
+    ║       │   ║   │   ║ │ ║ ├○ %results
+    ║       │   ║   │   ║ │ ║ └─call &collect_params_and_body  ««"nqp::shift($it)"
+    ║       │   ║   │   ║ │ ║   └─shift  ««"nqp::shift($it)"
+    ║       │   ║   │   ║ │ ║     └○ $it
+    ║       │   ║   │   ║ │ ╙─while  ««"$it {\n                        %results := collect_"...
+    ║       │   ║   │   ║ │   ├○ $it
+    ║       │   ║   │   ║ │   ├─bind  ««":="
+    ║       │   ║   │   ║ │   │ ├○ %results
+    ║       │   ║   │   ║ │   │ └─call &collect_params_and_body  ««"nqp::shift($it), %results"
+    ║       │   ║   │   ║ │   │   ├─shift  ««"nqp::shift($it)"
+    ║       │   ║   │   ║ │   │   │ └○ $it
+    ║       │   ║   │   ║ │   │   └○ %results
+    ║       │   ║   │   ║ │   └◙ IVal 1 :named("nohandler")
+    ║       │   ║   │   ║ └─bind  ««":="
+    ║       │   ║   │   ║   ├○ %results
+    ║       │   ║   │   ║   └─call &collect_params_and_body  ««"$block"
+    ║       │   ║   │   ║     └○ $block
+    ║       │   ║   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$arity  := %results<arity>"
+    ║       │   ║   │   ║ ├○ $arity
+    ║       │   ║   │   ║ └─ifnull
+    ║       │   ║   │   ║   ├─atkey
+    ║       │   ║   │   ║   │ ├○ %results
+    ║       │   ║   │   ║   │ └◙ SVal "arity"
+    ║       │   ║   │   ║   └◙ WVal NQPMu
+    ║       │   ║   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%params := %results<params>"
+    ║       │   ║   │   ║ ├○ %params
+    ║       │   ║   │   ║ └─ifnull
+    ║       │   ║   │   ║   ├─atkey
+    ║       │   ║   │   ║   │ ├○ %results
+    ║       │   ║   │   ║   │ └◙ SVal "params"
+    ║       │   ║   │   ║   └◙ WVal NQPMu
+    ║       │   ║   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@stmts  := %results<stmts>"
+    ║       │   ║   │   ║ ├○ @stmts
+    ║       │   ║   │   ║ └─ifnull
+    ║       │   ║   │   ║   ├─atkey
+    ║       │   ║   │   ║   │ ├○ %results
+    ║       │   ║   │   ║   │ └◙ SVal "stmts"
+    ║       │   ║   │   ║   └◙ WVal NQPMu
+    ║       │   ║   │   ╟─if  ««"nqp::elems(@stmts) == 0 {\n                    nqp:"...
+    ║       │   ║   │   ║ ├─iseq_n  ««"=="
+    ║       │   ║   │   ║ │ ├─elems  ««"nqp::elems(@stmts)"
+    ║       │   ║   │   ║ │ │ └○ @stmts
+    ║       │   ║   │   ║ │ └◙ IVal 0
+    ║       │   ║   │   ║ ├─die  ««"nqp::die(\"no statements found in inlineable $name:"...
+    ║       │   ║   │   ║ │ └─concat  ««"~"
+    ║       │   ║   │   ║ │   ├─concat
+    ║       │   ║   │   ║ │   │ ├─concat
+    ║       │   ║   │   ║ │   │ │ ├◙ SVal "no statements found in inlineable "
+    ║       │   ║   │   ║ │   │ │ └○ $name
+    ║       │   ║   │   ║ │   │ └◙ SVal ": "
+    ║       │   ║   │   ║ │   └─call &dump  ««"$block"
+    ║       │   ║   │   ║ │     └○ $block
+    ║       │   ║   │   ║ └─if  ««"nqp::elems(@stmts) == 1 {\n                    $blo"...
+    ║       │   ║   │   ║   ├─iseq_n  ««"=="
+    ║       │   ║   │   ║   │ ├─elems  ««"nqp::elems(@stmts)"
+    ║       │   ║   │   ║   │ │ └○ @stmts
+    ║       │   ║   │   ║   │ └◙ IVal 1
+    ║       │   ║   │   ║   ├─bind  ««":="
+    ║       │   ║   │   ║   │ ├○ $block
+    ║       │   ║   │   ║   │ └─ifnull
+    ║       │   ║   │   ║   │   ├─atpos
+    ║       │   ║   │   ║   │   │ ├○ @stmts
+    ║       │   ║   │   ║   │   │ └◙ IVal 0
+    ║       │   ║   │   ║   │   └◙ WVal NQPMu
+    ║       │   ║   │   ║   └─bind  ««":="
+    ║       │   ║   │   ║     ├○ $block
+    ║       │   ║   │   ║     └─callmethod new  ««"|@stmts"
+    ║       │   ║   │   ║       ├◙ WVal QAST::Stmts
+    ║       │   ║   │   ║       └○ @stmts :flat(1)
+    ║       │   ║   │   ╙─bindkey  ««":="
+    ║       │   ║   │     ├○ %inlineables
+    ║       │   ║   │     ├○ $name
+    ║       │   ║   │     └─:Block  ««"{\n                    my $argCount := nqp::elems(@"...
+    ║       │   ║   │       ╟○ @arguments :decl(param)
+    ║       │   ║   │       ╟○ $argCount :decl(var)
+    ║       │   ║   │       ╟○ $out :decl(var)
+    ║       │   ║   │       ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$argCount := nqp::elems(@arguments)"
+    ║       │   ║   │       ║ ├○ $argCount
+    ║       │   ║   │       ║ └─elems  ««"nqp::elems(@arguments)"
+    ║       │   ║   │       ║   └○ @arguments
+    ║       │   ║   │       ╟─unless  ««"nqp::die(\"cannot inline call with $argCount args t"...
+    ║       │   ║   │       ║ ├─iseq_n  ««"=="
+    ║       │   ║   │       ║ │ ├○ $argCount
+    ║       │   ║   │       ║ │ └○ $arity
+    ║       │   ║   │       ║ └─die  ««"nqp::die(\"cannot inline call with $argCount args t"...
+    ║       │   ║   │       ║   └─concat  ««"~"
+    ║       │   ║   │       ║     ├─concat
+    ║       │   ║   │       ║     │ ├─concat
+    ║       │   ║   │       ║     │ │ ├─concat
+    ║       │   ║   │       ║     │ │ │ ├◙ SVal "cannot inline call with "
+    ║       │   ║   │       ║     │ │ │ └○ $argCount
+    ║       │   ║   │       ║     │ │ └◙ SVal " args to "
+    ║       │   ║   │       ║     │ └○ $arity
+    ║       │   ║   │       ║     └─concat
+    ║       │   ║   │       ║       ├◙ SVal "-arity fn "
+    ║       │   ║   │       ║       └○ $name
+    ║       │   ║   │       ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := cloneAndSubst($block, -> $n {\n    #       "...
+    ║       │   ║   │       ║ ├○ $out
+    ║       │   ║   │       ║ └─call &cloneAndSubst  ««"$block, -> $n {\n    #                    say('####"...
+    ║       │   ║   │       ║   ├○ $block
+    ║       │   ║   │       ║   └─:Block  ««"{\n    #                    say('####', dump($n));\"...
+    ║       │   ║   │       ║     ╟○ $n :decl(param)
+    ║       │   ║   │       ║     ╙─if  ««"istype($n, QAST::Var) && nqp::existskey(%params, $n"...
+    ║       │   ║   │       ║       ├─if  ««"&&"
+    ║       │   ║   │       ║       │ ├─call &istype  ««"$n, QAST::Var"
+    ║       │   ║   │       ║       │ │ ├○ $n
+    ║       │   ║   │       ║       │ │ └◙ WVal QAST::Var
+    ║       │   ║   │       ║       │ └─existskey  ««"nqp::existskey(%params, $n.name)"
+    ║       │   ║   │       ║       │   ├○ %params
+    ║       │   ║   │       ║       │   └─callmethod name  ««".name"
+    ║       │   ║   │       ║       │     └○ $n
+    ║       │   ║   │       ║       ├─:Block :blocktype(immediate)  ««"{\n                            my $out := @argument"...
+    ║       │   ║   │       ║       │ ╟○ $out :decl(var)
+    ║       │   ║   │       ║       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := @arguments[%params{$n.name}]"
+    ║       │   ║   │       ║       │ ║ ├○ $out
+    ║       │   ║   │       ║       │ ║ └─ifnull
+    ║       │   ║   │       ║       │ ║   ├─atpos
+    ║       │   ║   │       ║       │ ║   │ ├○ @arguments
+    ║       │   ║   │       ║       │ ║   │ └─ifnull
+    ║       │   ║   │       ║       │ ║   │   ├─atkey
+    ║       │   ║   │       ║       │ ║   │   │ ├○ %params
+    ║       │   ║   │       ║       │ ║   │   │ └─callmethod name  ««".name"
+    ║       │   ║   │       ║       │ ║   │   │   └○ $n
+    ║       │   ║   │       ║       │ ║   │   └◙ WVal NQPMu
+    ║       │   ║   │       ║       │ ║   └◙ WVal NQPMu
+    ║       │   ║   │       ║       │ ╙○ $out
+    ║       │   ║   │       ║       └○ $n
+    ║       │   ║   │       ╙○ $out
+    ║       │   ║   └─call RETURN
+    ║       │   ║     └─call &inline_simple_subs  ««"$node, [], %inlineables"
+    ║       │   ║       ├○ $node
+    ║       │   ║       ├─list
+    ║       │   ║       └○ %inlineables
+    ║       │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := 0"
+    ║       │   ║ ├○ $i
+    ║       │   ║ └◙ IVal 0
+    ║       │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@children := $node.list"
+    ║       │   ║ ├○ @children
+    ║       │   ║ └─callmethod list  ««".list"
+    ║       │   ║   └○ $node
+    ║       │   ╟─for  ««"@children {\n            @children[$i] := inline_si"...
+    ║       │   ║ ├○ @children
+    ║       │   ║ ├─:Block :blocktype(immediate)  ««"{\n            @children[$i] := inline_simple_subs("...
+    ║       │   ║ │ ╟○ $_ :decl(param)
+    ║       │   ║ │ ╟─bindpos  ««":="
+    ║       │   ║ │ ║ ├○ @children
+    ║       │   ║ │ ║ ├○ $i
+    ║       │   ║ │ ║ └─call &inline_simple_subs  ««"$_, [], %inlineables"
+    ║       │   ║ │ ║   ├○ $_
+    ║       │   ║ │ ║   ├─list
+    ║       │   ║ │ ║   └○ %inlineables
+    ║       │   ║ │ ╙─postinc  ««"++"
+    ║       │   ║ │   └○ $i
+    ║       │   ║ └◙ IVal 1 :named("nohandler")
+    ║       │   ╙─if  ««"istype($node, QAST::Op) && ($node.op eq 'call' || $"...
+    ║       │     ├─if  ««"&&"
+    ║       │     │ ├─call &istype  ««"$node, QAST::Op"
+    ║       │     │ │ ├○ $node
+    ║       │     │ │ └◙ WVal QAST::Op
+    ║       │     │ └─unless  ««"||"
+    ║       │     │   ├─iseq_s  ««"eq"
+    ║       │     │   │ ├─callmethod op  ««".op"
+    ║       │     │   │ │ └○ $node
+    ║       │     │   │ └◙ SVal "call"
+    ║       │     │   └─iseq_s  ««"eq"
+    ║       │     │     ├─callmethod op  ««".op"
+    ║       │     │     │ └○ $node
+    ║       │     │     └◙ SVal "callstatic"
+    ║       │     └─:Block :blocktype(immediate)  ««"{\n            my $codeMaker := %inlineables{$node."...
+    ║       │       ╟○ $codeMaker :decl(var)
+    ║       │       ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$codeMaker := %inlineables{$node.name}"
+    ║       │       ║ ├○ $codeMaker
+    ║       │       ║ └─ifnull
+    ║       │       ║   ├─atkey
+    ║       │       ║   │ ├○ %inlineables
+    ║       │       ║   │ └─callmethod name  ««".name"
+    ║       │       ║   │   └○ $node
+    ║       │       ║   └◙ WVal NQPMu
+    ║       │       ╙─if  ««"$codeMaker {\n                my $out := $codeMaker"...
+    ║       │         ├○ $codeMaker
+    ║       │         └─:Block :blocktype(immediate)  ««"{\n                my $out := $codeMaker($node.list"...
+    ║       │           ╟○ $out :decl(var)
+    ║       │           ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := $codeMaker($node.list)"
+    ║       │           ║ ├○ $out
+    ║       │           ║ └─call  ««"$node.list"
+    ║       │           ║   ├○ $codeMaker
+    ║       │           ║   └─callmethod list  ««".list"
+    ║       │           ║     └○ $node
+    ║       │           ╟─callmethod node  ««"$node.node"
+    ║       │           ║ ├○ $out
+    ║       │           ║ └─callmethod node  ««".node"
+    ║       │           ║   └○ $node
+    ║       │           ╟─callmethod flat  ««"$node.flat"
+    ║       │           ║ ├○ $out
+    ║       │           ║ └─callmethod flat  ««".flat"
+    ║       │           ║   └○ $node
+    ║       │           ╟─callmethod named  ««"$node.named"
+    ║       │           ║ ├○ $out
+    ║       │           ║ └─callmethod named  ««".named"
+    ║       │           ║   └○ $node
+    ║       │           ╙─bind  ««":="
+    ║       │             ├○ $node
+    ║       │             └○ $out
     ║       └○ $node
     ╟─bind
     ║ ├○ &renameVars :decl(var)
@@ -1314,7 +1249,6 @@
     ╟○ &findDef
     ╟○ &findDefs
     ╟○ &findValueNodeInHash
-    ╟○ &cloneAndSubst
     ╟○ &collect_params_and_body
     ╟○ &inline_simple_subs
     ╟○ &renameVars
@@ -1837,6 +1771,9 @@
     ║ ║ ╟○ self :decl(param)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
+    ║ ║ ╟─bind  ««"@inlinecandidates"
+    ║ ║ ║ ├○ @inlinecandidates :decl(var)
+    ║ ║ ║ └─list
     ║ ║ ╟─callmethod log  ««"'ast_clean: ', self.user-progname, '...'"
     ║ ║ ║ ├─decont
     ║ ║ ║ │ └○ self
@@ -1877,6 +1814,39 @@
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &inline_simple_methods  ««"$ast"
     ║ ║ ║   └○ $ast
+    ║ ║ ╟○ @inlinecandidates
+    ║ ║ ╟─bind  ««":="
+    ║ ║ ║ ├○ @inlinecandidates
+    ║ ║ ║ └─call &findDefs  ««"$ast, -> $var, @pathUp {\n               (nqp::inde"...
+    ║ ║ ║   ├○ $ast
+    ║ ║ ║   └─:Block  ««"{\n               (nqp::index($var.name, '&STATS_')"...
+    ║ ║ ║     ╟○ $var :decl(param)
+    ║ ║ ║     ╟○ @pathUp :decl(param)
+    ║ ║ ║     ╙─unless  ««"||"
+    ║ ║ ║       ├─unless  ««"||"
+    ║ ║ ║       │ ├─isgt_n  ««">"
+    ║ ║ ║       │ │ ├─index  ««"nqp::index($var.name, '&STATS_')"
+    ║ ║ ║       │ │ │ ├─callmethod name  ««".name"
+    ║ ║ ║       │ │ │ │ └○ $var
+    ║ ║ ║       │ │ │ └◙ SVal "&STATS_"
+    ║ ║ ║       │ │ └◙ IVal -1
+    ║ ║ ║       │ └─isgt_n  ««">"
+    ║ ║ ║       │   ├─index  ««"nqp::index($var.name, '&LAMFIELD_')"
+    ║ ║ ║       │   │ ├─callmethod name  ««".name"
+    ║ ║ ║       │   │ │ └○ $var
+    ║ ║ ║       │   │ └◙ SVal "&LAMFIELD_"
+    ║ ║ ║       │   └◙ IVal -1
+    ║ ║ ║       └─isgt_n  ««">"
+    ║ ║ ║         ├─index  ««"nqp::index('&lam2id &lam2code &lam2fvs &int2str &nu"...
+    ║ ║ ║         │ ├◙ SVal "&lam2id &lam2code &lam2fvs &int2str &num2str"
+    ║ ║ ║         │ └─callmethod name  ««".name"
+    ║ ║ ║         │   └○ $var
+    ║ ║ ║         └◙ IVal -1
+    ║ ║ ╟─bind  ««":="
+    ║ ║ ║ ├○ $ast
+    ║ ║ ║ └─call &inline_simple_subs  ««"$ast, @inlinecandidates"
+    ║ ║ ║   ├○ $ast
+    ║ ║ ║   └○ @inlinecandidates
     ║ ║ ╙○ $ast
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my %stats := self.collect_stats($ast);\n"...
     ║ ║ ╟○ self :decl(param)

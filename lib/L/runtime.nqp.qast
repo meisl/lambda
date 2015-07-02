@@ -25,7 +25,7 @@
     ║   ╙─ifnull
     ║     ├─atpos
     ║     │ ├○ $lam
-    ║     │ └─call &LAMFIELD_ID  ««""
+    ║     │ └◙ IVal 0
     ║     └◙ WVal NQPMu
     ╟─bind
     ║ ├○ &lam2code :decl(var)
@@ -34,7 +34,7 @@
     ║   ╙─ifnull
     ║     ├─atpos
     ║     │ ├○ $lam
-    ║     │ └─call &LAMFIELD_CODE  ««""
+    ║     │ └◙ IVal 1
     ║     └◙ WVal NQPMu
     ╟─bind
     ║ ├○ &lam2fvs :decl(var)
@@ -42,7 +42,7 @@
     ║   ╟○ $lam :decl(param)
     ║   ╙─call &sublist  ««"$lam, LAMFIELD_FREEVARS()"
     ║     ├○ $lam
-    ║     └─call &LAMFIELD_FREEVARS  ««""
+    ║     └◙ IVal 2
     ╟─bind
     ║ ├○ &STATS_QASTSIZE :decl(var)
     ║ └─:Block  ««"{ 'Node'      }"
@@ -198,8 +198,11 @@
     ║   ╟○ %fvs :decl(var)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$id      := lam2id($lambda)"
     ║   ║ ├○ $id
-    ║   ║ └─call &lam2id  ««"$lambda"
-    ║   ║   └○ $lambda
+    ║   ║ └─ifnull  ««"$lambda"
+    ║   ║   ├─atpos
+    ║   ║   │ ├○ $lambda
+    ║   ║   │ └◙ IVal 0
+    ║   ║   └◙ WVal NQPMu
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$idx     := nqp::radix(10, $id, 1, 0)[0]"
     ║   ║ ├○ $idx
     ║   ║ └─ifnull
@@ -258,8 +261,9 @@
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$varsIt  := nqp::iterator(lam2fvs($lambda))"
     ║   ║ ├○ $varsIt
     ║   ║ └─iterator  ««"nqp::iterator(lam2fvs($lambda))"
-    ║   ║   └─call &lam2fvs  ««"$lambda"
-    ║   ║     └○ $lambda
+    ║   ║   └─call &sublist  ««"$lambda"
+    ║   ║     ├○ $lambda
+    ║   ║     └◙ IVal 2
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$namesIt := $infoIt"
     ║   ║ ├○ $namesIt
     ║   ║ └○ $infoIt
@@ -448,8 +452,11 @@
     ║     │ ║ │ ║   │ └○ $flatVal
     ║     │ ║ │ ║   ├─concat  ««"~"
     ║     │ ║ │ ║   │ ├○ $pre
-    ║     │ ║ │ ║   │ └─call &lam2id  ««"$fv"
-    ║     │ ║ │ ║   │   └○ $fv
+    ║     │ ║ │ ║   │ └─ifnull  ««"$fv"
+    ║     │ ║ │ ║   │   ├─atpos
+    ║     │ ║ │ ║   │   │ ├○ $fv
+    ║     │ ║ │ ║   │   │ └◙ IVal 0
+    ║     │ ║ │ ║   │   └◙ WVal NQPMu
     ║     │ ║ │ ║   └─concat  ««"~"
     ║     │ ║ │ ║     ├○ $pre
     ║     │ ║ │ ║     └○ $flatVal
@@ -602,43 +609,43 @@
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_LAMBDACOUNT  ««""
+    ║       │ │ └◙ SVal "lambda"
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " lambdas\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_QASTSIZE  ««""
+    ║       │ │ └◙ SVal "Node"
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::Node s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_BLOCKCOUNT  ««""
+    ║       │ │ └◙ SVal "Block"
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::Block s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_LISTCOUNT  ««""
+    ║       │ │ └◙ SVal "list"
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::Op(list) s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_IVALCOUNT  ««""
+    ║       │ │ └◙ SVal "IVal"
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::IVal s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_SVALSIZE  ««""
+    ║       │ │ └◙ SVal "SValChars"
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " chars ttl in "
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_SVALCOUNT  ««""
+    ║       │ │ └◙ SVal "SVal"
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::SVal s\n"
     ║       └◙ SVal "------------------------------------------------"
@@ -702,19 +709,19 @@
     ║   │ └◙ SVal "binder1 59 4 foo"
     ║   ├◙ SVal "stats"
     ║   └─hash  ««"nqp::hash( # to be filled in by compiler\n        S"...
-    ║     ├─call &STATS_QASTSIZE  ««""
+    ║     ├◙ SVal "Node"
     ║     ├◙ IVal -1
-    ║     ├─call &STATS_BLOCKCOUNT  ««""
+    ║     ├◙ SVal "Block"
     ║     ├◙ IVal -1
-    ║     ├─call &STATS_LISTCOUNT  ««""
+    ║     ├◙ SVal "list"
     ║     ├◙ IVal -1
-    ║     ├─call &STATS_LAMBDACOUNT  ««""
+    ║     ├◙ SVal "lambda"
     ║     ├◙ IVal -1
-    ║     ├─call &STATS_IVALCOUNT  ««""
+    ║     ├◙ SVal "IVal"
     ║     ├◙ IVal -1
-    ║     ├─call &STATS_SVALCOUNT  ««""
+    ║     ├◙ SVal "SVal"
     ║     ├◙ IVal -1
-    ║     ├─call &STATS_SVALSIZE  ««""
+    ║     ├◙ SVal "SValChars"
     ║     └◙ IVal -1
     ╟○ &LAMFIELD_ID
     ╟○ &LAMFIELD_CODE

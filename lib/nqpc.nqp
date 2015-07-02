@@ -164,29 +164,6 @@ sub findValueNodeInHash($keyPredicate, $valuePredicate, $hash = NO_VALUE) is exp
     $found;
 }
 
-sub cloneAndSubst($node, $substitution) {
-    nqp::die('cloneAndSubst expects a QAST::Node as 1st arg - got ' ~ describe($node) )
-        unless istype($node, QAST::Node);
-    nqp::die('cloneAndSubst expects a function as 2nd arg - got ' ~ describe($substitution) )
-        unless nqp::isinvokable($substitution);
-    
-    #return $substitution(nqp::clone($node))    # strange: this actually prevents any recursion...!?!
-    #    unless istype($node, QAST::Children);
-
-    $node := $node.shallow_clone;   # also makes a shallow clone of the children's list
-    my @children := $node.list;
-    my $i := 0;
-    for @children {
-        my $child := cloneAndSubst($_, $substitution);
-        unless nqp::isnull($child) {
-            @children[$i] := $child;
-            $i++;
-        }
-    }
-    nqp::setelems(@children, $i);
-    
-    $substitution($node);
-}
 
 
 sub collect_params_and_body($node, %results = hash(:arity(0), :params({}), :stmts([]))) {
@@ -220,84 +197,84 @@ sub collect_params_and_body($node, %results = hash(:arity(0), :params({}), :stmt
 
 
 sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
-    nqp::die('inline_simple_subs expects a QAST::Node as 1st arg - got ' ~ describe($node) )
-        unless istype($node, QAST::Node);
+    if istype($node, QAST::Node) {
 
-    # on first step, prepare:
-    if nqp::elems(@inlineDefs) > 0 {
-        for @inlineDefs {
-            next if nqp::isnull($_);
-            nqp::die("invalid def of inlineable sub: " ~ describe($_))
-                unless istype($_, QAST::Node);
-            nqp::die("invalid def of inlineable sub: " ~ dump($_))
-                unless istype($_, QAST::Op) && $_.op eq 'bind'
-                    && istype($_[0], QAST::Var)
-                    && istype($_[1], QAST::Block);
-            my $name   := $_[0].name;
-            my $block  := $_[1];
-            my %results;
-            if istype($block[0], QAST::Stmt, QAST::Stmts) {
-                my $it := nqp::iterator($block.list);
-                %results := collect_params_and_body(nqp::shift($it));
-                while $it {
-                    %results := collect_params_and_body(nqp::shift($it), %results);
-                }
-            } else {
-                %results := collect_params_and_body($block);
-            }
-            my $arity  := %results<arity>;
-            my %params := %results<params>;
-            my @stmts  := %results<stmts>;
-
-
-            if nqp::elems(@stmts) == 0 {
-                nqp::die("no statements found in inlineable $name: " ~ dump($block));
-            } elsif nqp::elems(@stmts) == 1 {
-                $block := @stmts[0];
-            } else {
-                $block := QAST::Stmts.new(|@stmts);
-            }
-
-            %inlineables{$name} := -> @arguments {
-                my $argCount := nqp::elems(@arguments);
-                nqp::die("cannot inline call with $argCount args to $arity" ~ "-arity fn $name")
-                    unless $argCount == $arity;
-                my $out := cloneAndSubst($block, -> $n {
-#                    say('####', dump($n));
-                    if istype($n, QAST::Var) && nqp::existskey(%params, $n.name) {
-                        my $out := @arguments[%params{$n.name}];
-#                        say('#### substituted ', dump($out, :oneLine), ' for ', dump($n, :oneLine));
-                        $out;
-                    } else {
-                        $n;
+        # on first step, prepare:
+        if nqp::elems(@inlineDefs) > 0 {
+            for @inlineDefs {
+                next if nqp::isnull($_);
+                nqp::die("invalid def of inlineable sub: " ~ describe($_))
+                    unless istype($_, QAST::Node);
+                nqp::die("invalid def of inlineable sub: " ~ dump($_))
+                    unless istype($_, QAST::Op) && $_.op eq 'bind'
+                        && istype($_[0], QAST::Var)
+                        && istype($_[1], QAST::Block);
+                my $name   := $_[0].name;
+                my $block  := $_[1];
+                my %results;
+                if istype($block[0], QAST::Stmt, QAST::Stmts) {
+                    my $it := nqp::iterator($block.list);
+                    %results := collect_params_and_body(nqp::shift($it));
+                    while $it {
+                        %results := collect_params_and_body(nqp::shift($it), %results);
                     }
-                });
-                $out;
-            };
+                } else {
+                    %results := collect_params_and_body($block);
+                }
+                my $arity  := %results<arity>;
+                my %params := %results<params>;
+                my @stmts  := %results<stmts>;
+
+
+                if nqp::elems(@stmts) == 0 {
+                    nqp::die("no statements found in inlineable $name: " ~ dump($block));
+                } elsif nqp::elems(@stmts) == 1 {
+                    $block := @stmts[0];
+                } else {
+                    $block := QAST::Stmts.new(|@stmts);
+                }
+
+                %inlineables{$name} := -> @arguments {
+                    my $argCount := nqp::elems(@arguments);
+                    nqp::die("cannot inline call with $argCount args to $arity" ~ "-arity fn $name")
+                        unless $argCount == $arity;
+                    my $out := cloneAndSubst($block, -> $n {
+    #                    say('####', dump($n));
+                        if istype($n, QAST::Var) && nqp::existskey(%params, $n.name) {
+                            my $out := @arguments[%params{$n.name}];
+    #                        say('#### substituted ', dump($out, :oneLine), ' for ', dump($n, :oneLine));
+                            $out;
+                        } else {
+                            $n;
+                        }
+                    });
+                    $out;
+                };
+            }
+            return inline_simple_subs($node, [], %inlineables);
         }
-        return inline_simple_subs($node, [], %inlineables);
+
+        # next, recurse into children:
+        my $i := 0;
+        my @children := $node.list;
+        for @children {
+            @children[$i] := inline_simple_subs($_, [], %inlineables);
+            $i++;
+        }
+
+        if istype($node, QAST::Op) && ($node.op eq 'call' || $node.op eq 'callstatic') {
+            my $codeMaker := %inlineables{$node.name};
+            if $codeMaker {
+                my $out := $codeMaker($node.list);
+    #            say('>>>> inlined ', dump($out), "\n>>>> for ", dump($node));
+                $out.node($node.node);
+                $out.flat($node.flat);
+                $out.named($node.named);
+                $node := $out;
+            }
+        }
     }
 
-    # next, recurse into children:
-    my $i := 0;
-    my @children := $node.list;
-    for @children {
-        @children[$i] := inline_simple_subs($_, [], %inlineables);
-        $i++;
-    }
-
-    if istype($node, QAST::Op) && ($node.op eq 'call' || $node.op eq 'callstatic') {
-        my $codeMaker := %inlineables{$node.name};
-        if $codeMaker {
-            my $out := $codeMaker($node.list);
-#            say('>>>> inlined ', dump($out), "\n>>>> for ", dump($node));
-            $out.node($node.node);
-            $out.flat($node.flat);
-            $out.named($node.named);
-            $node := $out;
-        }
-    }
-    
     $node;
 }
 
@@ -501,13 +478,13 @@ class SmartCompiler is NQP::Compiler {
         $ast := replace_assoc_and_pos_scoped($ast);
         $ast := inline_simple_methods($ast);
 
-        #my @inlinecandidates;
-        #@inlinecandidates := findDefs($ast, -> $var, @pathUp {
-        #       (nqp::index($var.name, '&STATS_') > -1)
-        #    || (nqp::index($var.name, '&LAMFIELD_') > -1)
-        #    || (nqp::index('&lam2id &lam2code &lam2fvs &int2str &num2str', $var.name) > -1)
-        #});
-        #$ast := inline_simple_subs($ast, @inlinecandidates);
+        my @inlinecandidates;
+        @inlinecandidates := findDefs($ast, -> $var, @pathUp {
+               (nqp::index($var.name, '&STATS_') > -1)
+            || (nqp::index($var.name, '&LAMFIELD_') > -1)
+            || (nqp::index('&lam2id &lam2code &lam2fvs &int2str &num2str', $var.name) > -1)
+        });
+        $ast := inline_simple_subs($ast, @inlinecandidates);
 
         #$ast := renameVars($ast, -> $s {
         #    my str $fst := nqp::substr($s, 0, 1);
