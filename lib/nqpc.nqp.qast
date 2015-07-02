@@ -33,6 +33,7 @@
     ╟○ &remove_bogusOpNames :decl(static) :default((NQPRoutine, invokable))
     ╟○ &inline_simple_methods :decl(static) :default((NQPRoutine, invokable))
     ╟○ &cloneAndSubst :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &collect_params_and_body :decl(static) :default((NQPRoutine, invokable))
     ╟─bind
     ║ ├○ &isinResultPosition :decl(var)
     ║ └─:Block  ««"{\n    my $n := nqp::elems($parent) - 1;\n    if ($"...
@@ -588,108 +589,6 @@
     ║       │     └◙ IVal 1 :named("nohandler")
     ║       └○ $found
     ╟─bind
-    ║ ├○ &collect_params_and_body :decl(var)
-    ║ └─:Block  ««"{\n    my $arity  := %results<arity>;\n    my %para"...
-    ║   ╟○ $node :decl(param)
-    ║   ╟○ %results :decl(param) :default((call &hash) (IVal 0 :named("arity")) (hash :named("params")) (list &circumfix:<[ ]> :named("stmts")))
-    ║   ╟○ $arity :decl(var)
-    ║   ╟○ %params :decl(var)
-    ║   ╟○ @stmts :decl(var)
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$arity  := %results<arity>"
-    ║   ║ ├○ $arity
-    ║   ║ └─ifnull
-    ║   ║   ├─atkey
-    ║   ║   │ ├○ %results
-    ║   ║   │ └◙ SVal "arity"
-    ║   ║   └◙ WVal NQPMu
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%params := %results<params>"
-    ║   ║ ├○ %params
-    ║   ║ └─ifnull
-    ║   ║   ├─atkey
-    ║   ║   │ ├○ %results
-    ║   ║   │ └◙ SVal "params"
-    ║   ║   └◙ WVal NQPMu
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@stmts  := %results<stmts>"
-    ║   ║ ├○ @stmts
-    ║   ║ └─ifnull
-    ║   ║   ├─atkey
-    ║   ║   │ ├○ %results
-    ║   ║   │ └◙ SVal "stmts"
-    ║   ║   └◙ WVal NQPMu
-    ║   ╟─for  ««"$node.list {\n        if istype($_, QAST::Var) {\n "...
-    ║   ║ ├─callmethod list  ««".list"
-    ║   ║ │ └○ $node
-    ║   ║ ├─:Block :blocktype(immediate)  ««"{\n        if istype($_, QAST::Var) {\n            "...
-    ║   ║ │ ╟○ $_ :decl(param)
-    ║   ║ │ ╙─if  ««"istype($_, QAST::Var) {\n            my $varName :="...
-    ║   ║ │   ├─call &istype  ««"$_, QAST::Var"
-    ║   ║ │   │ ├○ $_
-    ║   ║ │   │ └◙ WVal QAST::Var
-    ║   ║ │   ├─:Block :blocktype(immediate)  ««"{\n            my $varName := $_.name;\n           "...
-    ║   ║ │   │ ╟○ $varName :decl(var)
-    ║   ║ │   │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$varName := $_.name"
-    ║   ║ │   │ ║ ├○ $varName
-    ║   ║ │   │ ║ └─callmethod name  ««".name"
-    ║   ║ │   │ ║   └○ $_
-    ║   ║ │   │ ╙─if  ««"$_.decl {\n                if $_.decl eq 'param' {\"...
-    ║   ║ │   │   ├─callmethod decl  ««".decl"
-    ║   ║ │   │   │ └○ $_
-    ║   ║ │   │   ├─if  ««"$_.decl eq 'param' {\n                    nqp::die("...
-    ║   ║ │   │   │ ├─iseq_s  ««"eq"
-    ║   ║ │   │   │ │ ├─callmethod decl  ««".decl"
-    ║   ║ │   │   │ │ │ └○ $_
-    ║   ║ │   │   │ │ └◙ SVal "param"
-    ║   ║ │   │   │ ├─:Stmts  ««"{\n                    nqp::die(\"cannot handle :na"...
-    ║   ║ │   │   │ │ ├─if  ««"nqp::die(\"cannot handle :named parameter $varName:"...
-    ║   ║ │   │   │ │ │ ├─callmethod named  ««".named"
-    ║   ║ │   │   │ │ │ │ └○ $_
-    ║   ║ │   │   │ │ │ └─die  ««"nqp::die(\"cannot handle :named parameter $varName:"...
-    ║   ║ │   │   │ │ │   └─concat  ««"~"
-    ║   ║ │   │   │ │ │     ├─concat
-    ║   ║ │   │   │ │ │     │ ├─concat
-    ║   ║ │   │   │ │ │     │ │ ├◙ SVal "cannot handle :named parameter "
-    ║   ║ │   │   │ │ │     │ │ └○ $varName
-    ║   ║ │   │   │ │ │     │ └◙ SVal ": "
-    ║   ║ │   │   │ │ │     └─call &dump  ««"$_"
-    ║   ║ │   │   │ │ │       └○ $_
-    ║   ║ │   │   │ │ ├─if  ««"nqp::die(\"cannot handle :slurpy parameter $varName"...
-    ║   ║ │   │   │ │ │ ├─callmethod slurpy  ««".slurpy"
-    ║   ║ │   │   │ │ │ │ └○ $_
-    ║   ║ │   │   │ │ │ └─die  ««"nqp::die(\"cannot handle :slurpy parameter $varName"...
-    ║   ║ │   │   │ │ │   └─concat  ««"~"
-    ║   ║ │   │   │ │ │     ├─concat
-    ║   ║ │   │   │ │ │     │ ├─concat
-    ║   ║ │   │   │ │ │     │ │ ├◙ SVal "cannot handle :slurpy parameter "
-    ║   ║ │   │   │ │ │     │ │ └○ $varName
-    ║   ║ │   │   │ │ │     │ └◙ SVal ": "
-    ║   ║ │   │   │ │ │     └─call &dump  ««"$_"
-    ║   ║ │   │   │ │ │       └○ $_
-    ║   ║ │   │   │ │ ├─bindkey  ««":="
-    ║   ║ │   │   │ │ │ ├○ %params
-    ║   ║ │   │   │ │ │ ├○ $varName
-    ║   ║ │   │   │ │ │ └○ $arity
-    ║   ║ │   │   │ │ └─postinc  ««"++"
-    ║   ║ │   │   │ │   └○ $arity
-    ║   ║ │   │   │ └─die  ««"nqp::die('cannot handle :decl(' ~ $_.decl ~ ')')"
-    ║   ║ │   │   │   └─concat  ««"~"
-    ║   ║ │   │   │     ├─concat  ««"~"
-    ║   ║ │   │   │     │ ├◙ SVal "cannot handle :decl("
-    ║   ║ │   │   │     │ └─callmethod decl  ««".decl"
-    ║   ║ │   │   │     │   └○ $_
-    ║   ║ │   │   │     └◙ SVal ")"
-    ║   ║ │   │   └─push  ««"$_"
-    ║   ║ │   │     ├○ @stmts
-    ║   ║ │   │     └○ $_
-    ║   ║ │   └─push  ««"$_"
-    ║   ║ │     ├○ @stmts
-    ║   ║ │     └○ $_
-    ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╟─bindkey  ««":="
-    ║   ║ ├○ %results
-    ║   ║ ├◙ SVal "arity"
-    ║   ║ └○ $arity
-    ║   ╙○ %results
-    ╟─bind
     ║ ├○ &inline_simple_subs :decl(var)
     ║ └─:Block  ««"{\n    if istype($node, QAST::Node) {\n\n        # "...
     ║   ╟○ $node :decl(param)
@@ -718,9 +617,9 @@
     ║       │   ║   │   ╟─bind  ««"%results"
     ║       │   ║   │   ║ ├○ %results :decl(var)
     ║       │   ║   │   ║ └─hash
-    ║       │   ║   │   ╟○ $arity :decl(var)
     ║       │   ║   │   ╟○ %params :decl(var)
-    ║       │   ║   │   ╟○ @stmts :decl(var)
+    ║       │   ║   │   ╟○ $body :decl(var)
+    ║       │   ║   │   ╟○ $arity :decl(var)
     ║       │   ║   │   ╟○ $_ :decl(param)
     ║       │   ║   │   ╟─if  ««"next if nqp::isnull($_)"
     ║       │   ║   │   ║ ├─isnull  ««"nqp::isnull($_)"
@@ -815,13 +714,6 @@
     ║       │   ║   │   ║   ├○ %results
     ║       │   ║   │   ║   └─call &collect_params_and_body  ««"$block"
     ║       │   ║   │   ║     └○ $block
-    ║       │   ║   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$arity  := %results<arity>"
-    ║       │   ║   │   ║ ├○ $arity
-    ║       │   ║   │   ║ └─ifnull
-    ║       │   ║   │   ║   ├─atkey
-    ║       │   ║   │   ║   │ ├○ %results
-    ║       │   ║   │   ║   │ └◙ SVal "arity"
-    ║       │   ║   │   ║   └◙ WVal NQPMu
     ║       │   ║   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%params := %results<params>"
     ║       │   ║   │   ║ ├○ %params
     ║       │   ║   │   ║ └─ifnull
@@ -829,44 +721,35 @@
     ║       │   ║   │   ║   │ ├○ %results
     ║       │   ║   │   ║   │ └◙ SVal "params"
     ║       │   ║   │   ║   └◙ WVal NQPMu
-    ║       │   ║   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@stmts  := %results<stmts>"
-    ║       │   ║   │   ║ ├○ @stmts
+    ║       │   ║   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$body   := %results<body>"
+    ║       │   ║   │   ║ ├○ $body
     ║       │   ║   │   ║ └─ifnull
     ║       │   ║   │   ║   ├─atkey
     ║       │   ║   │   ║   │ ├○ %results
-    ║       │   ║   │   ║   │ └◙ SVal "stmts"
+    ║       │   ║   │   ║   │ └◙ SVal "body"
     ║       │   ║   │   ║   └◙ WVal NQPMu
-    ║       │   ║   │   ╟─if  ««"nqp::elems(@stmts) == 0 {\n                    nqp:"...
-    ║       │   ║   │   ║ ├─iseq_n  ««"=="
-    ║       │   ║   │   ║ │ ├─elems  ««"nqp::elems(@stmts)"
-    ║       │   ║   │   ║ │ │ └○ @stmts
-    ║       │   ║   │   ║ │ └◙ IVal 0
-    ║       │   ║   │   ║ ├─die  ««"nqp::die(\"no statements found in inlineable $name:"...
-    ║       │   ║   │   ║ │ └─concat  ««"~"
-    ║       │   ║   │   ║ │   ├─concat
-    ║       │   ║   │   ║ │   │ ├─concat
-    ║       │   ║   │   ║ │   │ │ ├◙ SVal "no statements found in inlineable "
-    ║       │   ║   │   ║ │   │ │ └○ $name
-    ║       │   ║   │   ║ │   │ └◙ SVal ": "
-    ║       │   ║   │   ║ │   └─call &dump  ««"$block"
-    ║       │   ║   │   ║ │     └○ $block
-    ║       │   ║   │   ║ └─if  ««"nqp::elems(@stmts) == 1 {\n                    $blo"...
-    ║       │   ║   │   ║   ├─iseq_n  ««"=="
-    ║       │   ║   │   ║   │ ├─elems  ««"nqp::elems(@stmts)"
-    ║       │   ║   │   ║   │ │ └○ @stmts
-    ║       │   ║   │   ║   │ └◙ IVal 1
-    ║       │   ║   │   ║   ├─bind  ««":="
-    ║       │   ║   │   ║   │ ├○ $block
-    ║       │   ║   │   ║   │ └─ifnull
-    ║       │   ║   │   ║   │   ├─atpos
-    ║       │   ║   │   ║   │   │ ├○ @stmts
-    ║       │   ║   │   ║   │   │ └◙ IVal 0
-    ║       │   ║   │   ║   │   └◙ WVal NQPMu
-    ║       │   ║   │   ║   └─bind  ««":="
-    ║       │   ║   │   ║     ├○ $block
-    ║       │   ║   │   ║     └─callmethod new  ««"|@stmts"
-    ║       │   ║   │   ║       ├◙ WVal QAST::Stmts
-    ║       │   ║   │   ║       └○ @stmts :flat(1)
+    ║       │   ║   │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$arity  := +%params"
+    ║       │   ║   │   ║ ├○ $arity
+    ║       │   ║   │   ║ └─numify  ««"+"
+    ║       │   ║   │   ║   └○ %params
+    ║       │   ║   │   ╟─unless  ««"nqp::die(\"no statements found in inlineable $name:"...
+    ║       │   ║   │   ║ ├─unless  ««"||"
+    ║       │   ║   │   ║ │ ├─falsey  ««"!"
+    ║       │   ║   │   ║ │ │ └─call &istype  ««"$body, QAST::Stmts, QAST::Stmt"
+    ║       │   ║   │   ║ │ │   ├○ $body
+    ║       │   ║   │   ║ │ │   ├◙ WVal QAST::Stmts
+    ║       │   ║   │   ║ │ │   └◙ WVal QAST::Stmt
+    ║       │   ║   │   ║ │ └─callmethod list  ««".list"
+    ║       │   ║   │   ║ │   └○ $body
+    ║       │   ║   │   ║ └─die  ««"nqp::die(\"no statements found in inlineable $name:"...
+    ║       │   ║   │   ║   └─concat  ««"~"
+    ║       │   ║   │   ║     ├─concat
+    ║       │   ║   │   ║     │ ├─concat
+    ║       │   ║   │   ║     │ │ ├◙ SVal "no statements found in inlineable "
+    ║       │   ║   │   ║     │ │ └○ $name
+    ║       │   ║   │   ║     │ └◙ SVal ": "
+    ║       │   ║   │   ║     └─call &dump  ««"$block"
+    ║       │   ║   │   ║       └○ $block
     ║       │   ║   │   ╙─bindkey  ««":="
     ║       │   ║   │     ├○ %inlineables
     ║       │   ║   │     ├○ $name
@@ -894,10 +777,10 @@
     ║       │   ║   │       ║     └─concat
     ║       │   ║   │       ║       ├◙ SVal "-arity fn "
     ║       │   ║   │       ║       └○ $name
-    ║       │   ║   │       ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := cloneAndSubst($block, -> $n {\n    #       "...
+    ║       │   ║   │       ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := cloneAndSubst($body, -> $n {\n    #        "...
     ║       │   ║   │       ║ ├○ $out
-    ║       │   ║   │       ║ └─call &cloneAndSubst  ««"$block, -> $n {\n    #                    say('####"...
-    ║       │   ║   │       ║   ├○ $block
+    ║       │   ║   │       ║ └─call &cloneAndSubst  ««"$body, -> $n {\n    #                    say('####'"...
+    ║       │   ║   │       ║   ├○ $body
     ║       │   ║   │       ║   └─:Block  ««"{\n    #                    say('####', dump($n));\"...
     ║       │   ║   │       ║     ╟○ $n :decl(param)
     ║       │   ║   │       ║     ╙─if  ««"istype($n, QAST::Var) && nqp::existskey(%params, $n"...
@@ -986,6 +869,11 @@
     ║       │           ║   ├○ $codeMaker
     ║       │           ║   └─callmethod list  ««".list"
     ║       │           ║     └○ $node
+    ║       │           ╟─callmethod annotate  ««"'inlined', $node.name"
+    ║       │           ║ ├○ $out
+    ║       │           ║ ├◙ SVal "inlined"
+    ║       │           ║ └─callmethod name  ««".name"
+    ║       │           ║   └○ $node
     ║       │           ╟─callmethod node  ««"$node.node"
     ║       │           ║ ├○ $out
     ║       │           ║ └─callmethod node  ««".node"
@@ -1249,7 +1137,6 @@
     ╟○ &findDef
     ╟○ &findDefs
     ╟○ &findValueNodeInHash
-    ╟○ &collect_params_and_body
     ╟○ &inline_simple_subs
     ╟○ &renameVars
     ╟─:Block :blocktype(immediate)  ««"{\n\n    # Where to search for user source files.\n"...

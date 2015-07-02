@@ -25,7 +25,7 @@
     ║   ╙─ifnull
     ║     ├─atpos
     ║     │ ├○ $lam
-    ║     │ └◙ IVal 0
+    ║     │ └◙ IVal 0 :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&LAMFIELD_ID" (str) ))
     ║     └◙ WVal NQPMu
     ╟─bind
     ║ ├○ &lam2code :decl(var)
@@ -34,7 +34,7 @@
     ║   ╙─ifnull
     ║     ├─atpos
     ║     │ ├○ $lam
-    ║     │ └◙ IVal 1
+    ║     │ └◙ IVal 1 :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&LAMFIELD_CODE" (str) ))
     ║     └◙ WVal NQPMu
     ╟─bind
     ║ ├○ &lam2fvs :decl(var)
@@ -42,7 +42,7 @@
     ║   ╟○ $lam :decl(param)
     ║   ╙─call &sublist  ««"$lam, LAMFIELD_FREEVARS()"
     ║     ├○ $lam
-    ║     └◙ IVal 2
+    ║     └◙ IVal 2 :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&LAMFIELD_FREEVARS" (str) ))
     ╟─bind
     ║ ├○ &STATS_QASTSIZE :decl(var)
     ║ └─:Block  ««"{ 'Node'      }"
@@ -198,10 +198,10 @@
     ║   ╟○ %fvs :decl(var)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$id      := lam2id($lambda)"
     ║   ║ ├○ $id
-    ║   ║ └─ifnull  ««"$lambda"
+    ║   ║ └─ifnull :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&lam2id" (str) ))  ««"$lambda"
     ║   ║   ├─atpos
     ║   ║   │ ├○ $lambda
-    ║   ║   │ └◙ IVal 0
+    ║   ║   │ └◙ IVal 0 :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&LAMFIELD_ID" (str) ))
     ║   ║   └◙ WVal NQPMu
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$idx     := nqp::radix(10, $id, 1, 0)[0]"
     ║   ║ ├○ $idx
@@ -261,9 +261,9 @@
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$varsIt  := nqp::iterator(lam2fvs($lambda))"
     ║   ║ ├○ $varsIt
     ║   ║ └─iterator  ««"nqp::iterator(lam2fvs($lambda))"
-    ║   ║   └─call &sublist  ««"$lambda"
+    ║   ║   └─call &sublist :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&lam2fvs" (str) ))  ««"$lambda"
     ║   ║     ├○ $lambda
-    ║   ║     └◙ IVal 2
+    ║   ║     └◙ IVal 2 :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&LAMFIELD_FREEVARS" (str) ))
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$namesIt := $infoIt"
     ║   ║ ├○ $namesIt
     ║   ║ └○ $infoIt
@@ -452,10 +452,10 @@
     ║     │ ║ │ ║   │ └○ $flatVal
     ║     │ ║ │ ║   ├─concat  ««"~"
     ║     │ ║ │ ║   │ ├○ $pre
-    ║     │ ║ │ ║   │ └─ifnull  ««"$fv"
+    ║     │ ║ │ ║   │ └─ifnull :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&lam2id" (str) ))  ««"$fv"
     ║     │ ║ │ ║   │   ├─atpos
     ║     │ ║ │ ║   │   │ ├○ $fv
-    ║     │ ║ │ ║   │   │ └◙ IVal 0
+    ║     │ ║ │ ║   │   │ └◙ IVal 0 :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&LAMFIELD_ID" (str) ))
     ║     │ ║ │ ║   │   └◙ WVal NQPMu
     ║     │ ║ │ ║   └─concat  ««"~"
     ║     │ ║ │ ║     ├○ $pre
@@ -609,43 +609,43 @@
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └◙ SVal "lambda"
+    ║       │ │ └◙ SVal "lambda" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_LAMBDACOUNT" (str) ))
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " lambdas\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └◙ SVal "Node"
+    ║       │ │ └◙ SVal "Node" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_QASTSIZE" (str) ))
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::Node s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └◙ SVal "Block"
+    ║       │ │ └◙ SVal "Block" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_BLOCKCOUNT" (str) ))
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::Block s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └◙ SVal "list"
+    ║       │ │ └◙ SVal "list" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_LISTCOUNT" (str) ))
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::Op(list) s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └◙ SVal "IVal"
+    ║       │ │ └◙ SVal "IVal" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_IVALCOUNT" (str) ))
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::IVal s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └◙ SVal "SValChars"
+    ║       │ │ └◙ SVal "SValChars" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_SVALSIZE" (str) ))
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " chars ttl in "
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └◙ SVal "SVal"
+    ║       │ │ └◙ SVal "SVal" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_SVALCOUNT" (str) ))
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::SVal s\n"
     ║       └◙ SVal "------------------------------------------------"
@@ -709,19 +709,19 @@
     ║   │ └◙ SVal "binder1 59 4 foo"
     ║   ├◙ SVal "stats"
     ║   └─hash  ««"nqp::hash( # to be filled in by compiler\n        S"...
-    ║     ├◙ SVal "Node"
+    ║     ├◙ SVal "Node" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_QASTSIZE" (str) ))
     ║     ├◙ IVal -1
-    ║     ├◙ SVal "Block"
+    ║     ├◙ SVal "Block" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_BLOCKCOUNT" (str) ))
     ║     ├◙ IVal -1
-    ║     ├◙ SVal "list"
+    ║     ├◙ SVal "list" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_LISTCOUNT" (str) ))
     ║     ├◙ IVal -1
-    ║     ├◙ SVal "lambda"
+    ║     ├◙ SVal "lambda" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_LAMBDACOUNT" (str) ))
     ║     ├◙ IVal -1
-    ║     ├◙ SVal "IVal"
+    ║     ├◙ SVal "IVal" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_IVALCOUNT" (str) ))
     ║     ├◙ IVal -1
-    ║     ├◙ SVal "SVal"
+    ║     ├◙ SVal "SVal" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_SVALCOUNT" (str) ))
     ║     ├◙ IVal -1
-    ║     ├◙ SVal "SValChars"
+    ║     ├◙ SVal "SValChars" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_SVALSIZE" (str) ))
     ║     └◙ IVal -1
     ╟○ &LAMFIELD_ID
     ╟○ &LAMFIELD_CODE

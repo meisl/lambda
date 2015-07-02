@@ -166,34 +166,6 @@ sub findValueNodeInHash($keyPredicate, $valuePredicate, $hash = NO_VALUE) is exp
 
 
 
-sub collect_params_and_body($node, %results = hash(:arity(0), :params({}), :stmts([]))) {
-    my $arity  := %results<arity>;
-    my %params := %results<params>;
-    my @stmts  := %results<stmts>;
-    for $node.list {
-        if istype($_, QAST::Var) {
-            my $varName := $_.name;
-            if $_.decl {
-                if $_.decl eq 'param' {
-                    nqp::die("cannot handle :named parameter $varName: " ~ dump($_))
-                        if $_.named;
-                    nqp::die("cannot handle :slurpy parameter $varName: " ~ dump($_))
-                        if $_.slurpy;
-                    %params{$varName} := $arity;
-                    $arity++;
-                } else {
-                    nqp::die('cannot handle :decl(' ~ $_.decl ~ ')');
-                }
-            } else {
-                @stmts.push($_);
-            }
-        } else {
-            @stmts.push($_);
-        }
-    }
-    %results<arity> := $arity;
-    %results;
-}
 
 
 sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
@@ -221,24 +193,18 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
                 } else {
                     %results := collect_params_and_body($block);
                 }
-                my $arity  := %results<arity>;
                 my %params := %results<params>;
-                my @stmts  := %results<stmts>;
+                my $body   := %results<body>;
+                my $arity  := +%params;
 
-
-                if nqp::elems(@stmts) == 0 {
-                    nqp::die("no statements found in inlineable $name: " ~ dump($block));
-                } elsif nqp::elems(@stmts) == 1 {
-                    $block := @stmts[0];
-                } else {
-                    $block := QAST::Stmts.new(|@stmts);
-                }
+                nqp::die("no statements found in inlineable $name: " ~ dump($block))
+                    unless !istype($body, QAST::Stmts, QAST::Stmt) || $body.list;
 
                 %inlineables{$name} := -> @arguments {
                     my $argCount := nqp::elems(@arguments);
                     nqp::die("cannot inline call with $argCount args to $arity" ~ "-arity fn $name")
                         unless $argCount == $arity;
-                    my $out := cloneAndSubst($block, -> $n {
+                    my $out := cloneAndSubst($body, -> $n {
     #                    say('####', dump($n));
                         if istype($n, QAST::Var) && nqp::existskey(%params, $n.name) {
                             my $out := @arguments[%params{$n.name}];
@@ -266,6 +232,7 @@ sub inline_simple_subs($node, @inlineDefs, %inlineables = {}) {
             my $codeMaker := %inlineables{$node.name};
             if $codeMaker {
                 my $out := $codeMaker($node.list);
+                $out.annotate('inlined', $node.name);
     #            say('>>>> inlined ', dump($out), "\n>>>> for ", dump($node));
                 $out.node($node.node);
                 $out.flat($node.flat);

@@ -462,8 +462,50 @@ class Util::QAST {
         }
     }
 
+    method collect_params_and_body($node) {
+        nqp::die('expected a QAST::Block - got ' ~ describe($node))
+            unless istype($node, QAST::Block);
+
+        my $arity  := 0;
+        my %params := {};
+        my @stmts  := [];
+
+        my @children := nqp::clone($node.list);
+        if istype($node[0], QAST::Stmts, QAST::Stmt) {  # replace 1st Stmt(s) with its children
+            nqp::splice(@children, $node[0].list, 0, 1);
+        }
+
+        for @children {
+            if istype($_, QAST::Var) {
+                my $varName := $_.name;
+                if $_.decl {
+                    if $_.decl eq 'param' {
+                        nqp::die("cannot handle :named parameter $varName: " ~ dump($_))
+                            if $_.named;
+                        nqp::die("cannot handle :slurpy parameter $varName: " ~ dump($_))
+                            if $_.slurpy;
+                        %params{$varName} := $arity;
+                        $arity++;
+                    } else {
+                        nqp::die('cannot handle :decl(' ~ $_.decl ~ ')');
+                    }
+                } else {
+                    @stmts.push($_);
+                }
+            } else {
+                @stmts.push($_);
+            }
+        }
+        nqp::hash( # BEWARE: `hash(:$arity, ..)` might not work!
+            'arity', $arity,
+            'params', %params,
+            'body', @stmts == 1 ?? @stmts[0] !! QAST::Stmts.new(|@stmts)
+        );
+    }
+
 
 }   # end of class Util::QAST
+
 
 
 sub dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) is export {
@@ -482,4 +524,8 @@ sub drop_takeclosure($ast)              is export { Util::QAST.drop_takeclosure(
 sub remove_bogusOpNames($ast)           is export { Util::QAST.remove_bogusOpNames($ast) }
 
 sub inline_simple_methods($ast)         is export { Util::QAST.inline_simple_methods($ast) }
-sub cloneAndSubst($ast, &substitution?)  is export { Util::QAST.cloneAndSubst($ast, &substitution // -> $x { $x }) }
+sub cloneAndSubst($ast, &substitution?) is export { Util::QAST.cloneAndSubst($ast, &substitution // -> $x { $x }) }
+
+sub collect_params_and_body($node)      is export { Util::QAST.collect_params_and_body($node) }
+
+

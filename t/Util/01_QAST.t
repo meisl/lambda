@@ -5,7 +5,7 @@ use Util;
 
 use Util::QAST;
 
-plan(218);
+plan(230);
 
 
 
@@ -1130,12 +1130,75 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     lives_ok( { $out := cloneAndSubst($ast, &callback) }, 'cloneAndSubst with 2nd arg `&substitution`') || diag(dump($ast));
     isa_ok( $out, QAST::Block, 'cloneAndSubst with 2nd arg returns clone of 1st arg (a)') || diag(dump($out));
     ok(     !($out =:= $ast), 'cloneAndSubst with 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
-    isa_ok( $out[0], QAST::Var, :name<x>, :decl<var>, 'cloneAndSubst with 2nd arg returns *deep" clone of 1st arg (a)') || diag(dump($out));
+    isa_ok( $out[0], QAST::Var, :name<x>, :decl<var>, 'cloneAndSubst with 2nd arg returns *deep* clone of 1st arg (a)') || diag(dump($out));
     ok(     !($out[0] =:= $xVar), 'cloneAndSubst with 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
-    isa_ok( $out[1], QAST::Var, :name<y>, :decl<var>, 'cloneAndSubst with 2nd arg returns *deep" clone of 1st arg (c)') || diag(dump($out));
+    isa_ok( $out[1], QAST::Var, :name<y>, :decl<var>, 'cloneAndSubst with 2nd arg returns *deep* clone of 1st arg (c)') || diag(dump($out));
     ok(     !($out[1] =:= $yVar), 'cloneAndSubst with 2nd arg returns clone of 1st arg (d)') || diag(dump($out));
     is(     +@cb-calls, 3, 'cloneAndSubst with 2nd arg calls back that 2nd arg') || diag(dump($out));
     is(     $out, @cb-calls[2], 'cloneAndSubst with 2nd arg calls cb with *deep* clones, in a dfs-up manner') || diag(dump($out));
+}
+
+{ # collect_params_and_body ---------------------------------------------------
+    my $ast;
+    my $out;
+    my $handle := mkBlockWithCATCH();
+
+    $ast := QAST::Stmts.new();
+    dies_ok({ $out := collect_params_and_body($ast) }, 'collect_params_and_body requires a QAST::Block as 1st arg')
+        || diag($out);
+
+    $ast := QAST::Block.new($handle);
+    lives_ok({ $out := collect_params_and_body($ast) }, 
+        'collect_params_and_body can cope with exception handlers')
+        || diag(dump($ast));
+    
+    ok( nqp::ishash($out), 'collect_params_and_body returns a hash')
+        || diag('expected a hash - got ', describe($out));
+
+    is( $out<body>, $ast[0], 'collect_params_and_body puts a single non-Var-decl into <body> of returned hash')
+        || diag(dump($out<body>));
+
+    $ast.unshift(QAST::Var.new(:name<foo>));
+    $out := collect_params_and_body($ast);
+    is( $out<arity>, 0, 'collect_params_and_body counts Var decls under <arity> of returned hash')
+        || diag($out);
+    is( $out<body>[0], $ast[0], 'collect_params_and_body puts anything except Var decls into <body> of returned hash')
+        || diag(dump($out<body>));
+    is( $out<body>[1], $ast[1], 'collect_params_and_body puts anything except Var decls into <body> of returned hash')
+        || diag(dump($out<body>));
+
+    $ast.unshift(QAST::Var.new(:name<bar>, :decl<param>));
+    $out := collect_params_and_body($ast);
+    is( $out<arity>, 1, 'collect_params_and_body counts Var decls under <arity> of returned hash')
+        || diag($out);
+    is( $out<params><bar>, 0, 'collect_params_and_body puts Var decls into <params> of returned hash')
+        || diag($out<params>);
+    is( $out<body>[0], $ast[1], 'collect_params_and_body puts anything except Var decls into <body> of returned hash')
+        || diag(dump($out<body>));
+    is( $out<body>[1], $ast[2], 'collect_params_and_body puts anything except Var decls into <body> of returned hash')
+        || diag(dump($out<body>));
+
+    $ast := QAST::Block.new(
+        QAST::Stmts.new(
+            QAST::Var.new(:name<foo>, :decl<param>),
+            QAST::Var.new(:name<bar>, :decl<param>),
+        ),
+        QAST::Stmts.new(
+            QAST::Var.new(:name<foo>),
+            QAST::Var.new(:name<bar>),
+            QAST::Var.new(:name<baz>),
+            $handle
+        ),
+    );
+    $out := collect_params_and_body($ast);
+    is( $out<arity>, 2, 'collect_params_and_body counts Var decls under <arity> of returned hash - even under child 0 Stmts')
+        || diag($out);
+
+    # now let's check local vars:
+    #$ast[0].push(QAST::Var.new(:name<baz>, :decl<var>));
+    #$out := collect_params_and_body($ast);
+
+
 }
 
 

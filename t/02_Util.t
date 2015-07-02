@@ -4,7 +4,7 @@ use testing;
 
 use Util;
 
-plan(129);
+plan(130);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -112,7 +112,8 @@ $baz.HOW.mixin($baz, Baz);
 
 
 dies_ok( { istype(Foo) }, 'istype with only one arg');
-dies_ok( { istype(Foo, $foo) }, 'istype with non-type arg as type');
+dies_ok( { istype(Foo, $foo) }, 'istype with non-type arg as type (a)');
+dies_ok( { istype(Foo, 'foo') }, 'istype with non-type arg as type (b)');
 
 is(istype(Foo, NQPMu            ), 1, 'istype(Foo, NQPMu            )');
 is(istype(Foo, NQPMu, nqp::null ), 1, 'istype(Foo, NQPMu, nqp::null )');
