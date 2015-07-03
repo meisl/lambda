@@ -8,7 +8,6 @@ use Util::QAST;
 plan(230);
 
 
-
 sub isa_nok($actual, $refutedType, str $desc) {
     my $result;
     if $refutedType =:= str {
@@ -21,7 +20,7 @@ sub isa_nok($actual, $refutedType, str $desc) {
         $result := !istype($actual, $refutedType);
     }
     unless $result {
-        $desc := $desc ~ "\n  # expected: something other than a " ~ $refutedType.HOW.name($refutedType)
+        $desc := $desc ~ "\n  # expected: anything but a " ~ $refutedType.HOW.name($refutedType)
                        ~ "\n  #      got: " ~ describe($actual)
         ;
     }
@@ -1115,11 +1114,11 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     $ast := QAST::Block.new($xVar, $yVar);
     lives_ok( { $out := cloneAndSubst($ast) }, 'cloneAndSubst without 2nd arg `&substitution`') || diag(dump($ast));
     isa_ok($out, QAST::Block, 'cloneAndSubst without 2nd arg returns clone of 1st arg (a)') || diag(dump($out));
-    ok( !($out =:= $ast), 'cloneAndSubst without 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
+    isnt(  $out, $ast, 'cloneAndSubst without 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
     isa_ok($out[0], QAST::Var, :name<x>, :decl<var>, 'cloneAndSubst without 2nd arg returns *deep" clone of 1st arg (a)') || diag(dump($out));
-    ok( !($out[0] =:= $xVar), 'cloneAndSubst without 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
+    isnt(  $out[0], $xVar, 'cloneAndSubst without 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
     isa_ok($out[1], QAST::Var, :name<y>, :decl<var>, 'cloneAndSubst without 2nd arg returns *deep" clone of 1st arg (c)') || diag(dump($out));
-    ok( !($out[1] =:= $yVar), 'cloneAndSubst without 2nd arg returns clone of 1st arg (d)') || diag(dump($out));
+    isnt(  $out[1], $yVar, 'cloneAndSubst without 2nd arg returns clone of 1st arg (d)') || diag(dump($out));
 
     my @cb-calls := [];
     my &callback := -> $n {
@@ -1128,14 +1127,14 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     };
     $ast := QAST::Block.new($xVar, $yVar);
     lives_ok( { $out := cloneAndSubst($ast, &callback) }, 'cloneAndSubst with 2nd arg `&substitution`') || diag(dump($ast));
-    isa_ok( $out, QAST::Block, 'cloneAndSubst with 2nd arg returns clone of 1st arg (a)') || diag(dump($out));
-    ok(     !($out =:= $ast), 'cloneAndSubst with 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
-    isa_ok( $out[0], QAST::Var, :name<x>, :decl<var>, 'cloneAndSubst with 2nd arg returns *deep* clone of 1st arg (a)') || diag(dump($out));
-    ok(     !($out[0] =:= $xVar), 'cloneAndSubst with 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
-    isa_ok( $out[1], QAST::Var, :name<y>, :decl<var>, 'cloneAndSubst with 2nd arg returns *deep* clone of 1st arg (c)') || diag(dump($out));
-    ok(     !($out[1] =:= $yVar), 'cloneAndSubst with 2nd arg returns clone of 1st arg (d)') || diag(dump($out));
-    is(     +@cb-calls, 3, 'cloneAndSubst with 2nd arg calls back that 2nd arg') || diag(dump($out));
-    is(     $out, @cb-calls[2], 'cloneAndSubst with 2nd arg calls cb with *deep* clones, in a dfs-up manner') || diag(dump($out));
+    isa_ok($out, QAST::Block, 'cloneAndSubst with 2nd arg returns clone of 1st arg (a)') || diag(dump($out));
+    isnt(  $out, $ast, 'cloneAndSubst with 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
+    isa_ok($out[0], QAST::Var, :name<x>, :decl<var>, 'cloneAndSubst with 2nd arg returns *deep* clone of 1st arg (a)') || diag(dump($out));
+    isnt(  $out[0], $xVar, 'cloneAndSubst with 2nd arg returns clone of 1st arg (b)') || diag(dump($out));
+    isa_ok($out[1], QAST::Var, :name<y>, :decl<var>, 'cloneAndSubst with 2nd arg returns *deep* clone of 1st arg (c)') || diag(dump($out));
+    isnt(  $out[1], $yVar, 'cloneAndSubst with 2nd arg returns clone of 1st arg (d)') || diag(dump($out));
+    is(    +@cb-calls, 3, 'cloneAndSubst with 2nd arg calls back that 2nd arg') || diag(dump($out));
+    is(    $out, @cb-calls[2], 'cloneAndSubst with 2nd arg calls cb with *deep* clones, in a dfs-up manner') || diag(dump($out));
 }
 
 { # collect_params_and_body ---------------------------------------------------

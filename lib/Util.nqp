@@ -1,6 +1,7 @@
 #!nqp
 
 class Util {
+    method hash(*%adverbs) { %adverbs }
 
     method min($a, $b) { $a < $b ?? $a !! $b }
     method max($a, $b) { $a > $b ?? $a !! $b }

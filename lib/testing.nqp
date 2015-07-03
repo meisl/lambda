@@ -379,8 +379,8 @@ class Testing {
 
         self.ok($result, $desc, |@descX);
     }
-
-    method is($actual, $expected, $desc) {
+    
+    sub test_is($actual, $expected) {
         my $result;
         my $comp;
         if nqp::isstr($expected) {
@@ -406,12 +406,27 @@ class Testing {
             $result := $actual =:= $expected;
             $comp := '=:=';
         }
-        unless $result {
-            $desc := $desc ~ "\n  # expected ($comp): " ~ describe($expected)
-                           ~ "\n  #" ~ nqp::x(' ', nqp::chars($comp) + 9) ~ "got: " ~ describe($actual)
+        nqp::hash('result', $result, 'comp', $comp);
+    }
+
+    method is($actual, $expected, $desc) {
+        my $test := test_is($actual, $expected);
+        unless $test<result> {
+            $desc := $desc ~ "\n  # expected (" ~ $test<comp> ~ '): ' ~ describe($expected)
+                           ~ "\n  #" ~ nqp::x(' ', nqp::chars($test<comp>) + 9) ~ "got: " ~ describe($actual)
             ;
         }
-        self.ok($result, $desc);
+        self.ok($test<result>, $desc);
+    }
+
+    method isnt($actual, $expected, $desc) {
+        my $test := test_is($actual, $expected);
+        if $test<result> {
+            $desc := $desc ~ "\n  # expected anything but (" ~ $test<comp> ~ '): ' ~ describe($expected)
+                           ~ "\n  #" ~ nqp::x(' ', nqp::chars($test<comp>) + 22) ~ "got: the very same"
+            ;
+        }
+        self.ok(!$test<result>, $desc);
     }
 
     sub is_same($actual, $expected, $desc) {
@@ -454,6 +469,7 @@ sub passes_ok($block, $desc?)           is export { Testing.passes_ok($block, $d
 sub lives_ok($block, $desc?)            is export { Testing.lives_ok($block, $desc) }
 sub dies_ok($block, $desc?)             is export { Testing.dies_ok($block, $desc) }
 sub is($actual, $expected, $desc?)      is export { Testing.is($actual, $expected, $desc) }
+sub isnt($actual, $expected, $desc?)    is export { Testing.isnt($actual, $expected, $desc) }
 
 
 sub MAIN(*@ARGS) {
