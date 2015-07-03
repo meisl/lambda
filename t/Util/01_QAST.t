@@ -5,7 +5,7 @@ use Util;
 
 use Util::QAST;
 
-plan(230);
+plan(244);
 
 
 sub isa_nok($actual, $refutedType, str $desc) {
@@ -1211,7 +1211,6 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
 { # inline_simple_subs --------------------------------------------------------
     my $ast;
     my $out;
-    my $handle := mkBlockWithCATCH();
 
     my $nVar := QAST::Var.new(:name<n>);
     my @inlinableDefs := [
@@ -1225,6 +1224,12 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
                     QAST::SVal.new(:value('-')),
                     $nVar
                 )
+            )
+        ),
+        QAST::Op.new(:op<bind>,
+            QAST::Var.new(:name('&five'), :decl<var>),
+            QAST::Block.new(
+                QAST::IVal.new(:value(5)),
             )
         ),
     ];
@@ -1248,6 +1253,28 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     isa_ok( $out[1], QAST::Op, :op<call>, :name('&bar'), 'inline_simple_subs leaves calls to non-inlinables untouched (a)')
         || diag(dump($out));
     isa_ok( $out[1][0], QAST::IVal, :value(7),           'inline_simple_subs leaves calls to non-inlinables untouched (b)')
+        || diag(dump($out));
+    isa_nok($out[0], QAST::SpecialArg, 'inline_simple_subs does inline a SpecialArg if original call wasn\'t one')
+        || diag(dump($out));
+
+
+    # multi-stage
+    $ast := QAST::Stmts.new(
+        QAST::Op.new(:op<call>, :name('&foo'),
+            QAST::Op.new(:op<call>, :name('&five'))
+        ),
+    );
+    #diag(dump($ast));
+    $out := inline_simple_subs($ast, @inlinableDefs);
+    isa_ok( $out[0], QAST::Op, :op<x>,              'multi-stage: inline_simple_subs inlined body from inlinableDefs (a)')
+        || diag(dump($out));
+    isa_ok( $out[0][0], QAST::SVal, :value('-'),    'multi-stage: inline_simple_subs inlined body from inlinableDefs (b)')
+        || diag(dump($out));
+    isa_ok( $out[0][1], QAST::IVal, :value(5),      'multi-stage: inline_simple_subs inlined body from inlinableDefs (c)')
+        || diag(dump($out));
+    isa_nok($out[0], QAST::SpecialArg, 'multi-stage: inline_simple_subs does inline a SpecialArg if original call wasn\'t one (a)')
+        || diag(dump($out));
+    isa_nok($out[0][1], QAST::SpecialArg, 'multi-stage: inline_simple_subs does inline a SpecialArg if original call wasn\'t one (b)')
         || diag(dump($out));
 
 }
