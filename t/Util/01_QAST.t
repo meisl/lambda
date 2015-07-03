@@ -1193,10 +1193,62 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     is( $out<arity>, 2, 'collect_params_and_body counts Var decls under <arity> of returned hash - even under child 0 Stmts')
         || diag($out);
 
+    is( $out<params><foo>, 0, 'collect_params_and_body collects Var decls under <params> of returned hash - even under child 0 Stmts')
+        || diag($out);
+    is( $out<params><bar>, 1, 'collect_params_and_body collects Var decls under <params> of returned hash - even under child 0 Stmts')
+        || diag($out);
+
+    isa_ok( $out<body>, QAST::Stmts, 'collect_params_and_body collects all the rest under a Stmts')
+        || diag($out);
+
     # now let's check local vars:
     #$ast[0].push(QAST::Var.new(:name<baz>, :decl<var>));
     #$out := collect_params_and_body($ast);
+}
 
+
+
+{ # inline_simple_subs --------------------------------------------------------
+    my $ast;
+    my $out;
+    my $handle := mkBlockWithCATCH();
+
+    my $nVar := QAST::Var.new(:name<n>);
+    my @inlinableDefs := [
+        QAST::Op.new(:op<bind>,
+            QAST::Var.new(:name('&foo'), :decl<var),
+            QAST::Block.new(
+                QAST::Stmts.new(
+                    QAST::Var.new(:name<n>, :decl<param>),
+                ),
+                QAST::Op.new(:op<x>,
+                    QAST::SVal.new(:value('-')),
+                    $nVar
+                )
+            )
+        ),
+    ];
+
+    $ast := QAST::Stmts.new(
+        QAST::Op.new(:op<call>, :name('&foo'),
+            QAST::IVal.new(:value(5))
+        ),
+        QAST::Op.new(:op<call>, :name('&bar'),
+            QAST::IVal.new(:value(7))
+        ),
+    );
+    #diag(dump($ast));
+    $out := inline_simple_subs($ast, @inlinableDefs);
+    isa_ok( $out[0], QAST::Op, :op<x>,                   'inline_simple_subs inlined body from inlinableDefs (a)')
+        || diag(dump($out));
+    isa_ok( $out[0][0], QAST::SVal, :value('-'),         'inline_simple_subs inlined body from inlinableDefs (b)')
+        || diag(dump($out));
+    isa_ok( $out[0][1], QAST::IVal, :value(5),           'inline_simple_subs inlined body from inlinableDefs (c)')
+        || diag(dump($out));
+    isa_ok( $out[1], QAST::Op, :op<call>, :name('&bar'), 'inline_simple_subs leaves calls to non-inlinables untouched (a)')
+        || diag(dump($out));
+    isa_ok( $out[1][0], QAST::IVal, :value(7),           'inline_simple_subs leaves calls to non-inlinables untouched (b)')
+        || diag(dump($out));
 
 }
 

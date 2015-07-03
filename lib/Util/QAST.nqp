@@ -504,6 +504,75 @@ class Util::QAST {
     }
 
 
+    method inline_simple_subs($node, @inlinableDefs, %inlineables = {}) {
+        if istype($node, QAST::Node) {
+
+            # on first step, prepare:
+            if nqp::elems(@inlinableDefs) > 0 {
+                for @inlinableDefs {
+                    next if nqp::isnull($_);
+                    nqp::die("invalid def of inlineable sub: " ~ describe($_))
+                        unless istype($_, QAST::Node);
+                    nqp::die("invalid def of inlineable sub: " ~ dump($_))
+                        unless istype($_, QAST::Op) && $_.op eq 'bind'
+                            && istype($_[0], QAST::Var)
+                            && istype($_[1], QAST::Block);
+                    my $name   := $_[0].name;
+                    my $block  := $_[1];
+                    my %results := collect_params_and_body($block);
+                    my %params := %results<params>;
+                    my $body   := %results<body>;
+                    my $arity  := +%params;
+
+                    nqp::die("no statements found in inlineable $name: " ~ dump($block))
+                        unless !istype($body, QAST::Stmts, QAST::Stmt) || $body.list;
+
+                    %inlineables{$name} := -> @arguments {
+                        my $argCount := nqp::elems(@arguments);
+                        nqp::die("cannot inline call with $argCount args to $arity" ~ "-arity fn $name")
+                            unless $argCount == $arity;
+                        my $out := cloneAndSubst($body, -> $n {
+        #                    say('####', dump($n));
+                            if istype($n, QAST::Var) && nqp::existskey(%params, $n.name) {
+                                my $out := @arguments[%params{$n.name}];
+        #                        say('#### substituted ', dump($out, :oneLine), ' for ', dump($n, :oneLine));
+                                $out;
+                            } else {
+                                $n;
+                            }
+                        });
+                        $out;
+                    };
+                }
+                return self.inline_simple_subs($node, [], %inlineables);
+            }
+
+            # next, recurse into children:
+            my $i := 0;
+            my @children := $node.list;
+            for @children {
+                @children[$i] := self.inline_simple_subs($_, [], %inlineables);
+                $i++;
+            }
+
+            if istype($node, QAST::Op) && ($node.op eq 'call' || $node.op eq 'callstatic') {
+                my $codeMaker := %inlineables{$node.name};
+                if $codeMaker {
+                    my $out := $codeMaker($node.list);
+                    $out.annotate('inlined', $node.name);
+        #            say('>>>> inlined ', dump($out), "\n>>>> for ", dump($node));
+                    $out.node($node.node);
+                    $out.flat($node.flat);
+                    $out.named($node.named);
+                    $node := $out;
+                }
+            }
+        }
+
+        $node;
+    }
+
+
 }   # end of class Util::QAST
 
 
@@ -528,4 +597,5 @@ sub cloneAndSubst($ast, &substitution?) is export { Util::QAST.cloneAndSubst($as
 
 sub collect_params_and_body($node)      is export { Util::QAST.collect_params_and_body($node) }
 
+sub inline_simple_subs($node, @inlinableDefs) is export { Util::QAST.inline_simple_subs($node, @inlinableDefs) }
 
