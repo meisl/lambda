@@ -468,6 +468,7 @@ class Util::QAST {
 
         my $arity  := 0;
         my %params := {};
+        my %locals := {};
         my @stmts  := [];
 
         my @children := nqp::clone($node.list);
@@ -487,20 +488,31 @@ class Util::QAST {
                         %params{$varName} := $arity;
                         $arity++;
                     } else {
-                        nqp::die('cannot handle :decl(' ~ $_.decl ~ ')');
+                        %locals{$varName} := $_;
                     }
                 } else {
                     @stmts.push($_);
                 }
+            } elsif istype($_, QAST::Op) && ($_.op eq 'bind') && istype($_[0], QAST::Var) && $_[0].decl {
+                %locals{$_[0].name} := $_[0];
+                my $bind := self.cloneAndSubst($_, -> $n { $n });
+                $bind[0].decl(nqp::null_s());
+                @stmts.push($bind);
             } else {
                 @stmts.push($_);
             }
         }
-        nqp::hash( # BEWARE: `hash(:$arity, ..)` might not work!
+        my %out := nqp::hash( # BEWARE: `hash(:$arity, ..)` might not work!
             'arity', $arity,
             'params', %params,
-            'body', @stmts == 1 ?? @stmts[0] !! QAST::Stmts.new(|@stmts)
+            'locals', %locals
         );
+        if %locals {
+            %out{'body'} := QAST::Block.new(|@stmts);
+        } else {
+            %out{'body'} := @stmts == 1 ?? @stmts[0] !! QAST::Stmts.new(|@stmts);
+        }
+        %out;
     }
 
     sub prepare_inliners(@inlinableDefs) {
@@ -517,8 +529,14 @@ class Util::QAST {
             my $block  := $_[1];
             my %results := collect_params_and_body($block);
             my %params := %results<params>;
+            my %locals := %results<locals>;
             my $body   := %results<body>;
             my $arity  := +%params;
+
+            if %locals {
+                my $v := nqp::iterval(nqp::iterator(%locals).shift);
+                nqp::die('cannot handle :decl(' ~ $v.decl ~ '): ' ~ dump($v));
+            }
 
             nqp::die("no statements found in inlineable $name: " ~ dump($block))
                 unless !istype($body, QAST::Stmts, QAST::Stmt) || $body.list;

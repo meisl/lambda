@@ -1202,6 +1202,42 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
         || diag($out);
 
     # now let's check local vars:
+
+    $ast := QAST::Block.new(
+        QAST::Var.new(:name('$x'), :decl<var>),
+        QAST::Var.new(:name('$x')),
+    );
+    lives_ok( { $out := collect_params_and_body($ast) }, 'collect_params_and_body on Block with local Var decl')
+        || diag(dump($ast));
+    isa_ok($out<locals>{'$x'}, QAST::Var, :name('$x'), :decl<var>, 'collect_params_and_body on Block with local Var decl collects local decls under <locals>')
+        || diag($out);
+    isa_ok($out<body>, QAST::Block, 'collect_params_and_body on Block with local Var decl returns a Block as <body> (a)')
+        || diag($out);
+    isa_ok($out<body>[0], QAST::Var, :name('$x'), :decl(''), 'collect_params_and_body on Block with local Var decl returns a Block as <body> (b)')
+        || diag($out);
+
+    $ast := QAST::Block.new(
+        QAST::Op.new(:op<bind>,
+            QAST::Var.new(:name('$x'), :decl<var>),
+            QAST::IVal.new(:value(3))
+        ),
+        QAST::Var.new(:name('$x')),
+    );
+    lives_ok( { $out := collect_params_and_body($ast) }, 'collect_params_and_body on Block with local Var decl under bind')
+        || diag(dump($ast));
+    isa_ok($out<locals>{'$x'}, QAST::Var, :name('$x'), :decl<var>, 'collect_params_and_body on Block with local Var decl under bind collects local decls under <locals>')
+        || diag($out);
+    isa_ok($out<body>, QAST::Block, 'collect_params_and_body on Block with local Var decl under bind returns a Block as <body> (a)')
+        || diag($out);
+    isa_ok($out<body>[0], QAST::Op, :op<bind>, 'collect_params_and_body on Block with local Var decl under bind returns a Block as <body> (b)')
+        || diag(dump($out<body>));
+    isa_ok($out<body>[0][0], QAST::Var, :name('$x'), :decl(''), 'collect_params_and_body on Block with local Var decl under bind returns a Block as <body> (b)')
+        || diag(dump($out<body>));
+    isa_ok($out<body>[0][1], QAST::IVal, :value(3), 'collect_params_and_body on Block with local Var decl under bind returns a Block as <body> (b)')
+        || diag(dump($out<body>));
+    isa_ok($out<body>[1], QAST::Var, :name('$x'), :decl(''), 'collect_params_and_body on Block with local Var decl under bind returns a Block as <body> (b)')
+        || diag(dump($out<body>));
+
     #$ast[0].push(QAST::Var.new(:name<baz>, :decl<var>));
     #$out := collect_params_and_body($ast);
 }
@@ -1277,6 +1313,52 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     isa_nok($out[0][1], QAST::SpecialArg, 'multi-stage: inline_simple_subs does inline a SpecialArg if original call wasn\'t one (b)')
         || diag(dump($out));
 
+
+    my $sub_with_local_var := QAST::Op.new(:op<bind>,
+        QAST::Var.new(:name('&baz')),
+        QAST::Block.new(
+            QAST::Var.new(:name('$count'), :decl<param>),
+            QAST::Var.new(:name('$blah'), :decl<var>),
+            QAST::Var.new(:name('$count'))
+        )
+    );
+    $ast := QAST::Op.new(:op<call>, :name('&baz'),
+        QAST::IVal.new(:value(42), :named<count>)
+    );
+    dies_ok( { $out := inline_simple_subs($ast, [$sub_with_local_var]) }, 
+        'inline_simple_subs with local var in inlinable sub')
+        || diag(dump($out));
+
+
+    my $sub_with_local_var_under_bind := QAST::Op.new(:op<bind>,
+        QAST::Var.new(:name('&baz')),
+        QAST::Block.new(
+            QAST::Var.new(:name('$count'), :decl<param>),
+            QAST::Op.new(:op<bind>, QAST::Var.new(:name('$blah'), :decl<var>), QAST::IVal.new(:value(23))),
+            QAST::Var.new(:name('$count'))
+        )
+    );
+    $ast := QAST::Op.new(:op<call>, :name('&baz'),
+        QAST::IVal.new(:value(42), :named<count>)
+    );
+    dies_ok( { $out := inline_simple_subs($ast, [$sub_with_local_var_under_bind]) }, 
+        'inline_simple_subs with local var under bind in inlinable sub')
+        || diag(dump($out));
+
+
+    my $sub_with_named_param := QAST::Op.new(:op<bind>,
+        QAST::Var.new(:name('&baz')),
+        QAST::Block.new(
+            QAST::Var.new(:name('$count'), :named<count>, :decl<param>),
+            QAST::Var.new(:name('$count'))
+        )
+    );
+    $ast := QAST::Op.new(:op<call>, :name('&baz'),
+        QAST::IVal.new(:value(42), :named<count>)
+    );
+    dies_ok( { $out := inline_simple_subs($ast, [$sub_with_named_param]) }, 
+        'inline_simple_subs with named param in inlinable sub')
+        || diag(dump($out));
 }
 
 
