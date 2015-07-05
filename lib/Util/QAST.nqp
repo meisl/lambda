@@ -468,6 +468,7 @@ class Util::QAST {
 
         my $arity  := 0;
         my %params := {};
+        my %named  := {};
         my %locals := {};
         my @stmts  := [];
 
@@ -481,12 +482,14 @@ class Util::QAST {
                 my $varName := $_.name;
                 if $_.decl {
                     if $_.decl eq 'param' {
-                        nqp::die("cannot handle :named parameter $varName: " ~ dump($_))
-                            if $_.named;
                         nqp::die("cannot handle :slurpy parameter $varName: " ~ dump($_))
                             if $_.slurpy;
-                        %params{$varName} := $arity;
-                        $arity++;
+                        if $_.named {
+                            %named{$_.named} := $_;
+                        } else {
+                            %params{$varName} := $arity;
+                            $arity++;
+                        }
                     } else {
                         %locals{$varName} := $_;
                     }
@@ -505,10 +508,11 @@ class Util::QAST {
         my %out := nqp::hash( # BEWARE: `hash(:$arity, ..)` might not work!
             'arity', $arity,
             'params', %params,
+            'named',  %named,
             'locals', %locals
         );
         if %locals {
-            %out{'body'} := QAST::Block.new(|@stmts);
+            %out{'body'} := QAST::Block.new(:blocktype<immediate>, |@stmts);
         } else {
             %out{'body'} := @stmts == 1 ?? @stmts[0] !! QAST::Stmts.new(|@stmts);
         }
@@ -529,9 +533,14 @@ class Util::QAST {
             my $block  := $_[1];
             my %results := collect_params_and_body($block);
             my %params := %results<params>;
+            my %named  := %results<named>;
             my %locals := %results<locals>;
             my $body   := %results<body>;
             my $arity  := +%params;
+            
+            if %named {
+                nqp::die("cannot handle :named parameters: " ~ describe(%named))
+            }
 
             if %locals {
                 my $v := nqp::iterval(nqp::iterator(%locals).shift);
