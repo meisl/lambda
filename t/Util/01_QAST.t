@@ -5,7 +5,8 @@ use Util;
 
 use Util::QAST;
 
-plan(244);
+plan(271);
+
 
 
 sub isa_nok($actual, $refutedType, str $desc) {
@@ -1154,27 +1155,31 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     ok( nqp::ishash($out), 'collect_params_and_body returns a hash')
         || diag('expected a hash - got ', describe($out));
 
-    is( $out<body>, $ast[0], 'collect_params_and_body puts a single non-Var-decl into <body> of returned hash')
+    is( $out<body>, $ast[0], 'collect_params_and_body puts a single non-Var-decl under key <body> ')
         || diag(dump($out<body>));
 
     $ast.unshift(QAST::Var.new(:name<foo>));
     $out := collect_params_and_body($ast);
-    is( $out<arity>, 0, 'collect_params_and_body counts Var decls under <arity> of returned hash')
+    is( $out<arity>, 0, 'collect_params_and_body counts Var decls under key <arity>')
         || diag($out);
-    is( $out<body>[0], $ast[0], 'collect_params_and_body puts anything except Var decls into <body> of returned hash')
+    is( $out<body>[0], $ast[0], 'collect_params_and_body puts anything except Var decls under key <body>')
         || diag(dump($out<body>));
-    is( $out<body>[1], $ast[1], 'collect_params_and_body puts anything except Var decls into <body> of returned hash')
+    is( $out<body>[1], $ast[1], 'collect_params_and_body puts anything except Var decls under key <body>')
         || diag(dump($out<body>));
+
+    # positional parameters:
 
     $ast.unshift(QAST::Var.new(:name<bar>, :decl<param>));
     $out := collect_params_and_body($ast);
-    is( $out<arity>, 1, 'collect_params_and_body counts Var decls under <arity> of returned hash')
-        || diag($out);
-    is( $out<params><bar>, 0, 'collect_params_and_body puts Var decls into <params> of returned hash')
-        || diag($out<params>);
-    is( $out<body>[0], $ast[1], 'collect_params_and_body puts anything except Var decls into <body> of returned hash')
+    is( $out<arity>, 1,
+        'collect_params_and_body counts Var decls under key <arity>') || diag($out);
+    isa_ok( $out<params><bar>, QAST::Var, :name<bar>, :decl<param>, 
+        'collect_params_and_body puts Var decls under key <params>') || diag($out<params>);
+    is( $out<params><bar>.ann('positional_index'), 0,
+        'collect_params_and_body annotates Var decls with "positional_index"') || diag($out<params>);
+    is( $out<body>[0], $ast[1], 'collect_params_and_body puts anything except Var decls under key <body>')
         || diag(dump($out<body>));
-    is( $out<body>[1], $ast[2], 'collect_params_and_body puts anything except Var decls into <body> of returned hash')
+    is( $out<body>[1], $ast[2], 'collect_params_and_body puts anything except Var decls under key <body>')
         || diag(dump($out<body>));
 
     $ast := QAST::Block.new(
@@ -1190,13 +1195,17 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
         ),
     );
     $out := collect_params_and_body($ast);
-    is( $out<arity>, 2, 'collect_params_and_body counts Var decls under <arity> of returned hash - even under child 0 Stmts')
+    is( $out<arity>, 2, 'collect_params_and_body counts Var decls under key <arity> - even under child 0 Stmts')
         || diag($out);
 
-    is( $out<params><foo>, 0, 'collect_params_and_body collects Var decls under <params> of returned hash - even under child 0 Stmts')
-        || diag($out);
-    is( $out<params><bar>, 1, 'collect_params_and_body collects Var decls under <params> of returned hash - even under child 0 Stmts')
-        || diag($out);
+    isa_ok( $out<params><foo>, QAST::Var, :name<foo>, :decl<param>, 
+        'collect_params_and_body collects Var decls under key <params> - even under child 0 Stmts (a)') || diag($out);
+    is( $out<params><foo>.ann('positional_index'), 0,
+        'collect_params_and_body annotates Var decls with "positional_index" (a)') || diag($out<params>);
+    isa_ok( $out<params><bar>, QAST::Var, :name<bar>, :decl<param>, 
+        'collect_params_and_body collects Var decls under key <params> - even under child 0 Stmts (b)') || diag($out);
+    is( $out<params><bar>.ann('positional_index'), 1, 
+        ' annotates Var decls with "positional_index" (b)') || diag($out);
 
     isa_ok( $out<body>, QAST::Stmts, 'collect_params_and_body collects all the rest under a Stmts')
         || diag($out);
@@ -1216,6 +1225,31 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
         || diag(dump($ast));
     isa_ok( $out<named><foo>, QAST::Var, :name<$foo>, :named<foo>, :decl<param>, 
         'collect_params_and_body collects named params under key "named", then value of .named attr')
+        || diag($out);
+
+
+    # special parameters, slurpy:
+
+    $ast := QAST::Block.new(
+        QAST::Stmts.new(
+            QAST::Var.new(:name<@foo>, :decl<param>, :slurpy),
+        ),
+        QAST::Stmts.new(
+            QAST::Var.new(:name<@foo>),
+        )
+    );
+    lives_ok( { $out := collect_params_and_body($ast) }, 'collect_params_and_body on Block with slurpy positional param') 
+        || diag($out);
+
+    $ast := QAST::Block.new(
+        QAST::Stmts.new(
+            QAST::Var.new(:name<@foo>, :decl<param>, :slurpy, :named<foo>),
+        ),
+        QAST::Stmts.new(
+            QAST::Var.new(:name<@foo>),
+        )
+    );
+    lives_ok( { $out := collect_params_and_body($ast) }, 'collect_params_and_body on Block with slurpy named param') 
         || diag($out);
 
 
@@ -1332,18 +1366,30 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     isa_nok($out[0][1], QAST::SpecialArg, 'multi-stage: inline_simple_subs does inline a SpecialArg if original call wasn\'t one (b)')
         || diag(dump($out));
 
-    # special parameters:
+    # special parameters, named:
 
-    $ast := QAST::Block.new(
-        QAST::Stmts.new(
-            QAST::Var.new(:name<$foo>, :decl<param>, :named<foo>),
-        ),
-        QAST::Stmts.new(
-            QAST::Var.new(:name<$foo>),
-        )
-    );
-    dies_ok( { $out := inline_simple_subs($ast) }, 'inline_simple_subs on Block with named param') 
-        || diag($out);
+    @inlinableDefs := [QAST::Op.new(:op<bind>, QAST::Var.new(:name<&bar>, :decl<var>), QAST::Block.new(
+        QAST::Var.new(:name<$foo>, :decl<param>, :named<foo>),
+        QAST::Stmts.new(QAST::Var.new(:name<$foo>))
+    ))];
+    dies_ok( { $out := inline_simple_subs($ast, @inlinableDefs) }, 
+        'inline_simple_subs on Block with named param') || diag($out);
+
+    # special parameters, slurpy:
+
+    @inlinableDefs := [QAST::Op.new(:op<bind>, QAST::Var.new(:name<&bar>, :decl<var>), QAST::Block.new(
+        QAST::Var.new(:name<@foo>, :decl<param>, :slurpy),
+        QAST::Stmts.new(QAST::Var.new(:name<@foo>))
+    ))];
+    dies_ok( { $out := inline_simple_subs($ast, @inlinableDefs) }, 
+        'inline_simple_subs on Block with slurpy positional param') || diag($out);
+
+    @inlinableDefs := [QAST::Op.new(:op<bind>, QAST::Var.new(:name<&bar>, :decl<var>), QAST::Block.new(
+        QAST::Var.new(:name<%foo>, :decl<param>, :slurpy, :named<foo>),
+        QAST::Stmts.new(QAST::Var.new(:name<%foo>))
+    ))];
+    dies_ok( { $out := inline_simple_subs($ast, @inlinableDefs) },
+        'inline_simple_subs on Block with slurpy named param') || diag($out);
 
 
     # local vars:
@@ -1360,8 +1406,7 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
         QAST::IVal.new(:value(42), :named<count>)
     );
     dies_ok( { $out := inline_simple_subs($ast, [$sub_with_local_var]) }, 
-        'inline_simple_subs with local var in inlinable sub')
-        || diag(dump($out));
+        'inline_simple_subs with local var in inlinable sub') || diag(dump($out));
 
 
     my $sub_with_local_var_under_bind := QAST::Op.new(:op<bind>,
@@ -1376,23 +1421,31 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
         QAST::IVal.new(:value(42), :named<count>)
     );
     dies_ok( { $out := inline_simple_subs($ast, [$sub_with_local_var_under_bind]) }, 
-        'inline_simple_subs with local var under bind in inlinable sub')
-        || diag(dump($out));
+        'inline_simple_subs with local var under bind in inlinable sub') || diag(dump($out));
 
 
-    my $sub_with_named_param := QAST::Op.new(:op<bind>,
-        QAST::Var.new(:name('&baz')),
-        QAST::Block.new(
-            QAST::Var.new(:name('$count'), :named<count>, :decl<param>),
-            QAST::Var.new(:name('$count'))
-        )
+    # non-inlinable/invalid callsite:
+    @inlinableDefs := [QAST::Op.new(:op<bind>, QAST::Var.new(:name<&bar>, :decl<var>), QAST::Block.new(
+        QAST::Var.new(:name<$foo>, :decl<param>),
+        QAST::Stmts.new(QAST::Var.new(:name<$foo>))
+    ))];
+
+    $ast := QAST::Op.new(:op<call>, :name('&bar'),
+        QAST::IVal.new(:value(42)),
+        QAST::IVal.new(:value(23)),
     );
-    $ast := QAST::Op.new(:op<call>, :name('&baz'),
-        QAST::IVal.new(:value(42), :named<count>)
+    dies_ok( { $out := inline_simple_subs($ast, @inlinableDefs) }, 
+        'inline_simple_subs with wrong arity in callsite') || diag(dump($out));
+
+    $ast := QAST::Op.new(:op<call>, :name('&bar'),
+        QAST::IVal.new(:value(42), :named<n>),
     );
-    dies_ok( { $out := inline_simple_subs($ast, [$sub_with_named_param]) }, 
-        'inline_simple_subs with named param in inlinable sub')
-        || diag(dump($out));
+    lives_ok( { $out := inline_simple_subs($ast, @inlinableDefs) }, 
+        'inline_simple_subs with wrong named param in callsite') || diag(dump($out));
+    isa_ok($out, QAST::Op, :op<call>, :name<&bar>, 
+        'inline_simple_subs with wrong named param in callsite leaves arg untouched (a)') || diag(dump($out));
+    isa_ok($out[0], QAST::IVal, :value(42), :named<n>, 
+        'inline_simple_subs with wrong named param in callsite leaves arg untouched (b)') || diag(dump($out));
 }
 
 

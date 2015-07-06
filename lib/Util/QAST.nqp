@@ -469,6 +469,7 @@ class Util::QAST {
         my $arity  := 0;
         my %params := {};
         my %named  := {};
+        my %slurpy := {};
         my %locals := {};
         my @stmts  := [];
 
@@ -482,12 +483,14 @@ class Util::QAST {
                 my $varName := $_.name;
                 if $_.decl {
                     if $_.decl eq 'param' {
-                        nqp::die("cannot handle :slurpy parameter $varName: " ~ dump($_))
-                            if $_.slurpy;
+                        if $_.slurpy {
+                            %slurpy{$_.name} := $_;
+                        }
                         if $_.named {
                             %named{$_.named} := $_;
                         } else {
-                            %params{$varName} := $arity;
+                            $_.annotate('positional_index', $arity);
+                            %params{$varName} := $_;
                             $arity++;
                         }
                     } else {
@@ -508,6 +511,7 @@ class Util::QAST {
         my %out := nqp::hash( # BEWARE: `hash(:$arity, ..)` might not work!
             'arity', $arity,
             'params', %params,
+            'slurpy', %slurpy,
             'named',  %named,
             'locals', %locals
         );
@@ -534,14 +538,19 @@ class Util::QAST {
             my %results := collect_params_and_body($block);
             my %params := %results<params>;
             my %named  := %results<named>;
+            my %slurpy := %results<slurpy>;
             my %locals := %results<locals>;
             my $body   := %results<body>;
             my $arity  := +%params;
             
             if %named {
-                nqp::die("cannot handle :named parameters: " ~ describe(%named))
+                my $v := nqp::iterval(nqp::iterator(%named).shift);
+                nqp::die("cannot handle :named parameters: " ~ dump($v))
             }
-
+            if %slurpy {
+                my $v := nqp::iterval(nqp::iterator(%slurpy).shift);
+                nqp::die("cannot handle :slurpy parameter: " ~ dump($v));
+            }
             if %locals {
                 my $v := nqp::iterval(nqp::iterator(%locals).shift);
                 nqp::die('cannot handle :decl(' ~ $v.decl ~ '): ' ~ dump($v));
@@ -555,9 +564,14 @@ class Util::QAST {
                 nqp::die("cannot inline call with $argCount args to $arity" ~ "-arity fn $name")
                     unless $argCount == $arity;
                 my $out := cloneAndSubst($body, -> $n {
-                    if istype($n, QAST::Var) && nqp::existskey(%params, $n.name) {
-                        my $out := @arguments[%params{$n.name}];
-                        $out;
+                    if istype($n, QAST::Var) {
+                        my $decl := %params{$n.name};
+                        if $decl {  # it's a positional arg
+                            @arguments[$decl.ann('positional_index')];
+                        #} elsif { # TODO: named params
+                        } else {
+                            $n;
+                        }
                     } else {
                         $n;
                     }
@@ -574,22 +588,23 @@ class Util::QAST {
             -> $n, @p { 
                 my $take := istype($n, QAST::Op) 
                     && ($n.op eq 'call' || $n.op eq 'callstatic')
-                    && !nqp::isnull_s($n.name) && $n.name ne '';
+                    && !nqp::isnull_s($n.name) && nqp::existskey(%inliners, $n.name)
+                ;
+                if $take {
+                    $take := $take && !($_.named) for $n.list;
+                }
                 TreeWalkDo.recurse(:$take);
             },
             -> $n, @p {
-                my $codeMaker := %inliners{$n.name};
-                if $codeMaker {
-                    my $out := $codeMaker($n.list);
-                    $out.annotate('inlined', $n.name);
-                    #say('>>>> inlined ', dump($out), "\n>>>> for ", dump($n));
-                    $out.node($n.node);
-                    if istype($n, QAST::SpecialArg) {
-                        $out.flat($n.flat);
-                        $out.named($n.named);
-                    }
-                    TreeWalk.replace($out);
+                my $out := %inliners{$n.name}($n.list);
+                $out.annotate('inlined', $n.name);
+                #say('>>>> inlined ', dump($out), "\n>>>> for ", dump($n));
+                $out.node($n.node);
+                if istype($n, QAST::SpecialArg) {
+                    $out.flat($n.flat);
+                    $out.named($n.named);
                 }
+                TreeWalk.replace($out);
             },
             $ast
         );
