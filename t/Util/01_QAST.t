@@ -5,7 +5,7 @@ use Util;
 
 use Util::QAST;
 
-plan(271);
+plan(276);
 
 
 
@@ -1240,6 +1240,8 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     lives_ok( { $out := collect_params_and_body($ast) }, 'collect_params_and_body on Block with slurpy positional param') 
         || diag($out);
+    isa_ok($out<slurpy><@foo>, QAST::Var, :name<@foo>, :decl<param>, :slurpy, 
+        'collect_params_and_body on Block with slurpy named param collects slurpies under key "slurpy"') || diag($out);
 
     $ast := QAST::Block.new(
         QAST::Stmts.new(
@@ -1251,6 +1253,20 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     lives_ok( { $out := collect_params_and_body($ast) }, 'collect_params_and_body on Block with slurpy named param') 
         || diag($out);
+    isa_ok($out<slurpy><@foo>, QAST::Var, :name<@foo>, :decl<param>, :named<foo>, :slurpy, 
+        'collect_params_and_body on Block with slurpy named param collects slurpies under key "slurpy"') || diag($out);
+
+
+    # special parameters, optional positionals:
+
+    $ast := QAST::Block.new(
+        QAST::Var.new(:name<$foo>, :decl<param>, :default(QAST::IVal.new(:value(7)))),
+        QAST::Stmts.new(QAST::Var.new(:name<$foo>))
+    );
+    lives_ok( { $out := collect_params_and_body($ast) }, 
+        'collect_params_and_body on Block with optional positional param') || diag($out);
+    isa_ok($out<optional><$foo>, QAST::Var, :name<$foo>, :decl<param>, 
+        'collect_params_and_body on Block with optional positional param collects optionals under key "optional"') || diag($out);
 
 
     # now let's check local vars:
@@ -1368,6 +1384,11 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
 
     # special parameters, named:
 
+    $ast := QAST::Stmts.new(
+        QAST::Op.new(:op<call>, :name('&bar'),
+            QAST::IVal.new(:value(23))
+        ),
+    );
     @inlinableDefs := [QAST::Op.new(:op<bind>, QAST::Var.new(:name<&bar>, :decl<var>), QAST::Block.new(
         QAST::Var.new(:name<$foo>, :decl<param>, :named<foo>),
         QAST::Stmts.new(QAST::Var.new(:name<$foo>))
@@ -1389,7 +1410,16 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
         QAST::Stmts.new(QAST::Var.new(:name<%foo>))
     ))];
     dies_ok( { $out := inline_simple_subs($ast, @inlinableDefs) },
-        'inline_simple_subs on Block with slurpy named param') || diag($out);
+        'inline_simple_subs on Block with slurpy named param') || diag(dump($out));
+
+    # special parameters, optional positionals:
+
+    @inlinableDefs := [QAST::Op.new(:op<bind>, QAST::Var.new(:name<&bar>, :decl<var>), QAST::Block.new(
+        QAST::Var.new(:name<$foo>, :decl<param>, :default(QAST::IVal.new(:value(7)))),
+        QAST::Stmts.new(QAST::Var.new(:name<$foo>))
+    ))];
+    dies_ok( { $out := inline_simple_subs($ast, @inlinableDefs) }, 
+        'inline_simple_subs on Block with optional positional param') || diag(dump($out));
 
 
     # local vars:

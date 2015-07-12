@@ -241,6 +241,8 @@ sub MAIN(*@ARGS) {
     $lambda1.push($lambda1);    # add a self (recursive) ref
     
     say(strOut($lambda1));
+    say(%info<stats>{STATS_QASTSIZE()});
     say(stats());
 }
+
 

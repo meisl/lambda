@@ -21,7 +21,7 @@
     ╟─bind
     ║ ├○ &lam2id :decl(var)
     ║ └─:Block  ««"{ $lam[LAMFIELD_ID()] }"
-    ║   ╟○ $lam :decl(param)
+    ║   ╟○ $lam :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─ifnull
     ║     ├─atpos
     ║     │ ├○ $lam
@@ -30,7 +30,7 @@
     ╟─bind
     ║ ├○ &lam2code :decl(var)
     ║ └─:Block  ««"{ $lam[LAMFIELD_CODE()] }"
-    ║   ╟○ $lam :decl(param)
+    ║   ╟○ $lam :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─ifnull
     ║     ├─atpos
     ║     │ ├○ $lam
@@ -39,7 +39,7 @@
     ╟─bind
     ║ ├○ &lam2fvs :decl(var)
     ║ └─:Block  ««"{ sublist($lam, LAMFIELD_FREEVARS()) }"
-    ║   ╟○ $lam :decl(param)
+    ║   ╟○ $lam :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─call &sublist  ««"$lam, LAMFIELD_FREEVARS()"
     ║     ├○ $lam
     ║     └◙ IVal 2 :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&LAMFIELD_FREEVARS" (str) ))
@@ -78,19 +78,19 @@
     ╟─bind
     ║ ├○ &int2str :decl(var)
     ║ └─:Block  ««"{ ~$i }"
-    ║   ╟○ $i :decl(param)
+    ║   ╟○ $i :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─stringify  ««"~"
     ║     └○ $i
     ╟─bind
     ║ ├○ &num2str :decl(var)
     ║ └─:Block  ««"{ ~$n }"
-    ║   ╟○ $n :decl(param)
+    ║   ╟○ $n :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─stringify  ««"~"
     ║     └○ $n
     ╟─bind
     ║ ├○ &strLit :decl(var)
     ║ └─:Block  ««"{ '\"' ~ nqp::escape($s) ~ '\"' }"
-    ║   ╟○ $s :decl(param)
+    ║   ╟○ $s :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─concat  ««"~"
     ║     ├─concat  ««"~"
     ║     │ ├◙ SVal "\""
@@ -100,7 +100,7 @@
     ╟─bind
     ║ ├○ &force :decl(var)
     ║ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    nqp::isinvokable($v) ?? $v() !! $v;\n}"
-    ║   ╟○ $v :decl(param)
+    ║   ╟○ $v :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─if  ««"?? $v() !!"
     ║     ├─isinvokable  ««"nqp::isinvokable($v)"
     ║     │ └○ $v
@@ -110,7 +110,7 @@
     ╟─bind
     ║ ├○ &delayMemo :decl(var)
     ║ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    my int $wasRun := 0;\n    my $result := nqp:"...
-    ║   ╟○ $block :decl(param)
+    ║   ╟○ $block :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╟○ $wasRun :decl(var)
     ║   ╟○ $result :decl(var)
     ║   ╟○ $out :decl(var)
@@ -138,8 +138,8 @@
     ╟─bind
     ║ ├○ &sublist :decl(var)
     ║ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    my int $n     := nqp::elems(@list);\n    my "...
-    ║   ╟○ @list :decl(param)
-    ║   ╟○ $from :decl(param)
+    ║   ╟○ @list :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $from :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
     ║   ╟○ $n :decl(var)
     ║   ╟○ $count :decl(var)
     ║   ╟○ $to :decl(var)
@@ -185,7 +185,7 @@
     ╟─bind
     ║ ├○ &lam2info :decl(var)
     ║ └─:Block  ««"{\n    my $id      := lam2id($lambda);\n    my $idx"...
-    ║   ╟○ $lambda :decl(param)
+    ║   ╟○ $lambda :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╟○ $id :decl(var)
     ║   ╟○ $idx :decl(var)
     ║   ╟○ $infoIt :decl(var)
@@ -287,7 +287,7 @@
     ╟─bind
     ║ ├○ &typecase :decl(var)
     ║ └─:Block  ««"{\n    #say('>>>typecase(', nqp::reprname($subject)"...
-    ║   ╟○ $subject :decl(param)
+    ║   ╟○ $subject :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╟○ %callbacks :decl(param) :named(1) :slurpy(1)
     ║   ╟○ $otherwise :decl(var)
     ║   ╟○ $cbKey :decl(var)
@@ -386,11 +386,15 @@
     ╟─bind
     ║ ├○ &strOut :decl(var)
     ║ └─:Block  ««"{\n    typecase(force($v),\n        :λ(-> $lambda {"...
-    ║   ╟○ $v :decl(param)
-    ║   ╟○ $indent :decl(param) :default(SVal "")
-    ║   ╟○ %done :decl(param) :default(hash)
+    ║   ╟○ $v :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $indent :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) )) :default(SVal "")
+    ║   ╟○ %done :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) )) :default(hash)
     ║   ╙─call &typecase  ««"force($v),\n        :λ(-> $lambda { # compiler shou"...
-    ║     ├─call &force  ««"$v"
+    ║     ├─if :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&force" (str) ))  ««"$v"
+    ║     │ ├─isinvokable  ««"nqp::isinvokable($v)"
+    ║     │ │ └○ $v
+    ║     │ ├─call  ««""
+    ║     │ │ └○ $v
     ║     │ └○ $v
     ║     ├─:Block :named("λ")  ««"{ # compiler should see that this needs not be a cl"...
     ║     │ ╟○ $lambda :decl(param)
@@ -506,14 +510,18 @@
     ╟─bind
     ║ ├○ &apply1 :decl(var)
     ║ └─:Block  ««"{\n    my $result := typecase(force($f),\n        :"...
-    ║   ╟○ $f :decl(param)
-    ║   ╟○ $a1 :decl(param)
+    ║   ╟○ $f :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $a1 :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
     ║   ╟○ $result :decl(var)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$result := typecase(force($f),\n        :λ(&lam2cod"...
     ║   ║ ├○ $result
     ║   ║ └─call  ««"$a1"
     ║   ║   ├─call &typecase  ««"force($f),\n        :λ(&lam2code),\n        :otherw"...
-    ║   ║   │ ├─call &force  ««"$f"
+    ║   ║   │ ├─if :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&force" (str) ))  ««"$f"
+    ║   ║   │ │ ├─isinvokable  ««"nqp::isinvokable($v)"
+    ║   ║   │ │ │ └○ $f
+    ║   ║   │ │ ├─call  ««""
+    ║   ║   │ │ │ └○ $f
     ║   ║   │ │ └○ $f
     ║   ║   │ ├○ &lam2code :named("λ")
     ║   ║   │ └─:Block :named("otherwise")  ««"{\n            nqp::die('ERROR: cannot apply ' ~ st"...
@@ -529,13 +537,17 @@
     ║   ║   │       └─call &strOut  ««"$a1"
     ║   ║   │         └○ $a1
     ║   ║   └○ $a1
-    ║   ╙─call &force  ««"$result"
+    ║   ╙─if :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&force" (str) ))  ««"$result"
+    ║     ├─isinvokable  ««"nqp::isinvokable($v)"
+    ║     │ └○ $result
+    ║     ├─call  ««""
+    ║     │ └○ $result
     ║     └○ $result
     ╟─bind
     ║ ├○ &join :decl(var)
     ║ └─:Block  ««"{\n    my $_;\n    my str $s := '';\n    my $i := n"...
-    ║   ╟○ $sep :decl(param)
-    ║   ╟○ @pieces :decl(param)
+    ║   ╟○ $sep :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ @pieces :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
     ║   ╟─bind  ««"$_"
     ║   ║ ├○ $_ :decl(var)
     ║   ║ └◙ WVal NQPMu
@@ -587,7 +599,7 @@
     ╟─bind
     ║ ├○ &say :decl(var)
     ║ └─:Block  ««"{\n    nqp::say(join('', @args));\n}"
-    ║   ╟○ @args :decl(param) :slurpy(1)
+    ║   ╟○ @args :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) )) :slurpy(1)
     ║   ╙─say  ««"nqp::say(join('', @args))"
     ║     └─call &join  ««"'', @args"
     ║       ├◙ SVal ""
@@ -652,7 +664,7 @@
     ╟─bind
     ║ ├○ &MAIN :decl(var)
     ║ └─:Block  ««"{\n    my $lambda2 := [\n        'λ1',             "...
-    ║   ╟○ @ARGS :decl(param) :slurpy(1)
+    ║   ╟○ @ARGS :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) )) :slurpy(1)
     ║   ╟○ $lambda2 :decl(var)
     ║   ╟○ $lambda1 :decl(var)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$lambda2 := [\n        'λ1',                       "...
@@ -683,6 +695,16 @@
     ║   ╟─call &say  ««"strOut($lambda1)"
     ║   ║ └─call &strOut  ««"$lambda1"
     ║   ║   └○ $lambda1
+    ║   ╟─call &say  ««"%info<stats>{STATS_QASTSIZE()}"
+    ║   ║ └─ifnull
+    ║   ║   ├─atkey
+    ║   ║   │ ├─ifnull
+    ║   ║   │ │ ├─atkey
+    ║   ║   │ │ │ ├○ %info
+    ║   ║   │ │ │ └◙ SVal "stats"
+    ║   ║   │ │ └◙ WVal NQPMu
+    ║   ║   │ └◙ SVal "Node" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_QASTSIZE" (str) ))
+    ║   ║   └◙ WVal NQPMu
     ║   ╙─call &say  ««"stats()"
     ║     └─call &stats  ««""
     ╟─bind

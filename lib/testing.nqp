@@ -429,7 +429,7 @@ class Testing {
         self.ok(!$test<result>, $desc);
     }
 
-    sub is_same($actual, $expected, $desc) {
+    method is_same($actual, $expected, $desc) {
         my $result := $actual =:= $expected;
         unless $result {
             $desc := $desc ~ "\n  # expected (=:=): $expected"
@@ -439,7 +439,7 @@ class Testing {
         ok($result, $desc);
     }
 
-    sub is_eq($actual, $expected, str $desc) {
+    method is_eq($actual, $expected, str $desc) {
         try {
             my str $a := $actual;
             my str $x := $expected;

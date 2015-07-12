@@ -466,12 +466,13 @@ class Util::QAST {
         nqp::die('expected a QAST::Block - got ' ~ describe($node))
             unless istype($node, QAST::Block);
 
-        my $arity  := 0;
-        my %params := {};
-        my %named  := {};
-        my %slurpy := {};
-        my %locals := {};
-        my @stmts  := [];
+        my $arity    := 0;
+        my %params   := {};
+        my %named    := {};
+        my %slurpy   := {};
+        my %locals   := {};
+        my %optional := {};
+        my @stmts    := [];
 
         my @children := nqp::clone($node.list);
         if istype($node[0], QAST::Stmts, QAST::Stmt) {  # replace 1st Stmt(s) with its children
@@ -483,9 +484,8 @@ class Util::QAST {
                 my $varName := $_.name;
                 if $_.decl {
                     if $_.decl eq 'param' {
-                        if $_.slurpy {
-                            %slurpy{$_.name} := $_;
-                        }
+                        %slurpy{$_.name} := $_ if $_.slurpy;
+                        %optional{$_.name} := $_ if $_.default;
                         if $_.named {
                             %named{$_.named} := $_;
                         } else {
@@ -513,7 +513,8 @@ class Util::QAST {
             'params', %params,
             'slurpy', %slurpy,
             'named',  %named,
-            'locals', %locals
+            'locals', %locals,
+            'optional', %optional,
         );
         if %locals {
             %out{'body'} := QAST::Block.new(:blocktype<immediate>, |@stmts);
@@ -540,20 +541,25 @@ class Util::QAST {
             my %named  := %results<named>;
             my %slurpy := %results<slurpy>;
             my %locals := %results<locals>;
+            my @optional := %results<optional>;
             my $body   := %results<body>;
             my $arity  := +%params;
             
             if %named {
-                my $v := nqp::iterval(nqp::iterator(%named).shift);
-                nqp::die("cannot handle :named parameters: " ~ dump($v))
+                my $v := nqp::iterval(nqp::shift(nqp::iterator(%named)));
+                nqp::die("cannot handle :named parameters: $name / " ~ dump($v))
             }
             if %slurpy {
-                my $v := nqp::iterval(nqp::iterator(%slurpy).shift);
-                nqp::die("cannot handle :slurpy parameter: " ~ dump($v));
+                my $v := nqp::iterval(nqp::shift(nqp::iterator(%slurpy)));
+                nqp::die("cannot handle :slurpy parameter: $name / " ~ dump($v));
             }
             if %locals {
-                my $v := nqp::iterval(nqp::iterator(%locals).shift);
-                nqp::die('cannot handle :decl(' ~ $v.decl ~ '): ' ~ dump($v));
+                my $v := nqp::iterval(nqp::shift(nqp::iterator(%locals)));
+                nqp::die('cannot handle :decl(' ~ $v.decl ~ "): $name / " ~ dump($v));
+            }
+            if @optional {
+                my $v := @optional[0];
+                nqp::die('cannot handle optional param ' ~ dump($v));
             }
 
             nqp::die("no statements found in inlineable $name: " ~ dump($block))

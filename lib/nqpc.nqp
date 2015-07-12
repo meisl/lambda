@@ -365,12 +365,26 @@ class SmartCompiler is NQP::Compiler {
         $ast := replace_assoc_and_pos_scoped($ast);
         $ast := inline_simple_methods($ast);
 
-        my @inlinecandidates;
-        @inlinecandidates := findDefs($ast, -> $var, @pathUp {
-               (nqp::index($var.name, '&STATS_') > -1)
-            || (nqp::index($var.name, '&LAMFIELD_') > -1)
-            || (nqp::index('&lam2id &lam2code &lam2fvs &int2str &num2str', $var.name) > -1)
-        });
+        my @inlinecandidates := [];
+        TreeWalk.dfs-up(
+            -> $n, @a {
+                TreeWalkDo.recurse(:take(istype($n, QAST::Op) && ($n.op eq 'bind')
+                    && istype($n[0], QAST::Var) && (nqp::index($n[0].name, '&') == 0)
+                    && (($n[0].decl eq 'var') || ($n[0].decl eq 'static') )
+                    && istype($n[1], QAST::Block)
+                ));
+            },
+            -> $n, @a {
+                my %subDesc := collect_params_and_body($n[1]);
+                unless  %subDesc<locals> || %subDesc<slurpy> || %subDesc<named> || %subDesc<optional> 
+                    || ($n[0].name eq '&renameVars') {
+                    @inlinecandidates.push($n)
+                }
+            },
+            $ast
+        );
+
+        say(describe($_[0].name)) for @inlinecandidates;
         $ast := inline_simple_subs($ast, @inlinecandidates);
 
         #$ast := renameVars($ast, -> $s {

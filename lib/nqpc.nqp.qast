@@ -38,8 +38,8 @@
     ╟─bind
     ║ ├○ &isinResultPosition :decl(var)
     ║ └─:Block  ««"{\n    my $n := nqp::elems($parent) - 1;\n    if ($"...
-    ║   ╟○ $node :decl(param)
-    ║   ╟○ $parent :decl(param)
+    ║   ╟○ $node :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $parent :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
     ║   ╟○ $n :decl(var)
     ║   ╙─lexotic RETURN
     ║     └─:Stmts  ««"\n    my $n := nqp::elems($parent) - 1;\n    if ($p"...
@@ -99,8 +99,8 @@
     ╟─bind
     ║ ├○ &drop_bogusVars :decl(var)
     ║ └─:Block  ««"{\n    if istype($ast, QAST::Var) && !$ast.decl {\n"...
-    ║   ╟○ $ast :decl(param)
-    ║   ╟○ $parent :decl(param) :default(null)
+    ║   ╟○ $ast :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $parent :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) )) :default(null)
     ║   ╙─lexotic RETURN
     ║     └─:Stmts  ««"\n    if istype($ast, QAST::Var) && !$ast.decl {\n "...
     ║       ├─if  ««"istype($ast, QAST::Var) && !$ast.decl {\n        if"...
@@ -183,7 +183,7 @@
     ╟─bind
     ║ ├○ &remove_MAIN :decl(var)
     ║ └─:Block  ««"{\n    say($ast[0].cuid);\n    say(\"CompUnit load:"...
-    ║   ╟○ $ast :decl(param)
+    ║   ╟○ $ast :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╟○ @path :decl(var)
     ║   ╟○ $MAIN :decl(var)
     ║   ╟○ $MAINcall :decl(var)
@@ -324,9 +324,9 @@
     ╟─bind
     ║ ├○ &findDef :decl(var)
     ║ └─:Block  ««"{\n    if nqp::isstr($matcher) {\n        my $name "...
-    ║   ╟○ $ast :decl(param)
-    ║   ╟○ $matcher :decl(param)
-    ║   ╟○ @pathUp :decl(param) :default(list &circumfix:<[ ]>)
+    ║   ╟○ $ast :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $matcher :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ @pathUp :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) )) :default(list &circumfix:<[ ]>)
     ║   ╟─if  ««"nqp::isstr($matcher) {\n        my $name := $matche"...
     ║   ║ ├─isstr  ««"nqp::isstr($matcher)"
     ║   ║ │ └○ $matcher
@@ -419,8 +419,8 @@
     ╟─bind
     ║ ├○ &findDefs :decl(var)
     ║ └─:Block  ««"{\n    my @out := [];\n    my $current := 1;\n    w"...
-    ║   ╟○ $ast :decl(param)
-    ║   ╟○ $matcher :decl(param)
+    ║   ╟○ $ast :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $matcher :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
     ║   ╟○ @out :decl(var)
     ║   ╟○ $current :decl(var)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@out := []"
@@ -485,9 +485,9 @@
     ╟─bind
     ║ ├○ &findValueNodeInHash :decl(var)
     ║ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    nqp::die('findValueNodeInHash expects a fn a"...
-    ║   ╟○ $keyPredicate :decl(param)
-    ║   ╟○ $valuePredicate :decl(param)
-    ║   ╟○ $hash :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
+    ║   ╟○ $keyPredicate :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $valuePredicate :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ $hash :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) )) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║   ╟○ $found :decl(var)
     ║   ╙─lexotic RETURN
     ║     └─:Stmts  ««"\n    nqp::die('findValueNodeInHash expects a fn as"...
@@ -592,8 +592,8 @@
     ╟─bind
     ║ ├○ &renameVars :decl(var)
     ║ └─:Block  ««"{\n    nqp::die('renameVars expects a QAST::Node as"...
-    ║   ╟○ $ast :decl(param)
-    ║   ╟○ $map :decl(param)
+    ║   ╟○ $ast :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $map :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
     ║   ╟─unless  ««"nqp::die('renameVars expects a QAST::Node as 1st ar"...
     ║   ║ ├─call &istype  ««"$ast, QAST::Node"
     ║   ║ │ ├○ $ast
@@ -665,7 +665,7 @@
     ╟─bind
     ║ ├○ &flatten :decl(var)
     ║ └─:Block  ««"{\n    return [$args]\n        unless nqp::islist($"...
-    ║   ╟○ $args :decl(param)
+    ║   ╟○ $args :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╟○ @out :decl(var)
     ║   ╙─lexotic RETURN
     ║     └─:Stmts  ««"\n    return [$args]\n        unless nqp::islist($a"...
@@ -702,7 +702,7 @@
     ╟─bind
     ║ ├○ &MAIN :decl(var)
     ║ └─:Block  ««"{\n    @ARGS := flatten(@ARGS);\n\n    my $cwd := n"...
-    ║   ╟○ @ARGS :decl(param) :slurpy(1)
+    ║   ╟○ @ARGS :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) )) :slurpy(1)
     ║   ╟○ $cwd :decl(var)
     ║   ╟○ $sep :decl(var)
     ║   ╟○ $nqpc :decl(var)
@@ -1116,7 +1116,7 @@
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &doit :decl(var)
     ║ ║ ║ └─:Block  ««"{\n            nqp::die(\"collect_stats expects a Q"...
-    ║ ║ ║   ╟○ $node :decl(param)
+    ║ ║ ║   ╟○ $node :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║ ║ ║   ╟○ $HOWname :decl(var)
     ║ ║ ║   ╟─unless  ««"nqp::die(\"collect_stats expects a QAST::Node - got"...
     ║ ║ ║   ║ ├─call &istype  ««"$node, QAST::Node"
@@ -1356,9 +1356,7 @@
     ║ ║ ╟○ self :decl(param)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
-    ║ ║ ╟─bind  ««"@inlinecandidates"
-    ║ ║ ║ ├○ @inlinecandidates :decl(var)
-    ║ ║ ║ └─list
+    ║ ║ ╟○ @inlinecandidates :decl(var)
     ║ ║ ╟─callmethod log  ««"'ast_clean: ', self.user-progname, '...'"
     ║ ║ ║ ├─decont
     ║ ║ ║ │ └○ self
@@ -1399,34 +1397,130 @@
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &inline_simple_methods  ««"$ast"
     ║ ║ ║   └○ $ast
-    ║ ║ ╟○ @inlinecandidates
-    ║ ║ ╟─bind  ««":="
+    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@inlinecandidates := []"
     ║ ║ ║ ├○ @inlinecandidates
-    ║ ║ ║ └─call &findDefs  ««"$ast, -> $var, @pathUp {\n               (nqp::inde"...
-    ║ ║ ║   ├○ $ast
-    ║ ║ ║   └─:Block  ««"{\n               (nqp::index($var.name, '&STATS_')"...
-    ║ ║ ║     ╟○ $var :decl(param)
-    ║ ║ ║     ╟○ @pathUp :decl(param)
-    ║ ║ ║     ╙─unless  ««"||"
-    ║ ║ ║       ├─unless  ««"||"
-    ║ ║ ║       │ ├─isgt_n  ««">"
-    ║ ║ ║       │ │ ├─index  ««"nqp::index($var.name, '&STATS_')"
-    ║ ║ ║       │ │ │ ├─callmethod name  ««".name"
-    ║ ║ ║       │ │ │ │ └○ $var
-    ║ ║ ║       │ │ │ └◙ SVal "&STATS_"
-    ║ ║ ║       │ │ └◙ IVal -1
-    ║ ║ ║       │ └─isgt_n  ««">"
-    ║ ║ ║       │   ├─index  ««"nqp::index($var.name, '&LAMFIELD_')"
-    ║ ║ ║       │   │ ├─callmethod name  ««".name"
-    ║ ║ ║       │   │ │ └○ $var
-    ║ ║ ║       │   │ └◙ SVal "&LAMFIELD_"
-    ║ ║ ║       │   └◙ IVal -1
-    ║ ║ ║       └─isgt_n  ««">"
-    ║ ║ ║         ├─index  ««"nqp::index('&lam2id &lam2code &lam2fvs &int2str &nu"...
-    ║ ║ ║         │ ├◙ SVal "&lam2id &lam2code &lam2fvs &int2str &num2str"
-    ║ ║ ║         │ └─callmethod name  ««".name"
-    ║ ║ ║         │   └○ $var
-    ║ ║ ║         └◙ IVal -1
+    ║ ║ ║ └─list
+    ║ ║ ╟─callmethod dfs-up  ««"\n            -> $n, @a {\n                TreeWalk"...
+    ║ ║ ║ ├◙ WVal TreeWalk
+    ║ ║ ║ ├─:Block  ««"{\n                TreeWalkDo.recurse(:take(istype("...
+    ║ ║ ║ │ ╟○ $n :decl(param)
+    ║ ║ ║ │ ╟○ @a :decl(param)
+    ║ ║ ║ │ ╙─callmethod recurse  ««":take(istype($n, QAST::Op) && ($n.op eq 'bind')\n  "...
+    ║ ║ ║ │   ├◙ WVal TreeWalkDo
+    ║ ║ ║ │   └─if :named("take")  ««"&&"
+    ║ ║ ║ │     ├─if  ««"&&"
+    ║ ║ ║ │     │ ├─if  ««"&&"
+    ║ ║ ║ │     │ │ ├─if  ««"&&"
+    ║ ║ ║ │     │ │ │ ├─if  ««"&&"
+    ║ ║ ║ │     │ │ │ │ ├─call &istype  ««"$n, QAST::Op"
+    ║ ║ ║ │     │ │ │ │ │ ├○ $n
+    ║ ║ ║ │     │ │ │ │ │ └◙ WVal QAST::Op
+    ║ ║ ║ │     │ │ │ │ └─iseq_s  ««"eq"
+    ║ ║ ║ │     │ │ │ │   ├─callmethod op  ««".op"
+    ║ ║ ║ │     │ │ │ │   │ └○ $n
+    ║ ║ ║ │     │ │ │ │   └◙ SVal "bind"
+    ║ ║ ║ │     │ │ │ └─call &istype  ««"$n[0], QAST::Var"
+    ║ ║ ║ │     │ │ │   ├─ifnull
+    ║ ║ ║ │     │ │ │   │ ├─atpos
+    ║ ║ ║ │     │ │ │   │ │ ├○ $n
+    ║ ║ ║ │     │ │ │   │ │ └◙ IVal 0
+    ║ ║ ║ │     │ │ │   │ └◙ WVal NQPMu
+    ║ ║ ║ │     │ │ │   └◙ WVal QAST::Var
+    ║ ║ ║ │     │ │ └─iseq_n  ««"=="
+    ║ ║ ║ │     │ │   ├─index  ««"nqp::index($n[0].name, '&')"
+    ║ ║ ║ │     │ │   │ ├─callmethod name  ««".name"
+    ║ ║ ║ │     │ │   │ │ └─ifnull
+    ║ ║ ║ │     │ │   │ │   ├─atpos
+    ║ ║ ║ │     │ │   │ │   │ ├○ $n
+    ║ ║ ║ │     │ │   │ │   │ └◙ IVal 0
+    ║ ║ ║ │     │ │   │ │   └◙ WVal NQPMu
+    ║ ║ ║ │     │ │   │ └◙ SVal "&"
+    ║ ║ ║ │     │ │   └◙ IVal 0
+    ║ ║ ║ │     │ └─unless  ««"||"
+    ║ ║ ║ │     │   ├─iseq_s  ««"eq"
+    ║ ║ ║ │     │   │ ├─callmethod decl  ««".decl"
+    ║ ║ ║ │     │   │ │ └─ifnull
+    ║ ║ ║ │     │   │ │   ├─atpos
+    ║ ║ ║ │     │   │ │   │ ├○ $n
+    ║ ║ ║ │     │   │ │   │ └◙ IVal 0
+    ║ ║ ║ │     │   │ │   └◙ WVal NQPMu
+    ║ ║ ║ │     │   │ └◙ SVal "var"
+    ║ ║ ║ │     │   └─iseq_s  ««"eq"
+    ║ ║ ║ │     │     ├─callmethod decl  ««".decl"
+    ║ ║ ║ │     │     │ └─ifnull
+    ║ ║ ║ │     │     │   ├─atpos
+    ║ ║ ║ │     │     │   │ ├○ $n
+    ║ ║ ║ │     │     │   │ └◙ IVal 0
+    ║ ║ ║ │     │     │   └◙ WVal NQPMu
+    ║ ║ ║ │     │     └◙ SVal "static"
+    ║ ║ ║ │     └─call &istype  ««"$n[1], QAST::Block"
+    ║ ║ ║ │       ├─ifnull
+    ║ ║ ║ │       │ ├─atpos
+    ║ ║ ║ │       │ │ ├○ $n
+    ║ ║ ║ │       │ │ └◙ IVal 1
+    ║ ║ ║ │       │ └◙ WVal NQPMu
+    ║ ║ ║ │       └◙ WVal QAST::Block
+    ║ ║ ║ ├─:Block  ««"{\n                my %subDesc := collect_params_an"...
+    ║ ║ ║ │ ╟○ $n :decl(param)
+    ║ ║ ║ │ ╟○ @a :decl(param)
+    ║ ║ ║ │ ╟○ %subDesc :decl(var)
+    ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%subDesc := collect_params_and_body($n[1])"
+    ║ ║ ║ │ ║ ├○ %subDesc
+    ║ ║ ║ │ ║ └─call &collect_params_and_body  ««"$n[1]"
+    ║ ║ ║ │ ║   └─ifnull
+    ║ ║ ║ │ ║     ├─atpos
+    ║ ║ ║ │ ║     │ ├○ $n
+    ║ ║ ║ │ ║     │ └◙ IVal 1
+    ║ ║ ║ │ ║     └◙ WVal NQPMu
+    ║ ║ ║ │ ╙─unless  ««"%subDesc<locals> || %subDesc<slurpy> || %subDesc<na"...
+    ║ ║ ║ │   ├─unless  ««"||"
+    ║ ║ ║ │   │ ├─unless  ««"||"
+    ║ ║ ║ │   │ │ ├─unless  ««"||"
+    ║ ║ ║ │   │ │ │ ├─unless  ««"||"
+    ║ ║ ║ │   │ │ │ │ ├─ifnull
+    ║ ║ ║ │   │ │ │ │ │ ├─atkey
+    ║ ║ ║ │   │ │ │ │ │ │ ├○ %subDesc
+    ║ ║ ║ │   │ │ │ │ │ │ └◙ SVal "locals"
+    ║ ║ ║ │   │ │ │ │ │ └◙ WVal NQPMu
+    ║ ║ ║ │   │ │ │ │ └─ifnull
+    ║ ║ ║ │   │ │ │ │   ├─atkey
+    ║ ║ ║ │   │ │ │ │   │ ├○ %subDesc
+    ║ ║ ║ │   │ │ │ │   │ └◙ SVal "slurpy"
+    ║ ║ ║ │   │ │ │ │   └◙ WVal NQPMu
+    ║ ║ ║ │   │ │ │ └─ifnull
+    ║ ║ ║ │   │ │ │   ├─atkey
+    ║ ║ ║ │   │ │ │   │ ├○ %subDesc
+    ║ ║ ║ │   │ │ │   │ └◙ SVal "named"
+    ║ ║ ║ │   │ │ │   └◙ WVal NQPMu
+    ║ ║ ║ │   │ │ └─ifnull
+    ║ ║ ║ │   │ │   ├─atkey
+    ║ ║ ║ │   │ │   │ ├○ %subDesc
+    ║ ║ ║ │   │ │   │ └◙ SVal "optional"
+    ║ ║ ║ │   │ │   └◙ WVal NQPMu
+    ║ ║ ║ │   │ └─iseq_s  ««"eq"
+    ║ ║ ║ │   │   ├─callmethod name  ««".name"
+    ║ ║ ║ │   │   │ └─ifnull
+    ║ ║ ║ │   │   │   ├─atpos
+    ║ ║ ║ │   │   │   │ ├○ $n
+    ║ ║ ║ │   │   │   │ └◙ IVal 0
+    ║ ║ ║ │   │   │   └◙ WVal NQPMu
+    ║ ║ ║ │   │   └◙ SVal "&renameVars"
+    ║ ║ ║ │   └─push  ««"$n"
+    ║ ║ ║ │     ├○ @inlinecandidates
+    ║ ║ ║ │     └○ $n
+    ║ ║ ║ └○ $ast
+    ║ ║ ╟─for  ««"say(describe($_[0].name)) for @inlinecandidates"
+    ║ ║ ║ ├○ @inlinecandidates
+    ║ ║ ║ └─:Block :blocktype(immediate)
+    ║ ║ ║   ╟○ $_ :decl(param)
+    ║ ║ ║   ╙─call &say  ««"describe($_[0].name)"
+    ║ ║ ║     └─call &describe  ««"$_[0].name"
+    ║ ║ ║       └─callmethod name  ««".name"
+    ║ ║ ║         └─ifnull
+    ║ ║ ║           ├─atpos
+    ║ ║ ║           │ ├○ $_
+    ║ ║ ║           │ └◙ IVal 0
+    ║ ║ ║           └◙ WVal NQPMu
     ║ ║ ╟─bind  ««":="
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &inline_simple_subs  ««"$ast, @inlinecandidates"
@@ -1443,7 +1537,7 @@
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &svalPred :decl(var)
     ║ ║ ║ └─:Block  ««"{\n            -> $node { istype($node, QAST::SVal)"...
-    ║ ║ ║   ╟○ $value :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
+    ║ ║ ║   ╟○ $value :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) )) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::SVal) && ($value =:= NO_VALUE"...
     ║ ║ ║     ╟○ $node :decl(param)
     ║ ║ ║     ╙─if  ««"&&"
@@ -1471,7 +1565,7 @@
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &ivalPred :decl(var)
     ║ ║ ║ └─:Block  ««"{\n            -> $node { istype($node, QAST::IVal)"...
-    ║ ║ ║   ╟○ $value :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
+    ║ ║ ║   ╟○ $value :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) )) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::IVal) && ($value =:= NO_VALUE"...
     ║ ║ ║     ╟○ $node :decl(param)
     ║ ║ ║     ╙─if  ««"&&"
@@ -1499,7 +1593,7 @@
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &opPred :decl(var)
     ║ ║ ║ └─:Block  ««"{\n            -> $node { istype($node, QAST::Op) &"...
-    ║ ║ ║   ╟○ $op :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
+    ║ ║ ║   ╟○ $op :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) )) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
     ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::Op) && ($op =:= NO_VALUE || $"...
     ║ ║ ║     ╟○ $node :decl(param)
     ║ ║ ║     ╙─if  ««"&&"
