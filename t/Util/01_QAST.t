@@ -5,7 +5,7 @@ use Util;
 
 use Util::QAST;
 
-plan(276);
+plan(286);
 
 
 
@@ -1336,7 +1336,7 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
             QAST::Block.new(
                 QAST::IVal.new(:value(5)),
             )
-        ),
+        )
     ];
 
     $ast := QAST::Stmts.new(
@@ -1477,6 +1477,84 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     isa_ok($out[0], QAST::IVal, :value(42), :named<n>, 
         'inline_simple_subs with wrong named param in callsite leaves arg untouched (b)') || diag(dump($out));
 }
+
+
+{ # renameVars ----------------------------------------------------------------
+    my $ast;
+    my $out;
+    {
+        my sub mapping($name) { $name }
+
+        $ast := QAST::Block.new(mkBlockWithCATCH());
+        lives_ok({ $out := renameVars($ast, &mapping) }, 
+            'renameVars can cope with exception handlers')
+            || diag(dump($ast));
+    }
+    {
+        my sub mapping($name) { $name eq '$x' ?? '$y' !! $name }
+
+        $ast := QAST::Block.new(
+            QAST::Op.new(:op<bind>,
+                QAST::Var.new(:name('$x'), :decl<var>),
+                QAST::IVal.new(:value(23))
+            ),
+            QAST::Op.new(:op<call>, :name('&foo'),
+                QAST::Var.new(:name('$x'))
+            )
+        );
+        $out := renameVars($ast, &mapping);
+        
+        isa_ok($out[0][0], QAST::Var, :name('$y'), 'renameVars renames var under bind')
+            || diag(dump($out));
+        isa_ok($out[1], QAST::Op, :op<call>, :name('&foo'), 'renameVars leaves unmapped call untouched')
+            || diag(dump($out));
+        isa_ok($out[1][0], QAST::Var, :name('$y'), 'renameVars renames var in arg position')
+            || diag(dump($out));
+    }
+    {
+        my sub mapping($name) { $name eq '&foo' ?? '&bar' !! $name }
+
+        $ast := QAST::Block.new(
+            QAST::Op.new(:op<bind>,
+                QAST::Var.new(:name('$x'), :decl<var>),
+                QAST::IVal.new(:value(23))
+            ),
+            QAST::Op.new(:op<call>, :name('&foo'),
+                QAST::Var.new(:name('$x'))
+            )
+        );
+        $out := renameVars($ast, &mapping);
+        
+        isa_ok($out[0][0], QAST::Var, :name('$x'), 'renameVars leaves unmapped var under bind untouched')
+            || diag(dump($out));
+        isa_ok($out[1], QAST::Op, :op<call>, :name('&bar'), 'renameVars renames call to mapped sub')
+            || diag(dump($out));
+        isa_ok($out[1][0], QAST::Var, :name('$x'), 'renameVars leaves unmapped var in arg position untouched')
+            || diag(dump($out));
+    }
+    {
+        my sub mapping($name) { $name eq '&foo' ?? '&bar' !! $name }
+
+        $ast := QAST::Block.new(
+            QAST::Op.new(:op<bind>,
+                QAST::Var.new(:name('$x'), :decl<var>),
+                QAST::IVal.new(:value(23))
+            ),
+            QAST::Op.new(:op<callstatic>, :name('&foo'),
+                QAST::Var.new(:name('$x'))
+            )
+        );
+        $out := renameVars($ast, &mapping);
+        
+        isa_ok($out[0][0], QAST::Var, :name('$x'), 'renameVars leaves unmapped var under bind untouched')
+            || diag(dump($out));
+        isa_ok($out[1], QAST::Op, :op<callstatic>, :name('&bar'), 'renameVars renames callstatic to mapped sub')
+            || diag(dump($out));
+        isa_ok($out[1][0], QAST::Var, :name('$x'), 'renameVars leaves unmapped var in arg position untouched')
+            || diag(dump($out));
+    }
+}
+
 
 
 done();

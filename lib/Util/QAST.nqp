@@ -617,6 +617,29 @@ class Util::QAST {
     }
 
 
+    method renameVars($ast, &map) {
+        nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ describe($ast) )
+            unless istype($ast, QAST::Node);
+        nqp::die('renameVars expects a unary fn as 2nd arg - got ' ~ describe(&map) )
+            unless nqp::isinvokable(&map);
+
+        TreeWalk.dfs-up(
+            -> $n, @p {
+                TreeWalkDo.recurse(:take(
+                    (    istype($n, QAST::Var)
+                      || istype($n, QAST::Op) && ($n.op eq 'call' || $n.op eq 'callstatic')
+                    ) && ($n.name ne &map($n.name))
+                ));
+            },
+            -> $n, @p { 
+                my $out := $n;
+                $out.name(&map($n.name));
+                TreeWalk.replace($out);
+            },
+            $ast
+        );
+    }
+
 }   # end of class Util::QAST
 
 
@@ -635,6 +658,7 @@ sub drop_Stmts($ast)                    is export { Util::QAST.drop_Stmts($ast) 
 sub replace_assoc_and_pos_scoped($ast)  is export { Util::QAST.replace_assoc_and_pos_scoped($ast) }
 sub drop_takeclosure($ast)              is export { Util::QAST.drop_takeclosure($ast) }
 sub remove_bogusOpNames($ast)           is export { Util::QAST.remove_bogusOpNames($ast) }
+sub renameVars($ast, &map)              is export { Util::QAST.renameVars($ast, &map) }
 
 sub inline_simple_methods($ast)         is export { Util::QAST.inline_simple_methods($ast) }
 sub cloneAndSubst($ast, &substitution?) is export { Util::QAST.cloneAndSubst($ast, &substitution // -> $x { $x }) }

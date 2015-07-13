@@ -165,31 +165,6 @@ sub findValueNodeInHash($keyPredicate, $valuePredicate, $hash = NO_VALUE) is exp
 }
 
 
-
-sub renameVars($ast, $map) {
-    nqp::die('renameVars expects a QAST::Node as 1st arg - got ' ~ describe($ast) )
-        unless istype($ast, QAST::Node);
-    nqp::die('renameVars expects a unary fn as 2nd arg(optional) - got ' ~ describe($map) )
-        unless nqp::isinvokable($map);
-
-    if istype($ast, QAST::Var) 
-       || (
-          istype($ast, QAST::Op)
-          && (($ast.op eq 'call') || ($ast.op eq 'callstatic'))
-        ) {
-        my str $old := $ast.name;
-        my str $new := $map($old);
-        if $new ne $old {
-            $ast.name($new);
-        }
-    }
-    #if istype($ast, QAST::Children) {
-    for $ast.list {
-        renameVars($_, $map);
-    }
-    $ast;
-}
-
 # -----------------------------------------------
 
 
@@ -372,12 +347,12 @@ class SmartCompiler is NQP::Compiler {
                     && istype($n[0], QAST::Var) && (nqp::index($n[0].name, '&') == 0)
                     && (($n[0].decl eq 'var') || ($n[0].decl eq 'static') )
                     && istype($n[1], QAST::Block)
+                    # TODO: do NOT try to inline recursive functions!
                 ));
             },
             -> $n, @a {
                 my %subDesc := collect_params_and_body($n[1]);
-                unless  %subDesc<locals> || %subDesc<slurpy> || %subDesc<named> || %subDesc<optional> 
-                    || ($n[0].name eq '&renameVars') {
+                unless %subDesc<locals> || %subDesc<slurpy> || %subDesc<named> || %subDesc<optional> {
                     @inlinecandidates.push($n)
                 }
             },

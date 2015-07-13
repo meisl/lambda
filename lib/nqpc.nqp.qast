@@ -31,6 +31,7 @@
     ╟○ &replace_assoc_and_pos_scoped :decl(static) :default((NQPRoutine, invokable))
     ╟○ &drop_takeclosure :decl(static) :default((NQPRoutine, invokable))
     ╟○ &remove_bogusOpNames :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &renameVars :decl(static) :default((NQPRoutine, invokable))
     ╟○ &inline_simple_methods :decl(static) :default((NQPRoutine, invokable))
     ╟○ &cloneAndSubst :decl(static) :default((NQPRoutine, invokable))
     ╟○ &collect_params_and_body :decl(static) :default((NQPRoutine, invokable))
@@ -589,75 +590,6 @@
     ║       │     │         └○ $v
     ║       │     └◙ IVal 1 :named("nohandler")
     ║       └○ $found
-    ╟─bind
-    ║ ├○ &renameVars :decl(var)
-    ║ └─:Block  ««"{\n    nqp::die('renameVars expects a QAST::Node as"...
-    ║   ╟○ $ast :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ $map :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
-    ║   ╟─unless  ««"nqp::die('renameVars expects a QAST::Node as 1st ar"...
-    ║   ║ ├─call &istype  ««"$ast, QAST::Node"
-    ║   ║ │ ├○ $ast
-    ║   ║ │ └◙ WVal QAST::Node
-    ║   ║ └─die  ««"nqp::die('renameVars expects a QAST::Node as 1st ar"...
-    ║   ║   └─concat  ««"~"
-    ║   ║     ├◙ SVal "renameVars expects a QAST::Node as 1st arg - got "
-    ║   ║     └─call &describe  ««"$ast"
-    ║   ║       └○ $ast
-    ║   ╟─unless  ««"nqp::die('renameVars expects a unary fn as 2nd arg("...
-    ║   ║ ├─isinvokable  ««"nqp::isinvokable($map)"
-    ║   ║ │ └○ $map
-    ║   ║ └─die  ««"nqp::die('renameVars expects a unary fn as 2nd arg("...
-    ║   ║   └─concat  ««"~"
-    ║   ║     ├◙ SVal "renameVars expects a unary fn as 2nd arg(optional) - got "
-    ║   ║     └─call &describe  ««"$map"
-    ║   ║       └○ $map
-    ║   ╟─if  ««"istype($ast, QAST::Var) \n       || (\n          is"...
-    ║   ║ ├─unless  ««"||"
-    ║   ║ │ ├─call &istype  ««"$ast, QAST::Var"
-    ║   ║ │ │ ├○ $ast
-    ║   ║ │ │ └◙ WVal QAST::Var
-    ║   ║ │ └─if  ««"&&"
-    ║   ║ │   ├─call &istype  ««"$ast, QAST::Op"
-    ║   ║ │   │ ├○ $ast
-    ║   ║ │   │ └◙ WVal QAST::Op
-    ║   ║ │   └─unless  ««"||"
-    ║   ║ │     ├─iseq_s  ««"eq"
-    ║   ║ │     │ ├─callmethod op  ««".op"
-    ║   ║ │     │ │ └○ $ast
-    ║   ║ │     │ └◙ SVal "call"
-    ║   ║ │     └─iseq_s  ««"eq"
-    ║   ║ │       ├─callmethod op  ««".op"
-    ║   ║ │       │ └○ $ast
-    ║   ║ │       └◙ SVal "callstatic"
-    ║   ║ └─:Block :blocktype(immediate)  ««"{\n        my str $old := $ast.name;\n        my st"...
-    ║   ║   ╟○ $old :decl(var)
-    ║   ║   ╟○ $new :decl(var)
-    ║   ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"str $old := $ast.name"
-    ║   ║   ║ ├○ $old
-    ║   ║   ║ └─callmethod name  ««".name"
-    ║   ║   ║   └○ $ast
-    ║   ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"str $new := $map($old)"
-    ║   ║   ║ ├○ $new
-    ║   ║   ║ └─call  ««"$old"
-    ║   ║   ║   ├○ $map
-    ║   ║   ║   └○ $old
-    ║   ║   ╙─if  ««"$new ne $old {\n            $ast.name($new);\n     "...
-    ║   ║     ├─isne_s  ««"ne"
-    ║   ║     │ ├○ $new
-    ║   ║     │ └○ $old
-    ║   ║     └─callmethod name  ««"$new"
-    ║   ║       ├○ $ast
-    ║   ║       └○ $new
-    ║   ╟─for  ««"$ast.list {\n        renameVars($_, $map);\n    }"
-    ║   ║ ├─callmethod list  ««".list"
-    ║   ║ │ └○ $ast
-    ║   ║ ├─:Block :blocktype(immediate)  ««"{\n        renameVars($_, $map);\n    }"
-    ║   ║ │ ╟○ $_ :decl(param)
-    ║   ║ │ ╙─call &renameVars  ««"$_, $map"
-    ║   ║ │   ├○ $_
-    ║   ║ │   └○ $map
-    ║   ║ └◙ IVal 1 :named("nohandler")
-    ║   ╙○ $ast
     ╟○ SmartCompiler :decl(static) :default((SmartCompiler, Type object))
     ╟○ NQPActions :decl(static) :default((NQPActions, Type object))
     ╟○ $needsCompilation :decl(var)
@@ -836,7 +768,6 @@
     ╟○ &findDef
     ╟○ &findDefs
     ╟○ &findValueNodeInHash
-    ╟○ &renameVars
     ╟─:Block :blocktype(immediate)  ««"{\n\n    # Where to search for user source files.\n"...
     ║ ╟○ $?PACKAGE :decl(static) :default((SmartCompiler, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((SmartCompiler, Type object))
@@ -1476,35 +1407,26 @@
     ║ ║ ║ │   ├─unless  ««"||"
     ║ ║ ║ │   │ ├─unless  ««"||"
     ║ ║ ║ │   │ │ ├─unless  ««"||"
-    ║ ║ ║ │   │ │ │ ├─unless  ««"||"
-    ║ ║ ║ │   │ │ │ │ ├─ifnull
-    ║ ║ ║ │   │ │ │ │ │ ├─atkey
-    ║ ║ ║ │   │ │ │ │ │ │ ├○ %subDesc
-    ║ ║ ║ │   │ │ │ │ │ │ └◙ SVal "locals"
-    ║ ║ ║ │   │ │ │ │ │ └◙ WVal NQPMu
-    ║ ║ ║ │   │ │ │ │ └─ifnull
-    ║ ║ ║ │   │ │ │ │   ├─atkey
-    ║ ║ ║ │   │ │ │ │   │ ├○ %subDesc
-    ║ ║ ║ │   │ │ │ │   │ └◙ SVal "slurpy"
-    ║ ║ ║ │   │ │ │ │   └◙ WVal NQPMu
+    ║ ║ ║ │   │ │ │ ├─ifnull
+    ║ ║ ║ │   │ │ │ │ ├─atkey
+    ║ ║ ║ │   │ │ │ │ │ ├○ %subDesc
+    ║ ║ ║ │   │ │ │ │ │ └◙ SVal "locals"
+    ║ ║ ║ │   │ │ │ │ └◙ WVal NQPMu
     ║ ║ ║ │   │ │ │ └─ifnull
     ║ ║ ║ │   │ │ │   ├─atkey
     ║ ║ ║ │   │ │ │   │ ├○ %subDesc
-    ║ ║ ║ │   │ │ │   │ └◙ SVal "named"
+    ║ ║ ║ │   │ │ │   │ └◙ SVal "slurpy"
     ║ ║ ║ │   │ │ │   └◙ WVal NQPMu
     ║ ║ ║ │   │ │ └─ifnull
     ║ ║ ║ │   │ │   ├─atkey
     ║ ║ ║ │   │ │   │ ├○ %subDesc
-    ║ ║ ║ │   │ │   │ └◙ SVal "optional"
+    ║ ║ ║ │   │ │   │ └◙ SVal "named"
     ║ ║ ║ │   │ │   └◙ WVal NQPMu
-    ║ ║ ║ │   │ └─iseq_s  ««"eq"
-    ║ ║ ║ │   │   ├─callmethod name  ««".name"
-    ║ ║ ║ │   │   │ └─ifnull
-    ║ ║ ║ │   │   │   ├─atpos
-    ║ ║ ║ │   │   │   │ ├○ $n
-    ║ ║ ║ │   │   │   │ └◙ IVal 0
-    ║ ║ ║ │   │   │   └◙ WVal NQPMu
-    ║ ║ ║ │   │   └◙ SVal "&renameVars"
+    ║ ║ ║ │   │ └─ifnull
+    ║ ║ ║ │   │   ├─atkey
+    ║ ║ ║ │   │   │ ├○ %subDesc
+    ║ ║ ║ │   │   │ └◙ SVal "optional"
+    ║ ║ ║ │   │   └◙ WVal NQPMu
     ║ ║ ║ │   └─push  ««"$n"
     ║ ║ ║ │     ├○ @inlinecandidates
     ║ ║ ║ │     └○ $n
