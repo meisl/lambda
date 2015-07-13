@@ -62,7 +62,7 @@ sub compileAll(@ms) {
     my $mainsrc := '"' ~ m2src($main) ~ '"';   
     my $rakudo  := nqp::backendconfig()<prefix>;
     my $moarexe := fixslashes($rakudo ~ '/bin/moar.exe');
-    my $nqplibs := fixslashes($rakudo ~ '/languages/nqp/lib');
+    my $nqplibs := fixslashes($rakudo ~ '/share/nqp/lib');
     my $libpath := fixslashes('--libpath="' ~ $nqplibs );
     my $moar    := fixslashes("$moarexe $libpath");
     my $nqp     := fixslashes($moar ~ '" --libpath="blib_tmp"' ~ ' "' ~ $nqplibs ~ '/nqp.moarvm"');

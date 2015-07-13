@@ -1,7 +1,7 @@
 @echo off
 
 SET RAKUDO=C:\rakudo
-SET NQPLIB=%RAKUDO%\languages\nqp\lib
+SET NQPLIB=%RAKUDO%\share\nqp\lib
 SET MOAR=%RAKUDO%\bin\moar.exe --libpath="%NQPLIB%"
 SET NQP=%MOAR% "%NQPLIB%\nqp.moarvm"
 
