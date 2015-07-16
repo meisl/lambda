@@ -13,7 +13,7 @@ use Util;
 # The latter meaning: by how much should it be advanced in a certain
 # situtation, if at all?
 
-plan(194);
+plan(229);
 
 =begin
 sub dodo($test) {
@@ -556,6 +556,88 @@ fails_ok( { is([], "foo") }, '`is([], "foo")`');
     fails_ok( { isnt($a, $a) }, '`isnt($a, $a)`' );
 }
 
+
+{ # assertion `isa_ok` --------------------------------------------------------
+    passes_ok({ isa_ok(23, int, '...') }, "`isa_ok(23, int, ...)`" );
+    fails_ok( { isa_ok(23, str, '...') }, "`isa_ok(23, str, ...)`" );
+
+    my class A {
+        has $!s;
+        has $!n;
+        method s() { $!s }
+        method n() { $!n }
+    }
+
+    my class B is A {
+    }
+
+    my class X { }
+
+    my $a := A.new(:s<foo>, :n(42));
+
+    fails_ok( { isa_ok($a, X, '...') }, "`isa_ok(\$a, A, ...)`" );
+    passes_ok({ isa_ok($a, A, '...') }, "`isa_ok(\$a, A, ...)`" );
+    passes_ok({ isa_ok($a, A, :s<foo>, '...') }, "`isa_ok(\$a, A, :s<foo>, ...)`" );
+    fails_ok( { isa_ok($a, A, :s<bar>, '...') }, "`isa_ok(\$a, A, :s<bar>, ...)`" );
+    fails_ok( { isa_ok($a, A, :t<foo>, '...') }, "`isa_ok(\$a, A, :t<foo>, ...)`" );
+    passes_ok({ isa_ok($a, A, :s<foo>, :n(42), '...') }, "`isa_ok(\$a, A, :s<foo>, :n(42), ...)`" );
+    passes_ok({ isa_ok($a, A,          :n(42), '...') }, "`isa_ok(\$a, A,          :n(42), ...)`" );
+    fails_ok( { isa_ok($a, A, :s<foo>, :n(23), '...') }, "`isa_ok(\$a, A, :s<foo>, :n(23), ...)`" );
+    fails_ok( { isa_ok($a, A,          :n(23), '...') }, "`isa_ok(\$a, A,          :n(23), ...)`" );
+
+    my $b := B.new(:s<foo>, :n(42));
+
+    passes_ok({ isa_ok($b, B, '...') }, "`isa_ok(\$b, B, ...)`" );
+    passes_ok({ isa_ok($b, A, '...') }, "`isa_ok(\$b, A, ...)`" );
+    passes_ok({ isa_ok($b, B, :s<foo>, '...') }, "`isa_ok(\$b, B, :s<foo>, ...)`" );
+    passes_ok({ isa_ok($b, A, :s<foo>, '...') }, "`isa_ok(\$b, A, :s<foo>, ...)`" );
+    fails_ok( { isa_ok($b, B, :s<bar>, '...') }, "`isa_ok(\$b, B, :s<bar>, ...)`" );
+    fails_ok( { isa_ok($b, A, :s<bar>, '...') }, "`isa_ok(\$b, A, :s<bar>, ...)`" );
+    fails_ok( { isa_ok($b, B, :t<foo>, '...') }, "`isa_ok(\$b, B, :t<foo>, ...)`" );
+    fails_ok( { isa_ok($b, A, :t<foo>, '...') }, "`isa_ok(\$b, A, :t<foo>, ...)`" );
+    
+    passes_ok({ isa_ok($b, B, :s<foo>, :n(42), '...') }, "`isa_ok(\$b, B, :s<foo>, :n(42), ...)`" );
+    passes_ok({ isa_ok($b, A, :s<foo>, :n(42), '...') }, "`isa_ok(\$b, A, :s<foo>, :n(42), ...)`" );
+    passes_ok({ isa_ok($b, B,          :n(42), '...') }, "`isa_ok(\$b, B,          :n(42), ...)`" );
+    passes_ok({ isa_ok($b, A,          :n(42), '...') }, "`isa_ok(\$b, A,          :n(42), ...)`" );
+    fails_ok( { isa_ok($b, B, :s<foo>, :n(23), '...') }, "`isa_ok(\$b, B, :s<foo>, :n(23), ...)`" );
+    fails_ok( { isa_ok($b, A, :s<foo>, :n(23), '...') }, "`isa_ok(\$b, A, :s<foo>, :n(23), ...)`" );
+    fails_ok( { isa_ok($b, A,          :n(23), '...') }, "`isa_ok(\$b, A,          :n(23), ...)`" );
+    fails_ok( { isa_ok($b, B,          :n(23), '...') }, "`isa_ok(\$b, B,          :n(23), ...)`" );
+
+}
+
+
+
+{ # assertion `isa_nok` -------------------------------------------------------
+    fails_ok( { isa_nok(23, int, '...') }, "`isa_nok(23, int, ...)`" );
+    passes_ok({ isa_nok(23, str, '...') }, "`isa_nok(23, str, ...)`" );
+
+    my class A {
+        has $!s;
+        has $!n;
+        method s() { $!s }
+        method n() { $!n }
+    }
+
+    my class B is A {
+    }
+
+    my class X { }
+
+    my $a := A.new(:s<foo>, :n(42));
+
+    passes_ok({ isa_nok($a, X, '...') }, "`isa_nok(\$a, X, ...)`" );
+    fails_ok( { isa_nok($a, A, '...') }, "`isa_nok(\$a, A, ...)`" );
+    passes_ok({ isa_nok($a, B, '...') }, "`isa_nok(\$a, B, ...)`" );
+
+    my $b := B.new(:s<foo>, :n(42));
+
+    passes_ok({ isa_nok($b, X, '...') }, "`isa_nok(\$b, X, ...)`" );
+    fails_ok( { isa_nok($b, A, '...') }, "`isa_nok(\$b, A, ...)`" );
+    fails_ok( { isa_nok($b, B, '...') }, "`isa_nok(\$b, B, ...)`" );
+
+}
 
 
 #is_eq("asdf", "asdf", "should fail");

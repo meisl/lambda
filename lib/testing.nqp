@@ -436,17 +436,88 @@ class Testing {
                            ~ "\n  #            got: $actual"
             ;
         }
-        ok($result, $desc);
+        self.ok($result, $desc);
     }
 
     method is_eq($actual, $expected, str $desc) {
         try {
             my str $a := $actual;
             my str $x := $expected;
-            ok($a eq $x, $desc);
-            CATCH { ok(0, $desc) }
+            self.ok($a eq $x, $desc);
+            CATCH { self.ok(0, $desc) }
         }
     }
+
+
+    method isa_ok($actual, $expectedType, str $desc, *%attributes) {
+        my $result;
+        if $expectedType =:= str {
+            $result := nqp::isstr($actual);
+        } elsif $expectedType =:= int {
+            $result := nqp::isint($actual);
+        } elsif $expectedType =:= num {
+            $result := nqp::isnum($actual);
+        } else {
+            $result := istype($actual, $expectedType);
+        }
+        if $result && %attributes {
+            my $attrIt := nqp::iterator(%attributes);
+            my $tests := -> {
+                while $result && $attrIt {
+                    nqp::shift($attrIt);
+                    my $m := $attrIt.key;
+                    my $xv := $attrIt.value;
+                    if nqp::can($actual, $attrIt.key) {
+                        my $av := nqp::callmethod($actual, $m);
+                        my $d:= $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
+                                        ~ " where .$m is " ~ describe($xv)
+                                      ~ "\n  #   actual: " ~ describe($actual)
+                        ;
+                        unless self.is($av, $xv, $d) {
+                            $desc := $d;
+                            $result := 0;
+                        }
+                    } else {
+                        $desc := $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
+                                            ~ " where .$m is " ~ describe($xv)
+                                       ~ "\n  #   actual: " ~ describe($actual)
+                                       ~ "\n  #      got: \"Cannot find method $m\""
+                        ;
+                        $result := self.ok(0, $desc);
+                    }
+                }
+                $result;
+            };
+            return self.passes_ok($tests, $desc);
+        } else {
+            $desc := $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
+                           ~ "\n  #      got: " ~ describe($actual)
+                unless $result;
+            return self.ok($result, $desc);
+        }
+    }
+
+
+    method isa_nok($actual, $refutedType, str $desc) {
+        my $result;
+        if $refutedType =:= str {
+            $result := !nqp::isstr($actual);
+        } elsif $refutedType =:= int {
+            $result := !nqp::isint($actual);
+        } elsif $refutedType =:= num {
+            $result := !nqp::isnum($actual);
+        } else {
+            $result := !istype($actual, $refutedType);
+        }
+        unless $result {
+            $desc := $desc ~ "\n  # expected: anything but a " ~ $refutedType.HOW.name($refutedType)
+                           ~ "\n  #      got: " ~ describe($actual)
+            ;
+        }
+        self.ok($result, $desc);
+    }
+
+
 
     my $HERE;
     method HERE() {
@@ -470,6 +541,8 @@ sub lives_ok($block, $desc?)            is export { Testing.lives_ok($block, $de
 sub dies_ok($block, $desc?)             is export { Testing.dies_ok($block, $desc) }
 sub is($actual, $expected, $desc?)      is export { Testing.is($actual, $expected, $desc) }
 sub isnt($actual, $expected, $desc?)    is export { Testing.isnt($actual, $expected, $desc) }
+sub isa_ok($actual, $expectedType, $desc, *%attributes) is export { Testing.isa_ok($actual, $expectedType, $desc, |%attributes) }
+sub isa_nok($actual, $refutedType, $desc)               is export { Testing.isa_nok($actual, $refutedType, $desc); }
 
 
 sub MAIN(*@ARGS) {
