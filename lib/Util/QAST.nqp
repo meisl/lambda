@@ -667,3 +667,183 @@ sub collect_params_and_body($node)      is export { Util::QAST.collect_params_an
 
 sub inline_simple_subs($node, @inlinableDefs) is export { Util::QAST.inline_simple_subs($node, @inlinableDefs) }
 
+
+sub MAIN(@ARGS) {
+    my sub q_and($f, $g) {
+        my $out;
+
+        my %fdesc := collect_params_and_body($f);
+        my %gdesc := collect_params_and_body($g);
+        my $fparam := nqp::iterval(nqp::shift(nqp::iterator(%fdesc<params>)));
+        my $gBody := cloneAndSubst(%gdesc<body>, -> $n {
+            if istype($n, QAST::Var) && nqp::existskey(%gdesc<params>, $n.name) {
+                QAST::Var.new(:name($fparam.name), :scope($fparam.scope));
+            } else {
+                $n;
+            }
+        });
+        
+        $out := QAST::Block.new(
+            cloneAndSubst($fparam),
+            QAST::Op.new(:op<if>,
+                cloneAndSubst(%fdesc<body>),
+                $gBody,
+                QAST::IVal.new(:value(0))
+            )
+        );
+
+        $out;
+    }
+
+    my sub q_or($f, $g) {
+        my $out;
+
+        my %fdesc := collect_params_and_body($f);
+        my %gdesc := collect_params_and_body($g);
+        my $fparam := nqp::iterval(nqp::shift(nqp::iterator(%fdesc<params>)));
+        my $gBody := cloneAndSubst(%gdesc<body>, -> $n {
+            if istype($n, QAST::Var) && nqp::existskey(%gdesc<params>, $n.name) {
+                QAST::Var.new(:name($fparam.name), :scope($fparam.scope));
+            } else {
+                $n;
+            }
+        });
+        
+        $out := QAST::Block.new(
+            cloneAndSubst($fparam),
+            QAST::Op.new(:op<if>,
+                cloneAndSubst(%fdesc<body>),
+                QAST::IVal.new(:value(1)),
+                $gBody
+            )
+        );
+
+        $out;
+    }
+
+    my $p := fix_var_attrs(QAST::Block.new(:blocktype<declaration>,
+        QAST::Var.new(:name<$x>, :decl<param>, :scope<lexical>),
+        QAST::Op.new(:op<if>,
+            QAST::Var.new(:name<$x>, :scope<lexical>),
+            QAST::IVal.new(:value(0)),
+            QAST::IVal.new(:value(1))
+        )
+    ));
+    my $q := fix_var_attrs(QAST::Block.new(:blocktype<declaration>,
+        QAST::Var.new(:name<$y>, :decl<param>, :scope<lexical>),
+        QAST::Op.new(:op<isgt_i>,
+            QAST::Var.new(:name<$y>, :scope<lexical>),
+            QAST::IVal.new(:value(0))
+        )
+    ));
+    my $r := fix_var_attrs(QAST::Block.new(:blocktype<declaration>,
+        QAST::Var.new(:name<$z>, :decl<param>, :scope<lexical>),
+        QAST::Op.new(:op<islt_i>,
+            QAST::Var.new(:name<$z>, :scope<lexical>),
+            QAST::IVal.new(:value(10))
+        )
+    ));
+    say('p: ' ~ dump($p));
+    say('q: ' ~ dump($q));
+    say('r: ' ~ dump($r));
+
+    my sub q_compose($f, $g) {
+        my $out;
+        #$out := QAST::Block.new(
+        #    QAST::Var.new(:name<$z>, :decl<param>, :scope<lexical>),
+        #    QAST::Op.new(:op<call>,
+        #        $f,
+        #        QAST::Op.new(:op<call>,
+        #            $g,
+        #            QAST::Var.new(:name<$z>, :scope<lexical>)
+        #        )
+        #    )
+        #);
+
+        my %fdesc := collect_params_and_body($f);
+        my %gdesc := collect_params_and_body($g);
+        my $fparam := nqp::iterval(nqp::shift(nqp::iterator(%fdesc<params>)));
+        my $gBody := cloneAndSubst(%gdesc<body>, -> $n {
+            if istype($n, QAST::Var) && nqp::existskey(%gdesc<params>, $n.name) {
+                QAST::Var.new(:name($fparam.name), :scope($fparam.scope));
+            } else {
+                $n;
+            }
+        });
+
+        $out := QAST::Block.new(
+            cloneAndSubst($fparam),
+            cloneAndSubst(%fdesc<body>, -> $n {
+                if istype($n, QAST::Var) && nqp::existskey(%fdesc<params>, $n.name) {
+                    $gBody; # clone it if used more than once
+                } else {
+                    $n;
+                }
+            })
+        );
+
+        $out;
+    }
+    
+
+    sub compile_qast($qast) {
+        $qast := QAST::CompUnit.new($qast)
+            unless istype($qast, QAST::CompUnit);
+        my $*QAST_BLOCK_NO_CLOSE := 1;
+        my $comp := nqp::getcomp('nqp');
+        $comp.addstage('optimize', :before<mast>);
+        $comp.compile($qast, :from('ast'));
+    }
+
+    #say('$p(1): ' ~ compile_qast($p)(1));
+    #say('$q(1): ' ~ compile_qast($q)(1));
+    my $pq := q_compose($p, $q);
+    say('q_compose($p, $q): ' ~ dump($pq));
+    say(describe(compile_qast($pq)));
+    say('q_compose($p, $q)(1): ' ~ compile_qast($pq)(1));
+
+    my $q_and_r := q_and($q, $r);
+    say('q_and($q, $r): ' ~ dump($q_and_r));
+
+    my $q_or_r := q_or($q, $r);
+    say('q_or($q, $r): ' ~ dump($q_or_r));
+
+
+    my $x := compile_qast(
+        QAST::Block.new(
+            QAST::Var.new(:name<$_>, :scope<lexical>, :decl<param>),
+            QAST::Op.new(:op<say>,
+                QAST::Op.new(:op<istrue>,
+                    QAST::Op.new(:op<unless>,
+                        QAST::Var.new(:name<$_>, :scope<lexical>),
+                        QAST::IVal.new(:value(5))
+                    )
+                )
+            )
+        )
+    );
+    say('###############');
+    $x(1);
+
+    my class BigInt is repr('P6bigint') { }
+
+
+    
+    my $one := nqp::box_i(1, BigInt);
+    my $two := nqp::box_i(2, BigInt);
+    my $i := 10;
+    my $pr := nqp::box_i(5000, BigInt);
+    while $i > 0 {
+        $pr := nqp::add_I(nqp::add_I($pr, $pr, BigInt), $one, BigInt);
+        $pr := nqp::add_I($pr, $two, BigInt) until nqp::isprime_I($pr, 100);
+        say('prime: ' ~ $pr);
+        $i := $i - 1;
+    }
+
+
+    my $z := nqp::where(QAST::Block.new());
+    my $zz := nqp::bitxor_i($z, nqp::bitshiftl_i($z, 32));
+    say($z);
+    say($zz);
+    say(nqp::mod_i($zz, $pr));
+}
