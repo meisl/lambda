@@ -409,20 +409,20 @@ class Testing {
         nqp::hash('result', $result, 'comp', $comp);
     }
 
-    method is($actual, $expected, $desc) {
+    method is($actual, $expected, $desc, :$describe) {
         my $test := test_is($actual, $expected);
         unless $test<result> {
-            $desc := $desc ~ "\n  # expected (" ~ $test<comp> ~ '): ' ~ describe($expected)
-                           ~ "\n  #" ~ nqp::x(' ', nqp::chars($test<comp>) + 9) ~ "got: " ~ describe($actual)
+            $desc := $desc ~ "\n  # expected (" ~ $test<comp> ~ '): ' ~ $describe($expected)
+                           ~ "\n  #" ~ nqp::x(' ', nqp::chars($test<comp>) + 9) ~ "got: " ~ $describe($actual)
             ;
         }
         self.ok($test<result>, $desc);
     }
 
-    method isnt($actual, $expected, $desc) {
+    method isnt($actual, $expected, $desc, :$describe) {
         my $test := test_is($actual, $expected);
         if $test<result> {
-            $desc := $desc ~ "\n  # expected anything but (" ~ $test<comp> ~ '): ' ~ describe($expected)
+            $desc := $desc ~ "\n  # expected anything but (" ~ $test<comp> ~ '): ' ~ $describe($expected)
                            ~ "\n  #" ~ nqp::x(' ', nqp::chars($test<comp>) + 22) ~ "got: the very same"
             ;
         }
@@ -539,8 +539,8 @@ sub fails_ok($block, $desc?)            is export { Testing.fails_ok($block, $de
 sub passes_ok($block, $desc?)           is export { Testing.passes_ok($block, $desc) }
 sub lives_ok($block, $desc?)            is export { Testing.lives_ok($block, $desc) }
 sub dies_ok($block, $desc?)             is export { Testing.dies_ok($block, $desc) }
-sub is($actual, $expected, $desc?)      is export { Testing.is($actual, $expected, $desc) }
-sub isnt($actual, $expected, $desc?)    is export { Testing.isnt($actual, $expected, $desc) }
+sub is($actual, $expected, $desc?, :$describe = &describe)      is export { Testing.is($actual, $expected, $desc, :$describe) }
+sub isnt($actual, $expected, $desc?, :$describe = &describe)    is export { Testing.isnt($actual, $expected, $desc, :$describe) }
 sub isa_ok($actual, $expectedType, $desc, *%attributes) is export { Testing.isa_ok($actual, $expectedType, $desc, |%attributes) }
 sub isa_nok($actual, $refutedType, $desc)               is export { Testing.isa_nok($actual, $refutedType, $desc); }
 
