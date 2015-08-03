@@ -1395,59 +1395,77 @@
     ║ ║ ║ │ ╟○ $n :decl(param)
     ║ ║ ║ │ ╟○ @a :decl(param)
     ║ ║ ║ │ ╟○ %subDesc :decl(var)
-    ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%subDesc := collect_params_and_body($n[1])"
+    ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%subDesc := collect_params_and_body($n[1], :name($n"...
     ║ ║ ║ │ ║ ├○ %subDesc
-    ║ ║ ║ │ ║ └─call &collect_params_and_body  ««"$n[1]"
-    ║ ║ ║ │ ║   └─ifnull
-    ║ ║ ║ │ ║     ├─atpos
-    ║ ║ ║ │ ║     │ ├○ $n
-    ║ ║ ║ │ ║     │ └◙ IVal 1
-    ║ ║ ║ │ ║     └◙ WVal NQPMu
-    ║ ║ ║ │ ╙─unless  ««"%subDesc<locals> || %subDesc<slurpy> || %subDesc<na"...
+    ║ ║ ║ │ ║ └─call &collect_params_and_body  ««"$n[1], :name($n[0].name)"
+    ║ ║ ║ │ ║   ├─ifnull
+    ║ ║ ║ │ ║   │ ├─atpos
+    ║ ║ ║ │ ║   │ │ ├○ $n
+    ║ ║ ║ │ ║   │ │ └◙ IVal 1
+    ║ ║ ║ │ ║   │ └◙ WVal NQPMu
+    ║ ║ ║ │ ║   └─callmethod name :named("name")  ««".name"
+    ║ ║ ║ │ ║     └─ifnull
+    ║ ║ ║ │ ║       ├─atpos
+    ║ ║ ║ │ ║       │ ├○ $n
+    ║ ║ ║ │ ║       │ └◙ IVal 0
+    ║ ║ ║ │ ║       └◙ WVal NQPMu
+    ║ ║ ║ │ ╙─unless  ««"@inlinecandidates.push($n)\n                    unl"...
     ║ ║ ║ │   ├─unless  ««"||"
     ║ ║ ║ │   │ ├─unless  ««"||"
     ║ ║ ║ │   │ │ ├─unless  ««"||"
-    ║ ║ ║ │   │ │ │ ├─ifnull
-    ║ ║ ║ │   │ │ │ │ ├─atkey
-    ║ ║ ║ │   │ │ │ │ │ ├○ %subDesc
-    ║ ║ ║ │   │ │ │ │ │ └◙ SVal "locals"
-    ║ ║ ║ │   │ │ │ │ └◙ WVal NQPMu
+    ║ ║ ║ │   │ │ │ ├─unless  ««"||"
+    ║ ║ ║ │   │ │ │ │ ├─unless  ««"||"
+    ║ ║ ║ │   │ │ │ │ │ ├─ifnull
+    ║ ║ ║ │   │ │ │ │ │ │ ├─atkey
+    ║ ║ ║ │   │ │ │ │ │ │ │ ├○ %subDesc
+    ║ ║ ║ │   │ │ │ │ │ │ │ └◙ SVal "locals"
+    ║ ║ ║ │   │ │ │ │ │ │ └◙ WVal NQPMu
+    ║ ║ ║ │   │ │ │ │ │ └─ifnull
+    ║ ║ ║ │   │ │ │ │ │   ├─atkey
+    ║ ║ ║ │   │ │ │ │ │   │ ├○ %subDesc
+    ║ ║ ║ │   │ │ │ │ │   │ └◙ SVal "slurpy"
+    ║ ║ ║ │   │ │ │ │ │   └◙ WVal NQPMu
+    ║ ║ ║ │   │ │ │ │ └─ifnull
+    ║ ║ ║ │   │ │ │ │   ├─atkey
+    ║ ║ ║ │   │ │ │ │   │ ├○ %subDesc
+    ║ ║ ║ │   │ │ │ │   │ └◙ SVal "named"
+    ║ ║ ║ │   │ │ │ │   └◙ WVal NQPMu
     ║ ║ ║ │   │ │ │ └─ifnull
     ║ ║ ║ │   │ │ │   ├─atkey
     ║ ║ ║ │   │ │ │   │ ├○ %subDesc
-    ║ ║ ║ │   │ │ │   │ └◙ SVal "slurpy"
+    ║ ║ ║ │   │ │ │   │ └◙ SVal "optional"
     ║ ║ ║ │   │ │ │   └◙ WVal NQPMu
     ║ ║ ║ │   │ │ └─ifnull
     ║ ║ ║ │   │ │   ├─atkey
     ║ ║ ║ │   │ │   │ ├○ %subDesc
-    ║ ║ ║ │   │ │   │ └◙ SVal "named"
+    ║ ║ ║ │   │ │   │ └◙ SVal "recursive"
     ║ ║ ║ │   │ │   └◙ WVal NQPMu
-    ║ ║ ║ │   │ └─ifnull
-    ║ ║ ║ │   │   ├─atkey
-    ║ ║ ║ │   │   │ ├○ %subDesc
-    ║ ║ ║ │   │   │ └◙ SVal "optional"
-    ║ ║ ║ │   │   └◙ WVal NQPMu
+    ║ ║ ║ │   │ └─call &istype  ««"%subDesc<body>, QAST::Block, QAST::Stmts, QAST::Stmt"
+    ║ ║ ║ │   │   ├─ifnull
+    ║ ║ ║ │   │   │ ├─atkey
+    ║ ║ ║ │   │   │ │ ├○ %subDesc
+    ║ ║ ║ │   │   │ │ └◙ SVal "body"
+    ║ ║ ║ │   │   │ └◙ WVal NQPMu
+    ║ ║ ║ │   │   ├◙ WVal QAST::Block
+    ║ ║ ║ │   │   ├◙ WVal QAST::Stmts
+    ║ ║ ║ │   │   └◙ WVal QAST::Stmt
     ║ ║ ║ │   └─push  ««"$n"
     ║ ║ ║ │     ├○ @inlinecandidates
     ║ ║ ║ │     └○ $n
     ║ ║ ║ └○ $ast
-    ║ ║ ╟─for  ««"say(describe($_[0].name)) for @inlinecandidates"
+    ║ ║ ╟─for  ««"say('inline candidate: ' ~ $_[0].name) for @inlinec"...
     ║ ║ ║ ├○ @inlinecandidates
     ║ ║ ║ └─:Block :blocktype(immediate)
     ║ ║ ║   ╟○ $_ :decl(param)
-    ║ ║ ║   ╙─call &say  ««"describe($_[0].name)"
-    ║ ║ ║     └─call &describe  ««"$_[0].name"
+    ║ ║ ║   ╙─call &say  ««"'inline candidate: ' ~ $_[0].name"
+    ║ ║ ║     └─concat  ««"~"
+    ║ ║ ║       ├◙ SVal "inline candidate: "
     ║ ║ ║       └─callmethod name  ««".name"
     ║ ║ ║         └─ifnull
     ║ ║ ║           ├─atpos
     ║ ║ ║           │ ├○ $_
     ║ ║ ║           │ └◙ IVal 0
     ║ ║ ║           └◙ WVal NQPMu
-    ║ ║ ╟─bind  ««":="
-    ║ ║ ║ ├○ $ast
-    ║ ║ ║ └─call &inline_simple_subs  ««"$ast, @inlinecandidates"
-    ║ ║ ║   ├○ $ast
-    ║ ║ ║   └○ @inlinecandidates
     ║ ║ ╙○ $ast
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my %stats := self.collect_stats($ast);\n"...
     ║ ║ ╟○ self :decl(param)
@@ -2094,6 +2112,7 @@
     ║   ╟○ $src_path :decl(param)
     ║   ╟○ $target :decl(param) :named("target") :default(SVal "mbc")
     ║   ╟○ $stagestats :decl(param) :named("stagestats") :default(WVal NQPMu)
+    ║   ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║   ╟○ $cwd :decl(var)
     ║   ╟○ $l :decl(var)
     ║   ╟○ $x :decl(var)

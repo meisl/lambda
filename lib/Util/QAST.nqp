@@ -462,7 +462,7 @@ class Util::QAST {
         }
     }
 
-    method collect_params_and_body($node) {
+    method collect_params_and_body($node, :$name) {
         nqp::die('expected a QAST::Block - got ' ~ describe($node))
             unless istype($node, QAST::Block);
 
@@ -515,11 +515,25 @@ class Util::QAST {
             'named',  %named,
             'locals', %locals,
             'optional', %optional,
+            'recursive', 0,
         );
-        if %locals {
-            %out{'body'} := QAST::Block.new(:blocktype<immediate>, |@stmts);
-        } else {
-            %out{'body'} := @stmts == 1 ?? @stmts[0] !! QAST::Stmts.new(|@stmts);
+        my $body := %locals
+            ?? QAST::Block.new(:blocktype<immediate>, |@stmts)
+            !! (@stmts == 1 ?? @stmts[0] !! QAST::Stmts.new(|@stmts));
+        %out{'body'} := $body;
+        unless nqp::isnull_s($name) {
+            TreeWalk.dfs-up(
+                -> $n, @p {
+                    if istype($n, QAST::Op) && (($n.op eq 'call') || ($n.op eq 'callstatic')) && ($n.name eq $name) {
+                        %out{'recursive'} := 1;
+                        TreeWalkDo.halt();
+                    } else {
+                        TreeWalkDo.recurse();
+                    }
+                },
+                -> $n, @p { },
+                $body
+            );
         }
         %out;
     }
@@ -604,6 +618,7 @@ class Util::QAST {
             -> $n, @p {
                 my $out := %inliners{$n.name}($n.list);
                 $out.annotate('inlined', $n.name);
+                say('>>>> inlined ', $n.name);
                 #say('>>>> inlined ', dump($out), "\n>>>> for ", dump($n));
                 $out.node($n.node);
                 if istype($n, QAST::SpecialArg) {
@@ -663,7 +678,7 @@ sub renameVars($ast, &map)              is export { Util::QAST.renameVars($ast, 
 sub inline_simple_methods($ast)         is export { Util::QAST.inline_simple_methods($ast) }
 sub cloneAndSubst($ast, &substitution?) is export { Util::QAST.cloneAndSubst($ast, &substitution // -> $x { $x }) }
 
-sub collect_params_and_body($node)      is export { Util::QAST.collect_params_and_body($node) }
+sub collect_params_and_body($node, str :$name = nqp::null_s)  is export { Util::QAST.collect_params_and_body($node, :$name) }
 
 sub inline_simple_subs($node, @inlinableDefs) is export { Util::QAST.inline_simple_subs($node, @inlinableDefs) }
 

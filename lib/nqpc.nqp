@@ -347,20 +347,22 @@ class SmartCompiler is NQP::Compiler {
                     && istype($n[0], QAST::Var) && (nqp::index($n[0].name, '&') == 0)
                     && (($n[0].decl eq 'var') || ($n[0].decl eq 'static') )
                     && istype($n[1], QAST::Block)
-                    # TODO: do NOT try to inline recursive functions!
+                    
                 ));
             },
             -> $n, @a {
-                my %subDesc := collect_params_and_body($n[1]);
-                unless %subDesc<locals> || %subDesc<slurpy> || %subDesc<named> || %subDesc<optional> {
-                    @inlinecandidates.push($n)
-                }
+                my %subDesc := collect_params_and_body($n[1], :name($n[0].name));
+                @inlinecandidates.push($n)
+                    unless %subDesc<locals> || %subDesc<slurpy> || %subDesc<named> || %subDesc<optional>
+                        || %subDesc<recursive>  # do NOT try to inline recursive functions!
+                        || istype(%subDesc<body>, QAST::Block, QAST::Stmts, QAST::Stmt)
+                ;
             },
             $ast
         );
 
-        say(describe($_[0].name)) for @inlinecandidates;
-        $ast := inline_simple_subs($ast, @inlinecandidates);
+        say('inline candidate: ' ~ $_[0].name) for @inlinecandidates;
+        #$ast := inline_simple_subs($ast, @inlinecandidates);
 
         #$ast := renameVars($ast, -> $s {
         #    my str $fst := nqp::substr($s, 0, 1);
@@ -549,7 +551,7 @@ class NQPCompiler is SmartCompiler {
         nqp::rethrow($error);
     }
 
-    method compileFile($src_path, :$target = 'mbc', :$stagestats) {
+    method compileFile($src_path, :$target = 'mbc', :$stagestats, *%adverbs) {
         # replace all backslashes with slashes
         $src_path := nqp::join('/', nqp::split('\\', $src_path));
         if !nqp::filereadable($src_path) {

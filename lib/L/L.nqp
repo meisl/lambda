@@ -1,11 +1,14 @@
 use NQPHLL;
 
-use LGrammar;
-use LActions;
+use L::LGrammar;
+use L::LActions;
 use nqpc;
+use Util;
 
 
 class LCompiler is SmartCompiler {
+
+    has $!runtime;
 
     method BUILD() {
         self.language('lambda');
@@ -14,20 +17,47 @@ class LCompiler is SmartCompiler {
         
         self.addstage('mkRuntime', :after<start>);
         #self.addstage('ast_clean', :after<ast>);
-        self.addstage('ast_stats', :before<ast_save>);
+        self.addstage('marryRT', :before<ast_save>);
         return self;
     }
 
     method compiler_progname($value = NO_VALUE) { 'Lc' }
 
+    method runtime($value = NO_VALUE) {
+        $!runtime := $value unless $value =:= NO_VALUE;
+        $!runtime;
+    }
+    
+
+    # override stage 'start' in order to reset things
+    
+    method start($src, *%adverbs) {
+        self.runtime(nqp::null);
+        $src;
+    }
+
+    # additional stages
+
     method mkRuntime($src) {
         my $nqpc := NQPCompiler.new();
         $nqpc.addstage('ast_clean', :before<ast_save>);
-        my $rtQAST := $nqpc.compileFile('runTime', :lib('lib/L'), :target('ast_save'));
-        self.log('mkRuntime: ~> ', whatsit($rtQAST));
+        $nqpc.addstage('ast_stats', :before<ast_save>);
+        my $runtimeAST := $nqpc.compileFile('lib/L/runTime.nqp', :lib('lib/L'), :target('ast_save'));
+        self.log('mkRuntime: ~> ', describe($runtimeAST));
+        self.runtime($runtimeAST);
         return $src;
     }
 
+    method marryRT($ast) {
+        my $rt := self.runtime;
+        unless nqp::istype($rt, QAST::Node) {
+            self.panic("invalid runtime: " ~ describe($rt));
+        }
+        self.log('marryRT: ', describe($rt));
+        
+        #my 
+        return $ast;
+    }
 
     method command_line(@args, *%adverbs) {
         my $program-name := @args[0];
@@ -61,34 +91,20 @@ class LCompiler is SmartCompiler {
         }
         if $error {
             nqp::die(">>>Error evaluating $*USER_FILE:\n" ~ $error);
+        } elsif nqp::isstr($result) {
+            say($result);
         } else {
-            self.interactive_result($result);
+            say(describe($result));
         }
     }
 
 }
 
 
-sub flatten($args) {
-    return [$args]
-        unless nqp::islist($args);
-    my @out := [];
-    for $args -> $_ {
-        if nqp::islist($_) {
-            for flatten($_) -> $_ {
-                @out.push($_);
-            }
-        } else {
-            @out.push($_);
-        }
-    }
-    @out;
-}
-
-sub MAIN(@ARGS) {
+sub MAIN(*@ARGS) {
     my $c := LCompiler.new();
 
-    my @as := flatten(@ARGS);
+    my @as := @ARGS;
     @as.push('Lc')     unless nqp::elems(@as) > 0; # program name for command_line
     @as.push('test.L') unless nqp::elems(@as) > 1;
 

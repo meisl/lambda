@@ -5,7 +5,7 @@ use Util;
 
 use Util::QAST;
 
-plan(286);
+plan(290);
 
 
 
@@ -1236,6 +1236,24 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
         || diag(dump($out<body>));
     isa_ok($out<body>[1], QAST::Var, :name('$x'), :decl(''), 'collect_params_and_body on Block with local Var decl under bind returns a Block as <body> (b)')
         || diag(dump($out<body>));
+
+
+    # recursion:
+
+    $ast := QAST::Block.new(
+        QAST::Var.new(:name<blah>, :scope<lexical>, :decl<param>),
+        QAST::Op.new(:op<call>, :name<foo>,
+            QAST::IVal.new(:value(5))
+        )
+    );
+    lives_ok( { $out := collect_params_and_body($ast, :name<foo>) }, 'collect_params_and_body with optional :name parameter (1)')
+        || diag(dump($ast));
+    is($out{'recursive'}, 1, 'collect_params_and_body with optional :name parameter recognizes (simple) recursive fns (1)')
+        || diag($out);
+    lives_ok( { $out := collect_params_and_body($ast, :name<bar>) }, 'collect_params_and_body with optional :name parameter (2)')
+        || diag(dump($ast));
+    is($out{'recursive'}, 0, 'collect_params_and_body with optional :name parameter recognizes (simple) recursive fns (2)')
+        || diag($out);
 
     #$ast[0].push(QAST::Var.new(:name<baz>, :decl<var>));
     #$out := collect_params_and_body($ast);

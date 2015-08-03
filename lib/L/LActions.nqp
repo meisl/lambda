@@ -1,60 +1,59 @@
 use NQPHLL;
 
 
-class LActions is HLL::Actions {
+
+    my sub assert-is-Node($n) {
+        (!nqp::istype($n, QAST::Node) && nqp::die("expected a QAST::Node - got " ~ nqp::reprname($n)))
+    }
+    
 
     my sub isSVal($node) {
-        nqp::die("isSVal expects a QAST::Node - got " ~ nqp::reprname($node))
-            unless nqp::istype($node, QAST::Node);
-        return nqp::istype($node, QAST::SVal);
+        nqp::istype($node, QAST::SVal)
+            || assert-is-Node($node);
     }
 
+
+    my sub isOp($node, $opName?) {
+        (nqp::istype($node, QAST::Op) && ($node.op eq ($opName // $node.op)))
+            || assert-is-Node($node);
+    }
+
+
+    my sub lexVar(str $name, *%adverbs) {
+        # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
+        QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<lexical>, |%adverbs);
+    }
+
+class LActions is HLL::Actions {
+
     my sub isIVal($node) {
-        nqp::die("isIVal expects a QAST::Node - got " ~ nqp::reprname($node))
-            unless nqp::istype($node, QAST::Node);
-        return nqp::istype($node, QAST::IVal);
+        nqp::istype($node, QAST::IVal)
+            || assert-is-Node($node);
     }
 
     my sub isNVal($node) {
-        nqp::die("isNVal expects a QAST::Node - got " ~ nqp::reprname($node))
-            unless nqp::istype($node, QAST::Node);
-        return nqp::istype($node, QAST::NVal);
+        nqp::istype($node, QAST::NVal)
+            || assert-is-Node($node);
     }
 
     my sub isNull($node) {
-        nqp::die("isNull expects a QAST::Node - got " ~ nqp::reprname($node))
-            unless nqp::istype($node, QAST::Node);
-        return nqp::istype($node, QAST::Op) && ($node.op eq 'null');
+        nqp::istype($node, QAST::Op) && ($node.op eq 'null')
+            || assert-is-Node($node);
     }
 
     my sub isVal($node) {
-        nqp::die("isVal expects a QAST::Node - got " ~ nqp::reprname($node))
-            unless nqp::istype($node, QAST::Node);
-        return isSVal($node) || isIVal($node) || isNVal($node) || isNull($node);
+        isSVal($node) || isIVal($node) || isNVal($node) || isNull($node);
     }
 
     my sub isVar($node) {
-        nqp::die("isVar expects a QAST::Node - got " ~ nqp::reprname($node))
-            unless nqp::istype($node, QAST::Node);
-        return nqp::istype($node, QAST::Var);
-    }
-
-    my sub isOp($node, $opName?) {
-        nqp::die("isOp expects a QAST::Node as 1st arg - got " ~ nqp::reprname($node))
-            unless nqp::istype($node, QAST::Node);
-        if !nqp::istype($opName, NQPMu) {
-            nqp::die("isOp expects a str as 2nd arg (optional) - got " ~ nqp::reprname($opName))
-                unless nqp::isstr($opName);
-            return nqp::istype($node, QAST::Op) && ($node.op eq $opName);
-        } else {
-            return nqp::istype($node, QAST::Op);
-        }
+        nqp::istype($node, QAST::Var)
+            || assert-is-Node($node);
     }
 
     my sub isLambda($node) {
         nqp::die("isLambda expects a QAST::Node - got " ~ nqp::reprname($node))
             unless nqp::istype($node, QAST::Node);
-        return isOp($node, 'list')
+        isOp($node, 'list')
             && (nqp::elems($node.list) > 1) # expect at least tag str and code block
             && isSVal($node[0])
             && (nqp::substr($node[0].value, 0, 1) eq 'λ')
@@ -78,11 +77,6 @@ class LActions is HLL::Actions {
     my sub locVar(str $name, *%adverbs) {
         # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
         QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<local>,   |%adverbs);
-    }
-
-    my sub lexVar(str $name, *%adverbs) {
-        # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
-        QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<lexical>, |%adverbs);
     }
 
     my sub mkDeclV($var, *%adverbs) {
@@ -150,7 +144,7 @@ class LActions is HLL::Actions {
         for @args {
             $out.push(asNode($_));
         }
-        return $out;
+        $out;
     }
 
     my sub mkRCall(str $fnName, *@args) {
@@ -229,13 +223,13 @@ class LActions is HLL::Actions {
     my sub mkHashLookup($hash, :$key!) {
         nqp::die("mkHashLookup expects a str or QAST::Node as key")
             unless nqp::isstr($key) || nqp::istype($key, QAST::Node);
-        return QAST::Op.new(:op<atkey>, $hash, asNode($key));
+        QAST::Op.new(:op<atkey>, $hash, asNode($key));
     }
 
     my sub mkListLookup($list, :$index!) {
         nqp::die("mkListLookup expects an int or a QAST::Node as index")
             unless nqp::isint($index) || nqp::istype($index, QAST::Node);
-        return QAST::Op.new(:op<atpos>, $list, asNode($index));
+        QAST::Op.new(:op<atpos>, $list, asNode($index));
     }
 
     my sub mkConcat(*@args) {
@@ -265,7 +259,7 @@ class LActions is HLL::Actions {
                 $current := QAST::Op.new(:op<concat>, $current, $_)
             }
         }
-        return $current;
+        $current;
     }
 
     my sub mkDie(*@msgPieces) {
@@ -549,7 +543,7 @@ class LActions is HLL::Actions {
             $memo
         });
 
-        return $block;
+        $block;
     }
 
     my sub match2location($match) {
@@ -582,7 +576,7 @@ class LActions is HLL::Actions {
             ?? '  (' ~ %l<var>.name ~ ')'
             !! ''
         ;
-        return '   at ' ~ %l<str> ~ $varNameStr;
+        '   at ' ~ %l<str> ~ $varNameStr;
     }
 
     my sub reportFV(str $where, $match, %fvs) {
@@ -776,7 +770,7 @@ class LActions is HLL::Actions {
     my sub getBindingLambda($v) {
         nqp::die('getBindingLambda expects a QAST::Var - got ' ~ nqp::reprname($v))
             unless isVar($v);
-        return $v.has_ann('bound_at')
+        $v.has_ann('bound_at')
             ?? $v.ann('bound_at')
             !! nqp::null;
     }
@@ -877,3 +871,17 @@ class LActions is HLL::Actions {
     }
 }
 
+sub MAIN(*@ARGS) {
+    #say(isSVal(QAST::Block.new));
+    #say(isSVal(QAST::SVal.new));
+    #say(isSVal("asdf"));
+
+    say(isOp(QAST::Block.new));
+    say(isOp(QAST::Op.new(:op<bind>)));
+    say(isOp(QAST::Op.new(:op<bind>), "null"));
+    say(isOp(QAST::Op.new(:op<bind>), "bind"));
+    say(isOp(QAST::Op.new(:op<bind>), 27));
+    #say(isOp("aysdf"));
+
+    say(lexVar('foo', :decl<param>).dump);
+}
