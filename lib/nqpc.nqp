@@ -340,6 +340,18 @@ class SmartCompiler is NQP::Compiler {
         $ast := replace_assoc_and_pos_scoped($ast);
         $ast := inline_simple_methods($ast);
 
+        #$ast := renameVars($ast, -> $s {
+        #    my str $fst := nqp::substr($s, 0, 1);
+        #    my str $snd := nqp::substr($s, 1, 1);
+        #    $fst eq '&' || $snd eq 'λ'
+        #        ??  '.' ~ nqp::substr($s, 1)
+        #        !! $s;
+        #});
+
+        $ast;
+    }
+
+    method inline_subs($ast, *%adverbs) {
         my @inlinecandidates := [];
         TreeWalk.dfs-up(
             -> $n, @a {
@@ -362,16 +374,8 @@ class SmartCompiler is NQP::Compiler {
         );
 
         say('inline candidate: ' ~ $_[0].name) for @inlinecandidates;
-        #$ast := inline_simple_subs($ast, @inlinecandidates);
-
-        #$ast := renameVars($ast, -> $s {
-        #    my str $fst := nqp::substr($s, 0, 1);
-        #    my str $snd := nqp::substr($s, 1, 1);
-        #    $fst eq '&' || $snd eq 'λ'
-        #        ??  '.' ~ nqp::substr($s, 1)
-        #        !! $s;
-        #});
-
+        $ast := inline_simple_subs($ast, @inlinecandidates);
+        
         $ast;
     }
 

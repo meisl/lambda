@@ -51,7 +51,7 @@ grammar LGrammar is HLL::Grammar {
     token delta { 'δ' }
 
     token varName {
-        <-[\"\\βδλ&.()\s]>+
+        <-[\d\"\\βδλ&.()\s]>+
     }
 
     token variable {
@@ -76,8 +76,14 @@ grammar LGrammar is HLL::Grammar {
 
     token abstraction {
         <.lambda>
-        [  <varName> '.'  <body=.termlist1orMore>
+        [  <varName>
         || <.panic: 'expected var name after λ'>
+        ] 
+        [  '.'
+        || <.panic: 'expected "." (dot) after binder'>
+        ]
+        [  <body=.termlist1orMore>
+        || <.panic: 'invalid term in lambda body'>
         ]
     }
 

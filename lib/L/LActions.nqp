@@ -550,7 +550,7 @@ class LActions is HLL::Actions {
         my @lines := nqp::split("\n", nqp::substr($match.orig, 0, $match.from == 0 ?? $match.chars !! $match.from));
         my $lineN := nqp::elems(@lines);
         my $colN  := 1 + nqp::chars(@lines.pop);
-        my $file := $*USER_FILES;
+        my $file := $*USER_FILE;
         hash(:file($file), :line($lineN), :column($colN), :match($match), :str("$file:$lineN:$colN"));
     }
 
@@ -619,8 +619,9 @@ class LActions is HLL::Actions {
         my $mainTerm := $mainTermMatch.ast;
 
         my $fvs := $mainTerm.ann('FV');
-        if nqp::elems($fvs) > 0 {
-            my $msg := "Compile Error: unbound variables\n";
+        my $fvs-count := nqp::elems($fvs);
+        if $fvs-count > 0 {
+            my $msg := 'Compile Error: unbound variable' ~ ($fvs-count > 1 ?? "s\n" !! "\n");
             for freeVars2locations($fvs) {
                 $msg := $msg ~ loc2str($_) ~ "\n";
             }

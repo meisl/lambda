@@ -15,9 +15,9 @@ class LCompiler is SmartCompiler {
         self.parsegrammar(LGrammar);
         self.parseactions(LActions.new);
         
-        self.addstage('mkRuntime', :after<start>);
-        #self.addstage('ast_clean', :after<ast>);
-        self.addstage('marryRT', :before<ast_save>);
+        self.addstage('mkRuntime',   :after<start>);
+        self.addstage('inline_subs', :before<ast_save>);
+        self.addstage('marryRT',     :before<ast_save>);
         return self;
     }
 
@@ -40,8 +40,9 @@ class LCompiler is SmartCompiler {
 
     method mkRuntime($src) {
         my $nqpc := NQPCompiler.new();
-        $nqpc.addstage('ast_clean', :before<ast_save>);
-        $nqpc.addstage('ast_stats', :before<ast_save>);
+        $nqpc.addstage('ast_clean',     :before<ast_save>);
+        $nqpc.addstage('inline_subs',   :before<ast_save>);
+        $nqpc.addstage('ast_stats',     :before<ast_save>);
         my $runtimeAST := $nqpc.compileFile('lib/L/runTime.nqp', :lib('lib/L'), :target('ast_save'));
         self.log('mkRuntime: ~> ', describe($runtimeAST));
         self.runtime($runtimeAST);
