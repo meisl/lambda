@@ -72,20 +72,17 @@ class LActions is HLL::Actions {
     }
 
     my sub mkDeclV($var, *%adverbs) {
-        nqp::die("mkDeclV expects a QAST::Var")
-            unless isVar($var);
+        insist-isa($var, QAST::Var);
         QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<var>,   |%adverbs);
     }
 
     my sub mkDeclP($var, *%adverbs) {
-        nqp::die("mkDeclP expects a QAST::Var")
-            unless isVar($var);
+        insist-isa($var, QAST::Var);
         QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<param>,   |%adverbs);
     }
 
     my sub mkBind($var, $value) {
-        nqp::die("mkBind expects a QAST::Var as 1st arg - got " ~ nqp::reprname($var))
-            unless isVar($var);
+        insist-isa($var, QAST::Var);
         my $valNode := asNode($value);
         QAST::Op.new(:op<bind>, $var, $valNode);
     }
@@ -144,8 +141,7 @@ class LActions is HLL::Actions {
     }
 
     my sub isForced($node) {
-        nqp::die("isForced expects a QAST::Node")
-            unless nqp::istype($node, QAST::Node);
+        insist-isa($node, QAST::Node);
         $node.has_ann('forced');
     }
 
@@ -209,13 +205,13 @@ class LActions is HLL::Actions {
 
     my sub mkHashLookup($hash, :$key!) {
         nqp::die("mkHashLookup expects a str or QAST::Node as key")
-            unless nqp::isstr($key) || nqp::istype($key, QAST::Node);
+            unless istype($key, str, QAST::Node);
         QAST::Op.new(:op<atkey>, $hash, asNode($key));
     }
 
     my sub mkListLookup($list, :$index!) {
         nqp::die("mkListLookup expects an int or a QAST::Node as index")
-            unless nqp::isint($index) || nqp::istype($index, QAST::Node);
+            unless istype($index, int, QAST::Node);
         QAST::Op.new(:op<atpos>, $list, asNode($index));
     }
 
