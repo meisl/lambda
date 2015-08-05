@@ -6,11 +6,6 @@ use Util::QAST;
 
 class LActions is HLL::Actions {
 
-    my sub isVar($node) {
-        nqp::istype($node, QAST::Var)
-            || insist-isa($node, QAST::Node)
-    }
-
     my sub isLambda($node) {
         isOp($node, 'list')
             && (nqp::elems($node.list) > 1) # expect at least tag str and code block

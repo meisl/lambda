@@ -658,6 +658,14 @@ class Util::QAST {
     }
 
 
+    method isSVal($node) { nqp::istype($node, QAST::SVal) || insist-isa($node, QAST::Node) }
+    method isIVal($node) { nqp::istype($node, QAST::IVal) || insist-isa($node, QAST::Node) }
+    method isNVal($node) { nqp::istype($node, QAST::NVal) || insist-isa($node, QAST::Node) }
+
+    method isVal($node) { self.isSVal($node) || self.isIVal($node) || self.isNVal($node) }
+
+    method isVar($node) { nqp::istype($node, QAST::Var) || insist-isa($node, QAST::Node) }
+
     method isOp($node, $opName) {
         #insist-isa($node, QAST::Node);
         insist-isa($opName, str, NO_VALUE);
@@ -665,11 +673,7 @@ class Util::QAST {
             || insist-isa($node, QAST::Node);
     }
 
-    method isSVal($node) { nqp::istype($node, QAST::SVal) || insist-isa($node, QAST::Node) }
-    method isIVal($node) { nqp::istype($node, QAST::IVal) || insist-isa($node, QAST::Node) }
-    method isNVal($node) { nqp::istype($node, QAST::NVal) || insist-isa($node, QAST::Node) }
 
-    method isVal($node) { self.isSVal($node) || self.isIVal($node) || self.isNVal($node) }
 
 }   # end of class Util::QAST
 
@@ -699,13 +703,15 @@ sub collect_params_and_body($node, str :$name = nqp::null_s)  is export { Util::
 sub inline_simple_subs($node, @inlinableDefs) is export { Util::QAST.inline_simple_subs($node, @inlinableDefs) }
 
 
-sub isOp($node, $opName = NO_VALUE)  is export { Util::QAST.isOp($node, $opName) }
+sub isSVal($node)                   is export { Util::QAST.isSVal($node) }
+sub isIVal($node)                   is export { Util::QAST.isIVal($node) }
+sub isNVal($node)                   is export { Util::QAST.isNVal($node) }
 
-sub isSVal($node)                    is export { Util::QAST.isSVal($node) }
-sub isIVal($node)                    is export { Util::QAST.isIVal($node) }
-sub isNVal($node)                    is export { Util::QAST.isNVal($node) }
+sub isVal($node)                    is export { Util::QAST.isVal($node)  }
 
-sub isVal($node)                     is export { Util::QAST.isVal($node)  }
+sub isOp($node, $opName = NO_VALUE) is export { Util::QAST.isOp($node, $opName) }
+
+sub isVar($node)                    is export { Util::QAST.isVar($node) }
 
 
 
