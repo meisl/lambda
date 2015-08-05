@@ -154,9 +154,10 @@ class Util {
         for @types {
             nqp::die("istype expects only type arguments after subject - encountered " ~ self.describe($_))
                 if nqp::isconcrete($_);
+            # TODO: fix for native types str, int, null, null_s (nqp::istype always returns false for these)
             $out := 1 if nqp::istype($subject, $_);
         }
-        return $out;
+        $out;
     }
 }
 

@@ -1,5 +1,9 @@
 use NQPHLL;
 
+use Util;
+
+
+
 # TODO: Unable to parse expression in blockoid; couldn't find final '}'  at line 143, near "$msg := $m"
 =begin
 {
@@ -13,6 +17,8 @@ use NQPHLL;
 grammar LGrammar is HLL::Grammar {
 
     rule TOP {
+        :my $*UNIT := QAST::CompUnit.new(:hll('L'), QAST::Block.new());
+
         ^ \s* <.eolComment>* <termlist1orMore>? $
     }
 
@@ -52,6 +58,7 @@ grammar LGrammar is HLL::Grammar {
 
     token varName {
         <-[\d\"\\βδλ&.()\s]>+
+          <-[\"\\βδλ&.()\s]>*
     }
 
     token variable {
@@ -74,21 +81,66 @@ grammar LGrammar is HLL::Grammar {
         <!>     # NYI
     }
 
+
+    my sub match2location($match) {
+        my @lines := nqp::split("\n", nqp::substr($match.orig, 0, $match.from == 0 ?? $match.chars !! $match.from));
+        my $lineN := nqp::elems(@lines);
+        my $colN  := 1 + nqp::chars(@lines.pop);
+        my $file := $*USER_FILE;
+        hash(:file($file), :line($lineN), :column($colN), :match($match), :str("$file:$lineN:$colN"));
+    }
+
+    my sub loc2str(%l) {
+        my $varNameStr := nqp::existskey(%l, 'var')
+            ?? '  (' ~ %l<var>.name ~ ')'
+            !! ''
+        ;
+        '   at ' ~ %l<str> ~ $varNameStr;
+    }
+
+    method panic($match, *@msg-pieces) {
+        @msg-pieces.push("\n");
+        @msg-pieces.push(loc2str(match2location($match)));
+        nqp::die(join('', @msg-pieces));
+    }
+
     token abstraction {
-        <.lambda>
-        [  <varName>
-        || <.panic: 'expected var name after λ'>
-        ] 
+        :my $so-far := $/<lambda> ~ $/<varName>;
+        <lambda>        { $so-far := $/<lambda> }
+        [  <varName>    { $so-far := $so-far ~ $/<varName> }
+        || <space-plus> { self.panic($/<space-plus>, 'no white space allowed after "' ~ $so-far ~ '"!') }
+        ||              <.bogus: 'invalid lambda binder'>
+        ]
         [  '.'
-        || <.panic: 'expected "." (dot) after binder'>
+        || <.bogus-ws: 'expected "." (dot) right after "' ~ $so-far ~ '" - found'>
         ]
         [  <body=.termlist1orMore>
-        || <.panic: 'invalid term in lambda body'>
+        || <.bogus: 'invalid term in lambda body'>
         ]
     }
 
-    rule definition {
-        '(' <.delta> <symbol> <term> ')'
+    token definition {
+        #<.panic: 'NYI'>
+        '(' <.delta> \s*
+            [  <symbol>
+            || <.bogus: 'invalid definition symbol'>
+            ]
+            <body=.termlist1orMore>
+         ')'
     }
+
+    token space-plus {
+        \s+
+    }
+    
+
+    token bogus($msg) {
+        <-[\s.()\"\\]>*  { self.panic($/, $msg, " \"$/\"") }
+    }
+
+    token bogus-ws($msg) {
+        <-[.()\"\\]>*  { self.panic($/, $msg, " \"$/\"") }
+    }
+
 }
 

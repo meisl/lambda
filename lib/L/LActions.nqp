@@ -1,21 +1,23 @@
 use NQPHLL;
 
+use Util;
+use Util::QAST;
 
 
-    my sub assert-is-Node($n) {
-        (!nqp::istype($n, QAST::Node) && nqp::die("expected a QAST::Node - got " ~ nqp::reprname($n)))
+
+    my sub insist-isa($n, $type) {
+        (!istype($n, $type) # Util::istype will complain if $type ain't a Type object
+            && nqp::die('expected a ' ~ nqp::how($type).name($type) ~ ' - got ' ~ describe($n)));
     }
-    
 
     my sub isSVal($node) {
         nqp::istype($node, QAST::SVal)
-            || assert-is-Node($node);
+            || insist-isa($node, QAST::Node)
     }
-
 
     my sub isOp($node, $opName?) {
         (nqp::istype($node, QAST::Op) && ($node.op eq ($opName // $node.op)))
-            || assert-is-Node($node);
+            || insist-isa($node, QAST::Node)
     }
 
 
@@ -28,17 +30,17 @@ class LActions is HLL::Actions {
 
     my sub isIVal($node) {
         nqp::istype($node, QAST::IVal)
-            || assert-is-Node($node);
+            || insist-isa($node, QAST::Node)
     }
 
     my sub isNVal($node) {
         nqp::istype($node, QAST::NVal)
-            || assert-is-Node($node);
+            || insist-isa($node, QAST::Node)
     }
 
     my sub isNull($node) {
         nqp::istype($node, QAST::Op) && ($node.op eq 'null')
-            || assert-is-Node($node);
+            || insist-isa($node, QAST::Node)
     }
 
     my sub isVal($node) {
@@ -47,7 +49,7 @@ class LActions is HLL::Actions {
 
     my sub isVar($node) {
         nqp::istype($node, QAST::Var)
-            || assert-is-Node($node);
+            || insist-isa($node, QAST::Node)
     }
 
     my sub isLambda($node) {
@@ -70,7 +72,7 @@ class LActions is HLL::Actions {
         } elsif nqp::istype($v, QAST::Node) {
             $v;
         } else {
-            nqp::die("cannot turn into QAST::Node: " ~ nqp::reprname($v));
+            nqp::die("cannot turn into QAST::Node: " ~ describe($v));
         }
     }
 
@@ -158,14 +160,11 @@ class LActions is HLL::Actions {
     }
 
     my sub isDelayed($node) {
-        nqp::die("isDelayed expects a QAST::Node")
-            unless nqp::istype($node, QAST::Node);
+        insist-isa($node, QAST::Node);
         $node.has_ann('delayed');
     }
 
     my sub mkDelaySimple($node) {
-        nqp::die("mkDelaySimple expects a QAST::Node")
-            unless nqp::istype($node, QAST::Node);
         if isVal($node) || isDelayed($node) || isVar($node) {
             $node;
         } elsif isForced($node) {
@@ -178,8 +177,6 @@ class LActions is HLL::Actions {
     }
 
     my sub mkDelayMemo($node) {
-        nqp::die("mkDelayMemo expects a QAST::Node")
-            unless nqp::istype($node, QAST::Node);
         if isVal($node) || isVar($node) {
             $node;
         } elsif isDelayed($node) {
@@ -282,9 +279,8 @@ class LActions is HLL::Actions {
 
     has @!lambdaInfo;
 
-    my sub mkRuntime($/, @lambdaInfo) {
-        my $block := QAST::Block.new(:arity(0));
-
+    my sub mkRuntime($/, $topBlock, @lambdaInfo) {
+        my $block := QAST::Stmts.new();
         my sub mkRFn(str $name, $paramNames, $cb, *%lexicals) {
             if nqp::isstr($paramNames) {
                 $paramNames := [$paramNames];
@@ -543,7 +539,9 @@ class LActions is HLL::Actions {
             $memo
         });
 
-        $block;
+        $topBlock.unshift($block);
+
+        $topBlock;
     }
 
     my sub match2location($match) {
@@ -552,6 +550,12 @@ class LActions is HLL::Actions {
         my $colN  := 1 + nqp::chars(@lines.pop);
         my $file := $*USER_FILE;
         hash(:file($file), :line($lineN), :column($colN), :match($match), :str("$file:$lineN:$colN"));
+    }
+
+    my sub panic($match, *@msg-pieces) {
+        @msg-pieces.push("\n");
+        @msg-pieces.push(loc2str(match2location($match)));
+        nqp::die(join('', @msg-pieces));
     }
 
     my sub freeVars2locations(%fvs) {
@@ -613,12 +617,13 @@ class LActions is HLL::Actions {
     method TOP($/) {
         my $mainTermMatch := $/<termlist1orMore>;
         nqp::defor($mainTermMatch,
-            nqp::die("Compile Error: no term found at all\n" ~ loc2str(match2location($/)) ~ "\n")
+            panic($/, "Compile Error: no term found at all")
         );
 
         my $mainTerm := $mainTermMatch.ast;
+        my $top-block := $*UNIT[0];
 
-        my $fvs := $mainTerm.ann('FV');
+        my $fvs := $mainTerm.ann('FV') // [];
         my $fvs-count := nqp::elems($fvs);
         if $fvs-count > 0 {
             my $msg := 'Compile Error: unbound variable' ~ ($fvs-count > 1 ?? "s\n" !! "\n");
@@ -628,7 +633,7 @@ class LActions is HLL::Actions {
             nqp::die($msg);
         }
 
-        my $s := mkRuntime($/, @!lambdaInfo);
+        my $s := mkRuntime($/, $top-block, @!lambdaInfo);
         # Note: cannot use mkBind here since this enforces an init value
         my $quastSizeBinding  := QAST::Op.new(:op<bind>, lexVar('.qastSize',   :decl<static>));   # will receive a value node later
         my $blockCountBinding := QAST::Op.new(:op<bind>, lexVar('.blockCount', :decl<static>));   # will receive a value node later
@@ -666,12 +671,9 @@ class LActions is HLL::Actions {
             $mainResult,
         ));
         
-        my $out := QAST::CompUnit.new(
-            :hll('L'),
-            #:load(...),
-            :main(mkCall(QAST::BVal.new(:value($s)))),
-            $s
-        );
+        my $out := $*UNIT;
+        $*UNIT.main(mkCall(QAST::BVal.new(:value($s))));
+        #$*UNIT.load(...);
 
         my @stats := stats($out);
         $quastSizeBinding.push(asNode(@stats[0] + nqp::elems(@stats)));  # size (we're pushing more right here)
@@ -694,37 +696,29 @@ class LActions is HLL::Actions {
         }
     }
 
+    method termlist2orMore($/) {
+        my @terms := $/<term>;
+
+        my $out := @terms.shift.ast;
+        $out := mkApp($out, $_.ast)
+            for @terms;
+        $out.node($/);
+
+        #reportFV('termlist2orMore', $/, $out.ann('FV'));
+        make $out;
+    }
+
     my sub mkApp($f, $a) {
+        insist-isa($f, QAST::Node);
+        insist-isa($a, QAST::Node);
+
         my $out := mkRCall('.apply1', $f, mkDelayMemo($a));
-        my $fv := nqp::clone($f.ann('FV'));
-        for $a.ann('FV') {
-            my $key := nqp::iterkey_s($_);
-            my @vals := nqp::iterval($_);
-            if nqp::existskey($fv, $key) {
-                for @vals -> $val {
-                    $fv{$key}.push($val);
-                }
-            } else {
-                $fv{$key} := @vals;
-            }
-        }
-        $out.annotate('FV', $fv);
+        
+        copy-free-vars(:into($out), $f, $a);
+
         $f.annotate('parent', $out);
         $a.annotate('parent', $out);
         $out;
-    }
-
-    method termlist2orMore($/) {
-        my $f := $/<term>.shift.ast;
-        my $a := $/<term>.shift.ast;
-        my $app := mkApp($f, $a);
-
-        for $/<term> {
-            $app := mkApp($app, $_.ast);
-        }
-        $app.node($/);
-        #reportFV('termlist2orMore', $/, $app.ann('FV'));
-        make $app;
     }
 
     method term($/) {
@@ -736,10 +730,8 @@ class LActions is HLL::Actions {
     method variable($/) {
         my str $name := ~$/;
         my $var := lexVar($name, :node($/));
-        my $fv := hash();
-        $fv{$name} := [$var];
-        $var.annotate('FV', $fv);
-        $var.annotate('deBruijnIdx', 0);
+        $var.annotate('FV', nqp::hash($name, [$var]));
+        $var.annotate('deBruijnIdx', 0);    # 0 means "unbound"
         make $var;
     }
 
@@ -764,7 +756,7 @@ class LActions is HLL::Actions {
         }
 #        say("###str-constant: " ~ $s);
         my $out := asNode($s);
-        $out.annotate('FV', hash());
+        $out.annotate('FV', {});
         make $out;
     }
 
@@ -774,6 +766,33 @@ class LActions is HLL::Actions {
         $v.has_ann('bound_at')
             ?? $v.ann('bound_at')
             !! nqp::null;
+    }
+
+    my sub copy-free-vars(:$into!, *@sources) {
+        $into.annotate('FV', {})
+            unless $into.has_ann('FV');
+        my %target-FVs := $into.ann('FV');
+        for @sources {
+            my %src-FVs := $_.ann('FV');
+            for %src-FVs {
+                my $var-name    := $_.key;
+                my @occurrences := $_.value;
+                my @target-occurrences;
+                if nqp::existskey(%target-FVs, $var-name) {
+                    @target-occurrences := %target-FVs{$var-name};
+                    @target-occurrences.push($_)
+                        for @occurrences;
+                } else {
+                    %target-FVs{$_.key} := nqp::clone(@occurrences);
+                }
+            }
+        }
+        %target-FVs;
+    }
+
+
+    method definition($/) {
+        panic($/, 'NYI');
     }
 
     method abstraction($/) {
@@ -805,11 +824,11 @@ class LActions is HLL::Actions {
         );
         @!lambdaInfo.push(%info);
 
-        my %fvs := nqp::clone($body.ann('FV'));
+        
+
+        my %fvs := copy-free-vars(:into($out), $body);
         my @boundVars := nqp::defor(%fvs{$binder.name}, []);
         nqp::deletekey(%fvs, $binder.name);
-
-        $out.annotate('FV', %fvs);
 
         for @boundVars -> $bv {
             my int $i := 0;

@@ -54,3 +54,27 @@
 (λf.λg.λx.f x (g x))    # S
 (λx.λ_.x)               # K
 (λx.x)                  # I
+
+
+
+
+#(δ (# Combinators:
+#    (I λx.x)                    # identity
+#    (K λx.λ_.x)                 # (make) a constant function
+#    (S λf.λg.λx.f x (g x))      # "extended" function composition
+#    (B λf.λg.λx.f (g x))        # function composition
+#    (C λf.λx.λy.f y x)          # swap args
+#    (M λx.x x)                  # self-application
+#    (Y (M λu.λf.f (u u f)))     # recursion
+#    # Lists:
+#    (nil   λonNil.λonCons.onNil)                  # ctor 
+#    (cons  λx.λxs.λonNil.λonCons.onCons x xs)     # ctor 
+#    (car   λxs.xs ("car" "nil") (λhd.λtl.hd))     # (provoke error on nil)
+#    (cdr   λxs.xs ("cdr" "nil") (λhd.λtl.tl))     # (provoke error on nil)
+#    (foldl (Y λself.λf.λstart.λxs.                # foldl
+#        xs start                            # nil case
+#           λhd.λtl.self f (f start hd) tl)) # cons case
+#   )
+#   I K
+#)
+
