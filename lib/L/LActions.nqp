@@ -10,12 +10,7 @@ use Util::QAST;
             && nqp::die('expected a ' ~ nqp::how($type).name($type) ~ ' - got ' ~ describe($n)));
     }
 
-    my sub isSVal($node) {
-        nqp::istype($node, QAST::SVal)
-            || insist-isa($node, QAST::Node)
-    }
-
-    my sub isOp($node, $opName?) {
+    my sub isOp($node, str $opName?) {
         (nqp::istype($node, QAST::Op) && ($node.op eq ($opName // $node.op)))
             || insist-isa($node, QAST::Node)
     }
@@ -28,6 +23,11 @@ use Util::QAST;
 
 class LActions is HLL::Actions {
 
+    my sub isSVal($node) {
+        nqp::istype($node, QAST::SVal)
+            || insist-isa($node, QAST::Node)
+    }
+
     my sub isIVal($node) {
         nqp::istype($node, QAST::IVal)
             || insist-isa($node, QAST::Node)
@@ -39,8 +39,7 @@ class LActions is HLL::Actions {
     }
 
     my sub isNull($node) {
-        nqp::istype($node, QAST::Op) && ($node.op eq 'null')
-            || insist-isa($node, QAST::Node)
+        isOp($node, 'null');
     }
 
     my sub isVal($node) {
@@ -53,8 +52,6 @@ class LActions is HLL::Actions {
     }
 
     my sub isLambda($node) {
-        nqp::die("isLambda expects a QAST::Node - got " ~ nqp::reprname($node))
-            unless nqp::istype($node, QAST::Node);
         isOp($node, 'list')
             && (nqp::elems($node.list) > 1) # expect at least tag str and code block
             && isSVal($node[0])

@@ -1,10 +1,11 @@
 #!nqp
 #^^^^ DON'T REMOVE OR CHANGE THIS FIRST LINE - NOR THIS ONE!!!
+# Neither rename this file - the tests for linesFrom depend on it!
 use testing;
 
 use Util;
 
-plan(130);
+plan(185);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -99,8 +100,29 @@ lives_ok( { say('# ', "b", 4711, nqp::null, nqp::null_s, FooBar) }, 'say can tak
 
 dies_ok( { istype() }, 'istype with no arg');
 dies_ok( { istype(nqp::null) }, 'istype with only one arg');
-is(istype(nqp::null, NQPMu           ), 0, 'istype(nqp::null, NQPMu           )');
-is(istype(nqp::null, NQPMu, nqp::null), 0, 'istype(nqp::null, NQPMu, nqp::null)');
+
+
+is(istype(NQPMu, nqp::null          ),  0, 'istype(NQPMu, nqp::null)');
+is(istype(NQPMu, nqp::null_s        ),  0, 'istype(NQPMu, nqp::null_s)');
+is(istype(NQPMu, NQPMu, nqp::null   ),  1, 'istype(NQPMu, NQPMu, nqp::null)');
+is(istype(NQPMu, NQPMu, nqp::null_s ),  1, 'istype(NQPMu, NQPMu, nqp::null_s)');
+is(istype(NQPMu, str                ),  0, 'istype(NQPMu, str)');
+is(istype(NQPMu, int                ),  0, 'istype(NQPMu, int)');
+is(istype(NQPMu, num                ),  0, 'istype(NQPMu, num)');
+
+is(istype(nqp::null, NQPMu             ),   0, 'istype(nqp::null, NQPMu)');
+is(istype(nqp::null, NQPMu, nqp::null  ),   1, 'istype(nqp::null, NQPMu, nqp::null)');
+is(istype(nqp::null, NQPMu, nqp::null_s),   0, 'istype(nqp::null, NQPMu, nqp::null_s)');
+is(istype(nqp::null, str               ),   0, 'istype(nqp::null, str)');
+is(istype(nqp::null, int               ),   0, 'istype(nqp::null, int)');
+is(istype(nqp::null, num               ),   0, 'istype(nqp::null, num)');
+
+is(istype(nqp::null_s, NQPMu             ), 0, 'istype(nqp::null_s, NQPMu)');
+is(istype(nqp::null_s, NQPMu, nqp::null  ), 0, 'istype(nqp::null_s, NQPMu, nqp::null)');
+is(istype(nqp::null_s, NQPMu, nqp::null_s), 1, 'istype(nqp::null_s, NQPMu, nqp::null_s)');
+is(istype(nqp::null_s, str               ), 1, 'istype(nqp::null_s, str)');
+is(istype(nqp::null_s, int               ), 0, 'istype(nqp::null_s, int)');
+is(istype(nqp::null_s, num               ), 0, 'istype(nqp::null_s, num)');
 
 my class Foo {}
 my class Bar is Foo {}
@@ -144,6 +166,10 @@ is(istype($foo, Baz             ), 0, 'istype($foo, Baz            )');
 is(istype($foo, Foo, Baz        ), 1, 'istype($foo, Foo, Baz       )');
 is(istype($foo, Baz, Foo        ), 1, 'istype($foo, Baz, Foo       )');
 is(istype($foo, Baz, Baz        ), 0, 'istype($foo, Baz, Baz       )');
+
+is(istype($foo, str             ), 0, 'istype($foo, str)');
+is(istype($foo, int             ), 0, 'istype($foo, int)');
+is(istype($foo, num             ), 0, 'istype($foo, num)');
 
 
 dies_ok( { istype(Bar) }, 'istype with only one arg');
@@ -192,6 +218,52 @@ is(istype($baz, Baz             ), 1, 'istype($baz, Baz             )');
 is(istype($baz, Foo, Baz        ), 1, 'istype($baz, Foo, Baz        )');
 is(istype($baz, Baz, Foo        ), 1, 'istype($baz, Baz, Foo        )');
 is(istype($baz, Baz, Baz        ), 1, 'istype($baz, Baz, Baz        )');
+
+
+is(istype("foo", nqp::null_s),  0, 'istype("foo", nqp::null_s)');
+is(istype("foo", nqp::null),    0, 'istype("foo", nqp::null)');
+is(istype("foo", str),          1, 'istype("foo", str)');
+is(istype("foo", int),          0, 'istype("foo", int)');
+is(istype("foo", num),          0, 'istype("foo", num)');
+
+is(istype(str, nqp::null_s),    0, 'istype(str, nqp::null_s)');
+is(istype(str, nqp::null),      0, 'istype(str, nqp::null)');
+is(istype(str, str),            1, 'istype(str, str)');
+is(istype(str, int),            0, 'istype(str, int)');
+is(istype(str, num),            0, 'istype(str, num)');
+
+is(istype(nqp::null_s, nqp::null_s),    1, 'istype(str, nqp::null_s)');
+is(istype(nqp::null_s, nqp::null),      0, 'istype(nqp::null_s, nqp::null)');
+is(istype(nqp::null_s, str),            1, 'istype(nqp::null_s, str)');
+is(istype(nqp::null_s, int),            0, 'istype(nqp::null_s, int)');
+is(istype(nqp::null_s, num),            0, 'istype(nqp::null_s, num)');
+
+
+is(istype(4711, nqp::null_s),   0, 'istype(4711, nqp::null_s)');
+is(istype(4711, nqp::null),     0, 'istype(4711, nqp::null)');
+is(istype(4711, str),           0, 'istype(4711, str)');
+is(istype(4711, int),           1, 'istype(4711, int)');
+is(istype(4711, num),           0, 'istype(4711, num)');
+
+is(istype(int, nqp::null_s),    0, 'istype(int, nqp::null_s)');
+is(istype(int, nqp::null),      0, 'istype(int, nqp::null)');
+is(istype(int, str),            0, 'istype(int, str)');
+is(istype(int, int),            1, 'istype(int, int)');
+is(istype(int, num),            0, 'istype(int, num)');
+
+
+is(istype(3.14, nqp::null_s),   0, 'istype(3.14, nqp::null_s)');
+is(istype(3.14, nqp::null),     0, 'istype(3.14, nqp::null)');
+is(istype(3.14, str),           0, 'istype(3.14, str)');
+is(istype(3.14, int),           0, 'istype(3.14, int)');
+is(istype(3.14, num),           1, 'istype(3.14, num)');
+
+is(istype(num, nqp::null_s),    0, 'istype(num, nqp::null_s)');
+is(istype(num, nqp::null),      0, 'istype(num, nqp::null)');
+is(istype(num, str),            0, 'istype(num, str)');
+is(istype(num, int),            0, 'istype(num, int)');
+is(istype(num, num),            1, 'istype(num, num)');
+
 
 # - linesFrom -----------------------------------------------------------------
 
