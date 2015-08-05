@@ -14,6 +14,7 @@
     ╟○ &trim :decl(static) :default((NQPRoutine, invokable))
     ╟○ &istype :decl(static) :default((NQPRoutine, invokable))
     ╟○ &describe :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &insist-isa :decl(static) :default((NQPRoutine, invokable))
     ╟○ &min :decl(static) :default((NQPRoutine, invokable))
     ╟○ &max :decl(static) :default((NQPRoutine, invokable))
     ╟○ &say :decl(static) :default((NQPRoutine, invokable))

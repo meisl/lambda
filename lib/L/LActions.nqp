@@ -3,13 +3,6 @@ use NQPHLL;
 use Util;
 use Util::QAST;
 
-
-
-    my sub insist-isa($n, $type) {
-        (!istype($n, $type) # Util::istype will complain if $type ain't a Type object
-            && nqp::die('expected a ' ~ nqp::how($type).name($type) ~ ' - got ' ~ describe($n)));
-    }
-
     my sub isOp($node, str $opName?) {
         (nqp::istype($node, QAST::Op) && ($node.op eq ($opName // $node.op)))
             || insist-isa($node, QAST::Node)

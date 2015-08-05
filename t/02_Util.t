@@ -5,7 +5,7 @@ use testing;
 
 use Util;
 
-plan(185);
+plan(199);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -264,6 +264,36 @@ is(istype(num, str),            0, 'istype(num, str)');
 is(istype(num, int),            0, 'istype(num, int)');
 is(istype(num, num),            1, 'istype(num, num)');
 
+
+# - insist-isa ----------------------------------------------------------------
+{
+    lives_ok({ insist-isa("foo", str) }, 'insist-isa("foo", str)');
+    dies_ok( { insist-isa("foo", int) }, 'insist-isa("foo", int)');
+    dies_ok( { insist-isa("foo", num) }, 'insist-isa("foo", num)');
+
+    my class Foo {}
+    dies_ok( { insist-isa("foo", Foo) }, 'insist-isa("foo", Foo)');
+    lives_ok({ insist-isa(Foo, Foo) },   'insist-isa(Foo, Foo)');
+
+    my $foo := Foo.new;
+    lives_ok({ insist-isa($foo, Foo) }, 'insist-isa($foo, Foo)');
+    dies_ok( { insist-isa($foo, str) }, 'insist-isa($foo, str)');
+    dies_ok( { insist-isa($foo, int) }, 'insist-isa($foo, int)');
+    dies_ok( { insist-isa($foo, num) }, 'insist-isa($foo, num)');
+
+    my class SubClassOfFoo is Foo {}
+    lives_ok({ insist-isa(SubClassOfFoo, Foo)   }, 'insist-isa(SubClassOfFoo, Foo)');
+    dies_ok( { insist-isa(Foo, SubClassOfFoo)   }, 'insist-isa(Foo, SubClassOfFoo)');
+    dies_ok( { insist-isa($foo, SubClassOfFoo)  }, 'insist-isa($foo, SubClassOfFoo)');
+
+    my $subClassOfFoo := SubClassOfFoo.new;
+    lives_ok({ insist-isa($subClassOfFoo, Foo) },           'insist-isa($subClassOfFoo, Foo)');
+    lives_ok({ insist-isa($subClassOfFoo, SubClassOfFoo) }, 'insist-isa($subClassOfFoo, SubClassOfFoo)');
+
+
+    #lives_ok({ insist-isa(, ) }, '');
+    #dies_ok( { insist-isa(, ) }, '');
+}
 
 # - linesFrom -----------------------------------------------------------------
 
