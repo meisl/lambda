@@ -3,6 +3,8 @@
 use Util;
 use Util::TreeWalk;
 
+my class NO_VALUE {}
+
 
 role StrByDump is export {
     method Str() { dump(self) }
@@ -85,8 +87,8 @@ class Util::QAST {
             if $node.slurpy {
                 @specials.push(':slurpy(' ~ $node.slurpy ~ ')');
             }
-            unless ($node.default =:= NO_VALUE) {
-                @specials.push(':default' ~ self.dump($node.value, :oneLine));
+            unless ($node.default =:= NQPMu) {
+                @specials.push(':default' ~ self.dump($node.default, :oneLine));
             }
             if nqp::eqat($extraStr, 'lexical ', 0) { # don't show default :decl
                 $extraStr := nqp::substr($extraStr, 8);
@@ -655,6 +657,20 @@ class Util::QAST {
         );
     }
 
+
+    method isOp($node, $opName) {
+        #insist-isa($node, QAST::Node);
+        insist-isa($opName, str, NO_VALUE);
+        nqp::istype($node, QAST::Op) && ($node.op eq ($opName // $node.op))
+            || insist-isa($node, QAST::Node);
+    }
+
+    method isSVal($node) { nqp::istype($node, QAST::SVal) || insist-isa($node, QAST::Node) }
+    method isIVal($node) { nqp::istype($node, QAST::IVal) || insist-isa($node, QAST::Node) }
+    method isNVal($node) { nqp::istype($node, QAST::NVal) || insist-isa($node, QAST::Node) }
+
+    method isVal($node) { self.isSVal($node) || self.isIVal($node) || self.isNVal($node) }
+
 }   # end of class Util::QAST
 
 
@@ -682,3 +698,16 @@ sub collect_params_and_body($node, str :$name = nqp::null_s)  is export { Util::
 
 sub inline_simple_subs($node, @inlinableDefs) is export { Util::QAST.inline_simple_subs($node, @inlinableDefs) }
 
+
+sub isOp($node, $opName = NO_VALUE)  is export { Util::QAST.isOp($node, $opName) }
+
+sub isSVal($node)                    is export { Util::QAST.isSVal($node) }
+sub isIVal($node)                    is export { Util::QAST.isIVal($node) }
+sub isNVal($node)                    is export { Util::QAST.isNVal($node) }
+
+sub isVal($node)                     is export { Util::QAST.isVal($node)  }
+
+
+
+sub MAIN(*@ARGS) {
+}

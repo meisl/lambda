@@ -5,7 +5,7 @@ use testing;
 
 use Util;
 
-plan(199);
+plan(204);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -265,15 +265,23 @@ is(istype(num, int),            0, 'istype(num, int)');
 is(istype(num, num),            1, 'istype(num, num)');
 
 
-# - insist-isa ----------------------------------------------------------------
-{
-    lives_ok({ insist-isa("foo", str) }, 'insist-isa("foo", str)');
+
+{ # insist-isa ----------------------------------------------------------------
+    dies_ok( { insist-isa() },               'insist-isa with no args');
+    dies_ok( { insist-isa("foo") },          'insist-isa with only one arg');
+    dies_ok( { insist-isa("foo", "foo") },   'insist-isa with non-type 2nd arg');
+
+
+    is(insist-isa("foo", str), 0, 'insist-isa("foo", str) - MUST return 0 if it matches!!');
+
     dies_ok( { insist-isa("foo", int) }, 'insist-isa("foo", int)');
     dies_ok( { insist-isa("foo", num) }, 'insist-isa("foo", num)');
+    lives_ok({ insist-isa("foo", str, int, num) }, 'insist-isa("foo", str, int, num)');
 
     my class Foo {}
     dies_ok( { insist-isa("foo", Foo) }, 'insist-isa("foo", Foo)');
     lives_ok({ insist-isa(Foo, Foo) },   'insist-isa(Foo, Foo)');
+    lives_ok({ insist-isa(Foo, Foo, int, nqp::null) },   'insist-isa(Foo, Foo, int, nqp::null)');
 
     my $foo := Foo.new;
     lives_ok({ insist-isa($foo, Foo) }, 'insist-isa($foo, Foo)');

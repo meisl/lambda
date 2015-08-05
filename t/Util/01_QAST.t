@@ -5,7 +5,7 @@ use Util;
 
 use Util::QAST;
 
-plan(290);
+plan(321);
 
 
 
@@ -1504,5 +1504,65 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
 }
 
 
+{ # isOp ----------------------------------------------------------------------
+    is(isOp(QAST::Op.new(:op<list>)),         1, 'isOp on QAST::Op instance');
+    is(isOp(QAST::Op.new(:op<list>), 'list'), 1, 'isOp on QAST::Op instance with op-name (a)');
+    is(isOp(QAST::Op.new(:op<list>), 'hash'), 0, 'isOp on QAST::Op instance with op-name (b)');
+
+    is(isOp(QAST::Block.new),           0, 'isOp on QAST::Block instance');
+    is(isOp(QAST::Block.new, 'list'),   0, 'isOp on QAST::Block instance with op-name');
+
+    my class Foo {}
+    dies_ok({ isOp(Foo.new) },        'isOp on Foo instance');
+    dies_ok({ isOp(Foo.new, 'list')}, 'isOp on Foo instance with op-name');
+}
+
+{ # isSVal --------------------------------------------------------------------
+    is(isSVal(QAST::SVal.new(:value<foo>)), 1, 'isSVal on QAST::SVal instance');
+    is(isSVal(QAST::IVal.new(:value(471))), 0, 'isSVal on QAST::IVal instance');
+    is(isSVal(QAST::NVal.new(:value(4.1))), 0, 'isSVal on QAST::NVal instance');
+    is(isSVal(QAST::Op.new(:op<null>)),     0, 'isSVal on QAST::Op(null) instance');
+
+    is(isSVal(QAST::Block.new),             0, 'isSVal on QAST::Block instance');
+
+    my class Foo {}
+    dies_ok({ isSVal(Foo.new) }, 'isSVal on Foo instance');
+}
+
+{ # isIVal --------------------------------------------------------------------
+    is(isIVal(QAST::SVal.new(:value<foo>)),     0, 'isIVal on QAST::SVal instance');
+    is(isIVal(QAST::IVal.new(:value(471))),     1, 'isIVal on QAST::IVal instance');
+    is(isIVal(QAST::NVal.new(:value(4.1))),     0, 'isIVal on QAST::NVal instance');
+    is(isIVal(QAST::Op.new(:op<null>)),         0, 'isIVal on QAST::Op(null) instance');
+
+    is(isIVal(QAST::Block.new),                 0, 'isIVal on QAST::Block instance');
+
+    my class Foo {}
+    dies_ok({ isIVal(Foo.new) }, 'isIVal on Foo instance');
+}
+
+{ # isIVal --------------------------------------------------------------------
+    is(isNVal(QAST::SVal.new(:value<foo>)),     0, 'isNVal on QAST::SVal instance');
+    is(isNVal(QAST::IVal.new(:value(471))),     0, 'isNVal on QAST::IVal instance');
+    is(isNVal(QAST::NVal.new(:value(4.1))),     1, 'isNVal on QAST::NVal instance');
+    is(isNVal(QAST::Op.new(:op<null>)),         0, 'isNVal on QAST::Op(null) instance');
+
+    is(isNVal(QAST::Block.new),                 0, 'isNVal on QAST::Block instance');
+
+    my class Foo {}
+    dies_ok({ isNVal(Foo.new) }, 'isNVal on Foo instance');
+}
+
+{ # isVal --------------------------------------------------------------------
+    is(isVal(QAST::SVal.new(:value<foo>)),     1, 'isVal on QAST::SVal instance');
+    is(isVal(QAST::IVal.new(:value(471))),     1, 'isVal on QAST::IVal instance');
+    is(isVal(QAST::NVal.new(:value(4.1))),     1, 'isVal on QAST::NVal instance');
+    is(isVal(QAST::Op.new(:op<null>)),         0, 'isVal on QAST::Op(null) instance');
+
+    is(isVal(QAST::Block.new),                 0, 'isVal on QAST::Block instance');
+
+    my class Foo {}
+    dies_ok({ isVal(Foo.new) }, 'isVal on Foo instance');
+}
 
 done();

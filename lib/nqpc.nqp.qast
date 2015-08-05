@@ -30,13 +30,18 @@
     ╟○ &fix_var_attrs :decl(static) :default((NQPRoutine, invokable))
     ╟○ &drop_takeclosure :decl(static) :default((NQPRoutine, invokable))
     ╟○ &collect_params_and_body :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &isOp :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &isVal :decl(static) :default((NQPRoutine, invokable))
     ╟○ &dump :decl(static) :default((NQPRoutine, invokable))
     ╟○ &removeChild :decl(static) :default((NQPRoutine, invokable))
     ╟○ &inline_simple_subs :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &isNVal :decl(static) :default((NQPRoutine, invokable))
     ╟○ &replace_assoc_and_pos_scoped :decl(static) :default((NQPRoutine, invokable))
     ╟○ &qastChildren :decl(static) :default((NQPRoutine, invokable))
     ╟○ &drop_Stmts :decl(static) :default((NQPRoutine, invokable))
     ╟○ &inline_simple_methods :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &isSVal :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &isIVal :decl(static) :default((NQPRoutine, invokable))
     ╟─bind
     ║ ├○ &isinResultPosition :decl(var)
     ║ └─:Block  ««"{\n    my $n := nqp::elems($parent) - 1;\n    if ($"...

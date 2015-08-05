@@ -3,41 +3,8 @@ use NQPHLL;
 use Util;
 use Util::QAST;
 
-    my sub isOp($node, str $opName?) {
-        (nqp::istype($node, QAST::Op) && ($node.op eq ($opName // $node.op)))
-            || insist-isa($node, QAST::Node)
-    }
-
-
-    my sub lexVar(str $name, *%adverbs) {
-        # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
-        QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<lexical>, |%adverbs);
-    }
 
 class LActions is HLL::Actions {
-
-    my sub isSVal($node) {
-        nqp::istype($node, QAST::SVal)
-            || insist-isa($node, QAST::Node)
-    }
-
-    my sub isIVal($node) {
-        nqp::istype($node, QAST::IVal)
-            || insist-isa($node, QAST::Node)
-    }
-
-    my sub isNVal($node) {
-        nqp::istype($node, QAST::NVal)
-            || insist-isa($node, QAST::Node)
-    }
-
-    my sub isNull($node) {
-        isOp($node, 'null');
-    }
-
-    my sub isVal($node) {
-        isSVal($node) || isIVal($node) || isNVal($node) || isNull($node);
-    }
 
     my sub isVar($node) {
         nqp::istype($node, QAST::Var)
@@ -64,6 +31,12 @@ class LActions is HLL::Actions {
         } else {
             nqp::die("cannot turn into QAST::Node: " ~ describe($v));
         }
+    }
+
+
+    my sub lexVar(str $name, *%adverbs) {
+        # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
+        QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<lexical>, |%adverbs);
     }
 
     my sub locVar(str $name, *%adverbs) {
@@ -151,7 +124,7 @@ class LActions is HLL::Actions {
     }
 
     my sub mkDelaySimple($node) {
-        if isVal($node) || isDelayed($node) || isVar($node) {
+        if isVal($node) || isOp($node, 'null') || isDelayed($node) || isVar($node) {
             $node;
         } elsif isForced($node) {
             $node.ann('forced');
@@ -163,7 +136,7 @@ class LActions is HLL::Actions {
     }
 
     my sub mkDelayMemo($node) {
-        if isVal($node) || isVar($node) {
+        if isVal($node) || isOp($node, 'null') || isOp($node, 'null') || isVar($node) {
             $node;
         } elsif isDelayed($node) {
             my $delayType := $node.ann('delayed');
@@ -194,7 +167,7 @@ class LActions is HLL::Actions {
             unless nqp::istype($node, QAST::Node);
         if isDelayed($node) {
             $node[0];
-        } elsif isForced($node) || isVal($node) {
+        } elsif isForced($node) || isVal($node) || isOp($node, 'null') {
             $node;
         } else {    # TODO: maybe inline if $node is already a QAST::Var
             my $out := mkRCall('.force', $node);
