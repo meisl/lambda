@@ -35,7 +35,7 @@
   - [x] do it via a role (rather than via an extra class)
   - [x] ~~maybe use Perl6's wrap mechanism (trickier!; and only works with Routines, not Blocks)~~
   - [x] do it efficiently, ie using as few indirections and as much compile-time binding and type-checking  as possible. -> overload/override `multi postcircumfix:<( )> (...)` with appropriate signatures (nest actual sig in extra parens `(` and `)`, since we'll be passed a capture); avoid introducing extra "internal" methods like "apply" etc.
-- [ ] #2 'add most simple symbol-lookup using "δ"'
+- [x] #2 'add most simple symbol-lookup using "δ"'
 - [ ] #3 'add hygienic macros using "µ"'
 - [ ] #4 'add "if" as a macro'
 - [ ] #14 'add "cond" (aka "switch") as a macro'

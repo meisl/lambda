@@ -28,10 +28,12 @@ grammar LGrammar is HLL::Grammar {
 
     token termlist1orMore() {
         <term>**1..*
+        \s* <.eolComment>*
     }
 
     token termlist2orMore {
-        <term>**2..* 
+        <term>**2..*
+        \s* <.eolComment>*
     }
 
     token term {
@@ -43,6 +45,7 @@ grammar LGrammar is HLL::Grammar {
         || <t=abstraction>
         || '(' \s* <.eolComment>*
                [  <t=abstraction>
+               || <t=simple-let>
                || <t=termlist2orMore>
                ]
           ')'
@@ -126,15 +129,33 @@ grammar LGrammar is HLL::Grammar {
         [  <body=.termlist1orMore>
         || <.bogus: 'invalid term in lambda body'>
         ]
+        \s* <.eolComment>*
     }
 
-    token definition {
-        '(' <.delta> \s*
-            [  <symbol>
-            || <.bogus: 'invalid definition symbol'>
+    token simple-let {
+        <delta> 
+        [  \s+ <.eolComment>*
+        || <.eolComment>+
+        || [\S|$] { panic($/, 'need whitespace after "' ~ $/<delta> ~ '"') }
+        ]
+        '(' \s* <.eolComment>*
+            <bindings=.simple-let-binding>+
+        ')'
+        \s* <.eolComment>*
+        <body=.termlist1orMore>
+        \s* <.eolComment>*
+    }
+
+    token simple-let-binding {
+        '(' [  <binder=.variable>
+            || <.bogus: 'invalid binder "' ~ $/<binder> ~ '" in simple let'>
             ]
-            <body=.termlist1orMore>
-         ')'
+            \s+ <.eolComment>*
+            [  <body=.term>
+            || <app=.termlist2orMore> { panic($/<app>, 'invalid binding of "' ~ $/<binder> ~ '" in simple let: need parens around "' ~ $/<app> ~ '"') }
+            ]
+        ')'
+        \s* <.eolComment>*
     }
 
     token bogus($msg) {

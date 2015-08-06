@@ -5,7 +5,7 @@ use Util;
 use L::LGrammar;
 
 
-plan(14);
+plan(22);
 
 {
     my $m;
@@ -42,6 +42,22 @@ plan(14);
     lives_ok({ $m := LGrammar.parse('(λx.x x)') }, 'a lambda with parens on the outside');
     lives_ok({ $m := LGrammar.parse('λx.(x x)') }, 'a lambda with parens around body');
     lives_ok({ $m := LGrammar.parse('(λx.(x x))') }, 'a lambda with parens around body and on the outside');
+
+    lives_ok({ $m := LGrammar.parse('""') }, 'empty string literal');
+    lives_ok({ $m := LGrammar.parse('"foo"') }, 'string literal');
+    is(~LGrammar.parse('"foo\nbar"'), '"foo\nbar"', 'string literal with escape seq \n');
+    dies_ok({ $m := LGrammar.parse('"foo\v"') }, 'string literal with invalid escape seq \v');
+
+}
+
+
+{ # simple let ----------------------------------------------------------------
+    my $m;
+    dies_ok({ $m := LGrammar.parse('(δ((K λx.λ_.x)) K K)') }, 'simple let with no ws after δ');
+    lives_ok({$m := LGrammar.parse("(δ# comment til end of line\n((K λx.λ_.x)) K K)") }, 'simple let with no ws after δ (eol-comment)');
+
+    lives_ok({$m := LGrammar.parse('(δ ((K λx.λ_.x)) K K)') }, 'simple let with one binding');
+    dies_ok({ $m := LGrammar.parse('(δ ((λ λx.λ_.x)) K K)') }, 'simple let with invalid binder');
 }
 
 

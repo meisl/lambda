@@ -84,12 +84,12 @@ class LCompiler is SmartCompiler {
         my $*USER_FILE := @a[0];
         my $error := 0;
         my $result;
-        try {
+        #try {
             $result := self.evalfiles($*USER_FILE, :encoding('utf8'), |%adverbs);
-            CATCH {
-                $error := $_;
-            }
-        }
+        #    CATCH {
+        #        $error := $_;
+        #    }
+        #}
         if $error {
             nqp::die(">>>Error evaluating $*USER_FILE:\n" ~ $error);
         } elsif nqp::isstr($result) {

@@ -745,21 +745,28 @@ class LActions is HLL::Actions {
     }
 
 
-    method definition($/) {
-        panic($/, 'NYI');
-    }
-
     method abstraction($/) {
         my $binder := mkDeclP(lexVar(~$/<varName>, :node($/<varName>)));
         my $body   := $/<body>.ast;
+        
+        my $out := mkLambda($binder, $body, @!lambdaInfo);
+        $out.node($/);
+        make $out;
+    }
+
+    sub mkLambda($binder, $body, @lambdaInfo) {
+        insist-isa($binder, QAST::Var);
+        nqp::die("expected var decl - got " ~ dump($binder, :oneLine))
+            unless $binder.decl eq 'param';
+        insist-isa($body, QAST::Node);
 
         if !$body.has_ann('FV') {
             nqp::die("missing annotation 'FV' in body\n" ~ $body.dump);
         }
 
-        my $code := QAST::Block.new(:arity(1), :node($/), $binder, $body);
+        my $code := QAST::Block.new(:arity(1), :node($body.node), $binder, $body);
         
-        my $infoIdx := nqp::elems(@!lambdaInfo);
+        my $infoIdx := nqp::elems(@lambdaInfo);
         my $out := mkList(
             asNode('λ' ~ $infoIdx),
             $code
@@ -768,15 +775,17 @@ class LActions is HLL::Actions {
         $body.annotate('parent', $out);
         $out.annotate('infoIdx', $infoIdx);
 
+        my $from   := nqp::sub_i($binder.node.from, 1); # using nqp::sub_i in order to get an int
+        my $length := nqp::sub_i($body.node.to, $from);
         my %info := hash(
             :lambda($out),
             :binder($binder),
-            :from($/.from),
-            :length(nqp::sub_i($/.to, $/.from)), # length; using nqp::sub_i in order to get an int
-            :fvn2dBI(hash()), # free-var-names-to-deBruijn-indices will be inserted below
-            :node($/),
+            :$from,
+            :$length,
+            :fvn2dBI({}), # free-var-names-to-deBruijn-indices will be inserted below
+            #:node($/), # ???????????????
         );
-        @!lambdaInfo.push(%info);
+        @lambdaInfo.push(%info);
 
         
 
@@ -798,13 +807,13 @@ class LActions is HLL::Actions {
             if nqp::elems(@lambdaParents) > 1 { # direct λ parent is *not us*, hence $bv free there
                 @lambdaParents.pop();
                 for @lambdaParents -> $lp {
-                    my %info := @!lambdaInfo[$lp.ann('infoIdx')];
+                    my %info := @lambdaInfo[$lp.ann('infoIdx')];
                     %info<fvn2dBI>{$bv.name} := $i;
                 }
 
                 # TODO: only in direct parent where it's free (if any)
                 #my $directLambdaParent := @lambdaParents[0];
-                #my %info := @!lambdaInfo[$lp.ann('infoIdx')];
+                #my %info := @lambdaInfo[$lp.ann('infoIdx')];
                 #%info<fvn2dBI>{$bv.name} := $i;
             }
 
@@ -831,7 +840,7 @@ class LActions is HLL::Actions {
                     }
                     if !$duped {
                         $out.push($v);
-                        nqp::die($name ~ ' already maps to ' ~ %fvn2dBI{$name} ~ ' in ' ~ $/)
+                        nqp::die($name ~ ' already maps to ' ~ %fvn2dBI{$name} ~ ' in ' ~ $/)   # !!!! don't have $/ here
                             if nqp::existskey(%fvn2dBI, $name);
                         %fvn2dBI{$name} := 0;   # Note: we're coming bottom up, so the deBruijn index is not yet known
                                                 #       it will be updated by the lambda that binds v
@@ -841,8 +850,25 @@ class LActions is HLL::Actions {
             }
         }
         
+        $out;
+    }
+
+    method simple-let($/) {
+        my @bindings := $/<bindings>;
+        my $out := $/<body>.ast;    # the let's body
+        
+        my $i := +@bindings;
+        while $i > 0 {
+            my $binding := @bindings[--$i];
+            my $binder := $binding<binder>.ast;
+            $binder.decl('param');
+            my $body   := $binding<body>.ast;
+            $out := mkApp(mkLambda($binder, $out, @!lambdaInfo), $body);
+            $out.node($/);  # !!?!?!?!
+        }
         make $out;
     }
+
 }
 
 sub MAIN(*@ARGS) {

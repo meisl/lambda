@@ -16,67 +16,37 @@
 #(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)
 
 
-(x)
-
-(λU.λM.λC.λB.λS.λK.λI.
-    (λY.
-        # Lists:
-        (λnil.λcons.λcar.λcdr.λfoldl.
-            (λxs.
-                #nil
-                #car xs              # "a"
-                #car nil             # ~> (Runtime) ERROR: cannot apply "car" to "nil"
-                #cdr xs              # (cons "b" (cons "c" nil))
-                #car (cdr xs)        # "b"
-                #cdr (cdr xs)        # (cons "c", nil)
-                #car (cdr (cdr xs))  # "c"
-                #foldl (λx.λ_.x) "zzz" xs   # "zzz"
-                #foldl (λ_.λx.x) "zzz" xs   # "c"
-                foldl
-                #Y
-                #(λy.λx.λzzz.x y x) "foo" ((λx.λu.u x) ((λa.λb.λ_.a b) "bar" "qumbl"))
-                #"foo" "bar"
-            ) (cons "a" (cons "b" (cons "c" nil)))
-        )
-        (λonNil.λonCons.onNil)                  # ctor nil
-        (λx.λxs.λonNil.λonCons.onCons x xs)     # ctor cons
-        (λxs.xs ("car" "nil") (λhd.λtl.hd))     # car   (provoke error on nil)
-        (λxs.xs ("cdr" "nil") (λhd.λtl.tl))     # cdr   (provoke error on nil)
-        (Y λself.λf.λstart.λxs.                 # foldl
-            xs start
-               λhd.λtl.self f (f start hd) tl
-        )
-    )
-    (U U)   # Y
+(δ (# Combinators:
+    (I λx.x)                    # identity
+    (K λx.λ_.x)                 # (make) a constant function
+    (S λf.λg.λx.f x (g x))      # "extended" function composition
+    (B λf.λg.λx.f (g x))        # function composition
+    (C λf.λx.λy.f y x)          # swap args
+    (M λx.x x)                  # self-application
+    (Y (M λu.λf.f (u u f)))     # recursion (Turing)
+    # Bool:
+    (True   λx.λy.x)
+    (False  λx.λy.y)
+    (and    λp.λq.p q False)
+    (or     λp.λq.p True q)
+    (not    λp.p False True)
+    # List:
+    (nil    λonNil.λonCons.onNil)                  # ctor 
+    (cons   λx.λxs.λonNil.λonCons.onCons x xs)     # ctor 
+    (car    λxs.xs ("car" "nil") (λhd.λtl.hd))     # (provoke error on nil)
+    (cdr    λxs.xs ("cdr" "nil") (λhd.λtl.tl))     # (provoke error on nil)
+    (foldl  (Y λself.λf.λstart.λxs.
+                xs start                            # nil case
+                   λhd.λtl.self f (f start hd) tl)) # cons case
+    (foldr  (Y λself.λf.λstart.λxs.
+                xs start                            # nil case
+                   λhd.λtl.f hd (self f start tl))) # cons case
+    (map    λf.foldr (λx.λacc.cons (f x) acc) nil)
+    (filter λp.foldr (λx.λacc.(p x) (cons x acc) acc) nil)
+    (reverse (foldl (C cons) nil))
+   )
+   #λf.f I K S B C M Y True False and or not nil cons car cdr foldl foldr map filter
+   reverse (cons "a" (cons "b" (cons "c" nil)))     # ~> (cons "c" (cons "b" (cons "a" nil)))
+   #λ_.K'
 )
-(λu.λf.f (u u f))       # U
-(λx.x x)                # M
-(λf.λx.λy.f y x)        # C
-(λf.λg.λx.f (g x))      # B
-(λf.λg.λx.f x (g x))    # S
-(λx.λ_.x)               # K
-(λx.x)                  # I
-
-
-
-
-#(δ (# Combinators:
-#    (I λx.x)                    # identity
-#    (K λx.λ_.x)                 # (make) a constant function
-#    (S λf.λg.λx.f x (g x))      # "extended" function composition
-#    (B λf.λg.λx.f (g x))        # function composition
-#    (C λf.λx.λy.f y x)          # swap args
-#    (M λx.x x)                  # self-application
-#    (Y (M λu.λf.f (u u f)))     # recursion
-#    # Lists:
-#    (nil   λonNil.λonCons.onNil)                  # ctor 
-#    (cons  λx.λxs.λonNil.λonCons.onCons x xs)     # ctor 
-#    (car   λxs.xs ("car" "nil") (λhd.λtl.hd))     # (provoke error on nil)
-#    (cdr   λxs.xs ("cdr" "nil") (λhd.λtl.tl))     # (provoke error on nil)
-#    (foldl (Y λself.λf.λstart.λxs.                # foldl
-#        xs start                            # nil case
-#           λhd.λtl.self f (f start hd) tl)) # cons case
-#   )
-#   I K
-#)
 
