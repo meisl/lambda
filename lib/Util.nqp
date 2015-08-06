@@ -35,7 +35,7 @@ class Util {
         } elsif nqp::isnum($x) {
             $out := nqp::isconcrete($x) ?? "$x (num)" !! '(' ~ self.describe_fallback($x) ~ ')';
         } elsif nqp::isstr($x) {
-            if nqp::isnull_s($x) {
+            if nqp::isnull_s($x) {  # Note: nqp::isconcrete(nqp::null_s()) is true
                 $out := 'nqp::null_s (str)';
             } elsif nqp::isconcrete($x) {
                 my $length := nqp::chars($x);

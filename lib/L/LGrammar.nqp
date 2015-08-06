@@ -19,7 +19,11 @@ grammar LGrammar is HLL::Grammar {
     rule TOP {
         :my $*UNIT := QAST::CompUnit.new(:hll('L'), QAST::Block.new());
 
-        ^ \s* <.eolComment>* <termlist1orMore>? $
+        ^ \s* 
+          <.eolComment>*
+          [  <termlist1orMore> $
+          || $ { panic($/, 'empty input') }
+          ]
     }
 
     token termlist1orMore() {
@@ -32,17 +36,15 @@ grammar LGrammar is HLL::Grammar {
 
     token term {
         \s* <.eolComment>*
-        [
-        | <t=variable>
-        | <t=str-constant>
-        | <t=int-constant>
-        | <t=definition>
-        | <t=abstraction>
-        | '(' \s* <.eolComment>*
-              [
-              | <t=abstraction>
-              | <t=termlist2orMore>
-              ]
+        [  <t=variable>
+        || <t=str-constant>
+        || <t=int-constant>
+        #|| <t=definition>
+        || <t=abstraction>
+        || '(' \s* <.eolComment>*
+               [  <t=abstraction>
+               || <t=termlist2orMore>
+               ]
           ')'
         ]
         \s* <.eolComment>*
@@ -52,7 +54,7 @@ grammar LGrammar is HLL::Grammar {
         '#' <-[\v]>* \s*
     }
 
-    token lambda { 'λ' | \\ | '&' }
+    token lambda { 'λ' || \\ || '&' }
 
     token delta { 'δ' }
 
@@ -71,22 +73,28 @@ grammar LGrammar is HLL::Grammar {
 
     token str-constant {
         '"'
-        [ (<-[\n\"\\]>+)
-        | (\\ [ <[brnft\"\\]> || <.panic: "unknown escape sequence"> ])
+        [  (<-[\n\"\\]>+)
+        || (\\ [ <[brnft\"\\]> || . { panic($/, "invalid escape sequence " ~ $/) } ])
         ]*
         '"'
     } 
 
     token int-constant {
-        <!>     # NYI
+        \d+     { panic($/, 'NYI') }
     }
 
 
     my sub match2location($match) {
-        my @lines := nqp::split("\n", nqp::substr($match.orig, 0, $match.from == 0 ?? $match.chars !! $match.from));
-        my $lineN := nqp::elems(@lines);
-        my $colN  := 1 + nqp::chars(@lines.pop);
         my $file := $*USER_FILE;
+        my @lines := nqp::split("\n", nqp::substr($match.orig, 0, $match.from == 0 ?? $match.chars !! $match.from));
+        my $colN;
+        my $lineN := nqp::elems(@lines);
+        if $lineN == 0 {
+            $lineN := 1;
+            $colN := 1;
+        } else {
+            $colN  := 1 + nqp::chars(@lines.pop);
+        }
         hash(:file($file), :line($lineN), :column($colN), :match($match), :str("$file:$lineN:$colN"));
     }
 
@@ -98,21 +106,22 @@ grammar LGrammar is HLL::Grammar {
         '   at ' ~ %l<str> ~ $varNameStr;
     }
 
-    method panic($match, *@msg-pieces) {
+    sub panic($match, *@msg-pieces) {
         @msg-pieces.push("\n");
         @msg-pieces.push(loc2str(match2location($match)));
         nqp::die(join('', @msg-pieces));
     }
 
     token abstraction {
-        :my $so-far := $/<lambda> ~ $/<varName>;
-        <lambda>        { $so-far := $/<lambda> }
-        [  <varName>    { $so-far := $so-far ~ $/<varName> }
-        || <space-plus> { self.panic($/<space-plus>, 'no white space allowed after "' ~ $so-far ~ '"!') }
+        <lambda>
+        [  <varName>
+        || $<s> = \s+   { panic($<s>, 'no white space allowed after "' ~ $/<lambda>) }
         ||              <.bogus: 'invalid lambda binder'>
         ]
         [  '.'
-        || <.bogus-ws: 'expected "." (dot) right after "' ~ $so-far ~ '" - found'>
+        || $<bogus> = <-[.()\"\\]>* {   # matches whitespace, too
+               panic($<bogus>, 'expected "." (dot) right after "' ~ $/<lambda> ~ $/<varName> ~ '"') 
+           }
         ]
         [  <body=.termlist1orMore>
         || <.bogus: 'invalid term in lambda body'>
@@ -120,7 +129,6 @@ grammar LGrammar is HLL::Grammar {
     }
 
     token definition {
-        #<.panic: 'NYI'>
         '(' <.delta> \s*
             [  <symbol>
             || <.bogus: 'invalid definition symbol'>
@@ -129,17 +137,8 @@ grammar LGrammar is HLL::Grammar {
          ')'
     }
 
-    token space-plus {
-        \s+
-    }
-    
-
     token bogus($msg) {
-        <-[\s.()\"\\]>*  { self.panic($/, $msg, " \"$/\"") }
-    }
-
-    token bogus-ws($msg) {
-        <-[.()\"\\]>*  { self.panic($/, $msg, " \"$/\"") }
+        <-[\s.()\"\\]>*  { panic($/, $msg, ' "' ~ $/ ~ '"') }
     }
 
 }
