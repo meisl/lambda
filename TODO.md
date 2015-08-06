@@ -28,7 +28,9 @@
 - [ ] #40 'add facility to switch on/off stats for P6Currying'
 - [ ] #22 'add comments to syntax'
 - [ ] #38 'add integer literals to syntax'
-- [x] #30 'add literal string constants to the grammar, using " (double-quotes) and \ (back-slash) for escape'
+- [ ] #30 'add string literals to the grammar, plus a (native) comparison for equality'
+  - [x] syntax
+  - [ ] comparison for equality
 - [x] #37 'λ-like function application in Perl6 (auto-currying & "over-application")':
   - [x] partial application simply by providing *fewer* arguments (yielding another applicable thing)
   - [x] "over-applying": since every application in λ yields something that can be applied again (except for constants and fns that return constants): providing *more* than the nomimal nr of args should simply apply the rest-args to the result of the first fn application
