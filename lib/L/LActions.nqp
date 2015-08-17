@@ -689,9 +689,15 @@ class LActions is HLL::Actions {
         make $var;
     }
 
-    my %str-esc := hash(:b("\b"), :r("\r"), :n("\n"), :f("\f"), :t("\t"));
-    nqp::bindkey(%str-esc, '"', '"');
-    nqp::bindkey(%str-esc, '\\', '\\');
+    my %str-esc := nqp::hash(
+        '"', '"',
+        '\\', '\\',
+        'b', "\b",
+        'r', "\r",
+        'n', "\n",
+        'f', "\f",
+        't', "\t",
+    );
 
     method str-constant($/) {
 #        say("###str-constant, 0: " ~ nqp::elems($/[0]));
