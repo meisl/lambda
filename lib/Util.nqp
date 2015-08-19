@@ -84,15 +84,12 @@ class Util {
 
     method trim(str $s) {
         my int $n := nqp::chars($s);
-        my int $i := 0;
-        while nqp::eqat($s, ' ', $i) && ($i < $n) {
-            $i++;
-        }
+        my int $i := nqp::findnotcclass(nqp::const::CCLASS_WHITESPACE, $s, 0, $n);
         if $i == $n {
             '';
         } else {
             $n--;
-            while nqp::eqat($s, ' ', $n) {
+            while nqp::findcclass(nqp::const::CCLASS_WHITESPACE, $s, $n, 1) == $n {
                 $n--;
             }
             nqp::substr($s, $i, $n - $i + 1);

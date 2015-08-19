@@ -5,7 +5,7 @@ use testing;
 
 use Util;
 
-plan(204);
+plan(205);
 
 
 is(max(  -1,    0),    0, 'max(  -1,    0)');
@@ -49,6 +49,8 @@ is(trim('x y'),     'x y',  'trim "x y"');
 is(trim('x y  '),   'x y',  'trim "x y  "');
 is(trim(' x y '),   'x y',  'trim " x y "');
 is(trim('  x y'),   'x y',  'trim "  x y"');
+
+is(trim(" \t x y\r\n"),   'x y',  'trim " \t x y\r\n"');
 
 
 # - unixify -------------------------------------------------------------------
