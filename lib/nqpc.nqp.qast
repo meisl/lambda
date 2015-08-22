@@ -1465,19 +1465,21 @@
     ║ ║ ║ │     ├○ @inlinecandidates
     ║ ║ ║ │     └○ $n
     ║ ║ ║ └○ $ast
-    ║ ║ ╟─for  ««"say('inline candidate: ' ~ $_[0].name) for @inlinec"...
+    ║ ║ ╟─for  ««"self.log('inline_subs: ', 'candidate ', $_[0].name)"...
     ║ ║ ║ ├○ @inlinecandidates
     ║ ║ ║ └─:Block :blocktype(immediate)
     ║ ║ ║   ╟○ $_ :decl(param)
-    ║ ║ ║   ╙─call &say  ««"'inline candidate: ' ~ $_[0].name"
-    ║ ║ ║     └─concat  ««"~"
-    ║ ║ ║       ├◙ SVal "inline candidate: "
-    ║ ║ ║       └─callmethod name  ««".name"
-    ║ ║ ║         └─ifnull
-    ║ ║ ║           ├─atpos
-    ║ ║ ║           │ ├○ $_
-    ║ ║ ║           │ └◙ IVal 0
-    ║ ║ ║           └◙ WVal NQPMu
+    ║ ║ ║   ╙─callmethod log  ««"'inline_subs: ', 'candidate ', $_[0].name"
+    ║ ║ ║     ├─decont
+    ║ ║ ║     │ └○ self
+    ║ ║ ║     ├◙ SVal "inline_subs: "
+    ║ ║ ║     ├◙ SVal "candidate "
+    ║ ║ ║     └─callmethod name  ««".name"
+    ║ ║ ║       └─ifnull
+    ║ ║ ║         ├─atpos
+    ║ ║ ║         │ ├○ $_
+    ║ ║ ║         │ └◙ IVal 0
+    ║ ║ ║         └◙ WVal NQPMu
     ║ ║ ╟─bind  ««":="
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &inline_simple_subs  ««"$ast, @inlinecandidates"
@@ -1669,12 +1671,6 @@
     ║ ║ ║     │ ├○ $infoHashDef
     ║ ║ ║     │ └◙ IVal 1
     ║ ║ ║     └◙ WVal NQPMu
-    ║ ║ ╟─call &say  ««"'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' ~ istype($in"...
-    ║ ║ ║ └─concat  ««"~"
-    ║ ║ ║   ├◙ SVal ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    ║ ║ ║   └─call &istype  ««"$infoHash, QAST::Op"
-    ║ ║ ║     ├○ $infoHash
-    ║ ║ ║     └◙ WVal QAST::Op
     ║ ║ ╟─if  ««"istype($infoHash, QAST::Op) && ($infoHash.op eq 'ha"...
     ║ ║ ║ ├─if  ««"&&"
     ║ ║ ║ │ ├─call &istype  ««"$infoHash, QAST::Op"
@@ -1719,9 +1715,13 @@
     ║ ║ ║ │ ║ │       │ └○ $_
     ║ ║ ║ │ ║ │       └◙ WVal NQPMu
     ║ ║ ║ │ ║ └◙ IVal 1 :named("nohandler")
-    ║ ║ ║ │ ╙─call &say  ««"dump($infoHashDef)"
-    ║ ║ ║ │   └─call &dump  ««"$infoHashDef"
-    ║ ║ ║ │     └○ $infoHashDef
+    ║ ║ ║ │ ╙─callmethod log  ««"'ast_stats: ', dump($infoHashDef, :oneLine)"
+    ║ ║ ║ │   ├─decont
+    ║ ║ ║ │   │ └○ self
+    ║ ║ ║ │   ├◙ SVal "ast_stats: "
+    ║ ║ ║ │   └─call &dump  ««"$infoHashDef, :oneLine"
+    ║ ║ ║ │     ├○ $infoHashDef
+    ║ ║ ║ │     └◙ IVal 1 :named("oneLine")
     ║ ║ ║ └─:Stmts  ««"{\n            self.log('ast_stats WARNING: no %inf"...
     ║ ║ ║   ├─callmethod log  ««"'ast_stats WARNING: no %info hash found in AST of '"...
     ║ ║ ║   │ ├─decont

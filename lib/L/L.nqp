@@ -40,9 +40,9 @@ class LCompiler is SmartCompiler {
 
     method mkRuntime($src) {
         my $nqpc := NQPCompiler.new();
-        $nqpc.addstage('ast_clean',     :before<ast_save>);
-        $nqpc.addstage('inline_subs',   :before<ast_save>);
-        $nqpc.addstage('ast_stats',     :before<ast_save>);
+        $nqpc.addstage('ast_clean',     :before<ast_save>) unless $nqpc.exists_stage('ast_clean');
+        $nqpc.addstage('inline_subs',   :before<ast_save>) unless $nqpc.exists_stage('inline_subs');
+        $nqpc.addstage('ast_stats',     :before<ast_save>) unless $nqpc.exists_stage('ast_stats');
         my $runtimeAST := $nqpc.compileFile('lib/L/runTime.nqp', :lib('lib/L'), :target('ast_save'));
         self.log('mkRuntime: ~> ', describe($runtimeAST));
         self.runtime($runtimeAST);

@@ -373,7 +373,7 @@ class SmartCompiler is NQP::Compiler {
             $ast
         );
 
-        say('inline candidate: ' ~ $_[0].name) for @inlinecandidates;
+        self.log('inline_subs: ', 'candidate ', $_[0].name) for @inlinecandidates;
         $ast := inline_simple_subs($ast, @inlinecandidates);
         
         $ast;
@@ -413,7 +413,7 @@ class SmartCompiler is NQP::Compiler {
             }
         });
         my $infoHash := $findStatsHash($infoHashDef[1]);
-        say('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' ~ istype($infoHash, QAST::Op));
+
         if istype($infoHash, QAST::Op) && ($infoHash.op eq 'hash') {
             my $findStatNode := -> $statKey {
                 findValueNodeInHash(svalPred($statKey), ivalPred(), $infoHash)
@@ -422,10 +422,9 @@ class SmartCompiler is NQP::Compiler {
                 my $node := $findStatNode($_);
                 if $node && nqp::existskey(%stats, $_) {
                     $node.value(%stats{$_});
-#                    say(">>>> stat $_ := ", dump($node, :oneLine));
                 }
             }
-            say(dump($infoHashDef));
+            self.log('ast_stats: ', dump($infoHashDef, :oneLine));
         } else {
             self.log('ast_stats WARNING: no %info hash found in AST of ', self.user-progname);
             self.log('ast_stats WARNING: ...dunno how to insert actual stats - which are:');

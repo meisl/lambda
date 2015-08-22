@@ -389,13 +389,14 @@ class Util::QAST {
                     && ($n.op ne 'lexotic')
                     && ($n.op ne 'control')
                     && ($n.op ne 'const')
+                    && ($n.name ne '')
                 ;
                 TreeWalkDo.recurse(:$take);
             },
             -> $n, @p {
-                say('>>>Op(', $n.dump_extra_node_info, ')')
+                say('>>>remove_bogusOpNames: Op(', $n.dump_extra_node_info, ' ', ~$n.node,')')
                     unless 0 <= nqp::index(
-                        'how who inf eqat eqaddr open exit say shift iterator setelems stat exception eoffh closefh setinputlinesep readlinefh flushfh filewritable filereadable backtracestrings getstdout getstderr clone lc join split splice index rindex findcclass findnotcclass decont handle x radix can postinc preinc postdec predec add_n sub_n stringify bind bindkey concat atpos atkey die reprname defor ifnull istype isnull isnull_s iseq_s iseq_n isgt_n islt_n isle_n isgt_n isge_n iseq_s isne_s isconcrete isinvokable isstr isint isnum islist ishash substr falsey if unless for while until elems chars escape list hash iterkey_s iterval existskey existspos numify findmethod getattr bindattr getmessage rethrow cwd getcomp getcurhllsym curlexpad backendconfig',
+                        'how who inf eqat eqaddr open exit say shift iterator setelems stat exception eoffh closefh setinputlinesep readlinefh flushfh filewritable filereadable backtracestrings getstdout getstderr clone lc join split splice index rindex findcclass findnotcclass decont handle x radix can postinc preinc postdec predec add_n sub_n stringify bind bindkey concat atpos atkey die reprname defor ifnull istype isnull isnull_s iseq_s isne_s iseq_n isgt_n islt_n isle_n isge_n iseq_i isgt_i islt_i isle_i isge_i isconcrete isinvokable isstr isint isnum islist ishash substr falsey if unless for while until elems chars escape list hash iterkey_s iterval existskey existspos numify findmethod getattr bindattr getmessage rethrow cwd getcomp getcurhllsym curlexpad backendconfig',
                         $n.op
                     );
                 $n.name(nqp::null_s);
@@ -620,8 +621,7 @@ class Util::QAST {
             -> $n, @p {
                 my $out := %inliners{$n.name}($n.list);
                 $out.annotate('inlined', $n.name);
-                say('>>>> inlined ', $n.name);
-                #say('>>>> inlined ', dump($out), "\n>>>> for ", dump($n));
+                #say('>>>> inlined ', $n.name, dump($out), "\n>>>> for ", dump($n));
                 $out.node($n.node);
                 if istype($n, QAST::SpecialArg) {
                     $out.flat($n.flat);
