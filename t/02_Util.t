@@ -19,18 +19,18 @@ plan(214);
     @b := flatten(5, :map(-> $x { $x + 1}) );
     is(@b[0], 6, 'flatten with optional :map on a non-list');
     
-    @b := flatten([23, [42]], :map(-> $x { $x + 1}) );
+    @b := flatten([23, [42]], :map(-> $x { $x + 1 }) );
     is(@b[0], 24, 'flatten with optional :map on list (of things and lists) (a)');
-    is(@b[1], 43, 'flatten with optional :map on list (of things and lists) (a)');
-    
+    is(@b[1], 43, 'flatten with optional :map on list (of things and lists) (b)');
+
     @a := ['bar', [5, 7, [42]]];
     @b := flatten(@a);
 
     is(+@b, 4, 'flatten (length of result)');
-    is(@b[0], @a[0],        'flatten (0)');
-    is(@b[1], @a[1][0],     'flatten (1)');
-    is(@b[2], @a[1][1],     'flatten (2)');
-    is(@b[3], @a[1][2][0],  'flatten (3)');
+    is(@b[0], @a[0],    'flatten (0)');
+    is(@b[1], @a[1][0], 'flatten (1)');
+    is(@b[2], @a[1][1], 'flatten (2)');
+    is(@b[3], @a[1][2], 'flatten (3/flattens only one level deep)');
 }
 
 { # - max & min -----------------------------------------------------------------

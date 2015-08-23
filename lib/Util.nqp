@@ -193,14 +193,13 @@ class Util {
 
         return [$map($args)]
             unless nqp::islist($args);
+
         my @out := [];
-        for $args -> $_ {
-            if nqp::islist($_) {
-                for flatten($_) -> $_ {
-                    @out.push($map($_));
-                }
+        for $args -> $arg {
+            if nqp::islist($arg) {
+                @out.push($map($_)) for $arg;
             } else {
-                @out.push($map($_));
+                @out.push($map($arg));
             }
         }
         @out;

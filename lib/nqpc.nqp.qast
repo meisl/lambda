@@ -620,6 +620,13 @@
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%opts := hash()"
     ║   ║ ├○ %opts
     ║   ║ └─call &hash  ««""
+    ║   ╟─call &say  ««"'CWD=', describe($cwd), \"\\n@ARGS=\", describe(@ARGS)"
+    ║   ║ ├◙ SVal "CWD="
+    ║   ║ ├─call &describe  ««"$cwd"
+    ║   ║ │ └○ $cwd
+    ║   ║ ├◙ SVal "\n@ARGS="
+    ║   ║ └─call &describe  ««"@ARGS"
+    ║   ║   └○ @ARGS
     ║   ╟─shift  ««".shift"
     ║   ║ └○ @ARGS
     ║   ╟─if  ««"nqp::elems(@ARGS) == 0 {\n        #@ARGS.push('L/LG"...
@@ -634,6 +641,16 @@
     ║   ║ ├○ $nqpc
     ║   ║ ├◙ SVal "write_bytecode"
     ║   ║ └◙ SVal "mbc" :named("before")
+    ║   ╟─callmethod log_level  ««"'INFO'"
+    ║   ║ ├○ $nqpc
+    ║   ║ └◙ SVal "INFO"
+    ║   ╟─call &say  ««"'CWD=', describe($cwd), \"\\n@ARGS=\", describe(@ARGS)"
+    ║   ║ ├◙ SVal "CWD="
+    ║   ║ ├─call &describe  ««"$cwd"
+    ║   ║ │ └○ $cwd
+    ║   ║ ├◙ SVal "\n@ARGS="
+    ║   ║ └─call &describe  ««"@ARGS"
+    ║   ║   └○ @ARGS
     ║   ╟─for  ««"@ARGS {\n        my $file := $_;\n        \n       "...
     ║   ║ ├○ @ARGS
     ║   ║ ├─:Block :annotations(#`{BOOTHash:}nqp::hash( "handlers", #`{BOOTHash:}nqp::hash( "CATCH", QAST::Stmts ) )) :blocktype(immediate)  ««"{\n        my $file := $_;\n        \n        my $r"...

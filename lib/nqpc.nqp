@@ -780,10 +780,10 @@ sub MAIN(*@ARGS) {
     my $sep := nqp::x('-', 29);
     my $nqpc := NQPCompiler.new();
     my %opts := hash();
-    #say('CWD=', describe($cwd), "\n@ARGS=", describe(@ARGS));
     
     #nqp::exit(0);
 
+    say('CWD=', describe($cwd), "\n@ARGS=", describe(@ARGS));
     @ARGS.shift;  # first is program name
 
     if nqp::elems(@ARGS) == 0 {
@@ -797,8 +797,11 @@ sub MAIN(*@ARGS) {
         #%opts<stagestats> := 1;
         #%opts<target>     := '';    # ...and run it
     }
-        #%opts<stagestats> := 1;
-        $nqpc.addstage('write_bytecode', :before<mbc>);
+    #%opts<stagestats> := 1;
+    $nqpc.addstage('write_bytecode', :before<mbc>);
+    $nqpc.log_level('INFO');
+
+    say('CWD=', describe($cwd), "\n@ARGS=", describe(@ARGS));
 
 
     for @ARGS {
