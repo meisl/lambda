@@ -5,30 +5,56 @@ use testing;
 
 use Util;
 
-plan(205);
+plan(214);
 
 
-is(max(  -1,    0),    0, 'max(  -1,    0)');
-is(max(   0,   -1),    0, 'max(   0,   -1)');
-is(max(   0,    0),    0, 'max(   0,    0)');
-is(max(   0,    1),    1, 'max(   0,    1)');
-is(max(   1,    0),    1, 'max(   1,    0)');
-is(max(4711, 4710), 4711, 'max(4711, 4710)');
-is(min(4711, 4711), 4711, 'min(4711, 4711)');
-is(max( -23,   42),   42, 'max( -23,   42)');
-is(max(  42,  -23),   42, 'max(  42,  -23)');
+{ # - flatten -------------------------------------------------------------------
+    my @a;
+    my @b;
+    my $b;
+
+    $b := flatten('foo');
+    isa_ok($b, NQPArray, 'flatten always retuns a list');
+    
+    @b := flatten(5, :map(-> $x { $x + 1}) );
+    is(@b[0], 6, 'flatten with optional :map on a non-list');
+    
+    @b := flatten([23, [42]], :map(-> $x { $x + 1}) );
+    is(@b[0], 24, 'flatten with optional :map on list (of things and lists) (a)');
+    is(@b[1], 43, 'flatten with optional :map on list (of things and lists) (a)');
+    
+    @a := ['bar', [5, 7, [42]]];
+    @b := flatten(@a);
+
+    is(+@b, 4, 'flatten (length of result)');
+    is(@b[0], @a[0],        'flatten (0)');
+    is(@b[1], @a[1][0],     'flatten (1)');
+    is(@b[2], @a[1][1],     'flatten (2)');
+    is(@b[3], @a[1][2][0],  'flatten (3)');
+}
+
+{ # - max & min -----------------------------------------------------------------
+    is(max(  -1,    0),    0, 'max(  -1,    0)');
+    is(max(   0,   -1),    0, 'max(   0,   -1)');
+    is(max(   0,    0),    0, 'max(   0,    0)');
+    is(max(   0,    1),    1, 'max(   0,    1)');
+    is(max(   1,    0),    1, 'max(   1,    0)');
+    is(max(4711, 4710), 4711, 'max(4711, 4710)');
+    is(min(4711, 4711), 4711, 'min(4711, 4711)');
+    is(max( -23,   42),   42, 'max( -23,   42)');
+    is(max(  42,  -23),   42, 'max(  42,  -23)');
 
 
-is(min(  -1,    0),   -1, 'min(  -1,    0)');
-is(min(   0,   -1),   -1, 'min(   0,   -1)');
-is(min(   0,    0),    0, 'min(   0,    0)');
-is(min(   0,    1),    0, 'min(   0,    1)');
-is(min(   1,    0),    0, 'min(   1,    0)');
-is(min(4711, 4710), 4710, 'min(4711, 4710)');
-is(min(4711, 4711), 4711, 'min(4711, 4711)');
-is(min( -23,   42),  -23, 'min( -23,   42)');
-is(min(  42,  -23),  -23, 'min(  42,  -23)');
-
+    is(min(  -1,    0),   -1, 'min(  -1,    0)');
+    is(min(   0,   -1),   -1, 'min(   0,   -1)');
+    is(min(   0,    0),    0, 'min(   0,    0)');
+    is(min(   0,    1),    0, 'min(   0,    1)');
+    is(min(   1,    0),    0, 'min(   1,    0)');
+    is(min(4711, 4710), 4710, 'min(4711, 4710)');
+    is(min(4711, 4711), 4711, 'min(4711, 4711)');
+    is(min( -23,   42),  -23, 'min( -23,   42)');
+    is(min(  42,  -23),  -23, 'min(  42,  -23)');
+}
 
 # - trim ----------------------------------------------------------------------
 

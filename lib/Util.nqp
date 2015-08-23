@@ -188,6 +188,24 @@ class Util {
         0;
     }
 
+    method flatten($args, :$map) {
+        $map := -> $x { $x } unless $map;
+
+        return [$map($args)]
+            unless nqp::islist($args);
+        my @out := [];
+        for $args -> $_ {
+            if nqp::islist($_) {
+                for flatten($_) -> $_ {
+                    @out.push($map($_));
+                }
+            } else {
+                @out.push($map($_));
+            }
+        }
+        @out;
+    }
+
 }
 
 
@@ -204,6 +222,8 @@ sub istype($subject, *@types)                    is export { Util.istype($subjec
 sub insist-isa($subject, $type, *@types)         is export { Util.insist-isa($subject, $type, |@types) }
 
 sub linesFrom(str $filename, $from = 1, $count?) is export { Util.linesFrom($filename, $from, $count) }
+
+sub flatten($args, :$map)                        is export { Util.flatten($args, :$map) }
 
 
 

@@ -18,6 +18,7 @@
     ╟○ &min :decl(static) :default((NQPRoutine, invokable))
     ╟○ &max :decl(static) :default((NQPRoutine, invokable))
     ╟○ &say :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &flatten :decl(static) :default((NQPRoutine, invokable))
     ╟○ &unixify :decl(static) :default((NQPRoutine, invokable))
     ╟○ &join :decl(static) :default((NQPRoutine, invokable))
     ╟○ &linesFrom :decl(static) :default((NQPRoutine, invokable))
@@ -592,43 +593,6 @@
     ╟○ NQPActions :decl(static) :default((NQPActions, Type object))
     ╟○ $needsCompilation :decl(var)
     ╟○ NQPCompiler :decl(static) :default((NQPCompiler, Type object))
-    ╟─bind
-    ║ ├○ &flatten :decl(var)
-    ║ └─:Block  ««"{\n    return [$args]\n        unless nqp::islist($"...
-    ║   ╟○ $args :decl(param)
-    ║   ╟○ @out :decl(var)
-    ║   ╙─lexotic RETURN
-    ║     └─:Stmts  ««"\n    return [$args]\n        unless nqp::islist($a"...
-    ║       ├─unless  ««"return [$args]\n        unless nqp::islist($args)"
-    ║       │ ├─islist  ««"nqp::islist($args)"
-    ║       │ │ └○ $args
-    ║       │ └─call RETURN
-    ║       │   └─list
-    ║       │     └○ $args
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@out := []"
-    ║       │ ├○ @out
-    ║       │ └─list
-    ║       ├─for  ««"$args -> $_ {\n        if nqp::islist($_) {\n      "...
-    ║       │ ├○ $args
-    ║       │ ├─:Block :blocktype(immediate)  ««"{\n        if nqp::islist($_) {\n            for fl"...
-    ║       │ │ ╟○ $_ :decl(param)
-    ║       │ │ ╙─if  ««"nqp::islist($_) {\n            for flatten($_) -> $"...
-    ║       │ │   ├─islist  ««"nqp::islist($_)"
-    ║       │ │   │ └○ $_
-    ║       │ │   ├─for  ««"flatten($_) -> $_ {\n                @out.push($_);"...
-    ║       │ │   │ ├─call &flatten  ««"$_"
-    ║       │ │   │ │ └○ $_
-    ║       │ │   │ ├─:Block :blocktype(immediate)  ««"{\n                @out.push($_);\n            }"
-    ║       │ │   │ │ ╟○ $_ :decl(param)
-    ║       │ │   │ │ ╙─push  ««"$_"
-    ║       │ │   │ │   ├○ @out
-    ║       │ │   │ │   └○ $_
-    ║       │ │   │ └◙ IVal 1 :named("nohandler")
-    ║       │ │   └─push  ««"$_"
-    ║       │ │     ├○ @out
-    ║       │ │     └○ $_
-    ║       │ └◙ IVal 1 :named("nohandler")
-    ║       └○ @out
     ╟─bind
     ║ ├○ &MAIN :decl(var)
     ║ └─:Block  ««"{\n    @ARGS := flatten(@ARGS);\n\n    my $cwd := n"...
@@ -2893,7 +2857,6 @@
     ║           ║ └─getstdout  ««"nqp::getstdout()"
     ║           ╙─die  ««"nqp::die($msg)"
     ║             └○ $msg
-    ╟○ &flatten
     ╟○ &MAIN
     ╙─if
       ├○ @ARGS

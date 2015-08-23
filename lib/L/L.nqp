@@ -121,16 +121,14 @@ class LCompiler is SmartCompiler {
 
 sub MAIN(*@ARGS) {
     my $c := LCompiler.new();
-
-    my @as := @ARGS;
-    @as.push('Lc')     unless nqp::elems(@as) > 0; # program name for command_line
-    @as.push('test.L') unless nqp::elems(@as) > 1;
-
-    #$c.log_level('INFO');
-
-    #$c.command_line(@as, :encoding('utf8'), :stagestats);
-    
-    $c.removestage('ast_save');
-    $c.interactive();
+    @ARGS := flatten(@ARGS, :map(&unixify));    # nqp itself doesn't seem to get it right (but moarvm does)
+    say(describe(@ARGS));
+    if nqp::elems(@ARGS) > 1 {  # 1st arg is program name
+        #$c.log_level('INFO');
+        $c.command_line(@ARGS, :encoding('utf8'), :stagestats);
+    } else {
+        $c.removestage('ast_save');
+        $c.interactive();
+    }
 }
 

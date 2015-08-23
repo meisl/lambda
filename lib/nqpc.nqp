@@ -770,22 +770,6 @@ class NQPCompiler is SmartCompiler {
 }
 
 
-sub flatten($args) {
-    return [$args]
-        unless nqp::islist($args);
-    my @out := [];
-    for $args -> $_ {
-        if nqp::islist($_) {
-            for flatten($_) -> $_ {
-                @out.push($_);
-            }
-        } else {
-            @out.push($_);
-        }
-    }
-    @out;
-}
-
 
 
 
