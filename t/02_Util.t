@@ -5,8 +5,40 @@ use testing;
 
 use Util;
 
-plan(214);
+plan(219);
 
+
+{ # - super ---------------------------------------------------------------------
+    my class A {
+        method m(*@args, *%adverbs) {
+            nqp::hash(
+                'class',   'A',
+                'args',    @args,
+                'adverbs', %adverbs
+            );
+        }
+    }
+    my class B is A {
+        method m(*@args, *%adverbs) {
+            nqp::hash(
+                'class',   'B',
+                'args',    @args,
+                'adverbs', %adverbs
+            );
+        }
+        method s() { super(self, 'm', 'foo', :bar<baz>) }
+    }
+
+    my $a := A.new;
+    my $b := B.new;
+
+    is($a.m<class>, 'A', 'super / sanity (a)');
+    is($b.m<class>, 'B', 'super / sanity (b)');
+    my $s-out := $b.s;
+    is($s-out<class>, 'A', 'super calls method in super class');
+    is($s-out<args>[0], 'foo', 'super passes on positional args');
+    is($s-out<adverbs><bar>, 'baz', 'super passes on named args');
+}
 
 { # - flatten -------------------------------------------------------------------
     my @a;

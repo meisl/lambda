@@ -344,6 +344,7 @@ class SmartCompiler is NQP::Compiler {
         self.panic("Unable to obtain AST from " ~ $source.HOW.name($source))
             unless $ast ~~ QAST::Node;
         $ast.HOW.mixin($ast, StrByDump);
+        self.log('ast: ', self.user-progname, ' done.');
         $ast;
     }
 
@@ -535,8 +536,8 @@ class NQPActions is NQP::Actions {
             #say('>>>>>> ' ~ describe($depOut));
         }
 
-        my $super := nqp::findmethod(self.HOW.mro(self)[1], 'statement_control:sym<use>');
-        $out := $super(self, $/);
+        $out := super(self, 'statement_control:sym<use>', $/);
+
         #$out := QAST::Stmts.new();
 
         #my $glob := findPath(-> $node, @pathUp {
@@ -567,9 +568,11 @@ class NQPCompiler is SmartCompiler {
     }
 
     method parse($source, *%adverbs) {
+        self.log('parse: ', self.user-progname, '...');
         my $*COMPILER := self;
-        my $parse := nqp::findmethod(self.HOW.mro(self)[1], 'parse');
-        $parse(self, $source, |%adverbs);
+        my $out := super(self, 'parse', $source, |%adverbs);
+        self.log('parse: ', self.user-progname, ' done.');
+        $out;
     }
     
 
@@ -783,7 +786,6 @@ sub MAIN(*@ARGS) {
     
     #nqp::exit(0);
 
-    say('CWD=', describe($cwd), "\n@ARGS=", describe(@ARGS));
     @ARGS.shift;  # first is program name
 
     if nqp::elems(@ARGS) == 0 {
@@ -800,9 +802,6 @@ sub MAIN(*@ARGS) {
     #%opts<stagestats> := 1;
     $nqpc.addstage('write_bytecode', :before<mbc>);
     $nqpc.log_level('INFO');
-
-    say('CWD=', describe($cwd), "\n@ARGS=", describe(@ARGS));
-
 
     for @ARGS {
         my $file := $_;

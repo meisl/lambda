@@ -19,6 +19,7 @@
     ╟○ &max :decl(static) :default((NQPRoutine, invokable))
     ╟○ &say :decl(static) :default((NQPRoutine, invokable))
     ╟○ &flatten :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &super :decl(static) :default((NQPRoutine, invokable))
     ╟○ &unixify :decl(static) :default((NQPRoutine, invokable))
     ╟○ &join :decl(static) :default((NQPRoutine, invokable))
     ╟○ &linesFrom :decl(static) :default((NQPRoutine, invokable))
@@ -620,13 +621,6 @@
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%opts := hash()"
     ║   ║ ├○ %opts
     ║   ║ └─call &hash  ««""
-    ║   ╟─call &say  ««"'CWD=', describe($cwd), \"\\n@ARGS=\", describe(@ARGS)"
-    ║   ║ ├◙ SVal "CWD="
-    ║   ║ ├─call &describe  ««"$cwd"
-    ║   ║ │ └○ $cwd
-    ║   ║ ├◙ SVal "\n@ARGS="
-    ║   ║ └─call &describe  ««"@ARGS"
-    ║   ║   └○ @ARGS
     ║   ╟─shift  ««".shift"
     ║   ║ └○ @ARGS
     ║   ╟─if  ««"nqp::elems(@ARGS) == 0 {\n        #@ARGS.push('L/LG"...
@@ -644,13 +638,6 @@
     ║   ╟─callmethod log_level  ««"'INFO'"
     ║   ║ ├○ $nqpc
     ║   ║ └◙ SVal "INFO"
-    ║   ╟─call &say  ««"'CWD=', describe($cwd), \"\\n@ARGS=\", describe(@ARGS)"
-    ║   ║ ├◙ SVal "CWD="
-    ║   ║ ├─call &describe  ««"$cwd"
-    ║   ║ │ └○ $cwd
-    ║   ║ ├◙ SVal "\n@ARGS="
-    ║   ║ └─call &describe  ««"@ARGS"
-    ║   ║   └○ @ARGS
     ║   ╟─for  ««"@ARGS {\n        my $file := $_;\n        \n       "...
     ║   ║ ├○ @ARGS
     ║   ║ ├─:Block :annotations(#`{BOOTHash:}nqp::hash( "handlers", #`{BOOTHash:}nqp::hash( "CATCH", QAST::Stmts ) )) :blocktype(immediate)  ««"{\n        my $file := $_;\n        \n        my $r"...
@@ -1334,6 +1321,14 @@
     ║ ║ ║ │ └○ $ast
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └◙ WVal StrByDump
+    ║ ║ ╟─callmethod log  ««"'ast: ', self.user-progname, ' done.'"
+    ║ ║ ║ ├─decont
+    ║ ║ ║ │ └○ self
+    ║ ║ ║ ├◙ SVal "ast: "
+    ║ ║ ║ ├─callmethod user-progname  ««".user-progname"
+    ║ ║ ║ │ └─decont
+    ║ ║ ║ │   └○ self
+    ║ ║ ║ └◙ SVal " done."
     ║ ║ ╙○ $ast
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.log('ast_clean: ', self.user-progna"...
     ║ ║ ╟○ self :decl(param)
@@ -1877,7 +1872,6 @@
     ║   ║ └◙ WVal NQPMu
     ║   ╟○ @expPathUp :decl(var)
     ║   ╟○ $export :decl(var)
-    ║   ╟○ $super :decl(var)
     ║   ╟○ $out
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@expPathUp := []"
     ║   ║ ├○ @expPathUp
@@ -2044,26 +2038,12 @@
     ║   ║       │   │ └◙ SVal "name"
     ║   ║       │   └◙ WVal NQPMu
     ║   ║       └─list
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$super := nqp::findmethod(self.HOW.mro(self)[1], 's"...
-    ║   ║ ├○ $super
-    ║   ║ └─findmethod  ««"nqp::findmethod(self.HOW.mro(self)[1], 'statement_c"...
-    ║   ║   ├─ifnull
-    ║   ║   │ ├─atpos
-    ║   ║   │ │ ├─callmethod mro  ««"self"
-    ║   ║   │ │ │ ├─how  ««".HOW"
-    ║   ║   │ │ │ │ └─decont
-    ║   ║   │ │ │ │   └○ self
-    ║   ║   │ │ │ └─decont
-    ║   ║   │ │ │   └○ self
-    ║   ║   │ │ └◙ IVal 1
-    ║   ║   │ └◙ WVal NQPMu
-    ║   ║   └◙ SVal "statement_control:sym<use>"
     ║   ╟─bind  ««":="
     ║   ║ ├○ $out
-    ║   ║ └─call  ««"self, $/"
-    ║   ║   ├○ $super
+    ║   ║ └─call &super  ««"self, 'statement_control:sym<use>', $/"
     ║   ║   ├─decont
     ║   ║   │ └○ self
+    ║   ║   ├◙ SVal "statement_control:sym<use>"
     ║   ║   └○ $/
     ║   ╟─callmethod node  ««"$/"
     ║   ║ ├○ $out
@@ -2105,36 +2085,41 @@
     ║ ║     └─call RETURN
     ║ ║       └─decont
     ║ ║         └○ self
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $*COMPILER := self;\n        my $pars"...
+    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.log('parse: ', self.user-progname, "...
     ║ ║ ╟○ self :decl(param)
     ║ ║ ╟○ $source :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟○ $*COMPILER :decl(var)
-    ║ ║ ╟○ $parse :decl(var)
+    ║ ║ ╟○ $out :decl(var)
+    ║ ║ ╟─callmethod log  ««"'parse: ', self.user-progname, '...'"
+    ║ ║ ║ ├─decont
+    ║ ║ ║ │ └○ self
+    ║ ║ ║ ├◙ SVal "parse: "
+    ║ ║ ║ ├─callmethod user-progname  ««".user-progname"
+    ║ ║ ║ │ └─decont
+    ║ ║ ║ │   └○ self
+    ║ ║ ║ └◙ SVal "..."
     ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$*COMPILER := self"
     ║ ║ ║ ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
     ║ ║ ║ └─decont
     ║ ║ ║   └○ self
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$parse := nqp::findmethod(self.HOW.mro(self)[1], 'p"...
-    ║ ║ ║ ├○ $parse
-    ║ ║ ║ └─findmethod  ««"nqp::findmethod(self.HOW.mro(self)[1], 'parse')"
-    ║ ║ ║   ├─ifnull
-    ║ ║ ║   │ ├─atpos
-    ║ ║ ║   │ │ ├─callmethod mro  ««"self"
-    ║ ║ ║   │ │ │ ├─how  ««".HOW"
-    ║ ║ ║   │ │ │ │ └─decont
-    ║ ║ ║   │ │ │ │   └○ self
-    ║ ║ ║   │ │ │ └─decont
-    ║ ║ ║   │ │ │   └○ self
-    ║ ║ ║   │ │ └◙ IVal 1
-    ║ ║ ║   │ └◙ WVal NQPMu
-    ║ ║ ║   └◙ SVal "parse"
-    ║ ║ ╙─call  ««"self, $source, |%adverbs"
-    ║ ║   ├○ $parse
-    ║ ║   ├─decont
-    ║ ║   │ └○ self
-    ║ ║   ├○ $source
-    ║ ║   └○ %adverbs :flat(1) :named(1)
+    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := super(self, 'parse', $source, |%adverbs)"
+    ║ ║ ║ ├○ $out
+    ║ ║ ║ └─call &super  ««"self, 'parse', $source, |%adverbs"
+    ║ ║ ║   ├─decont
+    ║ ║ ║   │ └○ self
+    ║ ║ ║   ├◙ SVal "parse"
+    ║ ║ ║   ├○ $source
+    ║ ║ ║   └○ %adverbs :flat(1) :named(1)
+    ║ ║ ╟─callmethod log  ««"'parse: ', self.user-progname, ' done.'"
+    ║ ║ ║ ├─decont
+    ║ ║ ║ │ └○ self
+    ║ ║ ║ ├◙ SVal "parse: "
+    ║ ║ ║ ├─callmethod user-progname  ««".user-progname"
+    ║ ║ ║ │ └─decont
+    ║ ║ ║ │   └○ self
+    ║ ║ ║ └◙ SVal " done."
+    ║ ║ ╙○ $out
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{ 'nqpc' }"
     ║ ║ ╟○ self :decl(param)
     ║ ║ ╟○ $value :decl(param) :default(WVal NO_VALUE)

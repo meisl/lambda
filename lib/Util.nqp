@@ -205,6 +205,11 @@ class Util {
         @out;
     }
 
+    method super($self, str $method-name, @args, %adverbs) {
+        my $method := nqp::findmethod($self.HOW.mro($self)[1], $method-name);
+        $method($self, |@args, |%adverbs);
+    }
+
 }
 
 
@@ -224,6 +229,7 @@ sub linesFrom(str $filename, $from = 1, $count?) is export { Util.linesFrom($fil
 
 sub flatten($args, :$map)                        is export { Util.flatten($args, :$map) }
 
+sub super($self, str $method-name, *@args, *%adverbs) is export { Util.super($self, $method-name, @args, %adverbs) }
 
 
 
