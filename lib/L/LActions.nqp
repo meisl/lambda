@@ -386,10 +386,10 @@ class LActions is HLL::Actions {
                         mkBind(mkDeclV($from),        mkListLookup($info, :index(1))),
                         mkBind(mkDeclV($length),      mkListLookup($info, :index(2))),
                         mkBind(mkDeclV($src),
-                            mkConcat(
+                            #mkConcat(
                                 QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length),
-                                '  # :tag(', mkRCall('.strLit', mkListLookup($v, :index(0))), ')',
-                            )
+                            #    '  # :tag(', mkRCall('.strLit', mkListLookup($v, :index(0))), ')',
+                            #)
                         ),
                         mkBind(mkDeclV($i), 0),
                         QAST::Op.new(:op<for>, $fvn2dBI, QAST::Block.new(:arity(1),
@@ -409,7 +409,7 @@ class LActions is HLL::Actions {
                                     $indent,
                                     '# where ',
                                     $name,
-                                    '(', $dBI, ')',
+                                    #'(', $dBI, ')',
                                     ' = ',
                                     QAST::Op.new(:op<if>,
                                         QAST::Op.new(:op<iseq_s>, $name, asNode('self')),
