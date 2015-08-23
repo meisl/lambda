@@ -6,6 +6,9 @@ use Util;
 use Util::QAST;
 
 
+my class NO_VALUE {}
+
+
 # -----------------------------------------------
 
 
@@ -177,6 +180,8 @@ class SmartCompiler is NQP::Compiler {
 
     has $!user_binname;
 
+    has $!log_level;
+
     method BUILD() {
         # in this order (!):
         self.addstage('ast_save',           :after<ast>);
@@ -195,6 +200,7 @@ class SmartCompiler is NQP::Compiler {
 
         # XXX don't hard-code this!
         @!user_srcpaths := <. lib lib/L>;
+        $!log_level := 'WARN';
     }
 
     # called "user-progname" (with a dash instead of an underscore) in HLL::Compiler
@@ -212,12 +218,31 @@ class SmartCompiler is NQP::Compiler {
         @!user_srcpaths;
     }
 
-    method log($msg, *@moreMsgPieces) {
-        my str $out := '# [' ~ self.compiler_progname ~ '] ' ~ $msg;
-        for @moreMsgPieces {
-            $out := $out ~ $_;
+    method log_level($level = NO_VALUE) {
+        $!log_level := $level unless $level =:= NO_VALUE;
+        $!log_level;
+    }
+    
+
+    method log($msg, *@moreMsgPieces, :$level = 'INFO') {
+        if self.log_level eq 'INFO' 
+            || self.log_level eq 'WARN' && ($level ne 'INFO')
+            || self.log_level eq 'ERROR' && ($level eq 'ERROR')
+        {
+            my str $out := '# [' ~ self.compiler_progname ~ "|$level] " ~ $msg;
+            for @moreMsgPieces {
+                $out := $out ~ $_;
+            }
+            say($out);
         }
-        say($out);
+    }
+
+    method backend() {
+        nqp::getattr(self, HLL::Compiler, '$!backend');
+    }
+
+    method version_string() {
+        self.language ~ ' v' ~ self.config<version>;
     }
 
     method find_file($module_name, @search_paths, :$ext!) {
@@ -441,7 +466,7 @@ class SmartCompiler is NQP::Compiler {
         return $ast
             if %adverbs<output> eq $qastfileName;
         spew($qastfileName, ~$ast);
-        #self.log('ast_save: QAST dump written to ', $qastfileName);
+        self.log('ast_save: QAST dump written to ', $qastfileName);
         $ast;
     }
 
@@ -807,12 +832,11 @@ sub MAIN(*@ARGS) {
             $nqpc.log("compiled: $file ~> " ~ describe($result));
         }
         CATCH {
-            $nqpc.log("ERROR: $file");
-            $nqpc.log($sep);
-            $nqpc.log("  CWD: $cwd");
-            $nqpc.log(' ARGS: ', nqp::join(' ', @ARGS));
-            $nqpc.log('');
-            $nqpc.log(~$_);
+            $nqpc.log(:level<ERROR>, " FILE: $file");
+            $nqpc.log(:level<ERROR>, "  CWD: $cwd");
+            $nqpc.log(:level<ERROR>, ' ARGS: ', nqp::join(' ', @ARGS));
+            $nqpc.log(:level<ERROR>, '');
+            $nqpc.log(:level<ERROR>, ~$_);
             nqp::exit(1);
             
             #nqp::die($msg);    # cannot do this: sometimes "Memory allocation failed; could not allocate zu bytes"

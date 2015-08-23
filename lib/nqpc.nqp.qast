@@ -43,6 +43,7 @@
     ╟○ &inline_simple_methods :decl(static) :default((NQPRoutine, invokable))
     ╟○ &isSVal :decl(static) :default((NQPRoutine, invokable))
     ╟○ &isIVal :decl(static) :default((NQPRoutine, invokable))
+    ╟○ NO_VALUE :decl(static) :default((NO_VALUE, Type object))
     ╟─bind
     ║ ├○ &isinResultPosition :decl(var)
     ║ └─:Block  ««"{\n    my $n := nqp::elems($parent) - 1;\n    if ($"...
@@ -495,7 +496,7 @@
     ║ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    nqp::die('findValueNodeInHash expects a fn a"...
     ║   ╟○ $keyPredicate :decl(param)
     ║   ╟○ $valuePredicate :decl(param)
-    ║   ╟○ $hash :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
+    ║   ╟○ $hash :decl(param) :default(WVal NO_VALUE)
     ║   ╟○ $found :decl(var)
     ║   ╙─lexotic RETURN
     ║     └─:Stmts  ««"\n    nqp::die('findValueNodeInHash expects a fn as"...
@@ -518,17 +519,7 @@
     ║       ├─if  ««"$hash =:= NO_VALUE {\n        return -> $hash { fin"...
     ║       │ ├─eqaddr  ««"=:="
     ║       │ │ ├○ $hash
-    ║       │ │ └─ifnull
-    ║       │ │   ├─atkey
-    ║       │ │   │ ├─who
-    ║       │ │   │ │ └○ $?PACKAGE
-    ║       │ │   │ └◙ SVal "NO_VALUE"
-    ║       │ │   └─ifnull
-    ║       │ │     ├─atkey
-    ║       │ │     │ ├─who
-    ║       │ │     │ │ └◙ WVal GLOBALish
-    ║       │ │     │ └◙ SVal "NO_VALUE"
-    ║       │ │     └◙ WVal NQPMu
+    ║       │ │ └◙ WVal NO_VALUE
     ║       │ ├─call RETURN
     ║       │ │ └─:Block  ««"{ findValueNodeInHash($keyPredicate, $valuePredicat"...
     ║       │ │   ╟○ $hash :decl(param)
@@ -718,35 +709,37 @@
     ║   ║ │   ├► "CATCH" (str)
     ║   ║ │   └─:Stmts
     ║   ║ │     ├─call
-    ║   ║ │     │ ├─:Block  ««"{\n            $nqpc.log(\"ERROR: $file\");\n      "...
+    ║   ║ │     │ ├─:Block  ««"{\n            $nqpc.log(:level<ERROR>, \" FILE: $f"...
     ║   ║ │     │ │ ╟○ $_ :decl(param)
     ║   ║ │     │ │ ╟─bind
     ║   ║ │     │ │ ║ ├○ $! :decl(var)
     ║   ║ │     │ │ ║ └○ $_
-    ║   ║ │     │ │ ╟─callmethod log  ««"\"ERROR: $file\""
+    ║   ║ │     │ │ ╟─callmethod log  ««":level<ERROR>, \" FILE: $file\""
     ║   ║ │     │ │ ║ ├○ $nqpc
+    ║   ║ │     │ │ ║ ├◙ SVal "ERROR" :named("level")
     ║   ║ │     │ │ ║ └─concat
-    ║   ║ │     │ │ ║   ├◙ SVal "ERROR: "
+    ║   ║ │     │ │ ║   ├◙ SVal " FILE: "
     ║   ║ │     │ │ ║   └○ $file
-    ║   ║ │     │ │ ╟─callmethod log  ««"$sep"
+    ║   ║ │     │ │ ╟─callmethod log  ««":level<ERROR>, \"  CWD: $cwd\""
     ║   ║ │     │ │ ║ ├○ $nqpc
-    ║   ║ │     │ │ ║ └○ $sep
-    ║   ║ │     │ │ ╟─callmethod log  ««"\"  CWD: $cwd\""
-    ║   ║ │     │ │ ║ ├○ $nqpc
+    ║   ║ │     │ │ ║ ├◙ SVal "ERROR" :named("level")
     ║   ║ │     │ │ ║ └─concat
     ║   ║ │     │ │ ║   ├◙ SVal "  CWD: "
     ║   ║ │     │ │ ║   └○ $cwd
-    ║   ║ │     │ │ ╟─callmethod log  ««"' ARGS: ', nqp::join(' ', @ARGS)"
+    ║   ║ │     │ │ ╟─callmethod log  ««":level<ERROR>, ' ARGS: ', nqp::join(' ', @ARGS)"
     ║   ║ │     │ │ ║ ├○ $nqpc
+    ║   ║ │     │ │ ║ ├◙ SVal "ERROR" :named("level")
     ║   ║ │     │ │ ║ ├◙ SVal " ARGS: "
     ║   ║ │     │ │ ║ └─join  ««"nqp::join(' ', @ARGS)"
     ║   ║ │     │ │ ║   ├◙ SVal " "
     ║   ║ │     │ │ ║   └○ @ARGS
-    ║   ║ │     │ │ ╟─callmethod log  ««"''"
+    ║   ║ │     │ │ ╟─callmethod log  ««":level<ERROR>, ''"
     ║   ║ │     │ │ ║ ├○ $nqpc
+    ║   ║ │     │ │ ║ ├◙ SVal "ERROR" :named("level")
     ║   ║ │     │ │ ║ └◙ SVal ""
-    ║   ║ │     │ │ ╟─callmethod log  ««"~$_"
+    ║   ║ │     │ │ ╟─callmethod log  ««":level<ERROR>, ~$_"
     ║   ║ │     │ │ ║ ├○ $nqpc
+    ║   ║ │     │ │ ║ ├◙ SVal "ERROR" :named("level")
     ║   ║ │     │ │ ║ └─stringify  ««"~"
     ║   ║ │     │ │ ║   └○ $_
     ║   ║ │     │ │ ╙─exit  ««"nqp::exit(1)"
@@ -769,6 +762,10 @@
     ║   │ └◙ SVal "ctxsave"
     ║   └─callmethod ctxsave
     ║     └○ local ctxsave
+    ╟─:Block :blocktype(immediate)  ««"{}"
+    ║ ╟○ $?PACKAGE :decl(static) :default((NO_VALUE, Type object))
+    ║ ╟○ $?CLASS :decl(static) :default((NO_VALUE, Type object))
+    ║ ╙◙ WVal NQPMu
     ╟○ &isinResultPosition
     ╟○ &drop_bogusVars
     ╟○ &remove_MAIN
@@ -817,15 +814,21 @@
     ║ ║ ╟─push  ««"'optimize=s'"
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └◙ SVal "optimize=s"
+    ║ ║ ╟─bind  ««":="
+    ║ ║ ║ ├○ attribute @!user_srcpaths
+    ║ ║ ║ │ ├─decont
+    ║ ║ ║ │ │ └○ self
+    ║ ║ ║ │ └◙ WVal SmartCompiler
+    ║ ║ ║ └─list  ««"<. lib lib/L>"
+    ║ ║ ║   ├◙ SVal "."
+    ║ ║ ║   ├◙ SVal "lib"
+    ║ ║ ║   └◙ SVal "lib/L"
     ║ ║ ╙─bind  ««":="
-    ║ ║   ├○ attribute @!user_srcpaths
+    ║ ║   ├○ attribute $!log_level
     ║ ║   │ ├─decont
     ║ ║   │ │ └○ self
     ║ ║   │ └◙ WVal SmartCompiler
-    ║ ║   └─list  ««"<. lib lib/L>"
-    ║ ║     ├◙ SVal "."
-    ║ ║     ├◙ SVal "lib"
-    ║ ║     └◙ SVal "lib/L"
+    ║ ║   └◙ SVal "WARN"
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.user-progname();\n    }"
     ║ ║ ╟○ self :decl(param)
     ║ ║ ╙─callmethod user-progname  ««""
@@ -833,21 +836,11 @@
     ║ ║     └○ self
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        $!user_binname := $v unless $v =:= NO_VA"...
     ║ ║ ╟○ self :decl(param)
-    ║ ║ ╟○ $v :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
+    ║ ║ ╟○ $v :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╟─unless  ««"$!user_binname := $v unless $v =:= NO_VALUE"
     ║ ║ ║ ├─eqaddr  ««"=:="
     ║ ║ ║ │ ├○ $v
-    ║ ║ ║ │ └─ifnull
-    ║ ║ ║ │   ├─atkey
-    ║ ║ ║ │   │ ├─who
-    ║ ║ ║ │   │ │ └○ $?PACKAGE
-    ║ ║ ║ │   │ └◙ SVal "NO_VALUE"
-    ║ ║ ║ │   └─ifnull
-    ║ ║ ║ │     ├─atkey
-    ║ ║ ║ │     │ ├─who
-    ║ ║ ║ │     │ │ └◙ WVal GLOBALish
-    ║ ║ ║ │     │ └◙ SVal "NO_VALUE"
-    ║ ║ ║ │     └◙ WVal NQPMu
+    ║ ║ ║ │ └◙ WVal NO_VALUE
     ║ ║ ║ └─bind  ««":="
     ║ ║ ║   ├○ attribute $!user_binname
     ║ ║ ║   │ ├─decont
@@ -864,34 +857,105 @@
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   └◙ WVal SmartCompiler
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my str $out := '# [' ~ self.compiler_pro"...
+    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        $!log_level := $level unless $level =:= "...
+    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ $level :decl(param) :default(WVal NO_VALUE)
+    ║ ║ ╟─unless  ««"$!log_level := $level unless $level =:= NO_VALUE"
+    ║ ║ ║ ├─eqaddr  ««"=:="
+    ║ ║ ║ │ ├○ $level
+    ║ ║ ║ │ └◙ WVal NO_VALUE
+    ║ ║ ║ └─bind  ««":="
+    ║ ║ ║   ├○ attribute $!log_level
+    ║ ║ ║   │ ├─decont
+    ║ ║ ║   │ │ └○ self
+    ║ ║ ║   │ └◙ WVal SmartCompiler
+    ║ ║ ║   └○ $level
+    ║ ║ ╙○ attribute $!log_level
+    ║ ║   ├─decont
+    ║ ║   │ └○ self
+    ║ ║   └◙ WVal SmartCompiler
+    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        if self.log_level eq 'INFO' \n          "...
     ║ ║ ╟○ self :decl(param)
     ║ ║ ╟○ $msg :decl(param)
     ║ ║ ╟○ @moreMsgPieces :decl(param) :slurpy(1)
-    ║ ║ ╟○ $out :decl(var)
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"str $out := '# [' ~ self.compiler_progname ~ '] ' ~"...
-    ║ ║ ║ ├○ $out
-    ║ ║ ║ └─concat  ««"~"
-    ║ ║ ║   ├─concat  ««"~"
-    ║ ║ ║   │ ├─concat  ««"~"
-    ║ ║ ║   │ │ ├◙ SVal "# ["
-    ║ ║ ║   │ │ └─callmethod compiler_progname  ««".compiler_progname"
-    ║ ║ ║   │ │   └─decont
-    ║ ║ ║   │ │     └○ self
-    ║ ║ ║   │ └◙ SVal "] "
-    ║ ║ ║   └○ $msg
-    ║ ║ ╟─for  ««"@moreMsgPieces {\n            $out := $out ~ $_;\n "...
-    ║ ║ ║ ├○ @moreMsgPieces
-    ║ ║ ║ ├─:Block :blocktype(immediate)  ««"{\n            $out := $out ~ $_;\n        }"
-    ║ ║ ║ │ ╟○ $_ :decl(param)
-    ║ ║ ║ │ ╙─bind  ««":="
-    ║ ║ ║ │   ├○ $out
-    ║ ║ ║ │   └─concat  ««"~"
-    ║ ║ ║ │     ├○ $out
-    ║ ║ ║ │     └○ $_
-    ║ ║ ║ └◙ IVal 1 :named("nohandler")
-    ║ ║ ╙─call &say  ««"$out"
-    ║ ║   └○ $out
+    ║ ║ ╟○ $level :decl(param) :named("level") :default(SVal "INFO")
+    ║ ║ ╙─if  ««"self.log_level eq 'INFO' \n            || self.log_"...
+    ║ ║   ├─unless  ««"||"
+    ║ ║   │ ├─unless  ««"||"
+    ║ ║   │ │ ├─iseq_s  ««"eq"
+    ║ ║   │ │ │ ├─callmethod log_level  ««".log_level"
+    ║ ║   │ │ │ │ └─decont
+    ║ ║   │ │ │ │   └○ self
+    ║ ║   │ │ │ └◙ SVal "INFO"
+    ║ ║   │ │ └─if  ««"&&"
+    ║ ║   │ │   ├─iseq_s  ««"eq"
+    ║ ║   │ │   │ ├─callmethod log_level  ««".log_level"
+    ║ ║   │ │   │ │ └─decont
+    ║ ║   │ │   │ │   └○ self
+    ║ ║   │ │   │ └◙ SVal "WARN"
+    ║ ║   │ │   └─isne_s  ««"ne"
+    ║ ║   │ │     ├○ $level
+    ║ ║   │ │     └◙ SVal "INFO"
+    ║ ║   │ └─if  ««"&&"
+    ║ ║   │   ├─iseq_s  ««"eq"
+    ║ ║   │   │ ├─callmethod log_level  ««".log_level"
+    ║ ║   │   │ │ └─decont
+    ║ ║   │   │ │   └○ self
+    ║ ║   │   │ └◙ SVal "ERROR"
+    ║ ║   │   └─iseq_s  ««"eq"
+    ║ ║   │     ├○ $level
+    ║ ║   │     └◙ SVal "ERROR"
+    ║ ║   └─:Block :blocktype(immediate)  ««"{\n            my str $out := '# [' ~ self.compiler"...
+    ║ ║     ╟○ $out :decl(var)
+    ║ ║     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"str $out := '# [' ~ self.compiler_progname ~ \"|$le"...
+    ║ ║     ║ ├○ $out
+    ║ ║     ║ └─concat  ««"~"
+    ║ ║     ║   ├─concat  ««"~"
+    ║ ║     ║   │ ├─concat  ««"~"
+    ║ ║     ║   │ │ ├◙ SVal "# ["
+    ║ ║     ║   │ │ └─callmethod compiler_progname  ««".compiler_progname"
+    ║ ║     ║   │ │   └─decont
+    ║ ║     ║   │ │     └○ self
+    ║ ║     ║   │ └─concat
+    ║ ║     ║   │   ├─concat
+    ║ ║     ║   │   │ ├◙ SVal "|"
+    ║ ║     ║   │   │ └○ $level
+    ║ ║     ║   │   └◙ SVal "] "
+    ║ ║     ║   └○ $msg
+    ║ ║     ╟─for  ««"@moreMsgPieces {\n                $out := $out ~ $_"...
+    ║ ║     ║ ├○ @moreMsgPieces
+    ║ ║     ║ ├─:Block :blocktype(immediate)  ««"{\n                $out := $out ~ $_;\n            }"
+    ║ ║     ║ │ ╟○ $_ :decl(param)
+    ║ ║     ║ │ ╙─bind  ««":="
+    ║ ║     ║ │   ├○ $out
+    ║ ║     ║ │   └─concat  ««"~"
+    ║ ║     ║ │     ├○ $out
+    ║ ║     ║ │     └○ $_
+    ║ ║     ║ └◙ IVal 1 :named("nohandler")
+    ║ ║     ╙─call &say  ««"$out"
+    ║ ║       └○ $out
+    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        nqp::getattr(self, HLL::Compiler, '$!bac"...
+    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╙─getattr  ««"nqp::getattr(self, HLL::Compiler, '$!backend')"
+    ║ ║   ├─decont
+    ║ ║   │ └○ self
+    ║ ║   ├◙ WVal HLL::Compiler
+    ║ ║   └◙ SVal "$!backend"
+    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.language ~ ' v' ~ self.config<versi"...
+    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╙─concat  ««"~"
+    ║ ║   ├─concat  ««"~"
+    ║ ║   │ ├─callmethod language  ««".language"
+    ║ ║   │ │ └─decont
+    ║ ║   │ │   └○ self
+    ║ ║   │ └◙ SVal " v"
+    ║ ║   └─ifnull
+    ║ ║     ├─atkey
+    ║ ║     │ ├─callmethod config  ««".config"
+    ║ ║     │ │ └─decont
+    ║ ║     │ │   └○ self
+    ║ ║     │ └◙ SVal "version"
+    ║ ║     └◙ WVal NQPMu
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $path;\n        my $file_name := nqp:"...
     ║ ║ ╟○ self :decl(param)
     ║ ║ ╟○ $module_name :decl(param)
@@ -1496,7 +1560,7 @@
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &svalPred :decl(var)
     ║ ║ ║ └─:Block  ««"{\n            -> $node { istype($node, QAST::SVal)"...
-    ║ ║ ║   ╟○ $value :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
+    ║ ║ ║   ╟○ $value :decl(param) :default(WVal NO_VALUE)
     ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::SVal) && ($value =:= NO_VALUE"...
     ║ ║ ║     ╟○ $node :decl(param)
     ║ ║ ║     ╙─if  ««"&&"
@@ -1506,17 +1570,7 @@
     ║ ║ ║       └─unless  ««"||"
     ║ ║ ║         ├─eqaddr  ««"=:="
     ║ ║ ║         │ ├○ $value
-    ║ ║ ║         │ └─ifnull
-    ║ ║ ║         │   ├─atkey
-    ║ ║ ║         │   │ ├─who
-    ║ ║ ║         │   │ │ └○ $?PACKAGE
-    ║ ║ ║         │   │ └◙ SVal "NO_VALUE"
-    ║ ║ ║         │   └─ifnull
-    ║ ║ ║         │     ├─atkey
-    ║ ║ ║         │     │ ├─who
-    ║ ║ ║         │     │ │ └◙ WVal GLOBALish
-    ║ ║ ║         │     │ └◙ SVal "NO_VALUE"
-    ║ ║ ║         │     └◙ WVal NQPMu
+    ║ ║ ║         │ └◙ WVal NO_VALUE
     ║ ║ ║         └─iseq_s  ««"eq"
     ║ ║ ║           ├─callmethod value  ««".value"
     ║ ║ ║           │ └○ $node
@@ -1524,7 +1578,7 @@
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &ivalPred :decl(var)
     ║ ║ ║ └─:Block  ««"{\n            -> $node { istype($node, QAST::IVal)"...
-    ║ ║ ║   ╟○ $value :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
+    ║ ║ ║   ╟○ $value :decl(param) :default(WVal NO_VALUE)
     ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::IVal) && ($value =:= NO_VALUE"...
     ║ ║ ║     ╟○ $node :decl(param)
     ║ ║ ║     ╙─if  ««"&&"
@@ -1534,17 +1588,7 @@
     ║ ║ ║       └─unless  ««"||"
     ║ ║ ║         ├─eqaddr  ««"=:="
     ║ ║ ║         │ ├○ $value
-    ║ ║ ║         │ └─ifnull
-    ║ ║ ║         │   ├─atkey
-    ║ ║ ║         │   │ ├─who
-    ║ ║ ║         │   │ │ └○ $?PACKAGE
-    ║ ║ ║         │   │ └◙ SVal "NO_VALUE"
-    ║ ║ ║         │   └─ifnull
-    ║ ║ ║         │     ├─atkey
-    ║ ║ ║         │     │ ├─who
-    ║ ║ ║         │     │ │ └◙ WVal GLOBALish
-    ║ ║ ║         │     │ └◙ SVal "NO_VALUE"
-    ║ ║ ║         │     └◙ WVal NQPMu
+    ║ ║ ║         │ └◙ WVal NO_VALUE
     ║ ║ ║         └─iseq_n  ««"=="
     ║ ║ ║           ├─callmethod value  ««".value"
     ║ ║ ║           │ └○ $node
@@ -1552,7 +1596,7 @@
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &opPred :decl(var)
     ║ ║ ║ └─:Block  ««"{\n            -> $node { istype($node, QAST::Op) &"...
-    ║ ║ ║   ╟○ $op :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
+    ║ ║ ║   ╟○ $op :decl(param) :default(WVal NO_VALUE)
     ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::Op) && ($op =:= NO_VALUE || $"...
     ║ ║ ║     ╟○ $node :decl(param)
     ║ ║ ║     ╙─if  ««"&&"
@@ -1562,17 +1606,7 @@
     ║ ║ ║       └─unless  ««"||"
     ║ ║ ║         ├─eqaddr  ««"=:="
     ║ ║ ║         │ ├○ $op
-    ║ ║ ║         │ └─ifnull
-    ║ ║ ║         │   ├─atkey
-    ║ ║ ║         │   │ ├─who
-    ║ ║ ║         │   │ │ └○ $?PACKAGE
-    ║ ║ ║         │   │ └◙ SVal "NO_VALUE"
-    ║ ║ ║         │   └─ifnull
-    ║ ║ ║         │     ├─atkey
-    ║ ║ ║         │     │ ├─who
-    ║ ║ ║         │     │ │ └◙ WVal GLOBALish
-    ║ ║ ║         │     │ └◙ SVal "NO_VALUE"
-    ║ ║ ║         │     └◙ WVal NQPMu
+    ║ ║ ║         │ └◙ WVal NO_VALUE
     ║ ║ ║         └─iseq_s  ««"eq"
     ║ ║ ║           ├─callmethod op  ««".op"
     ║ ║ ║           │ └○ $node
@@ -1777,6 +1811,11 @@
     ║ ║     │ ├○ $qastfileName
     ║ ║     │ └─stringify  ««"~"
     ║ ║     │   └○ $ast
+    ║ ║     ├─callmethod log  ««"'ast_save: QAST dump written to ', $qastfileName"
+    ║ ║     │ ├─decont
+    ║ ║     │ │ └○ self
+    ║ ║     │ ├◙ SVal "ast_save: QAST dump written to "
+    ║ ║     │ └○ $qastfileName
     ║ ║     └○ $ast
     ║ ╙─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        #self.log('write_bytecode: adverbs=' ~ d"...
     ║   ╟○ self :decl(param)
@@ -2117,7 +2156,7 @@
     ║ ║   └○ %adverbs :flat(1) :named(1)
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{ 'nqpc' }"
     ║ ║ ╟○ self :decl(param)
-    ║ ║ ╟○ $value :decl(param) :default((VarWithFallback associative :fallback((ifnull) ((atkey) ((who) (WVal GLOBALish)) (SVal "NO_VALUE")) (WVal NQPMu))) ((who) ($?PACKAGE)) (SVal "NO_VALUE"))
+    ║ ║ ╟○ $value :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╙◙ SVal "nqpc"
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        nqp::rethrow($error);\n    }"
     ║ ║ ╟○ self :decl(param)

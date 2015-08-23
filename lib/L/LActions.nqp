@@ -605,15 +605,16 @@ class LActions is HLL::Actions {
         my $mainResult := locVar('mainResult');
         $s.push(QAST::Block.new(:blocktype<immediate>,
             mkDeclV($mainResult),
-            mkRCall('.say', mkConcat(
-                ~nqp::elems(@!lambdaInfo), " lambdas\n",
-                lexVar('.qastSize'), " QAST::Node s\n",
-                lexVar('.blockCount'), " QAST::Block s\n",
-                lexVar('.listCount'), " QAST::Op(list) s\n",
-                lexVar('.ivalCount'), " QAST::IVal s\n",
-                lexVar('.svalSize'), " chars ttl in ", lexVar('.svalCount'), " QAST::SVal s\n",
-                "------------------------------------------------",
-            )),
+            #mkRCall('.say', mkConcat(
+            #    ~nqp::elems(@!lambdaInfo), " lambdas\n",
+            #    lexVar('.qastSize'), " QAST::Node s\n",
+            #    lexVar('.blockCount'), " QAST::Block s\n",
+            #    lexVar('.listCount'), " QAST::Op(list) s\n",
+            #    lexVar('.ivalCount'), " QAST::IVal s\n",
+            #    lexVar('.svalSize'), " chars ttl in ", lexVar('.svalCount'), " QAST::SVal s\n",
+            #    "------------------------------------------------",
+            #)),
+
             #QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)),
             
             #mkRCall('.say', mkConcat('.testDelay02 = ', mkRCall('.testDelay02', lexVar('.testDelay01')))),
@@ -621,7 +622,6 @@ class LActions is HLL::Actions {
             
             mkBind($mainResult, mkRCall('.strOut', $mainTerm, '')),
             
-            mkRCall('.say', "------------------------------------------------"),
             $mainResult,
         ));
         

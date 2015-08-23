@@ -726,7 +726,7 @@
     ║   ╙○ memo
     ╟─bind
     ║ ├○ .qastSize :decl(static)
-    ║ └◙ NVal 1462
+    ║ └◙ NVal 1428
     ╟─bind
     ║ ├○ .blockCount :decl(static)
     ║ └◙ NVal 136
@@ -738,44 +738,12 @@
     ║ └◙ NVal 170
     ╟─bind
     ║ ├○ .svalCount :decl(static)
-    ║ └◙ NVal 264
+    ║ └◙ NVal 256
     ╟─bind
     ║ ├○ .svalSize :decl(static)
-    ║ └◙ NVal 3284
+    ║ └◙ NVal 3088
     ╙─:Block :blocktype(immediate)
       ╟○ local mainResult :decl(var)
-      ╟─call .say
-      ║ └─concat
-      ║   ├─concat
-      ║   │ ├─concat
-      ║   │ │ ├─concat
-      ║   │ │ │ ├─concat
-      ║   │ │ │ │ ├─concat
-      ║   │ │ │ │ │ ├─concat
-      ║   │ │ │ │ │ │ ├─concat
-      ║   │ │ │ │ │ │ │ ├─concat
-      ║   │ │ │ │ │ │ │ │ ├─concat
-      ║   │ │ │ │ │ │ │ │ │ ├─concat
-      ║   │ │ │ │ │ │ │ │ │ │ ├─concat
-      ║   │ │ │ │ │ │ │ │ │ │ │ ├◙ SVal "75 lambdas\n"
-      ║   │ │ │ │ │ │ │ │ │ │ │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical .qastSize) ))
-      ║   │ │ │ │ │ │ │ │ │ │ │   └○ .qastSize
-      ║   │ │ │ │ │ │ │ │ │ │ └◙ SVal " QAST::Node s\n"
-      ║   │ │ │ │ │ │ │ │ │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical .blockCount) ))
-      ║   │ │ │ │ │ │ │ │ │   └○ .blockCount
-      ║   │ │ │ │ │ │ │ │ └◙ SVal " QAST::Block s\n"
-      ║   │ │ │ │ │ │ │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical .listCount) ))
-      ║   │ │ │ │ │ │ │   └○ .listCount
-      ║   │ │ │ │ │ │ └◙ SVal " QAST::Op(list) s\n"
-      ║   │ │ │ │ │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical .ivalCount) ))
-      ║   │ │ │ │ │   └○ .ivalCount
-      ║   │ │ │ │ └◙ SVal " QAST::IVal s\n"
-      ║   │ │ │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical .svalSize) ))
-      ║   │ │ │   └○ .svalSize
-      ║   │ │ └◙ SVal " chars ttl in "
-      ║   │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical .svalCount) ))
-      ║   │   └○ .svalCount
-      ║   └◙ SVal " QAST::SVal s\n------------------------------------------------"
       ╟─bind
       ║ ├○ local mainResult
       ║ └─call .strOut
@@ -1455,6 +1423,4 @@
       ║   │         ╟○ x :decl(param)
       ║   │         ╙○ x :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
       ║   └◙ SVal ""
-      ╟─call .say
-      ║ └◙ SVal "------------------------------------------------"
       ╙○ local mainResult

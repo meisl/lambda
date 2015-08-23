@@ -1,4 +1,4 @@
-@ echo off
+@echo off
 
 CALL nqpc.bat lib\L\L.nqp
 IF %ERRORLEVEL% GEQ 1 GOTO :EOF

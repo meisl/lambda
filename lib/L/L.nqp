@@ -4,6 +4,10 @@ use L::LGrammar;
 use L::LActions;
 use nqpc;
 use Util;
+use Util::QAST;
+
+
+my class NO_VALUE {}
 
 
 class LCompiler is SmartCompiler {
@@ -11,45 +15,37 @@ class LCompiler is SmartCompiler {
     has $!runtime;
 
     method BUILD() {
-        self.language('lambda');
+        self.config<version> := '0.0.1';
+        self.language('L');
         self.parsegrammar(LGrammar);
         self.parseactions(LActions.new);
         
-        self.addstage('mkRuntime',   :after<start>);
         self.addstage('inline_subs', :before<ast_save>);
         self.addstage('marryRT',     :before<ast_save>);
+        
+        $!runtime := self.mkRuntime;
         return self;
-    }
-
-    method compiler_progname($value = NO_VALUE) { 'Lc' }
-
-    method runtime($value = NO_VALUE) {
-        $!runtime := $value unless $value =:= NO_VALUE;
-        $!runtime;
-    }
     
-
-    # override stage 'start' in order to reset things
-    
-    method start($src, *%adverbs) {
-        self.runtime(nqp::null);
-        $src;
     }
 
-    # additional stages
-
-    method mkRuntime($src) {
+    method mkRuntime() {
         my $nqpc := NQPCompiler.new();
         $nqpc.addstage('ast_clean',     :before<ast_save>) unless $nqpc.exists_stage('ast_clean');
         $nqpc.addstage('inline_subs',   :before<ast_save>) unless $nqpc.exists_stage('inline_subs');
         $nqpc.addstage('ast_stats',     :before<ast_save>) unless $nqpc.exists_stage('ast_stats');
         my $runtimeAST := $nqpc.compileFile('lib/L/runTime.nqp', :lib('lib/L'), :target('ast_save'));
-        self.log('mkRuntime: ~> ', describe($runtimeAST));
-        self.runtime($runtimeAST);
-        return $src;
+        $runtimeAST;
     }
 
-    method marryRT($ast) {
+    method compiler_progname($value = NO_VALUE) { 'Lc' }
+
+    method runtime() {
+        cloneAndSubst($!runtime);
+    }
+
+    # additional stages
+
+    method marryRT($ast, *%adverbs) {
         my $rt := self.runtime;
         unless nqp::istype($rt, QAST::Node) {
             self.panic("invalid runtime: " ~ describe($rt));
@@ -99,7 +95,28 @@ class LCompiler is SmartCompiler {
         }
     }
 
+    method interactive_banner() {
+        my $backver := self.backend.version_string;
+          'This is the REPL of ' ~ self.version_string ~ " built on $backver\n"
+        ~ "type '!help' for a list of available commands\n"
+        ~ "---------------------------------------------\n";
+    }
+
+    method readline($stdin, $stdout, $prompt) {
+        nqp::printfh($stdout, $prompt);
+        return trim(nqp::readlinefh($stdin));
+    }
+
+    method autoprint($value, $stdout?) {
+        #say('$*AUTOPRINTPOS: ' ~ $*AUTOPRINTPOS);
+        #say('nqp::tellfh(nqp::getstdout()): ' ~ nqp::tellfh(nqp::getstdout()));
+        nqp::sayfh($stdout // nqp::getstdout(), $value);
+    }
+
+    
 }
+
+
 
 
 sub MAIN(*@ARGS) {
@@ -109,6 +126,11 @@ sub MAIN(*@ARGS) {
     @as.push('Lc')     unless nqp::elems(@as) > 0; # program name for command_line
     @as.push('test.L') unless nqp::elems(@as) > 1;
 
-    $c.command_line(@as, :encoding('utf8'), :stagestats);
+    #$c.log_level('INFO');
+
+    #$c.command_line(@as, :encoding('utf8'), :stagestats);
+    
+    $c.removestage('ast_save');
+    $c.interactive();
 }
 
