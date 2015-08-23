@@ -109,88 +109,73 @@
     ║             └○ $parent
     ╟─bind
     ║ ├○ &drop_bogusVars :decl(var)
-    ║ └─:Block  ««"{\n    if istype($ast, QAST::Var) && !$ast.decl {\n"...
+    ║ └─:Block  ««"{\n    insist-isa($ast, QAST::CompUnit);\n    my $b"...
     ║   ╟○ $ast :decl(param)
-    ║   ╟○ $parent :decl(param) :default(null)
-    ║   ╙─lexotic RETURN
-    ║     └─:Stmts  ««"\n    if istype($ast, QAST::Var) && !$ast.decl {\n "...
-    ║       ├─if  ««"istype($ast, QAST::Var) && !$ast.decl {\n        if"...
-    ║       │ ├─if  ««"&&"
-    ║       │ │ ├─call &istype  ««"$ast, QAST::Var"
-    ║       │ │ │ ├○ $ast
-    ║       │ │ │ └◙ WVal QAST::Var
-    ║       │ │ └─falsey  ««"!"
-    ║       │ │   └─callmethod decl  ««".decl"
-    ║       │ │     └○ $ast
-    ║       │ ├─if  ««"istype($parent, QAST::Block, QAST::Stmt, QAST::Stmt"...
-    ║       │ │ ├─call &istype  ««"$parent, QAST::Block, QAST::Stmt, QAST::Stmts"
-    ║       │ │ │ ├○ $parent
-    ║       │ │ │ ├◙ WVal QAST::Block
-    ║       │ │ │ ├◙ WVal QAST::Stmt
-    ║       │ │ │ └◙ WVal QAST::Stmts
-    ║       │ │ └─unless  ««"isinResultPosition($ast, $parent) {\n              "...
-    ║       │ │   ├─call &isinResultPosition  ««"$ast, $parent"
-    ║       │ │   │ ├○ $ast
-    ║       │ │   │ └○ $parent
-    ║       │ │   └─call RETURN
-    ║       │ │     └─null  ««"nqp::null"
-    ║       │ └─if  ««"+$ast.list { # workaround - not all nodes with chil"...
-    ║       │   ├─numify  ««"+"
-    ║       │   │ └─callmethod list  ««".list"
-    ║       │   │   └○ $ast
-    ║       │   └─:Block :blocktype(immediate)  ««"{ # workaround - not all nodes with children actual"...
-    ║       │     ╟○ @children :decl(var)
-    ║       │     ╟○ $changed :decl(var)
-    ║       │     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@children := []"
-    ║       │     ║ ├○ @children
-    ║       │     ║ └─list
-    ║       │     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$changed := 0"
-    ║       │     ║ ├○ $changed
-    ║       │     ║ └◙ IVal 0
-    ║       │     ╟─for  ««"$ast.list {\n            my $child := drop_bogusVar"...
-    ║       │     ║ ├─callmethod list  ««".list"
-    ║       │     ║ │ └○ $ast
-    ║       │     ║ ├─:Block :blocktype(immediate)  ««"{\n            my $child := drop_bogusVars($_, $ast"...
-    ║       │     ║ │ ╟○ $child :decl(var)
-    ║       │     ║ │ ╟○ $_ :decl(param)
-    ║       │     ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$child := drop_bogusVars($_, $ast)"
-    ║       │     ║ │ ║ ├○ $child
-    ║       │     ║ │ ║ └─call &drop_bogusVars  ««"$_, $ast"
-    ║       │     ║ │ ║   ├○ $_
-    ║       │     ║ │ ║   └○ $ast
-    ║       │     ║ │ ╙─if  ««"nqp::isnull($child) {\n                $changed := "...
-    ║       │     ║ │   ├─isnull  ««"nqp::isnull($child)"
-    ║       │     ║ │   │ └○ $child
-    ║       │     ║ │   ├─bind  ««":="
-    ║       │     ║ │   │ ├○ $changed
-    ║       │     ║ │   │ └◙ IVal 1
-    ║       │     ║ │   └─push  ««"$child"
-    ║       │     ║ │     ├○ @children
-    ║       │     ║ │     └○ $child
-    ║       │     ║ └◙ IVal 1 :named("nohandler")
-    ║       │     ╙─if  ««"$changed {\n            my @list := $ast.list;\n   "...
-    ║       │       ├○ $changed
-    ║       │       └─:Block :blocktype(immediate)  ««"{\n            my @list := $ast.list;\n            "...
-    ║       │         ╟○ @list :decl(var)
-    ║       │         ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@list := $ast.list"
-    ║       │         ║ ├○ @list
-    ║       │         ║ └─callmethod list  ««".list"
-    ║       │         ║   └○ $ast
-    ║       │         ╟─while  ««"+@list { @list.pop }"
-    ║       │         ║ ├─numify  ««"+"
-    ║       │         ║ │ └○ @list
-    ║       │         ║ ├─pop  ««".pop"
-    ║       │         ║ │ └○ @list
-    ║       │         ║ └◙ IVal 1 :named("nohandler")
-    ║       │         ╙─for  ««"@children { @list.push($_) }"
-    ║       │           ├○ @children
-    ║       │           ├─:Block :blocktype(immediate)  ««"{ @list.push($_) }"
-    ║       │           │ ╟○ $_ :decl(param)
-    ║       │           │ ╙─push  ««"$_"
-    ║       │           │   ├○ @list
-    ║       │           │   └○ $_
-    ║       │           └◙ IVal 1 :named("nohandler")
-    ║       └○ $ast
+    ║   ╟○ $block :decl(var)
+    ║   ╟○ @children :decl(var)
+    ║   ╟─call &insist-isa  ««"$ast, QAST::CompUnit"
+    ║   ║ ├○ $ast
+    ║   ║ └◙ WVal QAST::CompUnit
+    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$block := $ast[0]"
+    ║   ║ ├○ $block
+    ║   ║ └─ifnull
+    ║   ║   ├─atpos
+    ║   ║   │ ├○ $ast
+    ║   ║   │ └◙ IVal 0
+    ║   ║   └◙ WVal NQPMu
+    ║   ╟─call &insist-isa  ««"$block, QAST::Block"
+    ║   ║ ├○ $block
+    ║   ║ └◙ WVal QAST::Block
+    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@children := $block.list"
+    ║   ║ ├○ @children
+    ║   ║ └─callmethod list  ««".list"
+    ║   ║   └○ $block
+    ║   ╟─if  ««"+@children {\n        my $last := @children[+@child"...
+    ║   ║ ├─numify  ««"+"
+    ║   ║ │ └○ @children
+    ║   ║ └─:Block :blocktype(immediate)  ««"{\n        my $last := @children[+@children - 1];\n"...
+    ║   ║   ╟○ $last :decl(var)
+    ║   ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$last := @children[+@children - 1]"
+    ║   ║   ║ ├○ $last
+    ║   ║   ║ └─ifnull
+    ║   ║   ║   ├─atpos
+    ║   ║   ║   │ ├○ @children
+    ║   ║   ║   │ └─sub_n  ««"-"
+    ║   ║   ║   │   ├─numify  ««"+"
+    ║   ║   ║   │   │ └○ @children
+    ║   ║   ║   │   └◙ IVal 1
+    ║   ║   ║   └◙ WVal NQPMu
+    ║   ║   ╙─callmethod dfs-up  ««"\n            -> $n, @p {\n                if $n =:"...
+    ║   ║     ├◙ WVal TreeWalk
+    ║   ║     ├─:Block  ««"{\n                if $n =:= $block {\n            "...
+    ║   ║     │ ╟○ $n :decl(param)
+    ║   ║     │ ╟○ @p :decl(param)
+    ║   ║     │ ╙─if  ««"$n =:= $block {\n                    TreeWalkDo.rec"...
+    ║   ║     │   ├─eqaddr  ««"=:="
+    ║   ║     │   │ ├○ $n
+    ║   ║     │   │ └○ $block
+    ║   ║     │   ├─callmethod recurse  ««".recurse"
+    ║   ║     │   │ └◙ WVal TreeWalkDo
+    ║   ║     │   └─callmethod return  ««":take(\n                        !($n =:= $last) && "...
+    ║   ║     │     ├◙ WVal TreeWalkDo
+    ║   ║     │     └─if :named("take")  ««"&&"
+    ║   ║     │       ├─if  ««"&&"
+    ║   ║     │       │ ├─falsey  ««"!"
+    ║   ║     │       │ │ └─eqaddr  ««"=:="
+    ║   ║     │       │ │   ├○ $n
+    ║   ║     │       │ │   └○ $last
+    ║   ║     │       │ └─call &isVar  ««"$n"
+    ║   ║     │       │   └○ $n
+    ║   ║     │       └─falsey  ««"!"
+    ║   ║     │         └─callmethod decl  ««".decl"
+    ║   ║     │           └○ $n
+    ║   ║     ├─:Block  ««"{ TreeWalk.remove }"
+    ║   ║     │ ╟○ $n :decl(param)
+    ║   ║     │ ╟○ @p :decl(param)
+    ║   ║     │ ╙─callmethod remove  ««".remove"
+    ║   ║     │   └◙ WVal TreeWalk
+    ║   ║     └○ $block
+    ║   ╙○ $ast
     ╟─bind
     ║ ├○ &remove_MAIN :decl(var)
     ║ └─:Block  ««"{\n    say($ast[0].cuid);\n    say(\"CompUnit load:"...
@@ -734,12 +719,6 @@
     ║ ╟○ $?PACKAGE :decl(static) :default((NO_VALUE, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((NO_VALUE, Type object))
     ║ ╙◙ WVal NQPMu
-    ╟○ &isinResultPosition
-    ╟○ &drop_bogusVars
-    ╟○ &remove_MAIN
-    ╟○ &findDef
-    ╟○ &findDefs
-    ╟○ &findValueNodeInHash
     ╟─:Block :blocktype(immediate)  ««"{\n\n    # Where to search for user source files.\n"...
     ║ ╟○ $?PACKAGE :decl(static) :default((SmartCompiler, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((SmartCompiler, Type object))
@@ -1435,6 +1414,10 @@
     ║ ║ ║ │ └─decont
     ║ ║ ║ │   └○ self
     ║ ║ ║ └◙ SVal " / drop_Stmts done."
+    ║ ║ ╟─bind  ««":="
+    ║ ║ ║ ├○ $ast
+    ║ ║ ║ └─call &drop_bogusVars  ««"$ast"
+    ║ ║ ║   └○ $ast
     ║ ║ ╟─bind  ««":="
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─call &remove_bogusOpNames  ««"$ast"
@@ -2932,7 +2915,6 @@
     ║           ║ └─getstdout  ««"nqp::getstdout()"
     ║           ╙─die  ««"nqp::die($msg)"
     ║             └○ $msg
-    ╟○ &MAIN
     ╙─if
       ├○ @ARGS
       └─call &MAIN

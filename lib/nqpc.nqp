@@ -26,32 +26,29 @@ sub isinResultPosition($node, $parent) {
 }
 
 
-sub drop_bogusVars($ast, $parent = nqp::null) {
-    if istype($ast, QAST::Var) && !$ast.decl {
-        if istype($parent, QAST::Block, QAST::Stmt, QAST::Stmts) {
-            unless isinResultPosition($ast, $parent) {
-                #nqp::print(describe($parent) ~ ' ' ~ $ast.dump);
-                return nqp::null;
-            }
-        }
-    } elsif +$ast.list { # workaround - not all nodes with children actually do that role
-        #say('  >> ', describe($ast), ' ', nqp::elems($ast.list));
-        my @children := [];
-        my $changed := 0;
-        for $ast.list {
-            my $child := drop_bogusVars($_, $ast);
-            if nqp::isnull($child) {
-                $changed := 1;
-            } else {
-                @children.push($child);
-            }
-        }
-        if $changed {
-            my @list := $ast.list;
-            while +@list { @list.pop }
-            for @children { @list.push($_) }
-        }
+sub drop_bogusVars($ast) {
+    insist-isa($ast, QAST::CompUnit);
+    my $block := $ast[0];
+    insist-isa($block, QAST::Block);
+    my @children := $block.list;
+    if +@children {
+        my $last := @children[+@children - 1];
+        TreeWalk.dfs-up(
+            -> $n, @p {
+                if $n =:= $block {
+                    TreeWalkDo.recurse
+                } else {
+                    #say('>>>>>' ~ dump($n, :oneLine));
+                    TreeWalkDo.return(:take(
+                        !($n =:= $last) && isVar($n) && !$n.decl
+                    ));
+                }
+            },
+            -> $n, @p { TreeWalk.remove },
+            $block
+        );
     }
+
     $ast;
 }
 
@@ -387,7 +384,7 @@ class SmartCompiler is NQP::Compiler {
         $ast := drop_Stmts($ast);
         self.log('ast_clean: ', self.user-progname, ' / drop_Stmts done.');
         
-        #$ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
+        $ast := drop_bogusVars($ast);       # do this *after* drop_Stmts !!!
         $ast := remove_bogusOpNames($ast);
         #$ast := remove_MAIN($ast);
         

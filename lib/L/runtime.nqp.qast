@@ -722,7 +722,7 @@
     ║   ├◙ SVal "stats"
     ║   └─hash  ««"nqp::hash( # to be filled in by compiler\n        S"...
     ║     ├◙ SVal "Node" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_QASTSIZE" (str) ))
-    ║     ├◙ IVal 769
+    ║     ├◙ IVal 741
     ║     ├◙ SVal "Block" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_BLOCKCOUNT" (str) ))
     ║     ├◙ IVal 38
     ║     ├◙ SVal "list" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_LISTCOUNT" (str) ))
@@ -735,34 +735,6 @@
     ║     ├◙ IVal 74
     ║     ├◙ SVal "SValChars" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_SVALSIZE" (str) ))
     ║     └◙ IVal 740
-    ╟○ &LAMFIELD_ID
-    ╟○ &LAMFIELD_CODE
-    ╟○ &LAMFIELD_FREEVARS
-    ╟○ &lam2id
-    ╟○ &lam2code
-    ╟○ &lam2fvs
-    ╟○ &STATS_QASTSIZE
-    ╟○ &STATS_BLOCKCOUNT
-    ╟○ &STATS_LISTCOUNT
-    ╟○ &STATS_LAMBDACOUNT
-    ╟○ &STATS_CALLISHCOUNT
-    ╟○ &STATS_IVALCOUNT
-    ╟○ &STATS_SVALCOUNT
-    ╟○ &STATS_SVALSIZE
-    ╟○ &int2str
-    ╟○ &num2str
-    ╟○ &strLit
-    ╟○ &force
-    ╟○ &delayMemo
-    ╟○ &sublist
-    ╟○ &lam2info
-    ╟○ &typecase
-    ╟○ &strOut
-    ╟○ &apply1
-    ╟○ &join
-    ╟○ &say
-    ╟○ &stats
-    ╟○ &MAIN
     ╙─if
       ├○ @ARGS
       └─call &MAIN

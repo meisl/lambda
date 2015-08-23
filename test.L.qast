@@ -524,21 +524,10 @@
     ║       │ ║   └◙ IVal 2
     ║       │ ╟─bind
     ║       │ ║ ├○ src :decl(var)
-    ║       │ ║ └─concat
-    ║       │ ║   ├─concat
-    ║       │ ║   │ ├─concat
-    ║       │ ║   │ │ ├─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Op(substr) ))
-    ║       │ ║   │ │ │ └─substr
-    ║       │ ║   │ │ │   ├○ .src
-    ║       │ ║   │ │ │   ├○ from
-    ║       │ ║   │ │ │   └○ length
-    ║       │ ║   │ │ └◙ SVal "  # :tag("
-    ║       │ ║   │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Op(call .strLit) ))
-    ║       │ ║   │   └─call .strLit
-    ║       │ ║   │     └─atpos
-    ║       │ ║   │       ├○ v
-    ║       │ ║   │       └◙ IVal 0
-    ║       │ ║   └◙ SVal ")"
+    ║       │ ║ └─substr
+    ║       │ ║   ├○ .src
+    ║       │ ║   ├○ from
+    ║       │ ║   └○ length
     ║       │ ╟─bind
     ║       │ ║ ├○ i :decl(var)
     ║       │ ║ └◙ IVal 0
@@ -585,20 +574,15 @@
     ║       │ ║       │ │ ├─concat
     ║       │ ║       │ │ │ ├─concat
     ║       │ ║       │ │ │ │ ├─concat
-    ║       │ ║       │ │ │ │ │ ├─concat
-    ║       │ ║       │ │ │ │ │ │ ├─concat
-    ║       │ ║       │ │ │ │ │ │ │ ├─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical src) ))
-    ║       │ ║       │ │ │ │ │ │ │ │ └○ src
-    ║       │ ║       │ │ │ │ │ │ │ └◙ SVal "\n"
-    ║       │ ║       │ │ │ │ │ │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical indent) ))
-    ║       │ ║       │ │ │ │ │ │   └○ indent
-    ║       │ ║       │ │ │ │ │ └◙ SVal "# where "
-    ║       │ ║       │ │ │ │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical name) ))
-    ║       │ ║       │ │ │ │   └○ name
-    ║       │ ║       │ │ │ └◙ SVal "("
-    ║       │ ║       │ │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical dBI) ))
-    ║       │ ║       │ │   └○ dBI
-    ║       │ ║       │ └◙ SVal ") = "
+    ║       │ ║       │ │ │ │ │ ├─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical src) ))
+    ║       │ ║       │ │ │ │ │ │ └○ src
+    ║       │ ║       │ │ │ │ │ └◙ SVal "\n"
+    ║       │ ║       │ │ │ │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical indent) ))
+    ║       │ ║       │ │ │ │   └○ indent
+    ║       │ ║       │ │ │ └◙ SVal "# where "
+    ║       │ ║       │ │ └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Var(lexical name) ))
+    ║       │ ║       │ │   └○ name
+    ║       │ ║       │ └◙ SVal " = "
     ║       │ ║       └─call .force :annotations(#`{BOOTHash:}nqp::hash( "force", QAST::Op(if) ))
     ║       │ ║         └─if
     ║       │ ║           ├─iseq_s
@@ -726,7 +710,7 @@
     ║   ╙○ memo
     ╟─bind
     ║ ├○ .qastSize :decl(static)
-    ║ └◙ NVal 1428
+    ║ └◙ NVal 1412
     ╟─bind
     ║ ├○ .blockCount :decl(static)
     ║ └◙ NVal 136
@@ -735,13 +719,13 @@
     ║ └◙ NVal 152
     ╟─bind
     ║ ├○ .ivalCount :decl(static)
-    ║ └◙ NVal 170
+    ║ └◙ NVal 169
     ╟─bind
     ║ ├○ .svalCount :decl(static)
-    ║ └◙ NVal 256
+    ║ └◙ NVal 253
     ╟─bind
     ║ ├○ .svalSize :decl(static)
-    ║ └◙ NVal 3088
+    ║ └◙ NVal 3076
     ╙─:Block :blocktype(immediate)
       ╟○ local mainResult :decl(var)
       ╟─bind
