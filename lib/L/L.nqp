@@ -26,12 +26,12 @@ class LCompiler is SmartCompiler {
         $!runtime := self.mkRuntime;
         
         self.interactive_command('!h', -> :$in, :$out {
-                nqp::sayfh($out, '  !h    - this help');
-                nqp::sayfh($out, '  !q    - quit');
-                nqp::sayfh($out, '  "foo" - string literal');
-                nqp::sayfh($out, '  \x.x  - lambda abstraction');
-                nqp::sayfh($out, '  (x y) - application');
-                nqp::sayfh($out, '  (def ((K \x.\_.x) (S \f.\g.\x.f x (g x)) (I (S K K))) I K) - let-like bindings');
+            nqp::sayfh($out, '  !h    - this help');
+            nqp::sayfh($out, '  !q    - quit');
+            nqp::sayfh($out, '  "foo" - string literal');
+            nqp::sayfh($out, '  \x.x  - lambda abstraction');
+            nqp::sayfh($out, '  (x y) - application');
+            nqp::sayfh($out, '  (delta ((K \x.\_.x) (S \f.\g.\x.f x (g x)) (I (S K K))) I K) - let-like bindings');
         });
 
         self.interactive_command('!q', -> :$in, :$out { nqp::sayfh($out, 'Bye!'); nqp::exit(0) } );

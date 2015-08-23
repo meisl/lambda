@@ -59,7 +59,7 @@ grammar LGrammar is HLL::Grammar {
 
     token lambda { 'λ' || \\ || '&' }
 
-    token delta { 'δ' }
+    token delta { 'δ' || 'delta' }
 
     token varName {
         <-[\d\"\\βδλ&.()\s]>+

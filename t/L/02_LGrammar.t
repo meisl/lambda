@@ -5,7 +5,7 @@ use Util;
 use L::LGrammar;
 
 
-plan(22);
+plan(26);
 
 {
     my $m;
@@ -55,9 +55,14 @@ plan(22);
     my $m;
     dies_ok({ $m := LGrammar.parse('(δ((K λx.λ_.x)) K K)') }, 'simple let with no ws after δ');
     lives_ok({$m := LGrammar.parse("(δ# comment til end of line\n((K λx.λ_.x)) K K)") }, 'simple let with no ws after δ (eol-comment)');
+    is(~$m, "(δ# comment til end of line\n((K λx.λ_.x)) K K)", 'simple let with no ws after δ (eol-comment) / match');
 
     lives_ok({$m := LGrammar.parse('(δ ((K λx.λ_.x)) K K)') }, 'simple let with one binding');
+    is(~$m, '(δ ((K λx.λ_.x)) K K)', 'simple let with one binding / match');
     dies_ok({ $m := LGrammar.parse('(δ ((λ λx.λ_.x)) K K)') }, 'simple let with invalid binder');
+
+    lives_ok({$m := LGrammar.parse('(delta ((I λx.x)) I I)') }, 'simple let with "delta" instead of δ');
+    is(~$m, '(delta ((I λx.x)) I I)', 'simple let with "delta" instead of δ / match');
 }
 
 
