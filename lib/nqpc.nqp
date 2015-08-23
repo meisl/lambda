@@ -179,8 +179,8 @@ class SmartCompiler is NQP::Compiler {
     has @!user_srcpaths;
 
     has $!user_binname;
-
     has $!log_level;
+    has %!interactive_commands;
 
     method BUILD() {
         # in this order (!):
@@ -201,6 +201,7 @@ class SmartCompiler is NQP::Compiler {
         # XXX don't hard-code this!
         @!user_srcpaths := <. lib lib/L>;
         $!log_level := 'WARN';
+        %!interactive_commands := {};
     }
 
     # called "user-progname" (with a dash instead of an underscore) in HLL::Compiler
@@ -289,6 +290,34 @@ class SmartCompiler is NQP::Compiler {
         } else { # no src file, so maybe it's a module from the NQP language directory?
             return self.find_bytecode($module_name, :ext<moarvm>, :with-nqplib);
         }
+    }
+
+    method interactive_command(str $name, $code = NO_VALUE) {
+        if $code =:= NO_VALUE {
+            %!interactive_commands{$name};
+        } else {
+            my &code := $code;   # check if it's invokable
+            %!interactive_commands{$name} := &code;
+        }
+    }
+    
+
+    method readline($in, $out, $prompt) {
+        nqp::printfh($out, $prompt);
+        my $line := trim(nqp::readlinefh($in));
+        my $cmd := self.interactive_command($line);
+        if $cmd {
+            $cmd(:$in, :$out);
+            '';
+        } else {
+            $line;
+        }
+    }
+
+    method autoprint($value, $stdout?) {
+        #say('$*AUTOPRINTPOS: ' ~ $*AUTOPRINTPOS);
+        #say('nqp::tellfh(nqp::getstdout()): ' ~ nqp::tellfh(nqp::getstdout()));
+        nqp::sayfh($stdout // nqp::getstdout(), $value);
     }
 
     method collect_stats($node) {
@@ -564,6 +593,7 @@ class NQPCompiler is SmartCompiler {
         self.language('nqp');
         self.parsegrammar(NQP::Grammar);
         self.parseactions(NQPActions);
+
         return self;
     }
 

@@ -24,6 +24,18 @@ class LCompiler is SmartCompiler {
         self.addstage('marryRT',     :before<ast_save>);
         
         $!runtime := self.mkRuntime;
+        
+        self.interactive_command('!h', -> :$in, :$out {
+                nqp::sayfh($out, '  !h    - this help');
+                nqp::sayfh($out, '  !q    - quit');
+                nqp::sayfh($out, '  "foo" - string literal');
+                nqp::sayfh($out, '  \x.x  - lambda abstraction');
+                nqp::sayfh($out, '  (x y) - application');
+                nqp::sayfh($out, '  (def ((K \x.\_.x) (S \f.\g.\x.f x (g x)) (I (S K K))) I K) - let-like bindings');
+        });
+
+        self.interactive_command('!q', -> :$in, :$out { nqp::sayfh($out, 'Bye!'); nqp::exit(0) } );
+
         return self;
     
     }
@@ -98,22 +110,11 @@ class LCompiler is SmartCompiler {
     method interactive_banner() {
         my $backver := self.backend.version_string;
           'This is the REPL of ' ~ self.version_string ~ " built on $backver\n"
-        ~ "type '!help' for a list of available commands\n"
-        ~ "---------------------------------------------\n";
+        ~ "type '!h' for for help\n"
+        ~ "----------------------\n";
     }
 
-    method readline($stdin, $stdout, $prompt) {
-        nqp::printfh($stdout, $prompt);
-        return trim(nqp::readlinefh($stdin));
-    }
 
-    method autoprint($value, $stdout?) {
-        #say('$*AUTOPRINTPOS: ' ~ $*AUTOPRINTPOS);
-        #say('nqp::tellfh(nqp::getstdout()): ' ~ nqp::tellfh(nqp::getstdout()));
-        nqp::sayfh($stdout // nqp::getstdout(), $value);
-    }
-
-    
 }
 
 
