@@ -1499,25 +1499,29 @@
     ║ ║ ║ │       │ │ └◙ IVal 1
     ║ ║ ║ │       │ └◙ WVal NQPMu
     ║ ║ ║ │       └◙ WVal QAST::Block
-    ║ ║ ║ ├─:Block  ««"{\n                my %subDesc := collect_params_an"...
+    ║ ║ ║ ├─:Block  ««"{\n                my $name := $n[0].name;\n       "...
     ║ ║ ║ │ ╟○ $n :decl(param)
     ║ ║ ║ │ ╟○ @a :decl(param)
+    ║ ║ ║ │ ╟○ $name :decl(var)
     ║ ║ ║ │ ╟○ %subDesc :decl(var)
-    ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%subDesc := collect_params_and_body($n[1], :name($n"...
+    ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$name := $n[0].name"
+    ║ ║ ║ │ ║ ├○ $name
+    ║ ║ ║ │ ║ └─callmethod name  ««".name"
+    ║ ║ ║ │ ║   └─ifnull
+    ║ ║ ║ │ ║     ├─atpos
+    ║ ║ ║ │ ║     │ ├○ $n
+    ║ ║ ║ │ ║     │ └◙ IVal 0
+    ║ ║ ║ │ ║     └◙ WVal NQPMu
+    ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%subDesc := collect_params_and_body($n[1], :$name)"
     ║ ║ ║ │ ║ ├○ %subDesc
-    ║ ║ ║ │ ║ └─call &collect_params_and_body  ««"$n[1], :name($n[0].name)"
+    ║ ║ ║ │ ║ └─call &collect_params_and_body  ««"$n[1], :$name"
     ║ ║ ║ │ ║   ├─ifnull
     ║ ║ ║ │ ║   │ ├─atpos
     ║ ║ ║ │ ║   │ │ ├○ $n
     ║ ║ ║ │ ║   │ │ └◙ IVal 1
     ║ ║ ║ │ ║   │ └◙ WVal NQPMu
-    ║ ║ ║ │ ║   └─callmethod name :named("name")  ««".name"
-    ║ ║ ║ │ ║     └─ifnull
-    ║ ║ ║ │ ║       ├─atpos
-    ║ ║ ║ │ ║       │ ├○ $n
-    ║ ║ ║ │ ║       │ └◙ IVal 0
-    ║ ║ ║ │ ║       └◙ WVal NQPMu
-    ║ ║ ║ │ ╙─unless  ««"@inlinecandidates.push($n)\n                    unl"...
+    ║ ║ ║ │ ║   └○ $name :named("name")
+    ║ ║ ║ │ ╙─unless  ««"%subDesc<locals> || %subDesc<slurpy> || %subDesc<na"...
     ║ ║ ║ │   ├─unless  ««"||"
     ║ ║ ║ │   │ ├─unless  ««"||"
     ║ ║ ║ │   │ │ ├─unless  ««"||"

@@ -527,7 +527,7 @@ class Util::QAST {
         unless nqp::isnull_s($name) {
             TreeWalk.dfs-up(
                 -> $n, @p {
-                    if istype($n, QAST::Op) && (($n.op eq 'call') || ($n.op eq 'callstatic')) && ($n.name eq $name) {
+                    if (self.isOp($n, 'call') || self.isOp($n, 'callstatic')) && ($n.name eq $name) {
                         %out{'recursive'} := 1;
                         TreeWalkDo.halt();
                     } else {
@@ -587,10 +587,26 @@ class Util::QAST {
                 nqp::die("cannot inline call with $argCount args to $arity" ~ "-arity fn $name")
                     unless $argCount == $arity;
                 my $out := cloneAndSubst($body, -> $n {
-                    if istype($n, QAST::Var) {
+                    if isVar($n) {
                         my $decl := %params{$n.name};
                         if $decl {  # it's a positional arg
-                            @arguments[$decl.ann('positional_index')];
+                            my $arg-expr := @arguments[$decl.ann('positional_index')];
+                            cloneAndSubst($arg-expr);
+                        #} elsif { # TODO: named params
+                        } else {
+                            $n;
+                        }
+                    } elsif isOp($n, 'call') || isOp($n, 'callstatic') {
+                        my $decl := %params{$n.name};
+                        if $decl {  # it's a positional arg
+                            my $arg-expr := @arguments[$decl.ann('positional_index')];
+                            if isVar($arg-expr) {
+                                $n.name($arg-expr.name);
+                            } else {
+                                $n.name(nqp::null_s);
+                                $n.push(cloneAndSubst($arg-expr));
+                            }
+                            $n;
                         #} elsif { # TODO: named params
                         } else {
                             $n;
@@ -609,8 +625,7 @@ class Util::QAST {
         my %inliners := prepare_inliners(@inlinableDefs);
         TreeWalk.dfs-up(
             -> $n, @p { 
-                my $take := istype($n, QAST::Op) 
-                    && ($n.op eq 'call' || $n.op eq 'callstatic')
+                my $take := (self.isOp($n, 'call') || self.isOp($n, 'callstatic'))
                     && !nqp::isnull_s($n.name) && nqp::existskey(%inliners, $n.name)
                 ;
                 if $take {

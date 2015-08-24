@@ -1,5 +1,7 @@
 #!nqp
 use testing;
+use NQPHLL;
+use Util;
 
 use L::L;
 
@@ -17,5 +19,16 @@ plan(3);
 
 }
 
+{
+    my $c := nqp::getcomp('nqp');
+    my $*QAST_BLOCK_NO_CLOSE := 1;
+
+    $c.removestage('optimize');#, :before<ast>);
+
+    #my $v := $c.compile('"a string"; sub MAIN(*@ARGS) { 23; }; return 1;', :target<ast>, :compunit_ok(1));
+    my $v := $c.compile(QAST::Block.new(QAST::SVal.new(:value("a string"))), :from<ast>, :compunit_ok(0))();
+
+    is($v, 'a string', 'evaluate a string literal');
+}
 
 done();

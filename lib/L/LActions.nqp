@@ -105,6 +105,8 @@ class LActions is HLL::Actions {
     }
 
     my sub mkRCall(str $fnName, *@args) {
+        nqp::die("invalid runtime fn name $fnName")
+            unless nqp::index($fnName, '&') == 0;
         mkCall($fnName, |@args);
     }
 
@@ -145,10 +147,10 @@ class LActions is HLL::Actions {
         } elsif isForced($node) {
             mkDelayMemo($node.ann('forced'));
         } else {
-            $node := mkRCall('.delayMemo', mkDelaySimple($node));
+            $node := mkRCall('&delayMemo', mkDelaySimple($node));
 
             #$node := QAST::Stmts.new(
-            #    mkRCall('.say', mkConcat("# calling .delayMemo on\n", $node.dump)),
+            #    mkRCall('&say', mkConcat("# calling .delayMemo on\n", $node.dump)),
             #    $node
             #);
             
@@ -165,7 +167,7 @@ class LActions is HLL::Actions {
         } elsif isForced($node) || isVal($node) || isOp($node, 'null') {
             $node;
         } else {    # TODO: maybe inline if $node is already a QAST::Var
-            my $out := mkRCall('.force', $node);
+            my $out := mkRCall('&force', $node);
             $out.annotate('force', $node);
             $out;
         } # TODO: if $node is a call, and we introduce annotations re delayed status of return values...
@@ -218,14 +220,14 @@ class LActions is HLL::Actions {
     }
 
     my sub mkLambda2code($subject) {
-        mkRCall('.->#n', $subject, 'λ', 1);
+        mkRCall('&->#n', $subject, 'λ', 1);
     }
 
     my sub mkLambda2freevars($subject) {
-        mkRCall('.ifTag', $subject, 'λ',
+        mkRCall('&ifTag', $subject, 'λ',
             QAST::Block.new(:arity(1),
                 mkDeclP(lexVar('id')),
-                mkRCall('.sublist', $subject, 2)
+                mkRCall('&sublist', $subject, 2)
             ),
             QAST::Op.new(:op<null>)
         );
@@ -236,6 +238,9 @@ class LActions is HLL::Actions {
     my sub mkRuntime($/, $topBlock, @lambdaInfo) {
         my $block := QAST::Stmts.new();
         my sub mkRFn(str $name, $paramNames, $cb, *%lexicals) {
+            nqp::die("invalid runtime fn name $name")
+                unless nqp::index($name, '&') == 0;
+            
             if nqp::isstr($paramNames) {
                 $paramNames := [$paramNames];
             }
@@ -293,7 +298,7 @@ class LActions is HLL::Actions {
             mkBind(lexVar('.λinfo', :decl<static>), $lambdaInfo)
         );
 
-        mkRFn('.ifTag', <subject tag then else>, :tagAndId(nqp::null), -> $subject, $tag, $then, $else, $tagAndId {
+        mkRFn('&ifTag', <subject tag then else>, :tagAndId(nqp::null), -> $subject, $tag, $then, $else, $tagAndId {
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<islist>, $subject),
                 QAST::Stmts.new(
@@ -320,8 +325,8 @@ class LActions is HLL::Actions {
             )
         });
         
-        mkRFn('.->#n', <subject tag index>, -> $subject, $tag, $index {
-            mkRCall('.ifTag', $subject, $tag,
+        mkRFn('&->#n', <subject tag index>, -> $subject, $tag, $index {
+            mkRCall('&ifTag', $subject, $tag,
                 QAST::Block.new(:arity(1),
                     lexVar('_', :decl<param>),
                     mkListLookup($subject, :index($index))
@@ -330,7 +335,7 @@ class LActions is HLL::Actions {
             )
         });
         
-        mkRFn('.sublist', <list from>, -> $list, $from {
+        mkRFn('&sublist', <list from>, -> $list, $from {
             my $to    := lexVar('to');
             my $out   := lexVar('out');
             my $count := lexVar('count');
@@ -354,7 +359,7 @@ class LActions is HLL::Actions {
             $out,
         });
         
-        mkRFn('.strOut', <v indent>, -> $v, $indent {
+        mkRFn('&strOut', <v indent>, -> $v, $indent {
             my $id      := lexVar('id');
             my $info    := lexVar('info');
             my $src     := lexVar('src');
@@ -371,13 +376,13 @@ class LActions is HLL::Actions {
             mkBind($v, mkForce($v)),
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<isstr>, $v),
-                mkRCall('.strLit', $v),
-                mkRCall('.ifTag', 
+                mkRCall('&strLit', $v),
+                mkRCall('&ifTag', 
                     $v, 
                     'λ',
                     QAST::Block.new(:arity(1),
                         mkBind(mkDeclP($id),          mkForce($id)),
-                        mkBind(mkDeclV($fvars),       mkRCall('.sublist', $v, 2)),
+                        mkBind(mkDeclV($fvars),       mkRCall('&sublist', $v, 2)),
                         mkBind(mkDeclV($info),        mkListLookup(lexVar('.λinfo'), :index($id))),
                         mkBind(mkDeclV($fvn2dBI),
                             QAST::Op.new(:op<split>, asNode(' '), mkListLookup($info, :index(3)))
@@ -388,7 +393,7 @@ class LActions is HLL::Actions {
                         mkBind(mkDeclV($src),
                             #mkConcat(
                                 QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length),
-                            #    '  # :tag(', mkRCall('.strLit', mkListLookup($v, :index(0))), ')',
+                            #    '  # :tag(', mkRCall('&strLit', mkListLookup($v, :index(0))), ')',
                             #)
                         ),
                         mkBind(mkDeclV($i), 0),
@@ -414,7 +419,7 @@ class LActions is HLL::Actions {
                                     QAST::Op.new(:op<if>,
                                         QAST::Op.new(:op<iseq_s>, $name, asNode('self')),
                                         asNode('...'),
-                                        mkRCall('.strOut', 
+                                        mkRCall('&strOut', 
                                             $val,
                                             mkConcat($indent, '#           ')
                                         ),
@@ -429,7 +434,7 @@ class LActions is HLL::Actions {
             )
         });
 
-        mkRFn('.delayMemo', <block>, :wasRun(0), :result(nqp::null), -> $block, $wasRun, $result {
+        mkRFn('&delayMemo', <block>, :wasRun(0), :result(nqp::null), -> $block, $wasRun, $result {
             QAST::Block.new(:arity(0),
                 QAST::Op.new(:op<if>, $wasRun,
                     $result,
@@ -441,7 +446,7 @@ class LActions is HLL::Actions {
             )
         });
         
-        mkRFn('.force', <x>, -> $x {
+        mkRFn('&force', <x>, -> $x {
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<isinvokable>, $x),
                 mkCall($x),
@@ -449,43 +454,50 @@ class LActions is HLL::Actions {
             )
         });
         
-        mkRFn('.say', <v>, -> $v {
+        mkRFn('&say', <v>, -> $v {
             mkBind($v, mkForce($v)),
             QAST::Op.new(:op<say>,
                 QAST::Op.new(:op<if>,
                     QAST::Op.new(:op<isstr>, $v),
                     $v,
-                    mkRCall('.strOut', $v, '')
+                    mkRCall('&strOut', $v, '')
                 )
             )
         });
         
-        mkRFn('.strLit', <s>, -> $s {
-            mkConcat('"', QAST::Op.new(:op<escape>, $s), '"');
+        mkRFn('&strLit', <s>, -> $s {
+            #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
+            QAST::Op.new(:op<concat>,
+                asNode('"'),
+                QAST::Op.new(:op<concat>,
+                    QAST::Op.new(:op<escape>, $s),
+                    asNode('"')
+                )
+            );
         });
         
-        mkRFn('.apply1', <f a1>, :result(nqp::null), -> $f, $a1, $result {
+        mkRFn('&apply1', <f a1>, :result(nqp::null), -> $f, $a1, $result {
             mkBind($f, mkForce($f)),
             mkBind($result, mkCall(
                 QAST::Op.new(:op<defor>,
                     mkLambda2code($f),
-                    mkDie('cannot apply ', mkRCall('.strLit', $f), ' to ', mkRCall('.strOut', $a1, ''))
+                    mkDie('cannot apply ', mkRCall('&strOut', $f, ''), ' to ', mkRCall('&strOut', $a1, ''))
                 ),
                 $a1
             )),
             mkForce($result),
         });
         
-        $block.push(mkBind(lexVar('.testDelay01', :decl<static>),
+        $block.push(mkBind(lexVar('&testDelay01', :decl<static>),
             mkDelayMemo(mkDelaySimple(
                 QAST::Stmts.new(
-                    QAST::Op.new(:op<say>, asNode('.testDelay01 forced!!!!')),
+                    QAST::Op.new(:op<say>, asNode('&testDelay01 forced!!!!')),
                     asNode('42')
                 )
             ))
         ));
     
-        mkRFn('.testDelay02', <delayed>, :simple(nqp::null), :memo(nqp::null), -> $delayed, $simple, $memo {
+        mkRFn('&testDelay02', <delayed>, :simple(nqp::null), :memo(nqp::null), -> $delayed, $simple, $memo {
             mkBind($simple, mkDelaySimple($delayed)),
             mkBind($memo,   mkDelayMemo($delayed)),
             
@@ -605,7 +617,7 @@ class LActions is HLL::Actions {
         my $mainResult := locVar('mainResult');
         $s.push(QAST::Block.new(:blocktype<immediate>,
             mkDeclV($mainResult),
-            #mkRCall('.say', mkConcat(
+            #mkRCall('&say', mkConcat(
             #    ~nqp::elems(@!lambdaInfo), " lambdas\n",
             #    lexVar('.qastSize'), " QAST::Node s\n",
             #    lexVar('.blockCount'), " QAST::Block s\n",
@@ -617,10 +629,10 @@ class LActions is HLL::Actions {
 
             #QAST::Op.new(:op<flushfh>, QAST::Op.new(:op<getstdout>)),
             
-            #mkRCall('.say', mkConcat('.testDelay02 = ', mkRCall('.testDelay02', lexVar('.testDelay01')))),
-            #mkRCall('.say', mkConcat('.testDelay02 = ', mkRCall('.testDelay02', lexVar('.testDelay01')))),
+            #mkRCall('&say', mkConcat('&testDelay02 = ', mkRCall('&testDelay02', lexVar('&testDelay01')))),
+            #mkRCall('&say', mkConcat('&testDelay02 = ', mkRCall('&testDelay02', lexVar('&testDelay01')))),
             
-            mkBind($mainResult, mkRCall('.strOut', $mainTerm, '')),
+            mkBind($mainResult, mkRCall('&strOut', $mainTerm, '')),
             
             $mainResult,
         ));
@@ -666,7 +678,7 @@ class LActions is HLL::Actions {
         insist-isa($f, QAST::Node);
         insist-isa($a, QAST::Node);
 
-        my $out := mkRCall('.apply1', $f, mkDelayMemo($a));
+        my $out := mkRCall('&apply1', $f, mkDelayMemo($a));
         
         copy-free-vars(:into($out), $f, $a);
 

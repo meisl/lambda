@@ -415,12 +415,15 @@ class SmartCompiler is NQP::Compiler {
                 ));
             },
             -> $n, @a {
-                my %subDesc := collect_params_and_body($n[1], :name($n[0].name));
-                @inlinecandidates.push($n)
-                    unless %subDesc<locals> || %subDesc<slurpy> || %subDesc<named> || %subDesc<optional>
-                        || %subDesc<recursive>  # do NOT try to inline recursive functions!
-                        || istype(%subDesc<body>, QAST::Block, QAST::Stmts, QAST::Stmt)
-                ;
+                my $name := $n[0].name;
+                my %subDesc := collect_params_and_body($n[1], :$name);
+                unless %subDesc<locals> || %subDesc<slurpy> || %subDesc<named> || %subDesc<optional>
+                    || %subDesc<recursive>  # do NOT try to inline recursive functions!
+                    || istype(%subDesc<body>, QAST::Block, QAST::Stmts, QAST::Stmt)
+                {
+                    @inlinecandidates.push($n);
+                    #TreeWalk.remove if nqp::uc($name) eq $name;   # ATTENTION: renders ast_stats dysfunctional
+                }
             },
             $ast
         );
