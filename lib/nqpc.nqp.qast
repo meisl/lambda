@@ -723,7 +723,7 @@
     ║ ╟○ $?PACKAGE :decl(static) :default((SmartCompiler, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((SmartCompiler, Type object))
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        # in this order (!):\n        self.addst"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ @clo :decl(var)
     ║ ║ ╟─callmethod addstage  ««"'ast_save',           :after<ast>"
     ║ ║ ║ ├─decont
@@ -762,7 +762,7 @@
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └◙ SVal "optimize=s"
     ║ ║ ╟─bind  ««":="
-    ║ ║ ║ ├○ attribute @!user_srcpaths
+    ║ ║ ║ ├○ attribute @!user_srcpaths :returns(VMNull)
     ║ ║ ║ │ ├─decont
     ║ ║ ║ │ │ └○ self
     ║ ║ ║ │ └◙ WVal SmartCompiler
@@ -771,64 +771,64 @@
     ║ ║ ║   ├◙ SVal "lib"
     ║ ║ ║   └◙ SVal "lib/L"
     ║ ║ ╟─bind  ««":="
-    ║ ║ ║ ├○ attribute $!log_level
+    ║ ║ ║ ├○ attribute $!log_level :returns(VMNull)
     ║ ║ ║ │ ├─decont
     ║ ║ ║ │ │ └○ self
     ║ ║ ║ │ └◙ WVal SmartCompiler
     ║ ║ ║ └◙ SVal "WARN"
     ║ ║ ╙─bind  ««":="
-    ║ ║   ├○ attribute %!interactive_commands
+    ║ ║   ├○ attribute %!interactive_commands :returns(VMNull)
     ║ ║   │ ├─decont
     ║ ║   │ │ └○ self
     ║ ║   │ └◙ WVal SmartCompiler
     ║ ║   └─hash
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.user-progname();\n    }"
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙─callmethod user-progname  ««""
     ║ ║   └─decont
     ║ ║     └○ self
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        $!user_binname := $v unless $v =:= NO_VA"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $v :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╟─unless  ««"$!user_binname := $v unless $v =:= NO_VALUE"
     ║ ║ ║ ├─eqaddr  ««"=:="
     ║ ║ ║ │ ├○ $v
     ║ ║ ║ │ └◙ WVal NO_VALUE
     ║ ║ ║ └─bind  ««":="
-    ║ ║ ║   ├○ attribute $!user_binname
+    ║ ║ ║   ├○ attribute $!user_binname :returns(VMNull)
     ║ ║ ║   │ ├─decont
     ║ ║ ║   │ │ └○ self
     ║ ║ ║   │ └◙ WVal SmartCompiler
     ║ ║ ║   └○ $v
-    ║ ║ ╙○ attribute $!user_binname
+    ║ ║ ╙○ attribute $!user_binname :returns(VMNull)
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   └◙ WVal SmartCompiler
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        @!user_srcpaths;\n    }"
-    ║ ║ ╟○ self :decl(param)
-    ║ ║ ╙○ attribute @!user_srcpaths
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
+    ║ ║ ╙○ attribute @!user_srcpaths :returns(VMNull)
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   └◙ WVal SmartCompiler
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        $!log_level := $level unless $level =:= "...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $level :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╟─unless  ««"$!log_level := $level unless $level =:= NO_VALUE"
     ║ ║ ║ ├─eqaddr  ««"=:="
     ║ ║ ║ │ ├○ $level
     ║ ║ ║ │ └◙ WVal NO_VALUE
     ║ ║ ║ └─bind  ««":="
-    ║ ║ ║   ├○ attribute $!log_level
+    ║ ║ ║   ├○ attribute $!log_level :returns(VMNull)
     ║ ║ ║   │ ├─decont
     ║ ║ ║   │ │ └○ self
     ║ ║ ║   │ └◙ WVal SmartCompiler
     ║ ║ ║   └○ $level
-    ║ ║ ╙○ attribute $!log_level
+    ║ ║ ╙○ attribute $!log_level :returns(VMNull)
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   └◙ WVal SmartCompiler
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        if self.log_level eq 'INFO' \n          "...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $msg :decl(param)
     ║ ║ ╟○ @moreMsgPieces :decl(param) :slurpy(1)
     ║ ║ ╟○ $level :decl(param) :named("level") :default(SVal "INFO")
@@ -859,7 +859,7 @@
     ║ ║   │     ├○ $level
     ║ ║   │     └◙ SVal "ERROR"
     ║ ║   └─:Block :blocktype(immediate)  ««"{\n            my str $out := '# [' ~ self.compiler"...
-    ║ ║     ╟○ $out :decl(var)
+    ║ ║     ╟○ $out :decl(var) :returns(str)
     ║ ║     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"str $out := '# [' ~ self.compiler_progname ~ \"|$le"...
     ║ ║     ║ ├○ $out
     ║ ║     ║ └─concat  ««"~"
@@ -880,22 +880,22 @@
     ║ ║     ║ ├─:Block :blocktype(immediate)  ««"{\n                $out := $out ~ $_;\n            }"
     ║ ║     ║ │ ╟○ $_ :decl(param)
     ║ ║     ║ │ ╙─bind  ««":="
-    ║ ║     ║ │   ├○ $out
+    ║ ║     ║ │   ├○ $out :returns(str)
     ║ ║     ║ │   └─concat  ««"~"
-    ║ ║     ║ │     ├○ $out
+    ║ ║     ║ │     ├○ $out :returns(str)
     ║ ║     ║ │     └○ $_
     ║ ║     ║ └◙ IVal 1 :named("nohandler")
     ║ ║     ╙─call &say  ««"$out"
-    ║ ║       └○ $out
+    ║ ║       └○ $out :returns(str)
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        nqp::getattr(self, HLL::Compiler, '$!bac"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙─getattr  ««"nqp::getattr(self, HLL::Compiler, '$!backend')"
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   ├◙ WVal HLL::Compiler
     ║ ║   └◙ SVal "$!backend"
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.language ~ ' v' ~ self.config<versi"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙─concat  ««"~"
     ║ ║   ├─concat  ««"~"
     ║ ║   │ ├─callmethod language  ««".language"
@@ -910,7 +910,7 @@
     ║ ║     │ └◙ SVal "version"
     ║ ║     └◙ WVal NQPMu
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $path;\n        my $file_name := nqp:"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $module_name :decl(param)
     ║ ║ ╟○ @search_paths :decl(param)
     ║ ║ ╟○ $ext :decl(param) :named("ext")
@@ -951,20 +951,20 @@
     ║ ║ ║     └─null  ««"nqp::null"
     ║ ║ ╙○ $path
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.find_file($module_name, @!user_srcp"...
-    ║ ║ ╟○ self :decl(param)
-    ║ ║ ╟○ $module_name :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
+    ║ ║ ╟○ $module_name :decl(param) :returns(str)
     ║ ║ ╟○ $ext :decl(param) :named("ext")
     ║ ║ ╙─callmethod find_file  ««"$module_name, @!user_srcpaths, :$ext"
     ║ ║   ├─decont
     ║ ║   │ └○ self
-    ║ ║   ├○ $module_name
-    ║ ║   ├○ attribute @!user_srcpaths
+    ║ ║   ├○ $module_name :returns(str)
+    ║ ║   ├○ attribute @!user_srcpaths :returns(VMNull)
     ║ ║   │ ├─decont
     ║ ║   │ │ └○ self
     ║ ║   │ └◙ WVal SmartCompiler
     ║ ║   └○ $ext :named("ext")
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n            my $loader := nqp::getcurhllsym('Mod"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $module_name :decl(param)
     ║ ║ ╟○ $ext :decl(param) :named("ext")
     ║ ║ ╟○ $with-nqplib :decl(param) :named("with-nqplib") :default(WVal NQPMu)
@@ -997,8 +997,8 @@
     ║ ║   ├○ @module_paths
     ║ ║   └○ $ext :named("ext")
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $out;\n        my $src_path := self.f"...
-    ║ ║ ╟○ self :decl(param)
-    ║ ║ ╟○ $module_name :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
+    ║ ║ ╟○ $module_name :decl(param) :returns(str)
     ║ ║ ╟○ @on_behalf :decl(param)
     ║ ║ ╟─bind  ««"$out"
     ║ ║ ║ ├○ $out :decl(var)
@@ -1012,7 +1012,7 @@
     ║ ║     │ └─callmethod find_src  ««"$module_name, :ext<nqp>"
     ║ ║     │   ├─decont
     ║ ║     │   │ └○ self
-    ║ ║     │   ├○ $module_name
+    ║ ║     │   ├○ $module_name :returns(str)
     ║ ║     │   └◙ SVal "nqp" :named("ext")
     ║ ║     └─if  ««"$src_path {\n            my $bc_path := self.find_b"...
     ║ ║       ├○ $src_path
@@ -1024,7 +1024,7 @@
     ║ ║       │ ║ └─callmethod find_bytecode  ««"$module_name, :ext<moarvm>"
     ║ ║       │ ║   ├─decont
     ║ ║       │ ║   │ └○ self
-    ║ ║       │ ║   ├○ $module_name
+    ║ ║       │ ║   ├○ $module_name :returns(str)
     ║ ║       │ ║   └◙ SVal "moarvm" :named("ext")
     ║ ║       │ ╟─if  ««"$bc_path {\n                my $src_time := nqp::st"...
     ║ ║       │ ║ ├○ $bc_path
@@ -1061,12 +1061,12 @@
     ║ ║         └─callmethod find_bytecode  ««"$module_name, :ext<moarvm>, :with-nqplib"
     ║ ║           ├─decont
     ║ ║           │ └○ self
-    ║ ║           ├○ $module_name
+    ║ ║           ├○ $module_name :returns(str)
     ║ ║           ├◙ SVal "moarvm" :named("ext")
     ║ ║           └◙ IVal 1 :named("with-nqplib")
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        if $code =:= NO_VALUE {\n            %!i"...
-    ║ ║ ╟○ self :decl(param)
-    ║ ║ ╟○ $name :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
+    ║ ║ ╟○ $name :decl(param) :returns(str)
     ║ ║ ╟○ $code :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╙─if  ««"$code =:= NO_VALUE {\n            %!interactive_com"...
     ║ ║   ├─eqaddr  ««"=:="
@@ -1074,11 +1074,11 @@
     ║ ║   │ └◙ WVal NO_VALUE
     ║ ║   ├─ifnull
     ║ ║   │ ├─atkey
-    ║ ║   │ │ ├○ attribute %!interactive_commands
+    ║ ║   │ │ ├○ attribute %!interactive_commands :returns(VMNull)
     ║ ║   │ │ │ ├─decont
     ║ ║   │ │ │ │ └○ self
     ║ ║   │ │ │ └◙ WVal SmartCompiler
-    ║ ║   │ │ └○ $name
+    ║ ║   │ │ └○ $name :returns(str)
     ║ ║   │ └◙ WVal NQPMu
     ║ ║   └─:Block :blocktype(immediate)  ««"{\n            my &code := $code;   # check if it's"...
     ║ ║     ╟○ &code :decl(var)
@@ -1086,14 +1086,14 @@
     ║ ║     ║ ├○ &code
     ║ ║     ║ └○ $code
     ║ ║     ╙─bindkey  ««":="
-    ║ ║       ├○ attribute %!interactive_commands
+    ║ ║       ├○ attribute %!interactive_commands :returns(VMNull)
     ║ ║       │ ├─decont
     ║ ║       │ │ └○ self
     ║ ║       │ └◙ WVal SmartCompiler
-    ║ ║       ├○ $name
+    ║ ║       ├○ $name :returns(str)
     ║ ║       └○ &code
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        nqp::printfh($out, $prompt);\n        my"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $in :decl(param)
     ║ ║ ╟○ $out :decl(param)
     ║ ║ ╟○ $prompt :decl(param)
@@ -1123,7 +1123,7 @@
     ║ ║   │ └◙ SVal ""
     ║ ║   └○ $line
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        #say('$*AUTOPRINTPOS: ' ~ $*AUTOPRINTPOS"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $value :decl(param)
     ║ ║ ╟○ $stdout :decl(param) :default(WVal NQPMu)
     ║ ║ ╙─sayfh  ««"nqp::sayfh($stdout // nqp::getstdout(), $value)"
@@ -1132,7 +1132,7 @@
     ║ ║   │ └─getstdout  ««"nqp::getstdout()"
     ║ ║   └○ $value
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my %results := {};\n        my sub doit("...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $node :decl(param)
     ║ ║ ╟○ %results :decl(var)
     ║ ║ ╟─bind
@@ -1347,7 +1347,7 @@
     ║ ║ ║     └◙ WVal NQPMu
     ║ ║ ╙○ %results
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $ast := $source.ast();\n        self."...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $source :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟○ $ast :decl(var)
@@ -1383,7 +1383,7 @@
     ║ ║ ║ └◙ SVal " done."
     ║ ║ ╙○ $ast
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.log('ast_clean: ', self.user-progna"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟─callmethod log  ««"'ast_clean: ', self.user-progname, '...'"
@@ -1432,7 +1432,7 @@
     ║ ║ ║   └○ $ast
     ║ ║ ╙○ $ast
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my @inlinecandidates := [];\n        Tre"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟○ @inlinecandidates :decl(var)
@@ -1587,7 +1587,7 @@
     ║ ║ ║   └○ @inlinecandidates
     ║ ║ ╙○ $ast
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my %stats := self.collect_stats($ast);\n"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟○ %stats :decl(var)
@@ -1820,7 +1820,7 @@
     ║ ║ ║     └◙ IVal 1 :named("nohandler")
     ║ ║ ╙○ $ast
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $qastfileName := self.user-progname ~"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟○ $qastfileName :decl(var)
@@ -1854,7 +1854,7 @@
     ║ ║     │ └○ $qastfileName
     ║ ║     └○ $ast
     ║ ╙─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        #self.log('write_bytecode: adverbs=' ~ d"...
-    ║   ╟○ self :decl(param)
+    ║   ╟○ self :decl(param) :returns(SmartCompiler)
     ║   ╟○ $mast :decl(param)
     ║   ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║   ╟─if  ««"%adverbs<target> eq 'mbc' && %adverbs<output> {\n  "...
@@ -1925,7 +1925,7 @@
     ║ ╟○ $?PACKAGE :decl(static) :default((NQPActions, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((NQPActions, Type object))
     ║ ╙─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $out;\n\n        my @expPathUp := [];"...
-    ║   ╟○ self :decl(param)
+    ║   ╟○ self :decl(param) :returns(NQPActions)
     ║   ╟○ $/ :decl(param)
     ║   ╟─bind  ««"$out"
     ║   ║ ├○ $out :decl(var)
@@ -2127,7 +2127,7 @@
     ║ ╟○ $?PACKAGE :decl(static) :default((NQPCompiler, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((NQPCompiler, Type object))
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.language('nqp');\n        self.pars"...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╙─lexotic RETURN
     ║ ║   └─:Stmts  ««"\n        self.language('nqp');\n        self.parse"...
     ║ ║     ├─callmethod language  ««"'nqp'"
@@ -2146,7 +2146,7 @@
     ║ ║       └─decont
     ║ ║         └○ self
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.log('parse: ', self.user-progname, "...
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╟○ $source :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟○ $*COMPILER :decl(var)
@@ -2181,16 +2181,16 @@
     ║ ║ ║ └◙ SVal " done."
     ║ ║ ╙○ $out
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{ 'nqpc' }"
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╟○ $value :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╙◙ SVal "nqpc"
     ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        nqp::rethrow($error);\n    }"
-    ║ ║ ╟○ self :decl(param)
+    ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╟○ $error :decl(param)
     ║ ║ ╙─rethrow  ««"nqp::rethrow($error)"
     ║ ║   └○ $error
     ║ ╙─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        # replace all backslashes with slashes\n"...
-    ║   ╟○ self :decl(param)
+    ║   ╟○ self :decl(param) :returns(NQPCompiler)
     ║   ╟○ $src_path :decl(param)
     ║   ╟○ $target :decl(param) :named("target") :default(SVal "mbc")
     ║   ╟○ $stagestats :decl(param) :named("stagestats") :default(WVal NQPMu)

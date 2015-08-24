@@ -15,7 +15,7 @@ role StrByDump is export {
 class Util::QAST {
     
     method dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) {
-        my $clsStr := nqp::substr($node.HOW.name($node), 6);
+        my $clsStr := nqp::substr($node.HOW.name($node), 6);    # strip off leading "QAST::"
         
         my $isBlockChild := istype($parent, QAST::Block);
         my $isOrphan     := nqp::isnull($parent);
@@ -53,6 +53,12 @@ class Util::QAST {
         my $extraStr := trim($node.dump_extra_node_info);
         
         my @specials := [];
+        unless self.isVal($node) {
+            my $returns := $node.returns;
+            unless $returns =:= NQPMu {
+                @specials.push(':returns(' ~ $returns.HOW.name($returns) ~')')
+            }
+        }
         if istype($node, QAST::SpecialArg) {
             $clsStr := nqp::substr($clsStr, 0, nqp::index($clsStr, '+{'));
             @specials.push(':flat(' ~ $node.flat ~ ')') if $node.flat;

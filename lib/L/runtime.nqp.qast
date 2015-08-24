@@ -78,24 +78,24 @@
     ╟─bind
     ║ ├○ &int2str :decl(var)
     ║ └─:Block  ««"{ ~$i }"
-    ║   ╟○ $i :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $i :decl(param) :returns(int) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─stringify  ««"~"
-    ║     └○ $i
+    ║     └○ $i :returns(int)
     ╟─bind
     ║ ├○ &num2str :decl(var)
     ║ └─:Block  ««"{ ~$n }"
-    ║   ╟○ $n :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $n :decl(param) :returns(num) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─stringify  ««"~"
-    ║     └○ $n
+    ║     └○ $n :returns(num)
     ╟─bind
     ║ ├○ &strLit :decl(var)
     ║ └─:Block  ««"{ '\"' ~ nqp::escape($s) ~ '\"' }"
-    ║   ╟○ $s :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ $s :decl(param) :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─concat  ««"~"
     ║     ├─concat  ««"~"
     ║     │ ├◙ SVal "\""
     ║     │ └─escape  ««"nqp::escape($s)"
-    ║     │   └○ $s
+    ║     │   └○ $s :returns(str)
     ║     └◙ SVal "\""
     ╟─bind
     ║ ├○ &force :decl(var)
@@ -111,7 +111,7 @@
     ║ ├○ &delayMemo :decl(var)
     ║ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    my int $wasRun := 0;\n    my $result := nqp:"...
     ║   ╟○ $block :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ $wasRun :decl(var)
+    ║   ╟○ $wasRun :decl(var) :returns(int)
     ║   ╟○ $result :decl(var)
     ║   ╟○ $out :decl(var)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"int $wasRun := 0"
@@ -124,11 +124,11 @@
     ║   ║ ├○ $out
     ║   ║ └─:Block  ««"{\n        if $wasRun {\n            $result;\n    "...
     ║   ║   ╙─if  ««"$wasRun {\n            $result;\n        }"
-    ║   ║     ├○ $wasRun
+    ║   ║     ├○ $wasRun :returns(int)
     ║   ║     ├○ $result
     ║   ║     └─:Stmts  ««"{\n            $wasRun := 1;\n            $result :"...
     ║   ║       ├─bind  ««":="
-    ║   ║       │ ├○ $wasRun
+    ║   ║       │ ├○ $wasRun :returns(int)
     ║   ║       │ └◙ IVal 1
     ║   ║       └─bind  ««":="
     ║   ║         ├○ $result
@@ -139,10 +139,10 @@
     ║ ├○ &sublist :decl(var)
     ║ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    my int $n     := nqp::elems(@list);\n    my "...
     ║   ╟○ @list :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ $from :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
-    ║   ╟○ $n :decl(var)
-    ║   ╟○ $count :decl(var)
-    ║   ╟○ $to :decl(var)
+    ║   ╟○ $from :decl(param) :returns(int) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ $n :decl(var) :returns(int)
+    ║   ╟○ $count :decl(var) :returns(int)
+    ║   ╟○ $to :decl(var) :returns(int)
     ║   ╟○ @out :decl(var)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"int $n     := nqp::elems(@list)"
     ║   ║ ├○ $n
@@ -150,36 +150,36 @@
     ║   ║   └○ @list
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"int $count := $n"
     ║   ║ ├○ $count
-    ║   ║ └○ $n
+    ║   ║ └○ $n :returns(int)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"int $to    := $from + $count"
     ║   ║ ├○ $to
     ║   ║ └─add_n  ««"+"
-    ║   ║   ├○ $from
-    ║   ║   └○ $count
+    ║   ║   ├○ $from :returns(int)
+    ║   ║   └○ $count :returns(int)
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@out   := []"
     ║   ║ ├○ @out
     ║   ║ └─list
     ║   ╟─if  ««"$to > $n {\n        $to := $n\n    }"
     ║   ║ ├─isgt_n  ««">"
-    ║   ║ │ ├○ $to
-    ║   ║ │ └○ $n
+    ║   ║ │ ├○ $to :returns(int)
+    ║   ║ │ └○ $n :returns(int)
     ║   ║ └─bind  ««":="
-    ║   ║   ├○ $to
-    ║   ║   └○ $n
+    ║   ║   ├○ $to :returns(int)
+    ║   ║   └○ $n :returns(int)
     ║   ╟─while  ««"$from < $to {\n        @out.push(@list[$from]);\n  "...
     ║   ║ ├─islt_n  ««"<"
-    ║   ║ │ ├○ $from
-    ║   ║ │ └○ $to
+    ║   ║ │ ├○ $from :returns(int)
+    ║   ║ │ └○ $to :returns(int)
     ║   ║ ├─:Stmts  ««"{\n        @out.push(@list[$from]);\n        $from+"...
     ║   ║ │ ├─push  ««"@list[$from]"
     ║   ║ │ │ ├○ @out
     ║   ║ │ │ └─ifnull
     ║   ║ │ │   ├─atpos
     ║   ║ │ │   │ ├○ @list
-    ║   ║ │ │   │ └○ $from
+    ║   ║ │ │   │ └○ $from :returns(int)
     ║   ║ │ │   └◙ WVal NQPMu
     ║   ║ │ └─postinc  ««"++"
-    ║   ║ │   └○ $from
+    ║   ║ │   └○ $from :returns(int)
     ║   ║ └◙ IVal 1 :named("nohandler")
     ║   ╙○ @out
     ╟─bind
@@ -387,7 +387,7 @@
     ║ ├○ &strOut :decl(var)
     ║ └─:Block  ««"{\n    typecase(force($v),\n        :λ(-> $lambda {"...
     ║   ╟○ $v :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ $indent :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) )) :default(SVal "")
+    ║   ╟○ $indent :decl(param) :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) )) :default(SVal "")
     ║   ╟○ %done :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) )) :default(hash)
     ║   ╙─call &typecase  ««"force($v),\n        :λ(-> $lambda { # compiler shou"...
     ║     ├─if :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&force" (str) ))  ««"$v"
@@ -482,7 +482,7 @@
     ║     │ ║ │         │ ├─concat  ««"~"
     ║     │ ║ │         │ │ ├○ $src
     ║     │ ║ │         │ │ └◙ SVal "\n"
-    ║     │ ║ │         │ └○ $indent
+    ║     │ ║ │         │ └○ $indent :returns(str)
     ║     │ ║ │         └─if  ««"?? $pre ~ strOut($fv, $indent ~ '#' ~ nqp::x(' ', n"...
     ║     │ ║ │           ├─isnull  ««"nqp::isnull($flatVal)"
     ║     │ ║ │           │ └○ $flatVal
@@ -492,7 +492,7 @@
     ║     │ ║ │           │   ├○ $fv
     ║     │ ║ │           │   ├─concat  ««"~"
     ║     │ ║ │           │   │ ├─concat  ««"~"
-    ║     │ ║ │           │   │ │ ├○ $indent
+    ║     │ ║ │           │   │ │ ├○ $indent :returns(str)
     ║     │ ║ │           │   │ │ └◙ SVal "#"
     ║     │ ║ │           │   │ └─x  ««"nqp::x(' ', nqp::chars($pre) - 1)"
     ║     │ ║ │           │   │   ├◙ SVal " "
@@ -551,7 +551,7 @@
     ║   ╟─bind  ««"$_"
     ║   ║ ├○ $_ :decl(var)
     ║   ║ └◙ WVal NQPMu
-    ║   ╟○ $s :decl(var)
+    ║   ╟○ $s :decl(var) :returns(str)
     ║   ╟○ $i :decl(var)
     ║   ╟○ $_
     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"str $s := ''"
@@ -565,16 +565,16 @@
     ║   ║ ├○ $i
     ║   ║ └─:Stmts  ««"{\n        $s := nqp::shift($i);  # nqpc would conv"...
     ║   ║   ├─bind  ««":="
-    ║   ║   │ ├○ $s
+    ║   ║   │ ├○ $s :returns(str)
     ║   ║   │ └─shift  ««"nqp::shift($i)"
     ║   ║   │   └○ $i
     ║   ║   ├─unless  ««"$s := strOut($s)\n            unless nqp::isstr($s)"
     ║   ║   │ ├─isstr  ««"nqp::isstr($s)"
-    ║   ║   │ │ └○ $s
+    ║   ║   │ │ └○ $s :returns(str)
     ║   ║   │ └─bind  ««":="
-    ║   ║   │   ├○ $s
+    ║   ║   │   ├○ $s :returns(str)
     ║   ║   │   └─call &strOut  ««"$s"
-    ║   ║   │     └○ $s
+    ║   ║   │     └○ $s :returns(str)
     ║   ║   └─while  ««"$i {\n            $_ := nqp::shift($i);  # nqpc wou"...
     ║   ║     ├○ $i
     ║   ║     ├─:Stmts  ««"{\n            $_ := nqp::shift($i);  # nqpc would "...
@@ -583,10 +583,10 @@
     ║   ║     │ │ └─shift  ««"nqp::shift($i)"
     ║   ║     │ │   └○ $i
     ║   ║     │ └─bind  ««":="
-    ║   ║     │   ├○ $s
+    ║   ║     │   ├○ $s :returns(str)
     ║   ║     │   └─concat  ««"~"
     ║   ║     │     ├─concat  ««"~"
-    ║   ║     │     │ ├○ $s
+    ║   ║     │     │ ├○ $s :returns(str)
     ║   ║     │     │ └○ $sep
     ║   ║     │     └─if  ««"?? $_\n                !!"
     ║   ║     │       ├─isstr  ««"nqp::isstr($_)"
@@ -595,7 +595,7 @@
     ║   ║     │       └─call &strOut  ««"$_"
     ║   ║     │         └○ $_
     ║   ║     └◙ IVal 1 :named("nohandler")
-    ║   ╙○ $s
+    ║   ╙○ $s :returns(str)
     ╟─bind
     ║ ├○ &say :decl(var)
     ║ └─:Block  ««"{\n    nqp::say(join('', @args));\n}"
