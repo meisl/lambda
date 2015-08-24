@@ -3,64 +3,141 @@ use NQPHLL;
 use Util;
 use Util::QAST;
 
+my class NO_VALUE {}
+
+my class Type {
+
+    method new(*@args, *%adverbs) {
+        nqp::die('cannot instantiate class Type');
+    }
+
+    method toStr($t, :$parens) {
+        if nqp::isconcrete($t) {
+            if nqp::istype($t, FnType) {
+                if $parens {
+                    '(' ~ $t.Str ~ ')'
+                } else {
+                    $t.Str;
+                }
+            } else {
+                nqp::die('invalid type argument ' ~ describe($t) ~ ' - must not be concrete')
+            }
+        } else {
+            $t.HOW.name($t)
+        }
+    }
+    
+    
+}
+
+my class Void is Type {
+
+    method new(*@args, *%adverbs) {
+        nqp::die('cannot instantiate Void');
+    }
+}
+
+my class FnType is Type {
+    has $!in;
+    has $!out;
+    has $!str;
+
+    my %instances := {};
+
+    method new($in, $out) {
+        my $str := Type.toStr($in, :parens) ~ ' -> ' ~ Type.toStr($out);
+        my $instance := %instances{$str};
+        unless $instance {
+            $instance := nqp::create(self);
+            nqp::bindattr($instance, FnType, '$!in', $in);
+            nqp::bindattr($instance, FnType, '$!out', $out);
+            nqp::bindattr($instance, FnType, '$!str', $str);
+            %instances{$str} := $instance;
+        }
+        $instance;
+    }
+
+    method Str() { $!str }
+
+}
+
+
+
+my sub isLambda($node) {
+    isOp($node, 'list')
+        && (nqp::elems($node.list) > 1) # expect at least tag str and code block
+        && isSVal($node[0])
+        && (nqp::substr($node[0].value, 0, 1) eq 'λ')
+    ;
+}
+
+my sub asNode($v) {
+    if nqp::isstr($v) {
+        QAST::SVal.new(:value($v));
+    } elsif nqp::isint($v) {
+        QAST::IVal.new(:value($v));
+    } elsif nqp::isnum($v) {
+        QAST::NVal.new(:value($v));
+    } elsif nqp::istype($v, QAST::Node) {
+        $v;
+    } else {
+        nqp::die("cannot turn into QAST::Node: " ~ describe($v));
+    }
+}
+
+
+my sub lexVar(str $name, *%adverbs) {
+    # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
+    QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<lexical>, |%adverbs);
+}
+
+my sub locVar(str $name, *%adverbs) {
+    # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
+    QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<local>,   |%adverbs);
+}
+
+my sub mkDeclV($var, *%adverbs) {
+    insist-isa($var, QAST::Var);
+    QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<var>,   |%adverbs);
+}
+
+my sub mkDeclP($var, *%adverbs) {
+    insist-isa($var, QAST::Var);
+    QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<param>,   |%adverbs);
+}
+
+my sub mkBind($var, $value) {
+    insist-isa($var, QAST::Var);
+    $var := cloneAndSubst($var);
+    my $valNode := asNode($value);
+    if $var.returns =:= NQPMu {
+        if $valNode.returns =:= NQPMu {
+            
+        } else {    # $valNode has :returns set but $var hasn't
+            unless $var.decl {
+                $var.returns($valNode.returns);
+            }
+        }
+    } else { # $var has :returns set
+        if $valNode.returns =:= NQPMu {
+            
+        } else {    # $valNode has :returns set and also $var 
+            nqp::die('incompatible types ' ~ Type.toStr($var.returns) ~ ', ' ~ Type.toStr($valNode.returns))
+                unless $var.returns =:= $valNode.returns;
+        }
+    }
+    QAST::Op.new(:op<bind>, :returns($valNode.returns), $var, $valNode);
+}
 
 class LActions is HLL::Actions {
 
-    my sub isLambda($node) {
-        isOp($node, 'list')
-            && (nqp::elems($node.list) > 1) # expect at least tag str and code block
-            && isSVal($node[0])
-            && (nqp::substr($node[0].value, 0, 1) eq 'λ')
-        ;
-    }
-
-    my sub asNode($v) {
-        if nqp::isstr($v) {
-            QAST::SVal.new(:value($v));
-        } elsif nqp::isint($v) {
-            QAST::IVal.new(:value($v));
-        } elsif nqp::isnum($v) {
-            QAST::NVal.new(:value($v));
-        } elsif nqp::istype($v, QAST::Node) {
-            $v;
-        } else {
-            nqp::die("cannot turn into QAST::Node: " ~ describe($v));
-        }
-    }
-
-
-    my sub lexVar(str $name, *%adverbs) {
-        # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
-        QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<lexical>, |%adverbs);
-    }
-
-    my sub locVar(str $name, *%adverbs) {
-        # Note: we set :decl to null_s explicitly to prevent bogus ":decl()" in dump
-        QAST::Var.new(:name($name), :decl(nqp::null_s), :scope<local>,   |%adverbs);
-    }
-
-    my sub mkDeclV($var, *%adverbs) {
-        insist-isa($var, QAST::Var);
-        QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<var>,   |%adverbs);
-    }
-
-    my sub mkDeclP($var, *%adverbs) {
-        insist-isa($var, QAST::Var);
-        QAST::Var.new(:name($var.name), :scope($var.scope), :node($var.node), :decl<param>,   |%adverbs);
-    }
-
-    my sub mkBind($var, $value) {
-        insist-isa($var, QAST::Var);
-        my $valNode := asNode($value);
-        QAST::Op.new(:op<bind>, $var, $valNode);
-    }
 
     my sub mkList(*@contents) {
         my @contentNodes := [];
         for @contents {
             @contentNodes.push(asNode($_));
         }
-        QAST::Op.new(:op<list>, |@contentNodes);
+        QAST::Op.new(:op<list>, |@contentNodes);    #   TODO: , :returns(NQPArray)
     }
 
     my sub mkHash($contents) {
@@ -126,7 +203,7 @@ class LActions is HLL::Actions {
         } elsif isForced($node) {
             $node.ann('forced');
         } else {
-            $node := QAST::Block.new(:arity(0), $node);
+            $node := QAST::Block.new(:arity(0), :returns(FnType.new(Void, $node.returns)), $node);
             $node.annotate('delayed', 'simple');
             $node;
         }
@@ -199,7 +276,11 @@ class LActions is HLL::Actions {
             if isSVal($current) && isSVal($_) {
                 $current.value($current.value ~ $_.value);
             } else {
-                @compressed.push(mkForce($current));
+                if $current.returns =:= str {
+                    @compressed.push($current);
+                } else {
+                    @compressed.push(mkForce($current));
+                }
                 $current := $_;
             }
         }
@@ -209,8 +290,10 @@ class LActions is HLL::Actions {
         if $n > 1 {
             $current := nqp::shift(@compressed);
             for @compressed {
-                $current := QAST::Op.new(:op<concat>, $current, $_)
+                $current := QAST::Op.new(:op<concat>, :returns(str), $current, $_)
             }
+        } else {
+            $current.returns(str);
         }
         $current;
     }
@@ -237,7 +320,7 @@ class LActions is HLL::Actions {
 
     my sub mkRuntime($/, $topBlock, @lambdaInfo) {
         my $block := QAST::Stmts.new();
-        my sub mkRFn(str $name, $paramNames, $cb, *%lexicals) {
+        my sub mkRFn(str $name, $paramNames, $cb, :$returns = NO_VALUE, *%lexicals) {
             nqp::die("invalid runtime fn name $name")
                 unless nqp::index($name, '&') == 0;
             
@@ -267,9 +350,12 @@ class LActions is HLL::Actions {
             } else {
                 $body.push($stmts);
             }
-            $block.push(
-                mkBind(lexVar($name, :decl<static>), $body)
-            );
+            unless $returns =:= NO_VALUE {
+                $body.returns($returns);
+            }
+            my $binding := mkBind(lexVar($name, :decl<static>), $body);
+            $block.push($binding);
+            $binding;
         }
 
         $block.push(
@@ -359,7 +445,7 @@ class LActions is HLL::Actions {
             $out,
         });
         
-        mkRFn('&strOut', <v indent>, -> $v, $indent {
+        mkRFn('&strOut', <v indent>, :returns(FnType.new(NQPMu, FnType.new(str, str))), -> $v, $indent {
             my $id      := lexVar('id');
             my $info    := lexVar('info');
             my $src     := lexVar('src');
@@ -429,7 +515,11 @@ class LActions is HLL::Actions {
                         )),
                         $src
                     ),
-                    mkDelaySimple(QAST::Op.new(:op<reprname>, $v))
+                    QAST::Op.new(:op<if>,
+                        QAST::Op.new(:op<isint>, $v),
+                        $v,
+                        mkDelaySimple(QAST::Op.new(:op<reprname>, $v))
+                    )
                 )
             )
         });
@@ -465,12 +555,12 @@ class LActions is HLL::Actions {
             )
         });
         
-        mkRFn('&strLit', <s>, -> $s {
+        mkRFn('&strLit', <s>, :returns(FnType.new(str, str)), -> $s {
             #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
-            QAST::Op.new(:op<concat>,
+            QAST::Op.new(:op<concat>, :returns(str),
                 asNode('"'),
-                QAST::Op.new(:op<concat>,
-                    QAST::Op.new(:op<escape>, $s),
+                QAST::Op.new(:op<concat>, :returns(str),
+                    QAST::Op.new(:op<escape>, :returns(str), $s),
                     asNode('"')
                 )
             );
@@ -490,7 +580,7 @@ class LActions is HLL::Actions {
         
         $block.push(mkBind(lexVar('&testDelay01', :decl<static>),
             mkDelayMemo(mkDelaySimple(
-                QAST::Stmts.new(
+                QAST::Stmts.new(:returns(int),
                     QAST::Op.new(:op<say>, asNode('&testDelay01 forced!!!!')),
                     asNode('42')
                 )
@@ -889,7 +979,20 @@ class LActions is HLL::Actions {
 
 }
 
+
 sub MAIN(*@ARGS) {
+    my $F := FnType.new(str, int);
+    say('$F.Str: ' ~ $F.Str);
+    
+    my $G := FnType.new($F, int);
+    say('$G.Str: ' ~ $G.Str);
+    
+    my $H := FnType.new(Void, $G);
+    say('$H.Str: ' ~ $H.Str);
+
+    say(FnType.new(str, int) =:= $F);
+    say(FnType.new(int, str) =:= $F);
+
     #say(isSVal(QAST::Block.new));
     #say(isSVal(QAST::SVal.new));
     #say(isSVal("asdf"));
@@ -898,8 +1001,10 @@ sub MAIN(*@ARGS) {
     say(isOp(QAST::Op.new(:op<bind>)));
     say(isOp(QAST::Op.new(:op<bind>), "null"));
     say(isOp(QAST::Op.new(:op<bind>), "bind"));
-    say(isOp(QAST::Op.new(:op<bind>), 27));
+    #say(isOp(QAST::Op.new(:op<bind>), 27));
     #say(isOp("aysdf"));
 
-    say(lexVar('foo', :decl<param>).dump);
+    #say(lexVar('foo', :decl<param>).dump);
+    my $binding := mkBind(lexVar('foo', :decl<var>, :returns(int)), 'asdf');
+    say(dump($binding));
 }

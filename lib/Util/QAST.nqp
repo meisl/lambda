@@ -56,7 +56,11 @@ class Util::QAST {
         unless self.isVal($node) {
             my $returns := $node.returns;
             unless $returns =:= NQPMu {
-                @specials.push(':returns(' ~ $returns.HOW.name($returns) ~')')
+                if nqp::isconcrete($returns) {
+                    @specials.push(':returns(' ~ $returns.Str ~')')
+                } else {
+                    @specials.push(':returns(' ~ $returns.HOW.name($returns) ~')')
+                }
             }
         }
         if istype($node, QAST::SpecialArg) {
