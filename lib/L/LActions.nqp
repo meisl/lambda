@@ -237,15 +237,14 @@ class LActions is HLL::Actions {
     }
 
     my sub mkForce($node) {
-        nqp::die("mkForce expects a QAST::Node") 
-            unless nqp::istype($node, QAST::Node);
+        insist-isa($node, QAST::Node);
         if isDelayed($node) {
             $node[0];
         } elsif isForced($node) || isVal($node) || isOp($node, 'null') {
             $node;
         } else {    # TODO: maybe inline if $node is already a QAST::Var
             my $out := mkRCall('&force', $node);
-            $out.annotate('force', $node);
+            $out.annotate('forced', $node);
             $out;
         } # TODO: if $node is a call, and we introduce annotations re delayed status of return values...
     }
