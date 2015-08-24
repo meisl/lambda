@@ -1,7 +1,7 @@
 ──:CompUnit+{StrByDump}
   └─:Block
     ╟─bind :returns(str)
-    ║ ├○ .src :decl(static)
+    ║ ├○ .src :decl(static) :returns(str)
     ║ └◙ SVal "# ~> Compile Error: unbound variables y, z, w, u\n#(λx.λ_.y (x λy.x y z w)) \"fo\\noö\" \"bar\" \"baz\" λy.u \"qumbl\"\n\n# ~> (Runtime) ERROR: cannot apply \"xfo\\noö\" to λy.x y\n#(λx.λ_.(x λy.x y)) \"xfo\\noö\" \"xbar\" \"xbaz\" λz.\"qumbl\"\n\n#(λy.λz.λx.y (λy.y z)) \"y\" \"z\"\n\n# K applied to \"foo\" and something: ~> \"foo\"\n#(λx.λ_.x) \"foo\" (λf.λg.λx.f (g x))\n\n# Turing's Y:\n#(λU.U U) (λu.λf.f (u u f))\n\n# Turing's Y applied to a function that ignores param self:\n#(λU.U U) (λu.λf.f (u u f)) (λself.λx.x)\n\n\n(δ (# Combinators:\n    (I λx.x)                    # identity\n    (K λx.λ_.x)                 # (make) a constant function\n    (S λf.λg.λx.f x (g x))      # \"extended\" function composition\n    (B λf.λg.λx.f (g x))        # function composition\n    (C λf.λx.λy.f y x)          # swap args\n    (M λx.x x)                  # self-application\n    (Y (M λu.λf.f (u u f)))     # recursion (Turing)\n    # Bool:\n    (True   λx.λy.x)\n    (False  λx.λy.y)\n    (and    λp.λq.p q False)\n    (or     λp.λq.p True q)\n    (not    λp.p False True)\n    # List:\n    (nil    λonNil.λonCons.onNil)                  # ctor \n    (cons   λx.λxs.λonNil.λonCons.onCons x xs)     # ctor \n    (car    λxs.xs (\"car\" \"nil\") (λhd.λtl.hd))     # (provoke error on nil)\n    (cdr    λxs.xs (\"cdr\" \"nil\") (λhd.λtl.tl))     # (provoke error on nil)\n    (foldl  (Y λself.λf.λstart.λxs.\n                xs start                            # nil case\n                   λhd.λtl.self f (f start hd) tl)) # cons case\n    (foldr  (Y λself.λf.λstart.λxs.\n                xs start                            # nil case\n                   λhd.λtl.f hd (self f start tl))) # cons case\n    (map    λf.foldr (λx.λacc.cons (f x) acc) nil)\n    (filter λp.foldr (λx.λacc.(p x) (cons x acc) acc) nil)\n    (reverse (foldl (C cons) nil))\n   )\n   #λf.f I K S B C M Y True False and or not nil cons car cdr foldl foldr map filter\n   reverse (cons \"a\" (cons \"b\" (cons \"c\" nil)))     # ~> (cons \"c\" (cons \"b\" (cons \"a\" nil)))\n   #λ_.K'\n)\n\n"
     ╟─bind
     ║ ├○ .λinfo :decl(static)
@@ -474,10 +474,10 @@
     ║   ║       └◙ IVal 1
     ║   ╙○ out
     ╟─bind :returns(NQPMu -> str -> str)
-    ║ ├○ &strOut :decl(static)
+    ║ ├○ &strOut :decl(static) :returns(NQPMu -> str -> str)
     ║ └─:Block :returns(NQPMu -> str -> str)
     ║   ╟○ v :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ indent :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ indent :decl(param) :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
     ║   ╟─bind
     ║   ║ ├○ v
     ║   ║ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical v) ))
@@ -581,8 +581,7 @@
     ║       │ ║       │ │ │ │ │ ├─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical src) ))
     ║       │ ║       │ │ │ │ │ │ └○ src
     ║       │ ║       │ │ │ │ │ └◙ SVal "\n"
-    ║       │ ║       │ │ │ │ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical indent) ))
-    ║       │ ║       │ │ │ │   └○ indent
+    ║       │ ║       │ │ │ │ └○ indent :returns(str)
     ║       │ ║       │ │ │ └◙ SVal "# where "
     ║       │ ║       │ │ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical name) ))
     ║       │ ║       │ │   └○ name
@@ -596,8 +595,7 @@
     ║       │ ║           └─call &strOut
     ║       │ ║             ├○ val
     ║       │ ║             └─concat :returns(str)
-    ║       │ ║               ├─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical indent) ))
-    ║       │ ║               │ └○ indent
+    ║       │ ║               ├○ indent :returns(str)
     ║       │ ║               └◙ SVal "#           "
     ║       │ ╙○ src
     ║       └─if
@@ -655,14 +653,14 @@
     ║         ├○ v
     ║         └◙ SVal ""
     ╟─bind :returns(str -> str)
-    ║ ├○ &strLit :decl(static)
+    ║ ├○ &strLit :decl(static) :returns(str -> str)
     ║ └─:Block :returns(str -> str)
-    ║   ╟○ s :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ s :decl(param) :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╙─concat :returns(str)
     ║     ├◙ SVal "\""
     ║     └─concat :returns(str)
     ║       ├─escape :returns(str)
-    ║       │ └○ s
+    ║       │ └○ s :returns(str)
     ║       └◙ SVal "\""
     ╟─bind
     ║ ├○ &apply1 :decl(static)
@@ -726,7 +724,7 @@
     ║   ╙○ memo
     ╟─bind
     ║ ├○ .qastSize :decl(static)
-    ║ └◙ NVal 1419
+    ║ └◙ NVal 1417
     ╟─bind
     ║ ├○ .blockCount :decl(static)
     ║ └◙ NVal 136

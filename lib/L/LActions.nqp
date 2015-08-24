@@ -42,6 +42,10 @@ my class FnType is Type {
     has $!out;
     has $!str;
 
+    method in()  { $!in }
+    method out() { $!out }
+    method Str() { $!str }
+
     my %instances := {};
 
     method new($in, $out) {
@@ -56,8 +60,6 @@ my class FnType is Type {
         }
         $instance;
     }
-
-    method Str() { $!str }
 
 }
 
@@ -114,7 +116,7 @@ my sub mkBind($var, $value) {
         if $valNode.returns =:= NQPMu {
             
         } else {    # $valNode has :returns set but $var hasn't
-            unless $var.decl {
+            unless $var.decl eq 'var' {
                 $var.returns($valNode.returns);
             }
         }
@@ -243,9 +245,14 @@ class LActions is HLL::Actions {
         } elsif isForced($node) || isVal($node) || isOp($node, 'null') {
             $node;
         } else {    # TODO: maybe inline if $node is already a QAST::Var
-            my $out := mkRCall('&force', $node);
-            $out.annotate('forced', $node);
-            $out;
+            my $returns := $node.returns;
+            if istype($returns, str, int, num) {
+                $node;
+            } else {
+                my $out := mkRCall('&force', $node);
+                $out.annotate('forced', $node);
+                $out;
+            }
         } # TODO: if $node is a call, and we introduce annotations re delayed status of return values...
     }
 
@@ -326,12 +333,28 @@ class LActions is HLL::Actions {
             if nqp::isstr($paramNames) {
                 $paramNames := [$paramNames];
             }
+            my @paramTypes := [];
+            if $returns =:= NO_VALUE {
+                for $paramNames {
+                    @paramTypes.push(NQPMu);
+                }
+            } else {
+                my $temp := $returns;
+                for $paramNames {
+                    nqp::die("invalid type for fn $name: " ~ Type.toStr($returns))
+                        unless nqp::isconcrete($temp) && nqp::istype($temp, FnType);
+                    @paramTypes.push($temp.in);
+                    $temp := $temp.out;
+                }
+            }
             my $body := QAST::Block.new(:name($name), :arity(nqp::elems($paramNames)));
             my @vars := [];
+            my $i := 0;
             for $paramNames {
-                my $var := lexVar($_);
-                $body.push(mkDeclP($var));
+                my $var := lexVar($_, :returns(@paramTypes[$i]));
+                $body.push(mkDeclP($var, :returns(@paramTypes[$i])));
                 @vars.push($var);
+                $i++;
             }
             for %lexicals {
                 my $var := lexVar(nqp::iterkey_s($_));
@@ -523,13 +546,13 @@ class LActions is HLL::Actions {
             )
         });
 
-        mkRFn('&delayMemo', <block>, :wasRun(0), :result(nqp::null), -> $block, $wasRun, $result {
+        mkRFn('&delayMemo', <x>, :wasRun(0), :result(nqp::null), -> $x, $wasRun, $result {
             QAST::Block.new(:arity(0),
                 QAST::Op.new(:op<if>, $wasRun,
                     $result,
                     QAST::Stmts.new(
                         mkBind($wasRun, 1),
-                        mkBind($result, mkCall($block))
+                        mkBind($result, mkCall($x))
                     )
                 )
             )
