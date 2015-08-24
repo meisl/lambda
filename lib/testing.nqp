@@ -409,7 +409,7 @@ class Testing {
         nqp::hash('result', $result, 'comp', $comp);
     }
 
-    method is($actual, $expected, $desc, :$describe) {
+    method is($actual, $expected, $desc, :$describe = &describe) {
         my $test := test_is($actual, $expected);
         unless $test<result> {
             $desc := $desc ~ "\n  # expected (" ~ $test<comp> ~ '): ' ~ $describe($expected)
@@ -471,7 +471,7 @@ class Testing {
                         my $av := nqp::callmethod($actual, $m);
                         my $d:= $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
                                         ~ " where .$m is " ~ describe($xv)
-                                      ~ "\n  #   actual: " ~ describe($actual)
+                                      ~ "\n  #   actual: " ~ describe($av)
                         ;
                         unless self.is($av, $xv, $d) {
                             $desc := $d;
@@ -480,7 +480,6 @@ class Testing {
                     } else {
                         $desc := $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
                                             ~ " where .$m is " ~ describe($xv)
-                                       ~ "\n  #   actual: " ~ describe($actual)
                                        ~ "\n  #      got: \"Cannot find method $m\""
                         ;
                         $result := self.ok(0, $desc);
