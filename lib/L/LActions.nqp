@@ -535,7 +535,7 @@ class LActions is HLL::Actions {
             )
         });
         
-        mkRFn('&force', <x>, -> $x {
+        mkRFn('&force', <x>, :foo<bar>, -> $x, $foo {
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<isinvokable>, $x),
                 mkCall($x),
@@ -1004,6 +1004,7 @@ sub MAIN(*@ARGS) {
     #say(isOp("aysdf"));
 
     #say(lexVar('foo', :decl<param>).dump);
-    my $binding := mkBind(lexVar('foo', :decl<var>, :returns(int)), 'asdf');
-    say(dump($binding));
+    
+    #my $binding := mkBind(lexVar('foo', :decl<var>, :returns(int)), 'asdf');
+    #say(dump($binding));
 }
