@@ -139,7 +139,7 @@ class LActions is HLL::Actions {
         for @contents {
             @contentNodes.push(asNode($_));
         }
-        QAST::Op.new(:op<list>, |@contentNodes);    #   TODO: , :returns(NQPArray)
+        QAST::Op.new(:op<list>, :returns(NQPArray), |@contentNodes); 
     }
 
     my sub mkHash($contents) {
