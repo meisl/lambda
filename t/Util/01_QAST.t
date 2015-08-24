@@ -5,7 +5,7 @@ use Util;
 
 use Util::QAST;
 
-plan(333);
+plan(349);
 
 
 
@@ -1424,6 +1424,49 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
         'inline_simple_subs with wrong named param in callsite leaves arg untouched (a)') || diag(dump($out));
     isa_ok($out[0], QAST::IVal, :value(42), :named<n>, 
         'inline_simple_subs with wrong named param in callsite leaves arg untouched (b)') || diag(dump($out));
+
+
+    # parameter appearing in Op call ('s :name) - arg a var:
+    for <call callstatic> {
+        @inlinableDefs := [QAST::Op.new(:op<bind>, QAST::Var.new(:name<&bar>, :decl<var>), QAST::Block.new(
+            QAST::Var.new(:name<$foo>, :decl<param>),
+            QAST::Op.new(:op($_), :name<$foo>)
+        ))];
+        my $var := QAST::Var.new(:name<qumbl>);
+        $ast := QAST::Op.new(:op<call>, :name('&bar'),
+            $var,
+        );
+        lives_ok( { $out := inline_simple_subs($ast, @inlinableDefs) }, 
+            "inline_simple_subs with a $_ to param in body (arg a var)") || diag(dump($out));
+        isa_ok($out, QAST::Op, :op($_), :name($var.name),
+            "inline_simple_subs with a $_ to param in body (arg a var) / result (a)") || diag(dump($out));
+        is(+$out.list, 0,
+            "inline_simple_subs with a $_ to param in body (arg a var) / result (b)") || diag(dump($out));
+    }
+
+    # parameter appearing in Op call ('s :name) - arg non-var:
+    for <call callstatic> {
+        @inlinableDefs := [QAST::Op.new(:op<bind>, QAST::Var.new(:name<&bar>, :decl<var>), QAST::Block.new(
+            QAST::Var.new(:name<$foo>, :decl<param>),
+            QAST::Op.new(:op($_), :name<$foo>)
+        ))];
+        my $block := QAST::Block.new();
+        $block.annotate('marker', "it's me");
+        $ast := QAST::Op.new(:op<call>, :name('&bar'),
+            $block,
+        );
+        lives_ok( { $out := inline_simple_subs($ast, @inlinableDefs) }, 
+            "inline_simple_subs with a $_ to param in body") || diag(dump($out));
+        isa_ok($out, QAST::Op, :op($_), :name(''),
+            "inline_simple_subs with a $_ to param in body / result (a)") || diag(dump($out));
+        isa_ok($out[0], QAST::Block,
+            "inline_simple_subs with a $_ to param in body / result (b)") || diag(dump($out));
+        is($out[0].ann('marker'), "it's me",
+            "inline_simple_subs with a $_ to param in body / puts in a *clone* of the arg expr (a)") || diag(dump($out));
+        isnt($out[0], $block, 
+            "inline_simple_subs with a $_ to param in body / puts in a *clone* of the arg expr (b)") || diag(dump($out));
+    }
+
 }
 
 
