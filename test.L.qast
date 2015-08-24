@@ -381,11 +381,11 @@
     ║     ├◙ IVal 504
     ║     ├◙ IVal 1456
     ║     └◙ SVal ""
-    ╟─bind
-    ║ ├○ &ifTag :decl(static)
-    ║ └─:Block
+    ╟─bind :returns(NQPMu -> str -> NQPMu -> NQPMu -> NQPMu)
+    ║ ├○ &ifTag :decl(static) :returns(NQPMu -> str -> NQPMu -> NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> str -> NQPMu -> NQPMu -> NQPMu)
     ║   ╟○ subject :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ tag :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ tag :decl(param) :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
     ║   ╟○ then :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) ))
     ║   ╟○ else :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 3 (int) ))
     ║   ╟○ tagAndId :decl(var)
@@ -400,7 +400,7 @@
     ║     │ │   └◙ IVal 0
     ║     │ └─if
     ║     │   ├─iseq_s
-    ║     │   │ ├○ tag
+    ║     │   │ ├○ tag :returns(str)
     ║     │   │ └─substr
     ║     │   │   ├○ tagAndId
     ║     │   │   ├◙ IVal 0
@@ -417,62 +417,64 @@
     ║     │     └○ else
     ║     └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical else) ))
     ║       └○ else
-    ╟─bind
-    ║ ├○ &->#n :decl(static)
-    ║ └─:Block
+    ╟─bind :returns(NQPMu -> str -> int -> NQPMu)
+    ║ ├○ &->#n :decl(static) :returns(NQPMu -> str -> int -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> str -> int -> NQPMu)
     ║   ╟○ subject :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ tag :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
-    ║   ╟○ index :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) ))
+    ║   ╟○ tag :decl(param) :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ index :decl(param) :returns(int) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) ))
     ║   ╙─call &ifTag
     ║     ├○ subject
-    ║     ├○ tag
+    ║     ├○ tag :returns(str)
     ║     ├─:Block
     ║     │ ╟○ _ :decl(param)
     ║     │ ╙─atpos
     ║     │   ├○ subject
-    ║     │   └○ index
+    ║     │   └○ index :returns(int)
     ║     └─null
-    ╟─bind
-    ║ ├○ &sublist :decl(static)
-    ║ └─:Block
-    ║   ╟○ list :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ from :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
-    ║   ╟○ count :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) )) :default((elems) (list))
+    ╟─bind :returns(NQPArray -> int -> NQPArray)
+    ║ ├○ &sublist :decl(static) :returns(NQPArray -> int -> NQPArray)
+    ║ └─:Block :returns(NQPArray -> int -> NQPArray)
+    ║   ╟○ list :decl(param) :returns(NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ from :decl(param) :returns(int) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟─bind :returns(int)
+    ║   ║ ├○ n :decl(var) :returns(int)
+    ║   ║ └─elems :returns(int)
+    ║   ║   └○ list :returns(NQPArray)
+    ║   ╟─bind :returns(int)
+    ║   ║ ├○ count :decl(var) :returns(int)
+    ║   ║ └○ n :returns(int)
+    ║   ╟─bind :returns(int)
+    ║   ║ ├○ to :decl(var) :returns(int)
+    ║   ║ └─add_i :returns(int)
+    ║   ║   ├○ from :returns(int)
+    ║   ║   └○ count :returns(int)
     ║   ╟─bind
-    ║   ║ ├○ n :decl(var)
-    ║   ║ └─elems
-    ║   ║   └○ list
-    ║   ╟─bind
-    ║   ║ ├○ out :decl(var)
+    ║   ║ ├○ out :decl(var) :returns(NQPArray)
     ║   ║ └─list
-    ║   ╟─bind
-    ║   ║ ├○ to :decl(var)
-    ║   ║ └─add_i
-    ║   ║   ├○ from
-    ║   ║   └○ count
     ║   ╟─if
     ║   ║ ├─isgt_i
-    ║   ║ │ ├○ to
-    ║   ║ │ └○ n
-    ║   ║ └─bind
-    ║   ║   ├○ to
-    ║   ║   └○ n
+    ║   ║ │ ├○ to :returns(int)
+    ║   ║ │ └○ n :returns(int)
+    ║   ║ └─bind :returns(int)
+    ║   ║   ├○ to :returns(int)
+    ║   ║   └○ n :returns(int)
     ║   ╟─while
     ║   ║ ├─islt_i
-    ║   ║ │ ├○ from
-    ║   ║ │ └○ to
+    ║   ║ │ ├○ from :returns(int)
+    ║   ║ │ └○ to :returns(int)
     ║   ║ └─:Stmts
     ║   ║   ├─push
-    ║   ║   │ ├○ out
+    ║   ║   │ ├○ out :returns(NQPArray)
     ║   ║   │ └─atpos
-    ║   ║   │   ├○ list
-    ║   ║   │   └○ from
-    ║   ║   └─bind
-    ║   ║     ├○ from
-    ║   ║     └─add_i
-    ║   ║       ├○ from
+    ║   ║   │   ├○ list :returns(NQPArray)
+    ║   ║   │   └○ from :returns(int)
+    ║   ║   └─bind :returns(int)
+    ║   ║     ├○ from :returns(int)
+    ║   ║     └─add_i :returns(int)
+    ║   ║       ├○ from :returns(int)
     ║   ║       └◙ IVal 1
-    ║   ╙○ out
+    ║   ╙○ out :returns(NQPArray)
     ╟─bind :returns(NQPMu -> str -> str)
     ║ ├○ &strOut :decl(static) :returns(NQPMu -> str -> str)
     ║ └─:Block :returns(NQPMu -> str -> str)
@@ -605,10 +607,10 @@
     ║         └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
     ║           ╙─reprname
     ║             └○ v
-    ╟─bind
-    ║ ├○ &delayMemo :decl(static)
-    ║ └─:Block
-    ║   ╟○ block :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ╟─bind :returns(NQPMu -> NQPMu)
+    ║ ├○ &delayMemo :decl(static) :returns(NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> NQPMu)
+    ║   ╟○ x :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╟○ result :decl(var)
     ║   ╟─bind :returns(int)
     ║   ║ ├○ wasRun :decl(var)
@@ -623,10 +625,10 @@
     ║         │ └◙ IVal 1
     ║         └─bind
     ║           ├○ wasRun
-    ║           └─call block
-    ╟─bind
-    ║ ├○ &force :decl(static)
-    ║ └─:Block
+    ║           └─call x
+    ╟─bind :returns(NQPMu -> NQPMu)
+    ║ ├○ &force :decl(static) :returns(NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> NQPMu)
     ║   ╟○ x :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╟─bind :returns(str)
     ║   ║ ├○ foo :decl(var)
@@ -636,9 +638,9 @@
     ║     │ └○ x
     ║     ├─call x
     ║     └○ x
-    ╟─bind
-    ║ ├○ &say :decl(static)
-    ║ └─:Block
+    ╟─bind :returns(NQPMu -> NQPMu)
+    ║ ├○ &say :decl(static) :returns(NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> NQPMu)
     ║   ╟○ v :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╟─bind
     ║   ║ ├○ v
@@ -662,9 +664,9 @@
     ║       ├─escape :returns(str)
     ║       │ └○ s :returns(str)
     ║       └◙ SVal "\""
-    ╟─bind
-    ║ ├○ &apply1 :decl(static)
-    ║ └─:Block
+    ╟─bind :returns(NQPMu -> NQPMu -> NQPMu)
+    ║ ├○ &apply1 :decl(static) :returns(NQPMu -> NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> NQPMu -> NQPMu)
     ║   ╟○ f :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╟○ a1 :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
     ║   ╟○ result :decl(var)
@@ -709,9 +711,9 @@
     ║     ╟─say
     ║     ║ └◙ SVal "&testDelay01 forced!!!!"
     ║     ╙◙ SVal "42"
-    ╟─bind
-    ║ ├○ &testDelay02 :decl(static)
-    ║ └─:Block
+    ╟─bind :returns(NQPMu -> NQPMu)
+    ║ ├○ &testDelay02 :decl(static) :returns(NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> NQPMu)
     ║   ╟○ delayed :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
     ║   ╟○ simple :decl(var)
     ║   ╟○ memo :decl(var)
@@ -724,7 +726,7 @@
     ║   ╙○ memo
     ╟─bind
     ║ ├○ .qastSize :decl(static)
-    ║ └◙ NVal 1417
+    ║ └◙ NVal 1419
     ╟─bind
     ║ ├○ .blockCount :decl(static)
     ║ └◙ NVal 136

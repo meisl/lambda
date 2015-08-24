@@ -323,6 +323,7 @@ class LActions is HLL::Actions {
     }
 
     has @!lambdaInfo;
+    has %!runtime-fns-types;
 
     my sub mkRuntime($/, $topBlock, @lambdaInfo) {
         my $block := QAST::Stmts.new();
@@ -335,8 +336,10 @@ class LActions is HLL::Actions {
             }
             my @paramTypes := [];
             if $returns =:= NO_VALUE {
+                $returns := NQPMu;
                 for $paramNames {
                     @paramTypes.push(NQPMu);
+                    $returns := FnType.new(NQPMu, $returns);    # ATTENTION: reverses order (but works since all are NQPMu)
                 }
             } else {
                 my $temp := $returns;
@@ -372,9 +375,7 @@ class LActions is HLL::Actions {
             } else {
                 $body.push($stmts);
             }
-            unless $returns =:= NO_VALUE {
-                $body.returns($returns);
-            }
+            $body.returns($returns);
             my $binding := mkBind(lexVar($name, :decl<static>), $body);
             $block.push($binding);
             $binding;
@@ -406,7 +407,9 @@ class LActions is HLL::Actions {
             mkBind(lexVar('.λinfo', :decl<static>), $lambdaInfo)
         );
 
-        mkRFn('&ifTag', <subject tag then else>, :tagAndId(nqp::null), -> $subject, $tag, $then, $else, $tagAndId {
+        mkRFn('&ifTag', <subject tag then else>, :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(NQPMu, FnType.new(NQPMu, NQPMu))))), 
+            :tagAndId(nqp::null), 
+            -> $subject, $tag, $then, $else, $tagAndId {
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<islist>, $subject),
                 QAST::Stmts.new(
@@ -433,7 +436,8 @@ class LActions is HLL::Actions {
             )
         });
         
-        mkRFn('&->#n', <subject tag index>, -> $subject, $tag, $index {
+        mkRFn('&->#n', <subject tag index>, :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(int, NQPMu)))),
+            -> $subject, $tag, $index {
             mkRCall('&ifTag', $subject, $tag,
                 QAST::Block.new(:arity(1),
                     lexVar('_', :decl<param>),
@@ -443,16 +447,16 @@ class LActions is HLL::Actions {
             )
         });
         
-        mkRFn('&sublist', <list from>, -> $list, $from {
-            my $to    := lexVar('to');
-            my $out   := lexVar('out');
-            my $count := lexVar('count');
-            my $n     := lexVar('n');
+        mkRFn('&sublist', <list from>, :returns(FnType.new(NQPArray, FnType.new(int, NQPArray))), -> $list, $from {
+            my $to    := lexVar('to',       :returns(int));
+            my $out   := lexVar('out',      :returns(NQPArray));
+            my $count := lexVar('count',    :returns(int));
+            my $n     := lexVar('n',        :returns(int));
             
-            mkDeclP($count, :default(QAST::Op.new(:op<elems>, $list))),
-            mkBind(mkDeclV($n),   QAST::Op.new(:op<elems>, $list)),
-            mkBind(mkDeclV($out), mkList()),
-            mkBind(mkDeclV($to),  QAST::Op.new(:op<add_i>, $from, $count)),
+            mkBind(mkDeclV($n,     :returns(int)),      QAST::Op.new(:op<elems>, :returns(int), $list)),
+            mkBind(mkDeclV($count, :returns(int)),      cloneAndSubst($n)),
+            mkBind(mkDeclV($to,    :returns(int)),      QAST::Op.new(:op<add_i>, :returns(int), $from, $count)),
+            mkBind(mkDeclV($out,   :returns(NQPArray)), mkList()),
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<isgt_i>, $to, $n),
                 mkBind($to, $n)
@@ -461,7 +465,7 @@ class LActions is HLL::Actions {
                 QAST::Op.new(:op<islt_i>, $from, $to),
                 QAST::Stmts.new(
                     QAST::Op.new(:op<push>, $out, mkListLookup($list, :index($from))),
-                    mkBind($from, QAST::Op.new(:op<add_i>, $from, asNode(1))),
+                    mkBind($from, QAST::Op.new(:op<add_i>, :returns(int), $from, asNode(1))),
                 )
             ),
             $out,
