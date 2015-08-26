@@ -232,15 +232,33 @@ my sub mkDelayMemo($node) {
     } elsif isForced($node) {
         mkDelayMemo($node.ann('forced'));
     } else {
-        $node := mkRCall('&delayMemo', mkDelaySimple($node));
-
-        #$node := QAST::Stmts.new(
-        #    mkRCall('&say', mkConcat("# calling .delayMemo on\n", $node.dump)),
-        #    $node
+        #my $wasRun := lexVar('wasRun', :returns(int));
+        #my $result := lexVar('result', :returns($node.returns));
+        #my $out := QAST::Block.new(:blocktype<immediate>, :returns(FnType.new(Void, $node.returns)),
+        #    mkBind(mkDeclV($wasRun, :returns($wasRun.returns)), 0),
+        #    mkDeclV($result, :returns($result.returns)),
+        #    QAST::Block.new(:arity(0), :returns($node.returns),
+        #        QAST::Op.new(:op<if>, :returns($node.returns),
+        #            nqp::clone($wasRun),
+        #            nqp::clone($result),
+        #            QAST::Stmts.new(
+        #                mkBind($wasRun, 1),
+        #                mkBind($result, $node)
+        #            )
+        #        )
+        #    )
         #);
+
+        my $out := mkRCall('&delayMemo', mkDelaySimple($node));
+        $out.returns(FnType.new(Void, $node.returns));
+
+        ##$node := QAST::Stmts.new(
+        ##    mkRCall('&say', mkConcat("# calling .delayMemo on\n", $node.dump)),
+        ##    $node
+        ##);
         
-        $node.annotate('delayed', 'memo');
-        $node;
+        $out.annotate('delayed', 'memo');
+        $out;
     }
 }
 
