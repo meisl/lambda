@@ -5,6 +5,9 @@ use Util::QAST;
 
 my class NO_VALUE {}
 
+
+
+
 my class Type {
 
     method new(*@args, *%adverbs) {
@@ -131,570 +134,548 @@ my sub mkBind($var, $value) {
     QAST::Op.new(:op<bind>, :returns($valNode.returns), $var, $valNode);
 }
 
-class LActions is HLL::Actions {
-
-
-    my sub mkList(*@contents) {
-        my @contentNodes := [];
-        for @contents {
-            @contentNodes.push(asNode($_));
-        }
-        QAST::Op.new(:op<list>, :returns(NQPArray), |@contentNodes); 
+my sub mkList(*@contents) {
+    my @contentNodes := [];
+    for @contents {
+        @contentNodes.push(asNode($_));
     }
+    QAST::Op.new(:op<list>, :returns(NQPArray), |@contentNodes); 
+}
 
-    my sub mkHash($contents) {
-        my $out := QAST::Op.new(:op<hash>);
-        if nqp::islist($contents) {
-            my $length := nqp::elems($contents);
-            nqp::die("mkHash expects a list with an even nr elems - has " ~ $length)
-                if nqp::mod_i($length, 2);
-            for $contents {
-                $out.push(asNode($_));
-            }
-        } elsif nqp::ishash($contents) {
-            for $contents {
-                my $key := nqp::iterkey_s($_);
-                my $val := nqp::iterval($_);
-                $out.push(asNode($key));
-                $out.push(asNode($val));
-            }
-        } else {
-            nqp::die("mkHash expects a list or a hash - got " ~ nqp::reprname($contents));
-        }
-        $out;
-    }
-
-    my sub mkCall($fn, *@args) {
-        my $out := QAST::Op.new(:op<call>);
-        if nqp::isstr($fn) {
-            $out.name($fn);
-        } else {
-            nqp::die("mkCall expects a str or a QAST::Node as 1st arg")
-                unless nqp::istype($fn, QAST::Node);
-            if (isVar($fn) && $fn.scope eq 'lexical') {
-                $out.name($fn.name);
-            } else {
-                $out.push($fn);
-            }
-        }
-        for @args {
+my sub mkHash($contents) {
+    my $out := QAST::Op.new(:op<hash>);
+    if nqp::islist($contents) {
+        my $length := nqp::elems($contents);
+        nqp::die("mkHash expects a list with an even nr elems - has " ~ $length)
+            if nqp::mod_i($length, 2);
+        for $contents {
             $out.push(asNode($_));
         }
-        $out;
+    } elsif nqp::ishash($contents) {
+        for $contents {
+            my $key := nqp::iterkey_s($_);
+            my $val := nqp::iterval($_);
+            $out.push(asNode($key));
+            $out.push(asNode($val));
+        }
+    } else {
+        nqp::die("mkHash expects a list or a hash - got " ~ nqp::reprname($contents));
     }
+    $out;
+}
 
-    my sub mkRCall(str $fnName, *@args) {
-        nqp::die("invalid runtime fn name $fnName")
-            unless nqp::index($fnName, '&') == 0;
-        mkCall($fnName, |@args);
+my sub isForced($node) {
+    insist-isa($node, QAST::Node);
+    $node.has_ann('forced');
+}
+
+my sub isDelayed($node) {
+    insist-isa($node, QAST::Node);
+    $node.has_ann('delayed');
+}
+
+my sub mkDelaySimple($node) {
+    if isVal($node) || isOp($node, 'null') || isDelayed($node) || isVar($node) {
+        $node;
+    } elsif isForced($node) {
+        $node.ann('forced');
+    } else {
+        $node := QAST::Block.new(:arity(0), :returns(FnType.new(Void, $node.returns)), $node);
+        $node.annotate('delayed', 'simple');
+        $node;
     }
+}
 
-    my sub isForced($node) {
-        insist-isa($node, QAST::Node);
-        $node.has_ann('forced');
-    }
-
-    my sub isDelayed($node) {
-        insist-isa($node, QAST::Node);
-        $node.has_ann('delayed');
-    }
-
-    my sub mkDelaySimple($node) {
-        if isVal($node) || isOp($node, 'null') || isDelayed($node) || isVar($node) {
-            $node;
-        } elsif isForced($node) {
-            $node.ann('forced');
+my sub mkCall($fn, *@args) {
+    my $out := QAST::Op.new(:op<call>);
+    if nqp::isstr($fn) {
+        $out.name($fn);
+    } else {
+        nqp::die("mkCall expects a str or a QAST::Node as 1st arg")
+            unless nqp::istype($fn, QAST::Node);
+        if (isVar($fn) && $fn.scope eq 'lexical') {
+            $out.name($fn.name);
         } else {
-            $node := QAST::Block.new(:arity(0), :returns(FnType.new(Void, $node.returns)), $node);
-            $node.annotate('delayed', 'simple');
-            $node;
+            $out.push($fn);
         }
     }
+    for @args {
+        $out.push(asNode($_));
+    }
+    $out;
+}
 
-    my sub mkDelayMemo($node) {
-        if isVal($node) || isOp($node, 'null') || isOp($node, 'null') || isVar($node) {
+my $runtime;
+my %runtime-fns-types := {};
+
+my sub mkRCall(str $fnName, *@args) {
+    nqp::die("invalid runtime fn name $fnName")
+        unless nqp::index($fnName, '&') == 0;
+    #nqp::die("no such runtime fn: $fnName")
+    #    unless nqp::existskey(%runtime-fns-types, $fnName);
+    mkCall($fnName, |@args);
+}
+
+
+my sub mkDelayMemo($node) {
+    if isVal($node) || isOp($node, 'null') || isOp($node, 'null') || isVar($node) {
+        $node;
+    } elsif isDelayed($node) {
+        my $delayType := $node.ann('delayed');
+        if $delayType eq 'memo' {
             $node;
-        } elsif isDelayed($node) {
-            my $delayType := $node.ann('delayed');
-            if $delayType eq 'memo' {
-                $node;
-            } elsif $delayType eq 'simple' {
-                mkDelayMemo($node[0]);
-            } else {
-                nqp::die("mkDelayMemo: unknown delay type '$delayType' in\n" ~ $node.dump);
-            }
-        } elsif isForced($node) {
-            mkDelayMemo($node.ann('forced'));
+        } elsif $delayType eq 'simple' {
+            mkDelayMemo($node[0]);
         } else {
-            $node := mkRCall('&delayMemo', mkDelaySimple($node));
+            nqp::die("mkDelayMemo: unknown delay type '$delayType' in\n" ~ $node.dump);
+        }
+    } elsif isForced($node) {
+        mkDelayMemo($node.ann('forced'));
+    } else {
+        $node := mkRCall('&delayMemo', mkDelaySimple($node));
 
-            #$node := QAST::Stmts.new(
-            #    mkRCall('&say', mkConcat("# calling .delayMemo on\n", $node.dump)),
-            #    $node
-            #);
-            
-            $node.annotate('delayed', 'memo');
+        #$node := QAST::Stmts.new(
+        #    mkRCall('&say', mkConcat("# calling .delayMemo on\n", $node.dump)),
+        #    $node
+        #);
+        
+        $node.annotate('delayed', 'memo');
+        $node;
+    }
+}
+
+my sub mkForce($node) {
+    insist-isa($node, QAST::Node);
+    if isDelayed($node) {
+        $node[0];
+    } elsif isForced($node) || isVal($node) || isOp($node, 'null') {
+        $node;
+    } else {    # TODO: maybe inline if $node is already a QAST::Var
+        my $returns := $node.returns;
+        if istype($returns, str, int, num) {
             $node;
+        } else {
+            my $out := mkRCall('&force', $node);
+            $out.annotate('forced', $node);
+            $out;
         }
+    } # TODO: if $node is a call, and we introduce annotations re delayed status of return values...
+}
+
+my sub mkHashLookup($hash, :$key!) {
+    nqp::die("mkHashLookup expects a str or QAST::Node as key")
+        unless istype($key, str, QAST::Node);
+    QAST::Op.new(:op<atkey>, $hash, asNode($key));
+}
+
+my sub mkListLookup($list, :$index!) {
+    nqp::die("mkListLookup expects an int or a QAST::Node as index")
+        unless istype($index, int, QAST::Node);
+    QAST::Op.new(:op<atpos>, $list, asNode($index));
+}
+
+my sub mkConcat(*@args) {
+    nqp::die("mkConcat expects at least 1 arg")
+        unless nqp::elems(@args) > 0;
+    my @nodes := [];
+    for @args {
+        @nodes.push(asNode($_));
     }
 
-    my sub mkForce($node) {
-        insist-isa($node, QAST::Node);
-        if isDelayed($node) {
-            $node[0];
-        } elsif isForced($node) || isVal($node) || isOp($node, 'null') {
-            $node;
-        } else {    # TODO: maybe inline if $node is already a QAST::Var
-            my $returns := $node.returns;
-            if istype($returns, str, int, num) {
-                $node;
+    my @compressed := [];
+    my $current := nqp::shift(@nodes);
+    for @nodes {
+        if isSVal($current) && isSVal($_) {
+            $current.value($current.value ~ $_.value);
+        } else {
+            if $current.returns =:= str {
+                @compressed.push($current);
             } else {
-                my $out := mkRCall('&force', $node);
-                $out.annotate('forced', $node);
-                $out;
+                @compressed.push(mkForce($current));
             }
-        } # TODO: if $node is a call, and we introduce annotations re delayed status of return values...
-    }
-
-    my sub mkHashLookup($hash, :$key!) {
-        nqp::die("mkHashLookup expects a str or QAST::Node as key")
-            unless istype($key, str, QAST::Node);
-        QAST::Op.new(:op<atkey>, $hash, asNode($key));
-    }
-
-    my sub mkListLookup($list, :$index!) {
-        nqp::die("mkListLookup expects an int or a QAST::Node as index")
-            unless istype($index, int, QAST::Node);
-        QAST::Op.new(:op<atpos>, $list, asNode($index));
-    }
-
-    my sub mkConcat(*@args) {
-        nqp::die("mkConcat expects at least 1 arg")
-            unless nqp::elems(@args) > 0;
-        my @nodes := [];
-        for @args {
-            @nodes.push(asNode($_));
+            $current := $_;
         }
+    }
+    @compressed.push(mkForce($current));
 
-        my @compressed := [];
-        my $current := nqp::shift(@nodes);
-        for @nodes {
-            if isSVal($current) && isSVal($_) {
-                $current.value($current.value ~ $_.value);
-            } else {
-                if $current.returns =:= str {
-                    @compressed.push($current);
-                } else {
-                    @compressed.push(mkForce($current));
-                }
-                $current := $_;
-            }
+    my $n := nqp::elems(@compressed);
+    if $n > 1 {
+        $current := nqp::shift(@compressed);
+        for @compressed {
+            $current := QAST::Op.new(:op<concat>, :returns(str), $current, $_)
         }
-        @compressed.push(mkForce($current));
+    } else {
+        $current.returns(str);
+    }
+    $current;
+}
 
-        my $n := nqp::elems(@compressed);
-        if $n > 1 {
-            $current := nqp::shift(@compressed);
-            for @compressed {
-                $current := QAST::Op.new(:op<concat>, :returns(str), $current, $_)
+my sub mkDie(*@msgPieces) {
+    QAST::Op.new(:op<die>, mkConcat('ERROR: ', |@msgPieces));
+}
+
+my sub mkLambda2code($subject) {
+    mkRCall('&->#n', $subject, 'λ', 1);
+}
+
+my sub mkLambda2freevars($subject) {
+    mkRCall('&ifTag', $subject, 'λ',
+        QAST::Block.new(:arity(1),
+            mkDeclP(lexVar('id')),
+            mkRCall('&sublist', $subject, 2)
+        ),
+        QAST::Op.new(:op<null>)
+    );
+    }
+
+
+my sub make-runtime() {
+    my $block := QAST::Stmts.new();
+    my sub mkRFn(str $name, $paramNames, $cb, :$returns = NO_VALUE, *%lexicals) {
+        nqp::die("invalid runtime fn name $name")
+            unless nqp::index($name, '&') == 0;
+        
+        if nqp::isstr($paramNames) {
+            $paramNames := [$paramNames];
+        }
+        my @paramTypes := [];
+        if $returns =:= NO_VALUE {
+            $returns := NQPMu;
+            for $paramNames {
+                @paramTypes.push(NQPMu);
+                $returns := FnType.new(NQPMu, $returns);    # ATTENTION: reverses order (but works since all are NQPMu)
             }
         } else {
-            $current.returns(str);
+            my $temp := $returns;
+            for $paramNames {
+                nqp::die("invalid type for fn $name: " ~ Type.toStr($returns))
+                    unless nqp::isconcrete($temp) && nqp::istype($temp, FnType);
+                @paramTypes.push($temp.in);
+                $temp := $temp.out;
+            }
         }
-        $current;
+        my $body := QAST::Block.new(:name($name), :arity(nqp::elems($paramNames)));
+        my @vars := [];
+        my $i := 0;
+        for $paramNames {
+            my $var := lexVar($_, :returns(@paramTypes[$i]));
+            $body.push(mkDeclP($var, :returns(@paramTypes[$i])));
+            @vars.push($var);
+            $i++;
+        }
+        for %lexicals {
+            my $var := lexVar(nqp::iterkey_s($_));
+            my $val := nqp::iterval($_);
+            my $decl := mkDeclV($var);
+            if !nqp::isnull($val) {
+                $decl := mkBind($decl, $val);
+            }
+            $body.push($decl);
+            @vars.push($var);
+        }
+        my $stmts := $cb(|@vars);
+        if nqp::islist($stmts) {
+            for $stmts { $body.push($_) }
+        } else {
+            $body.push($stmts);
+        }
+        $body.returns($returns);
+        %runtime-fns-types{$name} := $returns;
+        my $binding := mkBind(lexVar($name, :decl<static>), $body);
+        $block.push($binding);
+
+        $binding;
     }
 
-    my sub mkDie(*@msgPieces) {
-        QAST::Op.new(:op<die>, mkConcat('ERROR: ', |@msgPieces));
-    }
-
-    my sub mkLambda2code($subject) {
-        mkRCall('&->#n', $subject, 'λ', 1);
-    }
-
-    my sub mkLambda2freevars($subject) {
-        mkRCall('&ifTag', $subject, 'λ',
+    mkRFn('&ifTag', <subject tag then else>, :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(NQPMu, FnType.new(NQPMu, NQPMu))))), 
+        :tagAndId(nqp::null), 
+        -> $subject, $tag, $then, $else, $tagAndId {
+        QAST::Op.new(:op<if>,
+            QAST::Op.new(:op<islist>, $subject),
+            QAST::Stmts.new(
+                mkBind($tagAndId, mkListLookup($subject, :index(0))),
+                QAST::Op.new(:op<if>,
+                    QAST::Op.new(:op<iseq_s>,
+                        $tag,
+                        QAST::Op.new(:op<substr>, $tagAndId, asNode(0), asNode(1)),
+                    ),
+                    mkCall($then, 
+                        mkListLookup(:index(0), # extract id as int from str tagAndId
+                            QAST::Op.new(:op<radix>,
+                                asNode(10),
+                                $tagAndId,
+                                asNode(1),
+                                asNode(0)
+                            )
+                        )
+                    ),
+                    mkForce($else)
+                ),
+            ),
+            mkForce($else)
+        )
+    });
+    
+    mkRFn('&->#n', <subject tag index>, :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(int, NQPMu)))),
+        -> $subject, $tag, $index {
+        mkRCall('&ifTag', $subject, $tag,
             QAST::Block.new(:arity(1),
-                mkDeclP(lexVar('id')),
-                mkRCall('&sublist', $subject, 2)
+                lexVar('_', :decl<param>),
+                mkListLookup($subject, :index($index))
             ),
             QAST::Op.new(:op<null>)
-        );
-    }
+        )
+    });
+    
+    mkRFn('&sublist', <list from>, :returns(FnType.new(NQPArray, FnType.new(int, NQPArray))), -> $list, $from {
+        my $to    := lexVar('to',       :returns(int));
+        my $out   := lexVar('out',      :returns(NQPArray));
+        my $count := lexVar('count',    :returns(int));
+        my $n     := lexVar('n',        :returns(int));
+        
+        mkBind(mkDeclV($n,     :returns(int)),      QAST::Op.new(:op<elems>, :returns(int), $list)),
+        mkBind(mkDeclV($count, :returns(int)),      cloneAndSubst($n)),
+        mkBind(mkDeclV($to,    :returns(int)),      QAST::Op.new(:op<add_i>, :returns(int), $from, $count)),
+        mkBind(mkDeclV($out,   :returns(NQPArray)), mkList()),
+        QAST::Op.new(:op<if>,
+            QAST::Op.new(:op<isgt_i>, $to, $n),
+            mkBind($to, $n)
+        ),
+        QAST::Op.new(:op<while>,
+            QAST::Op.new(:op<islt_i>, $from, $to),
+            QAST::Stmts.new(
+                QAST::Op.new(:op<push>, $out, mkListLookup($list, :index($from))),
+                mkBind($from, QAST::Op.new(:op<add_i>, :returns(int), $from, asNode(1))),
+            )
+        ),
+        $out,
+    });
+    
+    mkRFn('&strOut', <v indent>, :returns(FnType.new(NQPMu, FnType.new(str, str))), -> $v, $indent {
+        my $id      := lexVar('id');
+        my $info    := lexVar('info');
+        my $src     := lexVar('src');
+        my $from    := lexVar('from');
+        my $length  := lexVar('length');
+        my $fvars   := lexVar('fvars');
+        my $fvn2dBI := lexVar('fvn2dBI');  # "free var name 2 deBruijn index"
+        my $i       := lexVar('i');
+        my $pair    := lexVar('pair');
+        my $name    := lexVar('name');
+        my $dBI     := lexVar('dBI');   # "deBruijn index"
+        my $val     := lexVar('val');
 
-    has @!lambdaInfo;
-    has %!runtime-fns-types;
-
-    my sub mkRuntime($/, $topBlock, @lambdaInfo) {
-        my $block := QAST::Stmts.new();
-        my sub mkRFn(str $name, $paramNames, $cb, :$returns = NO_VALUE, *%lexicals) {
-            nqp::die("invalid runtime fn name $name")
-                unless nqp::index($name, '&') == 0;
-            
-            if nqp::isstr($paramNames) {
-                $paramNames := [$paramNames];
-            }
-            my @paramTypes := [];
-            if $returns =:= NO_VALUE {
-                $returns := NQPMu;
-                for $paramNames {
-                    @paramTypes.push(NQPMu);
-                    $returns := FnType.new(NQPMu, $returns);    # ATTENTION: reverses order (but works since all are NQPMu)
-                }
-            } else {
-                my $temp := $returns;
-                for $paramNames {
-                    nqp::die("invalid type for fn $name: " ~ Type.toStr($returns))
-                        unless nqp::isconcrete($temp) && nqp::istype($temp, FnType);
-                    @paramTypes.push($temp.in);
-                    $temp := $temp.out;
-                }
-            }
-            my $body := QAST::Block.new(:name($name), :arity(nqp::elems($paramNames)));
-            my @vars := [];
-            my $i := 0;
-            for $paramNames {
-                my $var := lexVar($_, :returns(@paramTypes[$i]));
-                $body.push(mkDeclP($var, :returns(@paramTypes[$i])));
-                @vars.push($var);
-                $i++;
-            }
-            for %lexicals {
-                my $var := lexVar(nqp::iterkey_s($_));
-                my $val := nqp::iterval($_);
-                my $decl := mkDeclV($var);
-                if !nqp::isnull($val) {
-                    $decl := mkBind($decl, $val);
-                }
-                $body.push($decl);
-                @vars.push($var);
-            }
-            my $stmts := $cb(|@vars);
-            if nqp::islist($stmts) {
-                for $stmts { $body.push($_) }
-            } else {
-                $body.push($stmts);
-            }
-            $body.returns($returns);
-            my $binding := mkBind(lexVar($name, :decl<static>), $body);
-            $block.push($binding);
-            $binding;
-        }
-
-        $block.push(
-            mkBind(lexVar('.src', :decl<static>), ~$/)
-        );
-
-        my $lambdaInfo := mkList();
-        for @lambdaInfo {
-            my %info := $_;
-            my $result := mkList(%info<binder>.name, %info<from>, %info<length>);
-            my $lambda := %info<lambda>;
-            my @freeVars := nqp::clone($lambda.list);
-            @freeVars.shift;  # remove tag
-            @freeVars.shift;  # remove code
-            my %fvn2dBI := %info<fvn2dBI>;  # "free var names 2 deBruijn indices"
-            my @fvn2dBI := [];
-            for @freeVars { # need them in exactly the order in which they appear in the lambda
-                my $name := $_.name;
-                my $deBruijnIdx := %fvn2dBI{$name};
-                @fvn2dBI.push($name ~ '.' ~ $deBruijnIdx);
-            }
-            $result.push(asNode(nqp::join(' ', @fvn2dBI)));
-            $lambdaInfo.push($result);
-        }
-        $block.push(
-            mkBind(lexVar('.λinfo', :decl<static>), $lambdaInfo)
-        );
-
-        mkRFn('&ifTag', <subject tag then else>, :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(NQPMu, FnType.new(NQPMu, NQPMu))))), 
-            :tagAndId(nqp::null), 
-            -> $subject, $tag, $then, $else, $tagAndId {
-            QAST::Op.new(:op<if>,
-                QAST::Op.new(:op<islist>, $subject),
-                QAST::Stmts.new(
-                    mkBind($tagAndId, mkListLookup($subject, :index(0))),
-                    QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<iseq_s>,
-                            $tag,
-                            QAST::Op.new(:op<substr>, $tagAndId, asNode(0), asNode(1)),
+        mkBind($v, mkForce($v)),
+        QAST::Op.new(:op<if>,
+            QAST::Op.new(:op<isstr>, $v),
+            mkRCall('&strLit', $v),
+            mkRCall('&ifTag', 
+                $v, 
+                'λ',
+                QAST::Block.new(:arity(1),
+                    mkBind(mkDeclP($id),          mkForce($id)),
+                    mkBind(mkDeclV($fvars),       mkRCall('&sublist', $v, 2)),
+                    mkBind(mkDeclV($info),        mkListLookup(lexVar('.λinfo'), :index($id))),
+                    mkBind(mkDeclV($fvn2dBI),
+                        QAST::Op.new(:op<split>, asNode(' '), mkListLookup($info, :index(3)))
+                        #mkListLookup($info, :index(3))
+                    ),
+                    mkBind(mkDeclV($from),        mkListLookup($info, :index(1))),
+                    mkBind(mkDeclV($length),      mkListLookup($info, :index(2))),
+                    mkBind(mkDeclV($src),
+                        #mkConcat(
+                            QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length),
+                        #    '  # :tag(', mkRCall('&strLit', mkListLookup($v, :index(0))), ')',
+                        #)
+                    ),
+                    mkBind(mkDeclV($i), 0),
+                    QAST::Op.new(:op<for>, $fvn2dBI, QAST::Block.new(:arity(1),
+                        mkDeclP($pair),
+                        mkBind($pair, QAST::Op.new(:op<split>, asNode('.'), $pair)),
+                        mkBind(mkDeclV($name), mkListLookup($pair, :index(0))),
+                        mkBind(mkDeclV($dBI), mkListLookup($pair, :index(1))),
+                        mkBind(mkDeclV($val), mkListLookup($fvars, :index($i))),
+                        mkBind($i, QAST::Op.new(:op<add_i>, $i, asNode(1))),
+                        QAST::Op.new(:op<if>, 
+                            QAST::Op.new(:op<not_i>, $dBI),
+                            mkBind($dBI, '∞')           # show "∞" as deBruijn index of unbound var
                         ),
-                        mkCall($then, 
-                            mkListLookup(:index(0), # extract id as int from str tagAndId
-                                QAST::Op.new(:op<radix>,
-                                    asNode(10),
-                                    $tagAndId,
-                                    asNode(1),
-                                    asNode(0)
+                        mkBind($src,
+                            mkConcat($src, 
+                                "\n",
+                                $indent,
+                                '# where ',
+                                $name,
+                                #'(', $dBI, ')',
+                                ' = ',
+                                QAST::Op.new(:op<if>,
+                                    QAST::Op.new(:op<iseq_s>, $name, asNode('self')),
+                                    asNode('...'),
+                                    mkRCall('&strOut', 
+                                        $val,
+                                        mkConcat($indent, '#           ')
+                                    ),
                                 )
                             )
-                        ),
-                        mkForce($else)
-                    ),
+                        )
+                    )),
+                    $src
                 ),
-                mkForce($else)
-            )
-        });
-        
-        mkRFn('&->#n', <subject tag index>, :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(int, NQPMu)))),
-            -> $subject, $tag, $index {
-            mkRCall('&ifTag', $subject, $tag,
-                QAST::Block.new(:arity(1),
-                    lexVar('_', :decl<param>),
-                    mkListLookup($subject, :index($index))
-                ),
-                QAST::Op.new(:op<null>)
-            )
-        });
-        
-        mkRFn('&sublist', <list from>, :returns(FnType.new(NQPArray, FnType.new(int, NQPArray))), -> $list, $from {
-            my $to    := lexVar('to',       :returns(int));
-            my $out   := lexVar('out',      :returns(NQPArray));
-            my $count := lexVar('count',    :returns(int));
-            my $n     := lexVar('n',        :returns(int));
-            
-            mkBind(mkDeclV($n,     :returns(int)),      QAST::Op.new(:op<elems>, :returns(int), $list)),
-            mkBind(mkDeclV($count, :returns(int)),      cloneAndSubst($n)),
-            mkBind(mkDeclV($to,    :returns(int)),      QAST::Op.new(:op<add_i>, :returns(int), $from, $count)),
-            mkBind(mkDeclV($out,   :returns(NQPArray)), mkList()),
-            QAST::Op.new(:op<if>,
-                QAST::Op.new(:op<isgt_i>, $to, $n),
-                mkBind($to, $n)
-            ),
-            QAST::Op.new(:op<while>,
-                QAST::Op.new(:op<islt_i>, $from, $to),
-                QAST::Stmts.new(
-                    QAST::Op.new(:op<push>, $out, mkListLookup($list, :index($from))),
-                    mkBind($from, QAST::Op.new(:op<add_i>, :returns(int), $from, asNode(1))),
+                QAST::Op.new(:op<if>,
+                    QAST::Op.new(:op<isint>, $v),
+                    $v,
+                    mkDelaySimple(QAST::Op.new(:op<reprname>, $v))
                 )
-            ),
-            $out,
-        });
-        
-        mkRFn('&strOut', <v indent>, :returns(FnType.new(NQPMu, FnType.new(str, str))), -> $v, $indent {
-            my $id      := lexVar('id');
-            my $info    := lexVar('info');
-            my $src     := lexVar('src');
-            my $from    := lexVar('from');
-            my $length  := lexVar('length');
-            my $fvars   := lexVar('fvars');
-            my $fvn2dBI := lexVar('fvn2dBI');  # "free var name 2 deBruijn index"
-            my $i       := lexVar('i');
-            my $pair    := lexVar('pair');
-            my $name    := lexVar('name');
-            my $dBI     := lexVar('dBI');   # "deBruijn index"
-            my $val     := lexVar('val');
+            )
+        )
+    });
 
-            mkBind($v, mkForce($v)),
+    mkRFn('&delayMemo', <x>, :wasRun(0), :result(nqp::null), -> $x, $wasRun, $result {
+        QAST::Block.new(:arity(0),
+            QAST::Op.new(:op<if>, $wasRun,
+                $result,
+                QAST::Stmts.new(
+                    mkBind($wasRun, 1),
+                    mkBind($result, mkCall($x))
+                )
+            )
+        )
+    });
+    
+    mkRFn('&force', <x>, :foo<bar>, -> $x, $foo {
+        QAST::Op.new(:op<if>,
+            QAST::Op.new(:op<isinvokable>, $x),
+            mkCall($x),
+            $x
+        )
+    });
+    
+    mkRFn('&say', <v>, -> $v {
+        mkBind($v, mkForce($v)),
+        QAST::Op.new(:op<say>,
             QAST::Op.new(:op<if>,
                 QAST::Op.new(:op<isstr>, $v),
-                mkRCall('&strLit', $v),
-                mkRCall('&ifTag', 
-                    $v, 
-                    'λ',
-                    QAST::Block.new(:arity(1),
-                        mkBind(mkDeclP($id),          mkForce($id)),
-                        mkBind(mkDeclV($fvars),       mkRCall('&sublist', $v, 2)),
-                        mkBind(mkDeclV($info),        mkListLookup(lexVar('.λinfo'), :index($id))),
-                        mkBind(mkDeclV($fvn2dBI),
-                            QAST::Op.new(:op<split>, asNode(' '), mkListLookup($info, :index(3)))
-                            #mkListLookup($info, :index(3))
-                        ),
-                        mkBind(mkDeclV($from),        mkListLookup($info, :index(1))),
-                        mkBind(mkDeclV($length),      mkListLookup($info, :index(2))),
-                        mkBind(mkDeclV($src),
-                            #mkConcat(
-                                QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length),
-                            #    '  # :tag(', mkRCall('&strLit', mkListLookup($v, :index(0))), ')',
-                            #)
-                        ),
-                        mkBind(mkDeclV($i), 0),
-                        QAST::Op.new(:op<for>, $fvn2dBI, QAST::Block.new(:arity(1),
-                            mkDeclP($pair),
-                            mkBind($pair, QAST::Op.new(:op<split>, asNode('.'), $pair)),
-                            mkBind(mkDeclV($name), mkListLookup($pair, :index(0))),
-                            mkBind(mkDeclV($dBI), mkListLookup($pair, :index(1))),
-                            mkBind(mkDeclV($val), mkListLookup($fvars, :index($i))),
-                            mkBind($i, QAST::Op.new(:op<add_i>, $i, asNode(1))),
-                            QAST::Op.new(:op<if>, 
-                                QAST::Op.new(:op<not_i>, $dBI),
-                                mkBind($dBI, '∞')           # show "∞" as deBruijn index of unbound var
-                            ),
-                            mkBind($src,
-                                mkConcat($src, 
-                                    "\n",
-                                    $indent,
-                                    '# where ',
-                                    $name,
-                                    #'(', $dBI, ')',
-                                    ' = ',
-                                    QAST::Op.new(:op<if>,
-                                        QAST::Op.new(:op<iseq_s>, $name, asNode('self')),
-                                        asNode('...'),
-                                        mkRCall('&strOut', 
-                                            $val,
-                                            mkConcat($indent, '#           ')
-                                        ),
-                                    )
-                                )
-                            )
-                        )),
-                        $src
-                    ),
-                    QAST::Op.new(:op<if>,
-                        QAST::Op.new(:op<isint>, $v),
-                        $v,
-                        mkDelaySimple(QAST::Op.new(:op<reprname>, $v))
-                    )
-                )
+                $v,
+                mkRCall('&strOut', $v, '')
             )
-        });
-
-        mkRFn('&delayMemo', <x>, :wasRun(0), :result(nqp::null), -> $x, $wasRun, $result {
-            QAST::Block.new(:arity(0),
-                QAST::Op.new(:op<if>, $wasRun,
-                    $result,
-                    QAST::Stmts.new(
-                        mkBind($wasRun, 1),
-                        mkBind($result, mkCall($x))
-                    )
-                )
-            )
-        });
-        
-        mkRFn('&force', <x>, :foo<bar>, -> $x, $foo {
-            QAST::Op.new(:op<if>,
-                QAST::Op.new(:op<isinvokable>, $x),
-                mkCall($x),
-                $x
-            )
-        });
-        
-        mkRFn('&say', <v>, -> $v {
-            mkBind($v, mkForce($v)),
-            QAST::Op.new(:op<say>,
-                QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<isstr>, $v),
-                    $v,
-                    mkRCall('&strOut', $v, '')
-                )
-            )
-        });
-        
-        mkRFn('&strLit', <s>, :returns(FnType.new(str, str)), -> $s {
-            #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
-            QAST::Op.new(:op<concat>, :returns(str),
-                asNode('"'),
-                QAST::Op.new(:op<concat>, :returns(str),
-                    QAST::Op.new(:op<escape>, :returns(str), $s),
-                    asNode('"')
-                )
-            );
-        });
-        
-        mkRFn('&apply1', <f a1>, :result(nqp::null), -> $f, $a1, $result {
-            mkBind($f, mkForce($f)),
-            mkBind($result, mkCall(
-                QAST::Op.new(:op<defor>,
-                    mkLambda2code($f),
-                    mkDie('cannot apply ', mkRCall('&strOut', $f, ''), ' to ', mkRCall('&strOut', $a1, ''))
-                ),
-                $a1
-            )),
-            mkForce($result),
-        });
-        
-        $block.push(mkBind(lexVar('&testDelay01', :decl<static>),
-            mkDelayMemo(mkDelaySimple(
-                QAST::Stmts.new(:returns(int),
-                    QAST::Op.new(:op<say>, asNode('&testDelay01 forced!!!!')),
-                    asNode('42')
-                )
-            ))
-        ));
+        )
+    });
     
-        mkRFn('&testDelay02', <delayed>, :simple(nqp::null), :memo(nqp::null), -> $delayed, $simple, $memo {
-            mkBind($simple, mkDelaySimple($delayed)),
-            mkBind($memo,   mkDelayMemo($delayed)),
-            
-            #$simple
-            $memo
-        });
+    mkRFn('&strLit', <s>, :returns(FnType.new(str, str)), -> $s {
+        #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
+        QAST::Op.new(:op<concat>, :returns(str),
+            asNode('"'),
+            QAST::Op.new(:op<concat>, :returns(str),
+                QAST::Op.new(:op<escape>, :returns(str), $s),
+                asNode('"')
+            )
+        );
+    });
+    
+    mkRFn('&apply1', <f a1>, :result(nqp::null), -> $f, $a1, $result {
+        mkBind($f, mkForce($f)),
+        mkBind($result, mkCall(
+            QAST::Op.new(:op<defor>,
+                mkLambda2code($f),
+                mkDie('cannot apply ', mkRCall('&strOut', $f, ''), ' to ', mkRCall('&strOut', $a1, ''))
+            ),
+            $a1
+        )),
+        mkForce($result),
+    });
+    
+    #$block.push(mkBind(lexVar('&testDelay01', :decl<static>),
+    #    mkDelayMemo(mkDelaySimple(
+    #        QAST::Stmts.new(:returns(int),
+    #            QAST::Op.new(:op<say>, asNode('&testDelay01 forced!!!!')),
+    #            asNode('42')
+    #        )
+    #    ))
+    #));
 
-        $topBlock.unshift($block);
+    #mkRFn('&testDelay02', <delayed>, :simple(nqp::null), :memo(nqp::null), -> $delayed, $simple, $memo {
+    #    mkBind($simple, mkDelaySimple($delayed)),
+    #    mkBind($memo,   mkDelayMemo($delayed)),
+    #    
+    #    #$simple
+    #    $memo
+    #});
 
-        $topBlock;
-    }
+    $block;
+}
 
-    my sub match2location($match) {
-        my @lines := nqp::split("\n", nqp::substr($match.orig, 0, $match.from == 0 ?? $match.chars !! $match.from));
-        my $lineN := nqp::elems(@lines);
-        my $colN  := 1 + nqp::chars(@lines.pop);
-        my $file := $*USER_FILE;
-        hash(:file($file), :line($lineN), :column($colN), :match($match), :str("$file:$lineN:$colN"));
-    }
+my sub match2location($match) {
+    my @lines := nqp::split("\n", nqp::substr($match.orig, 0, $match.from == 0 ?? $match.chars !! $match.from));
+    my $lineN := nqp::elems(@lines);
+    my $colN  := 1 + nqp::chars(@lines.pop);
+    my $file := $*USER_FILE;
+    hash(:file($file), :line($lineN), :column($colN), :match($match), :str("$file:$lineN:$colN"));
+}
 
-    my sub panic($match, *@msg-pieces) {
-        @msg-pieces.push("\n");
-        @msg-pieces.push(loc2str(match2location($match)));
-        nqp::die(join('', @msg-pieces));
-    }
+my sub panic($match, *@msg-pieces) {
+    @msg-pieces.push("\n");
+    @msg-pieces.push(loc2str(match2location($match)));
+    nqp::die(join('', @msg-pieces));
+}
 
-    my sub freeVars2locations(%fvs) {
-        my @out := [];
-        for %fvs {
-            my $key := nqp::iterkey_s($_);
-            my @vals := nqp::iterval($_);
-            for @vals -> $val {
-                die("not a Node: $key => ??")
-                    unless nqp::istype($val, QUAST::Node);
-                my $loc := match2location($val.node);
-                $loc{'name'} := $key;
-                $loc{'var'}  := $val;
-                @out.push($loc);
-            }
+my sub freeVars2locations(%fvs) {
+    my @out := [];
+    for %fvs {
+        my $key := nqp::iterkey_s($_);
+        my @vals := nqp::iterval($_);
+        for @vals -> $val {
+            die("not a Node: $key => ??")
+                unless nqp::istype($val, QUAST::Node);
+            my $loc := match2location($val.node);
+            $loc{'name'} := $key;
+            $loc{'var'}  := $val;
+            @out.push($loc);
         }
-        @out;
     }
+    @out;
+}
 
-    my sub loc2str(%l) {
-        my $varNameStr := nqp::existskey(%l, 'var')
-            ?? '  (' ~ %l<var>.name ~ ')'
-            !! ''
-        ;
-        '   at ' ~ %l<str> ~ $varNameStr;
+my sub loc2str(%l) {
+    my $varNameStr := nqp::existskey(%l, 'var')
+        ?? '  (' ~ %l<var>.name ~ ')'
+        !! ''
+    ;
+    '   at ' ~ %l<str> ~ $varNameStr;
+}
+
+my sub reportFV(str $where, $match, %fvs) {
+    say(nqp::elems(%fvs), " FVs in $where @ ", '"', nqp::escape($match), '"');
+    my @locs := freeVars2locations(%fvs);
+    for @locs {
+        say(loc2str($_));
     }
+}
 
-    my sub reportFV(str $where, $match, %fvs) {
-        say(nqp::elems(%fvs), " FVs in $where @ ", '"', nqp::escape($match), '"');
-        my @locs := freeVars2locations(%fvs);
-        for @locs {
-            say(loc2str($_));
+my sub stats($node) {
+    my sub _stats($node, @results) {
+        nqp::die("stats expects a QAST::Node - got " ~ nqp::reprname($node))
+            unless nqp::istype($node, QAST::Node);
+        @results[0] := @results[0] + 1; # size of tree
+        if nqp::istype($node, QAST::Block) {
+            @results[1] := @results[1] + 1; # nr of Blocks
+        } elsif isOp($node, 'list') {
+            @results[2] := @results[2] + 1; # nr of Op(list)s
+        } elsif isIVal($node) {
+            @results[3] := @results[3] + 1; # nr of IVals
+        } elsif isSVal($node) {
+            @results[4] := @results[4] + 1; # nr of SVals
+            @results[5] := @results[5] + nqp::chars($node.value); # ttl size of SVals
         }
-    }
-
-    my sub stats($node) {
-        my sub _stats($node, @results) {
-            nqp::die("stats expects a QAST::Node - got " ~ nqp::reprname($node))
-                unless nqp::istype($node, QAST::Node);
-            @results[0] := @results[0] + 1; # size of tree
-            if nqp::istype($node, QAST::Block) {
-                @results[1] := @results[1] + 1; # nr of Blocks
-            } elsif isOp($node, 'list') {
-                @results[2] := @results[2] + 1; # nr of Op(list)s
-            } elsif isIVal($node) {
-                @results[3] := @results[3] + 1; # nr of IVals
-            } elsif isSVal($node) {
-                @results[4] := @results[4] + 1; # nr of SVals
-                @results[5] := @results[5] + nqp::chars($node.value); # ttl size of SVals
-            }
-            for $node.list {
-                _stats($_, @results);
-            }
-            @results;
+        for $node.list {
+            _stats($_, @results);
         }
-        _stats($node, [0, 0, 0, 0, 0, 0]);
+        @results;
     }
+    _stats($node, [0, 0, 0, 0, 0, 0]);
+}
+
+class LActions is HLL::Actions {
+    has @!lambdaInfo;
 
     method TOP($/) {
         my $mainTermMatch := $/<termlist1orMore>;
@@ -715,7 +696,36 @@ class LActions is HLL::Actions {
             nqp::die($msg);
         }
 
-        my $s := mkRuntime($/, $top-block, @!lambdaInfo);
+        $top-block.push(make-runtime());
+        my $s := $top-block;
+        
+        my $lambdaInfo := mkList();
+        for @!lambdaInfo {
+            my %info := $_;
+            my $result := mkList(%info<binder>.name, %info<from>, %info<length>);
+            my $lambda := %info<lambda>;
+            my @freeVars := nqp::clone($lambda.list);
+            @freeVars.shift;  # remove tag
+            @freeVars.shift;  # remove code
+            my %fvn2dBI := %info<fvn2dBI>;  # "free var names 2 deBruijn indices"
+            my @fvn2dBI := [];
+            for @freeVars { # need them in exactly the order in which they appear in the lambda
+                my $name := $_.name;
+                my $deBruijnIdx := %fvn2dBI{$name};
+                @fvn2dBI.push($name ~ '.' ~ $deBruijnIdx);
+            }
+            $result.push(asNode(nqp::join(' ', @fvn2dBI)));
+            $lambdaInfo.push($result);
+        }
+        $top-block.unshift(
+            mkBind(lexVar('.λinfo', :decl<static>), $lambdaInfo)
+        );
+
+        $top-block.unshift(
+            mkBind(lexVar('.src', :decl<static>), ~$/)
+        );
+
+
         # Note: cannot use mkBind here since this enforces an init value
         my $quastSizeBinding  := QAST::Op.new(:op<bind>, lexVar('.qastSize',   :decl<static>));   # will receive a value node later
         my $blockCountBinding := QAST::Op.new(:op<bind>, lexVar('.blockCount', :decl<static>));   # will receive a value node later
@@ -1006,6 +1016,8 @@ class LActions is HLL::Actions {
 }
 
 
+
+
 sub MAIN(*@ARGS) {
     my $F := FnType.new(str, int);
     say('$F.Str: ' ~ $F.Str);
@@ -1018,6 +1030,7 @@ sub MAIN(*@ARGS) {
 
     say(FnType.new(str, int) =:= $F);
     say(FnType.new(int, str) =:= $F);
+
 
     #say(isSVal(QAST::Block.new));
     #say(isSVal(QAST::SVal.new));
@@ -1034,4 +1047,5 @@ sub MAIN(*@ARGS) {
     
     #my $binding := mkBind(lexVar('foo', :decl<var>, :returns(int)), 'asdf');
     #say(dump($binding));
+
 }

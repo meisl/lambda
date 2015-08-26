@@ -705,31 +705,11 @@
     ║   ╙─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical result) ))
     ║     └○ result
     ╟─bind
-    ║ ├○ &testDelay01 :decl(static)
-    ║ └─call &delayMemo :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
-    ║   └─:Block :returns(Void -> int) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
-    ║     ╟─say
-    ║     ║ └◙ SVal "&testDelay01 forced!!!!"
-    ║     ╙◙ SVal "42"
-    ╟─bind :returns(NQPMu -> NQPMu)
-    ║ ├○ &testDelay02 :decl(static) :returns(NQPMu -> NQPMu)
-    ║ └─:Block :returns(NQPMu -> NQPMu)
-    ║   ╟○ delayed :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ simple :decl(var)
-    ║   ╟○ memo :decl(var)
-    ║   ╟─bind
-    ║   ║ ├○ simple
-    ║   ║ └○ delayed
-    ║   ╟─bind
-    ║   ║ ├○ memo
-    ║   ║ └○ delayed
-    ║   ╙○ memo
-    ╟─bind
     ║ ├○ .qastSize :decl(static)
-    ║ └◙ NVal 1419
+    ║ └◙ NVal 1398
     ╟─bind
     ║ ├○ .blockCount :decl(static)
-    ║ └◙ NVal 136
+    ║ └◙ NVal 134
     ╟─bind
     ║ ├○ .listCount :decl(static)
     ║ └◙ NVal 152
@@ -738,10 +718,10 @@
     ║ └◙ NVal 169
     ╟─bind
     ║ ├○ .svalCount :decl(static)
-    ║ └◙ NVal 255
+    ║ └◙ NVal 253
     ╟─bind
     ║ ├○ .svalSize :decl(static)
-    ║ └◙ NVal 3079
+    ║ └◙ NVal 3054
     ╙─:Block :blocktype(immediate)
       ╟○ local mainResult :decl(var)
       ╟─bind
