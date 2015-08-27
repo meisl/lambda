@@ -440,12 +440,13 @@ my sub make-runtime() {
     mkRFn('&banner', [], 
         :returns(FnType.new(Void, str)),
     -> {
-        asNode("This is L v0.0.1")
+        asNode("This is L v0.0.1"),
     });
 
     mkRFn('&strLit', <s>, 
         :returns(FnType.new(str, str)), 
     -> $s {
+        mkDeclV(lexVar('foo')),
         #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
         QAST::Op.new(:op<concat>,
             asNode('"'),
@@ -899,13 +900,13 @@ class LActions is HLL::Actions {
     sub lookup(str $name, *@blocks) {
         my $n := +@blocks;
         my $i := 0;
-        my $out := NQPMu;
+        my %out;
 
-        while ($out =:= NQPMu) && ($i < $n) {
-            $out := @blocks[$i].symbol($name);
+        while ($i < $n) && (nqp::elems(%out) == 0) {
+            %out := @blocks[$i].symbol($name);
             $i++;
         }
-        $out;
+        %out;
     }
 
     method typecheck($n, $currentBlock, *@moreBlocks) {
@@ -975,46 +976,69 @@ class LActions is HLL::Actions {
                     }
                 }
                 $n.returns($temp);
-            } elsif istype($n, QAST::Block) {
-                my %blockInfo := collect_params_and_body($n);
-                if %blockInfo<named> || %blockInfo<slurpy> || %blockInfo<optional> {
-                    panic($n.node, 'NYI: typechecking named/slurpy/optional params', ":\n", dump($n, :indent("    ")));
-                }
-                my @tIns := [];
-                if %blockInfo<params> {
-                    #panic($n.node, 'NYI: typechecking non-zero arity Block', ":\n", dump($n, :indent("    ")));
-                    for %blockInfo<params> {
-                        my $name := $_.key;
-                        my $decl := $_.value;
-                        @tIns.push($decl.returns(TypeVar.new));
-                        $n.symbol($name, :declaration($decl));
-                    }
-                } else {
-                    @tIns.push(Void);
-                }
-                my $tOut := self.typecheck(%blockInfo<body>, $n, $currentBlock, |@moreBlocks);
-                my $tBlock := $tOut;
-                $tBlock := FnType.new($_, $tBlock) for @tIns;
-                $n.returns($tBlock);
-                say(dump($n));
-                $tBlock;
             } elsif istype($n, QAST::Stmts, QAST::Stmt) {
                 my $tLast := NQPMu;
                 $tLast := self.typecheck($_, $currentBlock, |@moreBlocks)
                     for $n.list;
                 $n.returns($tLast);
+            } elsif istype($n, QAST::Block) {
+                say('>>>>typechecking Block');
+                say(dump($n));
+                $n.annotate('positional', []);
+                $n.annotate('named',      {});
+                $n.annotate('slurpy',     []);
+                $n.annotate('optional',   []);
+                my $tOut;
+                for $n.list {
+                    $tOut := self.typecheck($_, $n, $currentBlock, |@moreBlocks);
+                }
+                if $n.ann('named') || $n.ann('slurpy') || $n.ann('optional') {
+                    panic($n.node, 'NYI: typechecking named/slurpy/optional params', ":\n", dump($n, :indent("    ")));
+                }
+                my @tIns := [];
+                for $n.ann('positional') {
+                    @tIns.push($_.returns);
+                    $n.symbol($_.name, :declaration($_));
+                }
+                @tIns.push(Void)
+                    unless @tIns;
+
+                my $tBlock := $tOut;
+                $tBlock := FnType.new($_, $tBlock) for @tIns;
+                $n.returns($tBlock);
+                say(dump($n));
             } elsif isVar($n) {
-                my %info := lookup($n.name, $currentBlock, |@moreBlocks);
-                my $decl;
-                if nqp::ishash(%info) && ($decl := %info<declaration>) {
-                    my $tVar := $decl.returns;
-                    if $tVar =:= NQPMu {
-                        panic($n.node, 'still untyped: declaration for ' ~ describe($n));
+                if $n.decl {
+                    my $decl := lookup($n.name, $currentBlock)<declaration>;
+                    if $decl {
+                        panic($n.node, 'redeclaration of ' ~ describe($n) ~ "in \n" ~ dump($currentBlock, :indent('    ')));
                     } else {
-                        $n.returns($tVar);
+                        $currentBlock.symbol($n.name, :declaration($n));
+                        $n.returns(TypeVar.new);
+                        if $n.decl eq 'param' {
+                            $currentBlock.ann('slurpy').push($n) if $n.slurpy;
+                            $currentBlock.ann('optional').push($n) if $n.default;
+                            if $n.named {
+                                $currentBlock.ann('named'){$n.name} := $n;
+                            } else {
+                                my @positional := $currentBlock.ann('positional');
+                                $n.annotate('positional_index', +@positional);
+                                @positional.push($n);
+                            }
+                        }
                     }
                 } else {
-                    panic($n.node, 'no declaration found for ' ~ describe($n));
+                    my $decl := lookup($n.name, $currentBlock, |@moreBlocks)<declaration>;
+                    if $decl {
+                        my $tVar := $decl.returns;
+                        if $tVar =:= NQPMu {
+                            panic($n.node, 'still untyped: declaration for ' ~ describe($n));
+                        } else {
+                            $n.returns($tVar);
+                        }
+                    } else {
+                        panic($n.node, 'no declaration found for ' ~ describe($n));
+                    }
                 }
             } elsif isOp($n, 'bind') {
                 my $var := $n[0];
