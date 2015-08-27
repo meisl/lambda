@@ -620,13 +620,13 @@ my sub make-runtime() {
     }
 
     mkRFn('&banner', [], 
-        :returns(FnType.new(Void, str)),
+        #:returns(Type.Fn(Type.Void, Type.Str)),
     -> {
         asNode("This is L v0.0.1"),
     });
 
     mkRFn('&strLit', <s>, 
-        :returns(FnType.new(str, str)), 
+        :returns(Type.Fn(Type.Str, Type.Str)), 
     -> $s {
         mkDeclV(lexVar('foo')),
         #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
@@ -640,7 +640,7 @@ my sub make-runtime() {
     });
     
     mkRFn('&sublist', <list from>, 
-        :returns(FnType.new(NQPArray, FnType.new(int, NQPArray))), 
+        #:returns(Type.Fn(NQPArray, Type.Int, NQPArray)), 
     -> $list, $from {
         my $to    := lexVar('to',       :returns(int));
         my $out   := lexVar('out',      :returns(NQPArray));
@@ -666,7 +666,7 @@ my sub make-runtime() {
     });
 
     mkRFn('&ifTag', <subject tag then else>, 
-        :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(NQPMu, FnType.new(NQPMu, NQPMu))))), 
+        #:returns(Type.Fn(NQPMu, Type.Str, NQPMu, NQPMu, NQPMu)), 
         :tagAndId(nqp::null), 
     -> $subject, $tag, $then, $else, $tagAndId {
         QAST::Op.new(:op<if>,
@@ -696,7 +696,7 @@ my sub make-runtime() {
     });
     
     mkRFn('&->#n', <subject tag index>, 
-        :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(int, NQPMu)))),
+        #:returns(Type.Fn(NQPMu, Type.Str, Type.Int, NQPMu)),
     -> $subject, $tag, $index {
         mkRCall('&ifTag', $subject, $tag,
             QAST::Block.new(:arity(1),
@@ -708,7 +708,7 @@ my sub make-runtime() {
     });
     
     mkRFn('&strOut', <v indent>, 
-        :returns(FnType.new(NQPMu, FnType.new(str, str))), 
+        #:returns(Type.Fn(NQPMu, Type.Str, Type.Str)), 
     -> $v, $indent {
         my $id      := lexVar('id');
         my $info    := lexVar('info');
@@ -788,10 +788,10 @@ my sub make-runtime() {
         )
     });
 
-    my $tv := TypeVar.new;
+    my $tv := Type.Var;
 
     mkRFn('&delayMemo', <x>, 
-        :returns(FnType.new(FnType.new(Void, $tv), FnType.new(Void, $tv))),
+        #:returns(Type.Fn(Type.Fn(Type.Void, $tv), Type.Void, $tv)),
         :wasRun(0), :result(nqp::null), 
     -> $x, $wasRun, $result {
         QAST::Block.new(:arity(0),
@@ -805,10 +805,10 @@ my sub make-runtime() {
         )
     });
     
-    $tv := TypeVar.new;
+    $tv := Type.Var;
 
     mkRFn('&force', <x>, 
-        :returns(FnType.new(FnType.new(Void, $tv), $tv)),
+        #:returns(Type.Fn(Type.Fn(Type.Void, $tv), $tv)),
         :foo<bar>,  # prevent it from being inlined
     -> $x, $foo {
         QAST::Op.new(:op<if>,
@@ -819,7 +819,7 @@ my sub make-runtime() {
     });
     
     mkRFn('&say', <v>, 
-        :returns(FnType.new(TypeVar.new, int)),
+        #:returns(Type.Fn(Type.Var, Type.Int)),
     -> $v {
         mkBind($v, mkForce($v)),
         QAST::Op.new(:op<say>,
@@ -831,10 +831,10 @@ my sub make-runtime() {
         )
     });
     
-    my $tvIn := TypeVar.new;
-    my $tvOut := TypeVar.new;
+    my $tvIn := Type.Var;
+    my $tvOut := Type.Var;
     mkRFn('&apply1', <f a1>,
-        :returns(FnType.new(FnType.new($tvIn, $tvOut), FnType.new($tvIn, $tvOut))),
+        #:returns(Type.Fn(Type.Fn($tvIn, $tvOut), $tvIn, $tvOut)),
         :result(nqp::null), 
     -> $f, $a1, $result {
         mkBind($f, mkForce($f)),
