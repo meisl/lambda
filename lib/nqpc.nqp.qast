@@ -54,7 +54,7 @@
     ║   ╟○ $n :decl(var)
     ║   ╙─lexotic RETURN
     ║     └─:Stmts  ««"\n    my $n := nqp::elems($parent) - 1;\n    if ($p"...
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$n := nqp::elems($parent) - 1"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$n := nqp::elems($parent) - 1"
     ║       │ ├○ $n
     ║       │ └─sub_n  ««"-"
     ║       │   ├─elems  ««"nqp::elems($parent)"
@@ -116,7 +116,7 @@
     ║   ╟─call &insist-isa  ««"$ast, QAST::CompUnit"
     ║   ║ ├○ $ast
     ║   ║ └◙ WVal QAST::CompUnit
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$block := $ast[0]"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$block := $ast[0]"
     ║   ║ ├○ $block
     ║   ║ └─ifnull
     ║   ║   ├─atpos
@@ -126,7 +126,7 @@
     ║   ╟─call &insist-isa  ««"$block, QAST::Block"
     ║   ║ ├○ $block
     ║   ║ └◙ WVal QAST::Block
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@children := $block.list"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"@children := $block.list"
     ║   ║ ├○ @children
     ║   ║ └─callmethod list  ««".list"
     ║   ║   └○ $block
@@ -135,7 +135,7 @@
     ║   ║ │ └○ @children
     ║   ║ └─:Block :blocktype(immediate)  ««"{\n        my $last := @children[+@children - 1];\n"...
     ║   ║   ╟○ $last :decl(var)
-    ║   ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$last := @children[+@children - 1]"
+    ║   ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$last := @children[+@children - 1]"
     ║   ║   ║ ├○ $last
     ║   ║   ║ └─ifnull
     ║   ║   ║   ├─atpos
@@ -200,10 +200,10 @@
     ║   ║ └─call &dump  ««"$ast.main"
     ║   ║   └─callmethod main  ««".main"
     ║   ║     └○ $ast
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@path := []"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"@path := []"
     ║   ║ ├○ @path
     ║   ║ └─list
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$MAIN := findDef($ast, '&MAIN', @path)"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$MAIN := findDef($ast, '&MAIN', @path)"
     ║   ║ ├○ $MAIN
     ║   ║ └─call &findDef  ««"$ast, '&MAIN', @path"
     ║   ║   ├○ $ast
@@ -225,7 +225,7 @@
     ║   ╟─bind  ««":="
     ║   ║ ├○ @path
     ║   ║ └─list
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$MAINcall := findPath(-> $node, @pathUp {\n        "...
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$MAINcall := findPath(-> $node, @pathUp {\n        "...
     ║   ║ ├○ $MAINcall
     ║   ║ └─call &findPath  ««"-> $node, @pathUp {\n            if istype($node, Q"...
     ║   ║   ├─:Block  ««"{\n            if istype($node, QAST::Op) && ($node"...
@@ -264,7 +264,7 @@
     ║   ║   │   │       └◙ SVal "&MAIN"
     ║   ║   │   ├─:Block :blocktype(immediate)  ««"{\n                my $parent := @pathUp[0];\n     "...
     ║   ║   │   │ ╟○ $parent :decl(var)
-    ║   ║   │   │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$parent := @pathUp[0]"
+    ║   ║   │   │ ╟─bind :annotations({"var_initialized" => 1})  ««"$parent := @pathUp[0]"
     ║   ║   │   │ ║ ├○ $parent
     ║   ║   │   │ ║ └─ifnull
     ║   ║   │   │ ║   ├─atpos
@@ -328,7 +328,7 @@
     ║   ║ │ └○ $matcher
     ║   ║ └─:Block :blocktype(immediate)  ««"{\n        my $name := $matcher;\n        $matcher "...
     ║   ║   ╟○ $name :decl(var)
-    ║   ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$name := $matcher"
+    ║   ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$name := $matcher"
     ║   ║   ║ ├○ $name
     ║   ║   ║ └○ $matcher
     ║   ║   ╙─bind  ««":="
@@ -348,7 +348,7 @@
     ║     │ ╟○ $node :decl(param)
     ║     │ ╟○ @pathUp :decl(param)
     ║     │ ╟○ $parent :decl(var)
-    ║     │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$parent := nqp::elems(@pathUp) > 0 ?? @pathUp[0] !!"...
+    ║     │ ╟─bind :annotations({"var_initialized" => 1})  ««"$parent := nqp::elems(@pathUp) > 0 ?? @pathUp[0] !!"...
     ║     │ ║ ├○ $parent
     ║     │ ║ └─if  ««"?? @pathUp[0] !!"
     ║     │ ║   ├─isgt_n  ««">"
@@ -399,7 +399,7 @@
     ║     │       │ └◙ WVal QAST::Op
     ║     │       ├─:Block :blocktype(immediate)  ««"{\n                my @next := qastChildren($node, "...
     ║     │       │ ╟○ @next :decl(var)
-    ║     │       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@next := qastChildren($node, QAST::Block, QAST::Stm"...
+    ║     │       │ ╟─bind :annotations({"var_initialized" => 1})  ««"@next := qastChildren($node, QAST::Block, QAST::Stm"...
     ║     │       │ ║ ├○ @next
     ║     │       │ ║ └─call &qastChildren  ««"$node, QAST::Block, QAST::Stmts, QAST::Stmt, QAST::"...
     ║     │       │ ║   ├○ $node
@@ -419,10 +419,10 @@
     ║   ╟○ $matcher :decl(param)
     ║   ╟○ @out :decl(var)
     ║   ╟○ $current :decl(var)
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@out := []"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"@out := []"
     ║   ║ ├○ @out
     ║   ║ └─list
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$current := 1"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$current := 1"
     ║   ║ ├○ $current
     ║   ║ └◙ IVal 1
     ║   ╟─while  ««"$current {\n        $current := findDef($ast, -> $v"...
@@ -436,7 +436,7 @@
     ║   ║ │ │     ╟○ $var :decl(param)
     ║   ║ │ │     ╟○ @pathUp :decl(param)
     ║   ║ │ │     ╟○ $takeit :decl(var)
-    ║   ║ │ │     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$takeit := 0"
+    ║   ║ │ │     ╟─bind :annotations({"var_initialized" => 1})  ««"$takeit := 0"
     ║   ║ │ │     ║ ├○ $takeit
     ║   ║ │ │     ║ └◙ IVal 0
     ║   ║ │ │     ╟─if  ««"$matcher($var, @pathUp) {\n                $takeit "...
@@ -449,7 +449,7 @@
     ║   ║ │ │     ║   ╟─bind  ««":="
     ║   ║ │ │     ║   ║ ├○ $takeit
     ║   ║ │ │     ║   ║ └◙ IVal 1
-    ║   ║ │ │     ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := nqp::iterator(@out)"
+    ║   ║ │ │     ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$i := nqp::iterator(@out)"
     ║   ║ │ │     ║   ║ ├○ $i
     ║   ║ │ │     ║   ║ └─iterator  ««"nqp::iterator(@out)"
     ║   ║ │ │     ║   ║   └○ @out
@@ -480,7 +480,7 @@
     ║   ╙○ @out
     ╟─bind
     ║ ├○ &findValueNodeInHash :decl(var)
-    ║ └─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable) ))  ««"{\n    nqp::die('findValueNodeInHash expects a fn a"...
+    ║ └─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable)})  ««"{\n    nqp::die('findValueNodeInHash expects a fn a"...
     ║   ╟○ $keyPredicate :decl(param)
     ║   ╟○ $valuePredicate :decl(param)
     ║   ╟○ $hash :decl(param) :default(WVal NO_VALUE)
@@ -524,7 +524,7 @@
     ║       │       ├◙ SVal "findValueNodeInHash expects a QAST::Node as (optional) 3rd arg - got "
     ║       │       └─call &describe  ««"$hash"
     ║       │         └○ $hash
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$found := nqp::null"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$found := nqp::null"
     ║       │ ├○ $found
     ║       │ └─null  ««"nqp::null"
     ║       ├─if  ««"istype($hash, QAST::Op) && $hash.op eq 'hash' {\n  "...
@@ -538,7 +538,7 @@
     ║       │ │   └◙ SVal "hash"
     ║       │ └─:Block :blocktype(immediate)  ««"{\n        my $it := nqp::iterator($hash.list);\n  "...
     ║       │   ╟○ $it :decl(var)
-    ║       │   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$it := nqp::iterator($hash.list)"
+    ║       │   ╟─bind :annotations({"var_initialized" => 1})  ««"$it := nqp::iterator($hash.list)"
     ║       │   ║ ├○ $it
     ║       │   ║ └─iterator  ««"nqp::iterator($hash.list)"
     ║       │   ║   └─callmethod list  ««".list"
@@ -550,7 +550,7 @@
     ║       │     │   └○ $found
     ║       │     ├─:Block :blocktype(immediate)  ««"{\n            my $k := nqp::shift($it);\n         "...
     ║       │     │ ╟○ $k :decl(var)
-    ║       │     │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$k := nqp::shift($it)"
+    ║       │     │ ╟─bind :annotations({"var_initialized" => 1})  ««"$k := nqp::shift($it)"
     ║       │     │ ║ ├○ $k
     ║       │     │ ║ └─shift  ««"nqp::shift($it)"
     ║       │     │ ║   └○ $it
@@ -562,7 +562,7 @@
     ║       │     │   │   └○ $k
     ║       │     │   └─:Block :blocktype(immediate)  ««"{\n                my $v := nqp::shift($it);\n     "...
     ║       │     │     ╟○ $v :decl(var)
-    ║       │     │     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$v := nqp::shift($it)"
+    ║       │     │     ╟─bind :annotations({"var_initialized" => 1})  ««"$v := nqp::shift($it)"
     ║       │     │     ║ ├○ $v
     ║       │     │     ║ └─shift  ««"nqp::shift($it)"
     ║       │     │     ║   └○ $it
@@ -591,19 +591,19 @@
     ║   ║ ├○ @ARGS
     ║   ║ └─call &flatten  ««"@ARGS"
     ║   ║   └○ @ARGS
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$cwd := nqp::cwd()"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$cwd := nqp::cwd()"
     ║   ║ ├○ $cwd
     ║   ║ └─cwd  ««"nqp::cwd()"
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$sep := nqp::x('-', 29)"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$sep := nqp::x('-', 29)"
     ║   ║ ├○ $sep
     ║   ║ └─x  ««"nqp::x('-', 29)"
     ║   ║   ├◙ SVal "-"
     ║   ║   └◙ IVal 29
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$nqpc := NQPCompiler.new()"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$nqpc := NQPCompiler.new()"
     ║   ║ ├○ $nqpc
     ║   ║ └─callmethod new  ««""
     ║   ║   └◙ WVal NQPCompiler
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%opts := hash()"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"%opts := hash()"
     ║   ║ ├○ %opts
     ║   ║ └─call &hash  ««""
     ║   ╟─shift  ««".shift"
@@ -625,16 +625,16 @@
     ║   ║ └◙ SVal "INFO"
     ║   ╟─for  ««"@ARGS {\n        my $file := $_;\n        \n       "...
     ║   ║ ├○ @ARGS
-    ║   ║ ├─:Block :annotations(#`{BOOTHash:}nqp::hash( "handlers", #`{BOOTHash:}nqp::hash( "CATCH", QAST::Stmts ) )) :blocktype(immediate)  ««"{\n        my $file := $_;\n        \n        my $r"...
+    ║   ║ ├─:Block :annotations({"handlers" => {"CATCH" => QAST::Stmts}}) :blocktype(immediate)  ««"{\n        my $file := $_;\n        \n        my $r"...
     ║   ║ │ ╟○ $file :decl(var)
     ║   ║ │ ╟○ $result :decl(var)
     ║   ║ │ ╟○ $_ :decl(param)
     ║   ║ │ ╙─handle
     ║   ║ │   ├─:Stmts  ««"\n        my $file := $_;\n        \n        my $re"...
-    ║   ║ │   │ ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$file := $_"
+    ║   ║ │   │ ├─bind :annotations({"var_initialized" => 1})  ««"$file := $_"
     ║   ║ │   │ │ ├○ $file
     ║   ║ │   │ │ └○ $_
-    ║   ║ │   │ ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$result := $nqpc.compileFile($file, |%opts)"
+    ║   ║ │   │ ├─bind :annotations({"var_initialized" => 1})  ««"$result := $nqpc.compileFile($file, |%opts)"
     ║   ║ │   │ │ ├○ $result
     ║   ║ │   │ │ └─callmethod compileFile  ««"$file, |%opts"
     ║   ║ │   │ │   ├○ $nqpc
@@ -722,7 +722,7 @@
     ╟─:Block :blocktype(immediate)  ««"{\n\n    # Where to search for user source files.\n"...
     ║ ╟○ $?PACKAGE :decl(static) :default((SmartCompiler, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((SmartCompiler, Type object))
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        # in this order (!):\n        self.addst"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        # in this order (!):\n        self.addst"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ @clo :decl(var)
     ║ ║ ╟─callmethod addstage  ««"'ast_save',           :after<ast>"
@@ -735,7 +735,7 @@
     ║ ║ ║ │ └○ self
     ║ ║ ║ ├◙ SVal "ast_clean"
     ║ ║ ║ └◙ SVal "ast_save" :named("before")
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@clo := self.commandline_options()"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"@clo := self.commandline_options()"
     ║ ║ ║ ├○ @clo
     ║ ║ ║ └─callmethod commandline_options  ««""
     ║ ║ ║   └─decont
@@ -782,12 +782,12 @@
     ║ ║   │ │ └○ self
     ║ ║   │ └◙ WVal SmartCompiler
     ║ ║   └─hash
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.user-progname();\n    }"
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.user-progname();\n    }"
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙─callmethod user-progname  ««""
     ║ ║   └─decont
     ║ ║     └○ self
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        $!user_binname := $v unless $v =:= NO_VA"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        $!user_binname := $v unless $v =:= NO_VA"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $v :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╟─unless  ««"$!user_binname := $v unless $v =:= NO_VALUE"
@@ -804,13 +804,13 @@
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   └◙ WVal SmartCompiler
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        @!user_srcpaths;\n    }"
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        @!user_srcpaths;\n    }"
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙○ attribute @!user_srcpaths :returns(VMNull)
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   └◙ WVal SmartCompiler
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        $!log_level := $level unless $level =:= "...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        $!log_level := $level unless $level =:= "...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $level :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╟─unless  ««"$!log_level := $level unless $level =:= NO_VALUE"
@@ -827,7 +827,7 @@
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   └◙ WVal SmartCompiler
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        if self.log_level eq 'INFO' \n          "...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        if self.log_level eq 'INFO' \n          "...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $msg :decl(param)
     ║ ║ ╟○ @moreMsgPieces :decl(param) :slurpy(1)
@@ -860,7 +860,7 @@
     ║ ║   │     └◙ SVal "ERROR"
     ║ ║   └─:Block :blocktype(immediate)  ««"{\n            my str $out := '# [' ~ self.compiler"...
     ║ ║     ╟○ $out :decl(var) :returns(str)
-    ║ ║     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"str $out := '# [' ~ self.compiler_progname ~ \"|$le"...
+    ║ ║     ╟─bind :annotations({"var_initialized" => 1})  ««"str $out := '# [' ~ self.compiler_progname ~ \"|$le"...
     ║ ║     ║ ├○ $out
     ║ ║     ║ └─concat  ««"~"
     ║ ║     ║   ├─concat  ««"~"
@@ -887,14 +887,14 @@
     ║ ║     ║ └◙ IVal 1 :named("nohandler")
     ║ ║     ╙─call &say  ««"$out"
     ║ ║       └○ $out :returns(str)
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        nqp::getattr(self, HLL::Compiler, '$!bac"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        nqp::getattr(self, HLL::Compiler, '$!bac"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙─getattr  ««"nqp::getattr(self, HLL::Compiler, '$!backend')"
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   ├◙ WVal HLL::Compiler
     ║ ║   └◙ SVal "$!backend"
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.language ~ ' v' ~ self.config<versi"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.language ~ ' v' ~ self.config<versi"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙─concat  ««"~"
     ║ ║   ├─concat  ««"~"
@@ -909,7 +909,7 @@
     ║ ║     │ │   └○ self
     ║ ║     │ └◙ SVal "version"
     ║ ║     └◙ WVal NQPMu
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $path;\n        my $file_name := nqp:"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $path;\n        my $file_name := nqp:"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $module_name :decl(param)
     ║ ║ ╟○ @search_paths :decl(param)
@@ -919,7 +919,7 @@
     ║ ║ ║ └◙ WVal NQPMu
     ║ ║ ╟○ $file_name :decl(var)
     ║ ║ ╟○ $path
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$file_name := nqp::join('/', nqp::split('::', $modu"...
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"$file_name := nqp::join('/', nqp::split('::', $modu"...
     ║ ║ ║ ├○ $file_name
     ║ ║ ║ └─concat  ««"~"
     ║ ║ ║   ├─join  ««"nqp::join('/', nqp::split('::', $module_name))"
@@ -950,7 +950,7 @@
     ║ ║ ║     ├○ $path
     ║ ║ ║     └─null  ««"nqp::null"
     ║ ║ ╙○ $path
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.find_file($module_name, @!user_srcp"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.find_file($module_name, @!user_srcp"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $module_name :decl(param) :returns(str)
     ║ ║ ╟○ $ext :decl(param) :named("ext")
@@ -963,18 +963,18 @@
     ║ ║   │ │ └○ self
     ║ ║   │ └◙ WVal SmartCompiler
     ║ ║   └○ $ext :named("ext")
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n            my $loader := nqp::getcurhllsym('Mod"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n            my $loader := nqp::getcurhllsym('Mod"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $module_name :decl(param)
     ║ ║ ╟○ $ext :decl(param) :named("ext")
     ║ ║ ╟○ $with-nqplib :decl(param) :named("with-nqplib") :default(WVal NQPMu)
     ║ ║ ╟○ $loader :decl(var)
     ║ ║ ╟○ @module_paths :decl(var)
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$loader := nqp::getcurhllsym('ModuleLoader')"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"$loader := nqp::getcurhllsym('ModuleLoader')"
     ║ ║ ║ ├○ $loader
     ║ ║ ║ └─getcurhllsym  ««"nqp::getcurhllsym('ModuleLoader')"
     ║ ║ ║   └◙ SVal "ModuleLoader"
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@module_paths := $loader.search_path('module-path')"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"@module_paths := $loader.search_path('module-path')"
     ║ ║ ║ ├○ @module_paths
     ║ ║ ║ └─callmethod search_path  ««"'module-path'"
     ║ ║ ║   ├○ $loader
@@ -996,7 +996,7 @@
     ║ ║   ├○ $module_name
     ║ ║   ├○ @module_paths
     ║ ║   └○ $ext :named("ext")
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $out;\n        my $src_path := self.f"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $out;\n        my $src_path := self.f"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $module_name :decl(param) :returns(str)
     ║ ║ ╟○ @on_behalf :decl(param)
@@ -1007,7 +1007,7 @@
     ║ ║ ╙─lexotic RETURN
     ║ ║   └─:Stmts  ««"\n        my $out;\n        my $src_path := self.fi"...
     ║ ║     ├○ $out
-    ║ ║     ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$src_path := self.find_src($module_name, :ext<nqp>)"
+    ║ ║     ├─bind :annotations({"var_initialized" => 1})  ««"$src_path := self.find_src($module_name, :ext<nqp>)"
     ║ ║     │ ├○ $src_path
     ║ ║     │ └─callmethod find_src  ««"$module_name, :ext<nqp>"
     ║ ║     │   ├─decont
@@ -1019,7 +1019,7 @@
     ║ ║       ├─:Block :blocktype(immediate)  ««"{\n            my $bc_path := self.find_bytecode($m"...
     ║ ║       │ ╟○ $bc_path :decl(var)
     ║ ║       │ ╟○ $clone :decl(var)
-    ║ ║       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$bc_path := self.find_bytecode($module_name, :ext<m"...
+    ║ ║       │ ╟─bind :annotations({"var_initialized" => 1})  ««"$bc_path := self.find_bytecode($module_name, :ext<m"...
     ║ ║       │ ║ ├○ $bc_path
     ║ ║       │ ║ └─callmethod find_bytecode  ««"$module_name, :ext<moarvm>"
     ║ ║       │ ║   ├─decont
@@ -1031,12 +1031,12 @@
     ║ ║       │ ║ └─:Block :blocktype(immediate)  ««"{\n                my $src_time := nqp::stat($src_p"...
     ║ ║       │ ║   ╟○ $src_time :decl(var)
     ║ ║       │ ║   ╟○ $bc_time :decl(var)
-    ║ ║       │ ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$src_time := nqp::stat($src_path, nqp::const::STAT_"...
+    ║ ║       │ ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$src_time := nqp::stat($src_path, nqp::const::STAT_"...
     ║ ║       │ ║   ║ ├○ $src_time
     ║ ║       │ ║   ║ └─stat  ««"nqp::stat($src_path, nqp::const::STAT_MODIFYTIME)"
     ║ ║       │ ║   ║   ├○ $src_path
     ║ ║       │ ║   ║   └─const STAT_MODIFYTIME
-    ║ ║       │ ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$bc_time  := nqp::stat($bc_path,  nqp::const::STAT_"...
+    ║ ║       │ ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$bc_time  := nqp::stat($bc_path,  nqp::const::STAT_"...
     ║ ║       │ ║   ║ ├○ $bc_time
     ║ ║       │ ║   ║ └─stat  ««"nqp::stat($bc_path,  nqp::const::STAT_MODIFYTIME)"
     ║ ║       │ ║   ║   ├○ $bc_path
@@ -1047,7 +1047,7 @@
     ║ ║       │ ║     │ └○ $bc_time
     ║ ║       │ ║     └─call RETURN
     ║ ║       │ ║       └○ $bc_path
-    ║ ║       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$clone := nqp::clone(self)"
+    ║ ║       │ ╟─bind :annotations({"var_initialized" => 1})  ««"$clone := nqp::clone(self)"
     ║ ║       │ ║ ├○ $clone
     ║ ║       │ ║ └─clone  ««"nqp::clone(self)"
     ║ ║       │ ║   └─decont
@@ -1064,7 +1064,7 @@
     ║ ║           ├○ $module_name :returns(str)
     ║ ║           ├◙ SVal "moarvm" :named("ext")
     ║ ║           └◙ IVal 1 :named("with-nqplib")
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        if $code =:= NO_VALUE {\n            %!i"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        if $code =:= NO_VALUE {\n            %!i"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $name :decl(param) :returns(str)
     ║ ║ ╟○ $code :decl(param) :default(WVal NO_VALUE)
@@ -1082,7 +1082,7 @@
     ║ ║   │ └◙ WVal NQPMu
     ║ ║   └─:Block :blocktype(immediate)  ««"{\n            my &code := $code;   # check if it's"...
     ║ ║     ╟○ &code :decl(var)
-    ║ ║     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"&code := $code"
+    ║ ║     ╟─bind :annotations({"var_initialized" => 1})  ««"&code := $code"
     ║ ║     ║ ├○ &code
     ║ ║     ║ └○ $code
     ║ ║     ╙─bindkey  ««":="
@@ -1092,7 +1092,7 @@
     ║ ║       │ └◙ WVal SmartCompiler
     ║ ║       ├○ $name :returns(str)
     ║ ║       └○ &code
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        nqp::printfh($out, $prompt);\n        my"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        nqp::printfh($out, $prompt);\n        my"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $in :decl(param)
     ║ ║ ╟○ $out :decl(param)
@@ -1102,12 +1102,12 @@
     ║ ║ ╟─printfh  ««"nqp::printfh($out, $prompt)"
     ║ ║ ║ ├○ $out
     ║ ║ ║ └○ $prompt
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$line := trim(nqp::readlinefh($in))"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"$line := trim(nqp::readlinefh($in))"
     ║ ║ ║ ├○ $line
     ║ ║ ║ └─call &trim  ««"nqp::readlinefh($in)"
     ║ ║ ║   └─readlinefh  ««"nqp::readlinefh($in)"
     ║ ║ ║     └○ $in
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$cmd := self.interactive_command($line)"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"$cmd := self.interactive_command($line)"
     ║ ║ ║ ├○ $cmd
     ║ ║ ║ └─callmethod interactive_command  ««"$line"
     ║ ║ ║   ├─decont
@@ -1122,7 +1122,7 @@
     ║ ║   │ │ └○ $out :named("out")
     ║ ║   │ └◙ SVal ""
     ║ ║   └○ $line
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        #say('$*AUTOPRINTPOS: ' ~ $*AUTOPRINTPOS"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        #say('$*AUTOPRINTPOS: ' ~ $*AUTOPRINTPOS"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $value :decl(param)
     ║ ║ ╟○ $stdout :decl(param) :default(WVal NQPMu)
@@ -1131,7 +1131,7 @@
     ║ ║   │ ├○ $stdout
     ║ ║   │ └─getstdout  ««"nqp::getstdout()"
     ║ ║   └○ $value
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my %results := {};\n        my sub doit("...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my %results := {};\n        my sub doit("...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $node :decl(param)
     ║ ║ ╟○ %results :decl(var)
@@ -1149,7 +1149,7 @@
     ║ ║ ║   ║     ├◙ SVal "collect_stats expects a QAST::Node - got "
     ║ ║ ║   ║     └─call &describe  ««"$node"
     ║ ║ ║   ║       └○ $node
-    ║ ║ ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$HOWname := $node.HOW.name($node)"
+    ║ ║ ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$HOWname := $node.HOW.name($node)"
     ║ ║ ║   ║ ├○ $HOWname
     ║ ║ ║   ║ └─callmethod name  ««"$node"
     ║ ║ ║   ║   ├─how  ««".HOW"
@@ -1182,7 +1182,7 @@
     ║ ║ ║   ║     │ └◙ WVal QAST::Op
     ║ ║ ║   ║     ├─:Block :blocktype(immediate)  ««"{\n                my $op := $node.op;\n    #      "...
     ║ ║ ║   ║     │ ╟○ $op :decl(var)
-    ║ ║ ║   ║     │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$op := $node.op"
+    ║ ║ ║   ║     │ ╟─bind :annotations({"var_initialized" => 1})  ««"$op := $node.op"
     ║ ║ ║   ║     │ ║ ├○ $op
     ║ ║ ║   ║     │ ║ └─callmethod op  ««".op"
     ║ ║ ║   ║     │ ║   └○ $node
@@ -1299,7 +1299,7 @@
     ║ ║ ║     │ ╙─call &doit  ««"$_"
     ║ ║ ║     │   └○ $_
     ║ ║ ║     └◙ IVal 1 :named("nohandler")
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%results := {}"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"%results := {}"
     ║ ║ ║ ├○ %results
     ║ ║ ║ └─hash
     ║ ║ ╟○ &doit
@@ -1346,12 +1346,12 @@
     ║ ║ ║     │ └◙ SVal "SVal"
     ║ ║ ║     └◙ WVal NQPMu
     ║ ║ ╙○ %results
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $ast := $source.ast();\n        self."...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $ast := $source.ast();\n        self."...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $source :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟○ $ast :decl(var)
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$ast := $source.ast()"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"$ast := $source.ast()"
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─callmethod ast  ««""
     ║ ║ ║   └○ $source
@@ -1382,7 +1382,7 @@
     ║ ║ ║ │   └○ self
     ║ ║ ║ └◙ SVal " done."
     ║ ║ ╙○ $ast
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.log('ast_clean: ', self.user-progna"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.log('ast_clean: ', self.user-progna"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
@@ -1431,12 +1431,12 @@
     ║ ║ ║ └─call &inline_simple_methods  ««"$ast"
     ║ ║ ║   └○ $ast
     ║ ║ ╙○ $ast
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my @inlinecandidates := [];\n        Tre"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my @inlinecandidates := [];\n        Tre"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟○ @inlinecandidates :decl(var)
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@inlinecandidates := []"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"@inlinecandidates := []"
     ║ ║ ║ ├○ @inlinecandidates
     ║ ║ ║ └─list
     ║ ║ ╟─callmethod dfs-up  ««"\n            -> $n, @a {\n                TreeWalk"...
@@ -1504,7 +1504,7 @@
     ║ ║ ║ │ ╟○ @a :decl(param)
     ║ ║ ║ │ ╟○ $name :decl(var)
     ║ ║ ║ │ ╟○ %subDesc :decl(var)
-    ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$name := $n[0].name"
+    ║ ║ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$name := $n[0].name"
     ║ ║ ║ │ ║ ├○ $name
     ║ ║ ║ │ ║ └─callmethod name  ««".name"
     ║ ║ ║ │ ║   └─ifnull
@@ -1512,7 +1512,7 @@
     ║ ║ ║ │ ║     │ ├○ $n
     ║ ║ ║ │ ║     │ └◙ IVal 0
     ║ ║ ║ │ ║     └◙ WVal NQPMu
-    ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%subDesc := collect_params_and_body($n[1], :$name)"
+    ║ ║ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"%subDesc := collect_params_and_body($n[1], :$name)"
     ║ ║ ║ │ ║ ├○ %subDesc
     ║ ║ ║ │ ║ └─call &collect_params_and_body  ««"$n[1], :$name"
     ║ ║ ║ │ ║   ├─ifnull
@@ -1586,7 +1586,7 @@
     ║ ║ ║   ├○ $ast
     ║ ║ ║   └○ @inlinecandidates
     ║ ║ ╙○ $ast
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my %stats := self.collect_stats($ast);\n"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my %stats := self.collect_stats($ast);\n"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
@@ -1650,13 +1650,13 @@
     ║ ║ ╟○ $findStatsHash :decl(var)
     ║ ║ ╟○ $infoHashDef :decl(var)
     ║ ║ ╟○ $infoHash :decl(var)
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%stats := self.collect_stats($ast)"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"%stats := self.collect_stats($ast)"
     ║ ║ ║ ├○ %stats
     ║ ║ ║ └─callmethod collect_stats  ««"$ast"
     ║ ║ ║   ├─decont
     ║ ║ ║   │ └○ self
     ║ ║ ║   └○ $ast
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@statskeyDefs := findDefs($ast, -> $var, @pathUp {\"...
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"@statskeyDefs := findDefs($ast, -> $var, @pathUp {\"...
     ║ ║ ║ ├○ @statskeyDefs
     ║ ║ ║ └─call &findDefs  ««"$ast, -> $var, @pathUp {\n            nqp::index($v"...
     ║ ║ ║   ├○ $ast
@@ -1669,7 +1669,7 @@
     ║ ║ ║       │ │ └○ $var
     ║ ║ ║       │ └◙ SVal "STATS_"
     ║ ║ ║       └◙ IVal -1
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@statskeys := []"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"@statskeys := []"
     ║ ║ ║ ├○ @statskeys
     ║ ║ ║ └─list
     ║ ║ ╟─for  ««"@statskeyDefs {\n            my $v := $_[1][0];\n  "...
@@ -1677,7 +1677,7 @@
     ║ ║ ║ ├─:Block :blocktype(immediate)  ««"{\n            my $v := $_[1][0];\n            if i"...
     ║ ║ ║ │ ╟○ $v :decl(var)
     ║ ║ ║ │ ╟○ $_ :decl(param)
-    ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$v := $_[1][0]"
+    ║ ║ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$v := $_[1][0]"
     ║ ║ ║ │ ║ ├○ $v
     ║ ║ ║ │ ║ └─ifnull
     ║ ║ ║ │ ║   ├─atpos
@@ -1702,14 +1702,14 @@
     ║ ║ ╟○ &svalPred
     ║ ║ ╟○ &ivalPred
     ║ ║ ╟○ &opPred
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$findStatsHash := findValueNodeInHash(svalPred('sta"...
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"$findStatsHash := findValueNodeInHash(svalPred('sta"...
     ║ ║ ║ ├○ $findStatsHash
     ║ ║ ║ └─call &findValueNodeInHash  ««"svalPred('stats'), opPred('hash')"
     ║ ║ ║   ├─call &svalPred  ««"'stats'"
     ║ ║ ║   │ └◙ SVal "stats"
     ║ ║ ║   └─call &opPred  ««"'hash'"
     ║ ║ ║     └◙ SVal "hash"
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$infoHashDef := findDef($ast, -> $var, @pathUp {\n "...
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"$infoHashDef := findDef($ast, -> $var, @pathUp {\n "...
     ║ ║ ║ ├○ $infoHashDef
     ║ ║ ║ └─call &findDef  ««"$ast, -> $var, @pathUp {\n            if $var.name "...
     ║ ║ ║   ├○ $ast
@@ -1732,7 +1732,7 @@
     ║ ║ ║           │ │ └◙ WVal NQPMu
     ║ ║ ║           │ └◙ IVal 1
     ║ ║ ║           └◙ WVal NQPMu
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$infoHash := $findStatsHash($infoHashDef[1])"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"$infoHash := $findStatsHash($infoHashDef[1])"
     ║ ║ ║ ├○ $infoHash
     ║ ║ ║ └─call  ««"$infoHashDef[1]"
     ║ ║ ║   ├○ $findStatsHash
@@ -1752,7 +1752,7 @@
     ║ ║ ║ │   └◙ SVal "hash"
     ║ ║ ║ ├─:Block :blocktype(immediate)  ««"{\n            my $findStatNode := -> $statKey {\n "...
     ║ ║ ║ │ ╟○ $findStatNode :decl(var)
-    ║ ║ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$findStatNode := -> $statKey {\n                fin"...
+    ║ ║ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$findStatNode := -> $statKey {\n                fin"...
     ║ ║ ║ │ ║ ├○ $findStatNode
     ║ ║ ║ │ ║ └─:Block  ««"{\n                findValueNodeInHash(svalPred($st"...
     ║ ║ ║ │ ║   ╟○ $statKey :decl(param)
@@ -1766,7 +1766,7 @@
     ║ ║ ║ │ ║ ├─:Block :blocktype(immediate)  ««"{\n                my $node := $findStatNode($_);\n"...
     ║ ║ ║ │ ║ │ ╟○ $node :decl(var)
     ║ ║ ║ │ ║ │ ╟○ $_ :decl(param)
-    ║ ║ ║ │ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$node := $findStatNode($_)"
+    ║ ║ ║ │ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$node := $findStatNode($_)"
     ║ ║ ║ │ ║ │ ║ ├○ $node
     ║ ║ ║ │ ║ │ ║ └─call  ««"$_"
     ║ ║ ║ │ ║ │ ║   ├○ $findStatNode
@@ -1819,14 +1819,14 @@
     ║ ║ ║     │     └○ $_
     ║ ║ ║     └◙ IVal 1 :named("nohandler")
     ║ ║ ╙○ $ast
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $qastfileName := self.user-progname ~"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $qastfileName := self.user-progname ~"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟○ $qastfileName :decl(var)
     ║ ║ ╙─lexotic RETURN
     ║ ║   └─:Stmts  ««"\n        my $qastfileName := self.user-progname ~ "...
-    ║ ║     ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$qastfileName := self.user-progname ~ '.qast'"
+    ║ ║     ├─bind :annotations({"var_initialized" => 1})  ««"$qastfileName := self.user-progname ~ '.qast'"
     ║ ║     │ ├○ $qastfileName
     ║ ║     │ └─concat  ««"~"
     ║ ║     │   ├─callmethod user-progname  ««".user-progname"
@@ -1853,7 +1853,7 @@
     ║ ║     │ ├◙ SVal "ast_save: QAST dump written to "
     ║ ║     │ └○ $qastfileName
     ║ ║     └○ $ast
-    ║ ╙─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        #self.log('write_bytecode: adverbs=' ~ d"...
+    ║ ╙─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        #self.log('write_bytecode: adverbs=' ~ d"...
     ║   ╟○ self :decl(param) :returns(SmartCompiler)
     ║   ╟○ $mast :decl(param)
     ║   ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
@@ -1897,7 +1897,7 @@
     ║   ║ │   └◙ SVal "\")"
     ║   ║ └─:Block :blocktype(immediate)  ««"{\n            my $assmbler := nqp::getcomp('MAST')"...
     ║   ║   ╟○ $assmbler :decl(var)
-    ║   ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$assmbler := nqp::getcomp('MAST')"
+    ║   ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$assmbler := nqp::getcomp('MAST')"
     ║   ║   ║ ├○ $assmbler
     ║   ║   ║ └─getcomp  ««"nqp::getcomp('MAST')"
     ║   ║   ║   └◙ SVal "MAST"
@@ -1924,7 +1924,7 @@
     ╟─:Block :blocktype(immediate)  ««"{\n    \n    method statement_control:sym<use>($/) "...
     ║ ╟○ $?PACKAGE :decl(static) :default((NQPActions, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((NQPActions, Type object))
-    ║ ╙─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        my $out;\n\n        my @expPathUp := [];"...
+    ║ ╙─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $out;\n\n        my @expPathUp := [];"...
     ║   ╟○ self :decl(param) :returns(NQPActions)
     ║   ╟○ $/ :decl(param)
     ║   ╟─bind  ««"$out"
@@ -1933,10 +1933,10 @@
     ║   ╟○ @expPathUp :decl(var)
     ║   ╟○ $export :decl(var)
     ║   ╟○ $out
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@expPathUp := []"
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"@expPathUp := []"
     ║   ║ ├○ @expPathUp
     ║   ║ └─list
-    ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$export := findPath(-> $node, @pathUp {\n          "...
+    ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$export := findPath(-> $node, @pathUp {\n          "...
     ║   ║ ├○ $export
     ║   ║ └─call &findPath  ««"-> $node, @pathUp {\n            istype($node, QAST"...
     ║   ║   ├─:Block  ««"{\n            istype($node, QAST::Var) && ($node.n"...
@@ -1965,7 +1965,7 @@
     ║   ║ └─:Block :blocktype(immediate)  ««"{\n            my $deps := findPath(-> $node, @path"...
     ║   ║   ╟○ $deps :decl(var)
     ║   ║   ╟○ $depOut :decl(var)
-    ║   ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$deps := findPath(-> $node, @pathUp {\n            "...
+    ║   ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$deps := findPath(-> $node, @pathUp {\n            "...
     ║   ║   ║ ├○ $deps
     ║   ║   ║ └─call &findPath  ««"-> $node, @pathUp {\n                if (+@pathUp >"...
     ║   ║   ║   ├─:Block  ««"{\n                if (+@pathUp > 1) && @pathUp[1] "...
@@ -1991,14 +1991,14 @@
     ║   ║   ║   │   ├─:Block :blocktype(immediate)  ««"{\n                    my $parent := @pathUp[0];\n "...
     ║   ║   ║   │   │ ╟○ $parent :decl(var)
     ║   ║   ║   │   │ ╟○ $brother :decl(var)
-    ║   ║   ║   │   │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$parent := @pathUp[0]"
+    ║   ║   ║   │   │ ╟─bind :annotations({"var_initialized" => 1})  ««"$parent := @pathUp[0]"
     ║   ║   ║   │   │ ║ ├○ $parent
     ║   ║   ║   │   │ ║ └─ifnull
     ║   ║   ║   │   │ ║   ├─atpos
     ║   ║   ║   │   │ ║   │ ├○ @pathUp
     ║   ║   ║   │   │ ║   │ └◙ IVal 0
     ║   ║   ║   │   │ ║   └◙ WVal NQPMu
-    ║   ║   ║   │   │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$brother := $parent[0]"
+    ║   ║   ║   │   │ ╟─bind :annotations({"var_initialized" => 1})  ««"$brother := $parent[0]"
     ║   ║   ║   │   │ ║ ├○ $brother
     ║   ║   ║   │   │ ║ └─ifnull
     ║   ║   ║   │   │ ║   ├─atpos
@@ -2046,7 +2046,7 @@
     ║   ║   ║   ║ └─callmethod new  ««":op<list>"
     ║   ║   ║   ║   ├◙ WVal QAST::Op
     ║   ║   ║   ║   └◙ SVal "list" :named("op")
-    ║   ║   ║   ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$depsBinding := QAST::Op.new(:op<bind>,\n          "...
+    ║   ║   ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$depsBinding := QAST::Op.new(:op<bind>,\n          "...
     ║   ║   ║   ║ ├○ $depsBinding
     ║   ║   ║   ║ └─callmethod new  ««":op<bind>,\n                    QAST::Var.new(\n   "...
     ║   ║   ║   ║   ├◙ WVal QAST::Op
@@ -2087,7 +2087,7 @@
     ║   ║   ║   │   │ └◙ SVal "name"
     ║   ║   ║   │   └◙ WVal NQPMu
     ║   ║   ║   └◙ SVal "\""
-    ║   ║   ╙─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$depOut := $*COMPILER.compileDependency(~$/<name>, [])"
+    ║   ║   ╙─bind :annotations({"var_initialized" => 1})  ««"$depOut := $*COMPILER.compileDependency(~$/<name>, [])"
     ║   ║     ├○ $depOut
     ║   ║     └─callmethod compileDependency  ««"~$/<name>, []"
     ║   ║       ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
@@ -2120,13 +2120,13 @@
     ║   ╙─callmethod make  ««"make "
     ║     ├○ $/
     ║     └○ $out
-    ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$needsCompilation := 0"
+    ╟─bind :annotations({"var_initialized" => 1})  ««"$needsCompilation := 0"
     ║ ├○ $needsCompilation
     ║ └◙ IVal 0
     ╟─:Block :blocktype(immediate)  ««"{\n\n    method BUILD() {\n        self.language('n"...
     ║ ╟○ $?PACKAGE :decl(static) :default((NQPCompiler, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((NQPCompiler, Type object))
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.language('nqp');\n        self.pars"...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.language('nqp');\n        self.pars"...
     ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╙─lexotic RETURN
     ║ ║   └─:Stmts  ««"\n        self.language('nqp');\n        self.parse"...
@@ -2145,7 +2145,7 @@
     ║ ║     └─call RETURN
     ║ ║       └─decont
     ║ ║         └○ self
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        self.log('parse: ', self.user-progname, "...
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.log('parse: ', self.user-progname, "...
     ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╟○ $source :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
@@ -2159,11 +2159,11 @@
     ║ ║ ║ │ └─decont
     ║ ║ ║ │   └○ self
     ║ ║ ║ └◙ SVal "..."
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$*COMPILER := self"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"$*COMPILER := self"
     ║ ║ ║ ├○┬VarWithFallback contextual $*COMPILER :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$COMPILER")) ((die_s) (SVal "Contextual $*COMPILER not found")))
     ║ ║ ║ └─decont
     ║ ║ ║   └○ self
-    ║ ║ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$out := super(self, 'parse', $source, |%adverbs)"
+    ║ ║ ╟─bind :annotations({"var_initialized" => 1})  ««"$out := super(self, 'parse', $source, |%adverbs)"
     ║ ║ ║ ├○ $out
     ║ ║ ║ └─call &super  ««"self, 'parse', $source, |%adverbs"
     ║ ║ ║   ├─decont
@@ -2180,16 +2180,16 @@
     ║ ║ ║ │   └○ self
     ║ ║ ║ └◙ SVal " done."
     ║ ║ ╙○ $out
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{ 'nqpc' }"
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{ 'nqpc' }"
     ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╟○ $value :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╙◙ SVal "nqpc"
-    ║ ╟─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        nqp::rethrow($error);\n    }"
+    ║ ╟─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        nqp::rethrow($error);\n    }"
     ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╟○ $error :decl(param)
     ║ ║ ╙─rethrow  ««"nqp::rethrow($error)"
     ║ ║   └○ $error
-    ║ ╙─:Block :annotations(#`{BOOTHash:}nqp::hash( "compile_time_dummy", (BOOTCode, invokable), "code_obj", (NQPRoutine, invokable) )) :blocktype(declaration_static)  ««"{\n        # replace all backslashes with slashes\n"...
+    ║ ╙─:Block :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        # replace all backslashes with slashes\n"...
     ║   ╟○ self :decl(param) :returns(NQPCompiler)
     ║   ╟○ $src_path :decl(param)
     ║   ╟○ $target :decl(param) :named("target") :default(SVal "mbc")
@@ -2223,7 +2223,7 @@
     ║       │ │ └─filereadable  ««"nqp::filereadable($src_path)"
     ║       │ │   └○ $src_path
     ║       │ └◙ WVal NQPMu
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$cwd := nqp::join('/', nqp::split('\\\\', nqp::cwd))"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$cwd := nqp::join('/', nqp::split('\\\\', nqp::cwd))"
     ║       │ ├○ $cwd
     ║       │ └─join  ««"nqp::join('/', nqp::split('\\\\', nqp::cwd))"
     ║       │   ├◙ SVal "/"
@@ -2255,11 +2255,11 @@
     ║       │   └─substr  ««"nqp::substr($src_path, 2)"
     ║       │     ├○ $src_path
     ║       │     └◙ IVal 2
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$l := nqp::chars($src_path)"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$l := nqp::chars($src_path)"
     ║       │ ├○ $l
     ║       │ └─chars  ««"nqp::chars($src_path)"
     ║       │   └○ $src_path
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$x := nqp::rindex($src_path, '.')"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$x := nqp::rindex($src_path, '.')"
     ║       │ ├○ $x
     ║       │ └─rindex  ««"nqp::rindex($src_path, '.')"
     ║       │   ├○ $src_path
@@ -2274,19 +2274,19 @@
     ║       │   └─concat
     ║       │     ├◙ SVal "invalid source file (no extension): "
     ║       │     └○ $src_path
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$src_ext := nqp::substr($src_path, $x + 1)"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$src_ext := nqp::substr($src_path, $x + 1)"
     ║       │ ├○ $src_ext
     ║       │ └─substr  ««"nqp::substr($src_path, $x + 1)"
     ║       │   ├○ $src_path
     ║       │   └─add_n  ««"+"
     ║       │     ├○ $x
     ║       │     └◙ IVal 1
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := nqp::rindex($src_path, '/')"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$i := nqp::rindex($src_path, '/')"
     ║       │ ├○ $i
     ║       │ └─rindex  ««"nqp::rindex($src_path, '/')"
     ║       │   ├○ $src_path
     ║       │   └◙ SVal "/"
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$src_name := nqp::substr($src_path, $i + 1, $x - $i"...
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$src_name := nqp::substr($src_path, $i + 1, $x - $i"...
     ║       │ ├○ $src_name
     ║       │ └─substr  ««"nqp::substr($src_path, $i + 1, $x - $i - 1)"
     ║       │   ├○ $src_path
@@ -2298,7 +2298,7 @@
     ║       │     │ ├○ $x
     ║       │     │ └○ $i
     ║       │     └◙ IVal 1
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$src_dir := nqp::substr($src_path, 0, max(0, $i))"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$src_dir := nqp::substr($src_path, 0, max(0, $i))"
     ║       │ ├○ $src_dir
     ║       │ └─substr  ««"nqp::substr($src_path, 0, max(0, $i))"
     ║       │   ├○ $src_path
@@ -2306,7 +2306,7 @@
     ║       │   └─call &max  ««"0, $i"
     ║       │     ├◙ IVal 0
     ║       │     └○ $i
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$src_lib := ''"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$src_lib := ''"
     ║       │ ├○ $src_lib
     ║       │ └◙ SVal ""
     ║       ├─for  ««"self.user_srcpaths {\n            if nqp::index($sr"...
@@ -2339,10 +2339,10 @@
     ║       │ └─bind  ««":="
     ║       │   ├○ $src_dir
     ║       │   └◙ SVal "."
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$vm_ext  := 'moarvm'"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$vm_ext  := 'moarvm'"
     ║       │ ├○ $vm_ext
     ║       │ └◙ SVal "moarvm"
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$vm_dir  := 'blib'"
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$vm_dir  := 'blib'"
     ║       │ ├○ $vm_dir
     ║       │ └◙ SVal "blib"
     ║       ├○ $vm_path
@@ -2406,7 +2406,7 @@
     ║       │ ├─decont
     ║       │ │ └○ self
     ║       │ └○ $vm_path
-    ║       ├─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$ast_path := \"$src_path.qast\""
+    ║       ├─bind :annotations({"var_initialized" => 1})  ««"$ast_path := \"$src_path.qast\""
     ║       │ ├○ $ast_path
     ║       │ └─concat
     ║       │   ├○ $src_path
@@ -2437,7 +2437,7 @@
     ║           ╟─bind  ««"$to"
     ║           ║ ├○ $to :decl(var)
     ║           ║ └◙ WVal NQPMu
-    ║           ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@opts := [\n                #'--module-path=L',\n  "...
+    ║           ╟─bind :annotations({"var_initialized" => 1})  ««"@opts := [\n                #'--module-path=L',\n  "...
     ║           ║ ├○ @opts
     ║           ║ └─list
     ║           ╟─if  ««"@opts.push(\"--target=$target\") if $target"
@@ -2486,7 +2486,7 @@
     ║           ║     └─concat  ««"~"
     ║           ║       ├◙ SVal "--output="
     ║           ║       └○ $ast_path
-    ║           ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@args := nqp::clone(@opts)"
+    ║           ╟─bind :annotations({"var_initialized" => 1})  ««"@args := nqp::clone(@opts)"
     ║           ║ ├○ @args
     ║           ║ └─clone  ««"nqp::clone(@opts)"
     ║           ║   └○ @opts
@@ -2503,7 +2503,7 @@
     ║           ║ └─join  ««"nqp::join(' ', @args)"
     ║           ║   ├◙ SVal " "
     ║           ║   └○ @args
-    ║           ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$*USER_FILE := $src_path"
+    ║           ╟─bind :annotations({"var_initialized" => 1})  ««"$*USER_FILE := $src_path"
     ║           ║ ├○┬VarWithFallback contextual $*USER_FILE :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$USER_FILE")) ((die_s) (SVal "Contextual $*USER_FILE not found")))
     ║           ║ └○ $src_path
     ║           ╟○ $result
@@ -2564,11 +2564,11 @@
     ║           ║   │       └◙ SVal " - but got null result...!?"
     ║           ║   └─call RETURN
     ║           ║     └○ $result
-    ║           ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$msg := nqp::getmessage($error)"
+    ║           ╟─bind :annotations({"var_initialized" => 1})  ««"$msg := nqp::getmessage($error)"
     ║           ║ ├○ $msg
     ║           ║ └─getmessage  ««"nqp::getmessage($error)"
     ║           ║   └○ $error
-    ║           ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$msglc := nqp::lc($msg)"
+    ║           ╟─bind :annotations({"var_initialized" => 1})  ««"$msglc := nqp::lc($msg)"
     ║           ║ ├○ $msglc
     ║           ║ └─lc  ««"nqp::lc($msg)"
     ║           ║   └○ $msg
@@ -2595,7 +2595,7 @@
     ║           ║ │ ║   ├○ $msglc
     ║           ║ │ ║   ├◙ SVal "'"
     ║           ║ │ ║   └○ $from
-    ║           ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$file := nqp::substr($msg, $from, $to - $from)"
+    ║           ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$file := nqp::substr($msg, $from, $to - $from)"
     ║           ║ │ ║ ├○ $file
     ║           ║ │ ║ └─substr  ««"nqp::substr($msg, $from, $to - $from)"
     ║           ║ │ ║   ├○ $msg
@@ -2635,7 +2635,7 @@
     ║           ║   │ ║   ├○ $msglc
     ║           ║   │ ║   ├◙ SVal "'"
     ║           ║   │ ║   └○ $from
-    ║           ║   │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$file := nqp::substr($msg, $from, $to - $from)"
+    ║           ║   │ ╟─bind :annotations({"var_initialized" => 1})  ««"$file := nqp::substr($msg, $from, $to - $from)"
     ║           ║   │ ║ ├○ $file
     ║           ║   │ ║ └─substr  ««"nqp::substr($msg, $from, $to - $from)"
     ║           ║   │ ║   ├○ $msg
@@ -2643,7 +2643,7 @@
     ║           ║   │ ║   └─sub_n  ««"-"
     ║           ║   │ ║     ├○ $to
     ║           ║   │ ║     └○ $from
-    ║           ║   │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$line := 1"
+    ║           ║   │ ╟─bind :annotations({"var_initialized" => 1})  ««"$line := 1"
     ║           ║   │ ║ ├○ $line
     ║           ║   │ ║ └◙ IVal 1
     ║           ║   │ ╙─bind  ««":="
@@ -2695,7 +2695,7 @@
     ║           ║     │ ║     ├─chars  ««"nqp::chars($msglc)"
     ║           ║     │ ║     │ └○ $msglc
     ║           ║     │ ║     └○ $from
-    ║           ║     │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$line := nqp::substr($msg, $from, $to - $from)"
+    ║           ║     │ ╟─bind :annotations({"var_initialized" => 1})  ««"$line := nqp::substr($msg, $from, $to - $from)"
     ║           ║     │ ║ ├○ $line
     ║           ║     │ ║ └─substr  ««"nqp::substr($msg, $from, $to - $from)"
     ║           ║     │ ║   ├○ $msg
@@ -2777,7 +2777,7 @@
     ║           ║       │ ║     ├─chars  ««"nqp::chars($msglc)"
     ║           ║       │ ║     │ └○ $msglc
     ║           ║       │ ║     └○ $from
-    ║           ║       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$line := nqp::substr($msg, $from, $to - $from)"
+    ║           ║       │ ╟─bind :annotations({"var_initialized" => 1})  ««"$line := nqp::substr($msg, $from, $to - $from)"
     ║           ║       │ ║ ├○ $line
     ║           ║       │ ║ └─substr  ««"nqp::substr($msg, $from, $to - $from)"
     ║           ║       │ ║   ├○ $msg
@@ -2792,16 +2792,16 @@
     ║           ║       │ ║   └─sub_n  ««"-"
     ║           ║       │ ║     ├○ $line
     ║           ║       │ ║     └◙ IVal 1
-    ║           ║       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"@lines := linesFrom($src_path, $line, 2)"
+    ║           ║       │ ╟─bind :annotations({"var_initialized" => 1})  ««"@lines := linesFrom($src_path, $line, 2)"
     ║           ║       │ ║ ├○ @lines
     ║           ║       │ ║ └─call &linesFrom  ««"$src_path, $line, 2"
     ║           ║       │ ║   ├○ $src_path
     ║           ║       │ ║   ├○ $line
     ║           ║       │ ║   └◙ IVal 2
-    ║           ║       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$i := 0"
+    ║           ║       │ ╟─bind :annotations({"var_initialized" => 1})  ««"$i := 0"
     ║           ║       │ ║ ├○ $i
     ║           ║       │ ║ └◙ IVal 0
-    ║           ║       │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$n := nqp::elems(@lines)"
+    ║           ║       │ ╟─bind :annotations({"var_initialized" => 1})  ««"$n := nqp::elems(@lines)"
     ║           ║       │ ║ ├○ $n
     ║           ║       │ ║ └─elems  ««"nqp::elems(@lines)"
     ║           ║       │ ║   └○ @lines
@@ -2813,14 +2813,14 @@
     ║           ║       │ ║ ├─:Block :blocktype(immediate)  ««"{\n                    my $line := @lines[$i];\n   "...
     ║           ║       │ ║ │ ╟○ $line :decl(var)
     ║           ║       │ ║ │ ╟○ $at :decl(var)
-    ║           ║       │ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$line := @lines[$i]"
+    ║           ║       │ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$line := @lines[$i]"
     ║           ║       │ ║ │ ║ ├○ $line
     ║           ║       │ ║ │ ║ └─ifnull
     ║           ║       │ ║ │ ║   ├─atpos
     ║           ║       │ ║ │ ║   │ ├○ @lines
     ║           ║       │ ║ │ ║   │ └○ $i
     ║           ║       │ ║ │ ║   └◙ WVal NQPMu
-    ║           ║       │ ║ │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$at := nqp::index($line, '=')"
+    ║           ║       │ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$at := nqp::index($line, '=')"
     ║           ║       │ ║ │ ║ ├○ $at
     ║           ║       │ ║ │ ║ └─index  ««"nqp::index($line, '=')"
     ║           ║       │ ║ │ ║   ├○ $line
@@ -2883,7 +2883,7 @@
     ║           ║         │ ╟─bind  ««"$column"
     ║           ║         │ ║ ├○ $column :decl(var)
     ║           ║         │ ║ └◙ WVal NQPMu
-    ║           ║         │ ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"$line := 1"
+    ║           ║         │ ╟─bind :annotations({"var_initialized" => 1})  ««"$line := 1"
     ║           ║         │ ║ ├○ $line
     ║           ║         │ ║ └◙ IVal 1
     ║           ║         │ ╟○ $column

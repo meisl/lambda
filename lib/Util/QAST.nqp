@@ -53,6 +53,10 @@ class Util::QAST {
         my $extraStr := trim($node.dump_extra_node_info);
         
         my @specials := [];
+        my $ty := $node.ann('ty');
+        @specials.push('::(' ~ $ty.Str ~ ')')
+            if $ty;
+
         unless self.isVal($node) {
             my $returns := $node.returns;
             unless $returns =:= NQPMu {
@@ -76,9 +80,42 @@ class Util::QAST {
             }
         }
 
+        my sub my_describe($x, :$except = []) {
+            if nqp::islist($x) {
+                '[' ~ join(', ', $x, :map(-> $z { my_describe($z) })) ~ ']';
+            } elsif nqp::ishash($x) {
+                my %except := {};
+                if nqp::isstr($except) {
+                    %except{$except} := 1;
+                } else {
+                    %except{$_} := 1 for $except;
+                }
+                my @pairs := [];
+                for $x {
+                    my $k := $_.key;
+                    next if %except{$k};
+                    my $v := $_.value;
+                    @pairs.push(my_describe($k) ~ ' => ' ~ my_describe($v));
+                }
+                '{' ~ join(', ', @pairs) ~ '}';
+            } elsif nqp::isconcrete($x) {
+                if nqp::isstr($x) && !nqp::isnull_s($x)  { # Note: nqp::isconcrete(nqp::null_s()) is true
+                    '"' ~ nqp::escape($x) ~ '"';
+                } elsif nqp::isint($x) || nqp::isnum($x) {
+                    ~$x;
+                } else {
+                    describe($x);
+                }
+            } else {
+                describe($x);
+            }
+        }
+        
+
         my %annotations := nqp::getattr($node, QAST::Node, '%!annotations');
-        if %annotations {
-            @specials.push(':annotations(' ~ describe(%annotations) ~ ')');
+        if %annotations && (!$node.has_ann('ty') || nqp::elems(%annotations) > 1) {
+            #@specials.push(':annotations(' ~ describe(%annotations) ~ ')');
+            @specials.push(':annotations(' ~ my_describe(%annotations, :except<ty>) ~ ')');
         }
 
 

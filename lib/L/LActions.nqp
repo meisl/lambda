@@ -14,6 +14,187 @@ my class Type {
         nqp::die('cannot instantiate class Type');
     }
 
+    method set($n) {
+        insist-isa($n, QAST::Node);
+        nqp::die('cannot use method set on class Type; need a Type instance')
+            unless nqp::isconcrete(self);
+        $n.annotate('ty', self);
+    }
+
+    # must put methods before subclasses s.t. they're are inherited
+    # however, we need to call the subs defined *after* the subclasses
+    method isVoid()     { isVoid(self)     }
+    method isStrType()  { isStrType(self)  }
+    method isIntType()  { isIntType(self)  }
+    method isNumType()  { isNumType(self)  }
+    method isBoolType() { isBoolType(self) }
+    method isTypeVar()  { isTypeVar(self)  }
+    method isFnType()   { isFnType(self)   }
+    method isSumType()  { isSumType(self)  }
+
+    # native types (corresponding to NQP's str, int, num)
+
+    my class Str is Type {
+        method Str() { "Str" }
+    }
+    my $Str := nqp::create(Str);
+    method Str() { $Str }
+
+
+    my class Int is Type {
+        method Str() { "Int" }
+    }
+    my $Int := nqp::create(Int);
+    method Int() { $Int }
+
+
+    my class Num is Type {
+        method Str() { "Num" }
+    }
+    my $Num := nqp::create(Num);
+    method Num() { $Num }
+
+
+    # the Bool type
+
+    my class Bool is Type {
+        method Str() { "Bool" }
+    }
+    my $Bool := nqp::create(Bool);
+    method BOOL() { $Bool }
+
+
+    # the Void type, only to be used in Fn types
+
+    my class Void is Type {
+        method Str() { "Void" }
+    }
+    my $Void := nqp::create(Void);
+    method Void() { $Void }
+
+
+    # the DontCare type, to be for ignored parameters
+
+    my class DontCare is Type {
+        method Str() { "_" }
+    }
+    my $DontCare := nqp::create(DontCare);
+    method DontCare() { $DontCare }
+    method _() { $DontCare }
+
+
+    # type variables
+
+    my %type-vars := {};
+    my class Var is Type {
+        has $!name;
+        method new() {
+            my $name := 't' ~ nqp::elems(%type-vars);
+            my $instance := nqp::create(self);
+            nqp::bindattr($instance, self, '$!name', $name);
+            %type-vars{$name} := $instance;
+            $instance;
+        }
+        method Str() { $!name }
+    }
+    method Var() { Var.new }
+
+
+    # function types
+
+    my %fn-types := {};
+    my class Fn is Type {
+        has $!in;
+        has $!out;
+        has $!str;
+        method new($in, $out) {
+            my $str := toStr($in, :parens) ~ ' -> ' ~ toStr($out);
+            my $instance := %fn-types{$str};
+            unless $instance {
+                $instance := nqp::create(self);
+                nqp::bindattr($instance, self, '$!in',  $in);
+                nqp::bindattr($instance, self, '$!out', $out);
+                nqp::bindattr($instance, self, '$!str', $str);
+                %fn-types{$str} := $instance;
+            }
+            $instance;
+        }
+        method Str() { $!str }
+        method in()  { $!in  }
+        method out() { $!out }
+    }
+    method Fn($a, $b, *@more) {
+        @more.unshift($b);
+        @more.unshift($a);
+        my $out := @more.pop;
+        while @more {
+            $out := Fn.new(@more.pop, $out);
+        }
+        $out;
+    }
+
+
+    # sum types
+
+    my %sum-types := {};
+    my class Sum is Type {
+        has $left;
+        has $right;
+        has $!str;
+        method new($left, $right) {
+
+            my $str := toStr($left, :parens) ~ ' + ' ~ toStr($right, :parens);
+            my $instance := %fn-types{$str};
+            unless $instance {
+                $instance := nqp::create(self);
+                nqp::bindattr($instance, self, '$!left',  $left);
+                nqp::bindattr($instance, self, '$!right', $right);
+                nqp::bindattr($instance, self, '$!str',   $str);
+                %fn-types{$str} := $instance;
+            }
+            $instance;
+        }
+        method Str() { $!str }
+    }
+
+
+    my sub isVoid($t)     { $t =:= Type.Void }
+    my sub isStrType($t)  { $t =:= Type.Str  }
+    my sub isIntType($t)  { $t =:= Type.Int  }
+    my sub isNumType($t)  { $t =:= Type.Num  }
+    my sub isBoolType($t) { $t =:= Type.BOOL }
+    my sub isTypeVar($t)  { nqp::istype($t, Var) }
+    my sub isFnType($t)   { nqp::istype($t, Fn)  }
+    my sub isSumType($t)  { nqp::istype($t, Sum) }
+
+    my sub toStr($t, :$parens) {
+        nqp::die('invalid type argument ' ~ describe($t))
+            unless nqp::istype($t, Type) && nqp::isconcrete($t);
+        if $t.isFnType && $parens {
+            '(' ~ $t.Str ~ ')';
+        } else {
+            $t.Str;
+        }
+    }
+
+    my %op-types := nqp::hash(
+        'concat', Type.Fn($Str, $Str, $Str),
+        'escape', Type.Fn($Str, $Str),
+        'isgt_i', Type.Fn($Int, $Int, $Bool),
+    );
+    method ofOp($op) {
+        unless nqp::isstr($op) {
+            nqp::die('expected a str - got ' ~ describe($op));
+        }
+        %op-types{$op};
+    }
+    
+    
+    method of($n) {
+        insist-isa($n, QAST::Node);
+        $n.ann('ty');
+    }
+
 }
 
 my class Void is Type {
@@ -46,6 +227,7 @@ my class FnType is Type {
         }
         $instance;
     }
+    
 
 }
 
@@ -867,31 +1049,32 @@ class LActions is HLL::Actions {
 
         make $out;
     }
+
     sub constrain-eq($t1, $t2) {
-        say('>>constraint: ', typeToStr($t1), ' = ', typeToStr($t2));
+        say('>>constraint: ', $t1.Str, ' = ', $t2.Str);
     }
     
     sub make-constraint($t1, $t2, $node) {
-        unless ($t1 =:= $t2) || ($t1 =:= NQPMu) || ($t2 =:= NQPMu) {
-            if nqp::istype($t1, FnType) {
-                if nqp::istype($t2, FnType) {
+        unless ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
+            if $t1.isFnType {
+                if $t2.isFnType {
                     make-constraint($t1.in,  $t2.in,  $node);   # TODO: variance
                     make-constraint($t1.out, $t2.out, $node);   # TODO: variance
-                } elsif nqp::istype($t2, TypeVar) {
+                } elsif $t2.isTypeVar {
                     constrain-eq($t2, $t1)
                 } else {
                     say(dump($node));
-                    panic($node.node, 'Type Error: ' ~ typeToStr($t1) ~ ' <> ' ~ typeToStr($t2));
+                    panic($node.node, 'Type Error: ' ~ $t1.Str ~ ' <> ' ~ $t2.Str);
                 }
-            } elsif nqp::istype($t1, TypeVar) {
+            } elsif $t1.isTypeVar {
                 constrain-eq($t1, $t2)
             } else {
-                # t1 is str, int, Void or some NQP type
-                if nqp::istype($t2, TypeVar) {
+                # t1 is Str, Int, Num, Bool, or Void
+                if $t2.isTypeVar {
                     make-constraint($t2, $t1, $node);
                 } else {
                     say(dump($node));
-                    panic($node.node, 'Type Error: ' ~ typeToStr($t1) ~ ' <> ' ~ typeToStr($t2));
+                    panic($node.node, 'Type Error: ' ~ $t1.Str ~ ' <> ' ~ $t2.Str);
                 }
             }
         }
@@ -910,13 +1093,14 @@ class LActions is HLL::Actions {
     }
 
     method typecheck($n, $currentBlock, *@moreBlocks) {
-        if $n.returns =:= NQPMu {
+        my $tN := Type.of($n);
+        unless $tN {
             if isSVal($n) {
-                $n.returns(str);
+                Type.Str.set($n);
             } elsif isIVal($n) {
-                $n.returns(int);
+                Type.Int.set($n);
             } elsif isNVal($n) {
-                $n.returns(num);
+                Type.Num.set($n);
             } elsif isLambda($n) {
                 my $block   := $n[1];
                 my $binder  := $block[0];
@@ -926,32 +1110,32 @@ class LActions is HLL::Actions {
                 my $tBinder;
                 my $tBody;
                 if @bound {
-                    $tBinder := TypeVar.new;
+                    $tBinder := Type.Var;
                     for @bound {
-                        $_.returns($tBinder);
+                        $tBinder.set($_);
                     }
                 } else {    # binder is ignored
-                    $tBinder := NQPMu;
+                    $tBinder := Type._;
                 }
                 $tBody := self.typecheck($body, $block, $currentBlock, |@moreBlocks);
 
-                $binder.returns($tBinder);
-                $n.returns(FnType.new($tBinder, $tBody));
+                $tBinder.set($binder);
+                Type.Fn($tBinder, $tBody).set($n);
             } elsif isApp($n) {
                 my $fun := $n[0];
                 my $arg := $n[1];
                 my $tFun := self.typecheck($fun, $currentBlock, |@moreBlocks);
                 my $tArg := self.typecheck($arg, $currentBlock, |@moreBlocks);
-                if nqp::istype($tFun, FnType) {
+                if $tFun.isFnType {
                     make-constraint($tFun.in, $tArg, $n);
                     $n.returns($tFun.out);
-                } elsif nqp::istype($tFun, TypeVar) {
+                } elsif $tFun.isTypeVar {
                     my $tOut := TypeVar.new;
-                    make-constraint($tFun, FnType.new($tArg, $tOut), $n);
+                    make-constraint($tFun, Type.Fn($tArg, $tOut), $n);
                     $n.returns($tOut);
                 } else {
                     say(dump($n));
-                    panic($n.node, "Type Error: cannot apply " ~ typeToStr($tFun), ' to ', typeToStr($tArg));
+                    panic($n.node, "Type Error: cannot apply " ~ $tFun.Str, ' to ', $tArg.Str);
                 }
             } elsif isRCall($n) {
                 my $tRuntimeFn := %runtime-fns-types{$n.name};
@@ -961,26 +1145,26 @@ class LActions is HLL::Actions {
 
                 my $temp := $tRuntimeFn;
                 for @tArgs {
-                    if nqp::istype($temp, FnType) {
+                    if $temp.isFnType {
                         make-constraint($temp.in, $_, $n);
                         $temp := $temp.out;
-                    } elsif nqp::istype($temp, TypeVar) {
-                        my $next := FnType.new($_, TypeVar.new);
+                    } elsif $temp.isTypeVar {
+                        my $next := Type.Fn($_, Type.Var);
                         make-constraint($temp, $next, $n);
                         $temp := $next.out;
                     } else {
                         say(dump($n));
-                        panic($n.node, 'Type Error: cannot apply runtime fn (', $n.name, ':', typeToStr($tRuntimeFn), ') to',
-                            join(' (', @tArgs, :map(&typeToStr), :prefix1st), ')'
+                        panic($n.node, 'Type Error: cannot apply runtime fn (', $n.name, ':', $tRuntimeFn.Str, ') to',
+                            join(' (', @tArgs, :map(-> $t { $t.Str }), :prefix1st), ')'
                         );
                     }
                 }
-                $n.returns($temp);
+                $temp.set($n);
             } elsif istype($n, QAST::Stmts, QAST::Stmt) {
-                my $tLast := NQPMu;
+                my $tLast := Type.Void;
                 $tLast := self.typecheck($_, $currentBlock, |@moreBlocks)
                     for $n.list;
-                $n.returns($tLast);
+                $tLast.set($n);
             } elsif istype($n, QAST::Block) {
                 say('>>>>typechecking Block');
                 say(dump($n));
@@ -997,15 +1181,15 @@ class LActions is HLL::Actions {
                 }
                 my @tIns := [];
                 for $n.ann('positional') {
-                    @tIns.push($_.returns);
+                    @tIns.push(Type.of($_));
                     $n.symbol($_.name, :declaration($_));
                 }
-                @tIns.push(Void)
+                @tIns.push(Type.Void)
                     unless @tIns;
-
-                my $tBlock := $tOut;
-                $tBlock := FnType.new($_, $tBlock) for @tIns;
-                $n.returns($tBlock);
+                
+                say('>>>preparing Block type: ' ~ join(' -> ', @tIns, :map(-> $t { $t.Str })) ~ ' -> ' ~ $tOut.Str);
+                my $tBlock := Type.Fn(|@tIns, $tOut);
+                $tBlock.set($n);
                 say(dump($n));
             } elsif isVar($n) {
                 if $n.decl {
@@ -1014,7 +1198,7 @@ class LActions is HLL::Actions {
                         panic($n.node, 'redeclaration of ' ~ describe($n) ~ "in \n" ~ dump($currentBlock, :indent('    ')));
                     } else {
                         $currentBlock.symbol($n.name, :declaration($n));
-                        $n.returns(TypeVar.new);
+                        Type.Var.set($n);
                         if $n.decl eq 'param' {
                             $currentBlock.ann('slurpy').push($n) if $n.slurpy;
                             $currentBlock.ann('optional').push($n) if $n.default;
@@ -1030,11 +1214,11 @@ class LActions is HLL::Actions {
                 } else {
                     my $decl := lookup($n.name, $currentBlock, |@moreBlocks)<declaration>;
                     if $decl {
-                        my $tVar := $decl.returns;
-                        if $tVar =:= NQPMu {
-                            panic($n.node, 'still untyped: declaration for ' ~ describe($n));
+                        my $tVar := Type.of($decl);
+                        if $tVar {
+                            $tVar.set($n);
                         } else {
-                            $n.returns($tVar);
+                            panic($n.node, 'still untyped: declaration for ' ~ describe($n));
                         }
                     } else {
                         panic($n.node, 'no declaration found for ' ~ describe($n));
@@ -1055,36 +1239,35 @@ class LActions is HLL::Actions {
                 make-constraint($tVar, $tVal, $n);
                 $n.returns($tVar);
             } elsif isOp($n) {
-                if nqp::existskey(%op-types, $n.op) {
-                    my $tOp := %op-types{$n.op};
+                my $tOp := Type.ofOp($n.op);
+                if $tOp {
                     my @tArgs := [];
                     @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
                         for $n.list;
 
                     my $temp := $tOp;
                     for @tArgs {
-                        if nqp::istype($temp, FnType) {
+                        if $temp.isFnType {
                             make-constraint($temp.in, $_, $n);
                             $temp := $temp.out;
                         } else {
                             say(dump($n));
-                            panic($n.node, 'Type Error: cannot apply Op (', $n.op, ':', typeToStr($tOp), ') to',
-                                join(' (', @tArgs, :map(&typeToStr), :prefix1st), ')'
+                            panic($n.node, 'Type Error: cannot apply Op (', $n.op, ':', $tOp.Str, ') to',
+                                join(' (', @tArgs, :map(-> $t { $t.Str }), :prefix1st), ')'
                             );
                         }
                     }
-
-                    $n.returns($temp);
+                    $temp.set($n);
                 } else {
                     say("\n", dump($n));
-                    nqp::die('Compile Error: typecheck NYI: ' ~ describe($n));
+                    nqp::die('Compile Error: dunno type of ' ~ describe($n));
                 }
             } else {
                 say("\n", dump($n));
                 nqp::die('Compile Error: typecheck NYI: ' ~ describe($n));
             }
         }
-        $n.returns;
+        Type.of($n);
     }
 
     method termlist1orMore($/) {
@@ -1330,16 +1513,39 @@ class LActions is HLL::Actions {
 
 
 
-
 sub MAIN(*@ARGS) {
-    my $F := FnType.new(TypeVar.new('a'), int);
-    say('$F.Str: ' ~ $F.Str);
+    for [Type.Void, Type.Str, Type.Int, Type.Num, Type.BOOL, Type.Var, Type.Fn(Type.Str, Type.Int), Type.Fn(Type.Void, Type.Var)] {
+        say(nqp::sprintf("%15s:", [~$_])
+            ~ '  isVoid: '     ~ $_.isVoid
+            ~ '  isStrType: '  ~ $_.isStrType
+            ~ '  isIntType: '  ~ $_.isIntType
+            ~ '  isNumType: '  ~ $_.isNumType
+            ~ '  isBoolType: ' ~ $_.isBoolType
+            ~ '  isTypeVar: '  ~ $_.isTypeVar
+            ~ '  isFnType: '   ~ $_.isFnType
+        );
+    }
+
+    my $F := Type.Fn(Type.Var, Type.Int);
+    say('F = ' ~ $F);
     
-    my $G := FnType.new($F, int);
-    say('$G.Str: ' ~ $G.Str);
+    my $G := Type.Fn($F, Type.Int);
+    say('G = ' ~ $G);
     
-    my $H := FnType.new(Void, $G);
-    say('$H.Str: ' ~ $H.Str);
+    my $H := Type.Fn(Type.Void, $G);
+    say('H = ' ~ $H);
+    
+    my $K := Type.Fn(Type.Void, Type.Int, Type.Str, Type.Var);
+    say('K = ' ~ $K);
+
+    for <concat escape isgt_i foo> {
+        say('Type.ofOp("' ~ $_ ~ '"): ' ~ Type.ofOp($_));
+    }
+
+    my $n := lexVar('foo');
+    Type.Fn(Type.Void, Type.Int).set($n);
+    say(dump($n));
+
 
     say(FnType.new(str, int) =:= $F);
     say(FnType.new(int, str) =:= $F);
