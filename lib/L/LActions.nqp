@@ -2,35 +2,10 @@ use NQPHLL;
 
 use Util;
 use Util::QAST;
+use Util::Compiler;
+
 
 my class NO_VALUE {}
-
-
-
-my sub match2location($match) {
-    my @lines := nqp::split("\n", nqp::substr($match.orig, 0, $match.from == 0 ?? $match.chars !! $match.from));
-    my $lineN := nqp::elems(@lines);
-    my $colN  := 1 + nqp::chars(@lines.pop);
-    my $file := $*USER_FILE;
-    hash(:file($file), :line($lineN), :column($colN), :match($match), :str("$file:$lineN:$colN"));
-}
-
-my sub loc2str(%l) {
-    my $varNameStr := nqp::existskey(%l, 'var')
-        ?? '  (' ~ %l<var>.name ~ ')'
-        !! ''
-    ;
-    '   at ' ~ %l<str> ~ $varNameStr;
-}
-
-my sub panic($match, *@msg-pieces) {
-    if nqp::isconcrete($match) {
-        @msg-pieces.push("\n");
-        @msg-pieces.push(loc2str(match2location($match)));
-    }
-    nqp::die(join('', @msg-pieces));
-}
-
 
 my class Type {
 
