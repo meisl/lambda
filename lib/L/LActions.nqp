@@ -7,6 +7,30 @@ my class NO_VALUE {}
 
 
 
+my sub match2location($match) {
+    my @lines := nqp::split("\n", nqp::substr($match.orig, 0, $match.from == 0 ?? $match.chars !! $match.from));
+    my $lineN := nqp::elems(@lines);
+    my $colN  := 1 + nqp::chars(@lines.pop);
+    my $file := $*USER_FILE;
+    hash(:file($file), :line($lineN), :column($colN), :match($match), :str("$file:$lineN:$colN"));
+}
+
+my sub loc2str(%l) {
+    my $varNameStr := nqp::existskey(%l, 'var')
+        ?? '  (' ~ %l<var>.name ~ ')'
+        !! ''
+    ;
+    '   at ' ~ %l<str> ~ $varNameStr;
+}
+
+my sub panic($match, *@msg-pieces) {
+    if nqp::isconcrete($match) {
+        @msg-pieces.push("\n");
+        @msg-pieces.push(loc2str(match2location($match)));
+    }
+    nqp::die(join('', @msg-pieces));
+}
+
 
 my class Type {
 
@@ -180,9 +204,13 @@ my class Type {
     my sub isFnType($t)    { nqp::istype($t, Fn)  }
     my sub isSumType($t)   { nqp::istype($t, Sum) }
 
+    method isValid($t) {
+        nqp::istype($t, Type) && nqp::isconcrete($t)
+    }
+
     my sub toStr($t, :$parens) {
         nqp::die('invalid type argument ' ~ describe($t))
-            unless nqp::istype($t, Type) && nqp::isconcrete($t);
+            unless Type.isValid($t);
         if $t.isFnType && $parens {
             '(' ~ $t.Str ~ ')';
         } else {
@@ -223,6 +251,54 @@ my class Type {
         insist-isa($n, QAST::Node);
         $n.ann('ty');
     }
+
+    # Type errors
+
+    method error(*@pieces, :$match = NO_VALUE, :$panic = &panic) {
+        insist-isa($match, NQPMatch, NQPMu)
+            unless $match =:= NO_VALUE;
+        nqp::die('no msg (pieces)')
+            unless @pieces;
+        my $msg := 'Type Error: ';
+        $msg := $msg ~ join('', @pieces, :map(-> $p { self.isValid($p) ?? $p.Str !! $p }));
+        
+        $panic($match, $msg);
+    }
+
+
+    # Type constraints
+
+    sub constrain-eq($t1, $t2) {
+        say('>>Type-constraint: ', $t1.Str, ' = ', $t2.Str);
+    }
+    
+    method constrain($t1, $t2, $node) {
+        insist-isa($node, QAST::Node);
+        unless ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
+            if $t1.isFnType {
+                if $t2.isFnType {
+                    self.constrain($t1.in,  $t2.in,  $node);   # TODO: variance
+                    self.constrain($t1.out, $t2.out, $node);   # TODO: variance
+                } elsif $t2.isTypeVar {
+                    constrain-eq($t2, $t1)
+                } else {
+                    say(dump($node));
+                    self.error(:match($node.node), $t1, ' <> ', $t2);
+                }
+            } elsif $t1.isTypeVar {
+                constrain-eq($t1, $t2)
+            } else {
+                # t1 is Str, Int, Num, Bool, or Void
+                if $t2.isTypeVar {
+                    self.constrain($t2, $t1, $node);
+                } else {
+                    say(dump($node));
+                    self.error(:match($node.node), $t1, ' <> ', $t2);
+                }
+            }
+        }
+    }
+
 
 }
 
@@ -876,21 +952,6 @@ my sub make-runtime() {
     $block;
 }
 
-my sub match2location($match) {
-    my @lines := nqp::split("\n", nqp::substr($match.orig, 0, $match.from == 0 ?? $match.chars !! $match.from));
-    my $lineN := nqp::elems(@lines);
-    my $colN  := 1 + nqp::chars(@lines.pop);
-    my $file := $*USER_FILE;
-    hash(:file($file), :line($lineN), :column($colN), :match($match), :str("$file:$lineN:$colN"));
-}
-
-my sub panic($match, *@msg-pieces) {
-    if nqp::isconcrete($match) {
-        @msg-pieces.push("\n");
-        @msg-pieces.push(loc2str(match2location($match)));
-    }
-    nqp::die(join('', @msg-pieces));
-}
 
 my sub freeVars2locations(%fvs) {
     my @out := [];
@@ -907,14 +968,6 @@ my sub freeVars2locations(%fvs) {
         }
     }
     @out;
-}
-
-my sub loc2str(%l) {
-    my $varNameStr := nqp::existskey(%l, 'var')
-        ?? '  (' ~ %l<var>.name ~ ')'
-        !! ''
-    ;
-    '   at ' ~ %l<str> ~ $varNameStr;
 }
 
 my sub reportFV(str $where, $match, %fvs) {
@@ -1058,36 +1111,6 @@ class LActions is HLL::Actions {
         make $out;
     }
 
-    sub constrain-eq($t1, $t2) {
-        say('>>constraint: ', $t1.Str, ' = ', $t2.Str);
-    }
-    
-    sub make-constraint($t1, $t2, $node) {
-        unless ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
-            if $t1.isFnType {
-                if $t2.isFnType {
-                    make-constraint($t1.in,  $t2.in,  $node);   # TODO: variance
-                    make-constraint($t1.out, $t2.out, $node);   # TODO: variance
-                } elsif $t2.isTypeVar {
-                    constrain-eq($t2, $t1)
-                } else {
-                    say(dump($node));
-                    panic($node.node, 'Type Error: ' ~ $t1.Str ~ ' <> ' ~ $t2.Str);
-                }
-            } elsif $t1.isTypeVar {
-                constrain-eq($t1, $t2)
-            } else {
-                # t1 is Str, Int, Num, Bool, or Void
-                if $t2.isTypeVar {
-                    make-constraint($t2, $t1, $node);
-                } else {
-                    say(dump($node));
-                    panic($node.node, 'Type Error: ' ~ $t1.Str ~ ' <> ' ~ $t2.Str);
-                }
-            }
-        }
-    }
-
     sub lookup(str $name, *@blocks) {
         my $n := +@blocks;
         my $i := 0;
@@ -1135,15 +1158,15 @@ class LActions is HLL::Actions {
                 my $tFun := self.typecheck($fun, $currentBlock, |@moreBlocks);
                 my $tArg := self.typecheck($arg, $currentBlock, |@moreBlocks);
                 if $tFun.isFnType {
-                    make-constraint($tFun.in, $tArg, $n);
+                    Type.constrain($tFun.in, $tArg, $n);
                     $n.returns($tFun.out);
                 } elsif $tFun.isTypeVar {
                     my $tOut := TypeVar.new;
-                    make-constraint($tFun, Type.Fn($tArg, $tOut), $n);
+                    Type.constrain($tFun, Type.Fn($tArg, $tOut), $n);
                     $n.returns($tOut);
                 } else {
                     say(dump($n));
-                    panic($n.node, "Type Error: cannot apply " ~ $tFun.Str, ' to ', $tArg.Str);
+                    Type.error(:match($n.node), 'cannot apply ', $tFun, ' to ', $tArg);
                 }
             } elsif isRCall($n) {
                 my $tRuntimeFn := %runtime-fns-types{$n.name};
@@ -1154,15 +1177,15 @@ class LActions is HLL::Actions {
                 my $temp := $tRuntimeFn;
                 for @tArgs {
                     if $temp.isFnType {
-                        make-constraint($temp.in, $_, $n);
+                        Type.constrain($temp.in, $_, $n);
                         $temp := $temp.out;
                     } elsif $temp.isTypeVar {
                         my $next := Type.Fn($_, Type.Var);
-                        make-constraint($temp, $next, $n);
+                        Type.constrain($temp, $next, $n);
                         $temp := $next.out;
                     } else {
                         say(dump($n));
-                        panic($n.node, 'Type Error: cannot apply runtime fn (', $n.name, ':', $tRuntimeFn.Str, ') to',
+                        Type.error(:match($n.node), 'cannot apply runtime fn (', $n.name, ':', $tRuntimeFn, ') to',
                             join(' (', @tArgs, :map(-> $t { $t.Str }), :prefix1st), ')'
                         );
                     }
@@ -1185,7 +1208,7 @@ class LActions is HLL::Actions {
                     $tOut := self.typecheck($_, $n, $currentBlock, |@moreBlocks);
                 }
                 if $n.ann('named') || $n.ann('slurpy') || $n.ann('optional') {
-                    panic($n.node, 'NYI: typechecking named/slurpy/optional params', ":\n", dump($n, :indent("    ")));
+                    Type.error(:match($n.node), 'NYI: typechecking named/slurpy/optional params', ":\n", dump($n, :indent("    ")));
                 }
                 my @tIns := [];
                 for $n.ann('positional') {
@@ -1203,7 +1226,7 @@ class LActions is HLL::Actions {
                 if $n.decl {
                     my $decl := lookup($n.name, $currentBlock)<declaration>;
                     if $decl {
-                        panic($n.node, 'redeclaration of ' ~ describe($n) ~ "in \n" ~ dump($currentBlock, :indent('    ')));
+                        Type.error(:match($n.node), 'redeclaration of ', $n, "in \n", dump($currentBlock, :indent('    ')));
                     } else {
                         $currentBlock.symbol($n.name, :declaration($n));
                         Type.Var.set($n);
@@ -1226,10 +1249,10 @@ class LActions is HLL::Actions {
                         if $tVar {
                             $tVar.set($n);
                         } else {
-                            panic($n.node, 'still untyped: declaration for ' ~ describe($n));
+                            Type.error(:match($n.node), 'still untyped: declaration for ', $n);
                         }
                     } else {
-                        panic($n.node, 'no declaration found for ' ~ describe($n));
+                        Type.error(:match($n.node), 'no declaration found for ', $n);
                     }
                 }
             } elsif isOp($n, 'bind') {
@@ -1239,7 +1262,7 @@ class LActions is HLL::Actions {
                 my $tVar := self.typecheck($var, $currentBlock, |@moreBlocks);
                 # TODO: check if tVar was introduced (if so can ditch the newly introduced Type.Var)
                 $tVal.set($n);
-                make-constraint($tVar, $tVal, $n);
+                Type.constrain($tVar, $tVal, $n);
             } elsif isOp($n, 'list') {
                 my @tArgs := [];
                 @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
@@ -1255,11 +1278,11 @@ class LActions is HLL::Actions {
                     my $temp := $tOp;
                     for @tArgs {
                         if $temp.isFnType {
-                            make-constraint($temp.in, $_, $n);
+                            Type.constrain($temp.in, $_, $n);
                             $temp := $temp.out;
                         } else {
                             say(dump($n));
-                            panic($n.node, 'Type Error: cannot apply Op (', $n.op, ':', $tOp.Str, ') to',
+                            Type.error(:match($n.node), 'cannot apply Op (', $n.op, ':', $tOp, ') to',
                                 join(' (', @tArgs, :map(-> $t { $t.Str }), :prefix1st), ')'
                             );
                         }
@@ -1268,11 +1291,11 @@ class LActions is HLL::Actions {
                 } else {
                     say("\n", dump($currentBlock));
                     say("\n", dump($n));
-                    nqp::die('Compile Error: dunno type of ' ~ describe($n));
+                    Type.error(:match($n.node), 'dunno type of ', $n);
                 }
             } else {
                 say("\n", dump($n));
-                nqp::die('Compile Error: typecheck NYI: ' ~ describe($n));
+                Type.error(:match($n.node), 'typecheck NYI: ', $n);
             }
         }
         Type.of($n);
@@ -1522,6 +1545,7 @@ class LActions is HLL::Actions {
 
 
 sub MAIN(*@ARGS) {
+
     for [Type.Void, Type.Str, Type.Int, Type.Num, Type.BOOL, Type.Array, Type.Var, Type.Fn(Type.Str, Type.Int), Type.Fn(Type.Void, Type.Var)] {
         say(nqp::sprintf("%15s:", [~$_])
             ~ '  isVoid: '      ~ $_.isVoid
@@ -1556,8 +1580,10 @@ sub MAIN(*@ARGS) {
     say(dump($n));
 
 
-    say(FnType.new(str, int) =:= $F);
-    say(FnType.new(int, str) =:= $F);
+    say((Type.Fn(Type.Str, Type.Int) =:= Type.Fn(Type.Int, Type.Str) ?? 'not ' !! '') 
+        ~ 'ok 42 - *NOT* (Type(Str -> Int) =:= Type(Int -> Str))');
+    say((Type.Fn(Type.Str, Type.Int) =:= Type.Fn(Type.Str, Type.Int) ?? '' !! 'not ') 
+        ~ 'ok 43 - (Type(Str -> Int) =:= Type(Str -> Int))');
 
 
     #say(isSVal(QAST::Block.new));
