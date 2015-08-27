@@ -155,10 +155,13 @@ class Util {
 
             if nqp::isnull($_) {
                 $out := 1 if nqp::isnull($subject);     # Note: nqp::isnull(nqp::isnull_s) is false
-            } elsif nqp::isnull_s($_) {
-                $out := 1 if nqp::isnull_s($subject);
-            } elsif $_ =:= str {
-                $out := 1 if nqp::isstr($subject);
+            } elsif nqp::isstr($_) {
+                if nqp::isnull_s($_) {
+                    $out := 1 if nqp::isnull_s($subject);
+                } else {    # $_ must be =:= str
+                    $out := 1 if nqp::isstr($subject);
+                }
+                
             } elsif $_ =:= int {
                 $out := 1 if nqp::isint($subject);
             } elsif $_ =:= num {

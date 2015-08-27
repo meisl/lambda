@@ -5,7 +5,7 @@ use testing;
 
 use Util;
 
-plan(219);
+plan(223);
 
 
 { # - super ---------------------------------------------------------------------
@@ -304,12 +304,14 @@ is(istype(4711, nqp::null),     0, 'istype(4711, nqp::null)');
 is(istype(4711, str),           0, 'istype(4711, str)');
 is(istype(4711, int),           1, 'istype(4711, int)');
 is(istype(4711, num),           0, 'istype(4711, num)');
+is(istype(4711, Foo),           0, 'istype(4711, Foo)');
 
 is(istype(int, nqp::null_s),    0, 'istype(int, nqp::null_s)');
 is(istype(int, nqp::null),      0, 'istype(int, nqp::null)');
 is(istype(int, str),            0, 'istype(int, str)');
 is(istype(int, int),            1, 'istype(int, int)');
 is(istype(int, num),            0, 'istype(int, num)');
+is(istype(int, Foo),            0, 'istype(int, Foo)');
 
 
 is(istype(3.14, nqp::null_s),   0, 'istype(3.14, nqp::null_s)');
@@ -317,12 +319,14 @@ is(istype(3.14, nqp::null),     0, 'istype(3.14, nqp::null)');
 is(istype(3.14, str),           0, 'istype(3.14, str)');
 is(istype(3.14, int),           0, 'istype(3.14, int)');
 is(istype(3.14, num),           1, 'istype(3.14, num)');
+is(istype(3.14, Foo),           0, 'istype(3.14, Foo)');
 
 is(istype(num, nqp::null_s),    0, 'istype(num, nqp::null_s)');
 is(istype(num, nqp::null),      0, 'istype(num, nqp::null)');
 is(istype(num, str),            0, 'istype(num, str)');
 is(istype(num, int),            0, 'istype(num, int)');
 is(istype(num, num),            1, 'istype(num, num)');
+is(istype(num, Foo),            0, 'istype(num, Foo)');
 
 
 
