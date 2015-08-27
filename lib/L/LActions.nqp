@@ -23,14 +23,17 @@ my class Type {
 
     # must put methods before subclasses s.t. they're are inherited
     # however, we need to call the subs defined *after* the subclasses
-    method isVoid()     { isVoid(self)     }
-    method isStrType()  { isStrType(self)  }
-    method isIntType()  { isIntType(self)  }
-    method isNumType()  { isNumType(self)  }
-    method isBoolType() { isBoolType(self) }
-    method isTypeVar()  { isTypeVar(self)  }
-    method isFnType()   { isFnType(self)   }
-    method isSumType()  { isSumType(self)  }
+    method isVoid()      { isVoid(self)      }
+    method isStrType()   { isStrType(self)   }
+    method isIntType()   { isIntType(self)   }
+    method isNumType()   { isNumType(self)   }
+    method isBoolType()  { isBoolType(self)  }
+
+    method isArrayType() { isArrayType(self) }
+    
+    method isTypeVar()   { isTypeVar(self)   }
+    method isFnType()    { isFnType(self)    }
+    method isSumType()   { isSumType(self)   }
 
     # native types (corresponding to NQP's str, int, num)
 
@@ -55,6 +58,15 @@ my class Type {
     method Num() { $Num }
 
 
+    # the Array type (corresponding to NQP's NQPArray)
+
+    my class Array is Type {
+        method Str() { "Array" }
+    }
+    my $Array := nqp::create(Array);
+    method Array() { $Array }
+
+
     # the Bool type
 
     my class Bool is Type {
@@ -73,7 +85,7 @@ my class Type {
     method Void() { $Void }
 
 
-    # the DontCare type, to be for ignored parameters
+    # the DontCare type, to be used for ignored parameters
 
     my class DontCare is Type {
         method Str() { "_" }
@@ -158,14 +170,15 @@ my class Type {
     }
 
 
-    my sub isVoid($t)     { $t =:= Type.Void }
-    my sub isStrType($t)  { $t =:= Type.Str  }
-    my sub isIntType($t)  { $t =:= Type.Int  }
-    my sub isNumType($t)  { $t =:= Type.Num  }
-    my sub isBoolType($t) { $t =:= Type.BOOL }
-    my sub isTypeVar($t)  { nqp::istype($t, Var) }
-    my sub isFnType($t)   { nqp::istype($t, Fn)  }
-    my sub isSumType($t)  { nqp::istype($t, Sum) }
+    my sub isVoid($t)      { $t =:= Type.Void  }
+    my sub isStrType($t)   { $t =:= Type.Str   }
+    my sub isIntType($t)   { $t =:= Type.Int   }
+    my sub isNumType($t)   { $t =:= Type.Num   }
+    my sub isBoolType($t)  { $t =:= Type.BOOL  }
+    my sub isArrayType($t) { $t =:= Type.Array }
+    my sub isTypeVar($t)   { nqp::istype($t, Var) }
+    my sub isFnType($t)    { nqp::istype($t, Fn)  }
+    my sub isSumType($t)   { nqp::istype($t, Sum) }
 
     my sub toStr($t, :$parens) {
         nqp::die('invalid type argument ' ~ describe($t))
@@ -178,9 +191,25 @@ my class Type {
     }
 
     my %op-types := nqp::hash(
-        'concat', Type.Fn($Str, $Str, $Str),
-        'escape', Type.Fn($Str, $Str),
-        'isgt_i', Type.Fn($Int, $Int, $Bool),
+        # special (not listed here, but explicitly handled by typecheck)
+        #'bind' # how to type the var argument?
+        #'list' # due to arbitrary nr of args
+        #'hash' # due to arbitrary nr of args (although some constraints, eg even nr of args)
+        
+        # str
+        'concat', Type.Fn($Str,   $Str, $Str),
+        'escape', Type.Fn($Str,   $Str),
+        # int
+        'iseq_i', Type.Fn($Int,   $Int, $Bool),
+        'isne_i', Type.Fn($Int,   $Int, $Bool),
+        'isgt_i', Type.Fn($Int,   $Int, $Bool),
+        'isge_i', Type.Fn($Int,   $Int, $Bool),
+        'islt_i', Type.Fn($Int,   $Int, $Bool),
+        'isle_i', Type.Fn($Int,   $Int, $Bool),
+        'add_i',  Type.Fn($Int,   $Int, $Int),
+        'sub_i',  Type.Fn($Int,   $Int, $Int),
+        # list/hash
+        'elems',  Type.Fn($Array, $Int),
     );
     method ofOp($op) {
         unless nqp::isstr($op) {
@@ -326,23 +355,7 @@ my sub mkBind($var, $value) {
     insist-isa($var, QAST::Var);
     $var := cloneAndSubst($var);
     my $valNode := asNode($value);
-    if $var.returns =:= NQPMu {
-        if $valNode.returns =:= NQPMu {
-            
-        } else {    # $valNode has :returns set but $var hasn't
-            unless $var.decl eq 'var' {
-                $var.returns($valNode.returns);
-            }
-        }
-    } else { # $var has :returns set
-        if $valNode.returns =:= NQPMu {
-            
-        } else {    # $valNode has :returns set and also $var 
-            nqp::die('incompatible types ' ~ Type.toStr($var.returns) ~ ', ' ~ Type.toStr($valNode.returns))
-                unless $var.returns =:= $valNode.returns;
-        }
-    }
-    QAST::Op.new(:op<bind>, :returns($valNode.returns), $var, $valNode);
+    QAST::Op.new(:op<bind>, $var, $valNode);
 }
 
 my sub mkList(*@contents) {
@@ -350,7 +363,7 @@ my sub mkList(*@contents) {
     for @contents {
         @contentNodes.push(asNode($_));
     }
-    QAST::Op.new(:op<list>, :returns(NQPArray), |@contentNodes); 
+    QAST::Op.new(:op<list>, |@contentNodes); 
 }
 
 my sub mkHash($contents) {
@@ -447,13 +460,13 @@ my sub mkDelayMemo($node) {
     } elsif isForced($node) {
         mkDelayMemo($node.ann('forced'));
     } else {
-        #my $wasRun := lexVar('wasRun', :returns(int));
-        #my $result := lexVar('result', :returns($node.returns));
-        #my $out := QAST::Block.new(:blocktype<immediate>, :returns(FnType.new(Void, $node.returns)),
-        #    mkBind(mkDeclV($wasRun, :returns($wasRun.returns)), 0),
-        #    mkDeclV($result, :returns($result.returns)),
-        #    QAST::Block.new(:arity(0), :returns($node.returns),
-        #        QAST::Op.new(:op<if>, :returns($node.returns),
+        #my $wasRun := lexVar('wasRun');
+        #my $result := lexVar('result');
+        #my $out := QAST::Block.new(:blocktype<immediate>),
+        #    mkBind(mkDeclV($wasRun), 0),
+        #    mkDeclV($result),
+        #    QAST::Block.new(:arity(0),
+        #        QAST::Op.new(:op<if>,
         #            nqp::clone($wasRun),
         #            nqp::clone($result),
         #            QAST::Stmts.new(
@@ -484,14 +497,9 @@ my sub mkForce($node) {
     } elsif isForced($node) || isVal($node) || isOp($node, 'null') {
         $node;
     } else {    # TODO: maybe inline if $node is already a QAST::Var
-        my $returns := $node.returns;
-        if istype($returns, str, int, num) {
-            $node;
-        } else {
-            my $out := mkRCall('&force', $node);
-            $out.annotate('forced', $node);
-            $out;
-        }
+        my $out := mkRCall('&force', $node);
+        $out.annotate('forced', $node);
+        $out;
     } # TODO: if $node is a call, and we introduce annotations re delayed status of return values...
 }
 
@@ -642,15 +650,15 @@ my sub make-runtime() {
     mkRFn('&sublist', <list from>, 
         #:returns(Type.Fn(NQPArray, Type.Int, NQPArray)), 
     -> $list, $from {
-        my $to    := lexVar('to',       :returns(int));
-        my $out   := lexVar('out',      :returns(NQPArray));
-        my $count := lexVar('count',    :returns(int));
-        my $n     := lexVar('n',        :returns(int));
+        my $to    := lexVar('to');
+        my $out   := lexVar('out');
+        my $count := lexVar('count');
+        my $n     := lexVar('n');
         
-        mkBind(mkDeclV($n,     :returns(int)),      QAST::Op.new(:op<elems>, :returns(int), $list)),
-        mkBind(mkDeclV($count, :returns(int)),      cloneAndSubst($n)),
-        mkBind(mkDeclV($to,    :returns(int)),      QAST::Op.new(:op<add_i>, :returns(int), $from, $count)),
-        mkBind(mkDeclV($out,   :returns(NQPArray)), mkList()),
+        mkBind(mkDeclV($n),     QAST::Op.new(:op<elems>, $list)),
+        mkBind(mkDeclV($count), cloneAndSubst($n)),
+        mkBind(mkDeclV($to),    QAST::Op.new(:op<add_i>, $from, $count)),
+        mkBind(mkDeclV($out),   mkList()),
         QAST::Op.new(:op<if>,
             QAST::Op.new(:op<isgt_i>, $to, $n),
             mkBind($to, $n)
@@ -659,7 +667,7 @@ my sub make-runtime() {
             QAST::Op.new(:op<islt_i>, $from, $to),
             QAST::Stmts.new(
                 QAST::Op.new(:op<push>, $out, mkListLookup($list, :index($from))),
-                mkBind($from, QAST::Op.new(:op<add_i>, :returns(int), $from, asNode(1))),
+                mkBind($from, QAST::Op.new(:op<add_i>, $from, asNode(1))),
             )
         ),
         $out,
@@ -1228,16 +1236,15 @@ class LActions is HLL::Actions {
                 my $var := $n[0];
                 my $val := $n[1];
                 my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks);
-                my $tVar := $var.returns;
-                if $tVar =:= NQPMu {
-                    if $var.decl {
-                        $tVar := $tVal;
-                    } else {
-                        $tVar := TypeVar.new;
-                    }
-                }
+                my $tVar := self.typecheck($var, $currentBlock, |@moreBlocks);
+                # TODO: check if tVar was introduced (if so can ditch the newly introduced Type.Var)
+                $tVal.set($n);
                 make-constraint($tVar, $tVal, $n);
-                $n.returns($tVar);
+            } elsif isOp($n, 'list') {
+                my @tArgs := [];
+                @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
+                    for $n.list;
+                Type.Array.set($n);
             } elsif isOp($n) {
                 my $tOp := Type.ofOp($n.op);
                 if $tOp {
@@ -1259,6 +1266,7 @@ class LActions is HLL::Actions {
                     }
                     $temp.set($n);
                 } else {
+                    say("\n", dump($currentBlock));
                     say("\n", dump($n));
                     nqp::die('Compile Error: dunno type of ' ~ describe($n));
                 }
@@ -1514,15 +1522,16 @@ class LActions is HLL::Actions {
 
 
 sub MAIN(*@ARGS) {
-    for [Type.Void, Type.Str, Type.Int, Type.Num, Type.BOOL, Type.Var, Type.Fn(Type.Str, Type.Int), Type.Fn(Type.Void, Type.Var)] {
+    for [Type.Void, Type.Str, Type.Int, Type.Num, Type.BOOL, Type.Array, Type.Var, Type.Fn(Type.Str, Type.Int), Type.Fn(Type.Void, Type.Var)] {
         say(nqp::sprintf("%15s:", [~$_])
-            ~ '  isVoid: '     ~ $_.isVoid
-            ~ '  isStrType: '  ~ $_.isStrType
-            ~ '  isIntType: '  ~ $_.isIntType
-            ~ '  isNumType: '  ~ $_.isNumType
-            ~ '  isBoolType: ' ~ $_.isBoolType
-            ~ '  isTypeVar: '  ~ $_.isTypeVar
-            ~ '  isFnType: '   ~ $_.isFnType
+            ~ '  isVoid: '      ~ $_.isVoid
+            ~ '  isStrType: '   ~ $_.isStrType
+            ~ '  isIntType: '   ~ $_.isIntType
+            ~ '  isNumType: '   ~ $_.isNumType
+            ~ '  isBoolType: '  ~ $_.isBoolType
+            ~ '  isArrayType: ' ~ $_.isArrayType
+            ~ '  isTypeVar: '   ~ $_.isTypeVar
+            ~ '  isFnType: '    ~ $_.isFnType
         );
     }
 
@@ -1538,7 +1547,7 @@ sub MAIN(*@ARGS) {
     my $K := Type.Fn(Type.Void, Type.Int, Type.Str, Type.Var);
     say('K = ' ~ $K);
 
-    for <concat escape isgt_i foo> {
+    for <concat escape isgt_i elems foo> {
         say('Type.ofOp("' ~ $_ ~ '"): ' ~ Type.ofOp($_));
     }
 
@@ -1559,12 +1568,4 @@ sub MAIN(*@ARGS) {
     say(isOp(QAST::Op.new(:op<bind>)));
     say(isOp(QAST::Op.new(:op<bind>), "null"));
     say(isOp(QAST::Op.new(:op<bind>), "bind"));
-    #say(isOp(QAST::Op.new(:op<bind>), 27));
-    #say(isOp("aysdf"));
-
-    #say(lexVar('foo', :decl<param>).dump);
-    
-    #my $binding := mkBind(lexVar('foo', :decl<var>, :returns(int)), 'asdf');
-    #say(dump($binding));
-
 }
