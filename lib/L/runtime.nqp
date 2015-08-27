@@ -1,7 +1,7 @@
 my $λsrc := '(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)';
 my %info := nqp::hash(
     'λ', [
-        'binder0 1 55 foo bar baz qumbl self self',
+        'binder0 1 55 foo fourty-two PI lambda2 self self',
         'binder1 59 4 foo',
     ],
     'stats', nqp::hash( # to be filled in by compiler
@@ -177,7 +177,8 @@ sub strOut($v, str $indent = '', %done = {}) {
         :num(&num2str)
     );
 }
-
+# (a -> b) -> a -> b
+# ((a -> b) + Void -> (a -> b)) -> (a + Void -> a) -> b
 sub apply1($f, $a1) {
     my $result := typecase(force($f),
         :λ(&lam2code),

@@ -1,0 +1,998 @@
+──:CompUnit+{StrByDump}
+  └─:Block
+    ╟─bind :returns(str)
+    ║ ├○ .src :decl(static) :returns(str)
+    ║ └◙ SVal "\n(δ (# Combinators:\n    (K        λx.λ_.x)                 # (make) a constant function\n    (M        λx.x x)                  # self-application\n    (Y        (M λu.λf.f (u u f)))     # recursion (Turing)\n    # Bool:\n    (True     λx.λy.x)\n    (False    λx.λy.y)\n    # Church numerals:\n    (zero     λf.λx.x)\n    (zero?    λn.n (K False) True)\n    (succ     λn.λf.λx.n f (f x))\n    (succ'    λn.λf.λx.f (n f x))\n    # List:\n    (nil      λonNil.λonCons.onNil)                  # ctor                               c -> _             -> c\n    (cons     λx.λxs.λonNil.λonCons.onCons x xs)     # ctor                     a -> b -> _ -> (a -> b -> c) -> c\n    (car      λxs.xs (\"car\" \"nil\") (λhd.λtl.hd))     # (provoke error on nil)\n    (cdr      λxs.xs (\"cdr\" \"nil\") (λhd.λtl.tl))     # (provoke error on nil)\n    (iterate (Y λself.λf.λx.λonNil.λonCons.onCons x (self f (f x)))   # make a stream\n    )\n   )\n   #(zero? zero)            # λx.λy.x = True\n   #(zero? (succ zero))     # λx.λy.y = False\n   #(succ (succ (succ zero)))\n   \n   (iterate succ zero)               # 0...     # diverges if iterate uses cons (?!)\n   \n   #(car (iterate succ zero))        # λf.λx.x = zero\n   #(cdr (iterate succ zero))        # 1...     # diverges if iterate uses cons (?!)\n   \n   #(car (cdr (iterate succ zero)))  # 1\n   #(cdr (cdr (iterate succ zero)))  # 2...     # diverges if iterate uses cons (?!)\n   \n   #(car (cdr (cdr (iterate succ zero))))\n)\n\n"
+    ╟─bind :returns(NQPArray)
+    ║ ├○ .λinfo :decl(static) :returns(NQPArray)
+    ║ └─list :returns(NQPArray)
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "_"
+    ║   │ ├◙ IVal 37
+    ║   │ ├◙ IVal 4
+    ║   │ └◙ SVal "x.2"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "x"
+    ║   │ ├◙ IVal 34
+    ║   │ ├◙ IVal 7
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "x"
+    ║   │ ├◙ IVal 102
+    ║   │ ├◙ IVal 6
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "f"
+    ║   │ ├◙ IVal 166
+    ║   │ ├◙ IVal 12
+    ║   │ └◙ SVal "u.2"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "u"
+    ║   │ ├◙ IVal 163
+    ║   │ ├◙ IVal 15
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "y"
+    ║   │ ├◙ IVal 235
+    ║   │ ├◙ IVal 4
+    ║   │ └◙ SVal "x.2"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "x"
+    ║   │ ├◙ IVal 232
+    ║   │ ├◙ IVal 7
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "y"
+    ║   │ ├◙ IVal 258
+    ║   │ ├◙ IVal 4
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "x"
+    ║   │ ├◙ IVal 255
+    ║   │ ├◙ IVal 7
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "x"
+    ║   │ ├◙ IVal 304
+    ║   │ ├◙ IVal 4
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "f"
+    ║   │ ├◙ IVal 301
+    ║   │ ├◙ IVal 7
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "n"
+    ║   │ ├◙ IVal 324
+    ║   │ ├◙ IVal 19
+    ║   │ └◙ SVal "True.4 K.7 False.3"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "x"
+    ║   │ ├◙ IVal 365
+    ║   │ ├◙ IVal 12
+    ║   │ └◙ SVal "f.2 n.3"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "f"
+    ║   │ ├◙ IVal 362
+    ║   │ ├◙ IVal 15
+    ║   │ └◙ SVal "n.3"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "n"
+    ║   │ ├◙ IVal 359
+    ║   │ ├◙ IVal 18
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "x"
+    ║   │ ├◙ IVal 399
+    ║   │ ├◙ IVal 12
+    ║   │ └◙ SVal "f.2 n.3"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "f"
+    ║   │ ├◙ IVal 396
+    ║   │ ├◙ IVal 15
+    ║   │ └◙ SVal "n.3"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "n"
+    ║   │ ├◙ IVal 393
+    ║   │ ├◙ IVal 18
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "onCons"
+    ║   │ ├◙ IVal 446
+    ║   │ ├◙ IVal 13
+    ║   │ └◙ SVal "onNil.2"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "onNil"
+    ║   │ ├◙ IVal 439
+    ║   │ ├◙ IVal 20
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "onCons"
+    ║   │ ├◙ IVal 567
+    ║   │ ├◙ IVal 19
+    ║   │ └◙ SVal "x.4 xs.3"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "onNil"
+    ║   │ ├◙ IVal 560
+    ║   │ ├◙ IVal 26
+    ║   │ └◙ SVal "x.4 xs.3"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "xs"
+    ║   │ ├◙ IVal 556
+    ║   │ ├◙ IVal 30
+    ║   │ └◙ SVal "x.4"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "x"
+    ║   │ ├◙ IVal 553
+    ║   │ ├◙ IVal 33
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "tl"
+    ║   │ ├◙ IVal 693
+    ║   │ ├◙ IVal 6
+    ║   │ └◙ SVal "hd.2"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "hd"
+    ║   │ ├◙ IVal 689
+    ║   │ ├◙ IVal 10
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "xs"
+    ║   │ ├◙ IVal 667
+    ║   │ ├◙ IVal 33
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "tl"
+    ║   │ ├◙ IVal 771
+    ║   │ ├◙ IVal 6
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "hd"
+    ║   │ ├◙ IVal 767
+    ║   │ ├◙ IVal 10
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "xs"
+    ║   │ ├◙ IVal 745
+    ║   │ ├◙ IVal 33
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "onCons"
+    ║   │ ├◙ IVal 844
+    ║   │ ├◙ IVal 31
+    ║   │ └◙ SVal "x.3 self.5 f.4"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "onNil"
+    ║   │ ├◙ IVal 837
+    ║   │ ├◙ IVal 38
+    ║   │ └◙ SVal "x.3 self.5 f.4"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "x"
+    ║   │ ├◙ IVal 834
+    ║   │ ├◙ IVal 41
+    ║   │ └◙ SVal "self.5 f.4"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "f"
+    ║   │ ├◙ IVal 831
+    ║   │ ├◙ IVal 44
+    ║   │ └◙ SVal "self.5"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "self"
+    ║   │ ├◙ IVal 825
+    ║   │ ├◙ IVal 50
+    ║   │ └◙ SVal ""
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "iterate"
+    ║   │ ├◙ IVal 813
+    ║   │ ├◙ IVal 239
+    ║   │ └◙ SVal "zero.9 succ.7"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "cdr"
+    ║   │ ├◙ IVal 735
+    ║   │ ├◙ IVal 700
+    ║   │ └◙ SVal "zero.9 Y.11 succ.7"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "car"
+    ║   │ ├◙ IVal 657
+    ║   │ ├◙ IVal 778
+    ║   │ └◙ SVal "zero.9 Y.11 succ.7"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "cons"
+    ║   │ ├◙ IVal 543
+    ║   │ ├◙ IVal 892
+    ║   │ └◙ SVal "zero.9 Y.11 succ.7"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "nil"
+    ║   │ ├◙ IVal 429
+    ║   │ ├◙ IVal 1006
+    ║   │ └◙ SVal "zero.9 Y.11 succ.7"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "succ'"
+    ║   │ ├◙ IVal 383
+    ║   │ ├◙ IVal 1052
+    ║   │ └◙ SVal "zero.9 Y.11 succ.7"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "succ"
+    ║   │ ├◙ IVal 349
+    ║   │ ├◙ IVal 1086
+    ║   │ └◙ SVal "zero.9 Y.11"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "zero?"
+    ║   │ ├◙ IVal 314
+    ║   │ ├◙ IVal 1121
+    ║   │ └◙ SVal "zero.9 Y.11"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "zero"
+    ║   │ ├◙ IVal 291
+    ║   │ ├◙ IVal 1144
+    ║   │ └◙ SVal "True.4 K.7 Y.11 False.3"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "False"
+    ║   │ ├◙ IVal 245
+    ║   │ ├◙ IVal 1190
+    ║   │ └◙ SVal "True.4 K.7 Y.11"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "True"
+    ║   │ ├◙ IVal 222
+    ║   │ ├◙ IVal 1213
+    ║   │ └◙ SVal "K.7 Y.11"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "Y"
+    ║   │ ├◙ IVal 150
+    ║   │ ├◙ IVal 1285
+    ║   │ └◙ SVal "K.7"
+    ║   ├─list :returns(NQPArray)
+    ║   │ ├◙ SVal "M"
+    ║   │ ├◙ IVal 92
+    ║   │ ├◙ IVal 1343
+    ║   │ └◙ SVal "K.7"
+    ║   └─list :returns(NQPArray)
+    ║     ├◙ SVal "K"
+    ║     ├◙ IVal 24
+    ║     ├◙ IVal 1411
+    ║     └◙ SVal ""
+    ╟─bind :returns(NQPMu -> str -> NQPMu -> NQPMu -> NQPMu)
+    ║ ├○ &ifTag :decl(static) :returns(NQPMu -> str -> NQPMu -> NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> str -> NQPMu -> NQPMu -> NQPMu)
+    ║   ╟○ subject :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ tag :decl(param) :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ then :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) ))
+    ║   ╟○ else :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 3 (int) ))
+    ║   ╟○ tagAndId :decl(var)
+    ║   ╙─if
+    ║     ├─islist
+    ║     │ └○ subject
+    ║     ├─:Stmts
+    ║     │ ├─bind
+    ║     │ │ ├○ tagAndId
+    ║     │ │ └─atpos
+    ║     │ │   ├○ subject
+    ║     │ │   └◙ IVal 0
+    ║     │ └─if
+    ║     │   ├─iseq_s
+    ║     │   │ ├○ tag :returns(str)
+    ║     │   │ └─substr
+    ║     │   │   ├○ tagAndId
+    ║     │   │   ├◙ IVal 0
+    ║     │   │   └◙ IVal 1
+    ║     │   ├─call then
+    ║     │   │ └─atpos
+    ║     │   │   ├─radix
+    ║     │   │   │ ├◙ IVal 10
+    ║     │   │   │ ├○ tagAndId
+    ║     │   │   │ ├◙ IVal 1
+    ║     │   │   │ └◙ IVal 0
+    ║     │   │   └◙ IVal 0
+    ║     │   └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical else) ))
+    ║     │     └○ else
+    ║     └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical else) ))
+    ║       └○ else
+    ╟─bind :returns(NQPMu -> str -> int -> NQPMu)
+    ║ ├○ &->#n :decl(static) :returns(NQPMu -> str -> int -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> str -> int -> NQPMu)
+    ║   ╟○ subject :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ tag :decl(param) :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ index :decl(param) :returns(int) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) ))
+    ║   ╙─call &ifTag
+    ║     ├○ subject
+    ║     ├○ tag :returns(str)
+    ║     ├─:Block
+    ║     │ ╟○ _ :decl(param)
+    ║     │ ╙─atpos
+    ║     │   ├○ subject
+    ║     │   └○ index :returns(int)
+    ║     └─null
+    ╟─bind :returns(NQPArray -> int -> NQPArray)
+    ║ ├○ &sublist :decl(static) :returns(NQPArray -> int -> NQPArray)
+    ║ └─:Block :returns(NQPArray -> int -> NQPArray)
+    ║   ╟○ list :decl(param) :returns(NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ from :decl(param) :returns(int) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟─bind :returns(int)
+    ║   ║ ├○ n :decl(var) :returns(int)
+    ║   ║ └─elems :returns(int)
+    ║   ║   └○ list :returns(NQPArray)
+    ║   ╟─bind :returns(int)
+    ║   ║ ├○ count :decl(var) :returns(int)
+    ║   ║ └○ n :returns(int)
+    ║   ╟─bind :returns(int)
+    ║   ║ ├○ to :decl(var) :returns(int)
+    ║   ║ └─add_i :returns(int)
+    ║   ║   ├○ from :returns(int)
+    ║   ║   └○ count :returns(int)
+    ║   ╟─bind :returns(NQPArray)
+    ║   ║ ├○ out :decl(var) :returns(NQPArray)
+    ║   ║ └─list :returns(NQPArray)
+    ║   ╟─if
+    ║   ║ ├─isgt_i
+    ║   ║ │ ├○ to :returns(int)
+    ║   ║ │ └○ n :returns(int)
+    ║   ║ └─bind :returns(int)
+    ║   ║   ├○ to :returns(int)
+    ║   ║   └○ n :returns(int)
+    ║   ╟─while
+    ║   ║ ├─islt_i
+    ║   ║ │ ├○ from :returns(int)
+    ║   ║ │ └○ to :returns(int)
+    ║   ║ └─:Stmts
+    ║   ║   ├─push
+    ║   ║   │ ├○ out :returns(NQPArray)
+    ║   ║   │ └─atpos
+    ║   ║   │   ├○ list :returns(NQPArray)
+    ║   ║   │   └○ from :returns(int)
+    ║   ║   └─bind :returns(int)
+    ║   ║     ├○ from :returns(int)
+    ║   ║     └─add_i :returns(int)
+    ║   ║       ├○ from :returns(int)
+    ║   ║       └◙ IVal 1
+    ║   ╙○ out :returns(NQPArray)
+    ╟─bind :returns(NQPMu -> str -> str)
+    ║ ├○ &strOut :decl(static) :returns(NQPMu -> str -> str)
+    ║ └─:Block :returns(NQPMu -> str -> str)
+    ║   ╟○ v :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ indent :decl(param) :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟─bind
+    ║   ║ ├○ v
+    ║   ║ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical v) ))
+    ║   ║   └○ v
+    ║   ╙─if
+    ║     ├─isstr
+    ║     │ └○ v
+    ║     ├─concat :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&strLit" (str) ))
+    ║     │ ├◙ SVal "\""
+    ║     │ └─concat :returns(str)
+    ║     │   ├─escape :returns(str)
+    ║     │   │ └○ v
+    ║     │   └◙ SVal "\""
+    ║     └─call &ifTag
+    ║       ├○ v
+    ║       ├◙ SVal "λ"
+    ║       ├─:Block
+    ║       │ ╟─bind
+    ║       │ ║ ├○ id :decl(param)
+    ║       │ ║ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical id) ))
+    ║       │ ║   └○ id
+    ║       │ ╟─bind
+    ║       │ ║ ├○ fvars :decl(var)
+    ║       │ ║ └─call &sublist
+    ║       │ ║   ├○ v
+    ║       │ ║   └◙ IVal 2
+    ║       │ ╟─bind
+    ║       │ ║ ├○ info :decl(var)
+    ║       │ ║ └─atpos
+    ║       │ ║   ├○ .λinfo
+    ║       │ ║   └○ id
+    ║       │ ╟─bind
+    ║       │ ║ ├○ fvn2dBI :decl(var)
+    ║       │ ║ └─split
+    ║       │ ║   ├◙ SVal " "
+    ║       │ ║   └─atpos
+    ║       │ ║     ├○ info
+    ║       │ ║     └◙ IVal 3
+    ║       │ ╟─bind
+    ║       │ ║ ├○ from :decl(var)
+    ║       │ ║ └─atpos
+    ║       │ ║   ├○ info
+    ║       │ ║   └◙ IVal 1
+    ║       │ ╟─bind
+    ║       │ ║ ├○ length :decl(var)
+    ║       │ ║ └─atpos
+    ║       │ ║   ├○ info
+    ║       │ ║   └◙ IVal 2
+    ║       │ ╟─bind
+    ║       │ ║ ├○ src :decl(var)
+    ║       │ ║ └─substr
+    ║       │ ║   ├○ .src
+    ║       │ ║   ├○ from
+    ║       │ ║   └○ length
+    ║       │ ╟─bind :returns(int)
+    ║       │ ║ ├○ i :decl(var)
+    ║       │ ║ └◙ IVal 0
+    ║       │ ╟─for
+    ║       │ ║ ├○ fvn2dBI
+    ║       │ ║ └─:Block
+    ║       │ ║   ╟○ pair :decl(param)
+    ║       │ ║   ╟─bind
+    ║       │ ║   ║ ├○ pair
+    ║       │ ║   ║ └─split
+    ║       │ ║   ║   ├◙ SVal "."
+    ║       │ ║   ║   └○ pair
+    ║       │ ║   ╟─bind
+    ║       │ ║   ║ ├○ name :decl(var)
+    ║       │ ║   ║ └─atpos
+    ║       │ ║   ║   ├○ pair
+    ║       │ ║   ║   └◙ IVal 0
+    ║       │ ║   ╟─bind
+    ║       │ ║   ║ ├○ dBI :decl(var)
+    ║       │ ║   ║ └─atpos
+    ║       │ ║   ║   ├○ pair
+    ║       │ ║   ║   └◙ IVal 1
+    ║       │ ║   ╟─bind
+    ║       │ ║   ║ ├○ val :decl(var)
+    ║       │ ║   ║ └─atpos
+    ║       │ ║   ║   ├○ fvars
+    ║       │ ║   ║   └○ i
+    ║       │ ║   ╟─bind
+    ║       │ ║   ║ ├○ i
+    ║       │ ║   ║ └─add_i
+    ║       │ ║   ║   ├○ i
+    ║       │ ║   ║   └◙ IVal 1
+    ║       │ ║   ╟─if
+    ║       │ ║   ║ ├─not_i
+    ║       │ ║   ║ │ └○ dBI
+    ║       │ ║   ║ └─bind :returns(str)
+    ║       │ ║   ║   ├○ dBI :returns(str)
+    ║       │ ║   ║   └◙ SVal "∞"
+    ║       │ ║   ╙─bind :returns(str)
+    ║       │ ║     ├○ src :returns(str)
+    ║       │ ║     └─concat :returns(str)
+    ║       │ ║       ├─concat :returns(str)
+    ║       │ ║       │ ├─concat :returns(str)
+    ║       │ ║       │ │ ├─concat :returns(str)
+    ║       │ ║       │ │ │ ├─concat :returns(str)
+    ║       │ ║       │ │ │ │ ├─concat :returns(str)
+    ║       │ ║       │ │ │ │ │ ├─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical src) ))
+    ║       │ ║       │ │ │ │ │ │ └○ src
+    ║       │ ║       │ │ │ │ │ └◙ SVal "\n"
+    ║       │ ║       │ │ │ │ └○ indent :returns(str)
+    ║       │ ║       │ │ │ └◙ SVal "# where "
+    ║       │ ║       │ │ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical name) ))
+    ║       │ ║       │ │   └○ name
+    ║       │ ║       │ └◙ SVal " = "
+    ║       │ ║       └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Op(if) ))
+    ║       │ ║         └─if
+    ║       │ ║           ├─iseq_s
+    ║       │ ║           │ ├○ name
+    ║       │ ║           │ └◙ SVal "self"
+    ║       │ ║           ├◙ SVal "..."
+    ║       │ ║           └─call &strOut
+    ║       │ ║             ├○ val
+    ║       │ ║             └─concat :returns(str)
+    ║       │ ║               ├○ indent :returns(str)
+    ║       │ ║               └◙ SVal "#           "
+    ║       │ ╙○ src
+    ║       └─if
+    ║         ├─isint
+    ║         │ └○ v
+    ║         ├○ v
+    ║         └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+    ║           ╙─reprname
+    ║             └○ v
+    ╟─bind :returns(NQPMu -> NQPMu)
+    ║ ├○ &delayMemo :decl(static) :returns(NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> NQPMu)
+    ║   ╟○ x :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ result :decl(var)
+    ║   ╟─bind :returns(int)
+    ║   ║ ├○ wasRun :decl(var)
+    ║   ║ └◙ IVal 0
+    ║   ╙─:Block
+    ║     ╙─if
+    ║       ├○ result
+    ║       ├○ wasRun
+    ║       └─:Stmts
+    ║         ├─bind :returns(int)
+    ║         │ ├○ result :returns(int)
+    ║         │ └◙ IVal 1
+    ║         └─bind
+    ║           ├○ wasRun
+    ║           └─call x
+    ╟─bind :returns(NQPMu -> NQPMu)
+    ║ ├○ &force :decl(static) :returns(NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> NQPMu)
+    ║   ╟○ x :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟─bind :returns(str)
+    ║   ║ ├○ foo :decl(var)
+    ║   ║ └◙ SVal "bar"
+    ║   ╙─if
+    ║     ├─isinvokable
+    ║     │ └○ x
+    ║     ├─call x
+    ║     └○ x
+    ╟─bind :returns(NQPMu -> NQPMu)
+    ║ ├○ &say :decl(static) :returns(NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> NQPMu)
+    ║   ╟○ v :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟─bind
+    ║   ║ ├○ v
+    ║   ║ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical v) ))
+    ║   ║   └○ v
+    ║   ╙─say
+    ║     └─if
+    ║       ├─isstr
+    ║       │ └○ v
+    ║       ├○ v
+    ║       └─call &strOut
+    ║         ├○ v
+    ║         └◙ SVal ""
+    ╟─bind :returns(str -> str)
+    ║ ├○ &strLit :decl(static) :returns(str -> str)
+    ║ └─:Block :returns(str -> str)
+    ║   ╟○ s :decl(param) :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╙─concat :returns(str)
+    ║     ├◙ SVal "\""
+    ║     └─concat :returns(str)
+    ║       ├─escape :returns(str)
+    ║       │ └○ s :returns(str)
+    ║       └◙ SVal "\""
+    ╟─bind :returns(NQPMu -> NQPMu -> NQPMu)
+    ║ ├○ &apply1 :decl(static) :returns(NQPMu -> NQPMu -> NQPMu)
+    ║ └─:Block :returns(NQPMu -> NQPMu -> NQPMu)
+    ║   ╟○ f :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ a1 :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ result :decl(var)
+    ║   ╟─bind
+    ║   ║ ├○ f
+    ║   ║ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical f) ))
+    ║   ║   └○ f
+    ║   ╟─bind
+    ║   ║ ├○ result
+    ║   ║ └─call
+    ║   ║   ├─defor
+    ║   ║   │ ├─call &ifTag :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&->#n" (str) ))
+    ║   ║   │ │ ├○ f
+    ║   ║   │ │ ├◙ SVal "λ"
+    ║   ║   │ │ ├─:Block
+    ║   ║   │ │ │ ╟○ _ :decl(param)
+    ║   ║   │ │ │ ╙─atpos
+    ║   ║   │ │ │   ├○ f
+    ║   ║   │ │ │   └◙ IVal 1
+    ║   ║   │ │ └─null
+    ║   ║   │ └─die
+    ║   ║   │   └─concat :returns(str)
+    ║   ║   │     ├─concat :returns(str)
+    ║   ║   │     │ ├─concat :returns(str)
+    ║   ║   │     │ │ ├◙ SVal "ERROR: cannot apply "
+    ║   ║   │     │ │ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Op(call &strOut) ))
+    ║   ║   │     │ │   └─call &strOut
+    ║   ║   │     │ │     ├○ f
+    ║   ║   │     │ │     └◙ SVal ""
+    ║   ║   │     │ └◙ SVal " to "
+    ║   ║   │     └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Op(call &strOut) ))
+    ║   ║   │       └─call &strOut
+    ║   ║   │         ├○ a1
+    ║   ║   │         └◙ SVal ""
+    ║   ║   └○ a1
+    ║   ╙─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical result) ))
+    ║     └○ result
+    ╟─bind
+    ║ ├○ .qastSize :decl(static)
+    ║ └◙ NVal 990
+    ╟─bind
+    ║ ├○ .blockCount :decl(static)
+    ║ └◙ NVal 91
+    ╟─bind
+    ║ ├○ .listCount :decl(static)
+    ║ └◙ NVal 100
+    ╟─bind
+    ║ ├○ .ivalCount :decl(static)
+    ║ └◙ NVal 117
+    ╟─bind
+    ║ ├○ .svalCount :decl(static)
+    ║ └◙ NVal 172
+    ╟─bind
+    ║ ├○ .svalSize :decl(static)
+    ║ └◙ NVal 2072
+    ╙─:Block :blocktype(immediate)
+      ╟○ local mainResult :decl(var)
+      ╟─bind
+      ║ ├○ local mainResult
+      ║ └─call &strOut
+      ║   ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ ├─list :returns(t73 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 48 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))
+      ║   │ │ ├◙ SVal "λ48"
+      ║   │ │ └─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │   ╟○ K :decl(param) :returns(t73) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K :decl(param)) ] ) ))
+      ║   │ │   ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     ├─list :returns(t71 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 47 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ] ) ))
+      ║   │ │     │ ├◙ SVal "λ47"
+      ║   │ │     │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │ ╟○ M :decl(param) :returns(t71) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "M", #`{NQPArray:}[ QAST::Var(lexical M :decl(param)) ] ) ))
+      ║   │ │     │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "M", #`{NQPArray:}[ QAST::Var(lexical M) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   ├─list :returns(t69 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 46 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ] ) ))
+      ║   │ │     │ │   │ ├◙ SVal "λ46"
+      ║   │ │     │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │ ╟○ Y :decl(param) :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   ├─list :returns(t68 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 45 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ ├◙ SVal "λ45"
+      ║   │ │     │ │   │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │ ╟○ True :decl(param) :returns(t68) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ], "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   ├─list :returns(t66 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 44 (int), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ], "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ ├◙ SVal "λ44"
+      ║   │ │     │ │   │ │   │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │ ╟○ False :decl(param) :returns(t66) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "False", #`{NQPArray:}[ QAST::Var(lexical False :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ], "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "False", #`{NQPArray:}[ QAST::Var(lexical False) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   ├─list :returns(t65 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 43 (int), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ], "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "False", #`{NQPArray:}[ QAST::Var(lexical False) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ ├◙ SVal "λ43"
+      ║   │ │     │ │   │ │   │ │   │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │ ╟○ zero :decl(param) :returns(t65) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ], "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "False", #`{NQPArray:}[ QAST::Var(lexical False) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   ├─list :returns(t64 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 42 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ ├◙ SVal "λ42"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │ ╟○ zero? :decl(param) :returns(t64) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "zero?", #`{NQPArray:}[ QAST::Var(lexical zero? :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   ├─list :returns(t62 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 41 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ ├◙ SVal "λ41"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╟○ succ :decl(param) :returns(t62) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "succ", #`{NQPArray:}[ QAST::Var(lexical succ :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   ├─list :returns(t61 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 40 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├◙ SVal "λ40"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╟○ succ' :decl(param) :returns(t61) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "succ'", #`{NQPArray:}[ QAST::Var(lexical succ' :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   ├─list :returns(t60 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 39 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├◙ SVal "λ39"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╟○ nil :decl(param) :returns(t60) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "nil", #`{NQPArray:}[ QAST::Var(lexical nil :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   ├─list :returns(t59 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 38 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├◙ SVal "λ38"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╟○ cons :decl(param) :returns(t59) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "cons", #`{NQPArray:}[ QAST::Var(lexical cons :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   ├─list :returns(t58 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 37 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├◙ SVal "λ37"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╟○ car :decl(param) :returns(t58) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "car", #`{NQPArray:}[ QAST::Var(lexical car :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   ├─list :returns(t57 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 36 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├◙ SVal "λ36"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├─:Block  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╟○ cdr :decl(param) :returns(t57) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "cdr", #`{NQPArray:}[ QAST::Var(lexical cdr :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))  ««"δ (# Combinators:\n    (K        λx.λ_.x)          "...
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   ├─list :returns(t56 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 35 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├◙ SVal "λ35"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├─:Block  ««"iterate succ zero"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╟○ iterate :decl(param) :returns(t56) :annotations(#`{BOOTHash:}nqp::hash( "deBruijnIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "iterate", #`{NQPArray:}[ QAST::Var(lexical iterate :decl(param)) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ], "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ], "iterate", #`{NQPArray:}[ QAST::Var(lexical iterate) ] ) ))  ««"iterate succ zero"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ], "iterate", #`{NQPArray:}[ QAST::Var(lexical iterate) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ iterate :returns(t56) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "iterate", #`{NQPArray:}[ QAST::Var(lexical iterate) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ └○ succ :returns(t62) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   └○ zero :returns(t65) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 9 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ zero :returns(t65) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 9 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ └○ succ :returns(t62) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   └─call &delayMemo :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │     └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │       ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))  ««"Y λself.λf.λx.λonNil.λonCons.onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │         ├○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │         └─call &delayMemo :returns(Void -> t54 -> t52 -> t50 -> t49 -> t48 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │           └─:Block :returns(Void -> t54 -> t52 -> t50 -> t49 -> t48 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             ╙─list :returns(t54 -> t52 -> t50 -> t49 -> t48 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 34 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λself.λf.λx.λonNil.λonCons.onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │               ├◙ SVal "λ34"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │               └─:Block  ««"λf.λx.λonNil.λonCons.onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                 ╟○ self :decl(param) :returns(t54)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                 ╙─list :returns(t52 -> t50 -> t49 -> t48 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 33 (int), "FV", #`{BOOTHash:}nqp::hash( "self", #`{NQPArray:}[ QAST::Var(lexical self) ] ) ))  ««"λf.λx.λonNil.λonCons.onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   ├◙ SVal "λ33"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   ├─:Block  ««"λx.λonNil.λonCons.onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │ ╟○ f :decl(param) :returns(t52)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │ ╙─list :returns(t50 -> t49 -> t48 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 32 (int), "FV", #`{BOOTHash:}nqp::hash( "self", #`{NQPArray:}[ QAST::Var(lexical self) ], "f", #`{NQPArray:}[ QAST::Var(lexical f), QAST::Var(lexical f) ] ) ))  ««"λx.λonNil.λonCons.onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   ├◙ SVal "λ32"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   ├─:Block  ««"λonNil.λonCons.onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │ ╟○ x :decl(param) :returns(t50)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │ ╙─list :returns(t49 -> t48 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 31 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x), QAST::Var(lexical x) ], "self", #`{NQPArray:}[ QAST::Var(lexical self) ], "f", #`{NQPArray:}[ QAST::Var(lexical f), QAST::Var(lexical f) ] ) ))  ««"λonNil.λonCons.onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   ├◙ SVal "λ31"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   ├─:Block  ««"λonCons.onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │ ╟○ onNil :decl(param) :returns(t49)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │ ╙─list :returns(t48 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 30 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x), QAST::Var(lexical x) ], "self", #`{NQPArray:}[ QAST::Var(lexical self) ], "f", #`{NQPArray:}[ QAST::Var(lexical f), QAST::Var(lexical f) ] ) ))  ««"λonCons.onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   ├◙ SVal "λ30"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   ├─:Block  ««"onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │ ╟○ onCons :decl(param) :returns(t48)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x), QAST::Var(lexical x) ], "self", #`{NQPArray:}[ QAST::Var(lexical self) ], "onCons", #`{NQPArray:}[ QAST::Var(lexical onCons) ], "f", #`{NQPArray:}[ QAST::Var(lexical f), QAST::Var(lexical f) ] ) ))  ««"onCons x (self f (f x))"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │   ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "onCons", #`{NQPArray:}[ QAST::Var(lexical onCons) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │   │ ├○ onCons :returns(t48) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "onCons", #`{NQPArray:}[ QAST::Var(lexical onCons) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │   │ └○ x :returns(t50) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │   └─call &delayMemo :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │     └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │       ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "self", #`{NQPArray:}[ QAST::Var(lexical self) ], "f", #`{NQPArray:}[ QAST::Var(lexical f), QAST::Var(lexical f) ] ) ))  ««"self f (f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │         ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "self", #`{NQPArray:}[ QAST::Var(lexical self) ], "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │         │ ├○ self :returns(t54) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 5 (int), "FV", #`{BOOTHash:}nqp::hash( "self", #`{NQPArray:}[ QAST::Var(lexical self) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │         │ └○ f :returns(t52) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │         └─call &delayMemo :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │           └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │             ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))  ««"f x"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │               ├○ f :returns(t52) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   │               └○ x :returns(t50) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   ├○ x :returns(t50) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   ├○ self :returns(t54) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 5 (int), "FV", #`{BOOTHash:}nqp::hash( "self", #`{NQPArray:}[ QAST::Var(lexical self) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   │   └○ f :returns(t52) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   ├○ x :returns(t50) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   ├○ self :returns(t54) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 5 (int), "FV", #`{BOOTHash:}nqp::hash( "self", #`{NQPArray:}[ QAST::Var(lexical self) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   │   └○ f :returns(t52) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   ├○ self :returns(t54) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 5 (int), "FV", #`{BOOTHash:}nqp::hash( "self", #`{NQPArray:}[ QAST::Var(lexical self) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   │   └○ f :returns(t52) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   └○ self :returns(t54) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 5 (int), "FV", #`{BOOTHash:}nqp::hash( "self", #`{NQPArray:}[ QAST::Var(lexical self) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ zero :returns(t65) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 9 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ └○ succ :returns(t62) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   └─call &delayMemo :returns(Void -> t46 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │     └─:Block :returns(Void -> t46 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │       ╙─list :returns(t46 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 29 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λxs.xs (\"cdr\" \"nil\") (λhd.λtl.tl)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │         ├◙ SVal "λ29"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │         └─:Block  ««"xs (\"cdr\" \"nil\") (λhd.λtl.tl)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │           ╟○ xs :decl(param) :returns(t46)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │           ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))  ««"xs (\"cdr\" \"nil\") (λhd.λtl.tl)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │ ├○ xs :returns(t46) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │ └─call &delayMemo :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │     ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"\"cdr\" \"nil\""
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │       ├◙ SVal "cdr" :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash(  ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │       └◙ SVal "nil" :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash(  ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             └─call &delayMemo :returns(Void -> NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │               └─:Block :returns(Void -> NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                 ╙─list :returns(NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 28 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λhd.λtl.tl"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   ├◙ SVal "λ28"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   └─:Block  ««"λtl.tl"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                     ╟○ hd :decl(param) :returns(t45)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                     ╙─list :returns(t44 -> t44) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 27 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λtl.tl"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                       ├◙ SVal "λ27"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                       └─:Block  ««"tl"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                         ╟○ tl :decl(param) :returns(t44)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                         ╙○ tl :returns(t44) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "tl", #`{NQPArray:}[ QAST::Var(lexical tl) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ zero :returns(t65) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 9 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ └○ succ :returns(t62) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   └─call &delayMemo :returns(Void -> t42 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │     └─:Block :returns(Void -> t42 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │       ╙─list :returns(t42 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 26 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λxs.xs (\"car\" \"nil\") (λhd.λtl.hd)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │         ├◙ SVal "λ26"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │         └─:Block  ««"xs (\"car\" \"nil\") (λhd.λtl.hd)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │           ╟○ xs :decl(param) :returns(t42)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │           ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))  ««"xs (\"car\" \"nil\") (λhd.λtl.hd)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │ ├○ xs :returns(t42) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │ └─call &delayMemo :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │     ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"\"car\" \"nil\""
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │       ├◙ SVal "car" :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash(  ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │       └◙ SVal "nil" :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash(  ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             └─call &delayMemo :returns(Void -> t41 -> t40 -> t41) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │               └─:Block :returns(Void -> t41 -> t40 -> t41) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                 ╙─list :returns(t41 -> t40 -> t41) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 25 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λhd.λtl.hd"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   ├◙ SVal "λ25"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                   └─:Block  ««"λtl.hd"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                     ╟○ hd :decl(param) :returns(t41)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                     ╙─list :returns(t40 -> t41) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 24 (int), "FV", #`{BOOTHash:}nqp::hash( "hd", #`{NQPArray:}[ QAST::Var(lexical hd) ] ) ))  ««"λtl.hd"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                       ├◙ SVal "λ24"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                       ├─:Block  ««"hd"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                       │ ╟○ tl :decl(param) :returns(t40)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                       │ ╙○ hd :returns(t41) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "hd", #`{NQPArray:}[ QAST::Var(lexical hd) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │                       └○ hd :returns(t41) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "hd", #`{NQPArray:}[ QAST::Var(lexical hd) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ zero :returns(t65) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 9 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ └○ succ :returns(t62) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   └─call &delayMemo :returns(Void -> t38 -> t37 -> t36 -> t35 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │     └─:Block :returns(Void -> t38 -> t37 -> t36 -> t35 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │       ╙─list :returns(t38 -> t37 -> t36 -> t35 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 23 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λx.λxs.λonNil.λonCons.onCons x xs"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │         ├◙ SVal "λ23"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │         └─:Block  ««"λxs.λonNil.λonCons.onCons x xs"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │           ╟○ x :decl(param) :returns(t38)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │           ╙─list :returns(t37 -> t36 -> t35 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 22 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))  ««"λxs.λonNil.λonCons.onCons x xs"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             ├◙ SVal "λ22"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             ├─:Block  ««"λonNil.λonCons.onCons x xs"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │ ╟○ xs :decl(param) :returns(t37)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │ ╙─list :returns(t36 -> t35 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 21 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))  ««"λonNil.λonCons.onCons x xs"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   ├◙ SVal "λ21"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   ├─:Block  ««"λonCons.onCons x xs"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │ ╟○ onNil :decl(param) :returns(t36)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │ ╙─list :returns(t35 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 20 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))  ««"λonCons.onCons x xs"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   ├◙ SVal "λ20"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   ├─:Block  ««"onCons x xs"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   │ ╟○ onCons :decl(param) :returns(t35)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "onCons", #`{NQPArray:}[ QAST::Var(lexical onCons) ], "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))  ««"onCons x xs"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   │   ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "onCons", #`{NQPArray:}[ QAST::Var(lexical onCons) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   │   │ ├○ onCons :returns(t35) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "onCons", #`{NQPArray:}[ QAST::Var(lexical onCons) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   │   │ └○ x :returns(t38) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   │   └○ xs :returns(t37) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   ├○ x :returns(t38) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   └○ xs :returns(t37) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   ├○ x :returns(t38) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   └○ xs :returns(t37) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "xs", #`{NQPArray:}[ QAST::Var(lexical xs) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             └○ x :returns(t38) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ zero :returns(t65) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 9 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ └○ succ :returns(t62) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │   └─call &delayMemo :returns(Void -> t34 -> t33 -> t34) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │     └─:Block :returns(Void -> t34 -> t33 -> t34) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │       ╙─list :returns(t34 -> t33 -> t34) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 19 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λonNil.λonCons.onNil"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │         ├◙ SVal "λ19"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │         └─:Block  ««"λonCons.onNil"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │           ╟○ onNil :decl(param) :returns(t34)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │           ╙─list :returns(t33 -> t34) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 18 (int), "FV", #`{BOOTHash:}nqp::hash( "onNil", #`{NQPArray:}[ QAST::Var(lexical onNil) ] ) ))  ««"λonCons.onNil"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             ├◙ SVal "λ18"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             ├─:Block  ««"onNil"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │ ╟○ onCons :decl(param) :returns(t33)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             │ ╙○ onNil :returns(t34) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "onNil", #`{NQPArray:}[ QAST::Var(lexical onNil) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ │             └○ onNil :returns(t34) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "onNil", #`{NQPArray:}[ QAST::Var(lexical onNil) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ zero :returns(t65) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 9 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   │ └○ succ :returns(t62) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "succ", #`{NQPArray:}[ QAST::Var(lexical succ) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │   └─call &delayMemo :returns(Void -> t30 -> t27 -> t26 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │     └─:Block :returns(Void -> t30 -> t27 -> t26 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │       ╙─list :returns(t30 -> t27 -> t26 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 17 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λn.λf.λx.f (n f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │         ├◙ SVal "λ17"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │         └─:Block  ««"λf.λx.f (n f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │           ╟○ n :decl(param) :returns(t30)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │           ╙─list :returns(t27 -> t26 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 16 (int), "FV", #`{BOOTHash:}nqp::hash( "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))  ««"λf.λx.f (n f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             ├◙ SVal "λ16"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             ├─:Block  ««"λx.f (n f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │ ╟○ f :decl(param) :returns(t27)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │ ╙─list :returns(t26 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 15 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f), QAST::Var(lexical f) ], "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))  ««"λx.f (n f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   ├◙ SVal "λ15"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   ├─:Block  ««"f (n f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │ ╟○ x :decl(param) :returns(t26)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "f", #`{NQPArray:}[ QAST::Var(lexical f), QAST::Var(lexical f) ], "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))  ««"f (n f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   ├○ f :returns(t27) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │   └─call &delayMemo :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │     └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │       ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "f", #`{NQPArray:}[ QAST::Var(lexical f) ], "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))  ««"n f x"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │         ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ], "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │         │ ├○ n :returns(t30) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │         │ └○ f :returns(t27) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   │         └○ x :returns(t26) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   ├○ f :returns(t27) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             │   └○ n :returns(t30) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ │             └○ n :returns(t30) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ ├○ zero :returns(t65) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 9 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   │ └○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │   └─call &delayMemo :returns(Void -> t24 -> t22 -> t21 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │     └─:Block :returns(Void -> t24 -> t22 -> t21 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │       ╙─list :returns(t24 -> t22 -> t21 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 14 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λn.λf.λx.n f (f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │         ├◙ SVal "λ14"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │         └─:Block  ««"λf.λx.n f (f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │           ╟○ n :decl(param) :returns(t24)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │           ╙─list :returns(t22 -> t21 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 13 (int), "FV", #`{BOOTHash:}nqp::hash( "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))  ««"λf.λx.n f (f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             ├◙ SVal "λ13"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             ├─:Block  ««"λx.n f (f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │ ╟○ f :decl(param) :returns(t22)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │ ╙─list :returns(t21 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 12 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f), QAST::Var(lexical f) ], "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))  ««"λx.n f (f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   ├◙ SVal "λ12"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   ├─:Block  ««"n f (f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   │ ╟○ x :decl(param) :returns(t21)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "f", #`{NQPArray:}[ QAST::Var(lexical f), QAST::Var(lexical f) ], "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))  ««"n f (f x)"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   │   ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ], "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   │   │ ├○ n :returns(t24) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   │   │ └○ f :returns(t22) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   │   └─call &delayMemo :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   │     └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   │       ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ], "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))  ««"f x"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   │         ├○ f :returns(t22) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   │         └○ x :returns(t21) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   ├○ f :returns(t22) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             │   └○ n :returns(t24) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ │             └○ n :returns(t24) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ ├○ zero :returns(t65) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 9 (int), "FV", #`{BOOTHash:}nqp::hash( "zero", #`{NQPArray:}[ QAST::Var(lexical zero) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   │ └○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │   └─call &delayMemo :returns(Void -> t19 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │     └─:Block :returns(Void -> t19 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │       ╙─list :returns(t19 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ], "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "False", #`{NQPArray:}[ QAST::Var(lexical False) ] ) ))  ««"λn.n (K False) True"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         ├◙ SVal "λ11"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         ├─:Block  ««"n (K False) True"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         │ ╟○ n :decl(param) :returns(t19)
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ], "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "n", #`{NQPArray:}[ QAST::Var(lexical n) ], "False", #`{NQPArray:}[ QAST::Var(lexical False) ] ) ))  ««"n (K False) True"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         │   ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "False", #`{NQPArray:}[ QAST::Var(lexical False) ], "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         │   │ ├○ n :returns(t19) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "n", #`{NQPArray:}[ QAST::Var(lexical n) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         │   │ └─call &delayMemo :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         │   │   └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         │   │     ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ], "False", #`{NQPArray:}[ QAST::Var(lexical False) ] ) ))  ««"K False"
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         │   │       ├○ K :returns(t73) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         │   │       └○ False :returns(t66) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "False", #`{NQPArray:}[ QAST::Var(lexical False) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         │   └○ True :returns(t68) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         ├○ True :returns(t68) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         ├○ K :returns(t73) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ │         └○ False :returns(t66) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "False", #`{NQPArray:}[ QAST::Var(lexical False) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ ├○ True :returns(t68) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ ├○ K :returns(t73) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ ├○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   │ └○ False :returns(t66) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "False", #`{NQPArray:}[ QAST::Var(lexical False) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ │   └─call &delayMemo :returns(Void -> NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │     └─:Block :returns(Void -> NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │   │ │       ╙─list :returns(NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 10 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λf.λx.x"
+      ║   │ │     │ │   │ │   │ │   │ │         ├◙ SVal "λ10"
+      ║   │ │     │ │   │ │   │ │   │ │         └─:Block  ««"λx.x"
+      ║   │ │     │ │   │ │   │ │   │ │           ╟○ f :decl(param) :returns(t18)
+      ║   │ │     │ │   │ │   │ │   │ │           ╙─list :returns(t17 -> t17) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 9 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λx.x"
+      ║   │ │     │ │   │ │   │ │   │ │             ├◙ SVal "λ9"
+      ║   │ │     │ │   │ │   │ │   │ │             └─:Block  ««"x"
+      ║   │ │     │ │   │ │   │ │   │ │               ╟○ x :decl(param) :returns(t17)
+      ║   │ │     │ │   │ │   │ │   │ │               ╙○ x :returns(t17) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ ├○ True :returns(t68) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash( "True", #`{NQPArray:}[ QAST::Var(lexical True) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ ├○ K :returns(t73) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ] ) ))
+      ║   │ │     │ │   │ │   │ │   │ └○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   │ │   └─call &delayMemo :returns(Void -> NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │   │ │     └─:Block :returns(Void -> NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │   │ │       ╙─list :returns(NQPArray) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 8 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λx.λy.y"
+      ║   │ │     │ │   │ │   │ │         ├◙ SVal "λ8"
+      ║   │ │     │ │   │ │   │ │         └─:Block  ««"λy.y"
+      ║   │ │     │ │   │ │   │ │           ╟○ x :decl(param) :returns(t16)
+      ║   │ │     │ │   │ │   │ │           ╙─list :returns(t15 -> t15) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λy.y"
+      ║   │ │     │ │   │ │   │ │             ├◙ SVal "λ7"
+      ║   │ │     │ │   │ │   │ │             └─:Block  ««"y"
+      ║   │ │     │ │   │ │   │ │               ╟○ y :decl(param) :returns(t15)
+      ║   │ │     │ │   │ │   │ │               ╙○ y :returns(t15) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "y", #`{NQPArray:}[ QAST::Var(lexical y) ] ) ))
+      ║   │ │     │ │   │ │   │ ├○ K :returns(t73) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ] ) ))
+      ║   │ │     │ │   │ │   │ └○ Y :returns(t69) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 11 (int), "FV", #`{BOOTHash:}nqp::hash( "Y", #`{NQPArray:}[ QAST::Var(lexical Y) ] ) ))
+      ║   │ │     │ │   │ │   └─call &delayMemo :returns(Void -> t14 -> t13 -> t14) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │   │ │     └─:Block :returns(Void -> t14 -> t13 -> t14) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │   │ │       ╙─list :returns(t14 -> t13 -> t14) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 6 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λx.λy.x"
+      ║   │ │     │ │   │ │         ├◙ SVal "λ6"
+      ║   │ │     │ │   │ │         └─:Block  ««"λy.x"
+      ║   │ │     │ │   │ │           ╟○ x :decl(param) :returns(t14)
+      ║   │ │     │ │   │ │           ╙─list :returns(t13 -> t14) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 5 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))  ««"λy.x"
+      ║   │ │     │ │   │ │             ├◙ SVal "λ5"
+      ║   │ │     │ │   │ │             ├─:Block  ««"x"
+      ║   │ │     │ │   │ │             │ ╟○ y :decl(param) :returns(t13)
+      ║   │ │     │ │   │ │             │ ╙○ x :returns(t14) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ │             └○ x :returns(t14) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │     │ │   │ └○ K :returns(t73) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ] ) ))
+      ║   │ │     │ │   └─call &delayMemo :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │     └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │       ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "M", #`{NQPArray:}[ QAST::Var(lexical M) ] ) ))  ««"M λu.λf.f (u u f)"
+      ║   │ │     │ │         ├○ M :returns(t71) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "M", #`{NQPArray:}[ QAST::Var(lexical M) ] ) ))
+      ║   │ │     │ │         └─call &delayMemo :returns(Void -> t8 -> t5 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │           └─:Block :returns(Void -> t8 -> t5 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │             ╙─list :returns(t8 -> t5 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 4 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λu.λf.f (u u f)"
+      ║   │ │     │ │               ├◙ SVal "λ4"
+      ║   │ │     │ │               └─:Block  ««"λf.f (u u f)"
+      ║   │ │     │ │                 ╟○ u :decl(param) :returns(t8)
+      ║   │ │     │ │                 ╙─list :returns(t5 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 3 (int), "FV", #`{BOOTHash:}nqp::hash( "u", #`{NQPArray:}[ QAST::Var(lexical u), QAST::Var(lexical u) ] ) ))  ««"λf.f (u u f)"
+      ║   │ │     │ │                   ├◙ SVal "λ3"
+      ║   │ │     │ │                   ├─:Block  ««"f (u u f)"
+      ║   │ │     │ │                   │ ╟○ f :decl(param) :returns(t5)
+      ║   │ │     │ │                   │ ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f), QAST::Var(lexical f) ], "u", #`{NQPArray:}[ QAST::Var(lexical u), QAST::Var(lexical u) ] ) ))  ««"f (u u f)"
+      ║   │ │     │ │                   │   ├○ f :returns(t5) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │                   │   └─call &delayMemo :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │     │ │                   │     └─:Block :returns(Void -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │     │ │                   │       ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ], "u", #`{NQPArray:}[ QAST::Var(lexical u), QAST::Var(lexical u) ] ) ))  ««"u u f"
+      ║   │ │     │ │                   │         ├─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "FV", #`{BOOTHash:}nqp::hash( "u", #`{NQPArray:}[ QAST::Var(lexical u), QAST::Var(lexical u) ] ) ))
+      ║   │ │     │ │                   │         │ ├○ u :returns(t8) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "u", #`{NQPArray:}[ QAST::Var(lexical u) ] ) ))
+      ║   │ │     │ │                   │         │ └○ u :returns(t8) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "u", #`{NQPArray:}[ QAST::Var(lexical u) ] ) ))
+      ║   │ │     │ │                   │         └○ f :returns(t5) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "f", #`{NQPArray:}[ QAST::Var(lexical f) ] ) ))
+      ║   │ │     │ │                   └○ u :returns(t8) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "u", #`{NQPArray:}[ QAST::Var(lexical u) ] ) ))
+      ║   │ │     │ └○ K :returns(t73) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 7 (int), "FV", #`{BOOTHash:}nqp::hash( "K", #`{NQPArray:}[ QAST::Var(lexical K) ] ) ))
+      ║   │ │     └─call &delayMemo :returns(Void -> t2 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │ │       └─:Block :returns(Void -> t2 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │ │         ╙─list :returns(t2 -> NQPMu) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λx.x x"
+      ║   │ │           ├◙ SVal "λ2"
+      ║   │ │           └─:Block  ««"x x"
+      ║   │ │             ╟○ x :decl(param) :returns(t2)
+      ║   │ │             ╙─call &apply1 :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x), QAST::Var(lexical x) ] ) ))  ««"x x"
+      ║   │ │               ├○ x :returns(t2) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ │               └○ x :returns(t2) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │ └─call &delayMemo :returns(Void -> t1 -> t0 -> t1) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))
+      ║   │   └─:Block :returns(Void -> t1 -> t0 -> t1) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+      ║   │     ╙─list :returns(t1 -> t0 -> t1) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λx.λ_.x"
+      ║   │       ├◙ SVal "λ1"
+      ║   │       └─:Block  ««"λ_.x"
+      ║   │         ╟○ x :decl(param) :returns(t1)
+      ║   │         ╙─list :returns(t0 -> t1) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "infoIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))  ««"λ_.x"
+      ║   │           ├◙ SVal "λ0"
+      ║   │           ├─:Block  ««"x"
+      ║   │           │ ╟○ _ :decl(param) :returns(t0)
+      ║   │           │ ╙○ x :returns(t1) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │           └○ x :returns(t1) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 2 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   └◙ SVal ""
+      ╙○ local mainResult

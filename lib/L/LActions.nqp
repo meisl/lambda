@@ -14,23 +14,6 @@ my class Type {
         nqp::die('cannot instantiate class Type');
     }
 
-    method toStr($t, :$parens) {
-        if nqp::isconcrete($t) {
-            if nqp::istype($t, FnType) {
-                if $parens {
-                    '(' ~ $t.Str ~ ')'
-                } else {
-                    $t.Str;
-                }
-            } else {
-                nqp::die('invalid type argument ' ~ describe($t) ~ ' - must not be concrete')
-            }
-        } else {
-            $t.HOW.name($t)
-        }
-    }
-    
-    
 }
 
 my class Void is Type {
@@ -52,7 +35,7 @@ my class FnType is Type {
     my %instances := {};
 
     method new($in, $out) {
-        my $str := Type.toStr($in, :parens) ~ ' -> ' ~ Type.toStr($out);
+        my $str := typeToStr($in, :parens) ~ ' -> ' ~ typeToStr($out);
         my $instance := %instances{$str};
         unless $instance {
             $instance := nqp::create(self);
@@ -66,6 +49,41 @@ my class FnType is Type {
 
 }
 
+my class TypeVar is Type {
+    has $!name;
+
+    my %instances := {};
+
+    method new() {
+        my $name := 't' ~ nqp::elems(%instances);
+        my $instance := nqp::create(self);
+        nqp::bindattr($instance, TypeVar, '$!name', $name);
+        %instances{$name} := $instance;
+        $instance;
+    }
+
+    method Str() { $!name }
+
+}
+
+
+my sub typeToStr($t, :$parens) {
+    if nqp::isconcrete($t) {
+        if nqp::istype($t, FnType) {
+            if $parens {
+                '(' ~ $t.Str ~ ')'
+            } else {
+                $t.Str;
+            }
+        } elsif nqp::istype($t, TypeVar) {
+            $t.Str;
+        } else {
+            nqp::die('invalid type argument ' ~ describe($t) ~ ' - must not be concrete')
+        }
+    } else {
+        $t.HOW.name($t)
+    }
+}
 
 
 my sub isLambda($node) {
@@ -75,6 +93,17 @@ my sub isLambda($node) {
         && (nqp::substr($node[0].value, 0, 1) eq 'λ')
     ;
 }
+
+my sub isApp($node) {
+    isOp($node, 'call')
+        && ($node.name eq '&apply1')
+}
+
+my sub isRCall($node) {
+    isOp($node, 'call')
+        && (nqp::index($node.name, '&') == 0)
+}
+
 
 my sub asNode($v) {
     if nqp::isstr($v) {
@@ -180,7 +209,7 @@ my sub mkDelaySimple($node) {
     } elsif isForced($node) {
         $node.ann('forced');
     } else {
-        $node := QAST::Block.new(:arity(0), :returns(FnType.new(Void, $node.returns)), $node);
+        $node := QAST::Block.new(:arity(0), $node);
         $node.annotate('delayed', 'simple');
         $node;
     }
@@ -250,7 +279,7 @@ my sub mkDelayMemo($node) {
         #);
 
         my $out := mkRCall('&delayMemo', mkDelaySimple($node));
-        $out.returns(FnType.new(Void, $node.returns));
+        $out.node($node.node);
 
         ##$node := QAST::Stmts.new(
         ##    mkRCall('&say', mkConcat("# calling .delayMemo on\n", $node.dump)),
@@ -358,15 +387,11 @@ my sub make-runtime() {
         }
         my @paramTypes := [];
         if $returns =:= NO_VALUE {
-            $returns := NQPMu;
-            for $paramNames {
-                @paramTypes.push(NQPMu);
-                $returns := FnType.new(NQPMu, $returns);    # ATTENTION: reverses order (but works since all are NQPMu)
-            }
+            nqp::die("need a type (:returns) for runtime fn $name");
         } else {
             my $temp := $returns;
             for $paramNames {
-                nqp::die("invalid type for fn $name: " ~ Type.toStr($returns))
+                nqp::die("invalid type for fn $name: " ~ typeToStr($returns))
                     unless nqp::isconcrete($temp) && nqp::istype($temp, FnType);
                 @paramTypes.push($temp.in);
                 $temp := $temp.out;
@@ -376,8 +401,9 @@ my sub make-runtime() {
         my @vars := [];
         my $i := 0;
         for $paramNames {
-            my $var := lexVar($_, :returns(@paramTypes[$i]));
-            $body.push(mkDeclP($var, :returns(@paramTypes[$i])));
+            my $var  := lexVar($_);         $var.returns(@paramTypes[$i]);
+            my $decl := mkDeclP($var);      $decl.returns(@paramTypes[$i]);
+            $body.push($decl);
             @vars.push($var);
             $i++;
         }
@@ -405,9 +431,10 @@ my sub make-runtime() {
         $binding;
     }
 
-    mkRFn('&ifTag', <subject tag then else>, :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(NQPMu, FnType.new(NQPMu, NQPMu))))), 
+    mkRFn('&ifTag', <subject tag then else>, 
+        :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(NQPMu, FnType.new(NQPMu, NQPMu))))), 
         :tagAndId(nqp::null), 
-        -> $subject, $tag, $then, $else, $tagAndId {
+    -> $subject, $tag, $then, $else, $tagAndId {
         QAST::Op.new(:op<if>,
             QAST::Op.new(:op<islist>, $subject),
             QAST::Stmts.new(
@@ -434,8 +461,9 @@ my sub make-runtime() {
         )
     });
     
-    mkRFn('&->#n', <subject tag index>, :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(int, NQPMu)))),
-        -> $subject, $tag, $index {
+    mkRFn('&->#n', <subject tag index>, 
+        :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(int, NQPMu)))),
+    -> $subject, $tag, $index {
         mkRCall('&ifTag', $subject, $tag,
             QAST::Block.new(:arity(1),
                 lexVar('_', :decl<param>),
@@ -445,7 +473,9 @@ my sub make-runtime() {
         )
     });
     
-    mkRFn('&sublist', <list from>, :returns(FnType.new(NQPArray, FnType.new(int, NQPArray))), -> $list, $from {
+    mkRFn('&sublist', <list from>, 
+        :returns(FnType.new(NQPArray, FnType.new(int, NQPArray))), 
+    -> $list, $from {
         my $to    := lexVar('to',       :returns(int));
         my $out   := lexVar('out',      :returns(NQPArray));
         my $count := lexVar('count',    :returns(int));
@@ -469,7 +499,9 @@ my sub make-runtime() {
         $out,
     });
     
-    mkRFn('&strOut', <v indent>, :returns(FnType.new(NQPMu, FnType.new(str, str))), -> $v, $indent {
+    mkRFn('&strOut', <v indent>, 
+        :returns(FnType.new(NQPMu, FnType.new(str, str))), 
+    -> $v, $indent {
         my $id      := lexVar('id');
         my $info    := lexVar('info');
         my $src     := lexVar('src');
@@ -548,7 +580,12 @@ my sub make-runtime() {
         )
     });
 
-    mkRFn('&delayMemo', <x>, :wasRun(0), :result(nqp::null), -> $x, $wasRun, $result {
+    my $tv := TypeVar.new;
+
+    mkRFn('&delayMemo', <x>, 
+        :returns(FnType.new(FnType.new(Void, $tv), FnType.new(Void, $tv))),
+        :wasRun(0), :result(nqp::null), 
+    -> $x, $wasRun, $result {
         QAST::Block.new(:arity(0),
             QAST::Op.new(:op<if>, $wasRun,
                 $result,
@@ -560,7 +597,12 @@ my sub make-runtime() {
         )
     });
     
-    mkRFn('&force', <x>, :foo<bar>, -> $x, $foo {
+    $tv := TypeVar.new;
+
+    mkRFn('&force', <x>, 
+        :returns(FnType.new(FnType.new(Void, $tv), $tv)),
+        :foo<bar>,  # prevent it from being inlined
+    -> $x, $foo {
         QAST::Op.new(:op<if>,
             QAST::Op.new(:op<isinvokable>, $x),
             mkCall($x),
@@ -568,7 +610,9 @@ my sub make-runtime() {
         )
     });
     
-    mkRFn('&say', <v>, -> $v {
+    mkRFn('&say', <v>, 
+        :returns(FnType.new(TypeVar.new, int)),
+    -> $v {
         mkBind($v, mkForce($v)),
         QAST::Op.new(:op<say>,
             QAST::Op.new(:op<if>,
@@ -579,7 +623,9 @@ my sub make-runtime() {
         )
     });
     
-    mkRFn('&strLit', <s>, :returns(FnType.new(str, str)), -> $s {
+    mkRFn('&strLit', <s>, 
+        :returns(FnType.new(str, str)), 
+    -> $s {
         #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
         QAST::Op.new(:op<concat>, :returns(str),
             asNode('"'),
@@ -590,7 +636,12 @@ my sub make-runtime() {
         );
     });
     
-    mkRFn('&apply1', <f a1>, :result(nqp::null), -> $f, $a1, $result {
+    my $tvIn := TypeVar.new;
+    my $tvOut := TypeVar.new;
+    mkRFn('&apply1', <f a1>,
+        :returns(FnType.new(FnType.new($tvIn, $tvOut), FnType.new($tvIn, $tvOut))),
+        :result(nqp::null), 
+    -> $f, $a1, $result {
         mkBind($f, mkForce($f)),
         mkBind($result, mkCall(
             QAST::Op.new(:op<defor>,
@@ -631,8 +682,10 @@ my sub match2location($match) {
 }
 
 my sub panic($match, *@msg-pieces) {
-    @msg-pieces.push("\n");
-    @msg-pieces.push(loc2str(match2location($match)));
+    if nqp::isconcrete($match) {
+        @msg-pieces.push("\n");
+        @msg-pieces.push(loc2str(match2location($match)));
+    }
     nqp::die(join('', @msg-pieces));
 }
 
@@ -714,7 +767,10 @@ class LActions is HLL::Actions {
             nqp::die($msg);
         }
 
-        $top-block.push(make-runtime());
+        my $runtime := make-runtime();
+        #self.typecheck($runtime);              # <<<<<<<<< TODO
+
+        $top-block.push($runtime);
         my $s := $top-block;
         
         my $lambdaInfo := mkList();
@@ -743,6 +799,9 @@ class LActions is HLL::Actions {
             mkBind(lexVar('.src', :decl<static>), ~$/)
         );
 
+        my $mainTermType;
+        $mainTermType := self.typecheck($mainTerm);
+        say('MAIN type: ' ~ typeToStr($mainTermType));
 
         # Note: cannot use mkBind here since this enforces an init value
         my $quastSizeBinding  := QAST::Op.new(:op<bind>, lexVar('.qastSize',   :decl<static>));   # will receive a value node later
@@ -794,6 +853,135 @@ class LActions is HLL::Actions {
         $svalSizeBinding.push(asNode(@stats[5]));       # ttl nr of characters in SVal nodes
 
         make $out;
+    }
+    sub constrain-eq($t1, $t2) {
+        say('>>constraint: ', typeToStr($t1), ' = ', typeToStr($t2));
+    }
+    
+    sub make-constraint($t1, $t2, $node) {
+        unless ($t1 =:= $t2) || ($t1 =:= NQPMu) || ($t2 =:= NQPMu) {
+            if nqp::istype($t1, FnType) {
+                if nqp::istype($t2, FnType) {
+                    make-constraint($t1.in,  $t2.in,  $node);   # TODO: variance
+                    make-constraint($t1.out, $t2.out, $node);   # TODO: variance
+                } elsif nqp::istype($t2, TypeVar) {
+                    constrain-eq($t2, $t1)
+                } else {
+                    say(dump($node));
+                    panic($node.node, 'Type Error: ' ~ typeToStr($t1) ~ ' <> ' ~ typeToStr($t2));
+                }
+            } elsif nqp::istype($t1, TypeVar) {
+                constrain-eq($t1, $t2)
+            } else {
+                say(dump($node));
+                panic($node.node, 'Type Error: ' ~ typeToStr($t1) ~ ' <> ' ~ typeToStr($t2));
+            }
+        }
+    }
+
+    method typecheck($n) {
+        if $n.returns =:= NQPMu {
+            if isSVal($n) {
+                $n.returns(str);
+            } elsif isIVal($n) {
+                $n.returns(int);
+            } elsif isNVal($n) {
+                $n.returns(num);
+            } elsif isLambda($n) {
+                my $block   := $n[1];
+                my $binder  := $block[0];
+                my $body    := $block[1];
+                my @bound   := $body.ann('FV'){$binder.name} // [];
+
+                my $tBinder;
+                my $tBody;
+                if @bound {
+                    $tBinder := TypeVar.new;
+                    for @bound {
+                        $_.returns($tBinder);
+                    }
+                } else {    # binder is ignored
+                    $tBinder := NQPMu;
+                }
+                $tBody := self.typecheck($body);
+
+                $binder.returns($tBinder);
+                $n.returns(FnType.new($tBinder, $tBody));
+            } elsif isApp($n) {
+                my $fun := $n[0];
+                my $arg := $n[1];
+                my $tFun := self.typecheck($fun);
+                my $tArg := self.typecheck($arg);
+                if nqp::istype($tFun, FnType) {
+                    make-constraint($tFun.in, $tArg, $n);
+                    $n.returns($tFun.out);
+                } elsif nqp::istype($tFun, TypeVar) {
+                    my $tOut := TypeVar.new;
+                    make-constraint($tFun, FnType.new($tArg, $tOut), $n);
+                    $n.returns($tOut);
+                } else {
+                    say(dump($n));
+                    panic($n.node, "Type Error: cannot apply " ~ typeToStr($tFun), ' to ', typeToStr($tArg));
+                }
+            } elsif isRCall($n) {
+                my $tRuntimeFn := %runtime-fns-types{$n.name};
+                my @tArgs := [];
+                @tArgs.push(self.typecheck($_))
+                    for $n.list;
+
+                my $temp := $tRuntimeFn;
+                for @tArgs {
+                    if nqp::istype($temp, FnType) {
+                        make-constraint($temp.in, $_, $n);
+                        $temp := $temp.out;
+                    } elsif nqp::istype($temp, TypeVar) {
+                        my $next := FnType.new($_, TypeVar.new);
+                        make-constraint($temp, $next, $n);
+                        $temp := $next.out;
+                    } else {
+                        say(dump($n));
+                        panic($n.node, 'Type Error: cannot apply runtime fn (', $n.name, ':', typeToStr($tRuntimeFn), ') to',
+                            join(' (', @tArgs, :map(&typeToStr), :prefix1st), ')'
+                        );
+                    }
+                }
+                $n.returns($temp);
+            } elsif istype($n, QAST::Block) {
+                my %blockInfo := collect_params_and_body($n);
+                if %blockInfo<named> || %blockInfo<slurpy> || %blockInfo<optional> {
+                    panic($n.node, 'NYI: typechecking named/slurpy/optional params', ":\n", dump($n, :indent("    ")));
+                }
+                if %blockInfo<params> {
+                    panic($n.node, 'NYI: typechecking non-zero arity Block', ":\n", dump($n, :indent("    ")));
+                }
+                my $tOut := self.typecheck(%blockInfo<body>);
+                my $tIn := Void;
+                $n.returns(FnType.new($tIn, $tOut));
+            } elsif istype($n, QAST::Stmts, QAST::Stmt) {
+                my $tLast := NQPMu;
+                $tLast := self.typecheck($_)
+                    for $n.list;
+                $n.returns($tLast);
+            } elsif isOp($n, 'bind') {
+                my $var := $n[0];
+                my $val := $n[1];
+                my $tVal := self.typecheck($val);
+                my $tVar := $var.returns;
+                if $tVar =:= NQPMu {
+                    if $var.decl {
+                        $tVar := $tVal;
+                    } else {
+                        $tVar := TypeVar.new;
+                    }
+                }
+                make-constraint($tVar, $tVal, $n);
+                $n.returns($tVar);
+            } else {
+                say("\n", dump($n));
+                nqp::die('Compile Error: typecheck NYI: ' ~ describe($n));
+            }
+        }
+        $n.returns;
     }
 
     method termlist1orMore($/) {
@@ -872,6 +1060,7 @@ class LActions is HLL::Actions {
         }
 #        say("###str-constant: " ~ $s);
         my $out := asNode($s);
+        $out.node($/);
         $out.annotate('FV', {});
         make $out;
     }
@@ -959,8 +1148,10 @@ class LActions is HLL::Actions {
             my int $i := 0;
             my $p := $bv;
             my @lambdaParents := [];
+            $bv.returns($binder.returns);
             while !($p =:= $out) {
                 $p := $p.ann('parent');
+
                 if isLambda($p) {
                     $i := $i + 1;
                     @lambdaParents.push($p);
@@ -1012,6 +1203,7 @@ class LActions is HLL::Actions {
             }
         }
         
+        $out.returns(NQPMu);
         $out;
     }
 
@@ -1037,7 +1229,7 @@ class LActions is HLL::Actions {
 
 
 sub MAIN(*@ARGS) {
-    my $F := FnType.new(str, int);
+    my $F := FnType.new(TypeVar.new('a'), int);
     say('$F.Str: ' ~ $F.Str);
     
     my $G := FnType.new($F, int);

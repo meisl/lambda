@@ -714,10 +714,10 @@
     ║ └◙ SVal "(λf.λstart.λxs.xs start (λhd.λtl.self f (f start hd) tl)) (λ_.x)"
     ╟─bind :annotations(#`{BOOTHash:}nqp::hash( "var_initialized", 1 (int) ))  ««"%info := nqp::hash(\n    'λ', [\n        'binder0 1"...
     ║ ├○ %info
-    ║ └─hash  ««"nqp::hash(\n    'λ', [\n        'binder0 1 55 foo b"...
+    ║ └─hash  ««"nqp::hash(\n    'λ', [\n        'binder0 1 55 foo f"...
     ║   ├◙ SVal "λ"
     ║   ├─list  ««","
-    ║   │ ├◙ SVal "binder0 1 55 foo bar baz qumbl self self"
+    ║   │ ├◙ SVal "binder0 1 55 foo fourty-two PI lambda2 self self"
     ║   │ └◙ SVal "binder1 59 4 foo"
     ║   ├◙ SVal "stats"
     ║   └─hash  ««"nqp::hash( # to be filled in by compiler\n        S"...
@@ -734,7 +734,7 @@
     ║     ├◙ SVal "SVal" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_SVALCOUNT" (str) ))
     ║     ├◙ IVal 74
     ║     ├◙ SVal "SValChars" :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&STATS_SVALSIZE" (str) ))
-    ║     └◙ IVal 740
+    ║     └◙ IVal 748
     ╙─if
       ├○ @ARGS
       └─call &MAIN
