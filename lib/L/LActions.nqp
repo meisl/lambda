@@ -236,6 +236,10 @@ my sub mkCall($fn, *@args) {
 
 my $runtime;
 my %runtime-fns-types := {};
+my %op-types := hash(
+    :concat(FnType.new(str, FnType.new(str, str))),
+    :escape(FnType.new(str, str)),
+);
 
 my sub mkRCall(str $fnName, *@args) {
     nqp::die("invalid runtime fn name $fnName")
@@ -385,24 +389,26 @@ my sub make-runtime() {
         if nqp::isstr($paramNames) {
             $paramNames := [$paramNames];
         }
-        my @paramTypes := [];
-        if $returns =:= NO_VALUE {
-            nqp::die("need a type (:returns) for runtime fn $name");
-        } else {
-            my $temp := $returns;
-            for $paramNames {
-                nqp::die("invalid type for fn $name: " ~ typeToStr($returns))
-                    unless nqp::isconcrete($temp) && nqp::istype($temp, FnType);
-                @paramTypes.push($temp.in);
-                $temp := $temp.out;
-            }
-        }
+
+        #my @paramTypes := [];
+        #if $returns =:= NO_VALUE {
+        #    nqp::die("need a type (:returns) for runtime fn $name");
+        #} else {
+        #    my $temp := $returns;
+        #    for $paramNames {
+        #        nqp::die("invalid type for fn $name: " ~ typeToStr($returns))
+        #            unless nqp::isconcrete($temp) && nqp::istype($temp, FnType);
+        #        @paramTypes.push($temp.in);
+        #        $temp := $temp.out;
+        #    }
+        #}
+        
         my $body := QAST::Block.new(:name($name), :arity(nqp::elems($paramNames)));
         my @vars := [];
         my $i := 0;
         for $paramNames {
-            my $var  := lexVar($_);         $var.returns(@paramTypes[$i]);
-            my $decl := mkDeclP($var);      $decl.returns(@paramTypes[$i]);
+            my $var  := lexVar($_);         #$var.returns(@paramTypes[$i]);
+            my $decl := mkDeclP($var);      #$decl.returns(@paramTypes[$i]);
             $body.push($decl);
             @vars.push($var);
             $i++;
@@ -423,13 +429,58 @@ my sub make-runtime() {
         } else {
             $body.push($stmts);
         }
-        $body.returns($returns);
+        #$body.returns($returns);
         %runtime-fns-types{$name} := $returns;
         my $binding := mkBind(lexVar($name, :decl<static>), $body);
         $block.push($binding);
 
         $binding;
     }
+
+    mkRFn('&banner', [], 
+        :returns(FnType.new(Void, str)),
+    -> {
+        asNode("This is L v0.0.1")
+    });
+
+    mkRFn('&strLit', <s>, 
+        :returns(FnType.new(str, str)), 
+    -> $s {
+        #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
+        QAST::Op.new(:op<concat>,
+            asNode('"'),
+            QAST::Op.new(:op<concat>,
+                QAST::Op.new(:op<escape>, $s),
+                asNode('"')
+            )
+        );
+    });
+    
+    mkRFn('&sublist', <list from>, 
+        :returns(FnType.new(NQPArray, FnType.new(int, NQPArray))), 
+    -> $list, $from {
+        my $to    := lexVar('to',       :returns(int));
+        my $out   := lexVar('out',      :returns(NQPArray));
+        my $count := lexVar('count',    :returns(int));
+        my $n     := lexVar('n',        :returns(int));
+        
+        mkBind(mkDeclV($n,     :returns(int)),      QAST::Op.new(:op<elems>, :returns(int), $list)),
+        mkBind(mkDeclV($count, :returns(int)),      cloneAndSubst($n)),
+        mkBind(mkDeclV($to,    :returns(int)),      QAST::Op.new(:op<add_i>, :returns(int), $from, $count)),
+        mkBind(mkDeclV($out,   :returns(NQPArray)), mkList()),
+        QAST::Op.new(:op<if>,
+            QAST::Op.new(:op<isgt_i>, $to, $n),
+            mkBind($to, $n)
+        ),
+        QAST::Op.new(:op<while>,
+            QAST::Op.new(:op<islt_i>, $from, $to),
+            QAST::Stmts.new(
+                QAST::Op.new(:op<push>, $out, mkListLookup($list, :index($from))),
+                mkBind($from, QAST::Op.new(:op<add_i>, :returns(int), $from, asNode(1))),
+            )
+        ),
+        $out,
+    });
 
     mkRFn('&ifTag', <subject tag then else>, 
         :returns(FnType.new(NQPMu, FnType.new(str, FnType.new(NQPMu, FnType.new(NQPMu, NQPMu))))), 
@@ -471,32 +522,6 @@ my sub make-runtime() {
             ),
             QAST::Op.new(:op<null>)
         )
-    });
-    
-    mkRFn('&sublist', <list from>, 
-        :returns(FnType.new(NQPArray, FnType.new(int, NQPArray))), 
-    -> $list, $from {
-        my $to    := lexVar('to',       :returns(int));
-        my $out   := lexVar('out',      :returns(NQPArray));
-        my $count := lexVar('count',    :returns(int));
-        my $n     := lexVar('n',        :returns(int));
-        
-        mkBind(mkDeclV($n,     :returns(int)),      QAST::Op.new(:op<elems>, :returns(int), $list)),
-        mkBind(mkDeclV($count, :returns(int)),      cloneAndSubst($n)),
-        mkBind(mkDeclV($to,    :returns(int)),      QAST::Op.new(:op<add_i>, :returns(int), $from, $count)),
-        mkBind(mkDeclV($out,   :returns(NQPArray)), mkList()),
-        QAST::Op.new(:op<if>,
-            QAST::Op.new(:op<isgt_i>, $to, $n),
-            mkBind($to, $n)
-        ),
-        QAST::Op.new(:op<while>,
-            QAST::Op.new(:op<islt_i>, $from, $to),
-            QAST::Stmts.new(
-                QAST::Op.new(:op<push>, $out, mkListLookup($list, :index($from))),
-                mkBind($from, QAST::Op.new(:op<add_i>, :returns(int), $from, asNode(1))),
-            )
-        ),
-        $out,
     });
     
     mkRFn('&strOut', <v indent>, 
@@ -621,19 +646,6 @@ my sub make-runtime() {
                 mkRCall('&strOut', $v, '')
             )
         )
-    });
-    
-    mkRFn('&strLit', <s>, 
-        :returns(FnType.new(str, str)), 
-    -> $s {
-        #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
-        QAST::Op.new(:op<concat>, :returns(str),
-            asNode('"'),
-            QAST::Op.new(:op<concat>, :returns(str),
-                QAST::Op.new(:op<escape>, :returns(str), $s),
-                asNode('"')
-            )
-        );
     });
     
     my $tvIn := TypeVar.new;
@@ -768,9 +780,9 @@ class LActions is HLL::Actions {
         }
 
         my $runtime := make-runtime();
-        #self.typecheck($runtime);              # <<<<<<<<< TODO
-
         $top-block.push($runtime);
+        self.typecheck($runtime, $top-block);              # <<<<<<<<< TODO
+
         my $s := $top-block;
         
         my $lambdaInfo := mkList();
@@ -800,7 +812,7 @@ class LActions is HLL::Actions {
         );
 
         my $mainTermType;
-        $mainTermType := self.typecheck($mainTerm);
+        $mainTermType := self.typecheck($mainTerm, QAST::Block.new);
         say('MAIN type: ' ~ typeToStr($mainTermType));
 
         # Note: cannot use mkBind here since this enforces an init value
@@ -873,13 +885,30 @@ class LActions is HLL::Actions {
             } elsif nqp::istype($t1, TypeVar) {
                 constrain-eq($t1, $t2)
             } else {
-                say(dump($node));
-                panic($node.node, 'Type Error: ' ~ typeToStr($t1) ~ ' <> ' ~ typeToStr($t2));
+                # t1 is str, int, Void or some NQP type
+                if nqp::istype($t2, TypeVar) {
+                    make-constraint($t2, $t1, $node);
+                } else {
+                    say(dump($node));
+                    panic($node.node, 'Type Error: ' ~ typeToStr($t1) ~ ' <> ' ~ typeToStr($t2));
+                }
             }
         }
     }
 
-    method typecheck($n) {
+    sub lookup(str $name, *@blocks) {
+        my $n := +@blocks;
+        my $i := 0;
+        my $out := NQPMu;
+
+        while ($out =:= NQPMu) && ($i < $n) {
+            $out := @blocks[$i].symbol($name);
+            $i++;
+        }
+        $out;
+    }
+
+    method typecheck($n, $currentBlock, *@moreBlocks) {
         if $n.returns =:= NQPMu {
             if isSVal($n) {
                 $n.returns(str);
@@ -903,15 +932,15 @@ class LActions is HLL::Actions {
                 } else {    # binder is ignored
                     $tBinder := NQPMu;
                 }
-                $tBody := self.typecheck($body);
+                $tBody := self.typecheck($body, $block, $currentBlock, |@moreBlocks);
 
                 $binder.returns($tBinder);
                 $n.returns(FnType.new($tBinder, $tBody));
             } elsif isApp($n) {
                 my $fun := $n[0];
                 my $arg := $n[1];
-                my $tFun := self.typecheck($fun);
-                my $tArg := self.typecheck($arg);
+                my $tFun := self.typecheck($fun, $currentBlock, |@moreBlocks);
+                my $tArg := self.typecheck($arg, $currentBlock, |@moreBlocks);
                 if nqp::istype($tFun, FnType) {
                     make-constraint($tFun.in, $tArg, $n);
                     $n.returns($tFun.out);
@@ -926,7 +955,7 @@ class LActions is HLL::Actions {
             } elsif isRCall($n) {
                 my $tRuntimeFn := %runtime-fns-types{$n.name};
                 my @tArgs := [];
-                @tArgs.push(self.typecheck($_))
+                @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
                     for $n.list;
 
                 my $temp := $tRuntimeFn;
@@ -951,21 +980,46 @@ class LActions is HLL::Actions {
                 if %blockInfo<named> || %blockInfo<slurpy> || %blockInfo<optional> {
                     panic($n.node, 'NYI: typechecking named/slurpy/optional params', ":\n", dump($n, :indent("    ")));
                 }
+                my @tIns := [];
                 if %blockInfo<params> {
-                    panic($n.node, 'NYI: typechecking non-zero arity Block', ":\n", dump($n, :indent("    ")));
+                    #panic($n.node, 'NYI: typechecking non-zero arity Block', ":\n", dump($n, :indent("    ")));
+                    for %blockInfo<params> {
+                        my $name := $_.key;
+                        my $decl := $_.value;
+                        @tIns.push($decl.returns(TypeVar.new));
+                        $n.symbol($name, :declaration($decl));
+                    }
+                } else {
+                    @tIns.push(Void);
                 }
-                my $tOut := self.typecheck(%blockInfo<body>);
-                my $tIn := Void;
-                $n.returns(FnType.new($tIn, $tOut));
+                my $tOut := self.typecheck(%blockInfo<body>, $n, $currentBlock, |@moreBlocks);
+                my $tBlock := $tOut;
+                $tBlock := FnType.new($_, $tBlock) for @tIns;
+                $n.returns($tBlock);
+                say(dump($n));
+                $tBlock;
             } elsif istype($n, QAST::Stmts, QAST::Stmt) {
                 my $tLast := NQPMu;
-                $tLast := self.typecheck($_)
+                $tLast := self.typecheck($_, $currentBlock, |@moreBlocks)
                     for $n.list;
                 $n.returns($tLast);
+            } elsif isVar($n) {
+                my %info := lookup($n.name, $currentBlock, |@moreBlocks);
+                my $decl;
+                if nqp::ishash(%info) && ($decl := %info<declaration>) {
+                    my $tVar := $decl.returns;
+                    if $tVar =:= NQPMu {
+                        panic($n.node, 'still untyped: declaration for ' ~ describe($n));
+                    } else {
+                        $n.returns($tVar);
+                    }
+                } else {
+                    panic($n.node, 'no declaration found for ' ~ describe($n));
+                }
             } elsif isOp($n, 'bind') {
                 my $var := $n[0];
                 my $val := $n[1];
-                my $tVal := self.typecheck($val);
+                my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks);
                 my $tVar := $var.returns;
                 if $tVar =:= NQPMu {
                     if $var.decl {
@@ -976,6 +1030,31 @@ class LActions is HLL::Actions {
                 }
                 make-constraint($tVar, $tVal, $n);
                 $n.returns($tVar);
+            } elsif isOp($n) {
+                if nqp::existskey(%op-types, $n.op) {
+                    my $tOp := %op-types{$n.op};
+                    my @tArgs := [];
+                    @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
+                        for $n.list;
+
+                    my $temp := $tOp;
+                    for @tArgs {
+                        if nqp::istype($temp, FnType) {
+                            make-constraint($temp.in, $_, $n);
+                            $temp := $temp.out;
+                        } else {
+                            say(dump($n));
+                            panic($n.node, 'Type Error: cannot apply Op (', $n.op, ':', typeToStr($tOp), ') to',
+                                join(' (', @tArgs, :map(&typeToStr), :prefix1st), ')'
+                            );
+                        }
+                    }
+
+                    $n.returns($temp);
+                } else {
+                    say("\n", dump($n));
+                    nqp::die('Compile Error: typecheck NYI: ' ~ describe($n));
+                }
             } else {
                 say("\n", dump($n));
                 nqp::die('Compile Error: typecheck NYI: ' ~ describe($n));
