@@ -440,20 +440,20 @@ my sub make-runtime() {
         
         mkBind(mkDeclV($n),     QAST::Op.new(:op<elems>, $list)),
         mkBind(mkDeclV($count), cloneAndSubst($n)),
-        mkBind(mkDeclV($to),    QAST::Op.new(:op<add_i>, $from, $count)),
+        mkBind(mkDeclV($to),    QAST::Op.new(:op<add_i>, $from, cloneAndSubst($count))),
         mkBind(mkDeclV($out),   mkList()),
         QAST::Op.new(:op<if>,
-            QAST::Op.new(:op<isgt_i>, $to, $n),
-            mkBind($to, $n)
+            QAST::Op.new(:op<isgt_i>, cloneAndSubst($to), cloneAndSubst($n)),
+            mkBind(cloneAndSubst($to), cloneAndSubst($n))
         ),
         QAST::Op.new(:op<while>,
-            QAST::Op.new(:op<islt_i>, $from, $to),
+            QAST::Op.new(:op<islt_i>, cloneAndSubst($from), cloneAndSubst($to)),
             QAST::Stmts.new(
-                QAST::Op.new(:op<push>, $out, mkListLookup($list, :index($from))),
-                mkBind($from, QAST::Op.new(:op<add_i>, $from, asNode(1))),
+                QAST::Op.new(:op<push>, cloneAndSubst($out), mkListLookup(cloneAndSubst($list), :index(cloneAndSubst($from)))),
+                mkBind(cloneAndSubst($from), QAST::Op.new(:op<add_i>, cloneAndSubst($from), asNode(1))),
             )
         ),
-        $out,
+        cloneAndSubst($out),
     });
 
     mkRFn('&ifTag', <subject tag then else>, 
@@ -982,11 +982,12 @@ class LActions is HLL::Actions {
                     for $n.list;
                 Type.Array.set($n);
             } elsif isOp($n) {
+                my @tArgs := [];
+                @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
+                    for $n.list;
+                
                 my $tOp := Type.ofOp($n.op);
                 if $tOp {
-                    my @tArgs := [];
-                    @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
-                        for $n.list;
 
                     my $temp := $tOp;
                     for @tArgs {

@@ -152,6 +152,10 @@ class Util::QAST {
             }
         } elsif istype($node, QAST::Block) {
             $prefix := $prefix ~ '─:';
+            my $name := $node.name;
+            if $name {
+                @specials.unshift('"' ~ nqp::escape($name) ~ '"');
+            }
             my $bt := $node.blocktype;
             if $bt && $bt ne 'declaration' { # don't show default :blocktype
                 @specials.push(':blocktype(' ~ $bt ~ ')');

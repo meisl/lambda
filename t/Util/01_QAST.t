@@ -5,7 +5,7 @@ use Util;
 
 use Util::QAST;
 
-plan(355);
+plan(356);
 
 
 
@@ -256,6 +256,8 @@ ok( istype($ast, QAST::Node), 'mkBlockWithCATCH returns a QAST::Node' )
     is(dump($b), '──:Block', 'dump Block');
     is(dump($b, :indent('    ')), '    ──:Block', 'dump Block with indent');
     is(dump($b, :oneLine), '(Block)', 'dump Block on one line');
+
+    is(dump(QAST::Block.new(:name<&foo>)), '──:Block "&foo"', 'dump Block with :name');
 
     $b.push($nullop);
     is(dump($b), "──:Block\n  ╙─null", 'dump Block with child uses double vertical line to connect child');

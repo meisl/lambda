@@ -18,11 +18,11 @@
     ║     └◙ SVal ""
     ╟─bind ::(Void -> Str)
     ║ ├○ &banner :decl(static) ::(Void -> Str)
-    ║ └─:Block ::(Void -> Str) :annotations({"named" => {}, "slurpy" => [], "positional" => [], "optional" => []})
+    ║ └─:Block "&banner" ::(Void -> Str) :annotations({"named" => {}, "slurpy" => [], "positional" => [], "optional" => []})
     ║   ╙◙ SVal "This is L v0.0.1" ::(Str)
     ╟─bind ::(t5 -> Str)
     ║ ├○ &strLit :decl(static) ::(t5 -> Str)
-    ║ └─:Block ::(t5 -> Str) :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical s :decl(param))], "optional" => []})
+    ║ └─:Block "&strLit" ::(t5 -> Str) :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical s :decl(param))], "optional" => []})
     ║   ╟○ s :decl(param) ::(t5) :annotations({"positional_index" => 0})
     ║   ╟○ foo :decl(var) ::(t6)
     ║   ╙─concat ::(Str)
@@ -33,7 +33,7 @@
     ║       └◙ SVal "\"" ::(Str)
     ╟─bind
     ║ ├○ &sublist :decl(static)
-    ║ └─:Block :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical list :decl(param)), QAST::Var(lexical from :decl(param))], "optional" => []})
+    ║ └─:Block "&sublist" :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical list :decl(param)), QAST::Var(lexical from :decl(param))], "optional" => []})
     ║   ╟○ list :decl(param) ::(t8) :annotations({"positional_index" => 0})
     ║   ╟○ from :decl(param) ::(t9) :annotations({"positional_index" => 1})
     ║   ╟─bind ::(Int)
@@ -52,31 +52,31 @@
     ║   ║ ├○ out :decl(var) ::(Array)
     ║   ║ └─list ::(Array)
     ║   ╟─if
-    ║   ║ ├─isgt_i
-    ║   ║ │ ├○ to
-    ║   ║ │ └○ n
-    ║   ║ └─bind
-    ║   ║   ├○ to
-    ║   ║   └○ n
+    ║   ║ ├─isgt_i ::(Bool)
+    ║   ║ │ ├○ to ::(Int)
+    ║   ║ │ └○ n ::(Int)
+    ║   ║ └─bind ::(Int)
+    ║   ║   ├○ to ::(Int)
+    ║   ║   └○ n ::(Int)
     ║   ╟─while
     ║   ║ ├─islt_i
-    ║   ║ │ ├○ from ::(t9)
+    ║   ║ │ ├○ from
     ║   ║ │ └○ to
     ║   ║ └─:Stmts
     ║   ║   ├─push
     ║   ║   │ ├○ out
     ║   ║   │ └─atpos
-    ║   ║   │   ├○ list ::(t8)
-    ║   ║   │   └○ from ::(t9)
+    ║   ║   │   ├○ list
+    ║   ║   │   └○ from
     ║   ║   └─bind
     ║   ║     ├○ from
     ║   ║     └─add_i
-    ║   ║       ├○ from ::(t9)
+    ║   ║       ├○ from
     ║   ║       └◙ IVal 1
     ║   ╙○ out
     ╟─bind
     ║ ├○ &ifTag :decl(static)
-    ║ └─:Block
+    ║ └─:Block "&ifTag"
     ║   ╟○ subject :decl(param) :annotations({"positional_index" => 0})
     ║   ╟○ tag :decl(param) :annotations({"positional_index" => 1})
     ║   ╟○ then :decl(param) :annotations({"positional_index" => 2})
@@ -112,7 +112,7 @@
     ║       └○ else
     ╟─bind
     ║ ├○ &->#n :decl(static)
-    ║ └─:Block
+    ║ └─:Block "&->#n"
     ║   ╟○ subject :decl(param) :annotations({"positional_index" => 0})
     ║   ╟○ tag :decl(param) :annotations({"positional_index" => 1})
     ║   ╟○ index :decl(param) :annotations({"positional_index" => 2})
@@ -127,7 +127,7 @@
     ║     └─null
     ╟─bind
     ║ ├○ &strOut :decl(static)
-    ║ └─:Block
+    ║ └─:Block "&strOut"
     ║   ╟○ v :decl(param) :annotations({"positional_index" => 0})
     ║   ╟○ indent :decl(param) :annotations({"positional_index" => 1})
     ║   ╟─bind
@@ -257,7 +257,7 @@
     ║             └○ v
     ╟─bind
     ║ ├○ &delayMemo :decl(static)
-    ║ └─:Block
+    ║ └─:Block "&delayMemo"
     ║   ╟○ x :decl(param) :annotations({"positional_index" => 0})
     ║   ╟○ result :decl(var)
     ║   ╟─bind
@@ -276,7 +276,7 @@
     ║           └─call x
     ╟─bind
     ║ ├○ &force :decl(static)
-    ║ └─:Block
+    ║ └─:Block "&force"
     ║   ╟○ x :decl(param) :annotations({"positional_index" => 0})
     ║   ╟─bind
     ║   ║ ├○ foo :decl(var)
@@ -288,7 +288,7 @@
     ║     └○ x
     ╟─bind
     ║ ├○ &say :decl(static)
-    ║ └─:Block
+    ║ └─:Block "&say"
     ║   ╟○ v :decl(param) :annotations({"positional_index" => 0})
     ║   ╟─bind
     ║   ║ ├○ v
@@ -304,7 +304,7 @@
     ║         └◙ SVal ""
     ╟─bind
     ║ ├○ &apply1 :decl(static)
-    ║ └─:Block
+    ║ └─:Block "&apply1"
     ║   ╟○ f :decl(param) :annotations({"positional_index" => 0})
     ║   ╟○ a1 :decl(param) :annotations({"positional_index" => 1})
     ║   ╟○ result :decl(var)
