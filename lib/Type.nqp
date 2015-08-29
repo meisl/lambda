@@ -119,7 +119,10 @@ class Type is export {
         has $!out;
         has $!str;
         method new($in, $out) {
-            my $str := toStr($in, :parens) ~ ' -> ' ~ toStr($out);
+            Type.insist-isValid($in, $out);
+            my $str := ($in.isFnType || $in.isSumType ?? '(' ~ $in.Str ~')' !! $in.Str)
+                     ~ ' -> '
+                     ~ ($out.isSumType ?? '(' ~ $out.Str ~')' !! $out.Str);
             my $instance := %fn-types{$str};
             unless $instance {
                 $instance := nqp::create(self);
@@ -152,7 +155,7 @@ class Type is export {
         has @!disjuncts;
         has $!str;
         method new(*@disjuncts) {
-            my $str := join(' + ', @disjuncts, :map(-> $t { toStr($t, :parens) }));
+            my $str := join(' + ', @disjuncts, :map(-> $t { $t.isFnType ?? '(' ~ $t.Str ~ ')' !! $t.Str }));
             my $instance := %sum-types{$str};
             unless $instance {
                 $instance := nqp::create(self);
@@ -212,15 +215,9 @@ class Type is export {
                 for @types;
     }
 
-    my sub toStr($t, :$parens) {
-        Type.insist-isValid($t);
-        if $t.isFnType && $parens {
-            '(' ~ $t.Str ~ ')';
-        } else {
-            $t.Str;
-        }
-    }
 
+    my $tThen := Type.Var;
+    my $tElse := Type.Var;
     my %op-types := nqp::hash(
         # special (not listed here, but explicitly handled by typecheck)
         #'bind' # how to type the var argument?
@@ -231,17 +228,26 @@ class Type is export {
         'concat', Type.Fn($Str,   $Str, $Str),
         'escape', Type.Fn($Str,   $Str),
         # int
-        'iseq_i', Type.Fn($Int,   $Int, $Bool),
-        'isne_i', Type.Fn($Int,   $Int, $Bool),
-        'isgt_i', Type.Fn($Int,   $Int, $Bool),
-        'isge_i', Type.Fn($Int,   $Int, $Bool),
-        'islt_i', Type.Fn($Int,   $Int, $Bool),
-        'isle_i', Type.Fn($Int,   $Int, $Bool),
-        'add_i',  Type.Fn($Int,   $Int, $Int),
-        'sub_i',  Type.Fn($Int,   $Int, $Int),
+        'iseq_i', Type.Fn($Int,   $Int,   $Bool),
+        'isne_i', Type.Fn($Int,   $Int,   $Bool),
+        'isgt_i', Type.Fn($Int,   $Int,   $Bool),
+        'isge_i', Type.Fn($Int,   $Int,   $Bool),
+        'islt_i', Type.Fn($Int,   $Int,   $Bool),
+        'isle_i', Type.Fn($Int,   $Int,   $Bool),
+        'neg_i',  Type.Fn($Int,   $Int),
+        'add_i',  Type.Fn($Int,   $Int,   $Int),
+        'sub_i',  Type.Fn($Int,   $Int,   $Int),
+        'mul_i',  Type.Fn($Int,   $Int,   $Int),
+        'div_i',  Type.Fn($Int,   $Int,   $Int),
+        'mod_i',  Type.Fn($Int,   $Int,   $Int),
+        'gcd_i',  Type.Fn($Int,   $Int,   $Int),
+        'lcm_i',  Type.Fn($Int,   $Int,   $Int),
         # list/hash
         'elems',  Type.Fn($Array, $Int),
+        # if:
+        'if',     Type.Fn($Bool, $tThen, $tElse, Type.Sum($tThen, $tElse)),
     );
+    
     method ofOp($op) {
         unless nqp::isstr($op) {
             nqp::die('expected a str - got ' ~ describe($op));
@@ -303,4 +309,3 @@ class Type is export {
     }
 
 }
-
