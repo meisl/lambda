@@ -660,6 +660,9 @@ class LActions is HLL::Actions {
         $top-block.push($runtime);
         try {
             self.typecheck($runtime, $top-block);              # <<<<<<<<< TODO
+            CATCH {
+                say(~$!);
+            }
         }
 
         my $s := $top-block;
@@ -922,8 +925,8 @@ class LActions is HLL::Actions {
                             $temp := $temp.out;
                         } else {
                             say(dump($n));
-                            Type.error(:match($n.node), 'cannot apply Op (', $n.op, ':', $tOp, ') to',
-                                join(' (', @tArgs, :map(-> $t { $t.Str }), :prefix1st), ')'
+                            Type.error(:match($n.node), 'cannot apply Op ', $n.op, ':', $tOp, '  to  ',
+                                '(' ~ join(' × ', @tArgs, :map(-> $t { $t.Str })) ~ ')'
                             );
                         }
                     }
@@ -1187,35 +1190,6 @@ class LActions is HLL::Actions {
 
 
 sub MAIN(*@ARGS) {
-    for [Type.Void, Type.Str, Type.Int, Type.Num, Type.BOOL, Type.Array, Type.Var, Type.Fn(Type.Str, Type.Int), Type.Fn(Type.Void, Type.Var)] {
-        say(nqp::sprintf("%15s:", [~$_])
-            ~ '  isVoid: '      ~ $_.isVoid
-            ~ '  isStrType: '   ~ $_.isStrType
-            ~ '  isIntType: '   ~ $_.isIntType
-            ~ '  isNumType: '   ~ $_.isNumType
-            ~ '  isBoolType: '  ~ $_.isBoolType
-            ~ '  isArrayType: ' ~ $_.isArrayType
-            ~ '  isTypeVar: '   ~ $_.isTypeVar
-            ~ '  isFnType: '    ~ $_.isFnType
-        );
-    }
-
-    my $F := Type.Fn(Type.Var, Type.Int);
-    say('F = ' ~ $F);
-    
-    my $G := Type.Fn($F, Type.Int);
-    say('G = ' ~ $G);
-    
-    my $H := Type.Fn(Type.Void, $G);
-    say('H = ' ~ $H);
-    
-    my $K := Type.Fn(Type.Void, Type.Int, Type.Str, Type.Var);
-    say('K = ' ~ $K);
-
-    for <concat escape isgt_i elems foo> {
-        say('Type.ofOp("' ~ $_ ~ '"): ' ~ Type.ofOp($_));
-    }
-
     my $n := lexVar('foo');
     Type.Fn(Type.Void, Type.Int).set($n);
     say(dump($n));

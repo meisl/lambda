@@ -40,6 +40,7 @@ class Type is export {
     method isTypeVar()   { isTypeVar(self)   }
     method isFnType()    { isFnType(self)    }
     method isSumType()   { isSumType(self)   }
+    method isCrossType() { isCrossType(self) }
 
     # native types (corresponding to NQP's str, int, num)
 
@@ -224,6 +225,57 @@ class Type is export {
     }
 
 
+    # cross types (to model NQP's positional args)
+
+    my %cross-types := {};
+    my class Cross is Type {
+        has Type $!head;
+        has Type $!tail;
+        has str  $!str;
+        method new(@conjuncts) {
+            my $str := join(' × ', @conjuncts, :map(-> $t { $t.isFnType || $t.isSumType ?? '(' ~ $t.Str ~ ')' !! $t.Str }));
+            my $instance := %cross-types{$str};
+            unless $instance {
+                $instance := nqp::create(self);
+                my $head := @conjuncts.shift;
+                my $tail := +@conjuncts == 1
+                    ?? @conjuncts[0]
+                    !! self.new(@conjuncts);
+                
+                nqp::bindattr(  $instance, self, '$!head', $head);
+                nqp::bindattr(  $instance, self, '$!tail', $tail);
+                nqp::bindattr_s($instance, self, '$!str',  $str);
+                %cross-types{$str} := $instance;
+            }
+            $instance;
+        }
+        method head() { $!head }
+        method tail() { $!tail }
+        method Str()  { $!str  }
+        method foldl1(&f) {
+            my $acc := self.head;
+            my $tl := self.tail;
+            while $tl.isCrossType {
+                $acc := &f($acc, $tl.head);
+                $tl := $tl.tail;
+            }
+            $acc := &f($acc, $tl);
+        }
+        
+    }
+
+    method Cross(*@types) {
+        Type.insist-isValid(|@types);
+        my $n := +@types;
+        if $n == 0 {
+            Type.Void;
+        } elsif $n == 1 {
+            @types[0];
+        } else {
+            Cross.new(@types);
+        }
+    }
+
     my sub isVoid($t)      { $t =:= Type.Void  }
     my sub isDontCare($t)  { $t =:= Type.DontCare }
 
@@ -239,9 +291,10 @@ class Type is export {
     my sub isBool($t)      { $t =:= Type.BOOL  }
     my sub isArray($t)     { $t =:= Type.Array }
 
-    my sub isTypeVar($t)   { nqp::istype($t, Var) }
-    my sub isFnType($t)    { nqp::istype($t, Fn)  }
-    my sub isSumType($t)   { nqp::istype($t, Sum) }
+    my sub isTypeVar($t)   { nqp::istype($t, Var)   }
+    my sub isFnType($t)    { nqp::istype($t, Fn)    }
+    my sub isSumType($t)   { nqp::istype($t, Sum)   }
+    my sub isCrossType($t) { nqp::istype($t, Cross) }
 
 
 
@@ -256,16 +309,17 @@ class Type is export {
     }
 
     my %type-lexorder := nqp::hash(
-        nqp::how($Void    ).name($Void    ), 0,
-        nqp::how($DontCare).name($DontCare), 1,
-        nqp::how($Bool    ).name($Bool    ), 2,
-        nqp::how($Int     ).name($Int     ), 3,
-        nqp::how($Num     ).name($Num     ), 4,
-        nqp::how($Str     ).name($Str     ), 5,
-        nqp::how($Array   ).name($Array   ), 6,
-        nqp::how(Var      ).name(Var      ), 7,
-        nqp::how(Fn       ).name(Fn       ), 8,
-        nqp::how(Sum      ).name(Sum      ), 9,
+        nqp::how($Void    ).name($Void    ),  0,
+        nqp::how($DontCare).name($DontCare),  1,
+        nqp::how($Bool    ).name($Bool    ),  2,
+        nqp::how($Int     ).name($Int     ),  3,
+        nqp::how($Num     ).name($Num     ),  4,
+        nqp::how($Str     ).name($Str     ),  5,
+        nqp::how($Array   ).name($Array   ),  6,
+        nqp::how(Var      ).name(Var      ),  7,
+        nqp::how(Fn       ).name(Fn       ),  8,
+        nqp::how(Sum      ).name(Sum      ),  9,
+        nqp::how(Cross    ).name(Cross    ), 10,
     );
 
     my sub lex-cmp($t1, $t2) {
@@ -280,6 +334,8 @@ class Type is export {
             } elsif $t1.isFnType {
                 lex-cmp($t1.in, $t2.in) || lex-cmp($t1.out, $t2.out);
             } elsif $t1.isSumType {
+                lex-cmp($t1.head, $t2.head) || lex-cmp($t1.tail, $t2.tail);
+            } elsif $t1.isCrossType {
                 lex-cmp($t1.head, $t2.head) || lex-cmp($t1.tail, $t2.tail);
             } else {
                 nqp::die("NYI: lex-cmp(" ~ $t1.Str ~ ', ' ~ $t2.Str ~ ')');
@@ -340,11 +396,26 @@ class Type is export {
         'lcm_i',  Type.Fn($Int,   $Int,   $Int),
         # list/hash
         'elems',  Type.Fn($Array, $Int),
+        'atpos',  Type.Fn($Array, $Int,     Type.Var),
+        'push',   Type.Fn($Array, Type.Var, $Void),
         # if:
-        'if',     Type.Sum(
-                    Type.Fn($Bool, $tThen, $tElse, Type.Sum($tThen, $tElse)),
-                    Type.Fn($Bool, $tThen, Type.Sum($tThen, $Bool))
+        'if',     #Type.Sum(
+                  #  Type.Fn($Bool, $tThen,         Type.Sum($Bool,  $tThen)),
+                  #  Type.Fn($Bool, $tThen, $tElse, Type.Sum($tThen, $tElse)),
+                  #),
+                  
+                  ##not really:
+                  #Type.Fn($Bool, $tThen, Type.Sum($Bool, $tThen, Type.Fn($tElse, Type.Sum($tThen, $tElse)))),
+                  ##Bool -> t0 -> (Bool + t0 + (t1 -> (t0 + t1)))
+
+                  ##proper:(Bool × t0 -> (Bool + t0)) + (Bool × t0 × t1 -> (t0 + t1))
+                  Type.Sum(
+                      Type.Fn(Type.Cross($Bool, $tThen),         Type.Sum($tThen, $Bool )),
+                      Type.Fn(Type.Cross($Bool, $tThen, $tElse), Type.Sum($tThen, $tElse)),
                   ),
+                  # 
+        #'isinvokable',  Type.Fn(Type.Var, $Bool
+        #    # Type.Sum(Type.Fn(Type.Var, Type.Var), Type.Fn($Void, Type.Var))
     );
     
     method ofOp($op) {

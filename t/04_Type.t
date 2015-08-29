@@ -43,14 +43,15 @@ plan(102);
 }
 
 
-{ # - SumType -----------------------------------------------------------------
+{ # - Sum ---------------------------------------------------------------------
     dies_ok( { Type.Sum }, 'Type.Sum with no arg');
     dies_ok( { Type.Sum('foo') }, 'Type.Sum with one arg non-Type');
     dies_ok( { Type.Sum(Type.Void, 42) }, 'Type.Sum with two args, one a non-Type');
     
     my $tv := Type.Var;
     my $tf := Type.Fn(Type.Void, $tv);
-    my @types := [Type.Void, Type.Str, Type.Int, Type.BOOL, Type.Array, $tv, $tf];
+    my $ts := Type.Sum($tv, $tf);
+    my @types := [Type.Void, Type._, Type.BOOL, Type.Int, Type.Num, Type.Str, Type.Array, $tv, $tf, $ts];
     
     is(Type.Sum($_), $_, 'Type.Sum with one arg yields that arg (' ~ $_.Str ~ ')')
         for @types;
@@ -61,7 +62,7 @@ plan(102);
     is(Type.Sum($_, $_, $_), $_, 'Type.Sum with thrice the same arg yields that arg (' ~ $_.Str ~ ')')
         for @types;
     
-    my $ts := Type.Sum(Type.Int, Type.Str);
+    $ts := Type.Sum(Type.Int, Type.Str);
     is(Type.Sum(Type.Int, Type.Str), $ts, 'Type.Sum with same args returns same instance');
     is(Type.Sum(Type.Str, Type.Int), $ts, 'Type.Sum with same args (but in different order) returns same instance');
     
@@ -106,6 +107,29 @@ plan(102);
         'Sum type inside a Fn type is always surrounded by parens (right)');
 }
 
+{ # - Cross -------------------------------------------------------------------
+    is(Type.Cross, Type.Void, 'Type.Cross with no arg yields Type.Void');
+    dies_ok( { Type.Cross('foo') }, 'Type.Cross with one arg non-Type');
+
+    dies_ok( { Type.Sum(Type.Str, 42) }, 'Type.Cross with two args, one a non-Type');
+    
+    my $tv := Type.Var;
+    my $tf := Type.Fn(Type.Void, $tv);
+    my $ts := Type.Sum($tv, $tf);
+    my @types := [Type.Void, Type._, Type.BOOL, Type.Int, Type.Num, Type.Str, Type.Array, $tv, $tf, $ts];
+    
+    is(Type.Cross($_), $_, 'Type.Cross with one arg yields that arg (' ~ $_.Str ~ ')')
+        for @types;
+
+    my $tc;
+    lives_ok({ $tc := Type.Cross($tv, $tf) }, 'Type.Cross(' ~ $tv ~ ', ' ~ $tf ~ ')');
+    isa_ok($tc, Type, 'Type.Cross(' ~ $tv ~ ', ' ~ $tf ~ ') is-a Type');
+    is(Type.Cross($tv, $tf), $tc, :describe(-> $t { $t.Str }), 'Type.Cross with same args yields very same instance');
+    is($tc.isCrossType, 1, 'Type.Cross(' ~ $tv ~ ', ' ~ $tf ~ ').isCrossType');
+
+    dies_ok({ Type.Cross($tc, $tc) }, 'Cross types must not be nested -');
+}
+
 { # - (lexical) order of types ------------------------------------------------
     my @types;
     my &map := -> $t { $t.isSumType || $t.isFnType ?? '('~$t.Str~')' !! $t.Str };
@@ -125,11 +149,13 @@ plan(102);
     my $fun1 := Type.Fn($void, $sum2, $var3);
     my $fun2 := Type.Fn($int, $_, $str);
     my $array := Type.Array;
+    my $cross1 := Type.Cross($int, $str);
+    my $cross2 := Type.Cross($str, $int);
 
-    @types := [$var3, $sum1, $array, $num, $_, $sum2, $str, $fun1, $bool, $void, $int, $fun2, $var1];
+    @types := [$var3, $sum1, $cross1, $array, $num, $_, $cross2, $sum2, $str, $fun1, $bool, $void, $int, $fun2, $var1];
     my $msg := 'Type.sort([' ~ join(', ', @types, :&map) ~ '])';
     is(join(', ', Type.sort(@types),  :&map),
-       join(', ', Type.sort([$void, $_, $bool, $int, $num, $str, $array, $var1, $var3, $fun1, $fun2, $sum1, $sum2]),  :&map),
+       join(', ', Type.sort([$void, $_, $bool, $int, $num, $str, $array, $var1, $var3, $fun1, $fun2, $sum1, $sum2, $cross1, $cross2]),  :&map),
         $msg);
 
 }
