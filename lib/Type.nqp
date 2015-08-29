@@ -149,23 +149,46 @@ class Type is export {
 
     my %sum-types := {};
     my class Sum is Type {
-        has $left;
-        has $right;
+        has @!disjuncts;
         has $!str;
-        method new($left, $right) {
-
-            my $str := toStr($left, :parens) ~ ' + ' ~ toStr($right, :parens);
-            my $instance := %fn-types{$str};
+        method new(*@disjuncts) {
+            my $str := join(' + ', @disjuncts, :map(-> $t { toStr($t, :parens) }));
+            my $instance := %sum-types{$str};
             unless $instance {
                 $instance := nqp::create(self);
-                nqp::bindattr($instance, self, '$!left',  $left);
-                nqp::bindattr($instance, self, '$!right', $right);
+                nqp::bindattr($instance, self, '@!disjuncts', @disjuncts);
                 nqp::bindattr($instance, self, '$!str',   $str);
-                %fn-types{$str} := $instance;
+                %sum-types{$str} := $instance;
             }
             $instance;
         }
         method Str() { $!str }
+    }
+
+    method Sum($t0, *@types) {
+        @types.push($t0);
+        Type.insist-isValid(|@types);
+        
+        # remove duplicates and flatten SumType s
+        my %types := {};
+        for @types -> $t {
+            if $t.isSumType {
+                %types{$_.Str} := $_
+                    for nqp::getattr($t, Sum, '@!disjuncts');
+            } else {
+                %types{$t.Str} := $t;
+            }
+        };
+
+        if +%types == 1 {
+            $t0;
+        } else {
+            @types := [];
+            @types.push($_.value)
+                for %types;
+            my $out := Sum.new(|@types);
+            $out;
+        }
     }
 
 
@@ -183,9 +206,14 @@ class Type is export {
         nqp::istype($t, Type) && nqp::isconcrete($t)
     }
 
+    method insist-isValid(*@types) {
+        nqp::die('expected a valid Type - got ' ~ describe($_))
+            unless Type.isValid($_)
+                for @types;
+    }
+
     my sub toStr($t, :$parens) {
-        nqp::die('invalid type argument ' ~ describe($t))
-            unless Type.isValid($t);
+        Type.insist-isValid($t);
         if $t.isFnType && $parens {
             '(' ~ $t.Str ~ ')';
         } else {
