@@ -1,8 +1,9 @@
 use testing;
+use Util;
 
 use Type;
 
-plan(100);
+plan(102);
 
 
 { # - Void --------------------------------------------------------------------
@@ -93,12 +94,44 @@ plan(100);
     is(Type.Sum($ts1, $tv), $ts1, :describe(-> $t { $t.Str }),
         , 'Type.Sum(' ~ $ts1.Str ~ ', ' ~ $tv.Str ~ ') yields same instance as Type.Sum(' ~ $tv.Str ~ ', ' ~ $ts1.Str ~ ')');
 
+    my $var1 := Type.Var;
+    my $var2 := Type.Var;
+    my $var3 := Type.Var;
+    is(Type.Sum($var3, $var2, $var1).Str, $var1.Str ~ ' + ' ~ $var2.Str ~ ' + ' ~ $var3.Str, '.Str of a Sum with 3 disjuncts');
 
     is(Type.Fn($ts1, $ts).Str, '(' ~ $ts1.Str ~ ') -> (' ~ $ts.Str ~ ')',
         'Sum type inside a Fn type is always surrounded by parens (left)');
 
     is(Type.Fn($ts, $ts1).Str, '(' ~ $ts.Str ~ ') -> (' ~ $ts1.Str ~ ')',
         'Sum type inside a Fn type is always surrounded by parens (right)');
+}
+
+{ # - (lexical) order of types ------------------------------------------------
+    my @types;
+    my &map := -> $t { $t.isSumType || $t.isFnType ?? '('~$t.Str~')' !! $t.Str };
+
+
+    my $var1 := Type.Var;
+    my $var2 := Type.Var;
+    my $var3 := Type.Var;
+    my $num  := Type.Num;
+    my $str  := Type.Str;
+    my $int  := Type.Int;
+    my $bool := Type.BOOL;
+    my $_    := Type._;
+    my $void := Type.Void;
+    my $sum1 := Type.Sum($var2, $var1);
+    my $sum2 := Type.Sum($var3, $var1, $var2);
+    my $fun1 := Type.Fn($void, $sum2, $var3);
+    my $fun2 := Type.Fn($int, $_, $str);
+    my $array := Type.Array;
+
+    @types := [$var3, $sum1, $array, $num, $_, $sum2, $str, $fun1, $bool, $void, $int, $fun2, $var1];
+    my $msg := 'Type.sort([' ~ join(', ', @types, :&map) ~ '])';
+    is(join(', ', Type.sort(@types),  :&map),
+       join(', ', Type.sort([$void, $_, $bool, $int, $num, $str, $array, $var1, $var3, $fun1, $fun2, $sum1, $sum2]),  :&map),
+        $msg);
+
 }
 
 
