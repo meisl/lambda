@@ -9,76 +9,6 @@ use Type;
 my class NO_VALUE {}
 
 
-my class Void is Type {
-
-    method new(*@args, *%adverbs) {
-        nqp::die('cannot instantiate Void');
-    }
-}
-
-my class FnType is Type {
-    has $!in;
-    has $!out;
-    has $!str;
-
-    method in()  { $!in }
-    method out() { $!out }
-    method Str() { $!str }
-
-    my %instances := {};
-
-    method new($in, $out) {
-        my $str := typeToStr($in, :parens) ~ ' -> ' ~ typeToStr($out);
-        my $instance := %instances{$str};
-        unless $instance {
-            $instance := nqp::create(self);
-            nqp::bindattr($instance, FnType, '$!in', $in);
-            nqp::bindattr($instance, FnType, '$!out', $out);
-            nqp::bindattr($instance, FnType, '$!str', $str);
-            %instances{$str} := $instance;
-        }
-        $instance;
-    }
-    
-
-}
-
-my class TypeVar is Type {
-    has $!name;
-
-    my %instances := {};
-
-    method new() {
-        my $name := 't' ~ nqp::elems(%instances);
-        my $instance := nqp::create(self);
-        nqp::bindattr($instance, TypeVar, '$!name', $name);
-        %instances{$name} := $instance;
-        $instance;
-    }
-
-    method Str() { $!name }
-
-}
-
-
-my sub typeToStr($t, :$parens) {
-    if nqp::isconcrete($t) {
-        if nqp::istype($t, FnType) {
-            if $parens {
-                '(' ~ $t.Str ~ ')'
-            } else {
-                $t.Str;
-            }
-        } elsif nqp::istype($t, TypeVar) {
-            $t.Str;
-        } else {
-            nqp::die('invalid type argument ' ~ describe($t) ~ ' - must not be concrete')
-        }
-    } else {
-        $t.HOW.name($t)
-    }
-}
-
 
 my sub isLambda($node) {
     isOp($node, 'list')
@@ -214,10 +144,6 @@ my sub mkCall($fn, *@args) {
 
 my $runtime;
 my %runtime-fns-types := {};
-my %op-types := hash(
-    :concat(FnType.new(str, FnType.new(str, str))),
-    :escape(FnType.new(str, str)),
-);
 
 my sub mkRCall(str $fnName, *@args) {
     nqp::die("invalid runtime fn name $fnName")
@@ -1261,9 +1187,6 @@ class LActions is HLL::Actions {
 
 
 sub MAIN(*@ARGS) {
-    say(describe(foo(0)));
-    say(describe(foo(-1)));
-
     for [Type.Void, Type.Str, Type.Int, Type.Num, Type.BOOL, Type.Array, Type.Var, Type.Fn(Type.Str, Type.Int), Type.Fn(Type.Void, Type.Var)] {
         say(nqp::sprintf("%15s:", [~$_])
             ~ '  isVoid: '      ~ $_.isVoid

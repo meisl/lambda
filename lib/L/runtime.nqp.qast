@@ -21,28 +21,28 @@
     ╟─bind
     ║ ├○ &lam2id :decl(var)
     ║ └─:Block "lam2id"  ««"{ $lam[LAMFIELD_ID()] }"
-    ║   ╟○ $lam :decl(param)
+    ║   ╟○ $lam :decl(param) :annotations({"positional_index" => 0})
     ║   ╙─ifnull
     ║     ├─atpos
     ║     │ ├○ $lam
-    ║     │ └─call &LAMFIELD_ID  ««""
+    ║     │ └◙ IVal 0 :annotations({"inlined" => "&LAMFIELD_ID"})
     ║     └◙ WVal NQPMu
     ╟─bind
     ║ ├○ &lam2code :decl(var)
     ║ └─:Block "lam2code"  ««"{ $lam[LAMFIELD_CODE()] }"
-    ║   ╟○ $lam :decl(param)
+    ║   ╟○ $lam :decl(param) :annotations({"positional_index" => 0})
     ║   ╙─ifnull
     ║     ├─atpos
     ║     │ ├○ $lam
-    ║     │ └─call &LAMFIELD_CODE  ««""
+    ║     │ └◙ IVal 1 :annotations({"inlined" => "&LAMFIELD_CODE"})
     ║     └◙ WVal NQPMu
     ╟─bind
     ║ ├○ &lam2fvs :decl(var)
     ║ └─:Block "lam2fvs"  ««"{ sublist($lam, LAMFIELD_FREEVARS()) }"
-    ║   ╟○ $lam :decl(param)
+    ║   ╟○ $lam :decl(param) :annotations({"positional_index" => 0})
     ║   ╙─call &sublist  ««"$lam, LAMFIELD_FREEVARS()"
     ║     ├○ $lam
-    ║     └─call &LAMFIELD_FREEVARS  ««""
+    ║     └◙ IVal 2 :annotations({"inlined" => "&LAMFIELD_FREEVARS"})
     ╟─bind
     ║ ├○ &STATS_QASTSIZE :decl(var)
     ║ └─:Block "STATS_QASTSIZE"  ««"{ 'Node'      }"
@@ -78,19 +78,19 @@
     ╟─bind
     ║ ├○ &int2str :decl(var)
     ║ └─:Block "int2str"  ««"{ ~$i }"
-    ║   ╟○ $i :decl(param) :returns(int)
+    ║   ╟○ $i :decl(param) :returns(int) :annotations({"positional_index" => 0})
     ║   ╙─stringify  ««"~"
     ║     └○ $i :returns(int)
     ╟─bind
     ║ ├○ &num2str :decl(var)
     ║ └─:Block "num2str"  ««"{ ~$n }"
-    ║   ╟○ $n :decl(param) :returns(num)
+    ║   ╟○ $n :decl(param) :returns(num) :annotations({"positional_index" => 0})
     ║   ╙─stringify  ««"~"
     ║     └○ $n :returns(num)
     ╟─bind
     ║ ├○ &strLit :decl(var)
     ║ └─:Block "strLit"  ««"{ '\"' ~ nqp::escape($s) ~ '\"' }"
-    ║   ╟○ $s :decl(param) :returns(str)
+    ║   ╟○ $s :decl(param) :returns(str) :annotations({"positional_index" => 0})
     ║   ╙─concat  ««"~"
     ║     ├─concat  ««"~"
     ║     │ ├◙ SVal "\""
@@ -100,7 +100,7 @@
     ╟─bind
     ║ ├○ &force :decl(var)
     ║ └─:Block "force" :annotations({"compile_time_dummy" => (BOOTCode, invokable)})  ««"{\n    nqp::isinvokable($v) ?? $v() !! $v;\n}"
-    ║   ╟○ $v :decl(param)
+    ║   ╟○ $v :decl(param) :annotations({"positional_index" => 0})
     ║   ╙─if  ««"?? $v() !!"
     ║     ├─isinvokable  ««"nqp::isinvokable($v)"
     ║     │ └○ $v
@@ -110,7 +110,7 @@
     ╟─bind
     ║ ├○ &delayMemo :decl(var)
     ║ └─:Block "delayMemo" :annotations({"compile_time_dummy" => (BOOTCode, invokable)})  ««"{\n    my int $wasRun := 0;\n    my $result := nqp:"...
-    ║   ╟○ $block :decl(param)
+    ║   ╟○ $block :decl(param) :annotations({"positional_index" => 0})
     ║   ╟○ $wasRun :decl(var) :returns(int)
     ║   ╟○ $result :decl(var)
     ║   ╟○ $out :decl(var)
@@ -138,8 +138,8 @@
     ╟─bind
     ║ ├○ &sublist :decl(var)
     ║ └─:Block "sublist" :annotations({"compile_time_dummy" => (BOOTCode, invokable)})  ««"{\n    my int $n     := nqp::elems(@list);\n    my "...
-    ║   ╟○ @list :decl(param)
-    ║   ╟○ $from :decl(param) :returns(int)
+    ║   ╟○ @list :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ $from :decl(param) :returns(int) :annotations({"positional_index" => 1})
     ║   ╟○ $n :decl(var) :returns(int)
     ║   ╟○ $count :decl(var) :returns(int)
     ║   ╟○ $to :decl(var) :returns(int)
@@ -185,7 +185,7 @@
     ╟─bind
     ║ ├○ &lam2info :decl(var)
     ║ └─:Block "lam2info"  ««"{\n    my $id      := lam2id($lambda);\n    my $idx"...
-    ║   ╟○ $lambda :decl(param)
+    ║   ╟○ $lambda :decl(param) :annotations({"positional_index" => 0})
     ║   ╟○ $id :decl(var)
     ║   ╟○ $idx :decl(var)
     ║   ╟○ $infoIt :decl(var)
@@ -198,8 +198,11 @@
     ║   ╟○ %fvs :decl(var)
     ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$id      := lam2id($lambda)"
     ║   ║ ├○ $id
-    ║   ║ └─call &lam2id  ««"$lambda"
-    ║   ║   └○ $lambda
+    ║   ║ └─ifnull :annotations({"inlined" => "&lam2id"})  ««"$lambda"
+    ║   ║   ├─atpos
+    ║   ║   │ ├○ $lambda
+    ║   ║   │ └◙ IVal 0 :annotations({"inlined" => "&LAMFIELD_ID"})
+    ║   ║   └◙ WVal NQPMu
     ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$idx     := nqp::radix(10, $id, 1, 0)[0]"
     ║   ║ ├○ $idx
     ║   ║ └─ifnull
@@ -258,8 +261,9 @@
     ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$varsIt  := nqp::iterator(lam2fvs($lambda))"
     ║   ║ ├○ $varsIt
     ║   ║ └─iterator  ««"nqp::iterator(lam2fvs($lambda))"
-    ║   ║   └─call &lam2fvs  ««"$lambda"
-    ║   ║     └○ $lambda
+    ║   ║   └─call &sublist :annotations({"inlined" => "&lam2fvs"})  ««"$lambda"
+    ║   ║     ├○ $lambda
+    ║   ║     └◙ IVal 2 :annotations({"inlined" => "&LAMFIELD_FREEVARS"})
     ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$namesIt := $infoIt"
     ║   ║ ├○ $namesIt
     ║   ║ └○ $infoIt
@@ -283,7 +287,7 @@
     ╟─bind
     ║ ├○ &typecase :decl(var)
     ║ └─:Block "typecase"  ««"{\n    #say('>>>typecase(', nqp::reprname($subject)"...
-    ║   ╟○ $subject :decl(param)
+    ║   ╟○ $subject :decl(param) :annotations({"positional_index" => 0})
     ║   ╟○ %callbacks :decl(param) :named(1) :slurpy(1)
     ║   ╟○ $otherwise :decl(var)
     ║   ╟○ $cbKey :decl(var)
@@ -382,11 +386,15 @@
     ╟─bind
     ║ ├○ &strOut :decl(var)
     ║ └─:Block "strOut"  ««"{\n    typecase(force($v),\n        :λ(-> $lambda {"...
-    ║   ╟○ $v :decl(param)
-    ║   ╟○ $indent :decl(param) :returns(str) :default(SVal "")
-    ║   ╟○ %done :decl(param) :default(hash)
+    ║   ╟○ $v :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ $indent :decl(param) :returns(str) :annotations({"positional_index" => 1}) :default(SVal "")
+    ║   ╟○ %done :decl(param) :annotations({"positional_index" => 2}) :default(hash)
     ║   ╙─call &typecase  ««"force($v),\n        :λ(-> $lambda { # compiler shou"...
-    ║     ├─call &force  ««"$v"
+    ║     ├─if :annotations({"inlined" => "&force"})  ««"$v"
+    ║     │ ├─isinvokable  ««"nqp::isinvokable($v)"
+    ║     │ │ └○ $v
+    ║     │ ├─call  ««""
+    ║     │ │ └○ $v
     ║     │ └○ $v
     ║     ├─:Block :named("λ")  ««"{ # compiler should see that this needs not be a cl"...
     ║     │ ╟○ $lambda :decl(param)
@@ -448,8 +456,11 @@
     ║     │ ║ │ ║   │ └○ $flatVal
     ║     │ ║ │ ║   ├─concat  ««"~"
     ║     │ ║ │ ║   │ ├○ $pre
-    ║     │ ║ │ ║   │ └─call &lam2id  ««"$fv"
-    ║     │ ║ │ ║   │   └○ $fv
+    ║     │ ║ │ ║   │ └─ifnull :annotations({"inlined" => "&lam2id"})  ««"$fv"
+    ║     │ ║ │ ║   │   ├─atpos
+    ║     │ ║ │ ║   │   │ ├○ $fv
+    ║     │ ║ │ ║   │   │ └◙ IVal 0 :annotations({"inlined" => "&LAMFIELD_ID"})
+    ║     │ ║ │ ║   │   └◙ WVal NQPMu
     ║     │ ║ │ ║   └─concat  ««"~"
     ║     │ ║ │ ║     ├○ $pre
     ║     │ ║ │ ║     └○ $flatVal
@@ -499,14 +510,18 @@
     ╟─bind
     ║ ├○ &apply1 :decl(var)
     ║ └─:Block "apply1"  ««"{\n    my $result := typecase(force($f),\n        :"...
-    ║   ╟○ $f :decl(param)
-    ║   ╟○ $a1 :decl(param)
+    ║   ╟○ $f :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ $a1 :decl(param) :annotations({"positional_index" => 1})
     ║   ╟○ $result :decl(var)
     ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$result := typecase(force($f),\n        :λ(&lam2cod"...
     ║   ║ ├○ $result
     ║   ║ └─call  ««"$a1"
     ║   ║   ├─call &typecase  ««"force($f),\n        :λ(&lam2code),\n        :otherw"...
-    ║   ║   │ ├─call &force  ««"$f"
+    ║   ║   │ ├─if :annotations({"inlined" => "&force"})  ««"$f"
+    ║   ║   │ │ ├─isinvokable  ««"nqp::isinvokable($v)"
+    ║   ║   │ │ │ └○ $f
+    ║   ║   │ │ ├─call  ««""
+    ║   ║   │ │ │ └○ $f
     ║   ║   │ │ └○ $f
     ║   ║   │ ├○ &lam2code :named("λ")
     ║   ║   │ └─:Block :named("otherwise")  ««"{\n            nqp::die('ERROR: cannot apply ' ~ st"...
@@ -522,13 +537,17 @@
     ║   ║   │       └─call &strOut  ««"$a1"
     ║   ║   │         └○ $a1
     ║   ║   └○ $a1
-    ║   ╙─call &force  ««"$result"
+    ║   ╙─if :annotations({"inlined" => "&force"})  ««"$result"
+    ║     ├─isinvokable  ««"nqp::isinvokable($v)"
+    ║     │ └○ $result
+    ║     ├─call  ««""
+    ║     │ └○ $result
     ║     └○ $result
     ╟─bind
     ║ ├○ &join :decl(var)
     ║ └─:Block "join"  ««"{\n    my $_;\n    my str $s := '';\n    my $i := n"...
-    ║   ╟○ $sep :decl(param)
-    ║   ╟○ @pieces :decl(param)
+    ║   ╟○ $sep :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ @pieces :decl(param) :annotations({"positional_index" => 1})
     ║   ╟─bind  ««"$_"
     ║   ║ ├○ $_ :decl(var)
     ║   ║ └◙ WVal NQPMu
@@ -580,7 +599,7 @@
     ╟─bind
     ║ ├○ &say :decl(var)
     ║ └─:Block "say"  ««"{\n    nqp::say(join('', @args));\n}"
-    ║   ╟○ @args :decl(param) :slurpy(1)
+    ║   ╟○ @args :decl(param) :annotations({"positional_index" => 0}) :slurpy(1)
     ║   ╙─say  ««"nqp::say(join('', @args))"
     ║     └─call &join  ««"'', @args"
     ║       ├◙ SVal ""
@@ -602,50 +621,50 @@
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_LAMBDACOUNT  ««""
+    ║       │ │ └◙ SVal "lambda" :annotations({"inlined" => "&STATS_LAMBDACOUNT"})
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " lambdas\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_QASTSIZE  ««""
+    ║       │ │ └◙ SVal "Node" :annotations({"inlined" => "&STATS_QASTSIZE"})
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::Node s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_BLOCKCOUNT  ««""
+    ║       │ │ └◙ SVal "Block" :annotations({"inlined" => "&STATS_BLOCKCOUNT"})
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::Block s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_LISTCOUNT  ««""
+    ║       │ │ └◙ SVal "list" :annotations({"inlined" => "&STATS_LISTCOUNT"})
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::Op(list) s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_IVALCOUNT  ««""
+    ║       │ │ └◙ SVal "IVal" :annotations({"inlined" => "&STATS_IVALCOUNT"})
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::IVal s\n"
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_SVALSIZE  ««""
+    ║       │ │ └◙ SVal "SValChars" :annotations({"inlined" => "&STATS_SVALSIZE"})
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " chars ttl in "
     ║       ├─ifnull
     ║       │ ├─atkey
     ║       │ │ ├○ %stats
-    ║       │ │ └─call &STATS_SVALCOUNT  ««""
+    ║       │ │ └◙ SVal "SVal" :annotations({"inlined" => "&STATS_SVALCOUNT"})
     ║       │ └◙ WVal NQPMu
     ║       ├◙ SVal " QAST::SVal s\n"
     ║       └◙ SVal "------------------------------------------------"
     ╟─bind
     ║ ├○ &MAIN :decl(var)
     ║ └─:Block "MAIN"  ««"{\n    my $lambda2 := [\n        'λ1',             "...
-    ║   ╟○ @ARGS :decl(param) :slurpy(1)
+    ║   ╟○ @ARGS :decl(param) :annotations({"positional_index" => 0}) :slurpy(1)
     ║   ╟○ $lambda2 :decl(var)
     ║   ╟○ $lambda1 :decl(var)
     ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$lambda2 := [\n        'λ1',                       "...
@@ -702,20 +721,20 @@
     ║   │ └◙ SVal "binder1 59 4 foo"
     ║   ├◙ SVal "stats"
     ║   └─hash  ««"nqp::hash( # to be filled in by compiler\n        S"...
-    ║     ├─call &STATS_QASTSIZE  ««""
+    ║     ├◙ SVal "Node" :annotations({"inlined" => "&STATS_QASTSIZE"})
+    ║     ├◙ IVal 741
+    ║     ├◙ SVal "Block" :annotations({"inlined" => "&STATS_BLOCKCOUNT"})
+    ║     ├◙ IVal 38
+    ║     ├◙ SVal "list" :annotations({"inlined" => "&STATS_LISTCOUNT"})
+    ║     ├◙ IVal 5
+    ║     ├◙ SVal "lambda" :annotations({"inlined" => "&STATS_LAMBDACOUNT"})
     ║     ├◙ IVal -1
-    ║     ├─call &STATS_BLOCKCOUNT  ««""
-    ║     ├◙ IVal -1
-    ║     ├─call &STATS_LISTCOUNT  ««""
-    ║     ├◙ IVal -1
-    ║     ├─call &STATS_LAMBDACOUNT  ««""
-    ║     ├◙ IVal -1
-    ║     ├─call &STATS_IVALCOUNT  ««""
-    ║     ├◙ IVal -1
-    ║     ├─call &STATS_SVALCOUNT  ««""
-    ║     ├◙ IVal -1
-    ║     ├─call &STATS_SVALSIZE  ««""
-    ║     └◙ IVal -1
+    ║     ├◙ SVal "IVal" :annotations({"inlined" => "&STATS_IVALCOUNT"})
+    ║     ├◙ IVal 34
+    ║     ├◙ SVal "SVal" :annotations({"inlined" => "&STATS_SVALCOUNT"})
+    ║     ├◙ IVal 74
+    ║     ├◙ SVal "SValChars" :annotations({"inlined" => "&STATS_SVALSIZE"})
+    ║     └◙ IVal 748
     ╙─if
       ├○ @ARGS
       └─call &MAIN
