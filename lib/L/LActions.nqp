@@ -732,7 +732,9 @@ class LActions is HLL::Actions {
 
         my $runtime := make-runtime();
         $top-block.push($runtime);
-        self.typecheck($runtime, $top-block);              # <<<<<<<<< TODO
+        try {
+            self.typecheck($runtime, $top-block);              # <<<<<<<<< TODO
+        }
 
         my $s := $top-block;
         
@@ -762,9 +764,9 @@ class LActions is HLL::Actions {
             mkBind(lexVar('.src', :decl<static>), ~$/)
         );
 
-        my $mainTermType;
-        $mainTermType := self.typecheck($mainTerm, QAST::Block.new);
-        say('MAIN type: ' ~ typeToStr($mainTermType));
+        #my $mainTermType;
+        #$mainTermType := self.typecheck($mainTerm, QAST::Block.new);
+        #say('MAIN type: ' ~ typeToStr($mainTermType));
 
         # Note: cannot use mkBind here since this enforces an init value
         my $quastSizeBinding  := QAST::Op.new(:op<bind>, lexVar('.qastSize',   :decl<static>));   # will receive a value node later
@@ -904,8 +906,8 @@ class LActions is HLL::Actions {
                     for $n.list;
                 $tLast.set($n);
             } elsif istype($n, QAST::Block) {
-                say('>>>>typechecking Block');
-                say(dump($n));
+                #say('>>>>typechecking Block');
+                #say(dump($n));
                 $n.annotate('positional', []);
                 $n.annotate('named',      {});
                 $n.annotate('slurpy',     []);
@@ -925,10 +927,10 @@ class LActions is HLL::Actions {
                 @tIns.push(Type.Void)
                     unless @tIns;
                 
-                say('>>>preparing Block type: ' ~ join(' -> ', @tIns, :map(-> $t { $t.Str })) ~ ' -> ' ~ $tOut.Str);
+                #say('>>>preparing Block type: ' ~ join(' -> ', @tIns, :map(-> $t { $t.Str })) ~ ' -> ' ~ $tOut.Str);
                 my $tBlock := Type.Fn(|@tIns, $tOut);
                 $tBlock.set($n);
-                say(dump($n));
+                #say(dump($n));
             } elsif isVar($n) {
                 if $n.decl {
                     my $decl := lookup($n.name, $currentBlock)<declaration>;
@@ -967,9 +969,13 @@ class LActions is HLL::Actions {
                 my $val := $n[1];
                 my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks);
                 my $tVar := self.typecheck($var, $currentBlock, |@moreBlocks);
-                # TODO: check if tVar was introduced (if so can ditch the newly introduced Type.Var)
+                
+                if $var.decl {  # in that case $tVar is a fresh Type.Var which we can easily eliminate right here:
+                    $tVal.set($var);    # simply use the value's type for the var directly
+                } else {
+                    Type.constrain($tVar, $tVal, $n);
+                }
                 $tVal.set($n);
-                Type.constrain($tVar, $tVal, $n);
             } elsif isOp($n, 'list') {
                 my @tArgs := [];
                 @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
@@ -1251,7 +1257,11 @@ class LActions is HLL::Actions {
 
 
 
+
+
 sub MAIN(*@ARGS) {
+    say(describe(foo(0)));
+    say(describe(foo(-1)));
 
     for [Type.Void, Type.Str, Type.Int, Type.Num, Type.BOOL, Type.Array, Type.Var, Type.Fn(Type.Str, Type.Int), Type.Fn(Type.Void, Type.Var)] {
         say(nqp::sprintf("%15s:", [~$_])

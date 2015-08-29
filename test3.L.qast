@@ -1,28 +1,86 @@
 ──:CompUnit+{StrByDump}
   └─:Block
-    ╟─bind :returns(str)
-    ║ ├○ .src :decl(static) :returns(str)
+    ╟─bind
+    ║ ├○ .src :decl(static)
     ║ └◙ SVal "\n#\"foo\"  # type str\n\n#42     # ERROR NYI\n\n#λx.x    # type t0 -> t0\n\n#λx.λ_.x   # type t0 -> NQPMu -> t0\n\n#λ_.\"foo\"    # type: NQPMu -> str\n\n#(λx.x) \"foo\"    # type: t5 where t5 = str\n\n#(\"foo\" \"bar\")   # Type Error: cannot apply str to str\n\n#(\"foo\" λx.x)   # Type Error: cannot apply str to Void -> t0 where t0 = t5 -> t5\n\n((λx.x) λx.x)   # type: t5 where t5 = Void -> t0; t0 = t6 -> t6\n\n#(δ (# Combinators:\n#    #(M λu.u u)                  # self-application\n#    #(K λx.λ_.x)                 # (make) a constant function\n#    (I λx.x)                    # identity\n#   )\n#    I \"foo\"\n#)\n\n"
-    ╟─bind :returns(NQPArray)
-    ║ ├○ .λinfo :decl(static) :returns(NQPArray)
-    ║ └─list :returns(NQPArray)
-    ║   ├─list :returns(NQPArray)
+    ╟─bind
+    ║ ├○ .λinfo :decl(static)
+    ║ └─list
+    ║   ├─list
     ║   │ ├◙ SVal "x"
     ║   │ ├◙ IVal 324
     ║   │ ├◙ IVal 4
     ║   │ └◙ SVal ""
-    ║   └─list :returns(NQPArray)
+    ║   └─list
     ║     ├◙ SVal "x"
     ║     ├◙ IVal 330
     ║     ├◙ IVal 4
     ║     └◙ SVal ""
+    ╟─bind ::(Void -> Str)
+    ║ ├○ &banner :decl(static) ::(Void -> Str)
+    ║ └─:Block ::(Void -> Str) :annotations({"named" => {}, "slurpy" => [], "positional" => [], "optional" => []})
+    ║   ╙◙ SVal "This is L v0.0.1" ::(Str)
+    ╟─bind ::(t5 -> Str)
+    ║ ├○ &strLit :decl(static) ::(t5 -> Str)
+    ║ └─:Block ::(t5 -> Str) :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical s :decl(param))], "optional" => []})
+    ║   ╟○ s :decl(param) ::(t5) :annotations({"positional_index" => 0})
+    ║   ╟○ foo :decl(var) ::(t6)
+    ║   ╙─concat ::(Str)
+    ║     ├◙ SVal "\"" ::(Str)
+    ║     └─concat ::(Str)
+    ║       ├─escape ::(Str)
+    ║       │ └○ s ::(t5)
+    ║       └◙ SVal "\"" ::(Str)
+    ╟─bind
+    ║ ├○ &sublist :decl(static)
+    ║ └─:Block :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical list :decl(param)), QAST::Var(lexical from :decl(param))], "optional" => []})
+    ║   ╟○ list :decl(param) ::(t8) :annotations({"positional_index" => 0})
+    ║   ╟○ from :decl(param) ::(t9) :annotations({"positional_index" => 1})
+    ║   ╟─bind ::(Int)
+    ║   ║ ├○ n :decl(var) ::(Int)
+    ║   ║ └─elems ::(Int)
+    ║   ║   └○ list ::(t8)
+    ║   ╟─bind ::(Int)
+    ║   ║ ├○ count :decl(var) ::(Int)
+    ║   ║ └○ n ::(Int)
+    ║   ╟─bind ::(Int)
+    ║   ║ ├○ to :decl(var) ::(Int)
+    ║   ║ └─add_i ::(Int)
+    ║   ║   ├○ from ::(t9)
+    ║   ║   └○ count ::(Int)
+    ║   ╟─bind ::(Array)
+    ║   ║ ├○ out :decl(var) ::(Array)
+    ║   ║ └─list ::(Array)
+    ║   ╟─if
+    ║   ║ ├─isgt_i
+    ║   ║ │ ├○ to
+    ║   ║ │ └○ n
+    ║   ║ └─bind
+    ║   ║   ├○ to
+    ║   ║   └○ n
+    ║   ╟─while
+    ║   ║ ├─islt_i
+    ║   ║ │ ├○ from ::(t9)
+    ║   ║ │ └○ to
+    ║   ║ └─:Stmts
+    ║   ║   ├─push
+    ║   ║   │ ├○ out
+    ║   ║   │ └─atpos
+    ║   ║   │   ├○ list ::(t8)
+    ║   ║   │   └○ from ::(t9)
+    ║   ║   └─bind
+    ║   ║     ├○ from
+    ║   ║     └─add_i
+    ║   ║       ├○ from ::(t9)
+    ║   ║       └◙ IVal 1
+    ║   ╙○ out
     ╟─bind
     ║ ├○ &ifTag :decl(static)
     ║ └─:Block
-    ║   ╟○ subject :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ tag :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
-    ║   ╟○ then :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) ))
-    ║   ╟○ else :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 3 (int) ))
+    ║   ╟○ subject :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ tag :decl(param) :annotations({"positional_index" => 1})
+    ║   ╟○ then :decl(param) :annotations({"positional_index" => 2})
+    ║   ╟○ else :decl(param) :annotations({"positional_index" => 3})
     ║   ╟○ tagAndId :decl(var)
     ║   ╙─if
     ║     ├─islist
@@ -48,16 +106,16 @@
     ║     │   │   │ ├◙ IVal 1
     ║     │   │   │ └◙ IVal 0
     ║     │   │   └◙ IVal 0
-    ║     │   └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical else) ))
+    ║     │   └─call &force :annotations({"forced" => QAST::Var(lexical else)})
     ║     │     └○ else
-    ║     └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical else) ))
+    ║     └─call &force :annotations({"forced" => QAST::Var(lexical else)})
     ║       └○ else
     ╟─bind
     ║ ├○ &->#n :decl(static)
     ║ └─:Block
-    ║   ╟○ subject :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ tag :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
-    ║   ╟○ index :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 2 (int) ))
+    ║   ╟○ subject :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ tag :decl(param) :annotations({"positional_index" => 1})
+    ║   ╟○ index :decl(param) :annotations({"positional_index" => 2})
     ║   ╙─call &ifTag
     ║     ├○ subject
     ║     ├○ tag
@@ -68,73 +126,26 @@
     ║     │   └○ index
     ║     └─null
     ╟─bind
-    ║ ├○ &sublist :decl(static)
-    ║ └─:Block
-    ║   ╟○ list :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ from :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
-    ║   ╟─bind :returns(int)
-    ║   ║ ├○ n :decl(var) :returns(int)
-    ║   ║ └─elems :returns(int)
-    ║   ║   └○ list
-    ║   ╟─bind :returns(int)
-    ║   ║ ├○ count :decl(var) :returns(int)
-    ║   ║ └○ n :returns(int)
-    ║   ╟─bind :returns(int)
-    ║   ║ ├○ to :decl(var) :returns(int)
-    ║   ║ └─add_i :returns(int)
-    ║   ║   ├○ from
-    ║   ║   └○ count :returns(int)
-    ║   ╟─bind :returns(NQPArray)
-    ║   ║ ├○ out :decl(var) :returns(NQPArray)
-    ║   ║ └─list :returns(NQPArray)
-    ║   ╟─if
-    ║   ║ ├─isgt_i
-    ║   ║ │ ├○ to :returns(int)
-    ║   ║ │ └○ n :returns(int)
-    ║   ║ └─bind :returns(int)
-    ║   ║   ├○ to :returns(int)
-    ║   ║   └○ n :returns(int)
-    ║   ╟─while
-    ║   ║ ├─islt_i
-    ║   ║ │ ├○ from
-    ║   ║ │ └○ to :returns(int)
-    ║   ║ └─:Stmts
-    ║   ║   ├─push
-    ║   ║   │ ├○ out :returns(NQPArray)
-    ║   ║   │ └─atpos
-    ║   ║   │   ├○ list
-    ║   ║   │   └○ from
-    ║   ║   └─bind :returns(int)
-    ║   ║     ├○ from :returns(int)
-    ║   ║     └─add_i :returns(int)
-    ║   ║       ├○ from
-    ║   ║       └◙ IVal 1
-    ║   ╙○ out :returns(NQPArray)
-    ╟─bind
     ║ ├○ &strOut :decl(static)
     ║ └─:Block
-    ║   ╟○ v :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ indent :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ v :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ indent :decl(param) :annotations({"positional_index" => 1})
     ║   ╟─bind
     ║   ║ ├○ v
-    ║   ║ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical v) ))
+    ║   ║ └─call &force :annotations({"forced" => QAST::Var(lexical v)})
     ║   ║   └○ v
     ║   ╙─if
     ║     ├─isstr
     ║     │ └○ v
-    ║     ├─concat :returns(str) :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&strLit" (str) ))
-    ║     │ ├◙ SVal "\""
-    ║     │ └─concat :returns(str)
-    ║     │   ├─escape :returns(str)
-    ║     │   │ └○ v
-    ║     │   └◙ SVal "\""
+    ║     ├─call &strLit
+    ║     │ └○ v
     ║     └─call &ifTag
     ║       ├○ v
     ║       ├◙ SVal "λ"
     ║       ├─:Block
     ║       │ ╟─bind
     ║       │ ║ ├○ id :decl(param)
-    ║       │ ║ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical id) ))
+    ║       │ ║ └─call &force :annotations({"forced" => QAST::Var(lexical id)})
     ║       │ ║   └○ id
     ║       │ ╟─bind
     ║       │ ║ ├○ fvars :decl(var)
@@ -169,7 +180,7 @@
     ║       │ ║   ├○ .src
     ║       │ ║   ├○ from
     ║       │ ║   └○ length
-    ║       │ ╟─bind :returns(int)
+    ║       │ ╟─bind
     ║       │ ║ ├○ i :decl(var)
     ║       │ ║ └◙ IVal 0
     ║       │ ╟─for
@@ -204,27 +215,27 @@
     ║       │ ║   ╟─if
     ║       │ ║   ║ ├─not_i
     ║       │ ║   ║ │ └○ dBI
-    ║       │ ║   ║ └─bind :returns(str)
-    ║       │ ║   ║   ├○ dBI :returns(str)
+    ║       │ ║   ║ └─bind
+    ║       │ ║   ║   ├○ dBI
     ║       │ ║   ║   └◙ SVal "∞"
-    ║       │ ║   ╙─bind :returns(str)
-    ║       │ ║     ├○ src :returns(str)
+    ║       │ ║   ╙─bind
+    ║       │ ║     ├○ src
     ║       │ ║     └─concat :returns(str)
     ║       │ ║       ├─concat :returns(str)
     ║       │ ║       │ ├─concat :returns(str)
     ║       │ ║       │ │ ├─concat :returns(str)
     ║       │ ║       │ │ │ ├─concat :returns(str)
     ║       │ ║       │ │ │ │ ├─concat :returns(str)
-    ║       │ ║       │ │ │ │ │ ├─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical src) ))
+    ║       │ ║       │ │ │ │ │ ├─call &force :annotations({"forced" => QAST::Var(lexical src)})
     ║       │ ║       │ │ │ │ │ │ └○ src
     ║       │ ║       │ │ │ │ │ └◙ SVal "\n"
-    ║       │ ║       │ │ │ │ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical indent) ))
+    ║       │ ║       │ │ │ │ └─call &force :annotations({"forced" => QAST::Var(lexical indent)})
     ║       │ ║       │ │ │ │   └○ indent
     ║       │ ║       │ │ │ └◙ SVal "# where "
-    ║       │ ║       │ │ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical name) ))
+    ║       │ ║       │ │ └─call &force :annotations({"forced" => QAST::Var(lexical name)})
     ║       │ ║       │ │   └○ name
     ║       │ ║       │ └◙ SVal " = "
-    ║       │ ║       └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Op(if) ))
+    ║       │ ║       └─call &force :annotations({"forced" => QAST::Op(if)})
     ║       │ ║         └─if
     ║       │ ║           ├─iseq_s
     ║       │ ║           │ ├○ name
@@ -233,7 +244,7 @@
     ║       │ ║           └─call &strOut
     ║       │ ║             ├○ val
     ║       │ ║             └─concat :returns(str)
-    ║       │ ║               ├─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical indent) ))
+    ║       │ ║               ├─call &force :annotations({"forced" => QAST::Var(lexical indent)})
     ║       │ ║               │ └○ indent
     ║       │ ║               └◙ SVal "#           "
     ║       │ ╙○ src
@@ -241,15 +252,15 @@
     ║         ├─isint
     ║         │ └○ v
     ║         ├○ v
-    ║         └─:Block :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
+    ║         └─:Block :annotations({"delayed" => "simple"})
     ║           ╙─reprname
     ║             └○ v
     ╟─bind
     ║ ├○ &delayMemo :decl(static)
     ║ └─:Block
-    ║   ╟○ x :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ x :decl(param) :annotations({"positional_index" => 0})
     ║   ╟○ result :decl(var)
-    ║   ╟─bind :returns(int)
+    ║   ╟─bind
     ║   ║ ├○ wasRun :decl(var)
     ║   ║ └◙ IVal 0
     ║   ╙─:Block
@@ -257,8 +268,8 @@
     ║       ├○ result
     ║       ├○ wasRun
     ║       └─:Stmts
-    ║         ├─bind :returns(int)
-    ║         │ ├○ result :returns(int)
+    ║         ├─bind
+    ║         │ ├○ result
     ║         │ └◙ IVal 1
     ║         └─bind
     ║           ├○ wasRun
@@ -266,8 +277,8 @@
     ╟─bind
     ║ ├○ &force :decl(static)
     ║ └─:Block
-    ║   ╟○ x :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟─bind :returns(str)
+    ║   ╟○ x :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟─bind
     ║   ║ ├○ foo :decl(var)
     ║   ║ └◙ SVal "bar"
     ║   ╙─if
@@ -278,10 +289,10 @@
     ╟─bind
     ║ ├○ &say :decl(static)
     ║ └─:Block
-    ║   ╟○ v :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
+    ║   ╟○ v :decl(param) :annotations({"positional_index" => 0})
     ║   ╟─bind
     ║   ║ ├○ v
-    ║   ║ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical v) ))
+    ║   ║ └─call &force :annotations({"forced" => QAST::Var(lexical v)})
     ║   ║   └○ v
     ║   ╙─say
     ║     └─if
@@ -292,30 +303,20 @@
     ║         ├○ v
     ║         └◙ SVal ""
     ╟─bind
-    ║ ├○ &strLit :decl(static)
-    ║ └─:Block
-    ║   ╟○ s :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╙─concat :returns(str)
-    ║     ├◙ SVal "\""
-    ║     └─concat :returns(str)
-    ║       ├─escape :returns(str)
-    ║       │ └○ s
-    ║       └◙ SVal "\""
-    ╟─bind
     ║ ├○ &apply1 :decl(static)
     ║ └─:Block
-    ║   ╟○ f :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 0 (int) ))
-    ║   ╟○ a1 :decl(param) :annotations(#`{BOOTHash:}nqp::hash( "positional_index", 1 (int) ))
+    ║   ╟○ f :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ a1 :decl(param) :annotations({"positional_index" => 1})
     ║   ╟○ result :decl(var)
     ║   ╟─bind
     ║   ║ ├○ f
-    ║   ║ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical f) ))
+    ║   ║ └─call &force :annotations({"forced" => QAST::Var(lexical f)})
     ║   ║   └○ f
     ║   ╟─bind
     ║   ║ ├○ result
     ║   ║ └─call
     ║   ║   ├─defor
-    ║   ║   │ ├─call &ifTag :annotations(#`{BOOTHash:}nqp::hash( "inlined", "&->#n" (str) ))
+    ║   ║   │ ├─call &ifTag :annotations({"inlined" => "&->#n"})
     ║   ║   │ │ ├○ f
     ║   ║   │ │ ├◙ SVal "λ"
     ║   ║   │ │ ├─:Block
@@ -329,24 +330,24 @@
     ║   ║   │     ├─concat :returns(str)
     ║   ║   │     │ ├─concat :returns(str)
     ║   ║   │     │ │ ├◙ SVal "ERROR: cannot apply "
-    ║   ║   │     │ │ └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Op(call &strOut) ))
+    ║   ║   │     │ │ └─call &force :annotations({"forced" => QAST::Op(call &strOut)})
     ║   ║   │     │ │   └─call &strOut
     ║   ║   │     │ │     ├○ f
     ║   ║   │     │ │     └◙ SVal ""
     ║   ║   │     │ └◙ SVal " to "
-    ║   ║   │     └─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Op(call &strOut) ))
+    ║   ║   │     └─call &force :annotations({"forced" => QAST::Op(call &strOut)})
     ║   ║   │       └─call &strOut
     ║   ║   │         ├○ a1
     ║   ║   │         └◙ SVal ""
     ║   ║   └○ a1
-    ║   ╙─call &force :annotations(#`{BOOTHash:}nqp::hash( "forced", QAST::Var(lexical result) ))
+    ║   ╙─call &force :annotations({"forced" => QAST::Var(lexical result)})
     ║     └○ result
     ╟─bind
     ║ ├○ .qastSize :decl(static)
-    ║ └◙ NVal 373
+    ║ └◙ NVal 378
     ╟─bind
     ║ ├○ .blockCount :decl(static)
-    ║ └◙ NVal 19
+    ║ └◙ NVal 20
     ╟─bind
     ║ ├○ .listCount :decl(static)
     ║ └◙ NVal 6
@@ -355,27 +356,27 @@
     ║ └◙ NVal 23
     ╟─bind
     ║ ├○ .svalCount :decl(static)
-    ║ └◙ NVal 27
+    ║ └◙ NVal 28
     ╟─bind
     ║ ├○ .svalSize :decl(static)
-    ║ └◙ NVal 661
+    ║ └◙ NVal 677
     ╙─:Block :blocktype(immediate)
       ╟○ local mainResult :decl(var)
       ╟─bind
       ║ ├○ local mainResult
       ║ └─call &strOut
-      ║   ├─call &apply1 :returns(t5) :annotations(#`{BOOTHash:}nqp::hash( "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"(λx.x) λx.x"
-      ║   │ ├─list :returns(t5 -> t5) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 0 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λx.x"
+      ║   ├─call &apply1 :annotations({"FV" => {}})  ««"(λx.x) λx.x"
+      ║   │ ├─list :annotations({"parent" => QAST::Op(call &apply1), "infoIdx" => 0, "FV" => {}})  ««"λx.x"
       ║   │ │ ├◙ SVal "λ0"
       ║   │ │ └─:Block  ««"x"
-      ║   │ │   ╟○ x :decl(param) :returns(t5)
-      ║   │ │   ╙○ x :returns(t5) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
-      ║   │ └─call &delayMemo :returns(Void -> t0) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "memo" (str) ))  ««"λx.x"
-      ║   │   └─:Block :returns(Void -> t6 -> t6) :annotations(#`{BOOTHash:}nqp::hash( "delayed", "simple" (str) ))
-      ║   │     ╙─list :returns(t6 -> t6) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(call &apply1), "infoIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash(  ) ))  ««"λx.x"
+      ║   │ │   ╟○ x :decl(param)
+      ║   │ │   ╙○ x :annotations({"parent" => QAST::Op(list), "bound_at" => QAST::Op(list), "deBruijnIdx" => 1, "FV" => {"x" => [QAST::Var(lexical x)]}})
+      ║   │ └─call &delayMemo :annotations({"delayed" => "memo"})  ««"λx.x"
+      ║   │   └─:Block :annotations({"delayed" => "simple"})
+      ║   │     ╙─list :annotations({"parent" => QAST::Op(call &apply1), "infoIdx" => 1, "FV" => {}})  ««"λx.x"
       ║   │       ├◙ SVal "λ1"
       ║   │       └─:Block  ««"x"
-      ║   │         ╟○ x :decl(param) :returns(t6)
-      ║   │         ╙○ x :returns(t6) :annotations(#`{BOOTHash:}nqp::hash( "parent", QAST::Op(list), "bound_at", QAST::Op(list), "deBruijnIdx", 1 (int), "FV", #`{BOOTHash:}nqp::hash( "x", #`{NQPArray:}[ QAST::Var(lexical x) ] ) ))
+      ║   │         ╟○ x :decl(param)
+      ║   │         ╙○ x :annotations({"parent" => QAST::Op(list), "bound_at" => QAST::Op(list), "deBruijnIdx" => 1, "FV" => {"x" => [QAST::Var(lexical x)]}})
       ║   └◙ SVal ""
       ╙○ local mainResult
