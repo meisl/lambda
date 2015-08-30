@@ -10,32 +10,92 @@ my class NO_VALUE {}
 class Type is export {
 
     method new(*@args, *%adverbs) {
-        nqp::die('cannot instantiate class Type');
+        nqp::die('cannot instantiate class ' ~ howName(self) ~ ' directly');
     }
-
-    has str $!str;
 
     my sub create($subclass, *%attributes) {
+        my $sName := howName($subclass);
         my $instance := nqp::create($subclass);
-        my str $str := %attributes<str> // howName($subclass);
-        nqp::deletekey(%attributes, 'str');
-        nqp::bindattr_s($instance, Type, '$!str', $str);
-        for %attributes {
-            my $k := '$!' ~ $_.key;
-            my $v := $_.value;
-            if nqp::isstr($v) {
-                nqp::bindattr_s($instance, $subclass, $k, $v);
-            } elsif nqp::isint($v) {
-                nqp::bindattr_i($instance, $subclass, $k, $v);
-            } elsif nqp::isnum($v) {
-                nqp::bindattr_n($instance, $subclass, $k, $v);
-            } else {
-                nqp::bindattr($instance, $subclass, $k, $v);
+        %attributes<str> := $sName
+            unless nqp::existskey(%attributes, 'str');
+
+        my @parents := $subclass.HOW.parents($instance);
+        my $i := @parents - 1;
+        while $i >= 0 {
+            my $p := @parents[$i];
+            my $pName := howName($p);
+            for $p.HOW.attributes($instance, :local) {
+                my $name := $_.name;
+                my $pre := nqp::substr($name, 0, 2);
+                nqp::die('strange attribute "' ~ $name ~ '" in class ' ~ howName($p) ~ ' must have a prefix of "$!", "@!", "%!" or "&!"')
+                    unless ($pre eq '$!') || ($pre eq '@!') || ($pre eq '%!') || ($pre eq '&!');
+                my $key  := nqp::substr($name, 2);
+                my $v;
+                my $t := $_.type;
+                if nqp::existskey(%attributes, $key) {
+                    $v := %attributes{$key};
+                } elsif $pre eq '@!' {
+                    $v := [];
+                } elsif $pre eq '%!' {
+                    $v := {};
+                } else {
+                    nqp::die('no init value for attribute ' ~ $name ~ ' in class ' ~ howName($p)
+                           ~ ' (got these: ' ~ describe(%attributes) ~ ')'
+                    );
+                }
+                try {   # cannot use Util::insist-isa for all: yields strange error re "cannot unbox a type object" - sometimes...
+                    my $tName;
+                    if nqp::isnull($t) {
+                        my $typeOK := 0;
+                        if $pre eq '$!' {
+                            $typeOK := 1;
+                            $tName := 'an ' ~ howName(NQPMu);
+                        } elsif $pre eq '@!' {
+                            $typeOK := nqp::islist($v);
+                            $tName := 'a list';
+                        } elsif $pre eq '%!' {
+                            $typeOK := nqp::ishash($v);
+                            $tName := 'a hash';
+                        } elsif $pre eq '&!' {
+                            $typeOK := nqp::isinvokable($v);
+                            $tName := 'an invokable object';
+                        }
+                        nqp::die('')
+                            unless $typeOK;
+                        nqp::bindattr($instance, $p, $name, $v);
+                    } else {
+                        $tName := 'a ' ~ howName($t);
+                        if $t =:= str {
+                            nqp::bindattr_s($instance, $p, $name, $v);
+                        } elsif $t =:= int {
+                            nqp::bindattr_i($instance, $p, $name, $v);
+                        } elsif $t =:= num {
+                            nqp::bindattr_n($instance, $p, $name, $v);
+                        } else {
+                            insist-isa($v, $t);
+                            nqp::bindattr($instance, $p, $name, $v);
+                        }
+                    }
+                    CATCH {
+                        nqp::die("during $sName instance init, attribute $name in class $pName"
+                            ~ ": expected $tName - got " ~ describe($v)
+                        );
+                    }
+                }
             }
+            
+            #my $m := $p.HOW.method_table($p)<_BUILD>;
+            #if $m {
+            #    #say(howName($subclass) ~ ' / before ' ~ howName($p) ~ '._BUILD: ' ~ describe(%attributes));
+            #    nqp::call($m, $instance, |%attributes);
+            #    #say(howName($subclass) ~ ' / after ' ~ howName($p) ~ '._BUILD: ' ~ describe(%attributes));
+            #}
+
+            $i--;
         }
+
         $instance;
     }
-    
 
     method set($n) {
         insist-isa($n, QAST::Node);
@@ -79,6 +139,8 @@ class Type is export {
     method isSumType()      { isSumType(self)       }
     method isCrossType()    { isCrossType(self)     }
 
+
+    has str $!str;
 
     method Str(:$outer-parens = NO_VALUE) {
         if nqp::isconcrete(self) {
@@ -141,44 +203,58 @@ class Type is export {
 
     my class Var is Type {
         has int $!id;
+        method id()   { $!id     }
+        method name() { self.Str }
+
         method new() {
             my int $id := nqp::elems(%type-vars);
             my str $str := "t$id";
-            my $instance := create(self, :$str, :$id);
+            my $instance := create(Var, :$str, :$id);
             %type-vars{$str} := $instance;
             $instance;
         }
-        method id()   { $!id     }
-        method name() { self.Str }
     }
 
+    # compound types (abstract class)
+
+    my class CompoundType is Type {
+        has Type $!head;    method head()  { $!head  }
+        has Type $!tail;    method tail()  { $!tail  }
+
+        method foldl1(&f) {
+            my $acc := self.head;
+            my $tl := self.tail;
+            my $myClass := nqp::what(self);
+            while nqp::istype($tl, $myClass) {
+                $acc := &f($acc, $tl.head);
+                $tl := $tl.tail;
+            }
+            $acc := &f($acc, $tl);
+        }
+    }
 
     # function types
 
-    my class Fn is Type {
-        has Type $!in;
-        has Type $!out;
+    my class Fn is CompoundType {
         method new($in, $out) {
             my $str := $in.Str(:outer-parens($in.isFnType || $in.isSumType || $in.isCrossType))
                      ~ ' -> '
                      ~ $out.Str(:outer-parens($out.isSumType));
             my $instance := %fn-types{$str};
             unless $instance {
-                $instance := create(self, :$str, :$in, :$out);
+                $instance := create(self, :$str, :head($in), :tail($out));
                 %fn-types{$str} := $instance;
             }
             $instance;
         }
-        method in()  { $!in  }
-        method out() { $!out }
+        method in()  { self.head }
+        method out() { self.tail }
     }
 
 
     # sum types
 
-    my class Sum is Type {
-        has Type $!head;
-        has Type $!tail;
+    my class Sum is CompoundType {
         method new(@disjuncts) {
             my $str := join(' + ', @disjuncts, :map(-> $t { $t.Str(:outer-parens($t.isFnType)) }));
             my $instance := %sum-types{$str};
@@ -193,25 +269,12 @@ class Type is export {
             }
             $instance;
         }
-        method head() { $!head }
-        method tail() { $!tail }
-        method foldl1(&f) {
-            my $acc := self.head;
-            my $tl := self.tail;
-            while $tl.isSumType {
-                $acc := &f($acc, $tl.head);
-                $tl := $tl.tail;
-            }
-            $acc := &f($acc, $tl);
-        }
         
     }
 
     # cross types (to model NQP's positional args)
 
-    my class Cross is Type {
-        has Type $!head;
-        has Type $!tail;
+    my class Cross is CompoundType {
         method new(@conjuncts) {
             my $str := join(' × ', @conjuncts, :map(-> $t { $t.Str(:outer-parens($t.isFnType || $t.isSumType)) }));
             my $instance := %cross-types{$str};
@@ -226,18 +289,6 @@ class Type is export {
             }
             $instance;
         }
-        method head() { $!head }
-        method tail() { $!tail }
-        method foldl1(&f) {
-            my $acc := self.head;
-            my $tl := self.tail;
-            while $tl.isCrossType {
-                $acc := &f($acc, $tl.head);
-                $tl := $tl.tail;
-            }
-            $acc := &f($acc, $tl);
-        }
-        
     }
 
     # - factory methods -------------------------------------------------------
