@@ -13,6 +13,75 @@ class Type is export {
         nqp::die('cannot instantiate class ' ~ howName(self) ~ ' directly');
     }
 
+    my sub initattrs($instance, $class, %attributes) {
+        my $cName := howName($class);
+        for $class.HOW.attributes($instance, :local) {
+            my $name := $_.name;
+            my $pre := nqp::substr($name, 0, 2);
+            nqp::die('strange attribute name "' ~ nqp::escape($name) ~ "\" in class $cName - must start with " ~ '"$!", "@!", "%!" or "&!"')
+                unless ($pre eq '$!') || ($pre eq '@!') || ($pre eq '%!') || ($pre eq '&!');
+            my $key  := nqp::substr($name, 2);
+            my $v;
+            my $t := $_.type;
+            if nqp::existskey(%attributes, $key) {
+                $v := %attributes{$key};
+            } elsif $pre eq '@!' {
+                $v := [];
+            } elsif $pre eq '%!' {
+                $v := {};
+            } else {
+                nqp::die("no init value for attribute $name in class $cName"
+                       ~ ' (got these: ' ~ describe(%attributes) ~ ')'
+                );
+            }
+            try {   # cannot use Util::insist-isa for all: yields strange error re "cannot unbox a type object" - sometimes...
+                my $tName;
+                if nqp::isnull($t) {
+                    my $typeOK := 0;
+                    if $pre eq '$!' {
+                        $typeOK := 1;
+                        $tName := 'an ' ~ howName(NQPMu);
+                    } elsif $pre eq '@!' {
+                        $typeOK := nqp::islist($v);
+                        $tName := 'a list';
+                    } elsif $pre eq '%!' {
+                        $typeOK := nqp::ishash($v);
+                        $tName := 'a hash';
+                    } elsif $pre eq '&!' {
+                        $typeOK := nqp::isinvokable($v);
+                        $tName := 'an invokable object';
+                    }
+                    nqp::die('')
+                        unless $typeOK;
+                    nqp::bindattr($instance, $class, $name, $v);
+                } else {
+                    $tName := 'a ' ~ howName($t);
+                    if $t =:= str {
+                        nqp::bindattr_s($instance, $class, $name, $v);
+                    } elsif $t =:= int {
+                        nqp::bindattr_i($instance, $class, $name, $v);
+                    } elsif $t =:= num {
+                        nqp::bindattr_n($instance, $class, $name, $v);
+                    } else {
+                        insist-isa($v, $t);
+                        nqp::bindattr($instance, $class, $name, $v);
+                    }
+                }
+                CATCH {
+                    my $sName := howName($instance);
+                    nqp::die("while initializing a $sName instance, attribute $name declared in class $cName must be $tName - got " ~ describe($v));
+                }
+            }
+        }
+        
+        #my $m := $p.HOW.method_table($p)<_BUILD>;
+        #if $m {
+        #    #say(howName($subclass) ~ ' / before ' ~ howName($p) ~ '._BUILD: ' ~ describe(%attributes));
+        #    nqp::call($m, $instance, |%attributes);
+        #    #say(howName($subclass) ~ ' / after ' ~ howName($p) ~ '._BUILD: ' ~ describe(%attributes));
+        #}
+   }
+
     my sub create($subclass, *%attributes) {
         my $sName := howName($subclass);
         my $instance := nqp::create($subclass);
@@ -23,74 +92,7 @@ class Type is export {
         my $i := @parents - 1;
         while $i >= 0 {
             my $p := @parents[$i];
-            my $pName := howName($p);
-            for $p.HOW.attributes($instance, :local) {
-                my $name := $_.name;
-                my $pre := nqp::substr($name, 0, 2);
-                nqp::die('strange attribute "' ~ $name ~ '" in class ' ~ howName($p) ~ ' must have a prefix of "$!", "@!", "%!" or "&!"')
-                    unless ($pre eq '$!') || ($pre eq '@!') || ($pre eq '%!') || ($pre eq '&!');
-                my $key  := nqp::substr($name, 2);
-                my $v;
-                my $t := $_.type;
-                if nqp::existskey(%attributes, $key) {
-                    $v := %attributes{$key};
-                } elsif $pre eq '@!' {
-                    $v := [];
-                } elsif $pre eq '%!' {
-                    $v := {};
-                } else {
-                    nqp::die('no init value for attribute ' ~ $name ~ ' in class ' ~ howName($p)
-                           ~ ' (got these: ' ~ describe(%attributes) ~ ')'
-                    );
-                }
-                try {   # cannot use Util::insist-isa for all: yields strange error re "cannot unbox a type object" - sometimes...
-                    my $tName;
-                    if nqp::isnull($t) {
-                        my $typeOK := 0;
-                        if $pre eq '$!' {
-                            $typeOK := 1;
-                            $tName := 'an ' ~ howName(NQPMu);
-                        } elsif $pre eq '@!' {
-                            $typeOK := nqp::islist($v);
-                            $tName := 'a list';
-                        } elsif $pre eq '%!' {
-                            $typeOK := nqp::ishash($v);
-                            $tName := 'a hash';
-                        } elsif $pre eq '&!' {
-                            $typeOK := nqp::isinvokable($v);
-                            $tName := 'an invokable object';
-                        }
-                        nqp::die('')
-                            unless $typeOK;
-                        nqp::bindattr($instance, $p, $name, $v);
-                    } else {
-                        $tName := 'a ' ~ howName($t);
-                        if $t =:= str {
-                            nqp::bindattr_s($instance, $p, $name, $v);
-                        } elsif $t =:= int {
-                            nqp::bindattr_i($instance, $p, $name, $v);
-                        } elsif $t =:= num {
-                            nqp::bindattr_n($instance, $p, $name, $v);
-                        } else {
-                            insist-isa($v, $t);
-                            nqp::bindattr($instance, $p, $name, $v);
-                        }
-                    }
-                    CATCH {
-                        nqp::die("during $sName instance init, attribute $name in class $pName"
-                            ~ ": expected $tName - got " ~ describe($v)
-                        );
-                    }
-                }
-            }
-            
-            #my $m := $p.HOW.method_table($p)<_BUILD>;
-            #if $m {
-            #    #say(howName($subclass) ~ ' / before ' ~ howName($p) ~ '._BUILD: ' ~ describe(%attributes));
-            #    nqp::call($m, $instance, |%attributes);
-            #    #say(howName($subclass) ~ ' / after ' ~ howName($p) ~ '._BUILD: ' ~ describe(%attributes));
-            #}
-
+            initattrs($instance, $p, %attributes);
             $i--;
         }
 
