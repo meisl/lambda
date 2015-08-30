@@ -13,6 +13,30 @@ class Type is export {
         nqp::die('cannot instantiate class Type');
     }
 
+    has str $!str;
+
+    my sub create($subclass, *%attributes) {
+        my $instance := nqp::create($subclass);
+        my str $str := %attributes<str> // howName($subclass);
+        nqp::deletekey(%attributes, 'str');
+        nqp::bindattr_s($instance, Type, '$!str', $str);
+        for %attributes {
+            my $k := '$!' ~ $_.key;
+            my $v := $_.value;
+            if nqp::isstr($v) {
+                nqp::bindattr_s($instance, $subclass, $k, $v);
+            } elsif nqp::isint($v) {
+                nqp::bindattr_i($instance, $subclass, $k, $v);
+            } elsif nqp::isnum($v) {
+                nqp::bindattr_n($instance, $subclass, $k, $v);
+            } else {
+                nqp::bindattr($instance, $subclass, $k, $v);
+            }
+        }
+        $instance;
+    }
+    
+
     method set($n) {
         insist-isa($n, QAST::Node);
         nqp::die('cannot use method set on class Type; need a Type instance')
@@ -43,64 +67,62 @@ class Type is export {
     method isCrossType() { isCrossType(self) }
 
 
+    my $Str;
+    method Str(:$outer-parens = NO_VALUE) {
+        if nqp::isconcrete(self) {
+            $outer-parens
+                ?? "($!str)"
+                !! $!str;
+        } else {
+            nqp::die("invalid parameter for factory method Type.Str: :outer-parens = " ~ describe($outer-parens))
+                unless $outer-parens =:= NO_VALUE;
+            $Str;
+        }
+    }
+
     # subclasses of Type ------------------------------------------------------
 
     # native types (corresponding to NQP's str, int, num)
 
-    my class Str is Type {
-        method Str() { "Str" }
-    }
-    my $Str := nqp::create(Str);
-    method Str() { $Str }
+    my class Str is Type {}
+    $Str := create(Str);
 
 
-    my class Int is Type {
-        method Str() { "Int" }
-    }
-    my $Int := nqp::create(Int);
+    my class Int is Type {}
+    my $Int := create(Int);
     method Int() { $Int }
 
 
-    my class Num is Type {
-        method Str() { "Num" }
-    }
-    my $Num := nqp::create(Num);
+    my class Num is Type {}
+    my $Num := create(Num);
     method Num() { $Num }
 
 
     # the Array type (corresponding to NQP's NQPArray)
 
-    my class Array is Type {
-        method Str() { "Array" }
-    }
-    my $Array := nqp::create(Array);
+    my class Array is Type {}
+    my $Array := create(Array);
     method Array() { $Array }
 
 
     # the Bool type
 
-    my class Bool is Type {
-        method Str() { "Bool" }
-    }
-    my $Bool := nqp::create(Bool);
-    method BOOL() { $Bool }
+    my class Bool is Type {}
+    my $Bool := create(Bool);
+    method BOOL() { $Bool } # cannot name it Bool for some reason....
 
 
     # the Void type, only to be used in Fn types
 
-    my class Void is Type {
-        method Str() { "Void" }
-    }
-    my $Void := nqp::create(Void);
+    my class Void is Type {}
+    my $Void := create(Void);
     method Void() { $Void }
 
 
     # the DontCare type, to be used for ignored parameters
 
-    my class DontCare is Type {
-        method Str() { "_" }
-    }
-    my $DontCare := nqp::create(DontCare);
+    my class DontCare is Type {}
+    my $DontCare := create(DontCare, :str<_>);
     method DontCare() { $DontCare }
     method _() { $DontCare }
 
@@ -110,18 +132,15 @@ class Type is export {
     my %type-vars := {};
     my class Var is Type {
         has int $!id;
-        has str $!name;
         method new() {
             my int $id := nqp::elems(%type-vars);
-            my str $name := "t$id";
-            my $instance := nqp::create(self);
-            nqp::bindattr_i($instance, self, '$!id', $id);
-            nqp::bindattr_s($instance, self, '$!name', $name);
-            %type-vars{$name} := $instance;
+            my str $str := "t$id";
+            my $instance := create(self, :$str, :$id);
+            %type-vars{$str} := $instance;
             $instance;
         }
-        method Str() { $!name }
-        method id()  { $!id   }
+        method id()   { $!id     }
+        method name() { self.Str }
     }
 
 
@@ -131,22 +150,17 @@ class Type is export {
     my class Fn is Type {
         has Type $!in;
         has Type $!out;
-        has str  $!str;
         method new($in, $out) {
-            my $str := ($in.isFnType || $in.isSumType || $in.isCrossType ?? '(' ~ $in.Str ~')' !! $in.Str)
+            my $str := $in.Str(:outer-parens($in.isFnType || $in.isSumType || $in.isCrossType))
                      ~ ' -> '
-                     ~ ($out.isSumType ?? '(' ~ $out.Str ~')' !! $out.Str);
+                     ~ $out.Str(:outer-parens($out.isSumType));
             my $instance := %fn-types{$str};
             unless $instance {
-                $instance := nqp::create(self);
-                nqp::bindattr($instance, self, '$!in',  $in);
-                nqp::bindattr($instance, self, '$!out', $out);
-                nqp::bindattr_s($instance, self, '$!str', $str);
+                $instance := create(self, :$str, :$in, :$out);
                 %fn-types{$str} := $instance;
             }
             $instance;
         }
-        method Str() { $!str }
         method in()  { $!in  }
         method out() { $!out }
     }
@@ -158,27 +172,22 @@ class Type is export {
     my class Sum is Type {
         has Type $!head;
         has Type $!tail;
-        has str  $!str;
         method new(@disjuncts) {
-            my $str := join(' + ', @disjuncts, :map(-> $t { $t.isFnType ?? '(' ~ $t.Str ~ ')' !! $t.Str }));
+            my $str := join(' + ', @disjuncts, :map(-> $t { $t.Str(:outer-parens($t.isFnType)) }));
             my $instance := %sum-types{$str};
             unless $instance {
-                $instance := nqp::create(self);
                 my $head := @disjuncts.shift;
                 my $tail := +@disjuncts == 1
                     ?? @disjuncts[0]
                     !! self.new(@disjuncts);
                 
-                nqp::bindattr(  $instance, self, '$!head', $head);
-                nqp::bindattr(  $instance, self, '$!tail', $tail);
-                nqp::bindattr_s($instance, self, '$!str',  $str);
+                $instance := create(self, :$str, :$head, :$tail);
                 %sum-types{$str} := $instance;
             }
             $instance;
         }
         method head() { $!head }
         method tail() { $!tail }
-        method Str()  { $!str  }
         method foldl1(&f) {
             my $acc := self.head;
             my $tl := self.tail;
@@ -197,27 +206,22 @@ class Type is export {
     my class Cross is Type {
         has Type $!head;
         has Type $!tail;
-        has str  $!str;
         method new(@conjuncts) {
-            my $str := join(' × ', @conjuncts, :map(-> $t { $t.isFnType || $t.isSumType ?? '(' ~ $t.Str ~ ')' !! $t.Str }));
+            my $str := join(' × ', @conjuncts, :map(-> $t { $t.Str(:outer-parens($t.isFnType || $t.isSumType)) }));
             my $instance := %cross-types{$str};
             unless $instance {
-                $instance := nqp::create(self);
                 my $head := @conjuncts.shift;
                 my $tail := +@conjuncts == 1
                     ?? @conjuncts[0]
                     !! self.new(@conjuncts);
                 
-                nqp::bindattr(  $instance, self, '$!head', $head);
-                nqp::bindattr(  $instance, self, '$!tail', $tail);
-                nqp::bindattr_s($instance, self, '$!str',  $str);
+                $instance := create(self, :$str, :$head, :$tail);
                 %cross-types{$str} := $instance;
             }
             $instance;
         }
         method head() { $!head }
         method tail() { $!tail }
-        method Str()  { $!str  }
         method foldl1(&f) {
             my $acc := self.head;
             my $tl := self.tail;
@@ -494,4 +498,42 @@ class Type is export {
         }
     }
 
+}
+
+sub MAIN(*@ARGS) {
+    say(Type.Void.Str   ~ ' / ' ~ Type.Void.Str(:outer-parens) );
+    say(Type._.Str      ~ ' / ' ~ Type._.Str(:outer-parens)    );
+    say(Type.BOOL.Str   ~ ' / ' ~ Type.BOOL.Str(:outer-parens)  );
+    say(Type.Str.Str    ~ ' / ' ~ Type.Str.Str(:outer-parens)  );
+    say(Type.Int.Str    ~ ' / ' ~ Type.Int.Str(:outer-parens)  );
+    say(Type.Num.Str    ~ ' / ' ~ Type.Num.Str(:outer-parens)  );
+    say(Type.Array.Str  ~ ' / ' ~ Type.Array.Str(:outer-parens));
+
+    my $tv1 := Type.Var;
+    say($tv1.Str    ~ ' / ' ~ $tv1.Str(:outer-parens));
+
+    my $tv2 := Type.Var;
+    my $tf1 := Type.Fn($tv1, $tv2);
+    say($tf1.Str ~ ' / ' ~ $tf1.Str(:outer-parens));
+    
+    my $tf2 := Type.Fn($tf1, Type.Var);
+    say($tf2.Str ~ ' / ' ~ $tf2.Str(:outer-parens));
+    
+    my $tf3 := Type.Fn(Type.Var, $tf1);
+    say($tf3.Str ~ ' / ' ~ $tf3.Str(:outer-parens));
+
+    my $ts := Type.Sum($tv1, $tv2);
+    say($ts.Str ~ ' / ' ~ $ts.Str(:outer-parens));
+    
+    my $tf4 := Type.Fn($ts, $tf1);
+    say($tf4.Str ~ ' / ' ~ $tf4.Str(:outer-parens));
+    
+    my $tf5 := Type.Fn($tf1, $ts);
+    say($tf5.Str ~ ' / ' ~ $tf5.Str(:outer-parens));
+
+    my $tc := Type.Cross($tv1, $tv2);
+    say($tc.Str ~ ' / ' ~ $tc.Str(:outer-parens));
+    
+    my $tf6 := Type.Fn($tc, $tf5);
+    say($tf6.Str ~ ' / ' ~ $tf6.Str(:outer-parens));
 }

@@ -3,22 +3,104 @@ use Util;
 
 use Type;
 
-plan(139);
+plan(198);
 
+{ # - Type (methods called on the class) --------------------------------------
+    #is(Type.isVoid, 'asdf');           ?
+}
 
 { # - Void --------------------------------------------------------------------
     isa_ok(Type.Void, Type, 'Type.Void is-a Type');
     is(Type.Void, Type.Void, 'Type.Void is a singleton');
 
-    is(Type.Void.isVoid,      1, 'Type.Void.isVoid');
-    is(Type.Void.isStrType,   0, 'Type.Void.isStrType  ');
-    is(Type.Void.isIntType,   0, 'Type.Void.isIntType  ');
-    is(Type.Void.isNumType,   0, 'Type.Void.isNumType  ');
-    is(Type.Void.isBoolType,  0, 'Type.Void.isBoolType ');
-    is(Type.Void.isArrayType, 0, 'Type.Void.isArrayType');
+    my $s := Type.Void.Str;
+    is($s, 'Void', '.Str of Type.Void returns a string');
+    is(Type.Void.Str(:outer-parens), "($s)", 'Type.Void.Str(:outer-parens) returns same string with outer "(", ")" added');
+    is(Type.Void.Str(:outer-parens(0)), $s, 'Type.Void.Str(:outer-parens(0)) yields no outer parens');
+
+    is(Type.Void.isVoid,      1, 'Type.Void.isVoid     ');
+    is(Type.Void.isDontCare,  0, 'Type.Void.isDontCare ');
+    is(Type.Void.isStr,       0, 'Type.Void.isStr      ');
+    is(Type.Void.isInt,       0, 'Type.Void.isInt      ');
+    is(Type.Void.isNum,       0, 'Type.Void.isNum      ');
+    is(Type.Void.isBool,      0, 'Type.Void.isBool     ');
+    is(Type.Void.isArray,     0, 'Type.Void.isArray    ');
     is(Type.Void.isTypeVar,   0, 'Type.Void.isTypeVar  ');
     is(Type.Void.isFnType,    0, 'Type.Void.isFnType   ');
     is(Type.Void.isSumType,   0, 'Type.Void.isSumType  ');
+    is(Type.Void.isCrossType, 0, 'Type.Void.isCrossType');
+}
+
+{ # - DontCare (aka "_" -------------------------------------------------------
+    isa_ok(Type._, Type, 'Type._ is-a Type');
+    is(Type._, Type._, 'Type._ is a singleton');
+
+    my $s := Type._.Str;
+    is($s, '_', '.Str of Type._ returns a string');
+    is(Type._.Str(:outer-parens), "($s)", 'Type._.Str(:outer-parens) returns same string with outer "(", ")" added');
+    is(Type._.Str(:outer-parens(0)), $s, 'Type._.Str(:outer-parens(0)) yields no outer parens');
+
+    is(Type._.isVoid,      0, 'Type._.isVoid     ');
+    is(Type._.isDontCare,  1, 'Type._.isDontCare ');
+    is(Type._.isStr,       0, 'Type._.isStr      ');
+    is(Type._.isInt,       0, 'Type._.isInt      ');
+    is(Type._.isNum,       0, 'Type._.isNum      ');
+    is(Type._.isBool,      0, 'Type._.isBool     ');
+    is(Type._.isArray,     0, 'Type._.isArray    ');
+    is(Type._.isTypeVar,   0, 'Type._.isTypeVar  ');
+    is(Type._.isFnType,    0, 'Type._.isFnType   ');
+    is(Type._.isSumType,   0, 'Type._.isSumType  ');
+    is(Type._.isCrossType, 0, 'Type._.isCrossType');
+}
+
+{ # - Str ---------------------------------------------------------------------
+    isa_ok(Type.Str,     Type, 'Type.Str (as a factory method on class Type) returns a Str type instance');
+    my $s := Type.Str.Str;
+    is($s, 'Str',  '.Str (as a method on the type instance) returns a string');
+    
+    is(Type.Str.Str(:outer-parens), "($s)", '.Str instance method takes an optional :outer-parens');
+    dies_ok({ Type.Str(:outer-parens) }, 'Type.Str factory method does NOT accept :outer-parens');
+    is(Type.Str.Str(:outer-parens(0)), $s, 'Type.Str.Str(:outer-parens(0)) yields no outer parens');
+
+    is(Type.Str.isVoid,      0, 'Type.Str.isVoid     ');
+    is(Type.Str.isDontCare,  0, 'Type.Str.isDontCare ');
+    is(Type.Str.isStr,       1, 'Type.Str.isStr      ');
+    is(Type.Str.isInt,       0, 'Type.Str.isInt      ');
+    is(Type.Str.isNum,       0, 'Type.Str.isNum      ');
+    is(Type.Str.isBool,      0, 'Type.Str.isBool     ');
+    is(Type.Str.isArray,     0, 'Type.Str.isArray    ');
+    is(Type.Str.isTypeVar,   0, 'Type.Str.isTypeVar  ');
+    is(Type.Str.isFnType,    0, 'Type.Str.isFnType   ');
+    is(Type.Str.isSumType,   0, 'Type.Str.isSumType  ');
+    is(Type.Str.isCrossType, 0, 'Type.Str.isCrossType');
+}
+
+{ # - Var ---------------------------------------------------------------------
+    my $t := Type.Var;
+    isa_ok($t,     Type, 'Type.Var is-a Type');
+    
+    my $t2 := Type.Var;
+    isa_ok($t2,     Type, 'Type.Var is-a Type (called again)');
+    isnt($t2, $t, 'Type.Var returns a different instance on each call');
+    
+    my $s := $t.Str;
+    isa_ok($s, str, 'Type.Var.Str returns a string');
+    isnt($t2, $s, 'different Type.Var instances have different .Str reprs');
+    
+    is($t.Str(:outer-parens), "($s)", 'Type.Var.Str(:outer-parens)');
+    is($t.Str(:outer-parens(0)), $s, 'Type.Var.Str(:outer-parens(0)) yields no outer parens');
+
+    is($t.isVoid,      0, "Type.Var.isVoid     ");
+    is($t.isDontCare,  0, "Type.Var.isDontCare ");
+    is($t.isStr,       0, "Type.Var.isStr      ");
+    is($t.isInt,       0, "Type.Var.isInt      ");
+    is($t.isNum,       0, "Type.Var.isNum      ");
+    is($t.isBool,      0, "Type.Var.isBool     ");
+    is($t.isArray,     0, "Type.Var.isArray    ");
+    is($t.isTypeVar,   1, "Type.Var.isTypeVar  ");
+    is($t.isFnType,    0, "Type.Var.isFnType   ");
+    is($t.isSumType,   0, "Type.Var.isSumType  ");
+    is($t.isCrossType, 0, "Type.Var.isCrossType");
 }
 
 { # - Fn ----------------------------------------------------------------------
@@ -32,17 +114,20 @@ plan(139);
 
     my $tfStr := $tf.Str;
     is($tfStr, Type.Void.Str ~ ' -> ' ~ Type.Void.Str, '.Str of Type.Fn(Type.Void, Type.Void)');
+    is($tf.Str(:outer-parens), "($tfStr)", '.Str(:outer-parens) of Type.Fn(Type.Void, Type.Void)');
+    is($tf.Str(:outer-parens(0)), $tfStr, '.Str(:outer-parens(0)) of Type.Fn(Type.Void, Type.Void) yields no outer parens');
 
     is($tf.isVoid,      0, "($tfStr).isVoid     ");
-    is($tf.isStrType,   0, "($tfStr).isStrType  ");
-    is($tf.isIntType,   0, "($tfStr).isIntType  ");
-    is($tf.isNumType,   0, "($tfStr).isNumType  ");
-    is($tf.isBoolType,  0, "($tfStr).isBoolType ");
-    is($tf.isArrayType, 0, "($tfStr).isArrayType");
+    is($tf.isDontCare,  0, "($tfStr).isDontCare ");
+    is($tf.isStr,       0, "($tfStr).isStr      ");
+    is($tf.isInt,       0, "($tfStr).isInt      ");
+    is($tf.isNum,       0, "($tfStr).isNum      ");
+    is($tf.isBool,      0, "($tfStr).isBool     ");
+    is($tf.isArray,     0, "($tfStr).isArray    ");
     is($tf.isTypeVar,   0, "($tfStr).isTypeVar  ");
     is($tf.isFnType,    1, "($tfStr).isFnType   ");
     is($tf.isSumType,   0, "($tfStr).isSumType  ");
-
+    is($tf.isCrossType, 0, "($tfStr).isCrossType");
 }
 
 
