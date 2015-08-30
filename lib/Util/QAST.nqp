@@ -15,7 +15,7 @@ role StrByDump is export {
 class Util::QAST {
     
     method dump($node, $parent = nqp::null, :$indent = '', :$oneLine = 0) {
-        my $clsStr := nqp::substr($node.HOW.name($node), 6);    # strip off leading "QAST::"
+        my $clsStr := nqp::substr(howName($node), 6);    # strip off leading "QAST::"
         
         my $isBlockChild := istype($parent, QAST::Block);
         my $isOrphan     := nqp::isnull($parent);
@@ -63,7 +63,7 @@ class Util::QAST {
                 if nqp::isconcrete($returns) {
                     @specials.push(':returns(' ~ $returns.Str ~')')
                 } else {
-                    @specials.push(':returns(' ~ $returns.HOW.name($returns) ~')')
+                    @specials.push(':returns(' ~ howName($returns) ~')')
                 }
             }
         }
@@ -182,7 +182,7 @@ class Util::QAST {
         $extraStr := ' ' ~ $extraStr
             if $extraStr ne '';
         my @lines := [$prefix ~ trim($clsStr ~ $extraStr ~ join(' ', @specials, :prefix1st)) ~ $suffix];
-        #my @lines := [$prefix ~ $node.HOW.name($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $matchStr];
+        #my @lines := [$prefix ~ howName($node) ~ ($extraStr ?? '(' ~ $extraStr ~ ')' !! '') ~ $matchStr];
         my $childIndent := $indent ~ ($isLastChild ?? '  ' !! ($isBlockChild ?? '║ ' !! '│ '));
         for $node.list {
             @lines.push(self.dump($_, $node, :indent($childIndent), :$oneLine));

@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(102);
+plan(139);
 
 
 { # - Void --------------------------------------------------------------------
@@ -22,6 +22,10 @@ plan(102);
 }
 
 { # - Fn ----------------------------------------------------------------------
+    dies_ok( { Type.Fn },                'Type.Fn with no arg');
+    dies_ok( { Type.Fn('foo') },        'Type.Fn with one arg non-Type');
+    dies_ok( { Type.Fn(Type.Void) },     'Type.Fn with only one Type arg');
+    dies_ok( { Type.Fn(Type.Void, 42) }, 'Type.Fn with two args, one a non-Type');
 
     my $tf := Type.Fn(Type.Void, Type.Void);
     isa_ok($tf, Type, 'Type.Fn(...) is-a Type');
@@ -38,7 +42,6 @@ plan(102);
     is($tf.isTypeVar,   0, "($tfStr).isTypeVar  ");
     is($tf.isFnType,    1, "($tfStr).isFnType   ");
     is($tf.isSumType,   0, "($tfStr).isSumType  ");
-    
 
 }
 
@@ -127,7 +130,18 @@ plan(102);
     is(Type.Cross($tv, $tf), $tc, :describe(-> $t { $t.Str }), 'Type.Cross with same args yields very same instance');
     is($tc.isCrossType, 1, 'Type.Cross(' ~ $tv ~ ', ' ~ $tf ~ ').isCrossType');
 
-    dies_ok({ Type.Cross($tc, $tc) }, 'Cross types must not be nested -');
+    dies_ok({ Type.Cross($tc, $tv) }, 'Cross types must not occur inside another (a)');
+    dies_ok({ Type.Cross($tv, $tc) }, 'Cross types must not occur inside another (b)');
+    
+    dies_ok({ Type.Sum($tc, $tv) }, 'Cross types must not occur inside a SumType (a)');
+    dies_ok({ Type.Sum($tv, $tc) }, 'Cross types must not occur inside a SumType (b)');
+    
+    dies_ok({ Type.Fn($tv, $tc) }, 'Cross types must not occur inside a FnType in output position');
+    my $tc2s;
+    lives_ok({ $tc2s := Type.Fn($tc, $tv).Str }, 'Cross types may occur inside a FnType in input position');
+    my $tcs := $tc.Str;
+    my $tvs := $tv.Str;
+    is($tc2s, "($tcs) -> $tvs", 'inner Cross types are shown with parens around them');
 }
 
 { # - (lexical) order of types ------------------------------------------------

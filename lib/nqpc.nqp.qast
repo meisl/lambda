@@ -21,6 +21,7 @@
     ╟○ &flatten :decl(static) :default((NQPRoutine, invokable))
     ╟○ &super :decl(static) :default((NQPRoutine, invokable))
     ╟○ &unixify :decl(static) :default((NQPRoutine, invokable))
+    ╟○ &howName :decl(static) :default((NQPRoutine, invokable))
     ╟○ &join :decl(static) :default((NQPRoutine, invokable))
     ╟○ &linesFrom :decl(static) :default((NQPRoutine, invokable))
     ╟○ &renameVars :decl(static) :default((NQPRoutine, invokable))
@@ -1149,11 +1150,9 @@
     ║ ║ ║   ║     ├◙ SVal "collect_stats expects a QAST::Node - got "
     ║ ║ ║   ║     └─call &describe  ««"$node"
     ║ ║ ║   ║       └○ $node
-    ║ ║ ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$HOWname := $node.HOW.name($node)"
+    ║ ║ ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$HOWname := howName($node)"
     ║ ║ ║   ║ ├○ $HOWname
-    ║ ║ ║   ║ └─callmethod name  ««"$node"
-    ║ ║ ║   ║   ├─how  ««".HOW"
-    ║ ║ ║   ║   │ └○ $node
+    ║ ║ ║   ║ └─call &howName  ««"$node"
     ║ ║ ║   ║   └○ $node
     ║ ║ ║   ╟─postinc  ««"++"
     ║ ║ ║   ║ └○┬VarWithFallback associative :fallback(WVal NQPMu)
@@ -1355,18 +1354,16 @@
     ║ ║ ║ ├○ $ast
     ║ ║ ║ └─callmethod ast  ««""
     ║ ║ ║   └○ $source
-    ║ ║ ╟─unless  ««"self.panic(\"Unable to obtain AST from \" ~ $source"...
+    ║ ║ ╟─unless  ««"self.panic(\"Unable to obtain AST from \" ~ howName"...
     ║ ║ ║ ├─callmethod ACCEPTS  ««"~~"
     ║ ║ ║ │ ├◙ WVal QAST::Node
     ║ ║ ║ │ └○ $ast
-    ║ ║ ║ └─callmethod panic  ««"\"Unable to obtain AST from \" ~ $source.HOW.name($"...
+    ║ ║ ║ └─callmethod panic  ««"\"Unable to obtain AST from \" ~ howName($source)"
     ║ ║ ║   ├─decont
     ║ ║ ║   │ └○ self
     ║ ║ ║   └─concat  ««"~"
     ║ ║ ║     ├◙ SVal "Unable to obtain AST from "
-    ║ ║ ║     └─callmethod name  ««"$source"
-    ║ ║ ║       ├─how  ««".HOW"
-    ║ ║ ║       │ └○ $source
+    ║ ║ ║     └─call &howName  ««"$source"
     ║ ║ ║       └○ $source
     ║ ║ ╟─callmethod mixin  ««"$ast, StrByDump"
     ║ ║ ║ ├─how  ««".HOW"

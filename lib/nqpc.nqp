@@ -323,7 +323,7 @@ class SmartCompiler is NQP::Compiler {
             nqp::die("collect_stats expects a QAST::Node - got " ~ describe($node))
                 unless istype($node, QAST::Node);
 
-            my $HOWname := $node.HOW.name($node);
+            my $HOWname := howName($node);
     #        %results{$HOWname}++;
 
             %results<Node>++; # size of tree
@@ -367,7 +367,7 @@ class SmartCompiler is NQP::Compiler {
     
     method ast($source, *%adverbs) {
         my $ast := $source.ast();
-        self.panic("Unable to obtain AST from " ~ $source.HOW.name($source))
+        self.panic("Unable to obtain AST from " ~ howName($source))
             unless $ast ~~ QAST::Node;
         $ast.HOW.mixin($ast, StrByDump);
         self.log('ast: ', self.user-progname, ' done.');

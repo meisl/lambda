@@ -469,7 +469,7 @@ class Testing {
                     my $xv := $attrIt.value;
                     if nqp::can($actual, $attrIt.key) {
                         my $av := nqp::callmethod($actual, $m);
-                        my $d:= $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
+                        my $d:= $desc ~ "\n  # expected: a " ~ howName($expectedType)
                                         ~ " where .$m is " ~ describe($xv)
                                       ~ "\n  #   actual: " ~ describe($av)
                         ;
@@ -478,7 +478,7 @@ class Testing {
                             $result := 0;
                         }
                     } else {
-                        $desc := $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
+                        $desc := $desc ~ "\n  # expected: a " ~ howName($expectedType)
                                             ~ " where .$m is " ~ describe($xv)
                                        ~ "\n  #      got: \"Cannot find method $m\""
                         ;
@@ -489,7 +489,7 @@ class Testing {
             };
             return self.passes_ok($tests, $desc);
         } else {
-            $desc := $desc ~ "\n  # expected: a " ~ $expectedType.HOW.name($expectedType)
+            $desc := $desc ~ "\n  # expected: a " ~ howName($expectedType)
                            ~ "\n  #      got: " ~ describe($actual)
                 unless $result;
             return self.ok($result, $desc);
@@ -509,7 +509,7 @@ class Testing {
             $result := !istype($actual, $refutedType);
         }
         unless $result {
-            $desc := $desc ~ "\n  # expected: anything but a " ~ $refutedType.HOW.name($refutedType)
+            $desc := $desc ~ "\n  # expected: anything but a " ~ howName($refutedType)
                            ~ "\n  #      got: " ~ describe($actual)
             ;
         }

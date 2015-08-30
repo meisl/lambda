@@ -10,14 +10,14 @@ class Util {
         nqp::join('/', nqp::split('\\', $path));
     }
 
-    method describe_fallback($x) {
-        my $out;
+    method howName($x) {
         my $how := nqp::how($x);
-        if $how {
-            $out := $how.name($x);
-        } else {
-            $out := nqp::reprname($x);
-        }
+        $how ?? $how.name($x)
+             !! nqp::reprname($x);
+    }
+
+    method describe_fallback($x) {
+        my $out := self.howName($x);
         
         unless nqp::isconcrete($x) {
             $out := $out ~ ', Type object'
@@ -67,7 +67,7 @@ class Util {
             }
             $out := '#`{' ~ self.describe_fallback($x) ~ ':}[ ' ~ nqp::join(', ', @out) ~ ' ]';
         } elsif nqp::istype($x, QAST::Node) && nqp::isconcrete($x) {
-            $out := $x.HOW.name($x);
+            $out := howName($x);
             my $extra := $x.dump_extra_node_info;
             $out := "$out($extra)" if $extra;
         } else {
@@ -184,7 +184,7 @@ class Util {
     method insist-isa($n, *@types) {
         unless self.istype($n, |@types) { # istype will complain if any is a non-Type object
             my $msg := 'expected a '
-                ~ self.join(' or a ', self.map(@types, -> $t { nqp::how($t).name($t) } ))
+                ~ self.join(' or a ', self.map(@types, -> $t { howName($t) } ))
                 ~ ' - got ' ~ describe($n);
             nqp::die($msg);
         }
@@ -219,6 +219,7 @@ class Util {
 sub min($a, $b)         is export { Util.min($a, $b)    }
 sub max($a, $b)         is export { Util.max($a, $b)    }
 sub unixify(str $path)  is export { Util.unixify($path) }
+sub howName($x)         is export { Util.howName($x)    }
 sub describe($x)        is export { Util.describe($x)   }
 sub say(*@pieces)       is export { Util.say(|@pieces)  }
 sub trim(str $s)        is export { Util.trim($s)       }

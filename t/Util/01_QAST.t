@@ -481,7 +481,7 @@ for QAST::Stmts, QAST::Stmt -> $STMT_KIND {
     );
     my $stmts_topmost := QAST::Stmts.new($block);
     my $ast := $stmts_topmost;
-    my $STMT_WHAT := $STMT_KIND.HOW.name($STMT_KIND);
+    my $STMT_WHAT := howName($STMT_KIND);
     #diag("check :resultChild fixup in $STMT_WHAT\n" ~ dump($ast));
 
     sub resultterm($node) {

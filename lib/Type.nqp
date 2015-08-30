@@ -42,6 +42,9 @@ class Type is export {
     method isSumType()   { isSumType(self)   }
     method isCrossType() { isCrossType(self) }
 
+
+    # subclasses of Type ------------------------------------------------------
+
     # native types (corresponding to NQP's str, int, num)
 
     my class Str is Type {
@@ -120,7 +123,6 @@ class Type is export {
         method Str() { $!name }
         method id()  { $!id   }
     }
-    method Var() { Var.new }
 
 
     # function types
@@ -131,8 +133,7 @@ class Type is export {
         has Type $!out;
         has str  $!str;
         method new($in, $out) {
-            Type.insist-isValid($in, $out);
-            my $str := ($in.isFnType || $in.isSumType ?? '(' ~ $in.Str ~')' !! $in.Str)
+            my $str := ($in.isFnType || $in.isSumType || $in.isCrossType ?? '(' ~ $in.Str ~')' !! $in.Str)
                      ~ ' -> '
                      ~ ($out.isSumType ?? '(' ~ $out.Str ~')' !! $out.Str);
             my $instance := %fn-types{$str};
@@ -148,15 +149,6 @@ class Type is export {
         method Str() { $!str }
         method in()  { $!in  }
         method out() { $!out }
-    }
-    method Fn($a, $b, *@more) {
-        @more.unshift($b);
-        @more.unshift($a);
-        my $out := @more.pop;
-        while @more {
-            $out := Fn.new(@more.pop, $out);
-        }
-        $out;
     }
 
 
@@ -199,32 +191,6 @@ class Type is export {
         
     }
 
-    method Sum($t0, *@types) {
-        @types.push($t0);
-        Type.insist-isValid(|@types);
-        
-        # remove duplicates and flatten SumType s
-        my %types := {};
-        for @types -> $t {
-            if $t.isSumType {
-                $t.foldl1(-> $acc, $s { %types{$s.Str} := $s });
-            } else {
-                %types{$t.Str} := $t;
-            }
-        };
-
-        if +%types == 1 {
-            $t0;
-        } else {
-            @types := [];
-            @types.push($_.value)
-                for %types;
-            my $out := Sum.new(Type.sort(@types));
-            $out;
-        }
-    }
-
-
     # cross types (to model NQP's positional args)
 
     my %cross-types := {};
@@ -264,8 +230,51 @@ class Type is export {
         
     }
 
+    # - factory methods -------------------------------------------------------
+    # Note: don't move around stuff lightly - decl order is of importance!
+
+    method Var() { Var.new }
+
+    method Fn($a, $b, *@more) {
+        @more.unshift($b);
+        @more.unshift($a);
+        my $out := @more.pop;
+        while @more {
+            my $in := @more.pop;
+            Type.insist-isValid($in);
+            Type.insist-isValid($out, :except(Cross));
+            $out := Fn.new($in, $out);
+        }
+        $out;
+    }
+
+    method Sum($t0, *@types) {
+        @types.push($t0);
+        Type.insist-isValid(|@types, :except(Cross));
+        
+        # remove duplicates and flatten SumType s
+        my %types := {};
+        for @types -> $t {
+            if $t.isSumType {
+                $t.foldl1(-> $acc, $s { %types{$s.Str} := $s });
+            } else {
+                %types{$t.Str} := $t;
+            }
+        };
+
+        if +%types == 1 {
+            $t0;
+        } else {
+            @types := [];
+            @types.push($_.value)
+                for %types;
+            my $out := Sum.new(Type.sort(@types));
+            $out;
+        }
+    }
+
     method Cross(*@types) {
-        Type.insist-isValid(|@types);
+        Type.insist-isValid(|@types, :except(Cross));
         my $n := +@types;
         if $n == 0 {
             Type.Void;
@@ -275,6 +284,8 @@ class Type is export {
             Cross.new(@types);
         }
     }
+
+    # - plumbing --------------------------------------------------------------
 
     my sub isVoid($t)      { $t =:= Type.Void  }
     my sub isDontCare($t)  { $t =:= Type.DontCare }
@@ -302,31 +313,36 @@ class Type is export {
         nqp::istype($t, Type) && nqp::isconcrete($t)
     }
 
-    method insist-isValid(*@types) {
-        nqp::die('expected a valid Type - got ' ~ describe($_))
-            unless Type.isValid($_)
-                for @types;
+    method insist-isValid(*@types, :@except = []) {
+        @except := [@except]
+            unless nqp::islist(@except);
+        for @types -> $_ {
+            nqp::die('expected a valid Type - got ' ~ describe($_))
+                unless Type.isValid($_);
+            nqp::die('expected a Type other than ' ~ join(', ', @except, :map(&howName)) ~ ' - got (' ~ $_.Str ~ ')')
+                if +@except && istype($_, |@except);
+        }
     }
 
     my %type-lexorder := nqp::hash(
-        nqp::how($Void    ).name($Void    ),  0,
-        nqp::how($DontCare).name($DontCare),  1,
-        nqp::how($Bool    ).name($Bool    ),  2,
-        nqp::how($Int     ).name($Int     ),  3,
-        nqp::how($Num     ).name($Num     ),  4,
-        nqp::how($Str     ).name($Str     ),  5,
-        nqp::how($Array   ).name($Array   ),  6,
-        nqp::how(Var      ).name(Var      ),  7,
-        nqp::how(Fn       ).name(Fn       ),  8,
-        nqp::how(Sum      ).name(Sum      ),  9,
-        nqp::how(Cross    ).name(Cross    ), 10,
+        howName($Void    ),  0,
+        howName($DontCare),  1,
+        howName($Bool    ),  2,
+        howName($Int     ),  3,
+        howName($Num     ),  4,
+        howName($Str     ),  5,
+        howName($Array   ),  6,
+        howName(Var      ),  7,
+        howName(Fn       ),  8,
+        howName(Sum      ),  9,
+        howName(Cross    ), 10,
     );
 
     my sub lex-cmp($t1, $t2) {
         if $t1 =:= $t2 {
             0;
         } else {
-            my $out := %type-lexorder{nqp::how($t1).name($t1)} - %type-lexorder{nqp::how($t2).name($t2)};
+            my $out := %type-lexorder{howName($t1)} - %type-lexorder{howName($t2)};
             if $out {
                 $out;
             } elsif $t1.isTypeVar {

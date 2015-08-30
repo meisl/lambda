@@ -5,7 +5,7 @@ use testing;
 
 use Util;
 
-plan(223);
+plan(227);
 
 
 { # - super ---------------------------------------------------------------------
@@ -111,37 +111,51 @@ is(trim('  x y'),   'x y',  'trim "  x y"');
 is(trim(" \t x y\r\n"),   'x y',  'trim " \t x y\r\n"');
 
 
-# - unixify -------------------------------------------------------------------
+{ # - unixify -----------------------------------------------------------------
 
-is(unixify('C:\rakudo\languages\nqp'), 'C:/rakudo/languages/nqp', 'unixify 1');
-is(unixify('C:\rakudo/languages/nqp'), 'C:/rakudo/languages/nqp', 'unixify 2');
+    is(unixify('C:\rakudo\languages\nqp'), 'C:/rakudo/languages/nqp', 'unixify 1');
+    is(unixify('C:\rakudo/languages/nqp'), 'C:/rakudo/languages/nqp', 'unixify 2');
+}
 
-# - describe ------------------------------------------------------------------
+{ # - howName -----------------------------------------------------------------
 
-is(describe(nqp::null), 'nqp::null', 'null is described as...');
-is(describe(nqp::null_s), 'nqp::null_s (str)', 'null_s is described as...');
+    is(howName(NQPMu),           'NQPMu',       'howName of QAST::Stmts (type)');
+    is(howName(QAST::Stmts),     'QAST::Stmts', 'howName of QAST::Stmts (type)');
+    is(howName(QAST::Stmts.new), 'QAST::Stmts', 'howName of QAST::Stmts (instance)');
 
-is(describe(QAST::Stmts), '(QAST::Stmts, Type object)', 'QAST::Stmts (type) is described as...');
+    is(howName(str),             'str',         'howName of str (type)');
+    #is(howName("x"),             'str',         'howName of str (instance)'); # it's actually "BOOTStr"
+
+    #is(howName(nqp::null),       'nqp::null',   'howName of nqp::null'); # it's actually "VMNull"
+}
+
+{ # - describe ----------------------------------------------------------------
+
+    is(describe(nqp::null), 'nqp::null', 'null is described as...');
+    is(describe(nqp::null_s), 'nqp::null_s (str)', 'null_s is described as...');
+
+    is(describe(QAST::Stmts), '(QAST::Stmts, Type object)', 'QAST::Stmts (type) is described as...');
 
 
-is(describe(["foo", 1, ['hello', 'world'], 3.1415]), 
-    '#`{NQPArray:}[ "foo" (str), 1 (int), #`{NQPArray:}[ "hello" (str), "world" (str) ], 3.1415 (num) ]',
-    'describe(...)');
+    is(describe(["foo", 1, ['hello', 'world'], 3.1415]), 
+        '#`{NQPArray:}[ "foo" (str), 1 (int), #`{NQPArray:}[ "hello" (str), "world" (str) ], 3.1415 (num) ]',
+        'describe(...)');
 
-my $longstring := nqp::x('foobar', 100);
-is(nqp::chars($longstring), 600, 'long str with 600 chars');
-my $described := describe($longstring);
-is(nqp::substr($described, 0, 7), '"foobar', 'str returned from describe starts with quoted prefix');
-my $length := nqp::chars($described);
-is(nqp::substr($described, $length - 13, 13), 'foobar" (str)', 'str returned from describe ends with quoted suffix');
-ok($length < 600, 'str returned from describe is limited in length (< 600)');
+    my $longstring := nqp::x('foobar', 100);
+    is(nqp::chars($longstring), 600, 'long str with 600 chars');
+    my $described := describe($longstring);
+    is(nqp::substr($described, 0, 7), '"foobar', 'str returned from describe starts with quoted prefix');
+    my $length := nqp::chars($described);
+    is(nqp::substr($described, $length - 13, 13), 'foobar" (str)', 'str returned from describe ends with quoted suffix');
+    ok($length < 600, 'str returned from describe is limited in length (< 600)');
 
-my $block := QAST::Block.new;
-is(describe($block), 'QAST::Block', 'a QAST::Block is described as...');
-my $var := QAST::Var.new(:name<foo>, :scope<lexical>, :decl<var>);
-is(describe($var), 'QAST::Var(lexical foo :decl(var))', 'a QAST::Var is described as...');
-$block.push($var);
-is(describe($block), 'QAST::Block', 'a QAST::Block is described without children');
+    my $block := QAST::Block.new;
+    is(describe($block), 'QAST::Block', 'a QAST::Block is described as...');
+    my $var := QAST::Var.new(:name<foo>, :scope<lexical>, :decl<var>);
+    is(describe($var), 'QAST::Var(lexical foo :decl(var))', 'a QAST::Var is described as...');
+    $block.push($var);
+    is(describe($block), 'QAST::Block', 'a QAST::Block is described without children');
+}
 
 # - join --------------------------------------------------------------------
 
