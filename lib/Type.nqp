@@ -46,25 +46,32 @@ class Type is export {
 
     # must put methods before subclasses s.t. they're are inherited
     # however, we need to call the subs defined *after* the subclasses
-    method isVoid()      { isVoid(self)      }
-    method isDontCare()  { isDontCare(self)  }
+    method isVoid()         { isVoid(self)          }
+    method isDontCare()     { isDontCare(self)      }
 
-    method isStrType()   { isStrType(self)   }
-    method isIntType()   { isIntType(self)   }
-    method isNumType()   { isNumType(self)   }
-    method isBoolType()  { isBoolType(self)  }
-    method isArrayType() { isArrayType(self) }
+
+
+    method isStrType()      { isStr(self)   }
+    method isIntType()      { isInt(self)   }
+    method isNumType()      { isNum(self)   }
+    method isBoolType()     { isBool(self)  }
+    method isArrayType()    { isArray(self) }
+
+
+
+    method isStr()          { isStr(self)           }
+    method isInt()          { isInt(self)           }
+    method isNum()          { isNum(self)           }
+    method isBool()         { isBool(self)          }
+    method isArray()        { isArray(self)         }
+
+    method isTypeVar()      { isTypeVar(self)       }
+
+    method isCompoundType() { isFnType(self) || isSumType(self) || isCrossType(self)  }
     
-    method isStr()       { isStr(self)   }
-    method isInt()       { isInt(self)   }
-    method isNum()       { isNum(self)   }
-    method isBool()      { isBool(self)  }
-    method isArray()     { isArray(self) }
-
-    method isTypeVar()   { isTypeVar(self)   }
-    method isFnType()    { isFnType(self)    }
-    method isSumType()   { isSumType(self)   }
-    method isCrossType() { isCrossType(self) }
+    method isFnType()       { isFnType(self)        }
+    method isSumType()      { isSumType(self)       }
+    method isCrossType()    { isCrossType(self)     }
 
 
     my $Str;
@@ -291,22 +298,17 @@ class Type is export {
 
     # - plumbing --------------------------------------------------------------
 
-    my sub isVoid($t)      { $t =:= Type.Void  }
-    my sub isDontCare($t)  { $t =:= Type.DontCare }
+    my sub isVoid($t)      { $t =:= $Void  }
+    my sub isDontCare($t)  { $t =:= $DontCare }
 
-    my sub isStrType($t)   { $t =:= Type.Str   }
-    my sub isIntType($t)   { $t =:= Type.Int   }
-    my sub isNumType($t)   { $t =:= Type.Num   }
-    my sub isBoolType($t)  { $t =:= Type.BOOL  }
-    my sub isArrayType($t) { $t =:= Type.Array }
-
-    my sub isStr($t)       { $t =:= Type.Str   }
-    my sub isInt($t)       { $t =:= Type.Int   }
-    my sub isNum($t)       { $t =:= Type.Num   }
-    my sub isBool($t)      { $t =:= Type.BOOL  }
-    my sub isArray($t)     { $t =:= Type.Array }
-
+    my sub isStr($t)       { $t =:= $Str   }
+    my sub isInt($t)       { $t =:= $Int   }
+    my sub isNum($t)       { $t =:= $Num   }
+    my sub isBool($t)      { $t =:= $Bool  }
+    my sub isArray($t)     { $t =:= $Array }
+    
     my sub isTypeVar($t)   { nqp::istype($t, Var)   }
+
     my sub isFnType($t)    { nqp::istype($t, Fn)    }
     my sub isSumType($t)   { nqp::istype($t, Sum)   }
     my sub isCrossType($t) { nqp::istype($t, Cross) }
