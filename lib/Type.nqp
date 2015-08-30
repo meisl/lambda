@@ -414,23 +414,30 @@ class Type is export {
         @xs[$k] := $tmp;
     }
     
-    sub insertion-sort(&cmp, @types, int $lo, int $hi) {
-        my int $n := +@types;
+    sub insertion-sort(&cmp, @xs, int $lo = 0, $hi = NO_VALUE) {
+        $hi := nqp::elems(@xs) - 1
+            if $hi =:= NO_VALUE;
         my int $i := $lo + 1;
         while $i <= $hi {
-            my int $j := $i;
-            while ($j > $lo) && (&cmp(@types[$j - 1], @types[$j]) > 0) {
-                swap($j, $j - 1, @types);
-                $j--;
+            my int $k := $i++;
+            my int $j := $k--;
+            my $x := @xs[$j];
+            while ($j > $lo) {
+                my $u := @xs[$k];
+                if (&cmp($u, $x) > 0) {
+                    @xs[$j--] := $u;
+                    @xs[$k--] := $x;
+                } else {
+                    $j := $lo;
+                }
             }
-            $i++;
         }
-        @types;
+        @xs;
     }
     
 
     method sort(@types) {
-        insertion-sort(&lex-cmp, @types, 0, +@types - 1);
+        insertion-sort(&lex-cmp, @types);
     }
 
     my $tThen := Type.Var;
