@@ -44,37 +44,42 @@ class Type is export {
         $n.annotate('ty', self);
     }
 
+    # will be set below (when subclasses are declared)
+    my $Void;
+    my $DontCare;
+    my $Str;
+    my $Int;
+    my $Num;
+    my $Bool;
+    my $Array;
+
+    # will be filled below (when subclasses are declared)
+    my %type-vars;
+    my %fn-types;
+    my %sum-types;
+    my %cross-types;
+
+
     # must put methods before subclasses s.t. they're are inherited
     # however, we need to call the subs defined *after* the subclasses
-    method isVoid()         { isVoid(self)          }
-    method isDontCare()     { isDontCare(self)      }
+    method isVoid()         { self =:= $Void        }
+    method isDontCare()     { self =:= $DontCare    }
 
-
-
-    method isStrType()      { isStr(self)   }
-    method isIntType()      { isInt(self)   }
-    method isNumType()      { isNum(self)   }
-    method isBoolType()     { isBool(self)  }
-    method isArrayType()    { isArray(self) }
-
-
-
-    method isStr()          { isStr(self)           }
-    method isInt()          { isInt(self)           }
-    method isNum()          { isNum(self)           }
-    method isBool()         { isBool(self)          }
-    method isArray()        { isArray(self)         }
+    method isStr()          { self =:= $Str   }
+    method isInt()          { self =:= $Int   }
+    method isNum()          { self =:= $Num   }
+    method isBool()         { self =:= $Bool  }
+    method isArray()        { self =:= $Array }
 
     method isTypeVar()      { isTypeVar(self)       }
 
-    method isCompoundType() { isFnType(self) || isSumType(self) || isCrossType(self)  }
+    method isCompoundType() { self.isFnType || self.isSumType || self.isCrossType  }
     
     method isFnType()       { isFnType(self)        }
     method isSumType()      { isSumType(self)       }
     method isCrossType()    { isCrossType(self)     }
 
 
-    my $Str;
     method Str(:$outer-parens = NO_VALUE) {
         if nqp::isconcrete(self) {
             $outer-parens
@@ -94,49 +99,46 @@ class Type is export {
     my class Str is Type {}
     $Str := create(Str);
 
-
     my class Int is Type {}
-    my $Int := create(Int);
+    $Int := create(Int);
     method Int() { $Int }
 
-
     my class Num is Type {}
-    my $Num := create(Num);
+    $Num := create(Num);
     method Num() { $Num }
 
 
     # the Array type (corresponding to NQP's NQPArray)
 
     my class Array is Type {}
-    my $Array := create(Array);
+    $Array := create(Array);
     method Array() { $Array }
 
 
     # the Bool type
 
     my class Bool is Type {}
-    my $Bool := create(Bool);
+    $Bool := create(Bool);
     method BOOL() { $Bool } # cannot name it Bool for some reason....
 
 
     # the Void type, only to be used in Fn types
 
     my class Void is Type {}
-    my $Void := create(Void);
+    $Void := create(Void);
     method Void() { $Void }
 
 
     # the DontCare type, to be used for ignored parameters
 
     my class DontCare is Type {}
-    my $DontCare := create(DontCare, :str<_>);
+    $DontCare := create(DontCare, :str<_>);
     method DontCare() { $DontCare }
     method _() { $DontCare }
 
 
     # type variables
 
-    my %type-vars := {};
     my class Var is Type {
         has int $!id;
         method new() {
@@ -153,7 +155,6 @@ class Type is export {
 
     # function types
 
-    my %fn-types := {};
     my class Fn is Type {
         has Type $!in;
         has Type $!out;
@@ -175,7 +176,6 @@ class Type is export {
 
     # sum types
 
-    my %sum-types := {};
     my class Sum is Type {
         has Type $!head;
         has Type $!tail;
@@ -209,7 +209,6 @@ class Type is export {
 
     # cross types (to model NQP's positional args)
 
-    my %cross-types := {};
     my class Cross is Type {
         has Type $!head;
         has Type $!tail;
@@ -297,15 +296,6 @@ class Type is export {
     }
 
     # - plumbing --------------------------------------------------------------
-
-    my sub isVoid($t)      { $t =:= $Void  }
-    my sub isDontCare($t)  { $t =:= $DontCare }
-
-    my sub isStr($t)       { $t =:= $Str   }
-    my sub isInt($t)       { $t =:= $Int   }
-    my sub isNum($t)       { $t =:= $Num   }
-    my sub isBool($t)      { $t =:= $Bool  }
-    my sub isArray($t)     { $t =:= $Array }
     
     my sub isTypeVar($t)   { nqp::istype($t, Var)   }
 
