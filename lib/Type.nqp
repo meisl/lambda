@@ -107,7 +107,7 @@ class Type is export {
     }
 
     method elems() { 1 }
-    
+    method foldl1(&f) { self }
 
     # will be set below (when subclasses are declared)
     my $Void;
