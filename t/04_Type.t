@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(246);
+plan(349);
 
 { # - Type (methods called on the class) --------------------------------------
     #is(Type.isVoid, 'asdf');           ?
@@ -320,11 +320,118 @@ plan(246);
 }
 
 
-{ # - .elems (non-1 for CompoundType s) ---------------------------------------
+{ # - .head and .tail (of CompoundType s) -------------------------------------
     my $t1 := Type.Str;
     my $t2 := Type.Var;
     my $t3 := Type.Fn($t1, $t2);
     my $t;
+    my $s;
+    my sub describe($t) { $t.Str }
+
+    $t := Type.Fn($t1, $t2);
+    $s := $t.Str(:outer-parens);
+    is($t.head, $t1, ".head of $s");
+    is($t.tail, $t2, ".tail of $s");
+
+    $t := Type.Fn($t1, $t2, $t3);
+    $s := $t.Str(:outer-parens);
+    is($t.head, $t1,                ".head of $s", :&describe);
+    is($t.tail, Type.Fn($t2, $t3),  ".tail of $s", :&describe);
+
+    $t := Type.Fn($t3, $t2, $t1);
+    $s := $t.Str(:outer-parens);
+    is($t.head, $t3,                ".head of $s", :&describe);
+    is($t.tail, Type.Fn($t2, $t1),  ".tail of $s", :&describe);
+
+    $t := Type.Cross($t1, $t2);
+    $s := $t.Str(:outer-parens);
+    is($t.head, $t1,                ".head of $s", :&describe);
+    is($t.tail, $t2,                ".tail of $s", :&describe);
+
+    $t := Type.Cross($t3, $t2, $t1);
+    $s := $t.Str(:outer-parens);
+    is($t.head, $t3,                    ".head of $s", :&describe);
+    is($t.tail, Type.Cross($t2, $t1),   ".tail of $s", :&describe);
+
+    # Attention: depends on (lexicographic) order on types:
+    $t := Type.Sum($t1, $t2);
+    $s := $t.Str(:outer-parens);
+    is($t.head, $t1,                ".head of $s", :&describe);
+    is($t.tail, $t2,                ".tail of $s", :&describe);
+
+    $t := Type.Sum($t1, $t2, $t3);
+    $s := $t.Str(:outer-parens);
+    is($t.head, $t1,                ".head of $s", :&describe);
+    is($t.tail, Type.Sum($t2, $t3), ".tail of $s", :&describe);
+}
+
+
+{ # - .foldl ------------------------------------------------------------------
+    my $t1 := Type.Str;
+    my $t2 := Type.Var;
+    my $t3 := Type.Fn($t1, $t2);
+
+    my sub recordFoldl(@acc, $t) {
+        @acc.push($t);
+        @acc;
+    }
+
+    for [
+        Type.Void, Type._, Type.Str, Type.Int, Type.Num, Type.BOOL, Type.Array, Type.Var,
+
+        #Type.Fn($t1),  # illegal: need at least 2
+        Type.Fn($t1, $t2),
+        Type.Fn($t1, $t2, $t3),
+        Type.Fn($t3, $t2, $t1),
+        
+        Type.Sum($t1),     # yields non-compound type
+        Type.Sum($t1, $t1),# yields non-compound type
+        Type.Sum($t1, $t2),
+        Type.Sum($t1, $t2, $t3),
+        
+        Type.Cross($t1),     # yields non-compound type
+        Type.Cross($t1, $t2),
+        Type.Cross($t1, $t2, $t3),
+
+        #Type.Sum($t1, Type.Cross($t2, $t3)),   # illegal: no Cross inside Sum
+        Type.Cross($t1, Type.Sum($t2, $t3)),
+        Type.Fn($t1, Type.Sum($t2, $t3)),
+        Type.Fn(Type.Sum($t2, $t3), $t1),
+        #Type.Fn($t1, Type.Cross($t2, $t3)),    # illegal: Cross only in arg position
+        Type.Fn(Type.Cross($t2, $t3), $t1),
+        Type.Cross($t1, Type.Fn(Type.Cross($t2, $t3), $t1)),
+    ] {
+        my $s := $_.Str(:outer-parens);
+        my @seen := $_.foldl(&recordFoldl, []);
+        if $_.isCompoundType {
+            my $c := nqp::what($_);
+            my $cs := howName($c);
+            my @components := [];
+            my $t := $_;
+            while nqp::istype($t, $c) {
+                @components.push($t.head);
+                $t := $t.tail;
+            }
+            @components.push($t);
+            my $n := +@components;
+            is(+@seen, $n, ".foldl / $s is compound => should have seen $n components (stopping at non-$cs tail)");
+            my $i := 0;
+            for @seen {
+                my $comp := @components[$i];
+                is($_, $comp, ".foldl / $s is compound => should have seen component $i: " ~ $comp.Str);
+                $i++;
+            }
+        } else {
+            is(+@seen, 1, ".foldl / $s is not compound => called back once");
+            is(@seen[0], $_, ".foldl / $s is not compound => saw just $s");
+        }
+    }
+}
+
+{ # - .elems (non-1 for CompoundType s) ---------------------------------------
+    my $t1 := Type.Str;
+    my $t2 := Type.Var;
+    my $t3 := Type.Fn($t1, $t2);
 
     my sub countFoldl1($t) {
         my $n := 1;
@@ -340,11 +447,12 @@ plan(246);
         Type.Fn($t1, $t2, $t3),
         Type.Fn($t3, $t2, $t1),
         
-        #Type.Sum($t1),     # yields non-compound type
+        Type.Sum($t1),     # yields non-compound type
+        Type.Sum($t1, $t1),# yields non-compound type
         Type.Sum($t1, $t2),
         Type.Sum($t1, $t2, $t3),
         
-        #Type.Cross($t1),     # yields non-compound type
+        Type.Cross($t1),     # yields non-compound type
         Type.Cross($t1, $t2),
         Type.Cross($t1, $t2, $t3),
 
@@ -355,10 +463,17 @@ plan(246);
         #Type.Fn($t1, Type.Cross($t2, $t3)),    # illegal: Cross only in arg position
         Type.Fn(Type.Cross($t2, $t3), $t1),
         Type.Cross($t1, Type.Fn(Type.Cross($t2, $t3), $t1)),
-
     ] {
         my $n := countFoldl1($_);
-        is($_.elems, $n, $_.Str(:outer-parens) ~ '.elems is as many as seen per .foldl1 - ' ~ $n);
+        my $s := $_.Str(:outer-parens);
+        my $elems := $_.elems;
+        is($elems, $n, "$s.elems is as many as seen per .foldl1: $n");
+        if $_.isCompoundType {
+            ok($elems > 1, "$s is compound => .elems > 1")
+                || diag("$s.elems = $elems")
+        } else {
+            is($elems, 1, "$s is not compound => .elems == 1");
+        }
     }
 }
 

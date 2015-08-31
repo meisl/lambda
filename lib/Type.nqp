@@ -107,7 +107,39 @@ class Type is export {
     }
 
     method elems() { 1 }
-    method foldl1(&f) { self }
+    method foldl1(&f) {
+        self;
+
+        ## in terms of foldl:
+        #my $first := 1;
+        #foldl(
+        #    -> $acc, $t {
+        #        if $first {
+        #            $first := 0;
+        #            $t;
+        #        } else {
+        #            &f($acc, $t);
+        #        }
+        #    },
+        #    NO_VALUE
+        #);
+    }
+
+    method foldl(&f, $start) {
+        &f($start, self)
+
+        ## in terms of foldl1:
+        #my $first := 1;
+        #foldl1(-> $acc, $t {
+        #    if $first {
+        #        $first := 0;
+        #        &f(&f($start, $acc), $t);
+        #    } else {
+        #        &f($acc, $t);
+        #    }
+        #});
+    }
+    
 
     # will be set below (when subclasses are declared)
     my $Void;
@@ -227,6 +259,16 @@ class Type is export {
         has Type $!tail;    method tail()  { $!tail  }
         has int  $!elems;   method elems() { $!elems }
 
+        method foldl(&f, $start) {
+            my $acc := &f($start, self.head);
+            my $tl := self.tail;
+            my $myClass := nqp::what(self);
+            while nqp::istype($tl, $myClass) {
+                $acc := &f($acc, $tl.head);
+                $tl := $tl.tail;
+            }
+            $acc := &f($acc, $tl);
+        }
         method foldl1(&f) {
             my $acc := self.head;
             my $tl := self.tail;
@@ -237,6 +279,7 @@ class Type is export {
             }
             $acc := &f($acc, $tl);
         }
+        
     }
 
     # function types
