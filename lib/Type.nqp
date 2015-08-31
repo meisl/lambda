@@ -106,6 +106,9 @@ class Type is export {
         $n.annotate('ty', self);
     }
 
+    method elems() { 1 }
+    
+
     # will be set below (when subclasses are declared)
     my $Void;
     my $DontCare;
@@ -222,6 +225,7 @@ class Type is export {
     my class CompoundType is Type {
         has Type $!head;    method head()  { $!head  }
         has Type $!tail;    method tail()  { $!tail  }
+        has int  $!elems;   method elems() { $!elems }
 
         method foldl1(&f) {
             my $acc := self.head;
@@ -244,7 +248,8 @@ class Type is export {
                      ~ $out.Str(:outer-parens($out.isSumType));
             my $instance := %fn-types{$str};
             unless $instance {
-                $instance := create(self, :$str, :head($in), :tail($out));
+                my int $elems := 1 + ($out.isFnType ?? $out.elems !! 1);
+                $instance := create(self, :$str, :head($in), :tail($out), :$elems);
                 %fn-types{$str} := $instance;
             }
             $instance;
@@ -261,12 +266,13 @@ class Type is export {
             my $str := join(' + ', @disjuncts, :map(-> $t { $t.Str(:outer-parens($t.isFnType)) }));
             my $instance := %sum-types{$str};
             unless $instance {
+                my int $elems := +@disjuncts;
                 my $head := @disjuncts.shift;
-                my $tail := +@disjuncts == 1
+                my $tail := $elems == 2
                     ?? @disjuncts[0]
                     !! self.new(@disjuncts);
                 
-                $instance := create(self, :$str, :$head, :$tail);
+                $instance := create(self, :$str, :$head, :$tail, :$elems);
                 %sum-types{$str} := $instance;
             }
             $instance;
@@ -281,12 +287,13 @@ class Type is export {
             my $str := join(' × ', @conjuncts, :map(-> $t { $t.Str(:outer-parens($t.isFnType || $t.isSumType)) }));
             my $instance := %cross-types{$str};
             unless $instance {
+                my int $elems := +@conjuncts;
                 my $head := @conjuncts.shift;
-                my $tail := +@conjuncts == 1
+                my $tail := $elems == 2
                     ?? @conjuncts[0]
                     !! self.new(@conjuncts);
                 
-                $instance := create(self, :$str, :$head, :$tail);
+                $instance := create(self, :$str, :$head, :$tail, :$elems);
                 %cross-types{$str} := $instance;
             }
             $instance;

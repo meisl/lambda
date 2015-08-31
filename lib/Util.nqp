@@ -181,9 +181,10 @@ class Util {
         @out;
     }
 
-    method insist-isa($n, *@types) {
-        unless self.istype($n, |@types) { # istype will complain if any is a non-Type object
-            my $msg := 'expected a '
+    method insist-isa($n, *@types, str :$desc) {
+        unless self.istype($n, |@types) { # istype will complain if any of @types is a non-Type object
+            my $msg := $desc ne '' ?? $desc ~ ': ' !! '';
+            $msg := $msg ~ 'expected a '
                 ~ self.join(' or a ', self.map(@types, -> $t { howName($t) } ))
                 ~ ' - got ' ~ describe($n);
             nqp::die($msg);
@@ -226,8 +227,8 @@ sub trim(str $s)        is export { Util.trim($s)       }
 
 sub join(str $sep, @pieces, :$prefix1st = 0, :$filter, :$map) is export { Util.join($sep, @pieces, :$prefix1st, :$filter, :$map) }
 
-sub istype($subject, *@types)                    is export { Util.istype($subject, |@types) }
-sub insist-isa($subject, $type, *@types)         is export { Util.insist-isa($subject, $type, |@types) }
+sub istype($subject, *@types)                           is export { Util.istype($subject, |@types) }
+sub insist-isa($subject, $type, *@types, str :$desc)    is export { Util.insist-isa($subject, $type, |@types, :$desc) }
 
 sub linesFrom(str $filename, $from = 1, $count?) is export { Util.linesFrom($filename, $from, $count) }
 

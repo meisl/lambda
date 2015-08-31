@@ -303,7 +303,6 @@ plan(198);
 }
 
 
-
 { # - QAST::Op types ----------------------------------------------------------
     my @ops := <
         concat escape
@@ -319,5 +318,49 @@ plan(198);
 
     diag('Type.ofOp("if"): ' ~ Type.ofOp('if').Str);
 }
+
+
+{ # - .elems (non-1 for CompoundType s) ---------------------------------------
+    is($_.elems, 1, $_.Str(:outer-parens) ~ '.elems')
+        for [Type.Void, Type._, Type.Str, Type.Int, Type.Num, Type.BOOL, Type.Array, Type.Var];
+    
+    my $t1 := Type.Str;
+    my $t2 := Type.Var;
+    my $t3 := Type.Fn($t1, $t2);
+    my $t;
+
+    my sub countFoldl1($t) {
+        my $n := 1;
+        $t.foldl1(-> $acc, $s { $n++; });
+        $n;
+    }
+
+    is($_.elems, countFoldl1($_), $_.Str(:outer-parens) ~ '.elems is as many as seen per .foldl1')
+        for [
+            #Type.Fn($t1),  # illegal: need at least 2
+            Type.Fn($t1, $t2),
+            Type.Fn($t1, $t2, $t3),
+            Type.Fn($t3, $t2, $t1),
+            
+            #Type.Sum($t1),     # yields non-compound type
+            Type.Sum($t1, $t2),
+            Type.Sum($t1, $t2, $t3),
+            
+            #Type.Cross($t1),     # yields non-compound type
+            Type.Cross($t1, $t2),
+            Type.Cross($t1, $t2, $t3),
+
+            #Type.Sum($t1, Type.Cross($t2, $t3)),   # illegal: no Cross inside Sum
+            Type.Cross($t1, Type.Sum($t2, $t3)),
+            Type.Fn($t1, Type.Sum($t2, $t3)),
+            Type.Fn(Type.Sum($t2, $t3), $t1),
+            #Type.Fn($t1, Type.Cross($t2, $t3)),    # illegal: Cross only in arg position
+            Type.Fn(Type.Cross($t2, $t3), $t1),
+
+        ]
+    ;
+}
+
+
 
 done();
