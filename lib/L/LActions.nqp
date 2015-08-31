@@ -914,23 +914,18 @@ class LActions is HLL::Actions {
                 my @tArgs := [];
                 @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
                     for $n.list;
+                my $tArgs := Type.Cross(|@tArgs);
                 
                 my $tOp := Type.ofOp($n.op);
                 if $tOp {
-
-                    my $temp := $tOp;
-                    for @tArgs {
-                        if $temp.isFnType {
-                            Type.constrain($temp.in, $_, $n);
-                            $temp := $temp.out;
-                        } else {
-                            say(dump($n));
-                            Type.error(:match($n.node), 'cannot apply Op ', $n.op, ':', $tOp, '  to  ',
-                                '(' ~ join(' × ', @tArgs, :map(-> $t { $t.Str })) ~ ')'
-                            );
-                        }
+                    unless $tOp.isFnType {
+                        say(dump($n));
+                        Type.error(:match($n.node), 'cannot apply Op ', $n.op, ':', $tOp, '  to  ', $tArgs);
                     }
-                    $temp.set($n);
+                    my $tIn  := $tOp.head;
+                    my $tOut := $tOp.tail;
+                    Type.constrain($tArgs, $tIn, $n);
+                    $tOut.set($n);
                 } else {
                     say("\n", dump($currentBlock));
                     say("\n", dump($n));

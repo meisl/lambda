@@ -499,27 +499,27 @@ class Type is export {
         #'hash' # due to arbitrary nr of args (although some constraints, eg even nr of args)
         
         # str
-        'concat', Type.Fn($Str,   $Str, $Str),
-        'escape', Type.Fn($Str,   $Str),
+        'concat', Type.Fn(Type.Cross($Str,   $Str    ),     $Str    ),
+        'escape', Type.Fn(Type.Cross($Str            ),     $Str    ),
         # int
-        'iseq_i', Type.Fn($Int,   $Int,   $Bool),
-        'isne_i', Type.Fn($Int,   $Int,   $Bool),
-        'isgt_i', Type.Fn($Int,   $Int,   $Bool),
-        'isge_i', Type.Fn($Int,   $Int,   $Bool),
-        'islt_i', Type.Fn($Int,   $Int,   $Bool),
-        'isle_i', Type.Fn($Int,   $Int,   $Bool),
-        'neg_i',  Type.Fn($Int,   $Int),
-        'add_i',  Type.Fn($Int,   $Int,   $Int),
-        'sub_i',  Type.Fn($Int,   $Int,   $Int),
-        'mul_i',  Type.Fn($Int,   $Int,   $Int),
-        'div_i',  Type.Fn($Int,   $Int,   $Int),
-        'mod_i',  Type.Fn($Int,   $Int,   $Int),
-        'gcd_i',  Type.Fn($Int,   $Int,   $Int),
-        'lcm_i',  Type.Fn($Int,   $Int,   $Int),
+        'iseq_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
+        'isne_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
+        'isgt_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
+        'isge_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
+        'islt_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
+        'isle_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
+        'neg_i',  Type.Fn(Type.Cross($Int            ),     $Int    ),
+        'add_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
+        'sub_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
+        'mul_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
+        'div_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
+        'mod_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
+        'gcd_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
+        'lcm_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
         # list/hash
-        'elems',  Type.Fn($Array, $Int),
-        'atpos',  Type.Fn($Array, $Int,     Type.Var),
-        'push',   Type.Fn($Array, Type.Var, $Void),
+        'elems',  Type.Fn(Type.Cross($Array          ),     $Int    ),
+        'atpos',  Type.Fn(Type.Cross($Array, $Int    ),     Type.Var),
+        'push',   Type.Fn(Type.Cross($Array, Type.Var),     $Void   ),
         # if:
         'if',     #Type.Sum(
                   #  Type.Fn($Bool, $tThen,         Type.Sum($Bool,  $tThen)),
@@ -582,6 +582,14 @@ class Type is export {
                     self.constrain($t1.out, $t2.out, $node);   # TODO: variance
                 } elsif $t2.isTypeVar {
                     constrain-eq($t2, $t1)
+                } else {
+                    say(dump($node));
+                    self.error(:match($node.node), $t1, ' <> ', $t2);
+                }
+            } elsif $t1.isCrossType {
+                if $t2.isCrossType {
+                    self.constrain($t1.head, $t2.tail, $node);   # TODO: variance
+                    self.constrain($t1.head, $t2.tail, $node);   # TODO: variance
                 } else {
                     say(dump($node));
                     self.error(:match($node.node), $t1, ' <> ', $t2);

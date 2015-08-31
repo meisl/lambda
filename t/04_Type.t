@@ -303,23 +303,6 @@ plan(349);
 }
 
 
-{ # - QAST::Op types ----------------------------------------------------------
-    my @ops := <
-        concat escape
-        iseq_i isne_i isgt_i isge_i islt_i isle_i    neg_i add_i sub_i mul_i div_i mod_i gcd_i lcm_i
-        elems
-    >;
-    
-    for @ops {
-        my $tOp := Type.ofOp($_);
-        is(Type.isValid($tOp), 1, 'Type.ofOp("' ~ $_ ~ '") is a valid type')
-        && is($tOp.isFnType, 1, 'Type.ofOp("' ~ $_ ~ '") is-a fn type');
-    }
-
-    diag('Type.ofOp("if"): ' ~ Type.ofOp('if').Str);
-}
-
-
 { # - .head and .tail (of CompoundType s) -------------------------------------
     my $t1 := Type.Str;
     my $t2 := Type.Var;
@@ -363,6 +346,26 @@ plan(349);
     $s := $t.Str(:outer-parens);
     is($t.head, $t1,                ".head of $s", :&describe);
     is($t.tail, Type.Sum($t2, $t3), ".tail of $s", :&describe);
+}
+
+
+{ # - QAST::Op types ----------------------------------------------------------
+    my @ops := <
+        concat escape
+        iseq_i isne_i isgt_i isge_i islt_i isle_i    neg_i add_i sub_i mul_i div_i mod_i gcd_i lcm_i
+        elems atpos push
+        if
+    >;
+    
+    for @ops {
+        my $tOp := Type.ofOp($_);
+        ok($tOp.isFnType,      'Type.ofOp("' ~ $_ ~ '") is-a fn type: ' ~ $tOp.Str);
+        
+        my $tHead := $tOp.head; # Well, can't really tell apart from real (curried) fn types...
+        ok($tHead.isCrossType || !$tHead.isCompoundType, 'Type.ofOp("' ~ $_ ~ '".head) is either Cross or non-compound: ' ~ $tHead.Str);
+    }
+
+    diag('Type.ofOp("if"): ' ~ Type.ofOp('if').Str);
 }
 
 
