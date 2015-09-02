@@ -34,5 +34,5 @@ class Util::Compiler {
 
 sub loc2str(%l)                 is export { Util::Compiler.loc2str(%l) }
 sub match2location($match)      is export { Util::Compiler.match2location($match) }
-sub panic($match, *@msg-pieces) is export { Util::Compiler.panic($match, @msg-pieces) }
+sub panic($match, *@msg-pieces) is export { Util::Compiler.panic($match, |@msg-pieces) }
 
