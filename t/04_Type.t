@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(328);
+plan(341);
 
 
 { # - class methods -----------------------------------------------------------
@@ -628,6 +628,24 @@ plan(328);
 
     error_ok(Type.Cross($Int, $Str), Type.Cross($Str, $Int));
     error_ok(Type.Cross($Str, $var1), Type.Cross($Str, $Int, $Num));
+
+    my @types1 := [
+        Type.Void,
+        Type._,
+        $Str,
+        $Int,
+        $Num,
+        Type.BOOL,
+        Type.Array,
+        $var1, $var2,
+        $fun1,
+        Type.Cross($Str, $Int),
+        Type.Cross($Str, $Int, $Num),
+        Type.Cross($fun1, $Num, $fun1),
+    ];
+
+    is(Type.constrain($_, $_), TypeConstraint.True, 'constraining (' ~ $_.Str ~ ') to itself')
+        for @types1;
 
 }
 

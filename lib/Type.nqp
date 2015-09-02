@@ -580,7 +580,12 @@ class Type is export {
     # Type constraints
 
     sub constrain-eq($t1, $t2) {
-        say('>>Type-constraint: ', $t1.Str, ' = ', $t2.Str);
+        my $tc := TypeConstraint.get($t1, $t2);
+        #say('>>[intermediary Type-constraint: ', $tc.Str, ']');
+        $tc;
+    }
+
+    my sub ignore(*@ps, *%ns) {
     }
     
     method constrain($t1, $t2, :$at = NO_VALUE, :&onError = NO_VALUE) {
@@ -591,33 +596,51 @@ class Type is export {
         } elsif !nqp::isinvokable(&onError) {
             nqp::die('expected an invokable object - got ' ~ describe(&onError));
         }
-        
+
+        my $out;
         my $error := 0;
-        unless ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
+        if ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
+            $out := TypeConstraint.True;
+        } else {
+            $out := TypeConstraint.False;
             if $t1.isSimpleType {
                 if $t2.isTypeVar {
-                    self.constrain($t2, $t1, :$at, :&onError);
+                    $out := self.constrain($t2, $t1, :$at, :&onError);
                 } else {
                     $error := 1;
                 }
             } elsif $t1.isTypeVar {
-                constrain-eq($t1, $t2);
+                $out := constrain-eq($t1, $t2);
             } else {  # $t1 is compound
                 if $t1.isFnType {
                     if $t2.isFnType {
-                        self.constrain($t1.in,  $t2.in,  :$at, :&onError);   # TODO: variance
-                        self.constrain($t1.out, $t2.out, :$at, :&onError);   # TODO: variance
+                        $out := self.constrain($t1.in,  $t2.in,  :$at, :&onError);   # TODO: variance
+                        $out := $out.and(
+                                self.constrain($t1.out, $t2.out, :$at, :&onError)    # TODO: variance
+                        );
                     } elsif $t2.isTypeVar {
-                        constrain-eq($t2, $t1)
+                        $out := constrain-eq($t2, $t1)
+                    } elsif $t2.isSumType {
+                        $out := $t2.foldl(
+                            -> $acc, $t { $acc.or(self.constrain($t1, $t, :onError(&ignore))) },
+                            TypeConstraint.False
+                        );
                     } else {
                         $error := 1;
                     }
-                #} elsif $t1.isSumType {   # TODO
+                } elsif $t1.isSumType {
+                    if $t2.isSumType {
+                        nqp::die("NYI: Sum / Sum");
+                    } else {
+                        $out := self.constrain($t2, $t1, :$at, :&onError);
+                    }
                 } elsif $t1.isCrossType {
                     if $t2.isCrossType {
                         if $t1.elems == $t2.elems {
-                            self.constrain($t1.head, $t2.head, :$at, :&onError);   # TODO: variance
-                            self.constrain($t1.tail, $t2.tail, :$at, :&onError);   # TODO: variance
+                            $out := self.constrain($t1.head, $t2.head, :$at, :&onError);   # TODO: variance
+                            $out := $out.and(
+                                    self.constrain($t1.tail, $t2.tail, :$at, :&onError)    # TODO: variance
+                            );
                         } else {
                             $error := 1;
                         }
@@ -629,12 +652,139 @@ class Type is export {
                 }
             }
         }
-
         &onError(:$at, $t1, ' <> ', $t2)
-            if $error;
+            if $out.isFalse;
+        $out;
+    }
+}
+
+class TypeConstraint is export {
+
+    my $True;
+    my $False;
+
+    method isTrue()   { self =:= $True  }
+    method isFalse()  { self =:= $False }
+    method isAtom()   { self.isTrue || self.isFalse }
+
+    my class SimpleConstraint is TypeConstraint {
+    }
+    
+    method isSimple() { nqp::istype(self, SimpleConstraint) }
+    method isEq()     { self.isSimple && !self.isAtom }
+
+    method lhs() { nqp::die('cannot get .lhs of ' ~ self.Str) }
+    method rhs() { nqp::die('cannot get .rhs of ' ~ self.Str) }
+
+    method and($c) { nqp::die('NYI: ' ~ howName(self) ~ '.and (' ~ self.Str ~ '), (' ~ $c.Str ~ ')' ) }
+    method or( $c) { nqp::die('NYI: ' ~ howName(self) ~ '.or (' ~ self.Str ~ '), (' ~ $c.Str ~ ')' ) }
+
+    my class Atom is SimpleConstraint {
+        method and($other) { self.isTrue ?? $other !! self   }
+        method or($other)  { self.isTrue ?? self   !! $other }
+        method Str()       { 'TypeConstraint.' ~ (self.isTrue ?? 'True' !! 'False') }
+    }
+    
+    $True  := nqp::create(Atom);    method True()  { $True  };
+    $False := nqp::create(Atom);    method False() { $False };
+
+    my class EqConstraint is SimpleConstraint {
+        has Type $!lhs; method lhs() { $!lhs }
+        has Type $!rhs; method rhs() { $!rhs }
+
+        method Str() {
+            $!lhs.Str ~ '  =  ' ~ $!rhs.Str;
+        }
+
+        method and($other) { 
+            if $other.isAtom {
+                $other.and(self);
+            } else {
+                makeAnd(self, $other);
+            }
+        }
+
+        method or($other) { 
+            if $other.isAtom {
+                $other.or(self);
+            } else {
+                nqp::die('NYI: (' ~ self.Str ~ ') | (' ~ $other.Str ~ ')');
+            }
+        }
+    }
+
+    my class AndConstraint is TypeConstraint {
+        has str $!str;
+        method Str() { $!str }
+
+        method and($other) { 
+            if $other.isSimple {
+                $other.and(self);
+            } else {
+                nqp::die('NYI: (' ~ self.Str ~ ') & (' ~ $other.Str ~ ')');
+            }
+        }
+
+        method or($other) { 
+            if $other.isSimple {
+                $other.or(self);
+            } else {
+                nqp::die('NYI: (' ~ self.Str ~ ') | (' ~ $other.Str ~ ')');
+            }
+        }
+    }
+
+    my sub makeAnd($c1, $c2) {
+        my $out := nqp::create(AndConstraint);
+        my $str := '(' ~ $c1.Str ~ ') & (' ~ $c2.Str ~ ')';
+        nqp::bindattr_s($out, AndConstraint, '$!str', $str);
+        $out;
+    }
+
+    method get(Type $lhs, Type $rhs) {
+        Type.insist-isValid($lhs);
+        Type.insist-isValid($rhs);
+        if $lhs =:= $rhs {
+            $True;
+        } else {
+            my $out;
+            if $lhs.isTypeVar {
+                if $rhs.isTypeVar {
+                    if $lhs.id > $rhs.id {
+                        $out := TypeConstraint.get($rhs, $lhs);
+                    }
+                }
+            } elsif $rhs.isTypeVar {
+                $out := TypeConstraint.get($rhs, $lhs);
+            }
+            unless $out {
+                $out := nqp::create(EqConstraint);
+                nqp::bindattr($out, EqConstraint, '$!lhs', $lhs);
+                nqp::bindattr($out, EqConstraint, '$!rhs', $rhs);
+            }
+            $out;
+        }
     }
 
 }
 
+
 sub MAIN(*@ARGS) {
+    my $var1 := Type.Var;
+    my $var2 := Type.Var;
+
+    my $c1a := TypeConstraint.get($var1, Type.Int);
+    say($c1a.Str);
+
+    my $c1b := TypeConstraint.get(Type.Int, $var1);
+    say($c1b.Str);
+
+    my $c2 := TypeConstraint.get(Type.Int, Type.Int);
+    say($c2.Str);
+
+    my $c3 := TypeConstraint.get($var1, $var2);
+    say($c3.Str);
+
+    my $c4 := TypeConstraint.get($var2, $var1);
+    say($c3.Str);
 }

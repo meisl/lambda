@@ -51,7 +51,7 @@
     ║   ╟─bind ::(Array)
     ║   ║ ├○ out :decl(var) ::(Array)
     ║   ║ └─list ::(Array)
-    ║   ╟─if
+    ║   ╟─if ::(t18)
     ║   ║ ├─isgt_i ::(Bool)
     ║   ║ │ ├○ to ::(Int)
     ║   ║ │ └○ n ::(Int)
@@ -59,20 +59,20 @@
     ║   ║   ├○ to ::(Int)
     ║   ║   └○ n ::(Int)
     ║   ╟─while
-    ║   ║ ├─islt_i
-    ║   ║ │ ├○ from
-    ║   ║ │ └○ to
-    ║   ║ └─:Stmts
-    ║   ║   ├─push
-    ║   ║   │ ├○ out
-    ║   ║   │ └─atpos
-    ║   ║   │   ├○ list
-    ║   ║   │   └○ from
-    ║   ║   └─bind
-    ║   ║     ├○ from
-    ║   ║     └─add_i
-    ║   ║       ├○ from
-    ║   ║       └◙ IVal 1
+    ║   ║ ├─islt_i ::(Bool)
+    ║   ║ │ ├○ from ::(t13)
+    ║   ║ │ └○ to ::(Int)
+    ║   ║ └─:Stmts ::(Int)
+    ║   ║   ├─push ::(Void)
+    ║   ║   │ ├○ out ::(Array)
+    ║   ║   │ └─atpos ::(t2)
+    ║   ║   │   ├○ list ::(t12)
+    ║   ║   │   └○ from ::(t13)
+    ║   ║   └─bind ::(Int)
+    ║   ║     ├○ from ::(t13)
+    ║   ║     └─add_i ::(Int)
+    ║   ║       ├○ from ::(t13)
+    ║   ║       └◙ IVal 1 ::(Int)
     ║   ╙○ out
     ╟─bind
     ║ ├○ &ifTag :decl(static)

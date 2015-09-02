@@ -796,12 +796,14 @@ class LActions is HLL::Actions {
                 my $tFun := self.typecheck($fun, $currentBlock, |@moreBlocks);
                 my $tArg := self.typecheck($arg, $currentBlock, |@moreBlocks);
                 if $tFun.isFnType {
-                    Type.constrain(:at($n), $tFun.in, $tArg);
-                    $n.returns($tFun.out);
+                    my $c := Type.constrain(:at($n), $tFun.in, $tArg);
+                    say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
+                    $tFun.out.set($n);
                 } elsif $tFun.isTypeVar {
                     my $tOut := TypeVar.new;
-                    Type.constrain(:at($n), $tFun, Type.Fn($tArg, $tOut));
-                    $n.returns($tOut);
+                    my $c := Type.constrain(:at($n), $tFun, Type.Fn($tArg, $tOut));
+                    say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
+                    $tOut.set($n);
                 } else {
                     say(dump($n));
                     Type.error(:at($n), 'cannot apply ', $tFun, ' to ', $tArg);
@@ -815,11 +817,13 @@ class LActions is HLL::Actions {
                 my $temp := $tRuntimeFn;
                 for @tArgs {
                     if $temp.isFnType {
-                        Type.constrain(:at($n), $temp.in, $_);
+                        my $c := Type.constrain(:at($n), $temp.in, $_);
+                        say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
                         $temp := $temp.out;
                     } elsif $temp.isTypeVar {
                         my $next := Type.Fn($_, Type.Var);
-                        Type.constrain(:at($n), $temp, $next);
+                        my $c := Type.constrain(:at($n), $temp, $next);
+                        say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
                         $temp := $next.out;
                     } else {
                         say(dump($n));
@@ -902,7 +906,8 @@ class LActions is HLL::Actions {
                 if $var.decl {  # in that case $tVar is a fresh Type.Var which we can easily eliminate right here:
                     $tVal.set($var);    # simply use the value's type for the var directly
                 } else {
-                    Type.constrain(:at($n), $tVar, $tVal);
+                    my $c := Type.constrain(:at($n), $tVar, $tVal);
+                    say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
                 }
                 $tVal.set($n);
                 if istype($val, QAST::Block) {
@@ -921,12 +926,19 @@ class LActions is HLL::Actions {
                 
                 my $tOp := Type.ofOp($n.op);
                 if $tOp {
-                    unless $tOp.isFnType {
+                    my $tOut;
+                    if $tOp.isFnType {
+                        my $tIn  := $tOp.head;
+                        $tOut := $tOp.tail;
+                        my $c := Type.constrain(:at($n), $tArgs, $tIn);
+                        say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
+                    } elsif $tOp.isSumType {
+                        $tOut := Type.Var;
+                        my $c := Type.constrain(:at($n), Type.Fn($tArgs, $tOut), $tOp);
+                        say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
+                    } else {
                         Type.error(:at($n), 'cannot apply Op ', $n.op, ' ::', $tOp, '  to  ', $tArgs);
                     }
-                    my $tIn  := $tOp.head;
-                    my $tOut := $tOp.tail;
-                    Type.constrain(:at($n), $tArgs, $tIn);
                     $tOut.set($n);
                 } else {
                     say("\n", dump($currentBlock));
