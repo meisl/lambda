@@ -389,7 +389,7 @@ class Type is export {
     }
 
     method Cross(*@types) {
-        Type.insist-isValid(|@types, :except(Cross));
+        Type.insist-isValid(|@types, :except(Cross, Void));
         my $n := +@types;
         if $n == 0 {
             Type.Void;

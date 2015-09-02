@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(301);
+plan(302);
 
 
 { # - class methods -----------------------------------------------------------
@@ -330,17 +330,20 @@ plan(301);
 
 { # - Cross --------------------------------------------------------------------
     my $t := Type.Cross;
-    isa_ok($t, Type, 'Type.Cross with no arg returns a Type');
     is($t, Type.Void, 'Type.Cross with no arg yields Type.Void');
     is(Type.Cross, $t, 'Type.Cross with same args yields same result (zero args)');
     dies_ok( { Type.Cross('foo') }, 'Type.Cross with one arg non-Type');
 
-    dies_ok( { Type.Sum(Type.Str, 42) }, 'Type.Cross with two args, one a non-Type');
-    
+    dies_ok( { Type.Cross(Type.Str, 42) }, 'Type.Cross with two args, one a non-Type');
+
+    dies_ok( { Type.Cross(Type.Void) }, 'Type.Cross with one arg: Void');
+    dies_ok( { Type.Cross(Type.Void, Type.Int) }, 'Type.Cross with two args where one is Void');
+    dies_ok( { Type.Cross(Type.Str, Type.Void, Type.Num) }, 'Type.Cross with three args where one is Void');
+
     my $tv := Type.Var;
     my $tf := Type.Fn(Type.Void, $tv);
     my $ts := Type.Sum($tv, $tf);
-    my @types := [Type.Void, Type._, Type.BOOL, Type.Int, Type.Num, Type.Str, Type.Array, $tv, $tf, $ts];
+    my @types := [Type._, Type.BOOL, Type.Int, Type.Num, Type.Str, Type.Array, $tv, $tf, $ts];
     
     is(Type.Cross($_), $_, 'Type.Cross with one arg yields that arg (' ~ $_.Str ~ ')')
         for @types;
