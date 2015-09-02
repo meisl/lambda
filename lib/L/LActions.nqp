@@ -796,15 +796,15 @@ class LActions is HLL::Actions {
                 my $tFun := self.typecheck($fun, $currentBlock, |@moreBlocks);
                 my $tArg := self.typecheck($arg, $currentBlock, |@moreBlocks);
                 if $tFun.isFnType {
-                    Type.constrain($tFun.in, $tArg, $n);
+                    Type.constrain(:at($n), $tFun.in, $tArg);
                     $n.returns($tFun.out);
                 } elsif $tFun.isTypeVar {
                     my $tOut := TypeVar.new;
-                    Type.constrain($tFun, Type.Fn($tArg, $tOut), $n);
+                    Type.constrain(:at($n), $tFun, Type.Fn($tArg, $tOut));
                     $n.returns($tOut);
                 } else {
                     say(dump($n));
-                    Type.error(:match($n.node), 'cannot apply ', $tFun, ' to ', $tArg);
+                    Type.error(:at($n), 'cannot apply ', $tFun, ' to ', $tArg);
                 }
             } elsif isRCall($n) {
                 my $tRuntimeFn := %runtime-fns-types{$n.name};
@@ -815,15 +815,15 @@ class LActions is HLL::Actions {
                 my $temp := $tRuntimeFn;
                 for @tArgs {
                     if $temp.isFnType {
-                        Type.constrain($temp.in, $_, $n);
+                        Type.constrain(:at($n), $temp.in, $_);
                         $temp := $temp.out;
                     } elsif $temp.isTypeVar {
                         my $next := Type.Fn($_, Type.Var);
-                        Type.constrain($temp, $next, $n);
+                        Type.constrain(:at($n), $temp, $next);
                         $temp := $next.out;
                     } else {
                         say(dump($n));
-                        Type.error(:match($n.node), 'cannot apply runtime fn (', $n.name, ':', $tRuntimeFn, ') to',
+                        Type.error(:at($n), 'cannot apply runtime fn (', $n.name, ':', $tRuntimeFn, ') to',
                             join(' (', @tArgs, :map(-> $t { $t.Str }), :prefix1st), ')'
                         );
                     }
@@ -846,7 +846,7 @@ class LActions is HLL::Actions {
                     $tOut := self.typecheck($_, $n, $currentBlock, |@moreBlocks);
                 }
                 if $n.ann('named') || $n.ann('slurpy') || $n.ann('optional') {
-                    Type.error(:match($n.node), 'NYI: typechecking named/slurpy/optional params', ":\n", dump($n, :indent("    ")));
+                    Type.error(:at($n), 'NYI: typechecking named/slurpy/optional params', ":\n", dump($n, :indent("    ")));
                 }
                 my @tIns := [];
                 for $n.ann('positional') {
@@ -864,7 +864,7 @@ class LActions is HLL::Actions {
                 if $n.decl {
                     my $decl := lookup($n.name, $currentBlock)<declaration>;
                     if $decl {
-                        Type.error(:match($n.node), 'redeclaration of ', $n, "in \n", dump($currentBlock, :indent('    ')));
+                        Type.error(:at($n), 'redeclaration of ', $n, "in \n", dump($currentBlock, :indent('    ')));
                     } else {
                         $currentBlock.symbol($n.name, :declaration($n));
                         Type.Var.set($n);
@@ -887,10 +887,10 @@ class LActions is HLL::Actions {
                         if $tVar {
                             $tVar.set($n);
                         } else {
-                            Type.error(:match($n.node), 'still untyped: declaration for ', $n);
+                            Type.error(:at($n), 'still untyped: declaration for ', $n);
                         }
                     } else {
-                        Type.error(:match($n.node), 'no declaration found for ', $n);
+                        Type.error(:at($n), 'no declaration found for ', $n);
                     }
                 }
             } elsif isOp($n, 'bind') {
@@ -902,9 +902,12 @@ class LActions is HLL::Actions {
                 if $var.decl {  # in that case $tVar is a fresh Type.Var which we can easily eliminate right here:
                     $tVal.set($var);    # simply use the value's type for the var directly
                 } else {
-                    Type.constrain($tVar, $tVal, $n);
+                    Type.constrain(:at($n), $tVar, $tVal);
                 }
                 $tVal.set($n);
+                if istype($val, QAST::Block) {
+                    say('>>typed Block ' ~ $var.name ~ ':: ' ~ Type.of($n));
+                }
             } elsif isOp($n, 'list') {
                 my @tArgs := [];
                 @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
@@ -919,21 +922,20 @@ class LActions is HLL::Actions {
                 my $tOp := Type.ofOp($n.op);
                 if $tOp {
                     unless $tOp.isFnType {
-                        say(dump($n));
-                        Type.error(:match($n.node), 'cannot apply Op ', $n.op, ':', $tOp, '  to  ', $tArgs);
+                        Type.error(:at($n), 'cannot apply Op ', $n.op, ' ::', $tOp, '  to  ', $tArgs);
                     }
                     my $tIn  := $tOp.head;
                     my $tOut := $tOp.tail;
-                    Type.constrain($tArgs, $tIn, $n);
+                    Type.constrain(:at($n), $tArgs, $tIn);
                     $tOut.set($n);
                 } else {
                     say("\n", dump($currentBlock));
                     say("\n", dump($n));
-                    Type.error(:match($n.node), 'dunno type of ', $n);
+                    Type.error(:at($n), 'dunno type of ', $n);
                 }
             } else {
                 say("\n", dump($n));
-                Type.error(:match($n.node), 'typecheck NYI: ', $n);
+                Type.error(:at($n), 'typecheck NYI: ', $n);
             }
         }
         Type.of($n);

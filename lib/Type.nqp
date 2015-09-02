@@ -555,9 +555,17 @@ class Type is export {
 
     # Type errors
 
-    method error(*@pieces, :$match = NO_VALUE, :$panic = &panic) {
-        insist-isa($match, NQPMatch, NQPMu)
-            unless $match =:= NO_VALUE;
+    method error(*@pieces, :$at = NO_VALUE, :$panic = &panic) {
+        my $match := NQPMu;
+        unless $at =:= NO_VALUE {
+            insist-isa($at, NQPMatch, QAST::Node);
+            if istype($at, QAST::Node) {
+                $match := $at.node;
+                say(dump($at));
+            } else {
+                $match := $at;
+            }
+        }
         nqp::die('no msg (pieces)')
             unless @pieces;
         my $msg := 'Type Error: ';
@@ -573,36 +581,38 @@ class Type is export {
         say('>>Type-constraint: ', $t1.Str, ' = ', $t2.Str);
     }
     
-    method constrain($t1, $t2, $node) {
-        insist-isa($node, QAST::Node);
+    method constrain($t1, $t2, :$at = NO_VALUE) {
+        unless $at =:= NO_VALUE {
+            insist-isa($at, NQPMatch, QAST::Node);
+        }
         unless ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
             if $t1.isFnType {
                 if $t2.isFnType {
-                    self.constrain($t1.in,  $t2.in,  $node);   # TODO: variance
-                    self.constrain($t1.out, $t2.out, $node);   # TODO: variance
+                    self.constrain($t1.in,  $t2.in,  :$at);   # TODO: variance
+                    self.constrain($t1.out, $t2.out, :$at);   # TODO: variance
                 } elsif $t2.isTypeVar {
                     constrain-eq($t2, $t1)
                 } else {
-                    say(dump($node));
-                    self.error(:match($node.node), $t1, ' <> ', $t2);
+                    self.error(:$at, $t1, ' <> ', $t2);
                 }
             } elsif $t1.isCrossType {
                 if $t2.isCrossType {
-                    self.constrain($t1.head, $t2.tail, $node);   # TODO: variance
-                    self.constrain($t1.head, $t2.tail, $node);   # TODO: variance
+                    unless $t1.elems == $t2.elems {
+                        self.error(:$at, $t1, ' <> ', $t2);
+                    }
+                    self.constrain($t1.head, $t2.tail, :$at);   # TODO: variance
+                    self.constrain($t1.head, $t2.tail, :$at);   # TODO: variance
                 } else {
-                    say(dump($node));
-                    self.error(:match($node.node), $t1, ' <> ', $t2);
+                    self.error(:$at, $t1, ' <> ', $t2);
                 }
             } elsif $t1.isTypeVar {
                 constrain-eq($t1, $t2)
             } else {
                 # t1 is Str, Int, Num, Bool, or Void
                 if $t2.isTypeVar {
-                    self.constrain($t2, $t1, $node);
+                    self.constrain($t2, $t1, :$at);
                 } else {
-                    say(dump($node));
-                    self.error(:match($node.node), $t1, ' <> ', $t2);
+                    self.error(:$at, $t1, ' <> ', $t2);
                 }
             }
         }

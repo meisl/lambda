@@ -3,13 +3,13 @@ use Util;
 
 use Type;
 
-plan(349);
+plan(339);
 
-{ # - Type (methods called on the class) --------------------------------------
+{ # - class methods -----------------------------------------------------------
     #is(Type.isVoid, 'asdf');           ?
 }
 
-{ # - Void --------------------------------------------------------------------
+{ # - Void ---------------------------------------------------------------------
     my $t := Type.Void;
     isa_ok($t, Type, 'Type.Void is-a Type');
     is(Type.Void, $t, 'Type.Void is a singleton');
@@ -34,7 +34,7 @@ plan(349);
     is($t.isCrossType,    0, "$s.isCrossType   ");
 }
 
-{ # - DontCare (aka "_" -------------------------------------------------------
+{ # - DontCare (aka "_" --------------------------------------------------------
     my $t := Type._;
     isa_ok($t, Type, 'Type._ is-a Type');
     is(Type._, $t, 'Type._ is a singleton');
@@ -59,7 +59,7 @@ plan(349);
     is($t.isCrossType,    0, "$s.isCrossType   ");
 }
 
-{ # - Str ---------------------------------------------------------------------
+{ # - Str ----------------------------------------------------------------------
     my $t := Type.Str;
     isa_ok($t, Type, 'Type.Str (as a factory method on class Type) returns a Str type instance');
     is(Type.Str, $t, 'Type.Str (as a factory method on class Type) returns same instance on every call');
@@ -85,7 +85,7 @@ plan(349);
     is($t.isCrossType,    0, "$s.isCrossType   ");
 }
 
-{ # - Var ---------------------------------------------------------------------
+{ # - Var ----------------------------------------------------------------------
     my $t := Type.Var;
     isa_ok($t,     Type, 'Type.Var is-a Type');
     
@@ -115,7 +115,7 @@ plan(349);
     is($t.isCrossType,    0, "$s.isCrossType   ");
 }
 
-{ # - Fn ----------------------------------------------------------------------
+{ # - Fn -----------------------------------------------------------------------
     dies_ok( { Type.Fn },                'Type.Fn with no arg');
     dies_ok( { Type.Fn('foo') },        'Type.Fn with one arg non-Type');
     dies_ok( { Type.Fn(Type.Void) },     'Type.Fn with only one Type arg');
@@ -146,7 +146,7 @@ plan(349);
 }
 
 
-{ # - Sum ---------------------------------------------------------------------
+{ # - Sum ----------------------------------------------------------------------
     dies_ok( { Type.Sum }, 'Type.Sum with no arg');
     dies_ok( { Type.Sum('foo') }, 'Type.Sum with one arg non-Type');
     dies_ok( { Type.Sum(Type.Void, 42) }, 'Type.Sum with two args, one a non-Type');
@@ -217,7 +217,7 @@ plan(349);
         'Sum type inside a Fn type is always surrounded by parens (right)');
 }
 
-{ # - Cross -------------------------------------------------------------------
+{ # - Cross --------------------------------------------------------------------
     my $t := Type.Cross;
     isa_ok($t, Type, 'Type.Cross with no arg returns a Type');
     is($t, Type.Void, 'Type.Cross with no arg yields Type.Void');
@@ -272,7 +272,7 @@ plan(349);
     is($sF, "($s) -> $sV", 'inner Cross types are shown with parens around them');
 }
 
-{ # - (lexical) order of types ------------------------------------------------
+{ # - (lexical) order of types -------------------------------------------------
     my @types;
     my &map := -> $t { $t.isSumType || $t.isFnType ?? '('~$t.Str~')' !! $t.Str };
 
@@ -303,7 +303,7 @@ plan(349);
 }
 
 
-{ # - .head and .tail (of CompoundType s) -------------------------------------
+{ # - .head and .tail (of CompoundType s) --------------------------------------
     my $t1 := Type.Str;
     my $t2 := Type.Var;
     my $t3 := Type.Fn($t1, $t2);
@@ -349,7 +349,7 @@ plan(349);
 }
 
 
-{ # - QAST::Op types ----------------------------------------------------------
+{ # - QAST::Op types -----------------------------------------------------------
     my @ops := <
         concat escape
         iseq_i isne_i isgt_i isge_i islt_i isle_i    neg_i add_i sub_i mul_i div_i mod_i gcd_i lcm_i
@@ -359,17 +359,14 @@ plan(349);
     
     for @ops {
         my $tOp := Type.ofOp($_);
-        ok($tOp.isFnType,      'Type.ofOp("' ~ $_ ~ '") is-a fn type: ' ~ $tOp.Str);
-        
-        my $tHead := $tOp.head; # Well, can't really tell apart from real (curried) fn types...
-        ok($tHead.isCrossType || !$tHead.isCompoundType, 'Type.ofOp("' ~ $_ ~ '".head) is either Cross or non-compound: ' ~ $tHead.Str);
+        ok($tOp.isFnType || $tOp.isSumType,
+            'Type.ofOp("' ~ $_ ~ '") is-a fn type or a Sum: ' ~ $tOp.Str);
     }
 
-    diag('Type.ofOp("if"): ' ~ Type.ofOp('if').Str);
 }
 
 
-{ # - .foldl ------------------------------------------------------------------
+{ # - .foldl -------------------------------------------------------------------
     my $t1 := Type.Str;
     my $t2 := Type.Var;
     my $t3 := Type.Fn($t1, $t2);
@@ -431,7 +428,7 @@ plan(349);
     }
 }
 
-{ # - .elems (non-1 for CompoundType s) ---------------------------------------
+{ # - .elems (non-1 for CompoundType s) ----------------------------------------
     my $t1 := Type.Str;
     my $t2 := Type.Var;
     my $t3 := Type.Fn($t1, $t2);
@@ -479,6 +476,22 @@ plan(349);
         }
     }
 }
+
+
+{ # - type constraints ---------------------------------------------------------
+
+    my $Str := Type.Str;
+    my $Int := Type.Int;
+    my $Num := Type.Num;
+
+    dies_ok({ Type.constrain() },                   'Type.constraint with no args');
+    dies_ok({ Type.constrain($Int) },               'Type.constraint with one args');
+    dies_ok({ Type.constrain($Int, $Int, $Int) },   'Type.constraint with three args');
+    
+    
+    dies_ok({ Type.constrain($Str, $Int) }, 'constraining Int = Str');
+}
+
 
 
 done();
