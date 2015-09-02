@@ -637,39 +637,4 @@ class Type is export {
 }
 
 sub MAIN(*@ARGS) {
-    say(Type.Void.Str   ~ ' / ' ~ Type.Void.Str(:outer-parens) );
-    say(Type._.Str      ~ ' / ' ~ Type._.Str(:outer-parens)    );
-    say(Type.BOOL.Str   ~ ' / ' ~ Type.BOOL.Str(:outer-parens)  );
-    say(Type.Str.Str    ~ ' / ' ~ Type.Str.Str(:outer-parens)  );
-    say(Type.Int.Str    ~ ' / ' ~ Type.Int.Str(:outer-parens)  );
-    say(Type.Num.Str    ~ ' / ' ~ Type.Num.Str(:outer-parens)  );
-    say(Type.Array.Str  ~ ' / ' ~ Type.Array.Str(:outer-parens));
-
-    my $tv1 := Type.Var;
-    say($tv1.Str    ~ ' / ' ~ $tv1.Str(:outer-parens));
-
-    my $tv2 := Type.Var;
-    my $tf1 := Type.Fn($tv1, $tv2);
-    say($tf1.Str ~ ' / ' ~ $tf1.Str(:outer-parens));
-    
-    my $tf2 := Type.Fn($tf1, Type.Var);
-    say($tf2.Str ~ ' / ' ~ $tf2.Str(:outer-parens));
-    
-    my $tf3 := Type.Fn(Type.Var, $tf1);
-    say($tf3.Str ~ ' / ' ~ $tf3.Str(:outer-parens));
-
-    my $ts := Type.Sum($tv1, $tv2);
-    say($ts.Str ~ ' / ' ~ $ts.Str(:outer-parens));
-    
-    my $tf4 := Type.Fn($ts, $tf1);
-    say($tf4.Str ~ ' / ' ~ $tf4.Str(:outer-parens));
-    
-    my $tf5 := Type.Fn($tf1, $ts);
-    say($tf5.Str ~ ' / ' ~ $tf5.Str(:outer-parens));
-
-    my $tc := Type.Cross($tv1, $tv2);
-    say($tc.Str ~ ' / ' ~ $tc.Str(:outer-parens));
-    
-    my $tf6 := Type.Fn($tc, $tf5);
-    say($tf6.Str ~ ' / ' ~ $tf6.Str(:outer-parens));
 }
