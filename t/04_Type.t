@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(341);
+plan(353);
 
 
 { # - class methods -----------------------------------------------------------
@@ -451,10 +451,12 @@ plan(341);
 
 { # - QAST::Op types -----------------------------------------------------------
     my @ops := <
-        concat escape
+        iseq_s 
+        chars chr concat escape flip lc uc join radix substr
         iseq_i isne_i isgt_i isge_i islt_i isle_i    neg_i add_i sub_i mul_i div_i mod_i gcd_i lcm_i
         elems atpos push
-        if
+        if while
+        islist isinvokable
     >;
     
     for @ops {

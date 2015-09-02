@@ -494,6 +494,7 @@ class Type is export {
 
     my $tThen := Type.Var;
     my $tElse := Type.Var;
+    my $tPost := Type.Var;
     my %op-types := nqp::hash(
         # special (not listed here, but explicitly handled by typecheck)
         #'bind' # how to type the var argument?
@@ -501,45 +502,51 @@ class Type is export {
         #'hash' # due to arbitrary nr of args (although some constraints, eg even nr of args)
         
         # str
-        'concat', Type.Fn(Type.Cross($Str,   $Str    ),     $Str    ),
-        'escape', Type.Fn(Type.Cross($Str            ),     $Str    ),
+        'iseq_s',   Type.Fn(Type.Cross($Str,   $Str    ),               $Bool   ),
+        'chars',    Type.Fn(Type.Cross($Str            ),               $Int    ),
+        'chr',      Type.Fn(Type.Cross($Int            ),               $Str    ),
+        'concat',   Type.Fn(Type.Cross($Str,   $Str    ),               $Str    ),
+        'escape',   Type.Fn(Type.Cross($Str            ),               $Str    ),
+        'flip',     Type.Fn(Type.Cross($Str            ),               $Str    ),
+        'lc',       Type.Fn(Type.Cross($Str            ),               $Str    ),
+        'uc',       Type.Fn(Type.Cross($Str            ),               $Str    ),
+        'join',     Type.Fn(Type.Cross($Str,   Type.Array),             $Str    ),
+        'radix',    Type.Fn(Type.Cross($Int, $Str, $Int, $Int),         $Int    ),
+        'substr',   Type.Sum(
+                        Type.Fn(Type.Cross($Str, $Int),                 $Str    ),
+                        Type.Fn(Type.Cross($Str, $Int, $Int),           $Str    ),
+                    ),
         # int
-        'iseq_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
-        'isne_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
-        'isgt_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
-        'isge_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
-        'islt_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
-        'isle_i', Type.Fn(Type.Cross($Int,   $Int    ),     $Bool   ),
-        'neg_i',  Type.Fn(Type.Cross($Int            ),     $Int    ),
-        'add_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
-        'sub_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
-        'mul_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
-        'div_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
-        'mod_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
-        'gcd_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
-        'lcm_i',  Type.Fn(Type.Cross($Int,   $Int    ),     $Int    ),
+        'iseq_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
+        'isne_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
+        'isgt_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
+        'isge_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
+        'islt_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
+        'isle_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
+        'neg_i',    Type.Fn(Type.Cross($Int            ),               $Int    ),
+        'add_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
+        'sub_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
+        'mul_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
+        'div_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
+        'mod_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
+        'gcd_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
+        'lcm_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
         # list/hash
-        'elems',  Type.Fn(Type.Cross($Array          ),     $Int    ),
-        'atpos',  Type.Fn(Type.Cross($Array, $Int    ),     Type.Var),
-        'push',   Type.Fn(Type.Cross($Array, Type.Var),     $Void   ),
+        'elems',    Type.Fn(Type.Cross($Array          ),               $Int    ),
+        'atpos',    Type.Fn(Type.Cross($Array, $Int    ),               Type.Var),
+        'push',     Type.Fn(Type.Cross($Array, Type.Var),               $Void   ),
         # if:
-        'if',     #Type.Sum(
-                  #  Type.Fn($Bool, $tThen,         Type.Sum($Bool,  $tThen)),
-                  #  Type.Fn($Bool, $tThen, $tElse, Type.Sum($tThen, $tElse)),
-                  #),
-                  
-                  ##not really:
-                  #Type.Fn($Bool, $tThen, Type.Sum($Bool, $tThen, Type.Fn($tElse, Type.Sum($tThen, $tElse)))),
-                  ##Bool -> t0 -> (Bool + t0 + (t1 -> (t0 + t1)))
-
-                  ##proper:(Bool × t0 -> (Bool + t0)) + (Bool × t0 × t1 -> (t0 + t1))
-                  Type.Sum(
-                      Type.Fn(Type.Cross($Bool, $tThen),         Type.Sum($tThen, $Bool )),
-                      Type.Fn(Type.Cross($Bool, $tThen, $tElse), Type.Sum($tThen, $tElse)),
-                  ),
+        'if',       Type.Sum(
+                        Type.Fn(Type.Cross($Bool, $tThen),              Type.Sum($tThen, $Bool )),
+                        Type.Fn(Type.Cross($Bool, $tThen, $tElse),      Type.Sum($tThen, $tElse)),
+                    ),
+        'while',    Type.Sum(
+                        Type.Fn(Type.Cross($Bool, Type.Var),            $Bool),
+                        Type.Fn(Type.Cross($Bool, Type.Var, $tPost),    $tPost),
+                    ),
                   # 
-        #'isinvokable',  Type.Fn(Type.Var, $Bool
-        #    # Type.Sum(Type.Fn(Type.Var, Type.Var), Type.Fn($Void, Type.Var))
+        'islist',   Type.Fn(Type.Cross(Type.Var),                       $Bool),
+        'isinvokable',  Type.Fn(Type.Cross(Type.Var),                   $Bool),
     );
     
     method ofOp($op) {
