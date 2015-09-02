@@ -169,12 +169,14 @@ class Type is export {
     method isArray()        { self =:= $Array }
 
     method isTypeVar()      { isTypeVar(self)       }
-
-    method isCompoundType() { self.isFnType || self.isSumType || self.isCrossType  }
     
     method isFnType()       { isFnType(self)        }
     method isSumType()      { isSumType(self)       }
     method isCrossType()    { isCrossType(self)     }
+
+
+    method isSimpleType()   { !self.isTypeVar && !self.isCompoundType }
+    method isCompoundType() { self.isFnType || self.isSumType || self.isCrossType  }
 
 
     has str $!str;

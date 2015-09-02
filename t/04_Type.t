@@ -3,60 +3,229 @@ use Util;
 
 use Type;
 
-plan(339);
+plan(284);
+
 
 { # - class methods -----------------------------------------------------------
     #is(Type.isVoid, 'asdf');           ?
 }
 
+
+{ # - classifiaction -----------------------------------------------------------
+    my sub test-classification($t, *%adverbs) {
+        isa_ok($t, Type, |%adverbs, $t.Str(:outer-parens) ~ ' classification');
+    }
+
+    test-classification($_, :isCompoundType(0)) for [
+        Type.Void,
+        Type.DontCare,
+        Type.Str,
+        Type.Int,
+        Type.Num,
+        Type.BOOL,
+        Type.Array,
+        Type.Var,
+    ];
+
+    test-classification($_, :isCompoundType(1)) for [
+        Type.Fn(Type.Int, Type.Str),
+        Type.Sum(Type.Int, Type.Str),
+        Type.Cross(Type.Int, Type.Str),
+    ];
+
+    test-classification($_, :isSimpleType(1)) for [
+        Type.Void,
+        Type.DontCare,
+        Type.Str,
+        Type.Int,
+        Type.Num,
+        Type.BOOL,
+        Type.Array,
+    ];
+
+    test-classification($_, :isSimpleType(0)) for [
+        Type.Var,
+        Type.Fn(Type.Int, Type.Str),
+        Type.Sum(Type.Int, Type.Str),
+        Type.Cross(Type.Int, Type.Str),
+    ];
+
+    test-classification(Type.Void,
+        :isVoid(        1),
+        :isDontCare(    0),
+        :isStr(         0),
+        :isInt(         0),
+        :isNum(         0),
+        :isBool(        0),
+        :isArray(       0),
+        :isTypeVar(     0),
+        :isFnType(      0),
+        :isSumType(     0),
+        :isCrossType(   0),
+    );
+
+    test-classification(Type.DontCare,
+        :isVoid(        0),
+        :isDontCare(    1),
+        :isStr(         0),
+        :isInt(         0),
+        :isNum(         0),
+        :isBool(        0),
+        :isArray(       0),
+        :isTypeVar(     0),
+        :isFnType(      0),
+        :isSumType(     0),
+        :isCrossType(   0),
+    );
+    
+    test-classification(Type.Str,
+        :isVoid(        0),
+        :isDontCare(    0),
+        :isStr(         1),
+        :isInt(         0),
+        :isNum(         0),
+        :isBool(        0),
+        :isArray(       0),
+        :isTypeVar(     0),
+        :isFnType(      0),
+        :isSumType(     0),
+        :isCrossType(   0),
+    );
+    
+    test-classification(Type.Int,
+        :isVoid(        0),
+        :isDontCare(    0),
+        :isStr(         0),
+        :isInt(         1),
+        :isNum(         0),
+        :isBool(        0),
+        :isArray(       0),
+        :isTypeVar(     0),
+        :isFnType(      0),
+        :isSumType(     0),
+        :isCrossType(   0),
+    );
+    
+    test-classification(Type.Num,
+        :isVoid(        0),
+        :isDontCare(    0),
+        :isStr(         0),
+        :isInt(         0),
+        :isNum(         1),
+        :isBool(        0),
+        :isArray(       0),
+        :isTypeVar(     0),
+        :isFnType(      0),
+        :isSumType(     0),
+        :isCrossType(   0),
+    );
+    
+    test-classification(Type.BOOL,
+        :isVoid(        0),
+        :isDontCare(    0),
+        :isStr(         0),
+        :isInt(         0),
+        :isNum(         0),
+        :isBool(        1),
+        :isArray(       0),
+        :isTypeVar(     0),
+        :isFnType(      0),
+        :isSumType(     0),
+        :isCrossType(   0),
+    );
+    
+    test-classification(Type.Array,
+        :isVoid(        0),
+        :isDontCare(    0),
+        :isStr(         0),
+        :isInt(         0),
+        :isNum(         0),
+        :isBool(        0),
+        :isArray(       1),
+        :isTypeVar(     0),
+        :isFnType(      0),
+        :isSumType(     0),
+        :isCrossType(   0),
+    );
+    
+    test-classification(Type.Var,
+        :isVoid(        0),
+        :isDontCare(    0),
+        :isStr(         0),
+        :isInt(         0),
+        :isNum(         0),
+        :isBool(        0),
+        :isArray(       0),
+        :isTypeVar(     1),
+        :isFnType(      0),
+        :isSumType(     0),
+        :isCrossType(   0),
+    );
+    
+    test-classification(Type.Fn(Type.Int, Type.Str),
+        :isVoid(        0),
+        :isDontCare(    0),
+        :isStr(         0),
+        :isInt(         0),
+        :isNum(         0),
+        :isBool(        0),
+        :isArray(       0),
+        :isTypeVar(     0),
+        :isFnType(      1),
+        :isSumType(     0),
+        :isCrossType(   0),
+    );
+    
+    test-classification(Type.Sum(Type.Int, Type.Str),
+        :isVoid(        0),
+        :isDontCare(    0),
+        :isStr(         0),
+        :isInt(         0),
+        :isNum(         0),
+        :isBool(        0),
+        :isArray(       0),
+        :isTypeVar(     0),
+        :isFnType(      0),
+        :isSumType(     1),
+        :isCrossType(   0),
+    );
+    
+    test-classification(Type.Cross(Type.Int, Type.Str),
+        :isVoid(        0),
+        :isDontCare(    0),
+        :isStr(         0),
+        :isInt(         0),
+        :isNum(         0),
+        :isBool(        0),
+        :isArray(       0),
+        :isTypeVar(     0),
+        :isFnType(      0),
+        :isSumType(     0),
+        :isCrossType(   1),
+    );
+
+
+}
+
+
 { # - Void ---------------------------------------------------------------------
     my $t := Type.Void;
-    isa_ok($t, Type, 'Type.Void is-a Type');
     is(Type.Void, $t, 'Type.Void is a singleton');
 
     my $s := $t.Str;
     is($s, 'Void', '.Str of Type.Void returns a string');
     is($t.Str(:outer-parens), "($s)", 'Type.Void.Str(:outer-parens) returns same string with outer "(", ")" added');
     is($t.Str(:outer-parens(0)), $s, 'Type.Void.Str(:outer-parens(0)) yields no outer parens');
-
-    $s := 'Type.Void';
-    is($t.isVoid,         1, "$s.isVoid        ");
-    is($t.isDontCare,     0, "$s.isDontCare    ");
-    is($t.isStr,          0, "$s.isStr         ");
-    is($t.isInt,          0, "$s.isInt         ");
-    is($t.isNum,          0, "$s.isNum         ");
-    is($t.isBool,         0, "$s.isBool        ");
-    is($t.isArray,        0, "$s.isArray       ");
-    is($t.isTypeVar,      0, "$s.isTypeVar     ");
-    is($t.isCompoundType, 0, "$s.isCompoundType");
-    is($t.isFnType,       0, "$s.isFnType      ");
-    is($t.isSumType,      0, "$s.isSumType     ");
-    is($t.isCrossType,    0, "$s.isCrossType   ");
 }
 
 { # - DontCare (aka "_" --------------------------------------------------------
     my $t := Type._;
-    isa_ok($t, Type, 'Type._ is-a Type');
     is(Type._, $t, 'Type._ is a singleton');
 
     my $s := $t.Str;
     is($s, '_', '.Str of Type._ returns a string');
     is($t.Str(:outer-parens), "($s)", 'Type._.Str(:outer-parens) returns same string with outer "(", ")" added');
     is($t.Str(:outer-parens(0)), $s, 'Type._.Str(:outer-parens(0)) yields no outer parens');
-
-    $s := 'Type._';
-    is($t.isVoid,         0, "$s.isVoid        ");
-    is($t.isDontCare,     1, "$s.isDontCare    ");
-    is($t.isStr,          0, "$s.isStr         ");
-    is($t.isInt,          0, "$s.isInt         ");
-    is($t.isNum,          0, "$s.isNum         ");
-    is($t.isBool,         0, "$s.isBool        ");
-    is($t.isArray,        0, "$s.isArray       ");
-    is($t.isTypeVar,      0, "$s.isTypeVar     ");
-    is($t.isCompoundType, 0, "$s.isCompoundType");
-    is($t.isFnType,       0, "$s.isFnType      ");
-    is($t.isSumType,      0, "$s.isSumType     ");
-    is($t.isCrossType,    0, "$s.isCrossType   ");
 }
 
 { # - Str ----------------------------------------------------------------------
@@ -69,25 +238,10 @@ plan(339);
     is($t.Str(:outer-parens), "($s)", '.Str instance method takes an optional :outer-parens');
     dies_ok({ Type.Str(:outer-parens) }, 'Type.Str factory method does NOT accept :outer-parens');
     is($t.Str(:outer-parens(0)), $s, 'Type.Str.Str(:outer-parens(0)) yields no outer parens');
-
-    $s := 'Type.Str';
-    is($t.isVoid,         0, "$s.isVoid        ");
-    is($t.isDontCare,     0, "$s.isDontCare    ");
-    is($t.isStr,          1, "$s.isStr         ");
-    is($t.isInt,          0, "$s.isInt         ");
-    is($t.isNum,          0, "$s.isNum         ");
-    is($t.isBool,         0, "$s.isBool        ");
-    is($t.isArray,        0, "$s.isArray       ");
-    is($t.isTypeVar,      0, "$s.isTypeVar     ");
-    is($t.isCompoundType, 0, "$s.isCompoundType");
-    is($t.isFnType,       0, "$s.isFnType      ");
-    is($t.isSumType,      0, "$s.isSumType     ");
-    is($t.isCrossType,    0, "$s.isCrossType   ");
 }
 
 { # - Var ----------------------------------------------------------------------
     my $t := Type.Var;
-    isa_ok($t,     Type, 'Type.Var is-a Type');
     
     my $t2 := Type.Var;
     isa_ok($t2,     Type, 'Type.Var is-a Type (called again)');
@@ -99,20 +253,6 @@ plan(339);
     
     is($t.Str(:outer-parens), "($s)", 'Type.Var.Str(:outer-parens)');
     is($t.Str(:outer-parens(0)), $s, 'Type.Var.Str(:outer-parens(0)) yields no outer parens');
-
-    $s := 'Type.Var';
-    is($t.isVoid,         0, "$s.isVoid        ");
-    is($t.isDontCare,     0, "$s.isDontCare    ");
-    is($t.isStr,          0, "$s.isStr         ");
-    is($t.isInt,          0, "$s.isInt         ");
-    is($t.isNum,          0, "$s.isNum         ");
-    is($t.isBool,         0, "$s.isBool        ");
-    is($t.isArray,        0, "$s.isArray       ");
-    is($t.isTypeVar,      1, "$s.isTypeVar     ");
-    is($t.isCompoundType, 0, "$s.isCompoundType");
-    is($t.isFnType,       0, "$s.isFnType      ");
-    is($t.isSumType,      0, "$s.isSumType     ");
-    is($t.isCrossType,    0, "$s.isCrossType   ");
 }
 
 { # - Fn -----------------------------------------------------------------------
@@ -122,27 +262,12 @@ plan(339);
     dies_ok( { Type.Fn(Type.Void, 42) }, 'Type.Fn with two args, one a non-Type');
 
     my $t := Type.Fn(Type.Void, Type.Void);
-    isa_ok($t, Type, 'Type.Fn(...) is-a Type');
     is(Type.Fn(Type.Void, Type.Void), $t, 'Type.Fn returns same instance for same args');
 
     my $s := $t.Str;
     is($s, Type.Void.Str ~ ' -> ' ~ Type.Void.Str, '.Str of Type.Fn(Type.Void, Type.Void)');
     is($t.Str(:outer-parens), "($s)", '.Str(:outer-parens) of Type.Fn(Type.Void, Type.Void)');
     is($t.Str(:outer-parens(0)), $s, '.Str(:outer-parens(0)) of Type.Fn(Type.Void, Type.Void) yields no outer parens');
-
-    $s := "($s)";
-    is($t.isVoid,         0, "$s.isVoid        ");
-    is($t.isDontCare,     0, "$s.isDontCare    ");
-    is($t.isStr,          0, "$s.isStr         ");
-    is($t.isInt,          0, "$s.isInt         ");
-    is($t.isNum,          0, "$s.isNum         ");
-    is($t.isBool,         0, "$s.isBool        ");
-    is($t.isArray,        0, "$s.isArray       ");
-    is($t.isTypeVar,      0, "$s.isTypeVar     ");
-    is($t.isCompoundType, 1, "$s.isCompoundType");
-    is($t.isFnType,       1, "$s.isFnType      ");
-    is($t.isSumType,      0, "$s.isSumType     ");
-    is($t.isCrossType,    0, "$s.isCrossType   ");
 }
 
 
@@ -173,20 +298,6 @@ plan(339);
     is($s, Type.Int.Str ~ ' + ' ~ Type.Str.Str, 'Type.Sum(Type.Int, Type.Str).Str');
     is($t.Str(:outer-parens), "($s)", '.Str(:outer-parens) of Type.Sum(Type.Int, Type.Str)');
     is($t.Str(:outer-parens(0)), $s, '.Str(:outer-parens(0)) of Type.Sum(Type.Int, Type.Str) yields no outer parens');
-
-    $s := "($s)";
-    is($t.isVoid,         0, "$s.isVoid        ");
-    is($t.isDontCare,     0, "$s.isDontCare    ");
-    is($t.isStr,          0, "$s.isStr         ");
-    is($t.isInt,          0, "$s.isInt         ");
-    is($t.isNum,          0, "$s.isNum         ");
-    is($t.isBool,         0, "$s.isBool        ");
-    is($t.isArray,        0, "$s.isArray       ");
-    is($t.isTypeVar,      0, "$s.isTypeVar     ");
-    is($t.isCompoundType, 1, "$s.isCompoundType");
-    is($t.isFnType,       0, "$s.isFnType      ");
-    is($t.isSumType,      1, "$s.isSumType     ");
-    is($t.isCrossType,    0, "$s.isCrossType   ");
 
     my $tv1 := Type.Var;
     isnt($tv, $tv1 ,'sanity check: Type.Var returns new instance on each call');
@@ -242,20 +353,6 @@ plan(339);
     isa_ok($s, str, '.Str on Cross type returns a string');
     is($t.Str(:outer-parens), "($s)", '.Str(:outer-parens) returns the same string with parentheses added');
     is($t.Str(:outer-parens(0)), $s, '.Str(:outer-parens(0)) yields NO outer parens');
-
-    $s := "($s)";
-    is($t.isVoid,         0, "$s.isVoid        ");
-    is($t.isDontCare,     0, "$s.isDontCare    ");
-    is($t.isStr,          0, "$s.isStr         ");
-    is($t.isInt,          0, "$s.isInt         ");
-    is($t.isNum,          0, "$s.isNum         ");
-    is($t.isBool,         0, "$s.isBool        ");
-    is($t.isArray,        0, "$s.isArray       ");
-    is($t.isTypeVar,      0, "$s.isTypeVar     ");
-    is($t.isCompoundType, 1, "$s.isCompoundType");
-    is($t.isFnType,       0, "$s.isFnType      ");
-    is($t.isSumType,      0, "$s.isSumType     ");
-    is($t.isCrossType,    1, "$s.isCrossType   ");
 
     dies_ok({ Type.Cross($t, $tv) }, 'Cross types must not occur inside another (a)');
     dies_ok({ Type.Cross($tv, $t) }, 'Cross types must not occur inside another (b)');
