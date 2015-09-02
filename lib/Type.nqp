@@ -596,7 +596,7 @@ class Type is export {
         unless ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
             if $t1.isSimpleType {
                 if $t2.isTypeVar {
-                    self.constrain($t2, $t1, :$at);
+                    self.constrain($t2, $t1, :$at, :&onError);
                 } else {
                     $error := 1;
                 }
@@ -605,8 +605,8 @@ class Type is export {
             } else {  # $t1 is compound
                 if $t1.isFnType {
                     if $t2.isFnType {
-                        self.constrain($t1.in,  $t2.in,  :$at);   # TODO: variance
-                        self.constrain($t1.out, $t2.out, :$at);   # TODO: variance
+                        self.constrain($t1.in,  $t2.in,  :$at, :&onError);   # TODO: variance
+                        self.constrain($t1.out, $t2.out, :$at, :&onError);   # TODO: variance
                     } elsif $t2.isTypeVar {
                         constrain-eq($t2, $t1)
                     } else {
@@ -616,8 +616,8 @@ class Type is export {
                 } elsif $t1.isCrossType {
                     if $t2.isCrossType {
                         if $t1.elems == $t2.elems {
-                            self.constrain($t1.head, $t2.tail, :$at);   # TODO: variance
-                            self.constrain($t1.head, $t2.tail, :$at);   # TODO: variance
+                            self.constrain($t1.head, $t2.head, :$at, :&onError);   # TODO: variance
+                            self.constrain($t1.tail, $t2.tail, :$at, :&onError);   # TODO: variance
                         } else {
                             $error := 1;
                         }

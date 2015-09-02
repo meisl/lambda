@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(302);
+plan(328);
 
 
 { # - class methods -----------------------------------------------------------
@@ -598,12 +598,17 @@ plan(302);
     }
 
     my sub error_ok($t1, $t2) {
+        my $m;
+        
+        $m := 'constraining ' ~ $t1.Str ~ '  =  ' ~ $t2.Str;
         $onErrorCalled := 0;
-        Type.constrain($t1, $t2, :&onError);
-        ok($onErrorCalled, 'constraining ' ~ $t1.Str ~ '  =  ' ~ $t2.Str ~ ' yields Type error');
+        lives_ok({ Type.constrain($t1, $t2, :&onError) }, $m);
+        ok($onErrorCalled, $m ~ ' yields Type error');
+
         $onErrorCalled := 0;
-        Type.constrain($t2, $t1, :&onError);
-        ok($onErrorCalled, 'constraining ' ~ $t2.Str ~ '  =  ' ~ $t1.Str ~ ' yields Type error');
+        $m := 'constraining ' ~ $t2.Str ~ '  =  ' ~ $t1.Str;
+        lives_ok({ Type.constrain($t2, $t1, :&onError) }, $m);
+        ok($onErrorCalled, $m ~ ' yields Type error');
     }
 
     error_ok($Str, $Int);
@@ -620,6 +625,10 @@ plan(302);
     error_ok(Type.Fn($var1, $Num), Type.Cross($Str, $Int));
     error_ok(Type.Fn($var1, $Num), Type.Cross($var1, $Num));
     
+
+    error_ok(Type.Cross($Int, $Str), Type.Cross($Str, $Int));
+    error_ok(Type.Cross($Str, $var1), Type.Cross($Str, $Int, $Num));
+
 }
 
 
