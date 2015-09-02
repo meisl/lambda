@@ -583,41 +583,55 @@ class Type is export {
         say('>>Type-constraint: ', $t1.Str, ' = ', $t2.Str);
     }
     
-    method constrain($t1, $t2, :$at = NO_VALUE) {
-        unless $at =:= NO_VALUE {
-            insist-isa($at, NQPMatch, QAST::Node);
+    method constrain($t1, $t2, :$at = NO_VALUE, :&onError = NO_VALUE) {
+        insist-isa($at, NQPMatch, QAST::Node)
+            unless $at =:= NO_VALUE;
+        if &onError =:= NO_VALUE {
+            &onError := -> *@ps, *%ns { self.error(|@ps, |%ns) }
+        } elsif !nqp::isinvokable(&onError) {
+            nqp::die('expected an invokable object - got ' ~ describe(&onError));
         }
+        
+        my $error := 0;
         unless ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
-            if $t1.isFnType {
-                if $t2.isFnType {
-                    self.constrain($t1.in,  $t2.in,  :$at);   # TODO: variance
-                    self.constrain($t1.out, $t2.out, :$at);   # TODO: variance
-                } elsif $t2.isTypeVar {
-                    constrain-eq($t2, $t1)
-                } else {
-                    self.error(:$at, $t1, ' <> ', $t2);
-                }
-            } elsif $t1.isCrossType {
-                if $t2.isCrossType {
-                    unless $t1.elems == $t2.elems {
-                        self.error(:$at, $t1, ' <> ', $t2);
-                    }
-                    self.constrain($t1.head, $t2.tail, :$at);   # TODO: variance
-                    self.constrain($t1.head, $t2.tail, :$at);   # TODO: variance
-                } else {
-                    self.error(:$at, $t1, ' <> ', $t2);
-                }
-            } elsif $t1.isTypeVar {
-                constrain-eq($t1, $t2)
-            } else {
-                # t1 is Str, Int, Num, Bool, or Void
+            if $t1.isSimpleType {
                 if $t2.isTypeVar {
                     self.constrain($t2, $t1, :$at);
                 } else {
-                    self.error(:$at, $t1, ' <> ', $t2);
+                    $error := 1;
+                }
+            } elsif $t1.isTypeVar {
+                constrain-eq($t1, $t2);
+            } else {  # $t1 is compound
+                if $t1.isFnType {
+                    if $t2.isFnType {
+                        self.constrain($t1.in,  $t2.in,  :$at);   # TODO: variance
+                        self.constrain($t1.out, $t2.out, :$at);   # TODO: variance
+                    } elsif $t2.isTypeVar {
+                        constrain-eq($t2, $t1)
+                    } else {
+                        $error := 1;
+                    }
+                #} elsif $t1.isSumType {   # TODO
+                } elsif $t1.isCrossType {
+                    if $t2.isCrossType {
+                        if $t1.elems == $t2.elems {
+                            self.constrain($t1.head, $t2.tail, :$at);   # TODO: variance
+                            self.constrain($t1.head, $t2.tail, :$at);   # TODO: variance
+                        } else {
+                            $error := 1;
+                        }
+                    } else {
+                        $error := 1;
+                    }
+                } else {
+                    self.error(:$at, 'NYI constraining ', $t1, ' / ', $t2);
                 }
             }
         }
+
+        &onError(:$at, $t1, ' <> ', $t2)
+            if $error;
     }
 
 }
