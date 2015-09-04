@@ -389,7 +389,11 @@ class Type is export {
     }
 
     method Cross(*@types) {
-        Type.insist-isValid(|@types, :except(Cross, Void));
+        Type.insist-isValid(
+            |@types,
+            :except(Cross, Void), 
+            :desc('Type.Cross(' ~ join(', ', @types, :map(-> $t { Type.isValid($t) ?? $t.Str !! describe($t) })) ~ ') - ')
+        );
         my $n := +@types;
         if $n == 0 {
             Type.Void;
@@ -414,13 +418,16 @@ class Type is export {
         nqp::istype($t, Type) && nqp::isconcrete($t)
     }
 
-    method insist-isValid(*@types, :@except = []) {
+    method insist-isValid(*@types, :@except = [], :$desc = NO_VALUE) {
+        if $desc =:= NO_VALUE {
+            $desc := '';
+        }
         @except := [@except]
             unless nqp::islist(@except);
         for @types -> $_ {
-            nqp::die('expected a valid Type - got ' ~ describe($_))
+            nqp::die($desc ~ 'expected a valid Type - got ' ~ describe($_))
                 unless Type.isValid($_);
-            nqp::die('expected a Type other than ' ~ join(', ', @except, :map(&howName)) ~ ' - got (' ~ $_.Str ~ ')')
+            nqp::die($desc ~ 'expected a Type other than ' ~ join(', ', @except, :map(&howName)) ~ ' - got (' ~ $_.Str ~ ')')
                 if +@except && istype($_, |@except);
         }
     }
@@ -498,6 +505,7 @@ class Type is export {
     my %op-types := nqp::hash(
         # special (not listed here, but explicitly handled by typecheck)
         #'bind' # how to type the var argument?
+        #'call' # due to arbitrary nr of args (at least one, the callee)
         #'list' # due to arbitrary nr of args
         #'hash' # due to arbitrary nr of args (although some constraints, eg even nr of args)
         
