@@ -766,7 +766,7 @@ class LActions is HLL::Actions {
         %out;
     }
 
-    method typecheck($n, $currentBlock, *@moreBlocks) {
+    method typecheck($n, $currentBlock, *@moreBlocks, :@constraints = []) {
         my $tN := Type.of($n);
         unless $tN {
             if isSVal($n) {
@@ -840,7 +840,7 @@ class LActions is HLL::Actions {
             #    $temp.set($n);
             } elsif istype($n, QAST::Stmts, QAST::Stmt) {
                 my $tLast := Type.Void;
-                $tLast := self.typecheck($_, $currentBlock, |@moreBlocks)
+                $tLast := self.typecheck($_, $currentBlock, |@moreBlocks, :@constraints)
                     for $n.list;
                 $tLast.set($n);
             } elsif istype($n, QAST::Block) {
@@ -851,8 +851,9 @@ class LActions is HLL::Actions {
                 $n.annotate('slurpy',     []);
                 $n.annotate('optional',   []);
                 my $tOut;
+                my @child-constraints := [];
                 for $n.list {
-                    $tOut := self.typecheck($_, $n, $currentBlock, |@moreBlocks);
+                    $tOut := self.typecheck($_, $n, $currentBlock, |@moreBlocks, :constraints(@child-constraints));
                 }
                 if $n.ann('named') || $n.ann('slurpy') || $n.ann('optional') {
                     Type.error(:at($n), 'NYI: typechecking named/slurpy/optional params', ":\n", dump($n, :indent("    ")));
@@ -864,6 +865,13 @@ class LActions is HLL::Actions {
                 }
                 my $tBlock := Type.Fn(Type.Cross(|@tIns), $tOut);
                 $tBlock.set($n);
+                my $c := TypeConstraint.True;
+                for @child-constraints {
+                    $c := $c.and($_);
+                    @constraints.push($_);
+                }
+                $n.annotate('constraints', $c.Str)
+                    unless $c.isTrue;
                 #say(dump($n));
             } elsif isVar($n) {
                 if $n.decl {
@@ -902,22 +910,24 @@ class LActions is HLL::Actions {
                 if $n.op eq 'bind' {
                     my $var := $n[0];
                     my $val := $n[1];
-                    my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks);
-                    my $tVar := self.typecheck($var, $currentBlock, |@moreBlocks);
+                    my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks, :@constraints);
+                    my $tVar := self.typecheck($var, $currentBlock, |@moreBlocks, :@constraints);
                     
                     if $var.decl {  # in that case $tVar is a fresh Type.Var which we can easily eliminate right here:
                         $tVal.set($var);    # simply use the value's type for the var directly
                     } else {
                         my $c := Type.constrain(:at($n), $tVar, $tVal);
+                        @constraints.push($c);
                         say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
                     }
                     $tVal.set($n);
                     if istype($val, QAST::Block) {
-                        say('>>typed Block ' ~ $var.name ~ ':: ' ~ Type.of($n));
+                        say('>>typed Block ' ~ $var.name ~ ':: ' ~ Type.of($n) ~ '; ' ~ $val.ann('constraints'));
+                        $n.annotate('constraints', $val.ann('constraints'));
                     }
                 } else {
                     my @tArgs := [];
-                    @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
+                    @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks, :@constraints))
                         for $n.list;
                     
                     if $n.op eq 'list' {
@@ -937,6 +947,7 @@ class LActions is HLL::Actions {
                         }
                         my $tOut := Type.Var;
                         my $c := Type.constrain(:at($n), $tCallee, Type.Fn(Type.Cross(|@tArgs), $tOut));
+                        @constraints.push($c);
                         say('>>Type-constraint/', $n.op, ': ', $callee.name, ': ', $c.Str) unless $c.isTrue;
                         $tOut.set($n);
                     } else {
@@ -949,10 +960,12 @@ class LActions is HLL::Actions {
                                 my $tIn  := $tOp.head;
                                 $tOut := $tOp.tail;
                                 my $c := Type.constrain(:at($n), $tArgs, $tIn);
+                                @constraints.push($c);
                                 say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
                             } elsif $tOp.isSumType {
                                 $tOut := Type.Var;
                                 my $c := Type.constrain(:at($n), Type.Fn($tArgs, $tOut), $tOp);
+                                @constraints.push($c);
                                 say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
                             } else {
                                 Type.error(:at($n), 'cannot apply Op ', $n.op, ' ::', $tOp, '  to  ', $tArgs);

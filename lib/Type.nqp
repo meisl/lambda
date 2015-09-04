@@ -740,6 +740,8 @@ class TypeConstraint is export {
         method and($other) { 
             if $other.isSimple {
                 $other.and(self);
+            } elsif nqp::istype($other, AndConstraint) {
+                makeAnd(self, $other);
             } else {
                 nqp::die('NYI: (' ~ self.Str ~ ') & (' ~ $other.Str ~ ')');
             }
@@ -755,10 +757,14 @@ class TypeConstraint is export {
     }
 
     my sub makeAnd($c1, $c2) {
-        my $out := nqp::create(AndConstraint);
-        my $str := '(' ~ $c1.Str ~ ') & (' ~ $c2.Str ~ ')';
-        nqp::bindattr_s($out, AndConstraint, '$!str', $str);
-        $out;
+        if $c1.Str eq $c2.Str {
+            $c1;
+        } else {
+            my $out := nqp::create(AndConstraint);
+            my $str := '(' ~ $c1.Str ~ ') & (' ~ $c2.Str ~ ')';
+            nqp::bindattr_s($out, AndConstraint, '$!str', $str);
+            $out;
+        }
     }
 
     method get(Type $lhs, Type $rhs) {
