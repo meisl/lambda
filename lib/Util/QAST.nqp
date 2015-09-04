@@ -733,8 +733,6 @@ class Util::QAST {
     method isVar($node) { nqp::istype($node, QAST::Var) || insist-isa($node, QAST::Node) }
 
     method isOp($node, $opName) {
-        #insist-isa($node, QAST::Node);
-        insist-isa($opName, str, NO_VALUE);
         nqp::istype($node, QAST::Op) && ($node.op eq ($opName // $node.op))
             || insist-isa($node, QAST::Node);
     }

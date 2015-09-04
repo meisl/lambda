@@ -149,23 +149,21 @@ class Util {
             unless @types;
         my $out := 0;
         for @types {
-            nqp::die("istype expects only type arguments or null or null_s after subject - encountered " ~ self.describe($_))
-                if nqp::isconcrete($_) && !nqp::isnull_s($_);
-            # Note: nqp::isconcrete(nqp::null_s) is true, but nqp::isconcrete(nqp::null) is false
-
-            if nqp::isnull($_) {
-                $out := 1 if nqp::isnull($subject);     # Note: nqp::isnull(nqp::isnull_s) is false
-            } elsif nqp::isstr($_) {
+            if nqp::isconcrete($_) {
+                # Note: nqp::isconcrete(nqp::null_s) is true, but nqp::isconcrete(nqp::null) is false
                 if nqp::isnull_s($_) {
                     $out := 1 if nqp::isnull_s($subject);
-                } else {    # $_ must be =:= str
-                    $out := 1 if nqp::isstr($subject);
+                } else {
+                    nqp::die("istype expects only type arguments or null or null_s after subject - encountered " ~ self.describe($_));
                 }
-                
+            } elsif $_ =:= str {
+                $out := 1 if nqp::isstr($subject);
             } elsif $_ =:= int {
                 $out := 1 if nqp::isint($subject);
             } elsif $_ =:= num {
                 $out := 1 if nqp::isnum($subject);
+            } elsif nqp::isnull($_) {
+                $out := 1 if nqp::isnull($subject);     # Note: nqp::isnull(nqp::isnull_s) is false
             } else {
                 $out := 1 if nqp::istype($subject, $_);
             }
@@ -235,7 +233,6 @@ sub linesFrom(str $filename, $from = 1, $count?) is export { Util.linesFrom($fil
 sub flatten($args, :$map)                        is export { Util.flatten($args, :$map) }
 
 sub super($self, str $method-name, *@args, *%adverbs) is export { Util.super($self, $method-name, @args, %adverbs) }
-
 
 
 sub MAIN(*@ARGS) {
