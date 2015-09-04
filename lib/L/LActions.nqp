@@ -862,11 +862,7 @@ class LActions is HLL::Actions {
                     @tIns.push(Type.of($_));
                     $n.symbol($_.name, :declaration($_));
                 }
-                @tIns.push(Type.Void)
-                    unless @tIns;
-                
-                #say('>>>preparing Block type: ' ~ join(' -> ', @tIns, :map(-> $t { $t.Str })) ~ ' -> ' ~ $tOut.Str);
-                my $tBlock := Type.Fn(|@tIns, $tOut);
+                my $tBlock := Type.Fn(Type.Cross(|@tIns), $tOut);
                 $tBlock.set($n);
                 #say(dump($n));
             } elsif isVar($n) {
