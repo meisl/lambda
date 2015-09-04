@@ -381,6 +381,18 @@ my sub make-runtime() {
         ),
         cloneAndSubst($out),
     });
+    
+    my $tv := Type.Var;
+    mkRFn('&force', <x>, 
+        #:returns(Type.Fn(Type.Fn(Type.Void, $tv), $tv)),
+        :foo<bar>,  # prevent it from being inlined
+    -> $x, $foo {
+        QAST::Op.new(:op<if>,
+            QAST::Op.new(:op<isinvokable>, $x),
+            mkCall($x),
+            $x
+        )
+    });
 
     mkRFn('&ifTag', <subject tag then else>, 
         #:returns(Type.Fn(NQPMu, Type.Str, NQPMu, NQPMu, NQPMu)), 
@@ -504,9 +516,8 @@ my sub make-runtime() {
             )
         )
     });
-
-    my $tv := Type.Var;
-
+    
+    $tv := Type.Var;
     mkRFn('&delayMemo', <x>, 
         #:returns(Type.Fn(Type.Fn(Type.Void, $tv), Type.Void, $tv)),
         :wasRun(0), :result(nqp::null), 
@@ -523,18 +534,6 @@ my sub make-runtime() {
     });
     
     $tv := Type.Var;
-
-    mkRFn('&force', <x>, 
-        #:returns(Type.Fn(Type.Fn(Type.Void, $tv), $tv)),
-        :foo<bar>,  # prevent it from being inlined
-    -> $x, $foo {
-        QAST::Op.new(:op<if>,
-            QAST::Op.new(:op<isinvokable>, $x),
-            mkCall($x),
-            $x
-        )
-    });
-    
     mkRFn('&say', <v>, 
         #:returns(Type.Fn(Type.Var, Type.Int)),
     -> $v {
@@ -658,12 +657,12 @@ class LActions is HLL::Actions {
 
         my $runtime := make-runtime();
         $top-block.push($runtime);
-        try {
+        #try {
             self.typecheck($runtime, $top-block);              # <<<<<<<<< TODO
-            CATCH {
-                say(~$!);
-            }
-        }
+        #    CATCH {
+        #        say(~$!);
+        #    }
+        #}
 
         my $s := $top-block;
         
@@ -808,31 +807,31 @@ class LActions is HLL::Actions {
                     say(dump($n));
                     Type.error(:at($n), 'cannot apply ', $tFun, ' to ', $tArg);
                 }
-            } elsif isRCall($n) {
-                my $tRuntimeFn := %runtime-fns-types{$n.name};
-                my @tArgs := [];
-                @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
-                    for $n.list;
-
-                my $temp := $tRuntimeFn;
-                for @tArgs {
-                    if $temp.isFnType {
-                        my $c := Type.constrain(:at($n), $temp.in, $_);
-                        say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
-                        $temp := $temp.out;
-                    } elsif $temp.isTypeVar {
-                        my $next := Type.Fn($_, Type.Var);
-                        my $c := Type.constrain(:at($n), $temp, $next);
-                        say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
-                        $temp := $next.out;
-                    } else {
-                        say(dump($n));
-                        Type.error(:at($n), 'cannot apply runtime fn (', $n.name, ':', $tRuntimeFn, ') to',
-                            join(' (', @tArgs, :map(-> $t { $t.Str }), :prefix1st), ')'
-                        );
-                    }
-                }
-                $temp.set($n);
+            #} elsif isRCall($n) {
+            #    my $tRuntimeFn := %runtime-fns-types{$n.name};
+            #    my @tArgs := [];
+            #    @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
+            #        for $n.list;
+            #
+            #    my $temp := $tRuntimeFn;
+            #    for @tArgs {
+            #        if $temp.isFnType {
+            #            my $c := Type.constrain(:at($n), $temp.in, $_);
+            #            say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
+            #            $temp := $temp.out;
+            #        } elsif $temp.isTypeVar {
+            #           my $next := Type.Fn($_, Type.Var);
+            #           my $c := Type.constrain(:at($n), $temp, $next);
+            #            say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
+            #            $temp := $next.out;
+            #        } else {
+            #            say(dump($n));
+            #            Type.error(:at($n), 'cannot apply runtime fn (', $n.name, ':', $tRuntimeFn, ') to',
+            #                join(' (', @tArgs, :map(-> $t { $t.Str }), :prefix1st), ')'
+            #            );
+            #        }
+            #    }
+            #    $temp.set($n);
             } elsif istype($n, QAST::Stmts, QAST::Stmt) {
                 my $tLast := Type.Void;
                 $tLast := self.typecheck($_, $currentBlock, |@moreBlocks)
@@ -913,6 +912,26 @@ class LActions is HLL::Actions {
                 if istype($val, QAST::Block) {
                     say('>>typed Block ' ~ $var.name ~ ':: ' ~ Type.of($n));
                 }
+            } elsif isOp($n, 'call') {
+                my @tArgs := [];
+                @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
+                    for $n.list;
+                my $callee;
+                my $tCallee;
+                my $name := $n.name;
+                if $n.name {
+                    $callee := lexVar($n.name);
+                    $tCallee := self.typecheck($callee, $currentBlock, |@moreBlocks);
+                } elsif +$n.list >= 1 {
+                    $callee := $n.list[0];
+                    $tCallee := @tArgs.shift;
+                } else {
+                    Type.error(:at($n), 'no callee for ', $n);
+                }
+                my $tOut := Type.Var;
+                my $c := Type.constrain(:at($n), $tCallee, Type.Fn(Type.Cross(|@tArgs), $tOut));
+                say('>>Type-constraint/call ', $callee.name, ': ', $c.Str) unless $c.isTrue;
+                $tOut.set($n);
             } elsif isOp($n, 'list') {
                 my @tArgs := [];
                 @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
