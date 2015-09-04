@@ -408,7 +408,7 @@ my sub make-runtime() {
                         QAST::Op.new(:op<substr>, $tagAndId, asNode(0), asNode(1)),
                     ),
                     mkCall($then, 
-                        mkListLookup(:index(0), # extract id as int from str tagAndId
+                        mkListLookup(:index(0), # extract id as int from str tagAndId (Note: radix returns an array, not an int!)
                             QAST::Op.new(:op<radix>,
                                 asNode(10),
                                 $tagAndId,
@@ -657,12 +657,12 @@ class LActions is HLL::Actions {
 
         my $runtime := make-runtime();
         $top-block.push($runtime);
-        #try {
+        try {
             self.typecheck($runtime, $top-block);              # <<<<<<<<< TODO
-        #    CATCH {
-        #        say(~$!);
-        #    }
-        #}
+            CATCH {
+                say(~$!);
+            }
+        }
 
         my $s := $top-block;
         
@@ -896,73 +896,72 @@ class LActions is HLL::Actions {
                         Type.error(:at($n), 'no declaration found for ', $n);
                     }
                 }
-            } elsif isOp($n, 'bind') {
-                my $var := $n[0];
-                my $val := $n[1];
-                my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks);
-                my $tVar := self.typecheck($var, $currentBlock, |@moreBlocks);
-                
-                if $var.decl {  # in that case $tVar is a fresh Type.Var which we can easily eliminate right here:
-                    $tVal.set($var);    # simply use the value's type for the var directly
-                } else {
-                    my $c := Type.constrain(:at($n), $tVar, $tVal);
-                    say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
-                }
-                $tVal.set($n);
-                if istype($val, QAST::Block) {
-                    say('>>typed Block ' ~ $var.name ~ ':: ' ~ Type.of($n));
-                }
-            } elsif isOp($n, 'call') {
-                my @tArgs := [];
-                @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
-                    for $n.list;
-                my $callee;
-                my $tCallee;
-                my $name := $n.name;
-                if $n.name {
-                    $callee := lexVar($n.name);
-                    $tCallee := self.typecheck($callee, $currentBlock, |@moreBlocks);
-                } elsif +$n.list >= 1 {
-                    $callee := $n.list[0];
-                    $tCallee := @tArgs.shift;
-                } else {
-                    Type.error(:at($n), 'no callee for ', $n);
-                }
-                my $tOut := Type.Var;
-                my $c := Type.constrain(:at($n), $tCallee, Type.Fn(Type.Cross(|@tArgs), $tOut));
-                say('>>Type-constraint/call ', $callee.name, ': ', $c.Str) unless $c.isTrue;
-                $tOut.set($n);
-            } elsif isOp($n, 'list') {
-                my @tArgs := [];
-                @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
-                    for $n.list;
-                Type.Array.set($n);
             } elsif isOp($n) {
-                my @tArgs := [];
-                @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
-                    for $n.list;
-                my $tArgs := Type.Cross(|@tArgs);
-                
-                my $tOp := Type.ofOp($n.op);
-                if $tOp {
-                    my $tOut;
-                    if $tOp.isFnType {
-                        my $tIn  := $tOp.head;
-                        $tOut := $tOp.tail;
-                        my $c := Type.constrain(:at($n), $tArgs, $tIn);
-                        say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
-                    } elsif $tOp.isSumType {
-                        $tOut := Type.Var;
-                        my $c := Type.constrain(:at($n), Type.Fn($tArgs, $tOut), $tOp);
-                        say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
+                if $n.op eq 'bind' {
+                    my $var := $n[0];
+                    my $val := $n[1];
+                    my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks);
+                    my $tVar := self.typecheck($var, $currentBlock, |@moreBlocks);
+                    
+                    if $var.decl {  # in that case $tVar is a fresh Type.Var which we can easily eliminate right here:
+                        $tVal.set($var);    # simply use the value's type for the var directly
                     } else {
-                        Type.error(:at($n), 'cannot apply Op ', $n.op, ' ::', $tOp, '  to  ', $tArgs);
+                        my $c := Type.constrain(:at($n), $tVar, $tVal);
+                        say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
                     }
-                    $tOut.set($n);
+                    $tVal.set($n);
+                    if istype($val, QAST::Block) {
+                        say('>>typed Block ' ~ $var.name ~ ':: ' ~ Type.of($n));
+                    }
                 } else {
-                    say("\n", dump($currentBlock));
-                    say("\n", dump($n));
-                    Type.error(:at($n), 'dunno type of ', $n);
+                    my @tArgs := [];
+                    @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
+                        for $n.list;
+                    
+                    if $n.op eq 'list' {
+                        Type.Array.set($n);
+                    } elsif $n.op eq 'call' {
+                        my $callee;
+                        my $tCallee;
+                        my $name := $n.name;
+                        if $n.name {
+                            $callee := lexVar($n.name);
+                            $tCallee := self.typecheck($callee, $currentBlock, |@moreBlocks);
+                        } elsif +$n.list >= 1 {
+                            $callee := $n.list[0];
+                            $tCallee := @tArgs.shift;
+                        } else {
+                            Type.error(:at($n), 'no callee for ', $n);
+                        }
+                        my $tOut := Type.Var;
+                        my $c := Type.constrain(:at($n), $tCallee, Type.Fn(Type.Cross(|@tArgs), $tOut));
+                        say('>>Type-constraint/', $n.op, ': ', $callee.name, ': ', $c.Str) unless $c.isTrue;
+                        $tOut.set($n);
+                    } else {
+                        my $tArgs := Type.Cross(|@tArgs);
+                        
+                        my $tOp := Type.ofOp($n.op);
+                        if $tOp {
+                            my $tOut;
+                            if $tOp.isFnType {
+                                my $tIn  := $tOp.head;
+                                $tOut := $tOp.tail;
+                                my $c := Type.constrain(:at($n), $tArgs, $tIn);
+                                say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
+                            } elsif $tOp.isSumType {
+                                $tOut := Type.Var;
+                                my $c := Type.constrain(:at($n), Type.Fn($tArgs, $tOut), $tOp);
+                                say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
+                            } else {
+                                Type.error(:at($n), 'cannot apply Op ', $n.op, ' ::', $tOp, '  to  ', $tArgs);
+                            }
+                            $tOut.set($n);
+                        } else {
+                            say("\n", dump($currentBlock));
+                            say("\n", dump($n));
+                            Type.error(:at($n), 'dunno type of ', $n);
+                        }
+                    }
                 }
             } else {
                 say("\n", dump($n));

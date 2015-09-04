@@ -518,8 +518,8 @@ class Type is export {
         'flip',     Type.Fn(Type.Cross($Str            ),               $Str    ),
         'lc',       Type.Fn(Type.Cross($Str            ),               $Str    ),
         'uc',       Type.Fn(Type.Cross($Str            ),               $Str    ),
-        'join',     Type.Fn(Type.Cross($Str,   Type.Array),             $Str    ),
-        'radix',    Type.Fn(Type.Cross($Int, $Str, $Int, $Int),         $Int    ),
+        'join',     Type.Fn(Type.Cross($Str,   $Array  ),               $Str    ),
+        'radix',    Type.Fn(Type.Cross($Int,   $Str, $Int, $Int),       $Array  ),
         'substr',   Type.Sum(
                         Type.Fn(Type.Cross($Str, $Int),                 $Str    ),
                         Type.Fn(Type.Cross($Str, $Int, $Int),           $Str    ),
