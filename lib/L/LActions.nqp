@@ -417,10 +417,10 @@ my sub make-runtime() {
                             )
                         )
                     ),
-                    mkForce($else)
+                    mkForce($else)  # different tag
                 ),
             ),
-            mkForce($else)
+            mkForce($else)  # subject not a list
         )
     });
     
@@ -432,7 +432,11 @@ my sub make-runtime() {
                 lexVar('_', :decl<param>),
                 mkListLookup($subject, :index($index))
             ),
-            QAST::Op.new(:op<null>)
+            QAST::Block.new(:arity(0),
+                mkDie(
+                    mkConcat('no such tag: ', cloneAndSubst($tag))
+                )
+            )
         )
     });
     
@@ -460,7 +464,7 @@ my sub make-runtime() {
                 $v, 
                 'λ',
                 QAST::Block.new(:arity(1),
-                    mkBind(mkDeclP($id),          mkForce($id)),
+                    mkDeclP($id),
                     mkBind(mkDeclV($fvars),       mkRCall('&sublist', $v, 2)),
                     mkBind(mkDeclV($info),        mkListLookup(lexVar('.λinfo'), :index($id))),
                     mkBind(mkDeclV($fvn2dBI),
@@ -657,14 +661,6 @@ class LActions is HLL::Actions {
 
         my $runtime := make-runtime();
         $top-block.push($runtime);
-        try {
-            self.typecheck($runtime, $top-block);              # <<<<<<<<< TODO
-            CATCH {
-                say(~$!);
-            }
-        }
-
-        my $s := $top-block;
         
         my $lambdaInfo := mkList();
         for @!lambdaInfo {
@@ -692,6 +688,15 @@ class LActions is HLL::Actions {
             mkBind(lexVar('.src', :decl<static>), ~$/)
         );
 
+        my $dummy-block := QAST::Block.new;
+        try {
+            self.typecheck($top-block, $dummy-block);              # <<<<<<<<< TODO
+            CATCH {
+                say(~$!);
+            }
+        }
+
+
         #my $mainTermType;
         #$mainTermType := self.typecheck($mainTerm, QAST::Block.new);
         #say('MAIN type: ' ~ typeToStr($mainTermType));
@@ -703,6 +708,7 @@ class LActions is HLL::Actions {
         my $ivalCountBinding  := QAST::Op.new(:op<bind>, lexVar('.ivalCount',  :decl<static>));   # will receive a value node later
         my $svalCountBinding  := QAST::Op.new(:op<bind>, lexVar('.svalCount',  :decl<static>));   # will receive a value node later
         my $svalSizeBinding   := QAST::Op.new(:op<bind>, lexVar('.svalSize',   :decl<static>));   # will receive a value node later
+        my $s := $top-block;
         $s.push($quastSizeBinding);
         $s.push($blockCountBinding);
         $s.push($listCountBinding);
@@ -893,7 +899,7 @@ class LActions is HLL::Actions {
                             Type.error(:at($n), 'still untyped: declaration for ', $n);
                         }
                     } else {
-                        Type.error(:at($n), 'no declaration found for ', $n);
+                        Type.error(:at($n), 'no declaration found for ', $n, "\n", dump($currentBlock));
                     }
                 }
             } elsif isOp($n) {

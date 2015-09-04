@@ -509,7 +509,10 @@ class Type is export {
         #'list' # due to arbitrary nr of args
         #'hash' # due to arbitrary nr of args (although some constraints, eg even nr of args)
         
+        # die
+        'die',      Type.Fn(Type.Cross($Str            ),               $Void   ),
         # str
+        'isstr',    Type.Fn(Type.Cross(Type.Var        ),               $Bool   ),
         'iseq_s',   Type.Fn(Type.Cross($Str,   $Str    ),               $Bool   ),
         'chars',    Type.Fn(Type.Cross($Str            ),               $Int    ),
         'chr',      Type.Fn(Type.Cross($Int            ),               $Str    ),
@@ -524,6 +527,7 @@ class Type is export {
                         Type.Fn(Type.Cross($Str, $Int),                 $Str    ),
                         Type.Fn(Type.Cross($Str, $Int, $Int),           $Str    ),
                     ),
+        'split',    Type.Fn(Type.Cross($Str,   $Str   ),                $Array  ),
         # int
         'iseq_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
         'isne_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
@@ -539,6 +543,7 @@ class Type is export {
         'mod_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
         'gcd_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
         'lcm_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
+        'not_i',    Type.Fn(Type.Cross($Int            ),               $Int    ),
         # list/hash
         'elems',    Type.Fn(Type.Cross($Array          ),               $Int    ),
         'atpos',    Type.Fn(Type.Cross($Array, $Int    ),               Type.Var),
