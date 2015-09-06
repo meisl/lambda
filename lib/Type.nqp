@@ -7,6 +7,72 @@ use Util::Compiler;
 
 my class NO_VALUE {}
 
+sub swap(int $i, int $k, @xs) {
+    my $tmp := @xs[$i];
+    @xs[$i] := @xs[$k];
+    @xs[$k] := $tmp;
+}
+
+sub insertion-sort(&cmp, @xs, int $lo = 0, $hi = NO_VALUE) {
+    $hi := nqp::elems(@xs) - 1
+        if $hi =:= NO_VALUE;
+    my int $i := $lo + 1;
+    while $i <= $hi {
+        my int $k := $i++;
+        my int $j := $k--;
+        my $x := @xs[$j];
+        while ($j > $lo) {
+            my $u := @xs[$k];
+            if (&cmp($u, $x) > 0) {
+                @xs[$j--] := $u;
+                @xs[$k--] := $x;
+            } else {
+                $j := $lo;
+            }
+        }
+    }
+    @xs;
+}
+
+
+my role Listy {
+
+    method foreach(&f) {
+        my $acc := &f(self.head);
+        my $tl := self.tail;
+        my $myClass := nqp::what(self);
+        while nqp::istype($tl, $myClass) {
+            &f($tl.head);
+            $tl := $tl.tail;
+        }
+        &f($tl);
+    }
+
+    method foldl(&f, $start) {
+        my $acc := &f($start, self.head);
+        my $tl := self.tail;
+        my $myClass := nqp::what(self);
+        while nqp::istype($tl, $myClass) {
+            $acc := &f($acc, $tl.head);
+            $tl := $tl.tail;
+        }
+        $acc := &f($acc, $tl);
+    }
+
+    method foldl1(&f) {
+        my $acc := self.head;
+        my $tl := self.tail;
+        my $myClass := nqp::what(self);
+        while nqp::istype($tl, $myClass) {
+            $acc := &f($acc, $tl.head);
+            $tl := $tl.tail;
+        }
+        $acc := &f($acc, $tl);
+    }
+
+}
+
+
 class Type is export {
 
     method new(*@args, *%adverbs) {
@@ -371,7 +437,7 @@ class Type is export {
         my %types := {};
         for @types -> $t {
             if $t.isSumType {
-                $t.foldl1(-> $acc, $s { %types{$s.Str} := $s });
+                $t.foldl(-> $acc, $s { %types{$s.Str} := $s }, NO_VALUE);
             } else {
                 %types{$t.Str} := $t;
             }
@@ -446,7 +512,7 @@ class Type is export {
         howName(Cross    ), 10,
     );
 
-    my sub lex-cmp($t1, $t2) {
+    sub lex-cmp($t1, $t2) {
         if $t1 =:= $t2 {
             0;
         } else {
@@ -467,35 +533,13 @@ class Type is export {
         }
     }
 
-    sub swap(int $i, int $k, @xs) {
-        my $tmp := @xs[$i];
-        @xs[$i] := @xs[$k];
-        @xs[$k] := $tmp;
+    method lex-cmp($t1, $t2) {
+        Type.insist-isValid($t1, $t2);
+        lex-cmp($t1, $t2);
     }
-    
-    sub insertion-sort(&cmp, @xs, int $lo = 0, $hi = NO_VALUE) {
-        $hi := nqp::elems(@xs) - 1
-            if $hi =:= NO_VALUE;
-        my int $i := $lo + 1;
-        while $i <= $hi {
-            my int $k := $i++;
-            my int $j := $k--;
-            my $x := @xs[$j];
-            while ($j > $lo) {
-                my $u := @xs[$k];
-                if (&cmp($u, $x) > 0) {
-                    @xs[$j--] := $u;
-                    @xs[$k--] := $x;
-                } else {
-                    $j := $lo;
-                }
-            }
-        }
-        @xs;
-    }
-    
 
     method sort(@types) {
+        Type.insist-isValid(|@types);
         insertion-sort(&lex-cmp, @types);
     }
 
@@ -617,8 +661,7 @@ class Type is export {
             nqp::die('expected an invokable object - got ' ~ describe(&onError));
         }
 
-        my $out;
-        my $error := 0;
+        my $out := TypeConstraint.False;
         if ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
             $out := TypeConstraint.True;
         } else {
@@ -626,27 +669,23 @@ class Type is export {
             if $t1.isSimpleType {
                 if $t2.isTypeVar {
                     $out := self.constrain($t2, $t1, :$at, :&onError);
-                } else {
-                    $error := 1;
                 }
             } elsif $t1.isTypeVar {
                 $out := constrain-eq($t1, $t2);
             } else {  # $t1 is compound
                 if $t1.isFnType {
                     if $t2.isFnType {
-                        $out := self.constrain($t1.in,  $t2.in,  :$at, :&onError);   # TODO: variance
-                        $out := $out.and(
-                                self.constrain($t1.out, $t2.out, :$at, :&onError)    # TODO: variance
+                        $out := TypeConstraint.And(
+                            self.constrain($t1.in,  $t2.in,  :$at, :&onError),   # TODO: variance
+                            self.constrain($t1.out, $t2.out, :$at, :&onError),   # TODO: variance
                         );
                     } elsif $t2.isTypeVar {
                         $out := constrain-eq($t2, $t1)
                     } elsif $t2.isSumType {
                         $out := $t2.foldl(
-                            -> $acc, $t { $acc.or(self.constrain($t1, $t, :onError(&ignore))) },
+                            -> $acc, $t { TypeConstraint.Or($acc, self.constrain($t1, $t, :onError(&ignore))) },
                             TypeConstraint.False
                         );
-                    } else {
-                        $error := 1;
                     }
                 } elsif $t1.isSumType {
                     if $t2.isSumType {
@@ -655,17 +694,11 @@ class Type is export {
                         $out := self.constrain($t2, $t1, :$at, :&onError);
                     }
                 } elsif $t1.isCrossType {
-                    if $t2.isCrossType {
-                        if $t1.elems == $t2.elems {
-                            $out := self.constrain($t1.head, $t2.head, :$at, :&onError);   # TODO: variance
-                            $out := $out.and(
-                                    self.constrain($t1.tail, $t2.tail, :$at, :&onError)    # TODO: variance
-                            );
-                        } else {
-                            $error := 1;
-                        }
-                    } else {
-                        $error := 1;
+                    if $t2.isCrossType && ($t1.elems == $t2.elems) {
+                        $out := TypeConstraint.And(
+                            self.constrain($t1.head, $t2.head, :$at, :&onError),   # TODO: variance
+                            self.constrain($t1.tail, $t2.tail, :$at, :&onError),   # TODO: variance
+                        );
                     }
                 } else {
                     self.error(:$at, 'NYI constraining ', $t1, ' / ', $t2);
@@ -688,6 +721,9 @@ class TypeConstraint is export {
     method isAtom()   { self.isTrue || self.isFalse }
 
     my class SimpleConstraint is TypeConstraint {
+        method foreach(&f)         { &f(self)         }
+        method foldl1( &f)         { self             }
+        method foldl(  &f, $start) { &f($start, self) }
     }
     
     method isSimple() { nqp::istype(self, SimpleConstraint) }
@@ -696,12 +732,7 @@ class TypeConstraint is export {
     method lhs() { nqp::die('cannot get .lhs of ' ~ self.Str) }
     method rhs() { nqp::die('cannot get .rhs of ' ~ self.Str) }
 
-    method and($c) { nqp::die('NYI: ' ~ howName(self) ~ '.and (' ~ self.Str ~ '), (' ~ $c.Str ~ ')' ) }
-    method or( $c) { nqp::die('NYI: ' ~ howName(self) ~ '.or (' ~ self.Str ~ '), (' ~ $c.Str ~ ')' ) }
-
     my class Atom is SimpleConstraint {
-        method and($other) { self.isTrue ?? $other !! self   }
-        method or($other)  { self.isTrue ?? self   !! $other }
         method Str()       { 'TypeConstraint.' ~ (self.isTrue ?? 'True' !! 'False') }
     }
     
@@ -713,59 +744,135 @@ class TypeConstraint is export {
         has Type $!rhs; method rhs() { $!rhs }
 
         method Str() {
-            $!lhs.Str ~ '  =  ' ~ $!rhs.Str;
-        }
-
-        method and($other) { 
-            if $other.isAtom {
-                $other.and(self);
-            } else {
-                makeAnd(self, $other);
-            }
-        }
-
-        method or($other) { 
-            if $other.isAtom {
-                $other.or(self);
-            } else {
-                nqp::die('NYI: (' ~ self.Str ~ ') | (' ~ $other.Str ~ ')');
-            }
+            $!lhs.Str(:outer-parens($!lhs.isCompoundType)) ~ ' = ' ~ $!rhs.Str(:outer-parens($!rhs.isCompoundType));
         }
     }
 
     my class AndConstraint is TypeConstraint {
-        has str $!str;
-        method Str() { $!str }
+        has str             $!str;      method Str()  { $!str  }
+        has EqConstraint    $!head;     method head() { $!head }
+        has TypeConstraint  $!tail;     method tail() { $!tail }
 
-        method and($other) { 
-            if $other.isSimple {
-                $other.and(self);
-            } elsif nqp::istype($other, AndConstraint) {
-                makeAnd(self, $other);
-            } else {
-                nqp::die('NYI: (' ~ self.Str ~ ') & (' ~ $other.Str ~ ')');
-            }
-        }
-
-        method or($other) { 
-            if $other.isSimple {
-                $other.or(self);
-            } else {
-                nqp::die('NYI: (' ~ self.Str ~ ') | (' ~ $other.Str ~ ')');
-            }
+        method new(@conjuncts) {
+            my $str := join('  &  ', @conjuncts, :map(-> $t { $t.Str }));
+            my $instance;
+            my int $elems := +@conjuncts;
+            my $head := @conjuncts.shift;
+            my $tail := $elems == 2
+                ?? @conjuncts[0]
+                !! self.new(@conjuncts);
+            
+            $instance := nqp::create(self);
+            nqp::bindattr_s($instance, self, '$!str',  $str);
+            nqp::bindattr(  $instance, self, '$!head', $head);
+            nqp::bindattr(  $instance, self, '$!tail', $tail);
+            nqp::how(self).mixin($instance, Listy);
+            $instance;
         }
     }
 
-    my sub makeAnd($c1, $c2) {
-        if $c1.Str eq $c2.Str {
-            $c1;
+    sub remove-dupes(@constraints, :&lex-cmp!, :$unit!, :$zero!, :$flatten = NO_VALUE) {
+        my $n := +@constraints;
+        if $n == 0 {
+            [$unit];
+        } elsif $n == 1 {
+            @constraints;
         } else {
-            my $out := nqp::create(AndConstraint);
-            my $str := '(' ~ $c1.Str ~ ') & (' ~ $c2.Str ~ ')';
-            nqp::bindattr_s($out, AndConstraint, '$!str', $str);
-            $out;
+            my @out := [];
+            my %constraints := {};
+            for @constraints {
+                if nqp::istype($_, $flatten) {
+                    $_.foreach(-> $c { %constraints{$c.Str} := $c });
+                } elsif lex-cmp($_, $unit) == 0 {
+                    # omit
+                } elsif lex-cmp($_, $zero) == 0 {
+                    @out := [$zero];    # collapse
+                } else {
+                    %constraints{$_.Str} := $_;
+                }
+            }
+            unless @out {
+                @out.push($_.value)
+                    for %constraints;
+                if +@out == 0 {
+                    @out := [$unit];
+                } else {
+                    insertion-sort(&lex-cmp, @out);
+                }
+            }
+            @out;
         }
     }
+
+    sub lex-cmp($c1, $c2) {
+        if $c1.Str eq $c2.Str {
+            0
+        } elsif $c1.isTrue {
+            -1
+        } elsif $c1.isFalse {
+            $c2.isTrue
+                ?? 1
+                !! -1;
+        } elsif $c1.isEq {
+            if $c2.isAtom {
+                1;
+            } elsif $c2.isEq {
+                my $lhss := Type.lex-cmp($c1.lhs, $c2.lhs);
+                if $lhss == 0 {
+                    Type.lex-cmp($c1.rhs, $c2.rhs);
+                } else {
+                    $lhss;
+                }
+            } else {
+                -1;
+            }
+        } elsif nqp::istype($c1, AndConstraint) {
+            if $c2.isSimple {
+                1;
+            } elsif nqp::istype($c2, AndConstraint) {
+                #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                nqp::die('NYI');
+            } else {
+                -1;
+            }
+        } else {
+            nqp::die('NYI: lex-cmp(' ~ $c1.Str ~ ', ' ~ $c2.Str ~ ')');
+        }
+    }
+    
+    method sort(@constraints) {
+        insertion-sort(&lex-cmp, @constraints);
+    }
+
+    method And(*@constraints) {
+        my @conjuncts := remove-dupes(@constraints,
+            :&lex-cmp,
+            :unit($True),
+            :zero($False),
+            :flatten(AndConstraint),
+        );
+        if +@conjuncts == 1 {
+            @conjuncts[0];
+        } else {
+            AndConstraint.new(@conjuncts);
+        }
+    }
+
+    method Or(*@constraints) {
+        my @disjuncts := remove-dupes(@constraints,
+            :&lex-cmp,
+            :unit($False),
+            :zero($True),
+            :flatten(NO_VALUE),
+        );
+        if +@disjuncts == 1 {
+            @disjuncts[0];
+        } else {
+            nqp::die('NYI');
+            #OrConstraint.new(@conjuncts);
+        }
+    }
+
 
     method get(Type $lhs, Type $rhs) {
         Type.insist-isValid($lhs);
@@ -812,5 +919,28 @@ sub MAIN(*@ARGS) {
     say($c3.Str);
 
     my $c4 := TypeConstraint.get($var2, $var1);
-    say($c3.Str);
+    say($c4.Str);
+
+    say(TypeConstraint.And($c2, $c3).Str);
+    say(TypeConstraint.And($c3, $c4).Str);
+    say(TypeConstraint.And($c1a, $c3).Str);
+    say(TypeConstraint.And($c3, $c1a).Str);
+
+    say('------------');
+    my $t12 := Type.Var;
+    my $t13 := Type.Var;
+    my $t14 := Type.Var;
+    my $f := Type.Fn(Type.Cross(Type.BOOL, Type.Int), $t14);
+    my $g := Type.ofOp('if');
+    #my $g := Type.Sum(
+    #    Type.Fn(Type.Cross(Type.BOOL, $t12), Type.Sum(Type.BOOL, $t12)),
+    #    #Type.Str,
+    #    Type.Fn(Type.Cross(Type.BOOL, $t12, $t13), Type.Sum($t12, $t13)),
+    #    #Type.Fn(Type.Cross(Type.BOOL, $t12, $t13), Type.Sum(Type.Str, $t13)),
+    #);
+    my $c5 := Type.constrain($f, $g);
+    say($c5.Str);
+
+    my $c6 := TypeConstraint.And($c5, $c4);
+    say($c6.Str);
 }

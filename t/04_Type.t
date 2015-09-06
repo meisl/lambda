@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(353);
+plan(354);
 
 
 { # - class methods -----------------------------------------------------------
@@ -320,6 +320,8 @@ plan(353);
     my $var2 := Type.Var;
     my $var3 := Type.Var;
     is(Type.Sum($var3, $var2, $var1).Str, $var1.Str ~ ' + ' ~ $var2.Str ~ ' + ' ~ $var3.Str, '.Str of a Sum with 3 disjuncts');
+
+    is(Type.Sum(Type.Sum($var3, $var2), $var1).Str, $var1.Str ~ ' + ' ~ $var2.Str ~ ' + ' ~ $var3.Str, 'Sum flattens (disjuncts that are Sums)');
 
     is(Type.Fn($ts1, $ts).Str, '(' ~ $ts1.Str ~ ') -> (' ~ $ts.Str ~ ')',
         'Sum type inside a Fn type is always surrounded by parens (left)');

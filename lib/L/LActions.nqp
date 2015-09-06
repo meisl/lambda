@@ -865,11 +865,8 @@ class LActions is HLL::Actions {
                 }
                 my $tBlock := Type.Fn(Type.Cross(|@tIns), $tOut);
                 $tBlock.set($n);
-                my $c := TypeConstraint.True;
-                for @child-constraints {
-                    $c := $c.and($_);
-                    @constraints.push($_);
-                }
+                my $c := TypeConstraint.And(|@child-constraints);
+                $c.foreach(-> $_ { @constraints.push($_) });
                 $n.annotate('constraints', $c.Str)
                     unless $c.isTrue;
                 #say(dump($n));
