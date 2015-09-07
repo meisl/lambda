@@ -206,7 +206,15 @@ class Type is export {
         #});
     }
 
-    method vars() { vars(self) }
+    method vars(%vs = {}) {
+        if self.isTypeVar {
+            %vs{self.name} := self;
+        } elsif self.isCompoundType {
+            self.head.vars(%vs);
+            self.tail.vars(%vs);
+        }
+        %vs;
+    }
 
     method with-fresh-vars(%subst = {}) { self }
 
@@ -308,16 +316,6 @@ class Type is export {
 
 
     # type variables
-
-    my sub vars($t, %vs = {}) {
-        if $t.isTypeVar {
-            %vs{$t.name} := $t;
-        } elsif $t.isCompoundType {
-            vars($t.head, %vs);
-            vars($t.tail, %vs);
-        }
-        %vs;
-    }
 
     my class Var is Type {
         has int $!id;
@@ -798,6 +796,22 @@ class TypeConstraint is export {
 
     method lhs() { nqp::die('cannot get .lhs of ' ~ self.Str) }
     method rhs() { nqp::die('cannot get .rhs of ' ~ self.Str) }
+
+    method vars(%vs = {}) {
+        if self.isAtom {
+            # nothing
+        } elsif self.isEq {
+            self.lhs.vars(%vs);
+            self.rhs.vars(%vs);
+        } elsif self.isAnd {
+            self.head.vars(%vs);
+            self.tail.vars(%vs);
+        } else {
+            nqp::die('NYI: .vars on ' ~ self.Str);
+        }
+        %vs;
+    }
+    
 
     my class Atom is SimpleConstraint {
         method Str()       { 'TypeConstraint.' ~ (self.isTrue ?? 'True' !! 'False') }

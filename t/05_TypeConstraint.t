@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(69);
+plan(111);
 
 
 { # - class methods -----------------------------------------------------------
@@ -44,6 +44,65 @@ plan(69);
         $and3,
         $and4,
     ];
+}
+
+
+{ # - .vars --------------------------------------------------------------------
+    my %vs;
+    my $s;
+
+    my $True  := TypeConstraint.True;
+    my $False := TypeConstraint.False;
+
+    for [$True, $False] {
+        $s := $_.Str;
+        %vs := $_.vars;
+        ok(nqp::ishash(%vs), ".vars of $s is-a hash");
+        is(+%vs,         0,  ".vars of $s is empty");
+   }
+    my $v1 := Type.Var;
+    my $eq1 := TypeConstraint.get($v1, Type.Str);
+    my $eq2 := TypeConstraint.get($v1, Type.Sum(Type.Int, Type.Str));
+    my $eq3 := TypeConstraint.get($v1, Type.Cross(Type.Int, Type.Str));
+    my $v2 := Type.Var;
+    my $eq4 := TypeConstraint.get($v1, $v2);
+    my $eq5 := TypeConstraint.get($v1, Type.Sum($v2, Type.Str, Type.Int));
+    my $eq6 := TypeConstraint.get($v2, Type.Cross(Type.Str, $v1, Type.Int));
+    my $eq7 := TypeConstraint.get($v2, Type.Cross($v2, $v1, Type.Int));
+    my $v3 := Type.Var;
+    my $eq8 := TypeConstraint.get($v1, Type.Sum($v1, $v2, $v3, Type.Int));
+
+    for [$eq1, $eq2, $eq3, $eq4, $eq5, $eq6, $eq7, $eq8] {
+        $s := $_.Str;
+        %vs := $_.vars;
+        ok(nqp::ishash(%vs),   ".vars of $s is-a hash");
+        my %vsExpected := $_.lhs.vars;
+        for $_.rhs.vars {
+            %vsExpected{$_.key} := $_.value;
+        }
+        is(+%vs, +%vsExpected, ".vars of $s is the union of the left-hand-side's and ride-hand-side's .vars (a)");
+        for %vsExpected {
+            is(%vs{$_.key}, $_.value, ".vars of $s is the union of the left-hand-side's and ride-hand-side's .vars (b/" ~ $_.value.Str ~ ")");
+        }
+    }
+
+    my $and1 := TypeConstraint.And($eq1, $eq2);
+    my $and2 := TypeConstraint.And($eq3, $eq4, $eq5, $eq6, $eq7, $eq8);
+    my $and3 := TypeConstraint.And($and1, $and2);
+
+    for [$and1, $and2] {
+        $s := $_.Str;
+        %vs := $_.vars;
+        ok(nqp::ishash(%vs),   ".vars of $s is-a hash");
+        my %vsExpected := $_.head.vars;
+        for $_.tail.vars {
+            %vsExpected{$_.key} := $_.value;
+        }
+        is(+%vs, +%vsExpected, ".vars of $s is the union of the head's and tail's .vars (a)");
+        for %vsExpected {
+            is(%vs{$_.key}, $_.value, ".vars of $s is the union of the head's and tail's .vars (b/" ~ $_.value.Str ~ ")");
+        }
+    }
 }
 
 
