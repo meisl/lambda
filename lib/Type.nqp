@@ -206,6 +206,8 @@ class Type is export {
         #});
     }
 
+    method vars() { vars(self) }
+
     method with-fresh-vars(%subst = {}) { self }
 
     # will be set below (when subclasses are declared)
@@ -307,6 +309,16 @@ class Type is export {
 
     # type variables
 
+    my sub vars($t, %vs = {}) {
+        if $t.isTypeVar {
+            %vs{$t.name} := $t;
+        } elsif $t.isCompoundType {
+            vars($t.head, %vs);
+            vars($t.tail, %vs);
+        }
+        %vs;
+    }
+
     my class Var is Type {
         has int $!id;
         method id()   { $!id     }
@@ -328,6 +340,7 @@ class Type is export {
             $out;
         }
     }
+    
 
     # compound types (abstract class)
 

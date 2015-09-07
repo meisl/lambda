@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(354);
+plan(327);
 
 
 { # - class methods -----------------------------------------------------------
@@ -581,75 +581,55 @@ plan(354);
     }
 }
 
+{ # - .vars --------------------------------------------------------------------
+    my %vs;
+    my $s;
 
-{ # - type constraints ---------------------------------------------------------
+    for [Type.BOOL, Type.Void, Type.DontCare, Type.Str, Type.Int, Type.Num, Type.Array] {
+        %vs := $_.vars;
+        $s := $_.Str;
+        ok(nqp::ishash(%vs), ".vars of $s is-a hash");
+        is(+%vs,         0,  ".vars of $s is empty");
+   }
 
-    my $Str := Type.Str;
-    my $Int := Type.Int;
-    my $Num := Type.Num;
-    my $fun1 := Type.Fn($Str, $Int);
-    my $var1 := Type.Var;
-    my $var2 := Type.Var;
+    my $v1 := Type.Var;
+    my $v2 := Type.Var;
 
-    dies_ok({ Type.constrain() },                   'Type.constraint with no args');
-    dies_ok({ Type.constrain($Int) },               'Type.constraint with one args');
-    dies_ok({ Type.constrain($Int, $Int, $Int) },   'Type.constraint with three args');
-    
-    my $onErrorCalled;
-    my sub onError(*@ps, *%ns) {
-        $onErrorCalled := 1;
-        [@ps, %ns];
+    for [$v1, $v2] {
+        $s := $_.Str;
+        %vs := $_.vars;
+        ok(nqp::ishash(%vs), ".vars of $s is-a hash");
+        is(+%vs,         1,  ".vars of $s contains one mapping");
+        is(%vs{$_.name}, $_, ".vars of $s maps \"" ~ $_.name ~ "\" to $s itself");
     }
 
-    my sub error_ok($t1, $t2) {
-        my $m;
-        
-        $m := 'constraining ' ~ $t1.Str ~ '  =  ' ~ $t2.Str;
-        $onErrorCalled := 0;
-        lives_ok({ Type.constrain($t1, $t2, :&onError) }, $m);
-        ok($onErrorCalled, $m ~ ' yields Type error');
-
-        $onErrorCalled := 0;
-        $m := 'constraining ' ~ $t2.Str ~ '  =  ' ~ $t1.Str;
-        lives_ok({ Type.constrain($t2, $t1, :&onError) }, $m);
-        ok($onErrorCalled, $m ~ ' yields Type error');
+    my $fun := Type.Fn(Type.Str, $v2, $v1);
+    $s := $fun.Str;
+    %vs := $fun.vars;
+    ok(nqp::ishash(%vs), ".vars of $s is-a hash");
+    is(+%vs,         2,  ".vars of $s contains two mappings");
+    for [$v1, $v2] {
+        is(%vs{$_.name}, $_, ".vars of $s maps \"" ~ $_.name ~ '" to ' ~ $_.Str);
     }
 
-    error_ok($Str, $Int);
+    my $sum := Type.Sum(Type.Int, $v1, $fun, $v2);
+    $s := $sum.Str;
+    %vs := $sum.vars;
+    ok(nqp::ishash(%vs), ".vars of $s is-a hash");
+    is(+%vs,         2,  ".vars of $s contains two mappings");
+    for [$v1, $v2] {
+        is(%vs{$_.name}, $_, ".vars of $s maps \"" ~ $_.name ~ '" to ' ~ $_.Str);
+    }
 
-    error_ok($Int, Type.Fn($Str, $Int));
-    error_ok($Num, Type.Fn($var1, $Num));
-
-    error_ok($Int, Type.Cross($Str, $Int));
-    error_ok($Num, Type.Cross($var1, $Num));
-
-
-    error_ok(Type.Fn($Str, $Int), Type.Cross($Str, $Int));
-    error_ok(Type.Fn($Str, $Int), Type.Cross($var1, $Num));
-    error_ok(Type.Fn($var1, $Num), Type.Cross($Str, $Int));
-    error_ok(Type.Fn($var1, $Num), Type.Cross($var1, $Num));
-    
-
-    error_ok(Type.Cross($Int, $Str), Type.Cross($Str, $Int));
-    error_ok(Type.Cross($Str, $var1), Type.Cross($Str, $Int, $Num));
-
-    my @types1 := [
-        Type.Void,
-        Type._,
-        $Str,
-        $Int,
-        $Num,
-        Type.BOOL,
-        Type.Array,
-        $var1, $var2,
-        $fun1,
-        Type.Cross($Str, $Int),
-        Type.Cross($Str, $Int, $Num),
-        Type.Cross($fun1, $Num, $fun1),
-    ];
-
-    is(Type.constrain($_, $_), TypeConstraint.True, 'constraining (' ~ $_.Str ~ ') to itself')
-        for @types1;
+    my $v3 := Type.Var;
+    my $sum2 := Type.Sum($v3, $sum);
+    $s := $sum2.Str;
+    %vs := $sum2.vars;
+    ok(nqp::ishash(%vs), ".vars of $s is-a hash");
+    is(+%vs,         3,  ".vars of $s contains three mappings");
+    for [$v1, $v2, $v3] {
+        is(%vs{$_.name}, $_, ".vars of $s maps \"" ~ $_.name ~ '" to ' ~ $_.Str);
+    }
 
 }
 
