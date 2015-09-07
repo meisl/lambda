@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(65);
+plan(69);
 
 
 { # - class methods -----------------------------------------------------------
@@ -15,17 +15,35 @@ plan(65);
         isa_ok($t, TypeConstraint, |%adverbs, '(' ~ $t.Str ~ ') classification');
     }
 
-    test-classification($_, :isAtom(1), :isSimple(1), :isEq(0)) for [
-        TypeConstraint.True,
-        TypeConstraint.False,
+    my $True  := TypeConstraint.True;
+    my $False := TypeConstraint.False;
+
+    test-classification($_, :isAtom(1), :isSimple(1), :isEq(0), :isAnd(0)) for [
+        $True,
+        $False,
     ];
 
-    test-classification($_, :isAtom(0), :isSimple(1), :isEq(1)) for [
-        TypeConstraint.get(Type.Var, Type.Str),
-        TypeConstraint.get(Type.Var, Type.Sum(Type.Int, Type.Str)),
-        TypeConstraint.get(Type.Var, Type.Cross(Type.Int, Type.Str)),
+    my $eq1 := TypeConstraint.get(Type.Var, Type.Str);
+    my $eq2 := TypeConstraint.get(Type.Var, Type.Sum(Type.Int, Type.Str));
+    my $eq3 := TypeConstraint.get(Type.Var, Type.Cross(Type.Int, Type.Str));
+
+    test-classification($_, :isAtom(0), :isSimple(1), :isEq(1), :isAnd(0)) for [
+        $eq1,
+        $eq2,
+        $eq3,
     ];
 
+    my $and1 := TypeConstraint.And($eq1, $eq2);
+    my $and2 := TypeConstraint.And($eq1, $eq3);
+    my $and3 := TypeConstraint.And($eq2, $eq3);
+    my $and4 := TypeConstraint.And($eq1, $eq2, $eq3);
+
+    test-classification($_, :isAtom(0), :isSimple(0), :isEq(0), :isAnd(1)) for [
+        $and1,
+        $and2,
+        $and3,
+        $and4,
+    ];
 }
 
 

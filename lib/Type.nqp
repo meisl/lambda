@@ -793,7 +793,8 @@ class TypeConstraint is export {
     }
     
     method isSimple() { nqp::istype(self, SimpleConstraint) }
-    method isEq()     { self.isSimple && !self.isAtom }
+    method isEq()     { 0 } # overridden in class EqConstraint
+    method isAnd()    { 0 } # overridden in class AndConstraint
 
     method lhs() { nqp::die('cannot get .lhs of ' ~ self.Str) }
     method rhs() { nqp::die('cannot get .rhs of ' ~ self.Str) }
@@ -812,6 +813,7 @@ class TypeConstraint is export {
         method Str() {
             $!lhs.Str(:outer-parens($!lhs.isCompoundType)) ~ ' = ' ~ $!rhs.Str(:outer-parens($!rhs.isCompoundType));
         }
+        method isEq() { 1 }
     }
 
     my class AndConstraint is TypeConstraint {
@@ -835,6 +837,7 @@ class TypeConstraint is export {
             nqp::how(self).mixin($instance, Listy);
             $instance;
         }
+        method isAnd() { 1 }
     }
 
     sub remove-dupes(@constraints, :&lex-cmp!, :$unit!, :$zero!, :$flatten = NO_VALUE) {
