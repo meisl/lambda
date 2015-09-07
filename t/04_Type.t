@@ -634,5 +634,44 @@ plan(327);
 }
 
 
+{ # - .subst -------------------------------------------------------------------
+    my $Void     := Type.Void;
+    my $DontCare := Type.DontCare;
+    my $Bool     := Type.BOOL;
+    my $Str      := Type.Str;
+    my $Int      := Type.Int;
+    my $Num      := Type.Num;
+    my $Array    := Type.Array;
+
+    my $v1 := Type.Var;
+    my $v2 := Type.Var;
+    my $v3 := Type.Var;
+    my $v4 := Type.Var;
+    my $v5 := Type.Var;
+
+    my %subst := nqp::hash(
+        $v1.name, $v3,
+        $v2.name, $v4,
+        $v3.name, $Str,
+        $v4.name, $Int,
+    );
+    my $ss := '' 
+        ~ $v1.name ~ ' => ' ~ $v3.Str ~ ', '
+        ~ $v2.name ~ ' => ' ~ $v4.Str ~ ', '
+        ~ $v3.name ~ ' => ' ~ $Str.Str ~ ', '
+        ~ $v4.name ~ ' => ' ~ $Int.Str
+    ;
+
+    is($v1.subst(%subst), $v3,  ".subst($ss) on " ~ $v1.Str ~ ' yields ' ~ $v3.Str );
+    is($v2.subst(%subst), $v4,  ".subst($ss) on " ~ $v2.Str ~ ' yields ' ~ $v4.Str );
+    is($v3.subst(%subst), $Str, ".subst($ss) on " ~ $v3.Str ~ ' yields ' ~ $Str.Str);
+    is($v4.subst(%subst), $Int, ".subst($ss) on " ~ $v4.Str ~ ' yields ' ~ $Int.Str);
+    is($v5.subst(%subst), $v5,  ".subst($ss) on " ~ $v5.Str ~ ' yields ' ~ $v5.Str );
+
+    for [$Void, $DontCare, $Bool, $Str, $Int, $Num, $Array] {
+        my $s := $_.Str;
+        is($_.subst(%subst), $_, ".subst($ss) on $s yields $s again");
+    }
+}
 
 done();

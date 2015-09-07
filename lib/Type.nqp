@@ -216,6 +216,19 @@ class Type is export {
         %vs;
     }
 
+    method subst(%s) {
+        if self.isTypeVar {
+            %s{self.name} // self;
+        } elsif self.isCompoundType {
+            nqp::what(self).new(
+                self.head.subst(%s),
+                self.tail.subst(%s)
+            );
+        } else {
+            self;
+        }
+    }
+
     method with-fresh-vars(%subst = {}) { self }
 
     # will be set below (when subclasses are declared)
