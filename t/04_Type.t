@@ -635,6 +635,8 @@ plan(327);
 
 
 { # - .subst -------------------------------------------------------------------
+    my $s;
+
     my $Void     := Type.Void;
     my $DontCare := Type.DontCare;
     my $Bool     := Type.BOOL;
@@ -642,24 +644,31 @@ plan(327);
     my $Int      := Type.Int;
     my $Num      := Type.Num;
     my $Array    := Type.Array;
+    my $cross1   := Type.Cross($Int, $Str);
 
     my $v1 := Type.Var;
     my $v2 := Type.Var;
     my $v3 := Type.Var;
     my $v4 := Type.Var;
     my $v5 := Type.Var;
+    my $v6 := Type.Var;
+    my $v7 := Type.Var;
 
     my %subst := nqp::hash(
         $v1.name, $v3,
         $v2.name, $v4,
         $v3.name, $Str,
         $v4.name, $Int,
+        $v6.name, $cross1,
+        $v7.name, $Void,
     );
     my $ss := '' 
         ~ $v1.name ~ ' => ' ~ $v3.Str ~ ', '
         ~ $v2.name ~ ' => ' ~ $v4.Str ~ ', '
         ~ $v3.name ~ ' => ' ~ $Str.Str ~ ', '
-        ~ $v4.name ~ ' => ' ~ $Int.Str
+        ~ $v4.name ~ ' => ' ~ $Int.Str ~ ', '
+        ~ $v6.name ~ ' => ' ~ $cross1.Str
+        ~ $v7.name ~ ' => ' ~ $Void.Str
     ;
 
     is($v1.subst(%subst), $v3,  ".subst($ss) on " ~ $v1.Str ~ ' yields ' ~ $v3.Str );
@@ -669,8 +678,46 @@ plan(327);
     is($v5.subst(%subst), $v5,  ".subst($ss) on " ~ $v5.Str ~ ' yields ' ~ $v5.Str );
 
     for [$Void, $DontCare, $Bool, $Str, $Int, $Num, $Array] {
-        my $s := $_.Str;
+        $s := $_.Str;
         is($_.subst(%subst), $_, ".subst($ss) on $s yields $s again");
+    }
+
+    {
+        my $fun1 := Type.Fn($cross1, $v2);
+        my $fun2 := Type.Fn($cross1, $v4);
+        my $s1 := $fun1.Str;
+        my $s2 := $fun2.Str;
+        is($fun1.subst(%subst), $fun2, :describe(-> $t {$t.Str}), ".subst($ss) on ($s1) yields ($s2)");
+        
+        my $fun3 := Type.Fn($cross1, $v6);  # %subst maps $v6 to a Cross type...
+        my $s3 := $fun3.Str;
+        my $out;
+        dies_ok({ $out := $fun3.subst(%subst) }, "check for non-Cross type in result position still working: .subst($ss) on ($s3)")
+            || diag($out.Str);
+    }
+
+    {
+        my $sum1 := Type.Sum($Int, $v1, $Str);
+        my $sum2 := Type.Sum($Int, $v3, $Str);
+        my $sum3 := Type.Sum($Int,      $Str);
+        my $s1 := $sum1.Str;
+        my $s2 := $sum2.Str;
+        my $s3 := $sum3.Str;
+        is($sum1.subst(%subst), $sum2, :describe(-> $t {$t.Str}), ".subst($ss) on ($s1) yields ($s2)");
+        is($sum2.subst(%subst), $sum3, :describe(-> $t {$t.Str}), ".subst($ss) on ($s2) yields ($s3) - duplicate removal still at work!");
+    }
+
+    {
+        my $cross2 := Type.Cross($v6, $Str);    # %subst maps $v6 to another Cross type...
+        $s := $cross2.Str;
+        my $out;
+        dies_ok({ $out := $cross2.subst(%subst) }, 'check for non-Cross types inside cross still working:  .subst($ss) on ($s)')
+            || diag($out.Str);
+        
+        my $cross3 := Type.Cross($v7, $Str);    # %subst maps $v7 to Void...
+        $s := $cross3.Str;
+        dies_ok({ $out := $cross3.subst(%subst) }, 'check for non-Void types inside cross still working:  .subst($ss) on ($s)')
+            || diag($out.Str);
     }
 }
 

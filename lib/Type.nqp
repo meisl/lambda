@@ -220,10 +220,17 @@ class Type is export {
         if self.isTypeVar {
             %s{self.name} // self;
         } elsif self.isCompoundType {
-            nqp::what(self).new(
-                self.head.subst(%s),
-                self.tail.subst(%s)
-            );
+            my $head := self.head.subst(%s);
+            my $tail := self.tail.subst(%s);
+            if self.isFnType {
+                Type.Fn($head, $tail);
+            } elsif self.isSumType {
+                Type.Sum($head, $tail);
+            } elsif self.isCrossType {
+                Type.Cross($head, $tail);
+            } else {
+                nqp::die('cannot subst in compound type: ' ~ self.Str);
+            }
         } else {
             self;
         }
@@ -645,17 +652,30 @@ class Type is export {
                         #Type.Fn($Bool,              $Bool),
                         #Type.Fn($Array,             $Bool), # <<<< True
                         #Type.Fn(Type.Fn($v0, $v1),  $Bool),
+                        
+                        #Type.Fn(
+                        #    Type.Sum(
+                        #        $Str,
+                        #        $Int,
+                        #        $Num,
+                        #        $Bool,
+                        #        Type.Fn($v0, $v1),
+                        #    ),
+                        #    $Bool
+                        #),
+                        #Type.Fn($Array, $Bool), # <<<< True
+
                         Type.Fn(
                             Type.Sum(
                                 $Str,
                                 $Int,
                                 $Num,
                                 $Bool,
+                                $Array,     # <<<< True
                                 Type.Fn($v0, $v1),
                             ),
                             $Bool
                         ),
-                        Type.Fn($Array, $Bool), # <<<< True
                     ),
         'isinvokable',  Type.Sum(
                         #Type.Fn($Str,               $Bool),
@@ -665,6 +685,18 @@ class Type is export {
                         #Type.Fn($Array,             $Bool),
                         #Type.Fn(Type.Fn($v0, $v1),  $Bool), # <<<< True
                         
+                        #Type.Fn(
+                        #    Type.Sum(
+                        #        $Str,
+                        #        $Int,
+                        #        $Num,
+                        #        $Bool,
+                        #        $Array,
+                        #    ),
+                        #    $Bool
+                        #),
+                        #Type.Fn(Type.Fn($v0, $v1), $Bool), # <<<< True
+
                         Type.Fn(
                             Type.Sum(
                                 $Str,
@@ -672,10 +704,10 @@ class Type is export {
                                 $Num,
                                 $Bool,
                                 $Array,
+                                Type.Fn($v0, $v1),     # <<<< True
                             ),
                             $Bool
                         ),
-                        Type.Fn(Type.Fn($v0, $v1), $Bool), # <<<< True
                     ),
     );
     
