@@ -773,9 +773,8 @@ class Type is export {
         if ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
             $out := TypeConstraint.True;
         } else {
-            $out := TypeConstraint.False;
             if $t1.isSimpleType {
-                if $t2.isTypeVar {
+                if $t2.isTypeVar || $t2.isSumType {
                     $out := self.constrain($t2, $t1, :$at, :&onError);
                 }
             } elsif $t1.isTypeVar {
@@ -787,16 +786,19 @@ class Type is export {
                             self.constrain($t1.in,  $t2.in,  :$at, :&onError),   # TODO: variance
                             self.constrain($t1.out, $t2.out, :$at, :&onError),   # TODO: variance
                         );
-                    } elsif $t2.isTypeVar {
-                        $out := constrain-eq($t2, $t1)
-                    } elsif $t2.isSumType {
-                        $out := $t2.foldl(
-                            -> $acc, $t { TypeConstraint.Or($acc, self.constrain($t1, $t, :onError(&ignore))) },
-                            TypeConstraint.False
-                        );
+                    } elsif $t2.isTypeVar || $t2.isSumType {
+                        $out := self.constrain($t2, $t1, :$at, :&onError);
                     }
                 } elsif $t1.isSumType {
-                    if $t2.isSumType {
+                    if $t2.isSimpleType || $t2.isFnType {
+                        $out := $t1.foldl(
+                            -> $acc, $t { TypeConstraint.Or($acc, self.constrain($t2, $t, :onError(&ignore))) },
+                            TypeConstraint.False
+                        );
+                    } elsif $t2.isTypeVar {
+                        $out := constrain-eq($t2, $t1);
+                        # TODO: see if it collapse to True
+                    } elsif $t2.isSumType {
                         nqp::die("NYI: Sum / Sum");
                     } else {
                         $out := self.constrain($t2, $t1, :$at, :&onError);
@@ -855,7 +857,21 @@ class TypeConstraint is export {
         }
         %vs;
     }
-    
+
+    method subst(%s) {
+        my $out;
+        if self.isAtom {
+            $out := self;   # nothing to substitute
+        } elsif self.isEq {
+            $out := TypeConstraint.get(
+                self.lhs.subst(%s),
+                self.rhs.subst(%s)
+            );
+        } else {
+            nqp::die('NYI: .subst on ' ~ self.Str);
+        }
+        $out;
+    }
 
     my class Atom is SimpleConstraint {
         method Str()       { 'TypeConstraint.' ~ (self.isTrue ?? 'True' !! 'False') }
