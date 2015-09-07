@@ -455,10 +455,9 @@ class Type is export {
             @types.push($_.value)
                 for %types;
             Type.sort(@types);
-            my $it := nqp::iterator(@types);
-            my $out := nqp::shift($it);
-            while $it {
-                $out := Sum.new($out, nqp::shift($it));
+            my $out := @types.pop;
+            while @types {
+                $out := Sum.new(@types.pop, $out);
             }
             $out;
         }
@@ -476,10 +475,9 @@ class Type is export {
         } elsif $n == 1 {
             @types[0];
         } else {
-            my $it := nqp::iterator(@types);
-            my $out := nqp::shift($it);
-            while $it {
-                $out := Cross.new($out, nqp::shift($it));
+            my $out := @types.pop;
+            while @types {
+                $out := Cross.new(@types.pop, $out);
             }
             $out;
         }
