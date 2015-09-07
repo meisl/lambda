@@ -205,7 +205,8 @@ class Type is export {
         #    }
         #});
     }
-    
+
+    method with-fresh-vars(%subst = {}) { self }
 
     # will be set below (when subclasses are declared)
     my $Void;
@@ -318,6 +319,14 @@ class Type is export {
             %type-vars{$str} := $instance;
             $instance;
         }
+        method with-fresh-vars(%subst = {}) {
+            my $out := %subst{$!id};
+            unless $out {
+                $out := self.new;
+                %subst{$!id} := $out;
+            }
+            $out;
+        }
     }
 
     # compound types (abstract class)
@@ -348,6 +357,12 @@ class Type is export {
             $acc := &f($acc, $tl);
         }
         
+        method with-fresh-vars(%subst = {}) {
+            my $head := self.head.with-fresh-vars(%subst);
+            my $tail := self.tail.with-fresh-vars(%subst);
+            nqp::what(self).new($head, $tail);
+        }
+
     }
 
     # function types
@@ -373,16 +388,11 @@ class Type is export {
     # sum types
 
     my class Sum is CompoundType {
-        method new(@disjuncts) {
-            my $str := join(' + ', @disjuncts, :map(-> $t { $t.Str(:outer-parens($t.isFnType)) }));
+        method new($head, $tail) {
+            my $str := join(' + ', [$head, $tail], :map(-> $t { $t.Str(:outer-parens($t.isFnType)) }));
             my $instance := %sum-types{$str};
             unless $instance {
-                my int $elems := +@disjuncts;
-                my $head := @disjuncts.shift;
-                my $tail := $elems == 2
-                    ?? @disjuncts[0]
-                    !! self.new(@disjuncts);
-                
+                my int $elems := 1 + ($tail.isSumType ?? $tail.elems !! 1);
                 $instance := create(self, :$str, :$head, :$tail, :$elems);
                 %sum-types{$str} := $instance;
             }
@@ -394,16 +404,11 @@ class Type is export {
     # cross types (to model NQP's positional args)
 
     my class Cross is CompoundType {
-        method new(@conjuncts) {
-            my $str := join(' × ', @conjuncts, :map(-> $t { $t.Str(:outer-parens($t.isFnType || $t.isSumType)) }));
+        method new($head, $tail) {
+            my $str := join(' × ', [$head, $tail], :map(-> $t { $t.Str(:outer-parens($t.isFnType || $t.isSumType)) }));
             my $instance := %cross-types{$str};
             unless $instance {
-                my int $elems := +@conjuncts;
-                my $head := @conjuncts.shift;
-                my $tail := $elems == 2
-                    ?? @conjuncts[0]
-                    !! self.new(@conjuncts);
-                
+                my int $elems := 1 + ($tail.isCrossType ?? $tail.elems !! 1);
                 $instance := create(self, :$str, :$head, :$tail, :$elems);
                 %cross-types{$str} := $instance;
             }
@@ -449,7 +454,12 @@ class Type is export {
             @types := [];
             @types.push($_.value)
                 for %types;
-            my $out := Sum.new(Type.sort(@types));
+            Type.sort(@types);
+            my $it := nqp::iterator(@types);
+            my $out := nqp::shift($it);
+            while $it {
+                $out := Sum.new($out, nqp::shift($it));
+            }
             $out;
         }
     }
@@ -466,7 +476,12 @@ class Type is export {
         } elsif $n == 1 {
             @types[0];
         } else {
-            Cross.new(@types);
+            my $it := nqp::iterator(@types);
+            my $out := nqp::shift($it);
+            while $it {
+                $out := Cross.new($out, nqp::shift($it));
+            }
+            $out;
         }
     }
 
@@ -543,9 +558,8 @@ class Type is export {
         insertion-sort(&lex-cmp, @types);
     }
 
-    my $tThen := Type.Var;
-    my $tElse := Type.Var;
-    my $tPost := Type.Var;
+    my $v0 := Type.Var;
+    my $v1 := Type.Var;
     my %op-types := nqp::hash(
         # special (not listed here, but explicitly handled by typecheck)
         #'bind' # how to type the var argument?
@@ -556,7 +570,7 @@ class Type is export {
         # die
         'die',      Type.Fn(Type.Cross($Str            ),               $Void   ),
         # str
-        'isstr',    Type.Fn(Type.Cross(Type.Var        ),               $Bool   ),
+        'isstr',    Type.Fn(Type.Cross($v0             ),               $Bool   ),
         'iseq_s',   Type.Fn(Type.Cross($Str,   $Str    ),               $Bool   ),
         'chars',    Type.Fn(Type.Cross($Str            ),               $Int    ),
         'chr',      Type.Fn(Type.Cross($Int            ),               $Str    ),
@@ -590,27 +604,68 @@ class Type is export {
         'not_i',    Type.Fn(Type.Cross($Int            ),               $Int    ),
         # list/hash
         'elems',    Type.Fn(Type.Cross($Array          ),               $Int    ),
-        'atpos',    Type.Fn(Type.Cross($Array, $Int    ),               Type.Var),
-        'push',     Type.Fn(Type.Cross($Array, Type.Var),               $Void   ),
+        'atpos',    Type.Fn(Type.Cross($Array, $Int    ),               $v0     ),
+        'push',     Type.Fn(Type.Cross($Array, $v0     ),               $Void   ),
         # if:
         'if',       Type.Sum(
-                        Type.Fn(Type.Cross($Bool, $tThen),              Type.Sum($tThen, $Bool )),
-                        Type.Fn(Type.Cross($Bool, $tThen, $tElse),      Type.Sum($tThen, $tElse)),
+                        Type.Fn(Type.Cross($Bool, $v0  ),               Type.Sum($v0, $Bool)),
+                        Type.Fn(Type.Cross($Bool, $v0, $v1),            Type.Sum($v0, $v1  )),
                     ),
         'while',    Type.Sum(
-                        Type.Fn(Type.Cross($Bool, Type.Var),            $Bool),
-                        Type.Fn(Type.Cross($Bool, Type.Var, $tPost),    $tPost),
+                        Type.Fn(Type.Cross($Bool, $v0),                 $Bool),
+                        Type.Fn(Type.Cross($Bool, $v0, $v1),            $v1),
                     ),
                   # 
-        'islist',   Type.Fn(Type.Cross(Type.Var),                       $Bool),
-        'isinvokable',  Type.Fn(Type.Cross(Type.Var),                   $Bool),
+        'islist',   Type.Sum(
+                        #Type.Fn($Str,               $Bool),
+                        #Type.Fn($Int,               $Bool),
+                        #Type.Fn($Num,               $Bool),
+                        #Type.Fn($Bool,              $Bool),
+                        #Type.Fn($Array,             $Bool), # <<<< True
+                        #Type.Fn(Type.Fn($v0, $v1),  $Bool),
+                        Type.Fn(
+                            Type.Sum(
+                                $Str,
+                                $Int,
+                                $Num,
+                                $Bool,
+                                Type.Fn($v0, $v1),
+                            ),
+                            $Bool
+                        ),
+                        Type.Fn($Array, $Bool), # <<<< True
+                    ),
+        'isinvokable',  Type.Sum(
+                        #Type.Fn($Str,               $Bool),
+                        #Type.Fn($Int,               $Bool),
+                        #Type.Fn($Num,               $Bool),
+                        #Type.Fn($Bool,              $Bool),
+                        #Type.Fn($Array,             $Bool),
+                        #Type.Fn(Type.Fn($v0, $v1),  $Bool), # <<<< True
+                        
+                        Type.Fn(
+                            Type.Sum(
+                                $Str,
+                                $Int,
+                                $Num,
+                                $Bool,
+                                $Array,
+                            ),
+                            $Bool
+                        ),
+                        Type.Fn(Type.Fn($v0, $v1), $Bool), # <<<< True
+                    ),
     );
     
     method ofOp($op) {
         unless nqp::isstr($op) {
             nqp::die('expected a str - got ' ~ describe($op));
         }
-        %op-types{$op};
+        my $out := %op-types{$op};
+        if $out {
+            $out := $out.with-fresh-vars;
+        }
+        $out;
     }
     
     
@@ -830,8 +885,12 @@ class TypeConstraint is export {
             if $c2.isSimple {
                 1;
             } elsif nqp::istype($c2, AndConstraint) {
-                #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                nqp::die('NYI');
+                my $heads := lex-cmp($c1.head, $c2.head);
+                if $heads == 0 {
+                    lex-cmp($c1.tail, $c2.tail);
+                } else {
+                    $heads;
+                }
             } else {
                 -1;
             }
@@ -868,8 +927,8 @@ class TypeConstraint is export {
         if +@disjuncts == 1 {
             @disjuncts[0];
         } else {
-            nqp::die('NYI');
-            #OrConstraint.new(@conjuncts);
+            nqp::die('NYI: ' ~ join('   +   ', @disjuncts, :map(-> $d { $d.Str })));
+            #OrConstraint.new(@disjuncts);
         }
     }
 
@@ -930,17 +989,22 @@ sub MAIN(*@ARGS) {
     my $t12 := Type.Var;
     my $t13 := Type.Var;
     my $t14 := Type.Var;
-    my $f := Type.Fn(Type.Cross(Type.BOOL, Type.Int), $t14);
-    my $g := Type.ofOp('if');
-    #my $g := Type.Sum(
-    #    Type.Fn(Type.Cross(Type.BOOL, $t12), Type.Sum(Type.BOOL, $t12)),
-    #    #Type.Str,
-    #    Type.Fn(Type.Cross(Type.BOOL, $t12, $t13), Type.Sum($t12, $t13)),
-    #    #Type.Fn(Type.Cross(Type.BOOL, $t12, $t13), Type.Sum(Type.Str, $t13)),
-    #);
+    my $f := Type.Fn(Type.Cross(Type.BOOL, Type.Int, Type.Str), $t14);
+    my $g := Type.Sum(
+        Type.Fn(Type.Cross(Type.BOOL, $t12), Type.Sum(Type.BOOL, $t12)),
+        Type.Fn(Type.Cross(Type.BOOL, $t12, $t13), Type.Sum($t12, $t13)),
+    );
+    $g := Type.ofOp('if');
+    my $g1 := $g.with-fresh-vars;
+    say('f ::' ~ $f.Str);
+    say('g ::' ~ $g.Str  ~ ' / ' ~ $g.head.elems);
+    say('g1::' ~ $g1.Str ~ ' / ' ~ $g1.head.elems);
     my $c5 := Type.constrain($f, $g);
     say($c5.Str);
-
-    my $c6 := TypeConstraint.And($c5, $c4);
+    my $c6 := Type.constrain($f, $g1);
     say($c6.Str);
+
+    say('------------');
+    my $c7 := TypeConstraint.And($c5, $c4);
+    say($c7.Str);
 }

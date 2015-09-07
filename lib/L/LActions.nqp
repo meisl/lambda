@@ -689,12 +689,12 @@ class LActions is HLL::Actions {
         );
 
         my $dummy-block := QAST::Block.new;
-        try {
+        #try {
             self.typecheck($top-block, $dummy-block);              # <<<<<<<<< TODO
-            CATCH {
-                say(~$!);
-            }
-        }
+        #    CATCH {
+        #        say(~$!);
+        #    }
+        #}
 
 
         #my $mainTermType;

@@ -11,7 +11,7 @@ plan(354);
 }
 
 
-{ # - classifiaction -----------------------------------------------------------
+{ # - classification -----------------------------------------------------------
     my sub test-classification($t, *%adverbs) {
         isa_ok($t, Type, |%adverbs, $t.Str(:outer-parens) ~ ' classification');
     }
