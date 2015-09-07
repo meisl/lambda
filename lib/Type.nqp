@@ -220,14 +220,16 @@ class Type is export {
         if self.isTypeVar {
             %s{self.name} // self;
         } elsif self.isCompoundType {
-            my $head := self.head.subst(%s);
-            my $tail := self.tail.subst(%s);
+            my @components := self.foldl(
+                -> @acc, $t { @acc.push($t.subst(%s)); @acc; },
+                []
+            );
             if self.isFnType {
-                Type.Fn($head, $tail);
+                Type.Fn(|@components);
             } elsif self.isSumType {
-                Type.Sum($head, $tail);
+                Type.Sum(|@components);
             } elsif self.isCrossType {
-                Type.Cross($head, $tail);
+                Type.Cross(|@components);
             } else {
                 nqp::die('cannot subst in compound type: ' ~ self.Str);
             }
@@ -236,7 +238,18 @@ class Type is export {
         }
     }
 
-    method with-fresh-vars(%subst = {}) { self }
+    method with-fresh-vars() {
+        my %vars := self.vars;
+        if +%vars {
+            my %subst := {};
+            for %vars {
+                %subst{$_.key} := Type.Var;
+            }
+            self.subst(%subst);
+        } else {
+            self;
+        }
+    }
 
     # will be set below (when subclasses are declared)
     my $Void;
@@ -349,14 +362,6 @@ class Type is export {
             %type-vars{$str} := $instance;
             $instance;
         }
-        method with-fresh-vars(%subst = {}) {
-            my $out := %subst{$!id};
-            unless $out {
-                $out := self.new;
-                %subst{$!id} := $out;
-            }
-            $out;
-        }
     }
     
 
@@ -386,12 +391,6 @@ class Type is export {
                 $tl := $tl.tail;
             }
             $acc := &f($acc, $tl);
-        }
-        
-        method with-fresh-vars(%subst = {}) {
-            my $head := self.head.with-fresh-vars(%subst);
-            my $tail := self.tail.with-fresh-vars(%subst);
-            nqp::what(self).new($head, $tail);
         }
 
     }

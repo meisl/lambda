@@ -3,7 +3,7 @@ use Util;
 
 use Type;
 
-plan(327);
+plan(345);
 
 
 { # - class methods -----------------------------------------------------------
@@ -644,7 +644,7 @@ plan(327);
     my $Int      := Type.Int;
     my $Num      := Type.Num;
     my $Array    := Type.Array;
-    my $cross1   := Type.Cross($Int, $Str);
+    my $cross1   := Type.Cross($Int, $Str, $Bool);  # should be larger than just 2
 
     my $v1 := Type.Var;
     my $v2 := Type.Var;
@@ -708,7 +708,7 @@ plan(327);
     }
 
     {
-        my $cross2 := Type.Cross($v6, $Str);    # %subst maps $v6 to another Cross type...
+        my $cross2 := Type.Cross($v6, $Str, $Bool);    # %subst maps $v6 to another Cross type...
         $s := $cross2.Str;
         my $out;
         dies_ok({ $out := $cross2.subst(%subst) }, 'check for non-Cross types inside cross still working:  .subst($ss) on ($s)')
