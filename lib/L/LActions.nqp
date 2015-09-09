@@ -907,8 +907,8 @@ class LActions is HLL::Actions {
                 if $n.op eq 'bind' {
                     my $var := $n[0];
                     my $val := $n[1];
-                    my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks, :@constraints);
                     my $tVar := self.typecheck($var, $currentBlock, |@moreBlocks, :@constraints);
+                    my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks, :@constraints);
                     
                     if $var.decl {  # in that case $tVar is a fresh Type.Var which we can easily eliminate right here:
                         $tVal.set($var);    # simply use the value's type for the var directly
