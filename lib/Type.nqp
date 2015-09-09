@@ -372,6 +372,17 @@ class Type is export {
         has Type $!tail;    method tail()  { $!tail  }
         has int  $!elems;   method elems() { $!elems }
 
+        method foreach(&f) {
+            my $acc := &f(self.head);
+            my $tl := self.tail;
+            my $myClass := nqp::what(self);
+            while nqp::istype($tl, $myClass) {
+                &f($tl.head);
+                $tl := $tl.tail;
+            }
+            &f($tl);
+        }
+
         method foldl(&f, $start) {
             my $acc := &f($start, self.head);
             my $tl := self.tail;

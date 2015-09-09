@@ -966,10 +966,26 @@ class LActions is HLL::Actions {
                                 @constraints.push($c);
                                 say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
                             } elsif $tOp.isSumType {
-                                $tOut := Type.Var;
-                                my $c := Type.constrain(:at($n), Type.Fn($tArgs, $tOut), $tOp);
-                                @constraints.push($c);
-                                say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
+                                my @cs    := [];
+                                my @tOuts := [];
+                                $tOp.foreach(-> $t {
+                                    if $t.isFnType {
+                                        my $c := Type.constrain(:at($n), $tArgs, $t.in, :onError(-> *@ps, *%ns {}));
+                                        unless $c.isFalse {
+                                            @cs.push($c);
+                                            @tOuts.push($t.out);
+                                        }
+                                    }
+                                });
+                                if +@cs == 1 {
+                                    unless @cs[0].isTrue {
+                                        @constraints.push(@cs[0]);
+                                        say('>>Type-constraint: ', @cs[0].Str);
+                                    }
+                                    $tOut := @tOuts[0];
+                                } else {
+                                    Type.error(:at($n), $tArgs, ' <> ', $tOp)
+                                }
                             } else {
                                 Type.error(:at($n), 'cannot apply Op ', $n.op, ' ::', $tOp, '  to  ', $tArgs);
                             }
