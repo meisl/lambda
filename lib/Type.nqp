@@ -646,12 +646,12 @@ class Type is export {
         'push',     Type.Fn(Type.Cross($Array, $v0     ),               $Void   ),
         # if:
         'if',       Type.Sum(
-                        Type.Fn(Type.Cross($Bool, $v0  ),               Type.Sum($v0, $Bool)),
-                        Type.Fn(Type.Cross($Bool, $v0, $v1),            Type.Sum($v0, $v1  )),
+                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $v0  ),               Type.Sum($v0, $Bool)),
+                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $v0, $v1),            Type.Sum($v0, $v1  )),
                     ),
         'while',    Type.Sum(
-                        Type.Fn(Type.Cross($Bool, $v0),                 $Bool),
-                        Type.Fn(Type.Cross($Bool, $v0, $v1),            $v1),
+                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $v0),                 $Bool),
+                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $v0, $v1),            $v1),   # the variant with a post block
                     ),
                   # 
         'islist',   Type.Sum(
