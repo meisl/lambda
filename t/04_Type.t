@@ -399,7 +399,8 @@ plan(345);
     @types := [$var3, $sum1, $cross1, $array, $num, $_, $cross2, $sum2, $str, $fun1, $bool, $void, $int, $fun2, $var1];
     my $msg := 'Type.sort([' ~ join(', ', @types, :&map) ~ '])';
     is(join(', ', Type.sort(@types),  :&map),
-       join(', ', Type.sort([$void, $_, $bool, $int, $num, $str, $array, $var1, $var3, $fun1, $fun2, $sum1, $sum2, $cross1, $cross2]),  :&map),
+       join(', ', [$void, $_, $bool, $int, $num, $str, $array, $var1, $var3, $fun1, $fun2, $sum1, $sum2, $cross1, $cross2],  :&map),
+        :describe(-> $_ { ~$_ }),   # suppress shortening of string by standard describe
         $msg);
 
 }

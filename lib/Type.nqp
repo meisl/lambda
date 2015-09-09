@@ -541,18 +541,28 @@ class Type is export {
         }
     }
 
-    my %type-lexorder := nqp::hash(
-        howName($Void    ),  0,
-        howName($DontCare),  1,
-        howName($Bool    ),  2,
-        howName($Int     ),  3,
-        howName($Num     ),  4,
-        howName($Str     ),  5,
-        howName($Array   ),  6,
-        howName(Var      ),  7,
-        howName(Fn       ),  8,
-        howName(Sum      ),  9,
-        howName(Cross    ), 10,
+    sub foldl(@xs, &f, $acc) {
+        $acc := &f($acc, $_)
+            for @xs;
+        $acc;
+    }
+    
+
+    my %type-lexorder := foldl([
+            $Void,
+            $DontCare,
+            $Bool,
+            $Int,
+            $Num,
+            $Str,
+            $Array,
+            Var,
+            Fn,
+            Sum,
+            Cross,
+        ],
+        -> %acc, $t { %acc{howName($t)} := +%acc; %acc; }, # map howName to index in above array
+        nqp::hash() # start with empty hash
     );
 
     sub lex-cmp($t1, $t2) {
