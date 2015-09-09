@@ -524,14 +524,20 @@ my sub make-runtime() {
     $tv := Type.Var;
     mkRFn('&delayMemo', <x>, 
         #:returns(Type.Fn(Type.Fn(Type.Void, $tv), Type.Void, $tv)),
-        :wasRun(0), :result(nqp::null), 
-    -> $x, $wasRun, $result {
+        #:wasRun(0), :result(nqp::null), 
+    -> $x {
+        my $wasRun := lexVar('wasRun');
+        my $result := lexVar('result');
+        
+        mkBind(mkDeclV($wasRun),       asNode(0)),
+        mkDeclV($result),
         QAST::Block.new(:arity(0),
+
             QAST::Op.new(:op<if>, $wasRun,
                 $result,
                 QAST::Stmts.new(
-                    mkBind($wasRun, 1),
-                    mkBind($result, mkCall($x))
+                    mkBind(nqp::clone($wasRun), 1),
+                    mkBind(nqp::clone($result), mkCall($x))
                 )
             )
         )
