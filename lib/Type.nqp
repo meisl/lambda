@@ -644,6 +644,12 @@ class Type is export {
         'elems',    Type.Fn(Type.Cross($Array          ),               $Int    ),
         'atpos',    Type.Fn(Type.Cross($Array, $Int    ),               $v0     ),
         'push',     Type.Fn(Type.Cross($Array, $v0     ),               $Void   ),
+        'say',      Type.Sum(
+                        Type.Fn($Str,   $Str),
+                        Type.Fn($Int,   $Int),
+                        Type.Fn($Num,   $Num),
+                        Type.Fn($Bool,  $Bool),
+                    ),
         # if:
         'if',       Type.Sum(
                         Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $v0  ),               Type.Sum($v0, $Bool)),
@@ -654,6 +660,23 @@ class Type is export {
                         Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $v0, $v1),            $v1),   # the variant with a post block
                     ),
                   # 
+        'for',      Type.Sum(
+                        Type.Fn(Type.Cross($Array, Type.Fn($v0, $v1)),                  $Bool),
+                        Type.Fn(Type.Cross($Array, Type.Fn($v0, $v1), $Int),            $Bool),
+                    ),
+        'isint',    Type.Sum(
+                        Type.Fn(
+                            Type.Sum(
+                                $Str,
+                                $Int,     # <<<< True
+                                $Num,
+                                $Bool,
+                                $Array,
+                                Type.Fn($v0, $v1),
+                            ),
+                            $Bool
+                        ),
+                    ),
         'islist',   Type.Sum(
                         #Type.Fn($Str,               $Bool),
                         #Type.Fn($Int,               $Bool),
@@ -718,6 +741,7 @@ class Type is export {
                             $Bool
                         ),
                     ),
+        'reprname', Type.Fn(Type.Cross($v0),               $Str   ),
     );
     
     method ofOp($op) {
