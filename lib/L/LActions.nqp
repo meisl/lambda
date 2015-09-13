@@ -246,7 +246,11 @@ my sub mkConcat(*@args) {
             $current := $_;
         }
     }
-    @compressed.push(mkForce($current));
+    if $current.returns =:= str {
+        @compressed.push($current);
+    } else {
+        @compressed.push(mkForce($current));
+    }
 
     my $n := nqp::elems(@compressed);
     if $n > 1 {
@@ -303,7 +307,7 @@ my sub make-runtime() {
         #}
         
         my $body := QAST::Block.new(:name($name), :arity(nqp::elems($paramNames)));
-        my @vars := [];
+        my @vars  := [];
         my $i := 0;
         for $paramNames {
             my $var  := lexVar($_);         #$var.returns(@paramTypes[$i]);
@@ -323,13 +327,19 @@ my sub make-runtime() {
             @vars.push($var);
         }
         my $stmts := $cb(|@vars);
+        my $tBody;
         if nqp::islist($stmts) {
-            for $stmts { $body.push($_) }
+            for $stmts {
+                $body.push($_);
+                $tBody := Type.of($_);
+            }
         } else {
             $body.push($stmts);
+            $tBody := Type.of($stmts);
         }
-        #$body.returns($returns);
-        %runtime-fns-types{$name} := $returns;
+        if $tBody {
+            $tBody.set($body);
+        }
         my $binding := mkBind(lexVar($name, :decl<static>), $body);
         $block.push($binding);
 
@@ -387,11 +397,30 @@ my sub make-runtime() {
         #:returns(Type.Fn(Type.Fn(Type.Void, $tv), $tv)),
         :foo<bar>,  # prevent it from being inlined
     -> $x, $foo {
-        QAST::Op.new(:op<if>,
+        my $out := QAST::Op.new(:op<if>,
             QAST::Op.new(:op<isinvokable>, $x),
             mkCall($x),
             $x
-        )
+        );
+        my $tv := Type.Var;
+        my $tf := Type.Fn(Type.Void, $tv);
+        Type.Sum(
+            Type.BOOL,
+            Type.Int,
+            Type.Num,
+            Type.Str,
+            Type.Array,
+            $tf,
+        ).set($x);
+        Type.Sum(
+            Type.Fn(Type.BOOL, Type.BOOL),
+            Type.Fn(Type.Int, Type.Int),
+            Type.Fn(Type.Num, Type.Num),
+            Type.Fn(Type.Str, Type.Str),
+            Type.Fn(Type.Array, Type.Array),
+            Type.Fn($tf, $tv),
+        ).set($out);
+        $out;
     });
 
     mkRFn('&ifTag', <subject tag then else>, 
@@ -417,16 +446,18 @@ my sub make-runtime() {
                             )
                         )
                     ),
-                    mkForce($else)  # different tag
+                    mkCall($else)  # different tag
                 ),
             ),
-            mkForce($else)  # subject not a list
+            mkCall($else)  # subject not a list
         )
     });
     
     mkRFn('&->#n', <subject tag index>, 
         #:returns(Type.Fn(NQPMu, Type.Str, Type.Int, NQPMu)),
     -> $subject, $tag, $index {
+        my $tagStr := cloneAndSubst($tag);
+        $tagStr.returns(str);
         mkRCall('&ifTag', $subject, $tag,
             QAST::Block.new(:arity(1),
                 lexVar('_', :decl<param>),
@@ -434,7 +465,7 @@ my sub make-runtime() {
             ),
             QAST::Block.new(:arity(0),
                 mkDie(
-                    mkConcat('no such tag: ', cloneAndSubst($tag))
+                    mkConcat('no such tag: ', $tagStr)
                 )
             )
         )
@@ -793,12 +824,16 @@ class LActions is HLL::Actions {
                     }
                 }
             });
-            if +@cs == 1 {
-                $tOut := @tOuts[0];
-                $c := @cs[0];
-            } elsif +@cs > 1 {
-                Type.error(:$at, 'cannot apply ', $callee, ' ::', $tCallee, '  to  ', $tArgs, ' - ambiguous');
+            if @cs {
+                $tOut := Type.Sum(|@tOuts);
+                $c := TypeConstraint.Or(|@cs);
             }
+            #if +@cs == 1 {
+            #    $tOut := @tOuts[0];
+            #    $c := @cs[0];
+            #} elsif +@cs > 1 {
+            #    Type.error(:$at, 'cannot apply ', $callee, ' ::', $tCallee, '  to  ', $tArgs, ' - ambiguous: ' ~ TypeConstraint.Or(|@cs));
+            #}
         } elsif $tCallee.isTypeVar {
             $tOut := Type.Var;
             $c := Type.constrain(:$at, $tCallee, Type.Fn($tArgs, $tOut));

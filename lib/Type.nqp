@@ -929,7 +929,7 @@ class TypeConstraint is export {
                 unless nqp::existskey($rhs.vars, $lhs.name) {
                     @out := [nqp::hash($lhs.name, $rhs)];
                 }
-            } elsif $lhs.isFnType {
+            } else {
                 @out := Type.constrain($lhs, $rhs).unify;
             }
         } elsif self.isAnd {
