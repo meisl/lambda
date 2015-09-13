@@ -422,6 +422,28 @@ my sub make-runtime() {
         ).set($out);
         $out;
     });
+    
+    $tv := Type.Var;
+    mkRFn('&delayMemo', <x>, 
+        #:returns(Type.Fn(Type.Fn(Type.Void, $tv), Type.Void, $tv)),
+        #:wasRun(0), :result(nqp::null), 
+    -> $x {
+        my $wasRun := lexVar('wasRun');
+        my $result := lexVar('result');
+        
+        mkBind(mkDeclV($wasRun),       asNode(0)),
+        mkDeclV($result),
+        QAST::Block.new(:arity(0),
+
+            QAST::Op.new(:op<if>, $wasRun,
+                $result,
+                QAST::Stmts.new(
+                    mkBind(nqp::clone($wasRun), 1),
+                    mkBind(nqp::clone($result), mkCall($x))
+                )
+            )
+        )
+    });
 
     mkRFn('&ifTag', <subject tag then else>, 
         #:returns(Type.Fn(NQPMu, Type.Str, NQPMu, NQPMu, NQPMu)), 
@@ -547,28 +569,6 @@ my sub make-runtime() {
                     QAST::Op.new(:op<isint>, $v),
                     $v,
                     mkDelaySimple(QAST::Op.new(:op<reprname>, $v))
-                )
-            )
-        )
-    });
-    
-    $tv := Type.Var;
-    mkRFn('&delayMemo', <x>, 
-        #:returns(Type.Fn(Type.Fn(Type.Void, $tv), Type.Void, $tv)),
-        #:wasRun(0), :result(nqp::null), 
-    -> $x {
-        my $wasRun := lexVar('wasRun');
-        my $result := lexVar('result');
-        
-        mkBind(mkDeclV($wasRun),       asNode(0)),
-        mkDeclV($result),
-        QAST::Block.new(:arity(0),
-
-            QAST::Op.new(:op<if>, $wasRun,
-                $result,
-                QAST::Stmts.new(
-                    mkBind(nqp::clone($wasRun), 1),
-                    mkBind(nqp::clone($result), mkCall($x))
                 )
             )
         )
@@ -803,6 +803,20 @@ class LActions is HLL::Actions {
         %out;
     }
 
+    sub typesubst($n, @substitutions) {
+        TreeWalk.dfs-up(
+            -> $n, @p {
+                my $type := Type.of($n);
+                TreeWalkDo.recurse(:take($type && $type.vars));
+            },
+            -> $n, @p {
+                Type.of($n).subst($_).set($n)
+                    for @substitutions;
+            },
+            $n
+        );
+    }
+
     sub typecheck-application($tCallee, @tArgs, :@constraints!, :$at!, :$callee) {
         Type.insist-isValid($tCallee);
         my $tArgs := Type.Cross(|@tArgs);
@@ -949,15 +963,12 @@ class LActions is HLL::Actions {
                 }
                 my $c := TypeConstraint.And(|@child-constraints);
                 my $tBlock := Type.Fn(Type.Cross(|@tIns), $tOut);
+                $tBlock.set($n);
                 $c.foreach(-> $_ { @constraints.push($_) });
                 $n.annotate('constraints', $c.Str)
                     unless $c.isTrue;
                 
-                my $unifier := $c.unify;
-                $tBlock := $tBlock.subst($_)
-                    for $unifier;
-
-                $tBlock.set($n);
+                typesubst($n, $c.unify);
                 #say(dump($n));
             } elsif isVar($n) {
                 if $n.decl {
