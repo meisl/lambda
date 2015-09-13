@@ -772,6 +772,49 @@ class LActions is HLL::Actions {
         %out;
     }
 
+    sub typecheck-application($tCallee, @tArgs, :@constraints!, :$at!, :$callee) {
+        Type.insist-isValid($tCallee);
+        my $tArgs := Type.Cross(|@tArgs);
+        my $c := TypeConstraint.False;
+        my $tOut;
+        if $tCallee.isFnType {
+            my $tIn  := $tCallee.head;
+            $tOut := $tCallee.tail;
+            $c := Type.constrain(:$at, $tArgs, $tIn);
+        } elsif $tCallee.isSumType {
+            my @cs    := [];
+            my @tOuts := [];
+            $tCallee.foreach(-> $t {
+                if $t.isFnType {
+                    my $c := Type.constrain(:$at, $tArgs, $t.in, :onError(-> *@ps, *%ns {}));
+                    unless $c.isFalse {
+                        @cs.push($c);
+                        @tOuts.push($t.out);
+                    }
+                }
+            });
+            if +@cs == 1 {
+                $tOut := @tOuts[0];
+                $c := @cs[0];
+            } elsif +@cs > 1 {
+                Type.error(:$at, 'cannot apply ', $callee, ' ::', $tCallee, '  to  ', $tArgs, ' - ambiguous');
+            }
+        } elsif $tCallee.isTypeVar {
+            $tOut := Type.Var;
+            $c := Type.constrain(:$at, $tCallee, Type.Fn($tArgs, $tOut));
+        }
+        if $c.isFalse {
+            Type.error(:$at, 'cannot apply ', $callee, ' ::', $tCallee, '  to  ', $tArgs);
+        } elsif $c.isTrue {
+            # nothing
+        } else {
+            @constraints.push($c);
+            say('>>Type-constraint: ', $c.Str);
+        }
+        $tOut;
+    }
+    
+
     method typecheck($n, $currentBlock, *@moreBlocks, :@constraints = []) {
         my $tN := Type.of($n);
         unless $tN {
@@ -948,47 +991,13 @@ class LActions is HLL::Actions {
                         } else {
                             Type.error(:at($n), 'no callee for ', $n);
                         }
-                        my $tOut := Type.Var;
-                        my $c := Type.constrain(:at($n), $tCallee, Type.Fn(Type.Cross(|@tArgs), $tOut));
-                        @constraints.push($c);
-                        say('>>Type-constraint/', $n.op, ': ', $callee.name, ': ', $c.Str) unless $c.isTrue;
+                        my $tOut := typecheck-application(:at($n), :callee($name), $tCallee, @tArgs, :@constraints);
+                        #say('>>Type-constraint/', $n.op, ': ', $callee.name, ': ', $c.Str) unless $c.isTrue;
                         $tOut.set($n);
                     } else {
-                        my $tArgs := Type.Cross(|@tArgs);
-                        
                         my $tOp := Type.ofOp($n.op);
                         if $tOp {
-                            my $tOut;
-                            if $tOp.isFnType {
-                                my $tIn  := $tOp.head;
-                                $tOut := $tOp.tail;
-                                my $c := Type.constrain(:at($n), $tArgs, $tIn);
-                                @constraints.push($c);
-                                say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
-                            } elsif $tOp.isSumType {
-                                my @cs    := [];
-                                my @tOuts := [];
-                                $tOp.foreach(-> $t {
-                                    if $t.isFnType {
-                                        my $c := Type.constrain(:at($n), $tArgs, $t.in, :onError(-> *@ps, *%ns {}));
-                                        unless $c.isFalse {
-                                            @cs.push($c);
-                                            @tOuts.push($t.out);
-                                        }
-                                    }
-                                });
-                                if +@cs == 1 {
-                                    unless @cs[0].isTrue {
-                                        @constraints.push(@cs[0]);
-                                        say('>>Type-constraint: ', @cs[0].Str);
-                                    }
-                                    $tOut := @tOuts[0];
-                                } else {
-                                    Type.error(:at($n), $tArgs, ' <> ', $tOp)
-                                }
-                            } else {
-                                Type.error(:at($n), 'cannot apply Op ', $n.op, ' ::', $tOp, '  to  ', $tArgs);
-                            }
+                            my $tOut := typecheck-application(:at($n), :callee('Op ' ~ $n.op), $tOp, @tArgs, :@constraints);
                             $tOut.set($n);
                         } else {
                             say("\n", dump($currentBlock));
