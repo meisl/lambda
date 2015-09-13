@@ -36,6 +36,8 @@ my sub asNode($v) {
         QAST::IVal.new(:value($v));
     } elsif nqp::isnum($v) {
         QAST::NVal.new(:value($v));
+    } elsif nqp::islist($v) {
+        mkList(|$v);
     } elsif nqp::istype($v, QAST::Node) {
         $v;
     } else {
@@ -308,6 +310,7 @@ my sub make-runtime() {
         
         my $body := QAST::Block.new(:name($name), :arity(nqp::elems($paramNames)));
         my @vars  := [];
+        my %named := {};
         my $i := 0;
         for $paramNames {
             my $var  := lexVar($_);         #$var.returns(@paramTypes[$i]);
@@ -324,9 +327,9 @@ my sub make-runtime() {
                 $decl := mkBind($decl, $val);
             }
             $body.push($decl);
-            @vars.push($var);
+            %named{$var.name} := $var;
         }
-        my $stmts := $cb(|@vars);
+        my $stmts := $cb(|@vars, |%named);
         my $tBody;
         if nqp::islist($stmts) {
             for $stmts {
@@ -353,9 +356,9 @@ my sub make-runtime() {
     });
 
     mkRFn('&strLit', <s>, 
-        :returns(Type.Fn(Type.Str, Type.Str)), 
+        #:returns(Type.Fn(Type.Str, Type.Str)), 
+        :foo<bar>,  # prevent it from being inlined
     -> $s {
-        mkDeclV(lexVar('foo')),
         #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
         QAST::Op.new(:op<concat>,
             asNode('"'),
@@ -368,16 +371,15 @@ my sub make-runtime() {
     
     mkRFn('&sublist', <list from>, 
         #:returns(Type.Fn(NQPArray, Type.Int, NQPArray)), 
-    -> $list, $from {
+        :out([]),
+    -> $list, $from, :$out! {
         my $to    := lexVar('to');
-        my $out   := lexVar('out');
         my $count := lexVar('count');
         my $n     := lexVar('n');
         
         mkBind(mkDeclV($n),     QAST::Op.new(:op<elems>, $list)),
         mkBind(mkDeclV($count), cloneAndSubst($n)),
         mkBind(mkDeclV($to),    QAST::Op.new(:op<add_i>, $from, cloneAndSubst($count))),
-        mkBind(mkDeclV($out),   mkList()),
         QAST::Op.new(:op<if>,
             QAST::Op.new(:op<isgt_i>, cloneAndSubst($to), cloneAndSubst($n)),
             mkBind(cloneAndSubst($to), cloneAndSubst($n))
@@ -396,7 +398,7 @@ my sub make-runtime() {
     mkRFn('&force', <x>, 
         #:returns(Type.Fn(Type.Fn(Type.Void, $tv), $tv)),
         :foo<bar>,  # prevent it from being inlined
-    -> $x, $foo {
+    -> $x, :$foo! {
         my $out := QAST::Op.new(:op<if>,
             QAST::Op.new(:op<isinvokable>, $x),
             mkCall($x),
@@ -426,15 +428,9 @@ my sub make-runtime() {
     $tv := Type.Var;
     mkRFn('&delayMemo', <x>, 
         #:returns(Type.Fn(Type.Fn(Type.Void, $tv), Type.Void, $tv)),
-        #:wasRun(0), :result(nqp::null), 
-    -> $x {
-        my $wasRun := lexVar('wasRun');
-        my $result := lexVar('result');
-        
-        mkBind(mkDeclV($wasRun),       asNode(0)),
-        mkDeclV($result),
+        :wasRun(0), :result(nqp::null), 
+    -> $x, :$wasRun!, :$result! {
         QAST::Block.new(:arity(0),
-
             QAST::Op.new(:op<if>, $wasRun,
                 $result,
                 QAST::Stmts.new(
@@ -448,7 +444,7 @@ my sub make-runtime() {
     mkRFn('&ifTag', <subject tag then else>, 
         #:returns(Type.Fn(NQPMu, Type.Str, NQPMu, NQPMu, NQPMu)), 
         :tagAndId(nqp::null), 
-    -> $subject, $tag, $then, $else, $tagAndId {
+    -> $subject, $tag, $then, $else, :$tagAndId! {
         my $extract-id-as-Int := mkListLookup(:index(0), # extract id as int from str tagAndId (Note: radix returns an array, not an int!)
             QAST::Op.new(:op<radix>,
                 asNode(10),
@@ -593,7 +589,7 @@ my sub make-runtime() {
     mkRFn('&apply1', <f a1>,
         #:returns(Type.Fn(Type.Fn($tvIn, $tvOut), $tvIn, $tvOut)),
         :result(nqp::null), 
-    -> $f, $a1, $result {
+    -> $f, $a1, :$result! {
         mkBind($f, mkForce($f)),
         mkBind($result, mkCall(
             QAST::Op.new(:op<defor>,
