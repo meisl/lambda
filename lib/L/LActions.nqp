@@ -912,12 +912,17 @@ class LActions is HLL::Actions {
                     @tIns.push(Type.of($_));
                     $n.symbol($_.name, :declaration($_));
                 }
-                my $tBlock := Type.Fn(Type.Cross(|@tIns), $tOut);
-                $tBlock.set($n);
                 my $c := TypeConstraint.And(|@child-constraints);
+                my $tBlock := Type.Fn(Type.Cross(|@tIns), $tOut);
                 $c.foreach(-> $_ { @constraints.push($_) });
                 $n.annotate('constraints', $c.Str)
                     unless $c.isTrue;
+                
+                my $unifier := $c.unify;
+                $tBlock := $tBlock.subst($_)
+                    for $unifier;
+
+                $tBlock.set($n);
                 #say(dump($n));
             } elsif isVar($n) {
                 if $n.decl {
@@ -968,8 +973,9 @@ class LActions is HLL::Actions {
                     }
                     $tVal.set($n);
                     if istype($val, QAST::Block) {
-                        say('>>typed Block ' ~ $var.name ~ ':: ' ~ Type.of($n) ~ '; ' ~ $val.ann('constraints'));
-                        $n.annotate('constraints', $val.ann('constraints'));
+                        my $c := $val.ann('constraints');
+                        say('>>typed Block ' ~ $var.name ~ ':: ' ~ $tVal ~ '; ' ~ $c);
+                        $n.annotate('constraints', $c);
                     }
                 } else {
                     my @tArgs := [];

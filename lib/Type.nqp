@@ -874,14 +874,8 @@ class TypeConstraint is export {
     method isTrue()   { self =:= $True  }
     method isFalse()  { self =:= $False }
     method isAtom()   { self.isTrue || self.isFalse }
-
-    my class SimpleConstraint is TypeConstraint {
-        method foreach(&f)         { &f(self)         }
-        method foldl1( &f)         { self             }
-        method foldl(  &f, $start) { &f($start, self) }
-    }
     
-    method isSimple() { nqp::istype(self, SimpleConstraint) }
+    method isSimple() { self.isAtom || self.isEq }
     method isEq()     { 0 } # overridden in class EqConstraint
     method isAnd()    { 0 } # overridden in class AndConstraint
 
@@ -913,9 +907,46 @@ class TypeConstraint is export {
                 self.rhs.subst(%s)
             );
         } else {
-            nqp::die('NYI: .subst on ' ~ self.Str);
+            $out := self.foldl(-> $acc, $c { TypeConstraint.And($acc, $c.subst(%s)) }, $True);
         }
         $out;
+    }
+
+    method unify() {
+        my @out;
+        if self.isTrue {
+            @out := [{}];
+        } elsif self.isFalse {
+            
+        } elsif self.isEq {
+            my $lhs := self.lhs;
+            my $rhs := self.rhs;
+            if !$lhs.isTypeVar && $rhs.isTypeVar {
+                $lhs := $rhs;
+                $rhs := self.lhs;
+            }
+            if $lhs.isTypeVar {
+                unless nqp::existskey($rhs.vars, $lhs.name) {
+                    @out := [nqp::hash($lhs.name, $rhs)];
+                }
+            } elsif $lhs.isFnType {
+                @out := Type.constrain($lhs, $rhs).unify;
+            }
+        } elsif self.isAnd {
+            @out := self.head.unify;
+            my $tail := self.tail.subst($_) for @out;
+            @out.push($_) for $tail.unify;
+        }
+        unless @out {
+            nqp::die("not unifiable: " ~ self.Str);
+        }
+        @out;
+    }
+
+    my class SimpleConstraint is TypeConstraint {
+        method foreach(&f)         { &f(self)         }
+        method foldl1( &f)         { self             }
+        method foldl(  &f, $start) { &f($start, self) }
     }
 
     my class Atom is SimpleConstraint {
@@ -1140,4 +1171,8 @@ sub MAIN(*@ARGS) {
     say('------------');
     my $c7 := TypeConstraint.And($c5, $c4);
     say($c7.Str);
+
+    
+    say('------------');
+    say($c7 ~ ' => ' ~ describe($c7.unify));
 }
