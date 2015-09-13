@@ -151,7 +151,7 @@ class Util::QAST {
                 $extraStr := ~$node.value;
             }
         } elsif istype($node, QAST::Block) {
-            $prefix := $prefix ~ '─:';
+            $prefix := $prefix ~ '─╥';
             my $name := $node.name;
             if $name {
                 @specials.unshift('"' ~ nqp::escape($name) ~ '"');
@@ -160,8 +160,8 @@ class Util::QAST {
             if $bt && $bt ne 'declaration' { # don't show default :blocktype
                 @specials.push(':blocktype(' ~ $bt ~ ')');
             }
-        } elsif istype($node, Stmts) {
-            $prefix := $prefix ~ '─:';
+        } elsif istype($node, QAST::Stmts) {
+            $prefix := $prefix ~ '─┬';
         } else {
             $prefix := $prefix ~ '─';
         }

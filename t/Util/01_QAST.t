@@ -240,38 +240,38 @@ ok( istype($ast, QAST::Node), 'mkBlockWithCATCH returns a QAST::Node' )
 
     my $stmts := QAST::Stmts.new($nullop, $v);
     is(dump($stmts),
-                 "──:Stmts"
+                 "──┬Stmts"
              ~ "\n  ├─null"
              ~ "\n  └○ foo", 
         'dump Stmts with children uses single vertical line to connect children');
     dies_ok( { ~$stmts }, 'stringifying QAST::Stmts as is');
     $stmts.HOW.mixin($stmts, StrByDump);
     is(~$stmts, 
-                 "──:Stmts+\{StrByDump}"
+                 "──┬Stmts+\{StrByDump}"
              ~ "\n  ├─null"
              ~ "\n  └○ foo", 
         'with role StrByDump mixed in it uses dump to stringify');
 
     my $b := QAST::Block.new();
-    is(dump($b), '──:Block', 'dump Block');
-    is(dump($b, :indent('    ')), '    ──:Block', 'dump Block with indent');
+    is(dump($b), '──╥Block', 'dump Block');
+    is(dump($b, :indent('    ')), '    ──╥Block', 'dump Block with indent');
     is(dump($b, :oneLine), '(Block)', 'dump Block on one line');
 
-    is(dump(QAST::Block.new(:name<&foo>)), '──:Block "&foo"', 'dump Block with :name');
+    is(dump(QAST::Block.new(:name<&foo>)), '──╥Block "&foo"', 'dump Block with :name');
 
     $b.push($nullop);
-    is(dump($b), "──:Block\n  ╙─null", 'dump Block with child uses double vertical line to connect child');
-    is(dump($b, :indent('# ')), "# ──:Block\n#   ╙─null", 'dump Block with child with indent');
+    is(dump($b), "──╥Block\n  ╙─null", 'dump Block with child uses double vertical line to connect child');
+    is(dump($b, :indent('# ')), "# ──╥Block\n#   ╙─null", 'dump Block with child with indent');
     is(dump($b, :oneLine), "((Block) (null))", 'dump Block with child on one line');
 
     $b.push($v);
     is(dump($b), 
-                 "──:Block"
+                 "──╥Block"
              ~ "\n  ╟─null"
              ~ "\n  ╙○ foo", 
         'dump Block with children uses double vertical line to connect children');
     is(dump($b, :indent('# ')), 
-                "# ──:Block"
+                "# ──╥Block"
             ~ "\n#   ╟─null"
             ~ "\n#   ╙○ foo", 
         'dump Block with children with indent uses double vertical line to connect children');
@@ -283,7 +283,7 @@ ok( istype($ast, QAST::Node), 'mkBlockWithCATCH returns a QAST::Node' )
     dies_ok( { ~$b }, 'stringifying QAST::Block as is');
     $b.HOW.mixin($b, StrByDump);
     is(~$b,  
-               "──:Block+\{StrByDump}"
+                 "──╥Block+\{StrByDump}"
              ~ "\n  ╟─null"
              ~ "\n  ╙○ foo", 
         'with role StrByDump mixed in it uses dump to stringify')

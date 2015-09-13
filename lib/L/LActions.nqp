@@ -449,6 +449,15 @@ my sub make-runtime() {
         #:returns(Type.Fn(NQPMu, Type.Str, NQPMu, NQPMu, NQPMu)), 
         :tagAndId(nqp::null), 
     -> $subject, $tag, $then, $else, $tagAndId {
+        my $extract-id-as-Int := mkListLookup(:index(0), # extract id as int from str tagAndId (Note: radix returns an array, not an int!)
+            QAST::Op.new(:op<radix>,
+                asNode(10),
+                $tagAndId,
+                asNode(1),
+                asNode(0)
+            )
+        );
+        Type.Int.set($extract-id-as-Int);
         QAST::Op.new(:op<if>,
             QAST::Op.new(:op<islist>, $subject),
             QAST::Stmts.new(
@@ -458,16 +467,7 @@ my sub make-runtime() {
                         $tag,
                         QAST::Op.new(:op<substr>, $tagAndId, asNode(0), asNode(1)),
                     ),
-                    mkCall($then, 
-                        mkListLookup(:index(0), # extract id as int from str tagAndId (Note: radix returns an array, not an int!)
-                            QAST::Op.new(:op<radix>,
-                                asNode(10),
-                                $tagAndId,
-                                asNode(1),
-                                asNode(0)
-                            )
-                        )
-                    ),
+                    mkCall($then, $extract-id-as-Int),
                     mkCall($else)  # different tag
                 ),
             ),

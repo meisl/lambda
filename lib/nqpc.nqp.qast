@@ -1,5 +1,5 @@
-──:CompUnit+{StrByDump}
-  └─:Block "<mainline>"
+──CompUnit+{StrByDump}
+  └─╥Block "<mainline>"
     ╟○ @ARGS :decl(param) :slurpy(1)
     ╟○ GLOBALish :decl(static) :default((GLOBALish, Type object))
     ╟○ $?PACKAGE :decl(static) :default((GLOBALish, Type object))
@@ -49,12 +49,12 @@
     ╟○ NO_VALUE :decl(static) :default((NO_VALUE, Type object))
     ╟─bind
     ║ ├○ &isinResultPosition :decl(var)
-    ║ └─:Block "isinResultPosition"  ««"{\n    my $n := nqp::elems($parent) - 1;\n    if ($"...
+    ║ └─╥Block "isinResultPosition"  ««"{\n    my $n := nqp::elems($parent) - 1;\n    if ($"...
     ║   ╟○ $node :decl(param)
     ║   ╟○ $parent :decl(param)
     ║   ╟○ $n :decl(var)
     ║   ╙─lexotic RETURN
-    ║     └─:Stmts  ««"\n    my $n := nqp::elems($parent) - 1;\n    if ($p"...
+    ║     └─┬Stmts  ««"\n    my $n := nqp::elems($parent) - 1;\n    if ($p"...
     ║       ├─bind :annotations({"var_initialized" => 1})  ««"$n := nqp::elems($parent) - 1"
     ║       │ ├○ $n
     ║       │ └─sub_n  ««"-"
@@ -110,7 +110,7 @@
     ║             └○ $parent
     ╟─bind
     ║ ├○ &drop_bogusVars :decl(var)
-    ║ └─:Block "drop_bogusVars"  ««"{\n    insist-isa($ast, QAST::CompUnit);\n    my $b"...
+    ║ └─╥Block "drop_bogusVars"  ««"{\n    insist-isa($ast, QAST::CompUnit);\n    my $b"...
     ║   ╟○ $ast :decl(param)
     ║   ╟○ $block :decl(var)
     ║   ╟○ @children :decl(var)
@@ -134,7 +134,7 @@
     ║   ╟─if  ««"+@children {\n        my $last := @children[+@child"...
     ║   ║ ├─numify  ««"+"
     ║   ║ │ └○ @children
-    ║   ║ └─:Block :blocktype(immediate)  ««"{\n        my $last := @children[+@children - 1];\n"...
+    ║   ║ └─╥Block :blocktype(immediate)  ««"{\n        my $last := @children[+@children - 1];\n"...
     ║   ║   ╟○ $last :decl(var)
     ║   ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$last := @children[+@children - 1]"
     ║   ║   ║ ├○ $last
@@ -148,7 +148,7 @@
     ║   ║   ║   └◙ WVal NQPMu
     ║   ║   ╙─callmethod dfs-up  ««"\n            -> $n, @p {\n                if $n =:"...
     ║   ║     ├◙ WVal TreeWalk
-    ║   ║     ├─:Block  ««"{\n                if $n =:= $block {\n            "...
+    ║   ║     ├─╥Block  ««"{\n                if $n =:= $block {\n            "...
     ║   ║     │ ╟○ $n :decl(param)
     ║   ║     │ ╟○ @p :decl(param)
     ║   ║     │ ╙─if  ««"$n =:= $block {\n                    TreeWalkDo.rec"...
@@ -170,7 +170,7 @@
     ║   ║     │       └─falsey  ««"!"
     ║   ║     │         └─callmethod decl  ««".decl"
     ║   ║     │           └○ $n
-    ║   ║     ├─:Block  ««"{ TreeWalk.remove }"
+    ║   ║     ├─╥Block  ««"{ TreeWalk.remove }"
     ║   ║     │ ╟○ $n :decl(param)
     ║   ║     │ ╟○ @p :decl(param)
     ║   ║     │ ╙─callmethod remove  ««".remove"
@@ -179,7 +179,7 @@
     ║   ╙○ $ast
     ╟─bind
     ║ ├○ &remove_MAIN :decl(var)
-    ║ └─:Block "remove_MAIN"  ««"{\n    say($ast[0].cuid);\n    say(\"CompUnit load:"...
+    ║ └─╥Block "remove_MAIN"  ««"{\n    say($ast[0].cuid);\n    say(\"CompUnit load:"...
     ║   ╟○ $ast :decl(param)
     ║   ╟○ @path :decl(var)
     ║   ╟○ $MAIN :decl(var)
@@ -229,7 +229,7 @@
     ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$MAINcall := findPath(-> $node, @pathUp {\n        "...
     ║   ║ ├○ $MAINcall
     ║   ║ └─call &findPath  ««"-> $node, @pathUp {\n            if istype($node, Q"...
-    ║   ║   ├─:Block  ««"{\n            if istype($node, QAST::Op) && ($node"...
+    ║   ║   ├─╥Block  ««"{\n            if istype($node, QAST::Op) && ($node"...
     ║   ║   │ ╟○ $node :decl(param)
     ║   ║   │ ╟○ @pathUp :decl(param)
     ║   ║   │ ╙─if  ««"istype($node, QAST::Op) && ($node.op eq 'call') && "...
@@ -263,7 +263,7 @@
     ║   ║   │   │       │   │ └◙ IVal 0
     ║   ║   │   │       │   └◙ WVal NQPMu
     ║   ║   │   │       └◙ SVal "&MAIN"
-    ║   ║   │   ├─:Block :blocktype(immediate)  ««"{\n                my $parent := @pathUp[0];\n     "...
+    ║   ║   │   ├─╥Block :blocktype(immediate)  ««"{\n                my $parent := @pathUp[0];\n     "...
     ║   ║   │   │ ╟○ $parent :decl(var)
     ║   ║   │   │ ╟─bind :annotations({"var_initialized" => 1})  ««"$parent := @pathUp[0]"
     ║   ║   │   │ ║ ├○ $parent
@@ -287,7 +287,7 @@
     ║   ║   │   │     │ ├○ $parent
     ║   ║   │   │     │ ├◙ WVal QAST::Stmt
     ║   ║   │   │     │ └◙ WVal QAST::Stmts
-    ║   ║   │   │     └─:Stmts  ««"{\n                    $parent := @pathUp[0];\n    "...
+    ║   ║   │   │     └─┬Stmts  ««"{\n                    $parent := @pathUp[0];\n    "...
     ║   ║   │   │       ├─bind  ««":="
     ║   ║   │   │       │ ├○ $parent
     ║   ║   │   │       │ └─ifnull
@@ -320,21 +320,21 @@
     ║   ╙○ $ast
     ╟─bind
     ║ ├○ &findDef :decl(var)
-    ║ └─:Block "findDef"  ««"{\n    if nqp::isstr($matcher) {\n        my $name "...
+    ║ └─╥Block "findDef"  ««"{\n    if nqp::isstr($matcher) {\n        my $name "...
     ║   ╟○ $ast :decl(param)
     ║   ╟○ $matcher :decl(param)
     ║   ╟○ @pathUp :decl(param) :default(list &circumfix:<[ ]>)
     ║   ╟─if  ««"nqp::isstr($matcher) {\n        my $name := $matche"...
     ║   ║ ├─isstr  ««"nqp::isstr($matcher)"
     ║   ║ │ └○ $matcher
-    ║   ║ └─:Block :blocktype(immediate)  ««"{\n        my $name := $matcher;\n        $matcher "...
+    ║   ║ └─╥Block :blocktype(immediate)  ««"{\n        my $name := $matcher;\n        $matcher "...
     ║   ║   ╟○ $name :decl(var)
     ║   ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$name := $matcher"
     ║   ║   ║ ├○ $name
     ║   ║   ║ └○ $matcher
     ║   ║   ╙─bind  ««":="
     ║   ║     ├○ $matcher
-    ║   ║     └─:Block  ««"{ $var.name eq $name && $var.decl }"
+    ║   ║     └─╥Block  ««"{ $var.name eq $name && $var.decl }"
     ║   ║       ╟○ $var :decl(param)
     ║   ║       ╟○ @pathUp :decl(param)
     ║   ║       ╙─if  ««"&&"
@@ -345,7 +345,7 @@
     ║   ║         └─callmethod decl  ««".decl"
     ║   ║           └○ $var
     ║   ╙─call &findPath  ««"\n        -> $node, @pathUp {\n            my $pare"...
-    ║     ├─:Block  ««"{\n            my $parent := nqp::elems(@pathUp) > "...
+    ║     ├─╥Block  ««"{\n            my $parent := nqp::elems(@pathUp) > "...
     ║     │ ╟○ $node :decl(param)
     ║     │ ╟○ @pathUp :decl(param)
     ║     │ ╟○ $parent :decl(var)
@@ -398,7 +398,7 @@
     ║     │       │ ├◙ WVal QAST::Stmts
     ║     │       │ ├◙ WVal QAST::Stmt
     ║     │       │ └◙ WVal QAST::Op
-    ║     │       ├─:Block :blocktype(immediate)  ««"{\n                my @next := qastChildren($node, "...
+    ║     │       ├─╥Block :blocktype(immediate)  ««"{\n                my @next := qastChildren($node, "...
     ║     │       │ ╟○ @next :decl(var)
     ║     │       │ ╟─bind :annotations({"var_initialized" => 1})  ««"@next := qastChildren($node, QAST::Block, QAST::Stm"...
     ║     │       │ ║ ├○ @next
@@ -415,7 +415,7 @@
     ║     └○ @pathUp
     ╟─bind
     ║ ├○ &findDefs :decl(var)
-    ║ └─:Block "findDefs"  ««"{\n    my @out := [];\n    my $current := 1;\n    w"...
+    ║ └─╥Block "findDefs"  ««"{\n    my @out := [];\n    my $current := 1;\n    w"...
     ║   ╟○ $ast :decl(param)
     ║   ╟○ $matcher :decl(param)
     ║   ╟○ @out :decl(var)
@@ -428,12 +428,12 @@
     ║   ║ └◙ IVal 1
     ║   ╟─while  ««"$current {\n        $current := findDef($ast, -> $v"...
     ║   ║ ├○ $current
-    ║   ║ ├─:Stmts  ««"{\n        $current := findDef($ast, -> $var, @path"...
+    ║   ║ ├─┬Stmts  ««"{\n        $current := findDef($ast, -> $var, @path"...
     ║   ║ │ ├─bind  ««":="
     ║   ║ │ │ ├○ $current
     ║   ║ │ │ └─call &findDef  ««"$ast, -> $var, @pathUp {\n            my $takeit :="...
     ║   ║ │ │   ├○ $ast
-    ║   ║ │ │   └─:Block  ««"{\n            my $takeit := 0;\n            if $ma"...
+    ║   ║ │ │   └─╥Block  ««"{\n            my $takeit := 0;\n            if $ma"...
     ║   ║ │ │     ╟○ $var :decl(param)
     ║   ║ │ │     ╟○ @pathUp :decl(param)
     ║   ║ │ │     ╟○ $takeit :decl(var)
@@ -445,7 +445,7 @@
     ║   ║ │ │     ║ │ ├○ $matcher
     ║   ║ │ │     ║ │ ├○ $var
     ║   ║ │ │     ║ │ └○ @pathUp
-    ║   ║ │ │     ║ └─:Block :blocktype(immediate)  ««"{\n                $takeit := 1;\n                m"...
+    ║   ║ │ │     ║ └─╥Block :blocktype(immediate)  ««"{\n                $takeit := 1;\n                m"...
     ║   ║ │ │     ║   ╟○ $i :decl(var)
     ║   ║ │ │     ║   ╟─bind  ««":="
     ║   ║ │ │     ║   ║ ├○ $takeit
@@ -481,13 +481,13 @@
     ║   ╙○ @out
     ╟─bind
     ║ ├○ &findValueNodeInHash :decl(var)
-    ║ └─:Block "findValueNodeInHash" :annotations({"compile_time_dummy" => (BOOTCode, invokable)})  ««"{\n    nqp::die('findValueNodeInHash expects a fn a"...
+    ║ └─╥Block "findValueNodeInHash" :annotations({"compile_time_dummy" => (BOOTCode, invokable)})  ««"{\n    nqp::die('findValueNodeInHash expects a fn a"...
     ║   ╟○ $keyPredicate :decl(param)
     ║   ╟○ $valuePredicate :decl(param)
     ║   ╟○ $hash :decl(param) :default(WVal NO_VALUE)
     ║   ╟○ $found :decl(var)
     ║   ╙─lexotic RETURN
-    ║     └─:Stmts  ««"\n    nqp::die('findValueNodeInHash expects a fn as"...
+    ║     └─┬Stmts  ««"\n    nqp::die('findValueNodeInHash expects a fn as"...
     ║       ├─unless  ««"nqp::die('findValueNodeInHash expects a fn as 1st a"...
     ║       │ ├─isinvokable  ««"nqp::isinvokable($keyPredicate)"
     ║       │ │ └○ $keyPredicate
@@ -509,7 +509,7 @@
     ║       │ │ ├○ $hash
     ║       │ │ └◙ WVal NO_VALUE
     ║       │ ├─call RETURN
-    ║       │ │ └─:Block  ««"{ findValueNodeInHash($keyPredicate, $valuePredicat"...
+    ║       │ │ └─╥Block  ««"{ findValueNodeInHash($keyPredicate, $valuePredicat"...
     ║       │ │   ╟○ $hash :decl(param)
     ║       │ │   ╙─call &findValueNodeInHash  ««"$keyPredicate, $valuePredicate, $hash"
     ║       │ │     ├○ $keyPredicate
@@ -537,7 +537,7 @@
     ║       │ │   ├─callmethod op  ««".op"
     ║       │ │   │ └○ $hash
     ║       │ │   └◙ SVal "hash"
-    ║       │ └─:Block :blocktype(immediate)  ««"{\n        my $it := nqp::iterator($hash.list);\n  "...
+    ║       │ └─╥Block :blocktype(immediate)  ««"{\n        my $it := nqp::iterator($hash.list);\n  "...
     ║       │   ╟○ $it :decl(var)
     ║       │   ╟─bind :annotations({"var_initialized" => 1})  ««"$it := nqp::iterator($hash.list)"
     ║       │   ║ ├○ $it
@@ -549,7 +549,7 @@
     ║       │     │ ├○ $it
     ║       │     │ └─falsey  ««"!"
     ║       │     │   └○ $found
-    ║       │     ├─:Block :blocktype(immediate)  ««"{\n            my $k := nqp::shift($it);\n         "...
+    ║       │     ├─╥Block :blocktype(immediate)  ««"{\n            my $k := nqp::shift($it);\n         "...
     ║       │     │ ╟○ $k :decl(var)
     ║       │     │ ╟─bind :annotations({"var_initialized" => 1})  ««"$k := nqp::shift($it)"
     ║       │     │ ║ ├○ $k
@@ -561,7 +561,7 @@
     ║       │     │   │ └─call  ««"$k"
     ║       │     │   │   ├○ $keyPredicate
     ║       │     │   │   └○ $k
-    ║       │     │   └─:Block :blocktype(immediate)  ««"{\n                my $v := nqp::shift($it);\n     "...
+    ║       │     │   └─╥Block :blocktype(immediate)  ««"{\n                my $v := nqp::shift($it);\n     "...
     ║       │     │     ╟○ $v :decl(var)
     ║       │     │     ╟─bind :annotations({"var_initialized" => 1})  ««"$v := nqp::shift($it)"
     ║       │     │     ║ ├○ $v
@@ -582,7 +582,7 @@
     ╟○ NQPCompiler :decl(static) :default((NQPCompiler, Type object))
     ╟─bind
     ║ ├○ &MAIN :decl(var)
-    ║ └─:Block "MAIN"  ««"{\n    @ARGS := flatten(@ARGS);\n\n    my $cwd := n"...
+    ║ └─╥Block "MAIN"  ««"{\n    @ARGS := flatten(@ARGS);\n\n    my $cwd := n"...
     ║   ╟○ @ARGS :decl(param) :slurpy(1)
     ║   ╟○ $cwd :decl(var)
     ║   ╟○ $sep :decl(var)
@@ -626,12 +626,12 @@
     ║   ║ └◙ SVal "INFO"
     ║   ╟─for  ««"@ARGS {\n        my $file := $_;\n        \n       "...
     ║   ║ ├○ @ARGS
-    ║   ║ ├─:Block :annotations({"handlers" => {"CATCH" => QAST::Stmts}}) :blocktype(immediate)  ««"{\n        my $file := $_;\n        \n        my $r"...
+    ║   ║ ├─╥Block :annotations({"handlers" => {"CATCH" => QAST::Stmts}}) :blocktype(immediate)  ««"{\n        my $file := $_;\n        \n        my $r"...
     ║   ║ │ ╟○ $file :decl(var)
     ║   ║ │ ╟○ $result :decl(var)
     ║   ║ │ ╟○ $_ :decl(param)
     ║   ║ │ ╙─handle
-    ║   ║ │   ├─:Stmts  ««"\n        my $file := $_;\n        \n        my $re"...
+    ║   ║ │   ├─┬Stmts  ««"\n        my $file := $_;\n        \n        my $re"...
     ║   ║ │   │ ├─bind :annotations({"var_initialized" => 1})  ««"$file := $_"
     ║   ║ │   │ │ ├○ $file
     ║   ║ │   │ │ └○ $_
@@ -661,9 +661,9 @@
     ║   ║ │   │ │       └○ $result
     ║   ║ │   │ └◙ WVal NQPMu
     ║   ║ │   ├► "CATCH" (str)
-    ║   ║ │   └─:Stmts
+    ║   ║ │   └─┬Stmts
     ║   ║ │     ├─call
-    ║   ║ │     │ ├─:Block  ««"{\n            $nqpc.log(:level<ERROR>, \" FILE: $f"...
+    ║   ║ │     │ ├─╥Block  ««"{\n            $nqpc.log(:level<ERROR>, \" FILE: $f"...
     ║   ║ │     │ │ ╟○ $_ :decl(param)
     ║   ║ │     │ │ ╟─bind
     ║   ║ │     │ │ ║ ├○ $! :decl(var)
@@ -699,7 +699,7 @@
     ║   ║ │     │ │ ╙─exit  ««"nqp::exit(1)"
     ║   ║ │     │ │   └◙ IVal 1
     ║   ║ │     │ └─exception
-    ║   ║ │     ├─:VM
+    ║   ║ │     ├─VM
     ║   ║ │     └◙ WVal NQPMu
     ║   ║ └◙ IVal 1 :named("nohandler")
     ║   ╙─call &say  ««"$sep"
@@ -716,14 +716,14 @@
     ║   │ └◙ SVal "ctxsave"
     ║   └─callmethod ctxsave
     ║     └○ local ctxsave
-    ╟─:Block :blocktype(immediate)  ««"{}"
+    ╟─╥Block :blocktype(immediate)  ««"{}"
     ║ ╟○ $?PACKAGE :decl(static) :default((NO_VALUE, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((NO_VALUE, Type object))
     ║ ╙◙ WVal NQPMu
-    ╟─:Block :blocktype(immediate)  ««"{\n\n    # Where to search for user source files.\n"...
+    ╟─╥Block :blocktype(immediate)  ««"{\n\n    # Where to search for user source files.\n"...
     ║ ╟○ $?PACKAGE :decl(static) :default((SmartCompiler, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((SmartCompiler, Type object))
-    ║ ╟─:Block "BUILD" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        # in this order (!):\n        self.addst"...
+    ║ ╟─╥Block "BUILD" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        # in this order (!):\n        self.addst"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ @clo :decl(var)
     ║ ║ ╟─callmethod addstage  ««"'ast_save',           :after<ast>"
@@ -783,12 +783,12 @@
     ║ ║   │ │ └○ self
     ║ ║   │ └◙ WVal SmartCompiler
     ║ ║   └─hash
-    ║ ╟─:Block "user_progname" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.user-progname();\n    }"
+    ║ ╟─╥Block "user_progname" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.user-progname();\n    }"
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙─callmethod user-progname  ««""
     ║ ║   └─decont
     ║ ║     └○ self
-    ║ ╟─:Block "user_binname" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        $!user_binname := $v unless $v =:= NO_VA"...
+    ║ ╟─╥Block "user_binname" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        $!user_binname := $v unless $v =:= NO_VA"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $v :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╟─unless  ««"$!user_binname := $v unless $v =:= NO_VALUE"
@@ -805,13 +805,13 @@
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   └◙ WVal SmartCompiler
-    ║ ╟─:Block "user_srcpaths" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        @!user_srcpaths;\n    }"
+    ║ ╟─╥Block "user_srcpaths" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        @!user_srcpaths;\n    }"
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙○ attribute @!user_srcpaths :returns(VMNull)
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   └◙ WVal SmartCompiler
-    ║ ╟─:Block "log_level" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        $!log_level := $level unless $level =:= "...
+    ║ ╟─╥Block "log_level" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        $!log_level := $level unless $level =:= "...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $level :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╟─unless  ««"$!log_level := $level unless $level =:= NO_VALUE"
@@ -828,7 +828,7 @@
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   └◙ WVal SmartCompiler
-    ║ ╟─:Block "log" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        if self.log_level eq 'INFO' \n          "...
+    ║ ╟─╥Block "log" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        if self.log_level eq 'INFO' \n          "...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $msg :decl(param)
     ║ ║ ╟○ @moreMsgPieces :decl(param) :slurpy(1)
@@ -859,7 +859,7 @@
     ║ ║   │   └─iseq_s  ««"eq"
     ║ ║   │     ├○ $level
     ║ ║   │     └◙ SVal "ERROR"
-    ║ ║   └─:Block :blocktype(immediate)  ««"{\n            my str $out := '# [' ~ self.compiler"...
+    ║ ║   └─╥Block :blocktype(immediate)  ««"{\n            my str $out := '# [' ~ self.compiler"...
     ║ ║     ╟○ $out :decl(var) :returns(str)
     ║ ║     ╟─bind :annotations({"var_initialized" => 1})  ««"str $out := '# [' ~ self.compiler_progname ~ \"|$le"...
     ║ ║     ║ ├○ $out
@@ -878,7 +878,7 @@
     ║ ║     ║   └○ $msg
     ║ ║     ╟─for  ««"@moreMsgPieces {\n                $out := $out ~ $_"...
     ║ ║     ║ ├○ @moreMsgPieces
-    ║ ║     ║ ├─:Block :blocktype(immediate)  ««"{\n                $out := $out ~ $_;\n            }"
+    ║ ║     ║ ├─╥Block :blocktype(immediate)  ««"{\n                $out := $out ~ $_;\n            }"
     ║ ║     ║ │ ╟○ $_ :decl(param)
     ║ ║     ║ │ ╙─bind  ««":="
     ║ ║     ║ │   ├○ $out :returns(str)
@@ -888,14 +888,14 @@
     ║ ║     ║ └◙ IVal 1 :named("nohandler")
     ║ ║     ╙─call &say  ««"$out"
     ║ ║       └○ $out :returns(str)
-    ║ ╟─:Block "backend" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        nqp::getattr(self, HLL::Compiler, '$!bac"...
+    ║ ╟─╥Block "backend" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        nqp::getattr(self, HLL::Compiler, '$!bac"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙─getattr  ««"nqp::getattr(self, HLL::Compiler, '$!backend')"
     ║ ║   ├─decont
     ║ ║   │ └○ self
     ║ ║   ├◙ WVal HLL::Compiler
     ║ ║   └◙ SVal "$!backend"
-    ║ ╟─:Block "version_string" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.language ~ ' v' ~ self.config<versi"...
+    ║ ╟─╥Block "version_string" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.language ~ ' v' ~ self.config<versi"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╙─concat  ««"~"
     ║ ║   ├─concat  ««"~"
@@ -910,7 +910,7 @@
     ║ ║     │ │   └○ self
     ║ ║     │ └◙ SVal "version"
     ║ ║     └◙ WVal NQPMu
-    ║ ╟─:Block "find_file" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $path;\n        my $file_name := nqp:"...
+    ║ ╟─╥Block "find_file" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $path;\n        my $file_name := nqp:"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $module_name :decl(param)
     ║ ║ ╟○ @search_paths :decl(param)
@@ -933,7 +933,7 @@
     ║ ║ ║     └○ $ext
     ║ ║ ╟─for  ««"@search_paths {\n            $path := \"$_/$file_na"...
     ║ ║ ║ ├○ @search_paths
-    ║ ║ ║ └─:Block :blocktype(immediate)  ««"{\n            $path := \"$_/$file_name\";\n       "...
+    ║ ║ ║ └─╥Block :blocktype(immediate)  ««"{\n            $path := \"$_/$file_name\";\n       "...
     ║ ║ ║   ╟○ $_ :decl(param)
     ║ ║ ║   ╟─bind  ««":="
     ║ ║ ║   ║ ├○ $path
@@ -951,7 +951,7 @@
     ║ ║ ║     ├○ $path
     ║ ║ ║     └─null  ««"nqp::null"
     ║ ║ ╙○ $path
-    ║ ╟─:Block "find_src" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.find_file($module_name, @!user_srcp"...
+    ║ ╟─╥Block "find_src" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.find_file($module_name, @!user_srcp"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $module_name :decl(param) :returns(str)
     ║ ║ ╟○ $ext :decl(param) :named("ext")
@@ -964,7 +964,7 @@
     ║ ║   │ │ └○ self
     ║ ║   │ └◙ WVal SmartCompiler
     ║ ║   └○ $ext :named("ext")
-    ║ ╟─:Block "find_bytecode" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n            my $loader := nqp::getcurhllsym('Mod"...
+    ║ ╟─╥Block "find_bytecode" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n            my $loader := nqp::getcurhllsym('Mod"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $module_name :decl(param)
     ║ ║ ╟○ $ext :decl(param) :named("ext")
@@ -997,7 +997,7 @@
     ║ ║   ├○ $module_name
     ║ ║   ├○ @module_paths
     ║ ║   └○ $ext :named("ext")
-    ║ ╟─:Block "compileDependency" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $out;\n        my $src_path := self.f"...
+    ║ ╟─╥Block "compileDependency" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $out;\n        my $src_path := self.f"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $module_name :decl(param) :returns(str)
     ║ ║ ╟○ @on_behalf :decl(param)
@@ -1006,7 +1006,7 @@
     ║ ║ ║ └◙ WVal NQPMu
     ║ ║ ╟○ $src_path :decl(var)
     ║ ║ ╙─lexotic RETURN
-    ║ ║   └─:Stmts  ««"\n        my $out;\n        my $src_path := self.fi"...
+    ║ ║   └─┬Stmts  ««"\n        my $out;\n        my $src_path := self.fi"...
     ║ ║     ├○ $out
     ║ ║     ├─bind :annotations({"var_initialized" => 1})  ««"$src_path := self.find_src($module_name, :ext<nqp>)"
     ║ ║     │ ├○ $src_path
@@ -1017,7 +1017,7 @@
     ║ ║     │   └◙ SVal "nqp" :named("ext")
     ║ ║     └─if  ««"$src_path {\n            my $bc_path := self.find_b"...
     ║ ║       ├○ $src_path
-    ║ ║       ├─:Block :blocktype(immediate)  ««"{\n            my $bc_path := self.find_bytecode($m"...
+    ║ ║       ├─╥Block :blocktype(immediate)  ««"{\n            my $bc_path := self.find_bytecode($m"...
     ║ ║       │ ╟○ $bc_path :decl(var)
     ║ ║       │ ╟○ $clone :decl(var)
     ║ ║       │ ╟─bind :annotations({"var_initialized" => 1})  ««"$bc_path := self.find_bytecode($module_name, :ext<m"...
@@ -1029,7 +1029,7 @@
     ║ ║       │ ║   └◙ SVal "moarvm" :named("ext")
     ║ ║       │ ╟─if  ««"$bc_path {\n                my $src_time := nqp::st"...
     ║ ║       │ ║ ├○ $bc_path
-    ║ ║       │ ║ └─:Block :blocktype(immediate)  ««"{\n                my $src_time := nqp::stat($src_p"...
+    ║ ║       │ ║ └─╥Block :blocktype(immediate)  ««"{\n                my $src_time := nqp::stat($src_p"...
     ║ ║       │ ║   ╟○ $src_time :decl(var)
     ║ ║       │ ║   ╟○ $bc_time :decl(var)
     ║ ║       │ ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$src_time := nqp::stat($src_path, nqp::const::STAT_"...
@@ -1065,7 +1065,7 @@
     ║ ║           ├○ $module_name :returns(str)
     ║ ║           ├◙ SVal "moarvm" :named("ext")
     ║ ║           └◙ IVal 1 :named("with-nqplib")
-    ║ ╟─:Block "interactive_command" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        if $code =:= NO_VALUE {\n            %!i"...
+    ║ ╟─╥Block "interactive_command" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        if $code =:= NO_VALUE {\n            %!i"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $name :decl(param) :returns(str)
     ║ ║ ╟○ $code :decl(param) :default(WVal NO_VALUE)
@@ -1081,7 +1081,7 @@
     ║ ║   │ │ │ └◙ WVal SmartCompiler
     ║ ║   │ │ └○ $name :returns(str)
     ║ ║   │ └◙ WVal NQPMu
-    ║ ║   └─:Block :blocktype(immediate)  ««"{\n            my &code := $code;   # check if it's"...
+    ║ ║   └─╥Block :blocktype(immediate)  ««"{\n            my &code := $code;   # check if it's"...
     ║ ║     ╟○ &code :decl(var)
     ║ ║     ╟─bind :annotations({"var_initialized" => 1})  ««"&code := $code"
     ║ ║     ║ ├○ &code
@@ -1093,7 +1093,7 @@
     ║ ║       │ └◙ WVal SmartCompiler
     ║ ║       ├○ $name :returns(str)
     ║ ║       └○ &code
-    ║ ╟─:Block "readline" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        nqp::printfh($out, $prompt);\n        my"...
+    ║ ╟─╥Block "readline" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        nqp::printfh($out, $prompt);\n        my"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $in :decl(param)
     ║ ║ ╟○ $out :decl(param)
@@ -1116,14 +1116,14 @@
     ║ ║ ║   └○ $line
     ║ ║ ╙─if  ««"$cmd {\n            $cmd(:$in, :$out);\n           "...
     ║ ║   ├○ $cmd
-    ║ ║   ├─:Stmts  ««"{\n            $cmd(:$in, :$out);\n            '';\"...
+    ║ ║   ├─┬Stmts  ««"{\n            $cmd(:$in, :$out);\n            '';\"...
     ║ ║   │ ├─call  ««":$in, :$out"
     ║ ║   │ │ ├○ $cmd
     ║ ║   │ │ ├○ $in :named("in")
     ║ ║   │ │ └○ $out :named("out")
     ║ ║   │ └◙ SVal ""
     ║ ║   └○ $line
-    ║ ╟─:Block "autoprint" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        #say('$*AUTOPRINTPOS: ' ~ $*AUTOPRINTPOS"...
+    ║ ╟─╥Block "autoprint" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        #say('$*AUTOPRINTPOS: ' ~ $*AUTOPRINTPOS"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $value :decl(param)
     ║ ║ ╟○ $stdout :decl(param) :default(WVal NQPMu)
@@ -1132,13 +1132,13 @@
     ║ ║   │ ├○ $stdout
     ║ ║   │ └─getstdout  ««"nqp::getstdout()"
     ║ ║   └○ $value
-    ║ ╟─:Block "collect_stats" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my %results := {};\n        my sub doit("...
+    ║ ╟─╥Block "collect_stats" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my %results := {};\n        my sub doit("...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $node :decl(param)
     ║ ║ ╟○ %results :decl(var)
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &doit :decl(var)
-    ║ ║ ║ └─:Block "doit"  ««"{\n            nqp::die(\"collect_stats expects a Q"...
+    ║ ║ ║ └─╥Block "doit"  ««"{\n            nqp::die(\"collect_stats expects a Q"...
     ║ ║ ║   ╟○ $node :decl(param)
     ║ ║ ║   ╟○ $HOWname :decl(var)
     ║ ║ ║   ╟─unless  ««"nqp::die(\"collect_stats expects a QAST::Node - got"...
@@ -1179,7 +1179,7 @@
     ║ ║ ║   ║     ├─call &istype  ««"$node, QAST::Op"
     ║ ║ ║   ║     │ ├○ $node
     ║ ║ ║   ║     │ └◙ WVal QAST::Op
-    ║ ║ ║   ║     ├─:Block :blocktype(immediate)  ««"{\n                my $op := $node.op;\n    #      "...
+    ║ ║ ║   ║     ├─╥Block :blocktype(immediate)  ««"{\n                my $op := $node.op;\n    #      "...
     ║ ║ ║   ║     │ ╟○ $op :decl(var)
     ║ ║ ║   ║     │ ╟─bind :annotations({"var_initialized" => 1})  ««"$op := $node.op"
     ║ ║ ║   ║     │ ║ ├○ $op
@@ -1273,7 +1273,7 @@
     ║ ║ ║   ║             ├─call &istype  ««"$node, QAST::SVal"
     ║ ║ ║   ║             │ ├○ $node
     ║ ║ ║   ║             │ └◙ WVal QAST::SVal
-    ║ ║ ║   ║             └─:Stmts  ««"{\n                %results<SVal>++;\n             "...
+    ║ ║ ║   ║             └─┬Stmts  ««"{\n                %results<SVal>++;\n             "...
     ║ ║ ║   ║               ├─postinc  ««"++"
     ║ ║ ║   ║               │ └○┬VarWithFallback associative :fallback(WVal NQPMu)
     ║ ║ ║   ║               │   ├○ %results
@@ -1293,7 +1293,7 @@
     ║ ║ ║   ╙─for  ««"$node.list {\n                doit($_);\n            }"
     ║ ║ ║     ├─callmethod list  ««".list"
     ║ ║ ║     │ └○ $node
-    ║ ║ ║     ├─:Block :blocktype(immediate)  ««"{\n                doit($_);\n            }"
+    ║ ║ ║     ├─╥Block :blocktype(immediate)  ««"{\n                doit($_);\n            }"
     ║ ║ ║     │ ╟○ $_ :decl(param)
     ║ ║ ║     │ ╙─call &doit  ««"$_"
     ║ ║ ║     │   └○ $_
@@ -1345,7 +1345,7 @@
     ║ ║ ║     │ └◙ SVal "SVal"
     ║ ║ ║     └◙ WVal NQPMu
     ║ ║ ╙○ %results
-    ║ ╟─:Block "ast" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $ast := $source.ast();\n        self."...
+    ║ ╟─╥Block "ast" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $ast := $source.ast();\n        self."...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $source :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
@@ -1379,7 +1379,7 @@
     ║ ║ ║ │   └○ self
     ║ ║ ║ └◙ SVal " done."
     ║ ║ ╙○ $ast
-    ║ ╟─:Block "ast_clean" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.log('ast_clean: ', self.user-progna"...
+    ║ ╟─╥Block "ast_clean" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.log('ast_clean: ', self.user-progna"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
@@ -1428,7 +1428,7 @@
     ║ ║ ║ └─call &inline_simple_methods  ««"$ast"
     ║ ║ ║   └○ $ast
     ║ ║ ╙○ $ast
-    ║ ╟─:Block "inline_subs" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my @inlinecandidates := [];\n        Tre"...
+    ║ ╟─╥Block "inline_subs" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my @inlinecandidates := [];\n        Tre"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
@@ -1438,7 +1438,7 @@
     ║ ║ ║ └─list
     ║ ║ ╟─callmethod dfs-up  ««"\n            -> $n, @a {\n                TreeWalk"...
     ║ ║ ║ ├◙ WVal TreeWalk
-    ║ ║ ║ ├─:Block  ««"{\n                TreeWalkDo.recurse(:take(istype("...
+    ║ ║ ║ ├─╥Block  ««"{\n                TreeWalkDo.recurse(:take(istype("...
     ║ ║ ║ │ ╟○ $n :decl(param)
     ║ ║ ║ │ ╟○ @a :decl(param)
     ║ ║ ║ │ ╙─callmethod recurse  ««":take(istype($n, QAST::Op) && ($n.op eq 'bind')\n  "...
@@ -1496,7 +1496,7 @@
     ║ ║ ║ │       │ │ └◙ IVal 1
     ║ ║ ║ │       │ └◙ WVal NQPMu
     ║ ║ ║ │       └◙ WVal QAST::Block
-    ║ ║ ║ ├─:Block  ««"{\n                my $name := $n[0].name;\n       "...
+    ║ ║ ║ ├─╥Block  ««"{\n                my $name := $n[0].name;\n       "...
     ║ ║ ║ │ ╟○ $n :decl(param)
     ║ ║ ║ │ ╟○ @a :decl(param)
     ║ ║ ║ │ ╟○ $name :decl(var)
@@ -1564,7 +1564,7 @@
     ║ ║ ║ └○ $ast
     ║ ║ ╟─for  ««"self.log('inline_subs: ', 'candidate ', $_[0].name)"...
     ║ ║ ║ ├○ @inlinecandidates
-    ║ ║ ║ └─:Block :blocktype(immediate)
+    ║ ║ ║ └─╥Block :blocktype(immediate)
     ║ ║ ║   ╟○ $_ :decl(param)
     ║ ║ ║   ╙─callmethod log  ««"'inline_subs: ', 'candidate ', $_[0].name"
     ║ ║ ║     ├─decont
@@ -1583,7 +1583,7 @@
     ║ ║ ║   ├○ $ast
     ║ ║ ║   └○ @inlinecandidates
     ║ ║ ╙○ $ast
-    ║ ╟─:Block "ast_stats" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my %stats := self.collect_stats($ast);\n"...
+    ║ ╟─╥Block "ast_stats" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my %stats := self.collect_stats($ast);\n"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
@@ -1592,9 +1592,9 @@
     ║ ║ ╟○ @statskeys :decl(var)
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &svalPred :decl(var)
-    ║ ║ ║ └─:Block "svalPred"  ««"{\n            -> $node { istype($node, QAST::SVal)"...
+    ║ ║ ║ └─╥Block "svalPred"  ««"{\n            -> $node { istype($node, QAST::SVal)"...
     ║ ║ ║   ╟○ $value :decl(param) :default(WVal NO_VALUE)
-    ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::SVal) && ($value =:= NO_VALUE"...
+    ║ ║ ║   ╙─╥Block  ««"{ istype($node, QAST::SVal) && ($value =:= NO_VALUE"...
     ║ ║ ║     ╟○ $node :decl(param)
     ║ ║ ║     ╙─if  ««"&&"
     ║ ║ ║       ├─call &istype  ««"$node, QAST::SVal"
@@ -1610,9 +1610,9 @@
     ║ ║ ║           └○ $value
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &ivalPred :decl(var)
-    ║ ║ ║ └─:Block "ivalPred"  ««"{\n            -> $node { istype($node, QAST::IVal)"...
+    ║ ║ ║ └─╥Block "ivalPred"  ««"{\n            -> $node { istype($node, QAST::IVal)"...
     ║ ║ ║   ╟○ $value :decl(param) :default(WVal NO_VALUE)
-    ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::IVal) && ($value =:= NO_VALUE"...
+    ║ ║ ║   ╙─╥Block  ««"{ istype($node, QAST::IVal) && ($value =:= NO_VALUE"...
     ║ ║ ║     ╟○ $node :decl(param)
     ║ ║ ║     ╙─if  ««"&&"
     ║ ║ ║       ├─call &istype  ««"$node, QAST::IVal"
@@ -1628,9 +1628,9 @@
     ║ ║ ║           └○ $value
     ║ ║ ╟─bind
     ║ ║ ║ ├○ &opPred :decl(var)
-    ║ ║ ║ └─:Block "opPred"  ««"{\n            -> $node { istype($node, QAST::Op) &"...
+    ║ ║ ║ └─╥Block "opPred"  ««"{\n            -> $node { istype($node, QAST::Op) &"...
     ║ ║ ║   ╟○ $op :decl(param) :default(WVal NO_VALUE)
-    ║ ║ ║   ╙─:Block  ««"{ istype($node, QAST::Op) && ($op =:= NO_VALUE || $"...
+    ║ ║ ║   ╙─╥Block  ««"{ istype($node, QAST::Op) && ($op =:= NO_VALUE || $"...
     ║ ║ ║     ╟○ $node :decl(param)
     ║ ║ ║     ╙─if  ««"&&"
     ║ ║ ║       ├─call &istype  ««"$node, QAST::Op"
@@ -1657,7 +1657,7 @@
     ║ ║ ║ ├○ @statskeyDefs
     ║ ║ ║ └─call &findDefs  ««"$ast, -> $var, @pathUp {\n            nqp::index($v"...
     ║ ║ ║   ├○ $ast
-    ║ ║ ║   └─:Block  ««"{\n            nqp::index($var.name, 'STATS_') > -1"...
+    ║ ║ ║   └─╥Block  ««"{\n            nqp::index($var.name, 'STATS_') > -1"...
     ║ ║ ║     ╟○ $var :decl(param)
     ║ ║ ║     ╟○ @pathUp :decl(param)
     ║ ║ ║     ╙─isgt_n  ««">"
@@ -1671,7 +1671,7 @@
     ║ ║ ║ └─list
     ║ ║ ╟─for  ««"@statskeyDefs {\n            my $v := $_[1][0];\n  "...
     ║ ║ ║ ├○ @statskeyDefs
-    ║ ║ ║ ├─:Block :blocktype(immediate)  ««"{\n            my $v := $_[1][0];\n            if i"...
+    ║ ║ ║ ├─╥Block :blocktype(immediate)  ««"{\n            my $v := $_[1][0];\n            if i"...
     ║ ║ ║ │ ╟○ $v :decl(var)
     ║ ║ ║ │ ╟○ $_ :decl(param)
     ║ ║ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$v := $_[1][0]"
@@ -1710,7 +1710,7 @@
     ║ ║ ║ ├○ $infoHashDef
     ║ ║ ║ └─call &findDef  ««"$ast, -> $var, @pathUp {\n            if $var.name "...
     ║ ║ ║   ├○ $ast
-    ║ ║ ║   └─:Block  ««"{\n            if $var.name eq '%info' {\n         "...
+    ║ ║ ║   └─╥Block  ««"{\n            if $var.name eq '%info' {\n         "...
     ║ ║ ║     ╟○ $var :decl(param)
     ║ ║ ║     ╟○ @pathUp :decl(param)
     ║ ║ ║     ╙─if  ««"$var.name eq '%info' {\n                $findStatsH"...
@@ -1747,11 +1747,11 @@
     ║ ║ ║ │   ├─callmethod op  ««".op"
     ║ ║ ║ │   │ └○ $infoHash
     ║ ║ ║ │   └◙ SVal "hash"
-    ║ ║ ║ ├─:Block :blocktype(immediate)  ««"{\n            my $findStatNode := -> $statKey {\n "...
+    ║ ║ ║ ├─╥Block :blocktype(immediate)  ««"{\n            my $findStatNode := -> $statKey {\n "...
     ║ ║ ║ │ ╟○ $findStatNode :decl(var)
     ║ ║ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$findStatNode := -> $statKey {\n                fin"...
     ║ ║ ║ │ ║ ├○ $findStatNode
-    ║ ║ ║ │ ║ └─:Block  ««"{\n                findValueNodeInHash(svalPred($st"...
+    ║ ║ ║ │ ║ └─╥Block  ««"{\n                findValueNodeInHash(svalPred($st"...
     ║ ║ ║ │ ║   ╟○ $statKey :decl(param)
     ║ ║ ║ │ ║   ╙─call &findValueNodeInHash  ««"svalPred($statKey), ivalPred(), $infoHash"
     ║ ║ ║ │ ║     ├─call &svalPred  ««"$statKey"
@@ -1760,7 +1760,7 @@
     ║ ║ ║ │ ║     └○ $infoHash
     ║ ║ ║ │ ╟─for  ««"@statskeys {\n                my $node := $findStat"...
     ║ ║ ║ │ ║ ├○ @statskeys
-    ║ ║ ║ │ ║ ├─:Block :blocktype(immediate)  ««"{\n                my $node := $findStatNode($_);\n"...
+    ║ ║ ║ │ ║ ├─╥Block :blocktype(immediate)  ««"{\n                my $node := $findStatNode($_);\n"...
     ║ ║ ║ │ ║ │ ╟○ $node :decl(var)
     ║ ║ ║ │ ║ │ ╟○ $_ :decl(param)
     ║ ║ ║ │ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$node := $findStatNode($_)"
@@ -1789,7 +1789,7 @@
     ║ ║ ║ │   └─call &dump  ««"$infoHashDef, :oneLine"
     ║ ║ ║ │     ├○ $infoHashDef
     ║ ║ ║ │     └◙ IVal 1 :named("oneLine")
-    ║ ║ ║ └─:Stmts  ««"{\n            self.log('ast_stats WARNING: no %inf"...
+    ║ ║ ║ └─┬Stmts  ««"{\n            self.log('ast_stats WARNING: no %inf"...
     ║ ║ ║   ├─callmethod log  ««"'ast_stats WARNING: no %info hash found in AST of '"...
     ║ ║ ║   │ ├─decont
     ║ ║ ║   │ │ └○ self
@@ -1803,7 +1803,7 @@
     ║ ║ ║   │ └◙ SVal "ast_stats WARNING: ...dunno how to insert actual stats - which are:"
     ║ ║ ║   └─for  ««"%stats {\n                self.log('    ', nqp::ite"...
     ║ ║ ║     ├○ %stats
-    ║ ║ ║     ├─:Block :blocktype(immediate)  ««"{\n                self.log('    ', nqp::iterkey_s("...
+    ║ ║ ║     ├─╥Block :blocktype(immediate)  ««"{\n                self.log('    ', nqp::iterkey_s("...
     ║ ║ ║     │ ╟○ $_ :decl(param)
     ║ ║ ║     │ ╙─callmethod log  ««"'    ', nqp::iterkey_s($_), ' = ', nqp::iterval($_)"
     ║ ║ ║     │   ├─decont
@@ -1816,13 +1816,13 @@
     ║ ║ ║     │     └○ $_
     ║ ║ ║     └◙ IVal 1 :named("nohandler")
     ║ ║ ╙○ $ast
-    ║ ╟─:Block "ast_save" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $qastfileName := self.user-progname ~"...
+    ║ ╟─╥Block "ast_save" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $qastfileName := self.user-progname ~"...
     ║ ║ ╟○ self :decl(param) :returns(SmartCompiler)
     ║ ║ ╟○ $ast :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
     ║ ║ ╟○ $qastfileName :decl(var)
     ║ ║ ╙─lexotic RETURN
-    ║ ║   └─:Stmts  ««"\n        my $qastfileName := self.user-progname ~ "...
+    ║ ║   └─┬Stmts  ««"\n        my $qastfileName := self.user-progname ~ "...
     ║ ║     ├─bind :annotations({"var_initialized" => 1})  ««"$qastfileName := self.user-progname ~ '.qast'"
     ║ ║     │ ├○ $qastfileName
     ║ ║     │ └─concat  ««"~"
@@ -1850,7 +1850,7 @@
     ║ ║     │ ├◙ SVal "ast_save: QAST dump written to "
     ║ ║     │ └○ $qastfileName
     ║ ║     └○ $ast
-    ║ ╙─:Block "write_bytecode" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        #self.log('write_bytecode: adverbs=' ~ d"...
+    ║ ╙─╥Block "write_bytecode" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        #self.log('write_bytecode: adverbs=' ~ d"...
     ║   ╟○ self :decl(param) :returns(SmartCompiler)
     ║   ╟○ $mast :decl(param)
     ║   ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
@@ -1892,7 +1892,7 @@
     ║   ║ │   │   │ └◙ SVal "output"
     ║   ║ │   │   └◙ WVal NQPMu
     ║   ║ │   └◙ SVal "\")"
-    ║   ║ └─:Block :blocktype(immediate)  ««"{\n            my $assmbler := nqp::getcomp('MAST')"...
+    ║   ║ └─╥Block :blocktype(immediate)  ««"{\n            my $assmbler := nqp::getcomp('MAST')"...
     ║   ║   ╟○ $assmbler :decl(var)
     ║   ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$assmbler := nqp::getcomp('MAST')"
     ║   ║   ║ ├○ $assmbler
@@ -1918,10 +1918,10 @@
     ║   ║         └─decont
     ║   ║           └○ self
     ║   ╙○ $mast
-    ╟─:Block :blocktype(immediate)  ««"{\n    \n    method statement_control:sym<use>($/) "...
+    ╟─╥Block :blocktype(immediate)  ««"{\n    \n    method statement_control:sym<use>($/) "...
     ║ ╟○ $?PACKAGE :decl(static) :default((NQPActions, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((NQPActions, Type object))
-    ║ ╙─:Block "statement_control:sym<use>" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $out;\n\n        my @expPathUp := [];"...
+    ║ ╙─╥Block "statement_control:sym<use>" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        my $out;\n\n        my @expPathUp := [];"...
     ║   ╟○ self :decl(param) :returns(NQPActions)
     ║   ╟○ $/ :decl(param)
     ║   ╟─bind  ««"$out"
@@ -1936,7 +1936,7 @@
     ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$export := findPath(-> $node, @pathUp {\n          "...
     ║   ║ ├○ $export
     ║   ║ └─call &findPath  ««"-> $node, @pathUp {\n            istype($node, QAST"...
-    ║   ║   ├─:Block  ««"{\n            istype($node, QAST::Var) && ($node.n"...
+    ║   ║   ├─╥Block  ««"{\n            istype($node, QAST::Var) && ($node.n"...
     ║   ║   │ ╟○ $node :decl(param)
     ║   ║   │ ╟○ @pathUp :decl(param)
     ║   ║   │ ╙─unless  ««"||"
@@ -1959,13 +1959,13 @@
     ║   ║   └○ @expPathUp
     ║   ╟─if  ««"$export {\n            my $deps := findPath(-> $nod"...
     ║   ║ ├○ $export
-    ║   ║ └─:Block :blocktype(immediate)  ««"{\n            my $deps := findPath(-> $node, @path"...
+    ║   ║ └─╥Block :blocktype(immediate)  ««"{\n            my $deps := findPath(-> $node, @path"...
     ║   ║   ╟○ $deps :decl(var)
     ║   ║   ╟○ $depOut :decl(var)
     ║   ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$deps := findPath(-> $node, @pathUp {\n            "...
     ║   ║   ║ ├○ $deps
     ║   ║   ║ └─call &findPath  ««"-> $node, @pathUp {\n                if (+@pathUp >"...
-    ║   ║   ║   ├─:Block  ««"{\n                if (+@pathUp > 1) && @pathUp[1] "...
+    ║   ║   ║   ├─╥Block  ««"{\n                if (+@pathUp > 1) && @pathUp[1] "...
     ║   ║   ║   │ ╟○ $node :decl(param)
     ║   ║   ║   │ ╟○ @pathUp :decl(param)
     ║   ║   ║   │ ╙─if  ««"(+@pathUp > 1) && @pathUp[1] =:= @expPathUp[0] {\n "...
@@ -1985,7 +1985,7 @@
     ║   ║   ║   │   │     │ ├○ @expPathUp
     ║   ║   ║   │   │     │ └◙ IVal 0
     ║   ║   ║   │   │     └◙ WVal NQPMu
-    ║   ║   ║   │   ├─:Block :blocktype(immediate)  ««"{\n                    my $parent := @pathUp[0];\n "...
+    ║   ║   ║   │   ├─╥Block :blocktype(immediate)  ««"{\n                    my $parent := @pathUp[0];\n "...
     ║   ║   ║   │   │ ╟○ $parent :decl(var)
     ║   ║   ║   │   │ ╟○ $brother :decl(var)
     ║   ║   ║   │   │ ╟─bind :annotations({"var_initialized" => 1})  ««"$parent := @pathUp[0]"
@@ -2036,7 +2036,7 @@
     ║   ║   ║   └○┬VarWithFallback contextual $*UNIT :fallback((ifnull) ((VarWithFallback associative :fallback(WVal NQPMu)) ((who) (WVal GLOBALish)) (SVal "$UNIT")) ((die_s) (SVal "Contextual $*UNIT not found")))
     ║   ║   ╟─unless  ««"$deps {\n                $deps := QAST::Op.new(:op<"...
     ║   ║   ║ ├○ $deps
-    ║   ║   ║ └─:Block :blocktype(immediate)  ««"{\n                $deps := QAST::Op.new(:op<list>)"...
+    ║   ║   ║ └─╥Block :blocktype(immediate)  ««"{\n                $deps := QAST::Op.new(:op<list>)"...
     ║   ║   ║   ╟○ $depsBinding :decl(var)
     ║   ║   ║   ╟─bind  ««":="
     ║   ║   ║   ║ ├○ $deps
@@ -2120,13 +2120,13 @@
     ╟─bind :annotations({"var_initialized" => 1})  ««"$needsCompilation := 0"
     ║ ├○ $needsCompilation
     ║ └◙ IVal 0
-    ╟─:Block :blocktype(immediate)  ««"{\n\n    method BUILD() {\n        self.language('n"...
+    ╟─╥Block :blocktype(immediate)  ««"{\n\n    method BUILD() {\n        self.language('n"...
     ║ ╟○ $?PACKAGE :decl(static) :default((NQPCompiler, Type object))
     ║ ╟○ $?CLASS :decl(static) :default((NQPCompiler, Type object))
-    ║ ╟─:Block "BUILD" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.language('nqp');\n        self.pars"...
+    ║ ╟─╥Block "BUILD" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.language('nqp');\n        self.pars"...
     ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╙─lexotic RETURN
-    ║ ║   └─:Stmts  ««"\n        self.language('nqp');\n        self.parse"...
+    ║ ║   └─┬Stmts  ««"\n        self.language('nqp');\n        self.parse"...
     ║ ║     ├─callmethod language  ««"'nqp'"
     ║ ║     │ ├─decont
     ║ ║     │ │ └○ self
@@ -2142,7 +2142,7 @@
     ║ ║     └─call RETURN
     ║ ║       └─decont
     ║ ║         └○ self
-    ║ ╟─:Block "parse" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.log('parse: ', self.user-progname, "...
+    ║ ╟─╥Block "parse" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        self.log('parse: ', self.user-progname, "...
     ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╟○ $source :decl(param)
     ║ ║ ╟○ %adverbs :decl(param) :named(1) :slurpy(1)
@@ -2177,16 +2177,16 @@
     ║ ║ ║ │   └○ self
     ║ ║ ║ └◙ SVal " done."
     ║ ║ ╙○ $out
-    ║ ╟─:Block "compiler_progname" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{ 'nqpc' }"
+    ║ ╟─╥Block "compiler_progname" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{ 'nqpc' }"
     ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╟○ $value :decl(param) :default(WVal NO_VALUE)
     ║ ║ ╙◙ SVal "nqpc"
-    ║ ╟─:Block "handle-exception" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        nqp::rethrow($error);\n    }"
+    ║ ╟─╥Block "handle-exception" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        nqp::rethrow($error);\n    }"
     ║ ║ ╟○ self :decl(param) :returns(NQPCompiler)
     ║ ║ ╟○ $error :decl(param)
     ║ ║ ╙─rethrow  ««"nqp::rethrow($error)"
     ║ ║   └○ $error
-    ║ ╙─:Block "compileFile" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        # replace all backslashes with slashes\n"...
+    ║ ╙─╥Block "compileFile" :annotations({"compile_time_dummy" => (BOOTCode, invokable), "code_obj" => (NQPRoutine, invokable)}) :blocktype(declaration_static)  ««"{\n        # replace all backslashes with slashes\n"...
     ║   ╟○ self :decl(param) :returns(NQPCompiler)
     ║   ╟○ $src_path :decl(param)
     ║   ╟○ $target :decl(param) :named("target") :default(SVal "mbc")
@@ -2207,7 +2207,7 @@
     ║   ║ └◙ WVal NQPMu
     ║   ╟○ $ast_path :decl(var)
     ║   ╙─lexotic RETURN
-    ║     └─:Stmts  ««"\n        # replace all backslashes with slashes\n "...
+    ║     └─┬Stmts  ««"\n        # replace all backslashes with slashes\n "...
     ║       ├─bind  ««":="
     ║       │ ├○ $src_path
     ║       │ └─join  ««"nqp::join('/', nqp::split('\\\\', $src_path))"
@@ -2310,7 +2310,7 @@
     ║       │ ├─callmethod user_srcpaths  ««".user_srcpaths"
     ║       │ │ └─decont
     ║       │ │   └○ self
-    ║       │ └─:Block :blocktype(immediate)  ««"{\n            if nqp::index($src_dir, $_) == 0 {\n"...
+    ║       │ └─╥Block :blocktype(immediate)  ««"{\n            if nqp::index($src_dir, $_) == 0 {\n"...
     ║       │   ╟○ $_ :decl(param)
     ║       │   ╙─if  ««"nqp::index($src_dir, $_) == 0 {\n                $s"...
     ║       │     ├─iseq_n  ««"=="
@@ -2318,7 +2318,7 @@
     ║       │     │ │ ├○ $src_dir
     ║       │     │ │ └○ $_
     ║       │     │ └◙ IVal 0
-    ║       │     └─:Stmts  ««"{\n                $src_lib := nqp::substr($src_dir"...
+    ║       │     └─┬Stmts  ««"{\n                $src_lib := nqp::substr($src_dir"...
     ║       │       ├─bind  ««":="
     ║       │       │ ├○ $src_lib
     ║       │       │ └─substr  ««"nqp::substr($src_dir, nqp::chars($_) + 1)"
@@ -2345,7 +2345,7 @@
     ║       ├○ $vm_path
     ║       ├─if  ««"$src_lib {\n            $src_path := \"$src_dir/$sr"...
     ║       │ ├○ $src_lib
-    ║       │ ├─:Stmts  ««"{\n            $src_path := \"$src_dir/$src_lib/$sr"...
+    ║       │ ├─┬Stmts  ««"{\n            $src_path := \"$src_dir/$src_lib/$sr"...
     ║       │ │ ├─bind  ««":="
     ║       │ │ │ ├○ $src_path
     ║       │ │ │ └─concat
@@ -2376,7 +2376,7 @@
     ║       │ │     │ │ └○ $src_name
     ║       │ │     │ └◙ SVal "."
     ║       │ │     └○ $vm_ext
-    ║       │ └─:Stmts  ««"{\n            $src_path := \"$src_dir/$src_name.$s"...
+    ║       │ └─┬Stmts  ««"{\n            $src_path := \"$src_dir/$src_name.$s"...
     ║       │   ├─bind  ««":="
     ║       │   │ ├○ $src_path
     ║       │   │ └─concat
@@ -2416,7 +2416,7 @@
     ║         │ └○ $needsCompilation
     ║         ├─call RETURN
     ║         │ └─null  ««"nqp::null"
-    ║         └─:Block :blocktype(immediate)  ««"{\n            my @opts := [\n                #'--m"...
+    ║         └─╥Block :blocktype(immediate)  ««"{\n            my @opts := [\n                #'--m"...
     ║           ╟○ @opts :decl(var)
     ║           ╟○ @args :decl(var)
     ║           ╟○ $*USER_FILE :decl(var)
@@ -2448,7 +2448,7 @@
     ║           ║ ├─iseq_s  ««"eq"
     ║           ║ │ ├○ $target
     ║           ║ │ └◙ SVal "mbc"
-    ║           ║ ├─:Stmts  ««"{\n                if nqp::stat($vm_path, nqp::cons"...
+    ║           ║ ├─┬Stmts  ««"{\n                if nqp::stat($vm_path, nqp::cons"...
     ║           ║ │ ├─if  ««"nqp::stat($vm_path, nqp::const::STAT_EXISTS) && !nq"...
     ║           ║ │ │ ├─if  ««"&&"
     ║           ║ │ │ │ ├─stat  ««"nqp::stat($vm_path, nqp::const::STAT_EXISTS)"
@@ -2507,7 +2507,7 @@
     ║           ╟○ $error
     ║           ╟─handle
     ║           ║ ├─handle
-    ║           ║ │ ├─:Stmts  ««"\n                $result := self.command_line(@arg"...
+    ║           ║ │ ├─┬Stmts  ««"\n                $result := self.command_line(@arg"...
     ║           ║ │ │ ├─bind  ««":="
     ║           ║ │ │ │ ├○ $result
     ║           ║ │ │ │ └─callmethod command_line  ««"@args, \n                    :encoding('utf8'), \n "...
@@ -2519,9 +2519,9 @@
     ║           ║ │ │ │   └○ $stagestats :named("stagestats")
     ║           ║ │ │ └◙ WVal NQPMu
     ║           ║ │ ├► "CATCH" (str)
-    ║           ║ │ └─:Stmts
+    ║           ║ │ └─┬Stmts
     ║           ║ │   ├─call
-    ║           ║ │   │ ├─:Block  ««"{\n                    $error := $_;\n             "...
+    ║           ║ │   │ ├─╥Block  ««"{\n                    $error := $_;\n             "...
     ║           ║ │   │ │ ╟○ $_ :decl(param)
     ║           ║ │   │ │ ╟─bind
     ║           ║ │   │ │ ║ ├○ $! :decl(var)
@@ -2530,15 +2530,15 @@
     ║           ║ │   │ │   ├○ $error
     ║           ║ │   │ │   └○ $_
     ║           ║ │   │ └─exception
-    ║           ║ │   ├─:VM
+    ║           ║ │   ├─VM
     ║           ║ │   └◙ WVal NQPMu
     ║           ║ ├► "CATCH" (str)
-    ║           ║ └─:Stmts
-    ║           ║   ├─:VM
+    ║           ║ └─┬Stmts
+    ║           ║   ├─VM
     ║           ║   └◙ WVal NQPMu
     ║           ╟─unless  ««"$error {\n                if nqp::isnull($result) {"...
     ║           ║ ├○ $error
-    ║           ║ └─:Stmts  ««"{\n                if nqp::isnull($result) {   # re"...
+    ║           ║ └─┬Stmts  ««"{\n                if nqp::isnull($result) {   # re"...
     ║           ║   ├─if  ««"nqp::isnull($result) {   # returning non-null means"...
     ║           ║   │ ├─isnull  ««"nqp::isnull($result)"
     ║           ║   │ │ └○ $result
@@ -2577,7 +2577,7 @@
     ║           ║ │ │ ├○ $msglc
     ║           ║ │ │ └◙ SVal "no such file"
     ║           ║ │ └◙ IVal -1
-    ║           ║ ├─:Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, '\\'"...
+    ║           ║ ├─╥Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, '\\'"...
     ║           ║ │ ╟○ $file :decl(var)
     ║           ║ │ ╟─bind  ««":="
     ║           ║ │ ║ ├○ $from
@@ -2616,7 +2616,7 @@
     ║           ║   │ │ ├○ $msglc
     ║           ║   │ │ └◙ SVal "unable to write bytecode"
     ║           ║   │ └◙ IVal -1
-    ║           ║   ├─:Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, '\\'"...
+    ║           ║   ├─╥Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, '\\'"...
     ║           ║   │ ╟○ $file :decl(var)
     ║           ║   │ ╟○ $line :decl(var)
     ║           ║   │ ╟─bind  ««":="
@@ -2663,7 +2663,7 @@
     ║           ║     │ │ ├○ $msglc
     ║           ║     │ │ └◙ SVal "confused"
     ║           ║     │ └◙ IVal -1
-    ║           ║     ├─:Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, 'at "...
+    ║           ║     ├─╥Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, 'at "...
     ║           ║     │ ╟○ $line :decl(var)
     ║           ║     │ ╟─bind  ««":="
     ║           ║     │ ║ ├○ $from
@@ -2739,7 +2739,7 @@
     ║           ║       │ │ ├○ $msglc
     ║           ║       │ │ └◙ SVal "assignment (\"=\") not supported "
     ║           ║       │ └◙ IVal -1
-    ║           ║       ├─:Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, 'at "...
+    ║           ║       ├─╥Block :blocktype(immediate)  ««"{\n                $from := nqp::index($msglc, 'at "...
     ║           ║       │ ╟○ $line :decl(var)
     ║           ║       │ ╟○ @lines :decl(var)
     ║           ║       │ ╟○ $i :decl(var)
@@ -2807,7 +2807,7 @@
     ║           ║       │ ║ ├─islt_n  ««"<"
     ║           ║       │ ║ │ ├○ $i
     ║           ║       │ ║ │ └○ $n
-    ║           ║       │ ║ ├─:Block :blocktype(immediate)  ««"{\n                    my $line := @lines[$i];\n   "...
+    ║           ║       │ ║ ├─╥Block :blocktype(immediate)  ««"{\n                    my $line := @lines[$i];\n   "...
     ║           ║       │ ║ │ ╟○ $line :decl(var)
     ║           ║       │ ║ │ ╟○ $at :decl(var)
     ║           ║       │ ║ │ ╟─bind :annotations({"var_initialized" => 1})  ««"$line := @lines[$i]"
@@ -2826,7 +2826,7 @@
     ║           ║       │ ║ │   ├─isgt_n  ««">"
     ║           ║       │ ║ │   │ ├○ $at
     ║           ║       │ ║ │   │ └◙ IVal -1
-    ║           ║       │ ║ │   ├─:Stmts  ««"{\n                        $column := $at + 1;\n   "...
+    ║           ║       │ ║ │   ├─┬Stmts  ««"{\n                        $column := $at + 1;\n   "...
     ║           ║       │ ║ │   │ ├─bind  ««":="
     ║           ║       │ ║ │   │ │ ├○ $column
     ║           ║       │ ║ │   │ │ └─add_n  ««"+"
@@ -2835,7 +2835,7 @@
     ║           ║       │ ║ │   │ └─bind  ««":="
     ║           ║       │ ║ │   │   ├○ $i
     ║           ║       │ ║ │   │   └○ $n
-    ║           ║       │ ║ │   └─:Stmts  ««"{\n                        $i++;\n                 "...
+    ║           ║       │ ║ │   └─┬Stmts  ««"{\n                        $i++;\n                 "...
     ║           ║       │ ║ │     ├─postinc  ««"++"
     ║           ║       │ ║ │     │ └○ $i
     ║           ║       │ ║ │     └─postinc  ««"++"
@@ -2875,7 +2875,7 @@
     ║           ║       │       └◙ SVal "\n"
     ║           ║       └─if  ««"0 {\n                my $line := 1;\n              "...
     ║           ║         ├◙ IVal 0
-    ║           ║         ├─:Block :blocktype(immediate)  ««"{\n                my $line := 1;\n                "...
+    ║           ║         ├─╥Block :blocktype(immediate)  ««"{\n                my $line := 1;\n                "...
     ║           ║         │ ╟○ $line :decl(var)
     ║           ║         │ ╟─bind  ««"$column"
     ║           ║         │ ║ ├○ $column :decl(var)
