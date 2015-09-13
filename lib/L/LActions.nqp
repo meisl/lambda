@@ -125,8 +125,8 @@ my sub mkDelaySimple($node) {
     }
 }
 
-my sub mkCall($fn, *@args) {
-    my $out := QAST::Op.new(:op<call>);
+my sub mkCall($fn, *@args, *%options) {
+    my $out := QAST::Op.new(:op<call>, |%options);
     if nqp::isstr($fn) {
         $out.name($fn);
     } else {
@@ -147,12 +147,12 @@ my sub mkCall($fn, *@args) {
 my $runtime;
 my %runtime-fns-types := {};
 
-my sub mkRCall(str $fnName, *@args) {
+my sub mkRCall(str $fnName, *@args, *%options) {
     nqp::die("invalid runtime fn name $fnName")
         unless nqp::index($fnName, '&') == 0;
     #nqp::die("no such runtime fn: $fnName")
     #    unless nqp::existskey(%runtime-fns-types, $fnName);
-    mkCall($fnName, |@args);
+    mkCall($fnName, |@args, |%options);
 }
 
 
@@ -453,10 +453,10 @@ my sub make-runtime() {
                 asNode(0)
             )
         );
+        
         Type.Int.set($extract-id-as-Int);
-        QAST::Op.new(:op<if>,
-            QAST::Op.new(:op<islist>, $subject),
-            QAST::Stmts.new(
+        QAST::Op.new(:op<typecase>, :name<subject>,
+            QAST::Stmts.new(:named<islist>,
                 mkBind($tagAndId, mkListLookup($subject, :index(0))),
                 QAST::Op.new(:op<if>,
                     QAST::Op.new(:op<iseq_s>,
@@ -465,9 +465,9 @@ my sub make-runtime() {
                     ),
                     mkCall($then, $extract-id-as-Int),
                     mkCall($else)  # different tag
-                ),
+                )
             ),
-            mkCall($else)  # subject not a list
+            mkCall($else, :named<otherwise>)
         )
     });
     
@@ -1019,6 +1019,59 @@ class LActions is HLL::Actions {
                         say('>>typed Block ' ~ $var.name ~ ':: ' ~ $tVal ~ '; ' ~ $c);
                         $n.annotate('constraints', $c);
                     }
+                } elsif $n.op eq 'typecase' {
+                    my $subject-name := $n.name;
+                    Type.error(:at($n), 'no :name for ', $n, "\n", dump($currentBlock))
+                        unless nqp::isstr($subject-name);
+                    $n.op('if');
+                    $n.name(nqp::null_s);
+                    my @args := $n.list;
+                    $n.set_children([]);
+                    my %clauses := {};
+                    for @args {
+                        my $arg-name := $_.named;
+                        Type.error(:at($n), 'no :named for ', $_, "\n", dump($n))
+                            unless nqp::isstr($arg-name);
+                        Type.error(:at($n), 'duplicate typecase clause :named<', $arg-name, '>: ', $_, "\n", dump($n))
+                            if nqp::existskey(%clauses, $arg-name);
+                        %clauses{$arg-name} := $_;
+                        $_.named(nqp::null_s);
+                    }
+                    my $out := %clauses<otherwise>;
+                    nqp::deletekey(%clauses, 'otherwise');
+                    my $outer-subject-type := self.typecheck(lexVar($subject-name), $currentBlock, |@moreBlocks, :@constraints);
+                    for %clauses {
+                        my $k := $_.key;
+                        my $v := $_.value;
+                        my $inner-subject-type := nqp::hash(
+                            'isint', Type.Int,
+                            'isnum', Type.Num,
+                            'isstr', Type.Str,
+                            'islist', Type.Array,
+                            'isinvokable', Type.Fn(Type.Void, Type.Var),
+                        ){$k};
+                        Type.error(:at($n), 'invalid typecase clause :named<', $k, '>: ', $v, "\n", dump($n))
+                            unless $inner-subject-type;
+                        my $subject := lexVar($subject-name);
+                        $outer-subject-type.set($subject);
+                        my $test := QAST::Op.new(:op($k), $subject);
+                        Type.BOOL.set($test);
+                        my $decl := mkDeclV($subject);
+                        $inner-subject-type.set($decl);
+                        my $body := QAST::Block.new($v);
+                        $body.symbol($subject-name, :declaration($decl));
+                        my $tBody := self.typecheck($body, $currentBlock, |@moreBlocks, :@constraints);
+                        $tBody.out.set($v);
+                        $out := QAST::Op.new(:op<if>,
+                            $test,
+                            $v,
+                            $out
+                        );
+                    }
+                    my $tOut := self.typecheck($out, $currentBlock, |@moreBlocks, :@constraints);
+                    $n.set_children($out.list);
+                    $tOut.set($n);
+                    say('>>>>>>>>>>', dump($out));
                 } else {
                     my @tArgs := [];
                     @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks, :@constraints))
