@@ -114,7 +114,7 @@ sub typecase($subject, *%callbacks) {
         %callbacks<otherwise>,
         -> $x { # compiler should see that this needs not be a closure
             nqp::die('typecase: fell through due to missing "otherwise"-callback: '
-                ~ nqp::reprname($subject)
+                ~ nqp::reprname($x)
             )
         }
     );

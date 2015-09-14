@@ -305,8 +305,8 @@
     ║   ║     ╙─die  ««"nqp::die('typecase: fell through due to missing \"o"...
     ║   ║       └─concat  ««"~"
     ║   ║         ├◙ SVal "typecase: fell through due to missing \"otherwise\"-callback: "
-    ║   ║         └─reprname  ««"nqp::reprname($subject)"
-    ║   ║           └○ $subject
+    ║   ║         └─reprname  ««"nqp::reprname($x)"
+    ║   ║           └○ $x
     ║   ╟─bind :annotations({"var_initialized" => 1})  ««"$cbKey := nqp::null"
     ║   ║ ├○ $cbKey
     ║   ║ └─null  ««"nqp::null"

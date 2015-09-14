@@ -163,28 +163,34 @@
     ║             ├◙ SVal "no such tag: " ::(Str)
     ║             └○ tag ::(Str) :returns(str)
     ╟─bind
-    ║ ├○ &strOut :decl(static) ::(t56)
-    ║ └─╥Block "&strOut" :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical v :decl(param)), QAST::Var(lexical indent :decl(param))], "optional" => []})
+    ║ ├○ &strOut-new :decl(static) ::(t56)
+    ║ └─╥Block "&strOut-new" :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical v :decl(param)), QAST::Var(lexical indent :decl(param))], "optional" => []})
     ║   ╟○ v :decl(param) ::(t57) :annotations({"positional_index" => 0})
     ║   ╟○ indent :decl(param) ::(t58) :annotations({"positional_index" => 1})
+    ║   ╙─if
+    ╟─bind
+    ║ ├○ &strOut :decl(static)
+    ║ └─╥Block "&strOut"
+    ║   ╟○ v :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ indent :decl(param) :annotations({"positional_index" => 1})
     ║   ╟─bind
-    ║   ║ ├○ v ::(t57)
+    ║   ║ ├○ v
     ║   ║ └─call &force :annotations({"forced" => QAST::Var(lexical v)})
-    ║   ║   └○ v ::(t57)
+    ║   ║   └○ v
     ║   ╙─if
     ║     ├─isstr
-    ║     │ └○ v ::(t57)
+    ║     │ └○ v
     ║     ├─call &strLit
-    ║     │ └○ v ::(t57)
+    ║     │ └○ v
     ║     └─call &ifTag
-    ║       ├○ v ::(t57)
+    ║       ├○ v
     ║       ├◙ SVal "λ"
     ║       ├─╥Block
     ║       │ ╟○ id :decl(param)
     ║       │ ╟─bind
     ║       │ ║ ├○ fvars :decl(var)
     ║       │ ║ └─call &sublist
-    ║       │ ║   ├○ v ::(t57)
+    ║       │ ║   ├○ v
     ║       │ ║   └◙ IVal 2
     ║       │ ╟─bind
     ║       │ ║ ├○ info :decl(var)
@@ -284,11 +290,11 @@
     ║       │ ╙○ src
     ║       └─if
     ║         ├─isint
-    ║         │ └○ v ::(t57)
-    ║         ├○ v ::(t57)
+    ║         │ └○ v
+    ║         ├○ v
     ║         └─╥Block :annotations({"delayed" => "simple"})
     ║           ╙─reprname
-    ║             └○ v ::(t57)
+    ║             └○ v
     ╟─bind
     ║ ├○ &say :decl(static)
     ║ └─╥Block "&say"
@@ -353,10 +359,10 @@
     ║     └○ result
     ╟─bind
     ║ ├○ .qastSize :decl(static)
-    ║ └◙ NVal 381
+    ║ └◙ NVal 387
     ╟─bind
     ║ ├○ .blockCount :decl(static)
-    ║ └◙ NVal 21
+    ║ └◙ NVal 22
     ╟─bind
     ║ ├○ .listCount :decl(static)
     ║ └◙ NVal 6

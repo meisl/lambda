@@ -113,7 +113,7 @@ my sub isDelayed($node) {
     $node.has_ann('delayed');
 }
 
-my sub mkDelaySimple($node) {
+my sub mkDelaySimple($node, *%options) {
     if isVal($node) || isOp($node, 'null') || isDelayed($node) || isVar($node) {
         $node;
     } elsif isForced($node) {
@@ -123,6 +123,8 @@ my sub mkDelaySimple($node) {
         $node.annotate('delayed', 'simple');
         $node;
     }
+    $node.set(%options);
+    $node;
 }
 
 my sub mkCall($fn, *@args, *%options) {
@@ -488,7 +490,30 @@ my sub make-runtime() {
             )
         )
     });
+
+    mkRFn('&strOut-new', <v indent>, 
+        #:returns(Type.Fn(NQPMu, Type.Str, Type.Str)), 
+    -> $v, $indent {
+        my $id      := lexVar('id');
+        my $info    := lexVar('info');
+        my $src     := lexVar('src');
+        my $from    := lexVar('from');
+        my $length  := lexVar('length');
+        my $fvars   := lexVar('fvars');
+        my $fvn2dBI := lexVar('fvn2dBI');  # "free var name 2 deBruijn index"
+        my $i       := lexVar('i');
+        my $pair    := lexVar('pair');
+        my $name    := lexVar('name');
+        my $dBI     := lexVar('dBI');   # "deBruijn index"
+        my $val     := lexVar('val');
     
+        QAST::Op.new(:op<typecase>,
+            mkRCall('&strLit', $v, :named<isstr>),
+            lexVar($v.name, :named<isint>),
+            mkDelaySimple(:named<otherwise>, QAST::Op.new(:op<reprname>, $v))
+        );
+    });
+
     mkRFn('&strOut', <v indent>, 
         #:returns(Type.Fn(NQPMu, Type.Str, Type.Str)), 
     -> $v, $indent {
