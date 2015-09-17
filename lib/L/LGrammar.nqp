@@ -17,7 +17,7 @@ use Util;
 grammar LGrammar is HLL::Grammar {
 
     rule TOP {
-        :my $*UNIT := QAST::CompUnit.new(:hll('L'), QAST::Block.new());
+        :my $*UNIT := QAST::CompUnit.new(:hll('nqp'), QAST::Block.new());
 
         ^ \s* 
           <.eolComment>*

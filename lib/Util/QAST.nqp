@@ -163,7 +163,7 @@ class Util::QAST {
         } elsif istype($node, QAST::Stmts) {
             $prefix := $prefix ~ '─┬';
         } else {
-            $prefix := $prefix ~ '─';
+            $prefix := $prefix ~ '─:';
         }
         
         my $suffix := $matchStr;

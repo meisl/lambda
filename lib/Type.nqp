@@ -635,6 +635,10 @@ class Type is export {
                         Type.Fn(Type.Cross($Str, $Int, $Int),           $Str    ),
                     ),
         'split',    Type.Fn(Type.Cross($Str,   $Str   ),                $Array  ),
+        'stringify',Type.Sum(
+                        Type.Fn(Type.Cross($Int),                       $Str    ),
+                        Type.Fn(Type.Cross($Num),                       $Str    ),
+                    ),
         # int
         'iseq_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
         'isne_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
@@ -651,6 +655,10 @@ class Type is export {
         'gcd_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
         'lcm_i',    Type.Fn(Type.Cross($Int,   $Int    ),               $Int    ),
         'not_i',    Type.Fn(Type.Cross($Int            ),               $Int    ),
+        'predec',   Type.Fn(Type.Cross($Int            ),               $Int    ),
+        'preinc',   Type.Fn(Type.Cross($Int            ),               $Int    ),
+        'postdec',  Type.Fn(Type.Cross($Int            ),               $Int    ),
+        'postinc',  Type.Fn(Type.Cross($Int            ),               $Int    ),
         # list/hash
         'elems',    Type.Fn(Type.Cross($Array          ),               $Int    ),
         'atpos',    Type.Fn(Type.Cross($Array, $Int    ),               $v0     ),

@@ -1,4 +1,4 @@
-──CompUnit+{StrByDump}
+──:CompUnit+{StrByDump}
   └─╥Block "<mainline>"
     ╟○ @ARGS :decl(param) :slurpy(1)
     ╟○ GLOBALish :decl(static) :default((GLOBALish, Type object))
@@ -699,7 +699,7 @@
     ║   ║ │     │ │ ╙─exit  ««"nqp::exit(1)"
     ║   ║ │     │ │   └◙ IVal 1
     ║   ║ │     │ └─exception
-    ║   ║ │     ├─VM
+    ║   ║ │     ├─:VM
     ║   ║ │     └◙ WVal NQPMu
     ║   ║ └◙ IVal 1 :named("nohandler")
     ║   ╙─call &say  ««"$sep"
@@ -2530,11 +2530,11 @@
     ║           ║ │   │ │   ├○ $error
     ║           ║ │   │ │   └○ $_
     ║           ║ │   │ └─exception
-    ║           ║ │   ├─VM
+    ║           ║ │   ├─:VM
     ║           ║ │   └◙ WVal NQPMu
     ║           ║ ├► "CATCH" (str)
     ║           ║ └─┬Stmts
-    ║           ║   ├─VM
+    ║           ║   ├─:VM
     ║           ║   └◙ WVal NQPMu
     ║           ╟─unless  ««"$error {\n                if nqp::isnull($result) {"...
     ║           ║ ├○ $error

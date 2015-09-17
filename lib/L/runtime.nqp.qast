@@ -1,4 +1,4 @@
-──CompUnit+{StrByDump}
+──:CompUnit+{StrByDump}
   └─╥Block "<mainline>"
     ╟○ @ARGS :decl(param) :slurpy(1)
     ╟○ GLOBALish :decl(static) :default((GLOBALish, Type object))
