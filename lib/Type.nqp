@@ -955,7 +955,10 @@ class TypeConstraint is export {
             }
         } elsif self.isAnd {
             @out := self.head.unify;
-            my $tail := self.tail.subst($_) for @out;
+            my $tail := self.tail;
+            for @out {
+                $tail := $tail.subst($_);
+            }
             @out.push($_) for $tail.unify;
         }
         unless @out {

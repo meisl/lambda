@@ -528,6 +528,7 @@ my sub make-runtime() {
         my $fvars   := lexVar('fvars');
         my $fvn2dBI := lexVar('fvn2dBI');  # "free var name 2 deBruijn index"
         my $i       := lexVar('i');
+        my $pairStr := lexVar('pairStr');
         my $pair    := lexVar('pair');
         my $name    := lexVar('name', :returns(str));
         my $dBI     := lexVar('dBI');   # "deBruijn index"
@@ -572,12 +573,12 @@ my sub make-runtime() {
                         ),
                         mkBind(mkDeclV($i), 0),
                         QAST::Op.new(:op<for>, $fvn2dBI, QAST::Block.new(:arity(1),
-                            mkDeclP($pair),
-                            mkBind($pair, QAST::Op.new(:op<split>, asNode('.'), $pair)),
-                            mkBind(mkDeclV($name), mkListLookup($pair, :index(0))),
-                            mkBind(mkDeclV($dBI), mkListLookup($pair, :index(1))),
-                            mkBind(mkDeclV($val), mkListLookup($fvars, :index($i))),
-                            mkBind($i, QAST::Op.new(:op<add_i>, $i, asNode(1))),
+                            mkDeclP($pairStr),
+                            mkBind(mkDeclV($pair), QAST::Op.new(:op<split>, asNode('.'), $pairStr)),
+                            mkBind(mkDeclV($name), mkListLookup(nqp::clone($pair),  :index(0))),
+                            mkBind(mkDeclV($dBI),  mkListLookup(nqp::clone($pair),  :index(1))),
+                            mkBind(mkDeclV($val),  mkListLookup(nqp::clone($fvars), :index($i))),
+                            mkBind(nqp::clone($i), QAST::Op.new(:op<add_i>, nqp::clone($i), asNode(1))),
                             QAST::Op.new(:op<if>, 
                                 QAST::Op.new(:op<not_i>, $dBI),
                                 mkBind($dBI, '∞')           # show "∞" as deBruijn index of unbound var
