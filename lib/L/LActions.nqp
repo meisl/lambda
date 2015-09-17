@@ -549,7 +549,10 @@ my sub make-runtime() {
             :isint(
                 QAST::Op.new(:op<stringify>, nqp::clone($v))    # Attention: works only if under a CompUnit with :hll<nqp> (!!)
             ),
-            :otherwise(
+            :isnum(
+                QAST::Op.new(:op<stringify>, nqp::clone($v))    # Attention: works only if under a CompUnit with :hll<nqp> (!!)
+            ),
+            :islist(
                 mkRCall('&ifTag', nqp::clone($v), 'λ',
                     QAST::Block.new(:arity(1),
                         mkDeclP($id),
@@ -601,6 +604,9 @@ my sub make-runtime() {
                     ),
                     mkDelaySimple(QAST::Op.new(:op<reprname>,  nqp::clone($v)))
                 )
+            ),
+            :otherwise(
+                mkDelaySimple(QAST::Op.new(:op<reprname>,  nqp::clone($v)))
             ),
         );
     });
@@ -838,12 +844,12 @@ class LActions is HLL::Actions {
         );
 
         my $dummy-block := QAST::Block.new;
-        try {
+        #try {
             self.typecheck($top-block, $dummy-block);              # <<<<<<<<< TODO
-            CATCH {
-                say(~$!);
-            }
-        }
+        #    CATCH {
+        #        say(~$!);
+        #    }
+        #}
 
 
         #my $mainTermType;
@@ -937,7 +943,24 @@ class LActions is HLL::Actions {
         if $tCallee.isFnType {
             my $tIn  := $tCallee.head;
             $tOut := $tCallee.tail;
-            $c := Type.constrain(:$at, $tArgs, $tIn);
+            #$c := Type.constrain(:$at, $tArgs, $tIn);
+            if $tArgs =:= $tIn {
+                $c := TypeConstraint.True;
+            } elsif $tArgs.elems == $tIn.elems {        ## TODO: refine check if they're really compatible (eg Cross :: Sum are not)
+                $c := $tArgs.zipfoldl(
+                    $tIn,
+                    -> $acc, $tArg, $tParam {
+                        my $cc;
+                        if $tArg.isSumType {
+                            $cc := $tArg.foldl(-> $acc, $s { TypeConstraint.And($acc, Type.constrain(:$at, $s, $tParam)) }, TypeConstraint.True);
+                        } else {
+                            $cc := Type.constrain(:$at, $tArg, $tParam);
+                        }
+                        TypeConstraint.And($acc, $cc);
+                    },
+                    TypeConstraint.True
+                );
+            }
         } elsif $tCallee.isSumType {
             my @cs    := [];
             my @tOuts := [];

@@ -206,6 +206,19 @@ class Type is export {
         #});
     }
 
+    method zipfoldl($t, &f, $start) {
+        my $n := self.elems;
+        nqp::die('cannot zip ' ~ self.Str ~ ' with ' ~ $t.Str)
+            unless $n == $t.elems;
+        if $n == 1 {
+            &f($start, self, $t);
+        } elsif $n == 2 {   # must not zipfoldl into last elem (if that is a different compound type)
+            &f(&f($start, self.head, $t.head), self.tail, $t.tail);
+        } else {
+            self.tail.zipfoldl($t.tail, &f, &f($start, self.head, $t.head));
+        }
+    }
+
     method vars(%vs = {}) {
         if self.isTypeVar {
             %vs{self.name} := self;
