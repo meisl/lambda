@@ -648,10 +648,7 @@ class Type is export {
                         Type.Fn(Type.Cross($Str, $Int, $Int),           $Str    ),
                     ),
         'split',    Type.Fn(Type.Cross($Str,   $Str   ),                $Array  ),
-        'stringify',Type.Sum(
-                        Type.Fn(Type.Cross($Int),                       $Str    ),
-                        Type.Fn(Type.Cross($Num),                       $Str    ),
-                    ),
+        'stringify',Type.Fn(Type.Cross(Type.Sum($Int, $Num)),           $Str    ),
         # int
         'iseq_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
         'isne_i',   Type.Fn(Type.Cross($Int,   $Int    ),               $Bool   ),
@@ -773,7 +770,17 @@ class Type is export {
                             $Bool
                         ),
                     ),
-        'reprname', Type.Fn(Type.Cross($v0),               $Str   ),
+        'reprname', Type.Fn(
+                        Type.Sum(
+                            $Str,
+                            $Int,
+                            $Num,
+                            $Bool,
+                            $Array,
+                            Type.Fn($v0, $v1),
+                        ),
+                        $Str
+                    ),
     );
     
     method ofOp($op) {

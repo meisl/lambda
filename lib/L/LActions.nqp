@@ -516,7 +516,7 @@ my sub make-runtime() {
         )
     });
 
-    mkRFn('&strOut-new', <u indent>, 
+    mkRFn('&strOut', <u indent>, 
         #:returns(Type.Fn(NQPMu, Type.Str, Type.Str)), 
     -> $u, $indent {
         my $v       := lexVar('v');
@@ -532,6 +532,7 @@ my sub make-runtime() {
         my $pair    := lexVar('pair');
         my $name    := lexVar('name', :returns(str));
         my $dBI     := lexVar('dBI');   # "deBruijn index"
+        my $dBIStr  := lexVar('dBIStr');
         my $val     := lexVar('val');
     
         mkBind(mkDeclV($v), mkTypecase($u,
@@ -542,7 +543,7 @@ my sub make-runtime() {
         )),
         mkTypecase($v,
             #:isinvokable(
-            #    mkRCall('&strOut-new', QAST::Op.new(:op<call>, nqp::clone($v)), nqp::clone($indent))
+            #    mkRCall('&strOut', QAST::Op.new(:op<call>, nqp::clone($v)), nqp::clone($indent))
             #),
             :isstr(
                 mkRCall('&strLit', nqp::clone($v))
@@ -579,20 +580,23 @@ my sub make-runtime() {
                             mkBind(mkDeclV($dBI),  mkListLookup(nqp::clone($pair),  :index(1))),
                             mkBind(mkDeclV($val),  mkListLookup(nqp::clone($fvars), :index($i))),
                             mkBind(nqp::clone($i), QAST::Op.new(:op<add_i>, nqp::clone($i), asNode(1))),
-                            QAST::Op.new(:op<if>, 
-                                QAST::Op.new(:op<not_i>, $dBI),
-                                mkBind($dBI, '∞')           # show "∞" as deBruijn index of unbound var
+                            mkBind(mkDeclV($dBIStr), 
+                                QAST::Op.new(:op<if>, 
+                                    QAST::Op.new(:op<not_i>, nqp::clone($dBI)),
+                                    asNode('∞'),           # show "∞" as deBruijn index of unbound var
+                                    QAST::Op.new(:op<stringify>, nqp::clone($dBI))
+                                ),
                             ),
                             mkBind($src,
                                 mkConcat($src, 
                                     QAST::Op.new(:op<concat>, asNode("\n"),       nqp::clone($indent)),
                                     QAST::Op.new(:op<concat>, asNode('# where '), nqp::clone($name)),
-                                    #'(', $dBI, ')',
+                                    #'(', $dBIStr, ')',
                                     QAST::Op.new(:op<concat>, asNode(' = '),
                                         QAST::Op.new(:op<if>,
                                             QAST::Op.new(:op<iseq_s>, nqp::clone($name), asNode('self')),
                                             asNode('...'),
-                                            mkRCall('&strOut-new', 
+                                            mkRCall('&strOut', 
                                                 $val,
                                                 QAST::Op.new(:op<concat>, nqp::clone($indent), asNode('#           '))
                                             ),
@@ -612,7 +616,7 @@ my sub make-runtime() {
         );
     });
 
-    mkRFn('&strOut', <v indent>, 
+    mkRFn('&strOut-old', <v indent>, 
         #:returns(Type.Fn(NQPMu, Type.Str, Type.Str)), 
     -> $v, $indent {
         my $id      := lexVar('id');
@@ -674,7 +678,7 @@ my sub make-runtime() {
                                 QAST::Op.new(:op<if>,
                                     QAST::Op.new(:op<iseq_s>, $name, asNode('self')),
                                     asNode('...'),
-                                    mkRCall('&strOut', 
+                                    mkRCall('&strOut-old', 
                                         $val,
                                         mkConcat($indent, '#           ')
                                     ),
@@ -845,12 +849,12 @@ class LActions is HLL::Actions {
         );
 
         my $dummy-block := QAST::Block.new;
-        #try {
+        try {
             self.typecheck($top-block, $dummy-block);              # <<<<<<<<< TODO
-        #    CATCH {
-        #        say(~$!);
-        #    }
-        #}
+            CATCH {
+                say(~$!);
+            }
+        }
 
 
         #my $mainTermType;
@@ -947,20 +951,30 @@ class LActions is HLL::Actions {
             #$c := Type.constrain(:$at, $tArgs, $tIn);
             if $tArgs =:= $tIn {
                 $c := TypeConstraint.True;
-            } elsif $tArgs.elems == $tIn.elems {        ## TODO: refine check if they're really compatible (eg Cross :: Sum are not)
-                $c := $tArgs.zipfoldl(
-                    $tIn,
-                    -> $acc, $tArg, $tParam {
-                        my $cc;
-                        if $tArg.isSumType {
-                            $cc := $tArg.foldl(-> $acc, $s { TypeConstraint.And($acc, Type.constrain(:$at, $s, $tParam)) }, TypeConstraint.True);
-                        } else {
-                            $cc := Type.constrain(:$at, $tArg, $tParam);
-                        }
-                        TypeConstraint.And($acc, $cc);
-                    },
-                    TypeConstraint.True
-                );
+            } else {
+                if $tArgs.isCrossType && $tIn.isCrossType {
+                    if $tArgs.elems == $tIn.elems {
+                        $c := $tArgs.zipfoldl(
+                            $tIn,
+                            -> $acc, $tArg, $tParam {
+                                my $cc;
+                                if $tArg.isSumType {
+                                    $cc := $tArg.foldl(-> $acc, $s { TypeConstraint.And($acc, Type.constrain(:$at, $s, $tParam)) }, TypeConstraint.True);
+                                } else {
+                                    $cc := Type.constrain(:$at, $tArg, $tParam);
+                                }
+                                TypeConstraint.And($acc, $cc);
+                            },
+                            TypeConstraint.True
+                        );
+                    }
+                } elsif !$tArgs.isCrossType && !$tIn.isCrossType {
+                    if $tArgs.isSumType {
+                        $c := $tArgs.foldl(-> $acc, $s { TypeConstraint.And($acc, Type.constrain(:$at, $s, $tIn)) }, TypeConstraint.True);
+                    } else {
+                        $c := Type.constrain(:$at, $tArgs, $tIn);
+                    }
+                }
             }
         } elsif $tCallee.isSumType {
             my @cs    := [];
@@ -1110,8 +1124,14 @@ class LActions is HLL::Actions {
                     unless $c.isTrue;
                 
                 say('>>unifying: ', $c.Str);
-                typesubst($n, $c.unify);
-                #say(dump($n));
+                {
+                    typesubst($n, $c.unify);
+                    CATCH {
+                        say(~$_);
+                        say(dump($n));
+                        nqp::die(~$_);
+                    }
+                }
             } elsif isVar($n) {
                 if $n.decl {
                     my $decl := lookup($n.name, $currentBlock)<declaration>;
