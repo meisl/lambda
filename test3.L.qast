@@ -16,13 +16,13 @@
     ║     ├◙ IVal 330 ::(Int)
     ║     ├◙ IVal 4 ::(Int)
     ║     └◙ SVal "" ::(Str)
-    ╟─bind ::(Void -> Str) :annotations({"constraints" => "t10 = (Void -> Str)"})
+    ╟─bind ::(Void -> Str) :annotations({"constraints" => "t9 = (Void -> Str)"})
     ║ ├○ &banner :decl(static) ::(Void -> Str)
-    ║ └─╥Block "&banner" ::(Void -> Str) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [], "optional" => [], "constraints" => "t10 = (Void -> Str)"})
+    ║ └─╥Block "&banner" ::(Void -> Str) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [], "optional" => [], "constraints" => "t9 = (Void -> Str)"})
     ║   ╙◙ SVal "This is L v0.0.1" ::(Str)
-    ╟─bind ::(Str -> Str) :annotations({"constraints" => "t11 = (t12 -> Str)  &  t12 = Str"})
+    ╟─bind ::(Str -> Str) :annotations({"constraints" => "t10 = (t11 -> Str)  &  t11 = Str"})
     ║ ├○ &strLit :decl(static) ::(Str -> Str)
-    ║ └─╥Block "&strLit" ::(Str -> Str) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical s :decl(param))], "optional" => [], "constraints" => "t11 = (t12 -> Str)  &  t12 = Str"})
+    ║ └─╥Block "&strLit" ::(Str -> Str) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical s :decl(param))], "optional" => [], "constraints" => "t10 = (t11 -> Str)  &  t11 = Str"})
     ║   ╟○ s :decl(param) ::(Str) :annotations({"positional_index" => 0})
     ║   ╟─bind ::(Str)
     ║   ║ ├○ foo :decl(var) ::(Str)
@@ -33,9 +33,9 @@
     ║       ├─escape ::(Str)
     ║       │ └○ s ::(Str)
     ║       └◙ SVal "\"" ::(Str)
-    ╟─bind ::((Array × Int) -> Array) :annotations({"constraints" => "t14 = ((t15 × t16) -> Array)  &  t15 = Array  &  t16 = Int  &  t21 = Int  &  t23 = t24  &  t25 = Int"})
+    ╟─bind ::((Array × Int) -> Array) :annotations({"constraints" => "t13 = ((t14 × t15) -> Array)  &  t14 = Array  &  t15 = Int  &  t20 = Int  &  t22 = t23  &  t24 = Int"})
     ║ ├○ &sublist :decl(static) ::((Array × Int) -> Array)
-    ║ └─╥Block "&sublist" ::((Array × Int) -> Array) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical list :decl(param)), QAST::Var(lexical from :decl(param))], "optional" => [], "constraints" => "t14 = ((t15 × t16) -> Array)  &  t15 = Array  &  t16 = Int  &  t21 = Int  &  t23 = t24  &  t25 = Int"})
+    ║ └─╥Block "&sublist" ::((Array × Int) -> Array) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical list :decl(param)), QAST::Var(lexical from :decl(param))], "optional" => [], "constraints" => "t13 = ((t14 × t15) -> Array)  &  t14 = Array  &  t15 = Int  &  t20 = Int  &  t22 = t23  &  t24 = Int"})
     ║   ╟○ list :decl(param) ::(Array) :annotations({"positional_index" => 0})
     ║   ╟○ from :decl(param) ::(Int) :annotations({"positional_index" => 1})
     ║   ╟─bind ::(Array)
@@ -67,7 +67,7 @@
     ║   ║ └─┬Stmts ::(Int)
     ║   ║   ├─push ::(Void)
     ║   ║   │ ├○ out ::(Array)
-    ║   ║   │ └─atpos ::(t24)
+    ║   ║   │ └─atpos ::(t23)
     ║   ║   │   ├○ list ::(Array)
     ║   ║   │   └○ from ::(Int)
     ║   ║   └─bind ::(Int)
@@ -76,75 +76,63 @@
     ║   ║       ├○ from ::(Int)
     ║   ║       └◙ IVal 1 ::(Int)
     ║   ╙○ out ::(Array)
-    ╟─bind ::(t28 -> (Bool + Int + Num + Str + Array + t32)) :annotations({"constraints" => "t27 = (t28 -> (t32 + t33))  &  t30 = Void  &  t31 = t32  &  t33 = (Bool + Int + Num + Str + Array)"})
-    ║ ├○ &force-new :decl(static) ::(t28 -> (Bool + Int + Num + Str + Array + t32))
-    ║ └─╥Block "&force-new" ::(t28 -> (Bool + Int + Num + Str + Array + t32)) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical x :decl(param))], "optional" => [], "constraints" => "t27 = (t28 -> (t32 + t33))  &  t30 = Void  &  t31 = t32  &  t33 = (Bool + Int + Num + Str + Array)"})
-    ║   ╟○ x :decl(param) ::(t28) :annotations({"positional_index" => 0})
+    ╟─bind ::((Bool + Int + Num + Str + Array + (Void -> t30)) -> (Bool + Int + Num + Str + Array + t30)) :annotations({"constraints" => "t2 = t29  &  t26 = ((Bool + Int + Num + Str + Array + (Void -> t2)) -> (t30 + t31))  &  t28 = Void  &  t29 = t30  &  t31 = (Bool + Int + Num + Str + Array)"})
+    ║ ├○ &force-new :decl(static) ::((Bool + Int + Num + Str + Array + (Void -> t30)) -> (Bool + Int + Num + Str + Array + t30))
+    ║ └─╥Block "&force-new" ::((Bool + Int + Num + Str + Array + (Void -> t30)) -> (Bool + Int + Num + Str + Array + t30)) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical x :decl(param))], "optional" => [], "constraints" => "t2 = t29  &  t26 = ((Bool + Int + Num + Str + Array + (Void -> t2)) -> (t30 + t31))  &  t28 = Void  &  t29 = t30  &  t31 = (Bool + Int + Num + Str + Array)"})
+    ║   ╟○ x :decl(param) ::(Bool + Int + Num + Str + Array + (Void -> t30)) :annotations({"positional_index" => 0})
     ║   ╟─bind ::(Str)
     ║   ║ ├○ foo :decl(var) ::(Str)
     ║   ║ └◙ SVal "bar" ::(Str)
-    ║   ╙─if ::(Bool + Int + Num + Str + Array + t32)
+    ║   ╙─if ::(Bool + Int + Num + Str + Array + t30)
     ║     ├─isinvokable ::(Bool)
-    ║     │ └○ x ::(t28)
-    ║     ├─call ::(t32)
-    ║     │ └○ x ::(Void -> t32)
+    ║     │ └○ x ::(Bool + Int + Num + Str + Array + (Void -> t30))
+    ║     ├─call ::(t30)
+    ║     │ └○ x ::(Void -> t30)
     ║     └○ x ::(Bool + Int + Num + Str + Array)
-    ╟─bind ::((Bool -> Bool) + (Int -> Int) + (Num -> Num) + (Str -> Str) + (Array -> Array) + ((Void -> t3) -> t3)) :annotations({"constraints" => (NQPMu, Type object)})
-    ║ ├○ &force :decl(static) ::((Bool -> Bool) + (Int -> Int) + (Num -> Num) + (Str -> Str) + (Array -> Array) + ((Void -> t3) -> t3))
-    ║ └─╥Block "&force" ::((Bool -> Bool) + (Int -> Int) + (Num -> Num) + (Str -> Str) + (Array -> Array) + ((Void -> t3) -> t3)) :annotations({"constrain-self" => (Var)})
-    ║   ╟○ x :decl(param) :annotations({"positional_index" => 0})
-    ║   ╟─bind
-    ║   ║ ├○ foo :decl(var)
-    ║   ║ └◙ SVal "bar"
-    ║   ╙─if ::((Bool -> Bool) + (Int -> Int) + (Num -> Num) + (Str -> Str) + (Array -> Array) + ((Void -> t3) -> t3))
-    ║     ├─isinvokable
-    ║     │ └○ x ::(Bool + Int + Num + Str + Array + (Void -> t3))
-    ║     ├─call x
-    ║     └○ x ::(Bool + Int + Num + Str + Array + (Void -> t3))
-    ╟─bind ::((Void -> t41) -> Void -> t41) :annotations({"constraints" => "t35 = (t36 -> Void -> t41)  &  t36 = (Void -> t39)  &  t37 = t39  &  t37 = t40  &  t39 = t41"})
-    ║ ├○ &delayMemo :decl(static) ::((Void -> t41) -> Void -> t41)
-    ║ └─╥Block "&delayMemo" ::((Void -> t41) -> Void -> t41) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical x :decl(param))], "optional" => [], "constraints" => "t35 = (t36 -> Void -> t41)  &  t36 = (Void -> t39)  &  t37 = t39  &  t37 = t40  &  t39 = t41"})
-    ║   ╟○ x :decl(param) ::(Void -> t41) :annotations({"positional_index" => 0})
-    ║   ╟○ result :decl(var) ::(t41)
+    ╟─bind ::((Void -> t38) -> Void -> t38) :annotations({"constraints" => "t32 = (t33 -> Void -> t38)  &  t33 = (Void -> t36)  &  t34 = t36  &  t34 = t37  &  t36 = t38"})
+    ║ ├○ &delayMemo :decl(static) ::((Void -> t38) -> Void -> t38)
+    ║ └─╥Block "&delayMemo" ::((Void -> t38) -> Void -> t38) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical x :decl(param))], "optional" => [], "constraints" => "t32 = (t33 -> Void -> t38)  &  t33 = (Void -> t36)  &  t34 = t36  &  t34 = t37  &  t36 = t38"})
+    ║   ╟○ x :decl(param) ::(Void -> t38) :annotations({"positional_index" => 0})
+    ║   ╟○ result :decl(var) ::(t38)
     ║   ╟─bind ::(Int)
     ║   ║ ├○ wasRun :decl(var) ::(Int)
     ║   ║ └◙ IVal 0 ::(Int)
-    ║   ╙─╥Block ::(Void -> t41) :annotations({"named" => {}, "slurpy" => [], "positional" => [], "optional" => [], "constraints" => "t36 = (Void -> t39)  &  t37 = t39  &  t37 = t40  &  t39 = t41"})
-    ║     ╙─if ::(t41)
+    ║   ╙─╥Block ::(Void -> t38) :annotations({"named" => {}, "slurpy" => [], "positional" => [], "optional" => [], "constraints" => "t33 = (Void -> t36)  &  t34 = t36  &  t34 = t37  &  t36 = t38"})
+    ║     ╙─if ::(t38)
     ║       ├○ wasRun ::(Int)
-    ║       ├○ result ::(t41)
-    ║       └─┬Stmts ::(t41)
+    ║       ├○ result ::(t38)
+    ║       └─┬Stmts ::(t38)
     ║         ├─bind ::(Int)
     ║         │ ├○ wasRun ::(Int)
     ║         │ └◙ IVal 1 ::(Int)
-    ║         └─bind ::(t41)
-    ║           ├○ result ::(t41)
-    ║           └─call x ::(t41)
-    ╟─bind ::((t43 × Str × (Int -> t53) × (Void -> t57)) -> (t53 + t57)) :annotations({"constraints" => "t42 = ((t43 × t44 × t45 × t46) -> (t56 + t57))  &  t44 = Str  &  t45 = (Int -> t51)  &  t46 = (Void -> t52)  &  t46 = (Void -> t55)  &  t47 = Str  &  t47 = t50  &  t51 = t53  &  t52 = t54  &  t55 = t57  &  t56 = (t53 + t54)"})
-    ║ ├○ &ifTag :decl(static) ::((t43 × Str × (Int -> t53) × (Void -> t57)) -> (t53 + t57))
-    ║ └─╥Block "&ifTag" ::((t43 × Str × (Int -> t53) × (Void -> t57)) -> (t53 + t57)) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical subject :decl(param)), QAST::Var(lexical tag :decl(param)), QAST::Var(lexical then :decl(param)), QAST::Var(lexical else :decl(param))], "optional" => [], "constraints" => "t42 = ((t43 × t44 × t45 × t46) -> (t56 + t57))  &  t44 = Str  &  t45 = (Int -> t51)  &  t46 = (Void -> t52)  &  t46 = (Void -> t55)  &  t47 = Str  &  t47 = t50  &  t51 = t53  &  t52 = t54  &  t55 = t57  &  t56 = (t53 + t54)"})
-    ║   ╟○ subject :decl(param) ::(t43) :annotations({"positional_index" => 0})
-    ║   ╟○ tag :decl(param) ::(Str) :annotations({"positional_index" => 1})
-    ║   ╟○ then :decl(param) ::(Int -> t53) :annotations({"positional_index" => 2})
-    ║   ╟○ else :decl(param) ::(Void -> t57) :annotations({"positional_index" => 3})
-    ║   ╟○ tagAndId :decl(var) ::(Str)
-    ║   ╙─if ::(t53 + t57)
+    ║         └─bind ::(t38)
+    ║           ├○ result ::(t38)
+    ║           └─call x ::(t38)
+    ╟─bind
+    ║ ├○ &ifTag :decl(static) ::(t39)
+    ║ └─╥Block "&ifTag" ::((t40 × t41 × t42 × t43) -> (t53 + t54)) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical subject :decl(param)), QAST::Var(lexical tag :decl(param)), QAST::Var(lexical then :decl(param)), QAST::Var(lexical else :decl(param))], "optional" => [], "constraints" => "t39 = ((t40 × t41 × t42 × t43) -> (t53 + t54))  &  t40 = Array  &  t40 = (Bool + Int + Num + Str + (t45 -> t46))  &  t41 = Str  &  t42 = (Int -> t48)  &  t43 = (Void -> t49)  &  t43 = (Void -> t52)  &  t44 = Str  &  t44 = t47  &  t48 = t50  &  t49 = t51  &  t52 = t54  &  t53 = (t50 + t51)"})
+    ║   ╟○ subject :decl(param) ::(t40) :annotations({"positional_index" => 0})
+    ║   ╟○ tag :decl(param) ::(t41) :annotations({"positional_index" => 1})
+    ║   ╟○ then :decl(param) ::(t42) :annotations({"positional_index" => 2})
+    ║   ╟○ else :decl(param) ::(t43) :annotations({"positional_index" => 3})
+    ║   ╟○ tagAndId :decl(var) ::(t44)
+    ║   ╙─if ::(t53 + t54)
     ║     ├─islist ::(Bool)
-    ║     │ └○ subject ::(t43)
-    ║     ├─┬Stmts ::(t53 + t57)
-    ║     │ ├─bind ::(Str)
-    ║     │ │ ├○ tagAndId ::(Str)
-    ║     │ │ └─atpos ::(Str)
+    ║     │ └○ subject ::(t40)
+    ║     ├─┬Stmts ::(t50 + t51)
+    ║     │ ├─bind ::(t47)
+    ║     │ │ ├○ tagAndId ::(t44)
+    ║     │ │ └─atpos ::(t47)
     ║     │ │   ├○ subject ::(Array)
     ║     │ │   └◙ IVal 0 ::(Int)
-    ║     │ └─if ::(t53 + t57)
+    ║     │ └─if ::(t50 + t51)
     ║     │   ├─iseq_s ::(Bool)
-    ║     │   │ ├○ tag ::(Str)
+    ║     │   │ ├○ tag ::(t41)
     ║     │   │ └─substr ::(Str)
-    ║     │   │   ├○ tagAndId ::(Str)
+    ║     │   │   ├○ tagAndId ::(t44)
     ║     │   │   ├◙ IVal 0 ::(Int)
     ║     │   │   └◙ IVal 1 ::(Int)
-    ║     │   ├─call then ::(t53)
+    ║     │   ├─call then ::(t48)
     ║     │   │ └─atpos ::(Int)
     ║     │   │   ├─radix
     ║     │   │   │ ├◙ IVal 10
@@ -152,310 +140,165 @@
     ║     │   │   │ ├◙ IVal 1
     ║     │   │   │ └◙ IVal 0
     ║     │   │   └◙ IVal 0
-    ║     │   └─call else ::(t57)
-    ║     └─call else ::(t57)
-    ╟─bind ::((Array × Str × Int) -> (Void + t63)) :annotations({"constraints" => "t43 = t59  &  t53 = t63  &  t57 = Void  &  t58 = ((t59 × t60 × t61) -> (t53 + t57))  &  t59 = Array  &  t60 = Str  &  t61 = Int  &  t62 = Int"})
-    ║ ├○ &->#n :decl(static) ::((Array × Str × Int) -> (Void + t63))
-    ║ └─╥Block "&->#n" ::((Array × Str × Int) -> (Void + t63)) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical subject :decl(param)), QAST::Var(lexical tag :decl(param)), QAST::Var(lexical index :decl(param))], "optional" => [], "constraints" => "t43 = t59  &  t53 = t63  &  t57 = Void  &  t58 = ((t59 × t60 × t61) -> (t53 + t57))  &  t59 = Array  &  t60 = Str  &  t61 = Int  &  t62 = Int"})
-    ║   ╟○ subject :decl(param) ::(Array) :annotations({"positional_index" => 0})
-    ║   ╟○ tag :decl(param) ::(Str) :annotations({"positional_index" => 1})
-    ║   ╟○ index :decl(param) ::(Int) :annotations({"positional_index" => 2})
-    ║   ╙─call &ifTag ::(Void + t63) :annotations({"inlined" => "&->#n"})
-    ║     ├○ subject ::(Array)
-    ║     ├○ tag ::(Str)
-    ║     ├─╥Block ::(Int -> t63) :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical _ :decl(param))], "optional" => [], "constraints" => "t59 = Array  &  t61 = Int"})
-    ║     │ ╟○ _ :decl(param) ::(Int) :annotations({"positional_index" => 0})
-    ║     │ ╙─atpos ::(t63)
-    ║     │   ├○ subject ::(Array)
-    ║     │   └○ index ::(Int)
-    ║     └─╥Block ::(Void -> Void) :annotations({"named" => {}, "slurpy" => [], "positional" => [], "optional" => [], "constraints" => "t60 = Str"})
-    ║       ╙─die ::(Void)
-    ║         └─concat ::(Str) :returns(str)
-    ║           ├◙ SVal "ERROR: " ::(Str)
-    ║           └─concat ::(Str) :returns(str)
-    ║             ├◙ SVal "no such tag: " ::(Str)
-    ║             └○ tag ::(Str) :returns(str)
-    ╟─bind ::((t93 × Str) -> (Str + (Void -> Str))) :annotations({"constraints" => "t43 = Array  &  t53 = Str  &  t57 = Str  &  t64 = ((t65 × t66) -> (t112 + t113))  &  t64 = ((t93 × Str) -> t97)  &  t66 = Str  &  t68 = Void  &  t69 = t70  &  t71 = (Bool + Int + Num + Str + Array)  &  t72 = t104  &  t73 = t105  &  t74 = Int  &  t77 = Array  &  t79 = Str  &  t81 = Int  &  t83 = Int  &  t86 = Str  &  t89 = Str  &  t91 = Int  &  t91 = (Int + Num)  &  t95 = Str  &  t96 = Str  &  t97 = t99  &  t98 = Str  &  t99 = Str  &  t100 = Str  &  t101 = Str  &  t106 = Str  &  t107 = (Void -> Str)  &  t108 = (t53 + t57)  &  t109 = (t106 + t107)  &  t110 = Str  &  t111 = (t108 + t109)  &  t112 = Str  &  t113 = (t110 + t111)"})
-    ║ ├○ &strOut :decl(static) ::((t93 × Str) -> (Str + (Void -> Str)))
-    ║ └─╥Block "&strOut" ::((t93 × Str) -> (Str + (Void -> Str))) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical u :decl(param)), QAST::Var(lexical indent :decl(param))], "optional" => [], "constraints" => "t43 = Array  &  t53 = Str  &  t57 = Str  &  t64 = ((t65 × t66) -> (t112 + t113))  &  t64 = ((t93 × Str) -> t97)  &  t66 = Str  &  t68 = Void  &  t69 = t70  &  t71 = (Bool + Int + Num + Str + Array)  &  t72 = t104  &  t73 = t105  &  t74 = Int  &  t77 = Array  &  t79 = Str  &  t81 = Int  &  t83 = Int  &  t86 = Str  &  t89 = Str  &  t91 = Int  &  t91 = (Int + Num)  &  t95 = Str  &  t96 = Str  &  t97 = t99  &  t98 = Str  &  t99 = Str  &  t100 = Str  &  t101 = Str  &  t106 = Str  &  t107 = (Void -> Str)  &  t108 = (t53 + t57)  &  t109 = (t106 + t107)  &  t110 = Str  &  t111 = (t108 + t109)  &  t112 = Str  &  t113 = (t110 + t111)"})
-    ║   ╟○ u :decl(param) ::(t93) :annotations({"positional_index" => 0})
-    ║   ╟○ indent :decl(param) ::(Str) :annotations({"positional_index" => 1})
-    ║   ╟─bind ::(Bool + Int + Num + Str + Array + t70)
-    ║   ║ ├○ v :decl(var) ::(Bool + Int + Num + Str + Array + t70)
-    ║   ║ └─if ::(Bool + Int + Num + Str + Array + t70)
-    ║   ║   ├─isinvokable ::(Bool)
-    ║   ║   │ └○ u ::(t93)
-    ║   ║   ├─call ::(t70)
-    ║   ║   │ └○ u ::(Void -> t70)
-    ║   ║   └○ u ::(Bool + Int + Num + Str + Array)
-    ║   ╙─if ::(Str + (Void -> Str))
-    ║     ├─isnum ::(Bool)
-    ║     │ └○ v ::(Bool + Int + Num + Str + Array + t70)
-    ║     ├─stringify ::(Str)
-    ║     │ └○ v ::(Num)
-    ║     └─if ::(Str + (Void -> Str))
-    ║       ├─isstr ::(Bool)
-    ║       │ └○ v ::(Bool + Int + Num + Str + Array + t70)
-    ║       ├─call &strLit ::(Str)
-    ║       │ └○ v ::(Str)
-    ║       └─if ::(Str + (Void -> Str))
-    ║         ├─islist ::(Bool)
-    ║         │ └○ v ::(Bool + Int + Num + Str + Array + t70)
-    ║         ├─call &ifTag ::(Str)
-    ║         │ ├○ v ::(Array)
-    ║         │ ├◙ SVal "λ" ::(Str)
-    ║         │ ├─╥Block ::(Int -> Str) :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical id :decl(param))], "optional" => [], "constraints" => "t64 = ((t93 × Str) -> t97)  &  t66 = Str  &  t74 = Int  &  t77 = Array  &  t79 = Str  &  t81 = Int  &  t83 = Int  &  t86 = Str  &  t89 = Str  &  t91 = Int  &  t91 = (Int + Num)  &  t95 = Str  &  t96 = Str  &  t97 = t99  &  t98 = Str  &  t99 = Str  &  t100 = Str  &  t101 = Str"})
-    ║         │ │ ╟○ id :decl(param) ::(Int) :annotations({"positional_index" => 0})
-    ║         │ │ ╟─bind ::(Array)
-    ║         │ │ ║ ├○ fvars :decl(var) ::(Array)
-    ║         │ │ ║ └─call &sublist ::(Array)
-    ║         │ │ ║   ├○ v ::(Array)
-    ║         │ │ ║   └◙ IVal 2 ::(Int)
-    ║         │ │ ╟─bind ::(Array)
-    ║         │ │ ║ ├○ info :decl(var) ::(Array)
-    ║         │ │ ║ └─atpos ::(Array)
-    ║         │ │ ║   ├○ .λinfo ::(Array)
-    ║         │ │ ║   └○ id ::(Int)
-    ║         │ │ ╟─bind ::(Array)
-    ║         │ │ ║ ├○ fvn2dBI :decl(var) ::(Array)
-    ║         │ │ ║ └─split ::(Array)
-    ║         │ │ ║   ├◙ SVal " " ::(Str)
-    ║         │ │ ║   └─atpos ::(Str)
-    ║         │ │ ║     ├○ info ::(Array)
-    ║         │ │ ║     └◙ IVal 3 ::(Int)
-    ║         │ │ ╟─bind ::(Int)
-    ║         │ │ ║ ├○ from :decl(var) ::(Int)
-    ║         │ │ ║ └─atpos ::(Int)
-    ║         │ │ ║   ├○ info ::(Array)
-    ║         │ │ ║   └◙ IVal 1 ::(Int)
-    ║         │ │ ╟─bind ::(Int)
-    ║         │ │ ║ ├○ length :decl(var) ::(Int)
-    ║         │ │ ║ └─atpos ::(Int)
-    ║         │ │ ║   ├○ info ::(Array)
-    ║         │ │ ║   └◙ IVal 2 ::(Int)
-    ║         │ │ ╟─bind ::(Str)
-    ║         │ │ ║ ├○ src :decl(var) ::(Str) :returns(str)
-    ║         │ │ ║ └─substr ::(Str)
-    ║         │ │ ║   ├○ .src ::(Str)
-    ║         │ │ ║   ├○ from ::(Int)
-    ║         │ │ ║   └○ length ::(Int)
-    ║         │ │ ╟─bind ::(Int)
-    ║         │ │ ║ ├○ i :decl(var) ::(Int)
-    ║         │ │ ║ └◙ IVal 0 ::(Int)
-    ║         │ │ ╟─for ::(Bool)
-    ║         │ │ ║ ├○ fvn2dBI ::(Array)
-    ║         │ │ ║ └─╥Block ::(Str -> Str) :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical pairStr :decl(param))], "optional" => [], "constraints" => "t64 = ((t93 × Str) -> t97)  &  t66 = Str  &  t86 = Str  &  t89 = Str  &  t91 = Int  &  t91 = (Int + Num)  &  t95 = Str  &  t96 = Str  &  t97 = t99  &  t98 = Str  &  t99 = Str"})
-    ║         │ │ ║   ╟○ pairStr :decl(param) ::(Str) :annotations({"positional_index" => 0})
-    ║         │ │ ║   ╟─bind ::(Array)
-    ║         │ │ ║   ║ ├○ pair :decl(var) ::(Array)
-    ║         │ │ ║   ║ └─split ::(Array)
-    ║         │ │ ║   ║   ├◙ SVal "." ::(Str)
-    ║         │ │ ║   ║   └○ pairStr ::(Str)
-    ║         │ │ ║   ╟─bind ::(Str)
-    ║         │ │ ║   ║ ├○ name :decl(var) ::(Str) :returns(str)
-    ║         │ │ ║   ║ └─atpos ::(Str)
-    ║         │ │ ║   ║   ├○ pair ::(Array)
-    ║         │ │ ║   ║   └◙ IVal 0 ::(Int)
-    ║         │ │ ║   ╟─bind ::(Int)
-    ║         │ │ ║   ║ ├○ dBI :decl(var) ::(Int)
-    ║         │ │ ║   ║ └─atpos ::(Int)
-    ║         │ │ ║   ║   ├○ pair ::(Array)
-    ║         │ │ ║   ║   └◙ IVal 1 ::(Int)
-    ║         │ │ ║   ╟─bind ::(t93)
-    ║         │ │ ║   ║ ├○ val :decl(var) ::(t93)
-    ║         │ │ ║   ║ └─atpos ::(t93)
-    ║         │ │ ║   ║   ├○ fvars ::(Array)
-    ║         │ │ ║   ║   └○ i ::(Int)
-    ║         │ │ ║   ╟─bind ::(Int)
-    ║         │ │ ║   ║ ├○ i ::(Int)
-    ║         │ │ ║   ║ └─add_i ::(Int)
-    ║         │ │ ║   ║   ├○ i ::(Int)
-    ║         │ │ ║   ║   └◙ IVal 1 ::(Int)
-    ║         │ │ ║   ╟─bind ::(Str)
-    ║         │ │ ║   ║ ├○ dBIStr :decl(var) ::(Str)
-    ║         │ │ ║   ║ └─if ::(Str)
-    ║         │ │ ║   ║   ├─not_i ::(Int)
-    ║         │ │ ║   ║   │ └○ dBI ::(Int)
-    ║         │ │ ║   ║   ├◙ SVal "∞" ::(Str)
-    ║         │ │ ║   ║   └─stringify ::(Str)
-    ║         │ │ ║   ║     └○ dBI ::(Int)
-    ║         │ │ ║   ╙─bind ::(Str)
-    ║         │ │ ║     ├○ src ::(Str) :returns(str)
-    ║         │ │ ║     └─concat ::(Str) :returns(str)
-    ║         │ │ ║       ├─concat ::(Str) :returns(str)
-    ║         │ │ ║       │ ├─concat ::(Str) :returns(str)
-    ║         │ │ ║       │ │ ├○ src ::(Str) :returns(str)
-    ║         │ │ ║       │ │ └─concat ::(Str)
-    ║         │ │ ║       │ │   ├◙ SVal "\n" ::(Str)
-    ║         │ │ ║       │ │   └○ indent ::(Str)
-    ║         │ │ ║       │ └─concat ::(Str)
-    ║         │ │ ║       │   ├◙ SVal "# where " ::(Str)
-    ║         │ │ ║       │   └○ name ::(Str) :returns(str)
-    ║         │ │ ║       └─concat ::(Str)
-    ║         │ │ ║         ├◙ SVal " = " ::(Str)
-    ║         │ │ ║         └─if ::(Str)
-    ║         │ │ ║           ├─iseq_s ::(Bool)
-    ║         │ │ ║           │ ├○ name ::(Str) :returns(str)
-    ║         │ │ ║           │ └◙ SVal "self" ::(Str)
-    ║         │ │ ║           ├◙ SVal "..." ::(Str)
-    ║         │ │ ║           └─call &strOut ::(Str)
-    ║         │ │ ║             ├○ val ::(t93)
-    ║         │ │ ║             └─concat ::(Str)
-    ║         │ │ ║               ├○ indent ::(Str)
-    ║         │ │ ║               └◙ SVal "#           " ::(Str)
-    ║         │ │ ╙○ src ::(Str) :returns(str)
-    ║         │ └─╥Block ::(Void -> Str) :annotations({"named" => {}, "slurpy" => [], "positional" => [], "optional" => [], "delayed" => "simple"})
-    ║         │   ╙─reprname ::(Str)
-    ║         │     └○ v ::(Array)
-    ║         └─if ::(Str + (Void -> Str))
-    ║           ├─isint ::(Bool)
-    ║           │ └○ v ::(Bool + Int + Num + Str + Array + t70)
-    ║           ├─stringify ::(Str)
-    ║           │ └○ v ::(Int)
-    ║           └─╥Block ::(Void -> Str) :annotations({"named" => {}, "slurpy" => [], "positional" => [], "optional" => [], "delayed" => "simple", "constraints" => "t72 = t104  &  t73 = t105"})
-    ║             ╙─reprname ::(Str)
-    ║               └○ v ::(Bool + (t104 -> t105))
+    ║     │   └─call else ::(t49)
+    ║     └─call else ::(t52)
     ╟─bind
-    ║ ├○ &strOut-old :decl(static) ::(t114)
-    ║ └─╥Block "&strOut-old" :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical v :decl(param)), QAST::Var(lexical indent :decl(param))], "optional" => []})
-    ║   ╟○ v :decl(param) ::(t115) :annotations({"positional_index" => 0})
-    ║   ╟○ indent :decl(param) ::(t116) :annotations({"positional_index" => 1})
+    ║ ├○ &->#n :decl(static)
+    ║ └─╥Block "&->#n"
+    ║   ╟○ subject :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ tag :decl(param) :annotations({"positional_index" => 1})
+    ║   ╟○ index :decl(param) :annotations({"positional_index" => 2})
+    ║   ╙─call &ifTag
+    ║     ├○ subject
+    ║     ├○ tag
+    ║     ├─╥Block
+    ║     │ ╟○ _ :decl(param)
+    ║     │ ╙─atpos
+    ║     │   ├○ subject
+    ║     │   └○ index
+    ║     └─╥Block
+    ║       ╙─die
+    ║         └─concat :returns(str)
+    ║           ├◙ SVal "ERROR: "
+    ║           └─concat :returns(str)
+    ║             ├◙ SVal "no such tag: "
+    ║             └○ tag :returns(str)
+    ╟─bind
+    ║ ├○ &strOut :decl(static)
+    ║ └─╥Block "&strOut"
+    ║   ╟○ u :decl(param) :annotations({"positional_index" => 0})
+    ║   ╟○ indent :decl(param) :annotations({"positional_index" => 1})
     ║   ╟─bind
-    ║   ║ ├○ v ::(t115)
-    ║   ║ └─call &force :annotations({"forced" => QAST::Var(lexical v)})
-    ║   ║   └○ v ::(t115)
-    ║   ╙─if
-    ║     ├─isstr
-    ║     │ └○ v ::(t115)
-    ║     ├─call &strLit
-    ║     │ └○ v ::(t115)
-    ║     └─call &ifTag
-    ║       ├○ v ::(t115)
-    ║       ├◙ SVal "λ"
-    ║       ├─╥Block
-    ║       │ ╟○ id :decl(param)
-    ║       │ ╟─bind
-    ║       │ ║ ├○ fvars :decl(var)
-    ║       │ ║ └─call &sublist
-    ║       │ ║   ├○ v ::(t115)
-    ║       │ ║   └◙ IVal 2
-    ║       │ ╟─bind
-    ║       │ ║ ├○ info :decl(var)
-    ║       │ ║ └─atpos
-    ║       │ ║   ├○ .λinfo
-    ║       │ ║   └○ id
-    ║       │ ╟─bind
-    ║       │ ║ ├○ fvn2dBI :decl(var)
-    ║       │ ║ └─split
-    ║       │ ║   ├◙ SVal " "
-    ║       │ ║   └─atpos
-    ║       │ ║     ├○ info
-    ║       │ ║     └◙ IVal 3
-    ║       │ ╟─bind
-    ║       │ ║ ├○ from :decl(var)
-    ║       │ ║ └─atpos
-    ║       │ ║   ├○ info
-    ║       │ ║   └◙ IVal 1
-    ║       │ ╟─bind
-    ║       │ ║ ├○ length :decl(var)
-    ║       │ ║ └─atpos
-    ║       │ ║   ├○ info
-    ║       │ ║   └◙ IVal 2
-    ║       │ ╟─bind
-    ║       │ ║ ├○ src :decl(var)
-    ║       │ ║ └─substr
-    ║       │ ║   ├○ .src
-    ║       │ ║   ├○ from
-    ║       │ ║   └○ length
-    ║       │ ╟─bind
-    ║       │ ║ ├○ i :decl(var)
-    ║       │ ║ └◙ IVal 0
-    ║       │ ╟─for
-    ║       │ ║ ├○ fvn2dBI
-    ║       │ ║ └─╥Block
-    ║       │ ║   ╟○ pair :decl(param)
-    ║       │ ║   ╟─bind
-    ║       │ ║   ║ ├○ pair
-    ║       │ ║   ║ └─split
-    ║       │ ║   ║   ├◙ SVal "."
-    ║       │ ║   ║   └○ pair
-    ║       │ ║   ╟─bind
-    ║       │ ║   ║ ├○ name :decl(var)
-    ║       │ ║   ║ └─atpos
-    ║       │ ║   ║   ├○ pair
-    ║       │ ║   ║   └◙ IVal 0
-    ║       │ ║   ╟─bind
-    ║       │ ║   ║ ├○ dBI :decl(var)
-    ║       │ ║   ║ └─atpos
-    ║       │ ║   ║   ├○ pair
-    ║       │ ║   ║   └◙ IVal 1
-    ║       │ ║   ╟─bind
-    ║       │ ║   ║ ├○ val :decl(var)
-    ║       │ ║   ║ └─atpos
-    ║       │ ║   ║   ├○ fvars
-    ║       │ ║   ║   └○ i
-    ║       │ ║   ╟─bind
-    ║       │ ║   ║ ├○ i
-    ║       │ ║   ║ └─add_i
-    ║       │ ║   ║   ├○ i
-    ║       │ ║   ║   └◙ IVal 1
-    ║       │ ║   ╟─if
-    ║       │ ║   ║ ├─not_i
-    ║       │ ║   ║ │ └○ dBI
-    ║       │ ║   ║ └─bind
-    ║       │ ║   ║   ├○ dBI
-    ║       │ ║   ║   └◙ SVal "∞"
-    ║       │ ║   ╙─bind
-    ║       │ ║     ├○ src
-    ║       │ ║     └─concat :returns(str)
-    ║       │ ║       ├─concat :returns(str)
-    ║       │ ║       │ ├─concat :returns(str)
-    ║       │ ║       │ │ ├─concat :returns(str)
-    ║       │ ║       │ │ │ ├─concat :returns(str)
-    ║       │ ║       │ │ │ │ ├─concat :returns(str)
-    ║       │ ║       │ │ │ │ │ ├─call &force :annotations({"forced" => QAST::Var(lexical src)})
-    ║       │ ║       │ │ │ │ │ │ └○ src
-    ║       │ ║       │ │ │ │ │ └◙ SVal "\n"
-    ║       │ ║       │ │ │ │ └─call &force :annotations({"forced" => QAST::Var(lexical indent)})
-    ║       │ ║       │ │ │ │   └○ indent
-    ║       │ ║       │ │ │ └◙ SVal "# where "
-    ║       │ ║       │ │ └─call &force :annotations({"forced" => QAST::Var(lexical name)})
-    ║       │ ║       │ │   └○ name
-    ║       │ ║       │ └◙ SVal " = "
-    ║       │ ║       └─call &force :annotations({"forced" => QAST::Op(if)})
-    ║       │ ║         └─if
-    ║       │ ║           ├─iseq_s
-    ║       │ ║           │ ├○ name
-    ║       │ ║           │ └◙ SVal "self"
-    ║       │ ║           ├◙ SVal "..."
-    ║       │ ║           └─call &strOut-old
-    ║       │ ║             ├○ val
-    ║       │ ║             └─concat :returns(str)
-    ║       │ ║               ├─call &force :annotations({"forced" => QAST::Var(lexical indent)})
-    ║       │ ║               │ └○ indent
-    ║       │ ║               └◙ SVal "#           "
-    ║       │ ╙○ src
-    ║       └─if
-    ║         ├─isint
-    ║         │ └○ v ::(t115)
-    ║         ├○ v ::(t115)
-    ║         └─╥Block :annotations({"delayed" => "simple"})
-    ║           ╙─reprname
-    ║             └○ v ::(t115)
+    ║   ║ ├○ v :decl(var)
+    ║   ║ └─call &force-new
+    ║   ║   └○ u
+    ║   ╙─typecase
+    ║     ├─call &ifTag :named("islist")
+    ║     │ ├○ v
+    ║     │ ├◙ SVal "λ"
+    ║     │ ├─╥Block
+    ║     │ │ ╟○ id :decl(param)
+    ║     │ │ ╟─bind
+    ║     │ │ ║ ├○ fvars :decl(var)
+    ║     │ │ ║ └─call &sublist
+    ║     │ │ ║   ├○ v
+    ║     │ │ ║   └◙ IVal 2
+    ║     │ │ ╟─bind
+    ║     │ │ ║ ├○ info :decl(var)
+    ║     │ │ ║ └─atpos
+    ║     │ │ ║   ├○ .λinfo
+    ║     │ │ ║   └○ id
+    ║     │ │ ╟─bind
+    ║     │ │ ║ ├○ fvn2dBI :decl(var)
+    ║     │ │ ║ └─split
+    ║     │ │ ║   ├◙ SVal " "
+    ║     │ │ ║   └─atpos
+    ║     │ │ ║     ├○ info
+    ║     │ │ ║     └◙ IVal 3
+    ║     │ │ ╟─bind
+    ║     │ │ ║ ├○ from :decl(var)
+    ║     │ │ ║ └─atpos
+    ║     │ │ ║   ├○ info
+    ║     │ │ ║   └◙ IVal 1
+    ║     │ │ ╟─bind
+    ║     │ │ ║ ├○ length :decl(var)
+    ║     │ │ ║ └─atpos
+    ║     │ │ ║   ├○ info
+    ║     │ │ ║   └◙ IVal 2
+    ║     │ │ ╟─bind
+    ║     │ │ ║ ├○ src :decl(var) :returns(str)
+    ║     │ │ ║ └─substr
+    ║     │ │ ║   ├○ .src
+    ║     │ │ ║   ├○ from
+    ║     │ │ ║   └○ length
+    ║     │ │ ╟─bind
+    ║     │ │ ║ ├○ i :decl(var)
+    ║     │ │ ║ └◙ IVal 0
+    ║     │ │ ╟─for
+    ║     │ │ ║ ├○ fvn2dBI
+    ║     │ │ ║ └─╥Block
+    ║     │ │ ║   ╟○ pairStr :decl(param)
+    ║     │ │ ║   ╟─bind
+    ║     │ │ ║   ║ ├○ pair :decl(var)
+    ║     │ │ ║   ║ └─split
+    ║     │ │ ║   ║   ├◙ SVal "."
+    ║     │ │ ║   ║   └○ pairStr
+    ║     │ │ ║   ╟─bind
+    ║     │ │ ║   ║ ├○ name :decl(var) :returns(str)
+    ║     │ │ ║   ║ └─atpos
+    ║     │ │ ║   ║   ├○ pair
+    ║     │ │ ║   ║   └◙ IVal 0
+    ║     │ │ ║   ╟─bind
+    ║     │ │ ║   ║ ├○ dBI :decl(var)
+    ║     │ │ ║   ║ └─atpos
+    ║     │ │ ║   ║   ├○ pair
+    ║     │ │ ║   ║   └◙ IVal 1
+    ║     │ │ ║   ╟─bind
+    ║     │ │ ║   ║ ├○ val :decl(var)
+    ║     │ │ ║   ║ └─atpos
+    ║     │ │ ║   ║   ├○ fvars
+    ║     │ │ ║   ║   └○ i
+    ║     │ │ ║   ╟─bind
+    ║     │ │ ║   ║ ├○ i
+    ║     │ │ ║   ║ └─add_i
+    ║     │ │ ║   ║   ├○ i
+    ║     │ │ ║   ║   └◙ IVal 1
+    ║     │ │ ║   ╟─bind
+    ║     │ │ ║   ║ ├○ dBIStr :decl(var)
+    ║     │ │ ║   ║ └─if
+    ║     │ │ ║   ║   ├─not_i
+    ║     │ │ ║   ║   │ └○ dBI
+    ║     │ │ ║   ║   ├◙ SVal "∞"
+    ║     │ │ ║   ║   └─stringify
+    ║     │ │ ║   ║     └○ dBI
+    ║     │ │ ║   ╙─bind
+    ║     │ │ ║     ├○ src :returns(str)
+    ║     │ │ ║     └─concat :returns(str)
+    ║     │ │ ║       ├─concat :returns(str)
+    ║     │ │ ║       │ ├─concat :returns(str)
+    ║     │ │ ║       │ │ ├○ src :returns(str)
+    ║     │ │ ║       │ │ └─concat
+    ║     │ │ ║       │ │   ├◙ SVal "\n"
+    ║     │ │ ║       │ │   └○ indent
+    ║     │ │ ║       │ └─concat
+    ║     │ │ ║       │   ├◙ SVal "# where "
+    ║     │ │ ║       │   └○ name :returns(str)
+    ║     │ │ ║       └─concat
+    ║     │ │ ║         ├◙ SVal " = "
+    ║     │ │ ║         └─if
+    ║     │ │ ║           ├─iseq_s
+    ║     │ │ ║           │ ├○ name :returns(str)
+    ║     │ │ ║           │ └◙ SVal "self"
+    ║     │ │ ║           ├◙ SVal "..."
+    ║     │ │ ║           └─call &strOut
+    ║     │ │ ║             ├○ val
+    ║     │ │ ║             └─concat
+    ║     │ │ ║               ├○ indent
+    ║     │ │ ║               └◙ SVal "#           "
+    ║     │ │ ╙○ src :returns(str)
+    ║     │ └─╥Block :annotations({"delayed" => "simple"})
+    ║     │   ╙─reprname
+    ║     │     └○ v
+    ║     ├─stringify :named("isint")
+    ║     │ └○ v
+    ║     ├─call &strLit :named("isstr")
+    ║     │ └○ v
+    ║     ├─stringify :named("isnum")
+    ║     │ └○ v
+    ║     └─reprname :named("otherwise")
+    ║       └○ v
     ╟─bind
     ║ ├○ &say :decl(static)
     ║ └─╥Block "&say"
     ║   ╟○ v :decl(param) :annotations({"positional_index" => 0})
     ║   ╟─bind
     ║   ║ ├○ v
-    ║   ║ └─call &force :annotations({"forced" => QAST::Var(lexical v)})
+    ║   ║ └─call &force-new
     ║   ║   └○ v
     ║   ╙─say
-    ║     └─if
-    ║       ├─isstr
-    ║       │ └○ v
-    ║       ├○ v
-    ║       └─call &strOut
+    ║     └─typecase
+    ║       ├○ v :named("isstr")
+    ║       └─call &strOut :named("otherwise")
     ║         ├○ v
     ║         └◙ SVal ""
     ╟─bind
@@ -466,26 +309,26 @@
     ║   ╟○ result :decl(var)
     ║   ╟─bind
     ║   ║ ├○ f
-    ║   ║ └─call &force :annotations({"forced" => QAST::Var(lexical f)})
+    ║   ║ └─call &force-new
     ║   ║   └○ f
     ║   ╟─bind
     ║   ║ ├○ result
     ║   ║ └─call
     ║   ║   ├─defor
-    ║   ║   │ ├─call &ifTag ::(Void + t63) :annotations({"inlined" => "&->#n"})
+    ║   ║   │ ├─call &ifTag :annotations({"inlined" => "&->#n"})
     ║   ║   │ │ ├○ f
     ║   ║   │ │ ├◙ SVal "λ"
-    ║   ║   │ │ ├─╥Block ::(Int -> t63) :annotations({"named" => {}, "slurpy" => [], "positional" => [QAST::Var(lexical _ :decl(param))], "optional" => [], "constraints" => "t59 = Array  &  t61 = Int"})
-    ║   ║   │ │ │ ╟○ _ :decl(param) ::(Int) :annotations({"positional_index" => 0})
-    ║   ║   │ │ │ ╙─atpos ::(t63)
+    ║   ║   │ │ ├─╥Block
+    ║   ║   │ │ │ ╟○ _ :decl(param)
+    ║   ║   │ │ │ ╙─atpos
     ║   ║   │ │ │   ├○ f
     ║   ║   │ │ │   └◙ IVal 1
-    ║   ║   │ │ └─╥Block ::(Void -> Void) :annotations({"named" => {}, "slurpy" => [], "positional" => [], "optional" => [], "constraints" => "t60 = Str"})
-    ║   ║   │ │   ╙─die ::(Void)
-    ║   ║   │ │     └─concat ::(Str) :returns(str)
-    ║   ║   │ │       ├◙ SVal "ERROR: " ::(Str)
-    ║   ║   │ │       └─concat ::(Str) :returns(str)
-    ║   ║   │ │         ├◙ SVal "no such tag: " ::(Str)
+    ║   ║   │ │ └─╥Block
+    ║   ║   │ │   ╙─die
+    ║   ║   │ │     └─concat :returns(str)
+    ║   ║   │ │       ├◙ SVal "ERROR: "
+    ║   ║   │ │       └─concat :returns(str)
+    ║   ║   │ │         ├◙ SVal "no such tag: "
     ║   ║   │ │         └◙ SVal "λ"
     ║   ║   │ └─die
     ║   ║   │   └─concat :returns(str)
@@ -506,22 +349,22 @@
     ║     └○ result
     ╟─bind
     ║ ├○ .qastSize :decl(static)
-    ║ └◙ NVal 534
+    ║ └◙ NVal 377
     ╟─bind
     ║ ├○ .blockCount :decl(static)
-    ║ └◙ NVal 27
+    ║ └◙ NVal 21
     ╟─bind
     ║ ├○ .listCount :decl(static)
     ║ └◙ NVal 6
     ╟─bind
     ║ ├○ .ivalCount :decl(static)
-    ║ └◙ NVal 31
+    ║ └◙ NVal 23
     ╟─bind
     ║ ├○ .svalCount :decl(static)
-    ║ └◙ NVal 42
+    ║ └◙ NVal 31
     ╟─bind
     ║ ├○ .svalSize :decl(static)
-    ║ └◙ NVal 739
+    ║ └◙ NVal 701
     ╙─╥Block :blocktype(immediate)
       ╟○ local mainResult :decl(var)
       ╟─bind

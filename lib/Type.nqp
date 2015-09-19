@@ -673,11 +673,16 @@ class Type is export {
         'elems',    Type.Fn(Type.Cross($Array          ),               $Int    ),
         'atpos',    Type.Fn(Type.Cross($Array, $Int    ),               $v0     ),
         'push',     Type.Fn(Type.Cross($Array, $v0     ),               $Void   ),
-        'say',      Type.Sum(
-                        Type.Fn($Str,   $Str),
-                        Type.Fn($Int,   $Int),
-                        Type.Fn($Num,   $Num),
-                        Type.Fn($Bool,  $Bool),
+        'say',      Type.Fn(
+                        Type.Sum(
+                            $Str,
+                            $Int,
+                            $Num,
+                            $Bool,
+                            $Array,
+                            Type.Fn($Void, $v1),
+                        ),
+                        $Void
                     ),
         # if:
         'if',       Type.Sum(
@@ -863,7 +868,7 @@ class Type is export {
                         $out := self.constrain($t2, $t1, :$at, :&onError);
                     }
                 } elsif $t1.isSumType {
-                    if $t2.isSimpleType || $t2.isFnType {
+                    if $t2.isSimpleType || $t2.isFnType || $t2.isSumType {
                         $out := $t1.foldl(
                             -> $acc, $t { TypeConstraint.Or($acc, self.constrain($t2, $t, :onError(&ignore))) },
                             TypeConstraint.False
@@ -871,8 +876,8 @@ class Type is export {
                     } elsif $t2.isTypeVar {
                         $out := constrain-eq($t2, $t1);
                         # TODO: see if it collapse to True
-                    } elsif $t2.isSumType {
-                        nqp::die("NYI: Sum / Sum");
+                    #} elsif  {
+                    #    self.error(:$at, "NYI: Sum / Sum: ", $t1, '  /  ', $t2);
                     } else {
                         $out := self.constrain($t2, $t1, :$at, :&onError);
                     }

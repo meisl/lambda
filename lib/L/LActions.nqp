@@ -329,37 +329,36 @@ my sub make-runtime() {
         my $body := QAST::Block.new(:name($name), :arity(nqp::elems($paramNames)));
         my @vars  := [];
         my %named := {};
-        my $i := 0;
-        for $paramNames {
-            my $var  := lexVar($_);         #$var.returns(@paramTypes[$i]);
-            my $decl := mkDeclP($var);      #$decl.returns(@paramTypes[$i]);
-            $body.push($decl);
-            @vars.push($var);
-            $i++;
-        }
-        for %lexicals {
-            my $var := lexVar(nqp::iterkey_s($_));
-            my $val := nqp::iterval($_);
-            my $decl := mkDeclV($var);
-            if !nqp::isnull($val) {
-                $decl := mkBind($decl, $val);
-            }
-            $body.push($decl);
-            %named{$var.name} := $var;
-        }
+        @vars.push(lexVar($_))
+            for $paramNames;
+        %named{$_.key} := lexVar($_.key)
+            for %lexicals;
+        
         my $stmts := $cb(|@vars, |%named);
+        
+        # make declarations *AFTER* the call to $cb, ie. from the actual vars passed to $cb!
+        for @vars {
+            $body.push(mkDeclP($_));
+        }
+        for %named {
+            my $var  := $_.value;
+            my $decl := mkDeclV($var);
+            my $initial-value := %lexicals{$var.name};
+            unless nqp::existskey(%lexicals, $var.name) && !($initial-value =:= NQPMu) {
+                nqp::die("mkRFn('$name'): invalid entry for lexical " ~ $var.name ~ ': ' ~ describe($initial-value));
+            }
+            $body.push($initial-value =:= NO_VALUE
+                ?? $decl
+                !! mkBind($decl, $initial-value)
+            );
+        }
         my $tBody;
         if nqp::islist($stmts) {
             for $stmts {
                 $body.push($_);
-                $tBody := Type.of($_);
             }
         } else {
             $body.push($stmts);
-            $tBody := Type.of($stmts);
-        }
-        if $tBody {
-            $tBody.set($body);
         }
         my $binding := mkBind(lexVar($name, :decl<static>), $body);
         $block.push($binding);
@@ -412,50 +411,40 @@ my sub make-runtime() {
         cloneAndSubst($out),
     });
 
+    #mkRFn('&force', <x>, 
+    #    :foo<bar>,  # prevent it from being inlined
+    #-> $x, :$foo! {
+    #    mkTypecase($x,
+    #        :isinvokable(QAST::Op.new(:op<call>, $x)),
+    #        :otherwise(nqp::clone($x))
+    #    )
+    #});
+    
+
     mkRFn('&force-new', <x>, 
         :foo<bar>,  # prevent it from being inlined
     -> $x, :$foo! {
-        mkTypecase($x,
-            :isinvokable(QAST::Op.new(:op<call>, $x)),
+        
+        my $out := mkTypecase($x,
+            :isinvokable(QAST::Op.new(:op<call>, nqp::clone($x))),
             :otherwise(nqp::clone($x))
-        )
-    });
-    
-    my $tv := Type.Var;
-    mkRFn('&force', <x>, 
-        #:returns(Type.Fn(Type.Fn(Type.Void, $tv), $tv)),
-        :foo<bar>,  # prevent it from being inlined
-    -> $x, :$foo! {
-        my $out := QAST::Op.new(:op<if>,
-            QAST::Op.new(:op<isinvokable>, $x),
-            mkCall($x),
-            $x
         );
-        my $tv := Type.Var;
-        my $tf := Type.Fn(Type.Void, $tv);
+        # MUST set the param's type *AFTER* cloning it:
         Type.Sum(
             Type.BOOL,
             Type.Int,
             Type.Num,
             Type.Str,
             Type.Array,
-            $tf,
+            Type.Fn(Type.Void, Type.Var),
         ).set($x);
-        Type.Sum(
-            Type.Fn(Type.BOOL, Type.BOOL),
-            Type.Fn(Type.Int, Type.Int),
-            Type.Fn(Type.Num, Type.Num),
-            Type.Fn(Type.Str, Type.Str),
-            Type.Fn(Type.Array, Type.Array),
-            Type.Fn($tf, $tv),
-        ).set($out);
         $out;
     });
     
-    $tv := Type.Var;
+    my $tv := Type.Var;
     mkRFn('&delayMemo', <x>, 
         #:returns(Type.Fn(Type.Fn(Type.Void, $tv), Type.Void, $tv)),
-        :wasRun(0), :result(nqp::null), 
+        :wasRun(0), :result(NO_VALUE), 
     -> $x, :$wasRun!, :$result! {
         QAST::Block.new(:arity(0),
             QAST::Op.new(:op<if>, $wasRun,
@@ -470,7 +459,7 @@ my sub make-runtime() {
 
     mkRFn('&ifTag', <subject tag then else>, 
         #:returns(Type.Fn(NQPMu, Type.Str, NQPMu, NQPMu, NQPMu)), 
-        :tagAndId(nqp::null), 
+        :tagAndId(NO_VALUE), 
     -> $subject, $tag, $then, $else, :$tagAndId! {
         my $extract-id-as-Int := mkListLookup(:index(0), # extract id as int from str tagAndId (Note: radix returns an array, not an int!)
             QAST::Op.new(:op<radix>,
@@ -535,12 +524,7 @@ my sub make-runtime() {
         my $dBIStr  := lexVar('dBIStr');
         my $val     := lexVar('val');
     
-        mkBind(mkDeclV($v), mkTypecase($u,
-            :isinvokable(
-                QAST::Op.new(:op<call>, nqp::clone($u))
-            ),
-            :otherwise($u)
-        )),
+        mkBind(mkDeclV($v), mkRCall('&force-new', $u)),
         mkTypecase($v,
             #:isinvokable(
             #    mkRCall('&strOut', QAST::Op.new(:op<call>, nqp::clone($v)), nqp::clone($indent))
@@ -611,113 +595,36 @@ my sub make-runtime() {
                 )
             ),
             :otherwise(
-                mkDelaySimple(QAST::Op.new(:op<reprname>,  nqp::clone($v)))
+                QAST::Op.new(:op<reprname>,  nqp::clone($v))
             ),
         );
-    });
-
-    mkRFn('&strOut-old', <v indent>, 
-        #:returns(Type.Fn(NQPMu, Type.Str, Type.Str)), 
-    -> $v, $indent {
-        my $id      := lexVar('id');
-        my $info    := lexVar('info');
-        my $src     := lexVar('src');
-        my $from    := lexVar('from');
-        my $length  := lexVar('length');
-        my $fvars   := lexVar('fvars');
-        my $fvn2dBI := lexVar('fvn2dBI');  # "free var name 2 deBruijn index"
-        my $i       := lexVar('i');
-        my $pair    := lexVar('pair');
-        my $name    := lexVar('name');
-        my $dBI     := lexVar('dBI');   # "deBruijn index"
-        my $val     := lexVar('val');
-
-        mkBind($v, mkForce($v)),
-        QAST::Op.new(:op<if>,
-            QAST::Op.new(:op<isstr>, $v),
-            mkRCall('&strLit', $v),
-            mkRCall('&ifTag', 
-                $v, 
-                'λ',
-                QAST::Block.new(:arity(1),
-                    mkDeclP($id),
-                    mkBind(mkDeclV($fvars),       mkRCall('&sublist', $v, 2)),
-                    mkBind(mkDeclV($info),        mkListLookup(lexVar('.λinfo'), :index($id))),
-                    mkBind(mkDeclV($fvn2dBI),
-                        QAST::Op.new(:op<split>, asNode(' '), mkListLookup($info, :index(3)))
-                        #mkListLookup($info, :index(3))
-                    ),
-                    mkBind(mkDeclV($from),        mkListLookup($info, :index(1))),
-                    mkBind(mkDeclV($length),      mkListLookup($info, :index(2))),
-                    mkBind(mkDeclV($src),
-                        #mkConcat(
-                            QAST::Op.new(:op<substr>, lexVar('.src'), $from, $length),
-                        #    '  # :tag(', mkRCall('&strLit', mkListLookup($v, :index(0))), ')',
-                        #)
-                    ),
-                    mkBind(mkDeclV($i), 0),
-                    QAST::Op.new(:op<for>, $fvn2dBI, QAST::Block.new(:arity(1),
-                        mkDeclP($pair),
-                        mkBind($pair, QAST::Op.new(:op<split>, asNode('.'), $pair)),
-                        mkBind(mkDeclV($name), mkListLookup($pair, :index(0))),
-                        mkBind(mkDeclV($dBI), mkListLookup($pair, :index(1))),
-                        mkBind(mkDeclV($val), mkListLookup($fvars, :index($i))),
-                        mkBind($i, QAST::Op.new(:op<add_i>, $i, asNode(1))),
-                        QAST::Op.new(:op<if>, 
-                            QAST::Op.new(:op<not_i>, $dBI),
-                            mkBind($dBI, '∞')           # show "∞" as deBruijn index of unbound var
-                        ),
-                        mkBind($src,
-                            mkConcat($src, 
-                                "\n",
-                                $indent,
-                                '# where ',
-                                $name,
-                                #'(', $dBI, ')',
-                                ' = ',
-                                QAST::Op.new(:op<if>,
-                                    QAST::Op.new(:op<iseq_s>, $name, asNode('self')),
-                                    asNode('...'),
-                                    mkRCall('&strOut-old', 
-                                        $val,
-                                        mkConcat($indent, '#           ')
-                                    ),
-                                )
-                            )
-                        )
-                    )),
-                    $src
-                ),
-                QAST::Op.new(:op<if>,
-                    QAST::Op.new(:op<isint>, $v),
-                    $v,
-                    mkDelaySimple(QAST::Op.new(:op<reprname>, $v))
-                )
-            )
-        )
     });
     
     $tv := Type.Var;
     mkRFn('&say', <v>, 
         #:returns(Type.Fn(Type.Var, Type.Int)),
     -> $v {
-        mkBind($v, mkForce($v)),
+        #my $v := lexVar('v');
+        mkBind($v, mkRCall('&force-new', nqp::clone($v))),
         QAST::Op.new(:op<say>,
-            QAST::Op.new(:op<if>,
-                QAST::Op.new(:op<isstr>, $v),
-                $v,
-                mkRCall('&strOut', $v, '')
-            )
-        )
+            mkTypecase($v,
+                :isstr(
+                    nqp::clone($v)
+                ),
+                :otherwise(
+                    mkRCall('&strOut', $v, '')
+                ),
+            ),
+        ),
     });
     
     my $tvIn := Type.Var;
     my $tvOut := Type.Var;
     mkRFn('&apply1', <f a1>,
         #:returns(Type.Fn(Type.Fn($tvIn, $tvOut), $tvIn, $tvOut)),
-        :result(nqp::null), 
+        :result(NO_VALUE), 
     -> $f, $a1, :$result! {
-        mkBind($f, mkForce($f)),
+        mkBind($f, mkCall('&force-new', $f)),
         mkBind($result, mkCall(
             QAST::Op.new(:op<defor>,
                 mkLambda2code($f),
@@ -849,12 +756,12 @@ class LActions is HLL::Actions {
         );
 
         my $dummy-block := QAST::Block.new;
-        try {
+        #try {
             self.typecheck($top-block, $dummy-block);              # <<<<<<<<< TODO
-            CATCH {
-                say(~$!);
-            }
-        }
+        #    CATCH {
+        #        say(~$!);
+        #    }
+        #}
 
 
         #my $mainTermType;
@@ -958,8 +865,9 @@ class LActions is HLL::Actions {
                             $tIn,
                             -> $acc, $tArg, $tParam {
                                 my $cc;
-                                if $tArg.isSumType {
+                                if $tArg.isSumType && !$tParam.isTypeVar {
                                     $cc := $tArg.foldl(-> $acc, $s { TypeConstraint.And($acc, Type.constrain(:$at, $s, $tParam)) }, TypeConstraint.True);
+                                    say('#--# contravariant sum: ' ~ $tArg.Str ~ ' = ' ~ $tParam.Str ~ '  ~>  ' ~ $cc.Str);
                                 } else {
                                     $cc := Type.constrain(:$at, $tArg, $tParam);
                                 }
@@ -969,8 +877,9 @@ class LActions is HLL::Actions {
                         );
                     }
                 } elsif !$tArgs.isCrossType && !$tIn.isCrossType {
-                    if $tArgs.isSumType {
+                    if $tArgs.isSumType && !$tIn.isTypeVar {
                         $c := $tArgs.foldl(-> $acc, $s { TypeConstraint.And($acc, Type.constrain(:$at, $s, $tIn)) }, TypeConstraint.True);
+                        say('#### contravariant sum: ' ~ $tArgs.Str ~ ' = ' ~ $tIn.Str ~ '  ~>  ' ~ $c.Str);
                     } else {
                         $c := Type.constrain(:$at, $tArgs, $tIn);
                     }
@@ -1012,11 +921,143 @@ class LActions is HLL::Actions {
         }
         $tOut;
     }
-    
+
+    sub typecheck-var($n, $currentBlock, *@moreBlocks, :@constraints!) {
+        insist-isa($n, QAST::Var);
+        if $n.decl {
+            my $decl := lookup($n.name, $currentBlock)<declaration>;
+            if $decl {
+                Type.error(:at($n), 'redeclaration of ', $n, "in \n", dump($currentBlock, :indent('    ')));
+            } else {
+                $currentBlock.symbol($n.name, :declaration($n));
+                unless Type.of($n) {
+                    Type.Var.set($n);
+                };
+                if $n.decl eq 'param' {
+                    $currentBlock.ann('slurpy').push($n) if $n.slurpy;
+                    $currentBlock.ann('optional').push($n) if $n.default;
+                    if $n.named {
+                        $currentBlock.ann('named'){$n.name} := $n;
+                    } else {
+                        my @positional := $currentBlock.ann('positional');
+                        $n.annotate('positional_index', +@positional);
+                        @positional.push($n);
+                    }
+                }
+            }
+        } else {
+            my $decl := lookup($n.name, $currentBlock, |@moreBlocks)<declaration>;
+            if $decl {
+                my $tDecl := Type.of($decl);
+                if $tDecl {
+                    my $tVar := Type.of($n);
+                    if $tVar {
+                        my $c := Type.constrain($tVar, $tDecl,
+                            :onError(-> :$at, *@msgPieces {
+                                Type.error(:at($n), 'mismatch of use-type and declaration-type: ', $tVar.Str, ' !:< ', $tDecl.Str, " in \n", dump($currentBlock));
+                            })
+                        );
+                        @constraints.push($c);
+                    } else {
+                        $tDecl.set($n);
+                    }
+                } else {
+                    Type.error(:at($n), 'still untyped: declaration for ', $n);
+                }
+            } else {
+                Type.error(:at($n), 'no declaration found for ', $n, "\n", dump($currentBlock));
+            }
+        }
+        Type.of($n);
+    }
+
+    method typecheck-typecase($n, $currentBlock, *@moreBlocks, :@constraints = []) {
+        nqp::die("expected an Op(typecase) - got " ~ describe($n))
+            unless isOp($n, 'typecase');
+        my $subject-name := $n.name;
+        Type.error(:at($n), 'no :name for ', $n, " in\n", dump($currentBlock))
+            unless nqp::isstr($subject-name);
+        my %clauses := {};
+        my @args := $n.list;
+        for @args {
+            my $arg-name := $_.named;
+            Type.error(:at($n), 'no :named for ', $_, "\n", dump($n))
+                unless nqp::isstr($arg-name);
+            Type.error(:at($n), 'duplicate typecase clause :named<', $arg-name, '>: ', $_, "\n", dump($n))
+                if nqp::existskey(%clauses, $arg-name);
+            %clauses{$arg-name} := $_;
+            $_.named(nqp::null_s);
+        }
+        my $outer-subject-type := self.typecheck(lexVar($subject-name), $currentBlock, |@moreBlocks, :@constraints);
+        my $tFn := Type.Fn(Type.Var, Type.Var);
+        
+        my %subject-type-otherwise := nqp::hash(
+            Type.Int.Str,   Type.Int,
+            Type.Num.Str,   Type.Num, 
+            Type.Str.Str,   Type.Str,
+            Type.BOOL.Str,  Type.BOOL,
+            Type.Array.Str, Type.Array,
+            $tFn.Str,       $tFn,
+        );
+        my %op-to-type := nqp::hash(
+            'isint', Type.Int,
+            'isnum', Type.Num,
+            'isstr', Type.Str,
+            'islist', Type.Array,
+            'isinvokable', $tFn,
+        );
+        my sub typecheck-clause($clause-body, $inner-subject-type) {
+            my $decl := lexVar($subject-name, :decl<var>);
+            $inner-subject-type.set($decl);
+            my $body := QAST::Block.new($clause-body);
+            $body.symbol($subject-name, :declaration($decl));
+            @constraints.push(Type.constrain(:at($clause-body), $inner-subject-type, $outer-subject-type));
+            my $tBody := self.typecheck($clause-body, $body, $currentBlock, |@moreBlocks, :@constraints);
+            $tBody.set($clause-body);
+        }
+        my $otherwise := %clauses<otherwise>;
+        nqp::deletekey(%clauses, 'otherwise');
+        my $out := $otherwise;
+        
+        for %clauses {
+            my $k := $_.key;
+            my $v := $_.value;
+            my $inner-subject-type := %op-to-type{$k};
+            Type.error(:at($n), 'invalid typecase clause :named<', $k, '>: ', $v, "\n", dump($n))
+                unless $inner-subject-type;
+            nqp::deletekey(%subject-type-otherwise, $inner-subject-type.Str);
+            
+            typecheck-clause($v, $inner-subject-type);
+
+            my $subject := lexVar($subject-name);
+            $outer-subject-type.set($subject);
+            my $test := QAST::Op.new(:op($k), $subject);
+            Type.BOOL.set($test);
+            $out := QAST::Op.new(:op<if>,
+                $test,
+                $v,
+                $out
+            );
+        }
+
+        my @subject-type-otherwise := [];
+        @subject-type-otherwise.push($_.value) # collect remaining type possibilities in otherwise branch
+            for %subject-type-otherwise;
+        
+        typecheck-clause($otherwise, Type.Sum(|@subject-type-otherwise));
+        
+        $n.op('if');
+        $n.name(nqp::null_s);
+        $n.set_children($out.list);
+        say('>>>>>>>>>> final typecheck of $n: ', TypeConstraint.And(|@constraints).Str, "\n", dump($n));
+        self.typecheck($n, $currentBlock, |@moreBlocks, :@constraints);
+        say('>>>>>>>>>>', dump($n));
+    }
 
     method typecheck($n, $currentBlock, *@moreBlocks, :@constraints = []) {
-        my $tN := Type.of($n);
-        unless $tN {
+        if isVar($n) {
+            typecheck-var($n, $currentBlock, |@moreBlocks, :@constraints);
+        } elsif !Type.of($n) {  # otherwise do typecheck only if $n doesn't already have a type
             if isSVal($n) {
                 Type.Str.set($n);
             } elsif isIVal($n) {
@@ -1132,39 +1173,6 @@ class LActions is HLL::Actions {
                         nqp::die(~$_);
                     }
                 }
-            } elsif isVar($n) {
-                if $n.decl {
-                    my $decl := lookup($n.name, $currentBlock)<declaration>;
-                    if $decl {
-                        Type.error(:at($n), 'redeclaration of ', $n, "in \n", dump($currentBlock, :indent('    ')));
-                    } else {
-                        $currentBlock.symbol($n.name, :declaration($n));
-                        Type.Var.set($n);
-                        if $n.decl eq 'param' {
-                            $currentBlock.ann('slurpy').push($n) if $n.slurpy;
-                            $currentBlock.ann('optional').push($n) if $n.default;
-                            if $n.named {
-                                $currentBlock.ann('named'){$n.name} := $n;
-                            } else {
-                                my @positional := $currentBlock.ann('positional');
-                                $n.annotate('positional_index', +@positional);
-                                @positional.push($n);
-                            }
-                        }
-                    }
-                } else {
-                    my $decl := lookup($n.name, $currentBlock, |@moreBlocks)<declaration>;
-                    if $decl {
-                        my $tVar := Type.of($decl);
-                        if $tVar {
-                            $tVar.set($n);
-                        } else {
-                            Type.error(:at($n), 'still untyped: declaration for ', $n);
-                        }
-                    } else {
-                        Type.error(:at($n), 'no declaration found for ', $n, "\n", dump($currentBlock));
-                    }
-                }
             } elsif isOp($n) {
                 if $n.op eq 'bind' {
                     my $var := $n[0];
@@ -1192,83 +1200,7 @@ class LActions is HLL::Actions {
                         $n.annotate('constraints', $c);
                     }
                 } elsif $n.op eq 'typecase' {
-                    my $subject-name := $n.name;
-                    Type.error(:at($n), 'no :name for ', $n, "\n", dump($currentBlock))
-                        unless nqp::isstr($subject-name);
-                    my %clauses := {};
-                    my @args := $n.list;
-                    for @args {
-                        my $arg-name := $_.named;
-                        Type.error(:at($n), 'no :named for ', $_, "\n", dump($n))
-                            unless nqp::isstr($arg-name);
-                        Type.error(:at($n), 'duplicate typecase clause :named<', $arg-name, '>: ', $_, "\n", dump($n))
-                            if nqp::existskey(%clauses, $arg-name);
-                        %clauses{$arg-name} := $_;
-                        $_.named(nqp::null_s);
-                    }
-                    my $outer-subject-type := self.typecheck(lexVar($subject-name), $currentBlock, |@moreBlocks, :@constraints);
-                    my $tFn := Type.Fn(Type.Var, Type.Var);
-                    
-                    my %subject-type-otherwise := nqp::hash(
-                        Type.Int.Str,   Type.Int,
-                        Type.Num.Str,   Type.Num, 
-                        Type.Str.Str,   Type.Str,
-                        Type.BOOL.Str,  Type.BOOL,
-                        Type.Array.Str, Type.Array,
-                        $tFn.Str,       $tFn,
-                    );
-                    my %op-to-type := nqp::hash(
-                        'isint', Type.Int,
-                        'isnum', Type.Num,
-                        'isstr', Type.Str,
-                        'islist', Type.Array,
-                        'isinvokable', $tFn,
-                    );
-                    my sub typecheck-clause($clause-body, $inner-subject-type) {
-                        my $decl := lexVar($subject-name, :decl<var>);
-                        $inner-subject-type.set($decl);
-                        my $body := QAST::Block.new($clause-body);
-                        $body.symbol($subject-name, :declaration($decl));
-                        my $tBody := self.typecheck($clause-body, $body, $currentBlock, |@moreBlocks, :@constraints);
-                        $tBody.set($clause-body);
-                    }
-                    my $otherwise := %clauses<otherwise>;
-                    nqp::deletekey(%clauses, 'otherwise');
-                    my $out := $otherwise;
-                    
-                    for %clauses {
-                        my $k := $_.key;
-                        my $v := $_.value;
-                        my $inner-subject-type := %op-to-type{$k};
-                        Type.error(:at($n), 'invalid typecase clause :named<', $k, '>: ', $v, "\n", dump($n))
-                            unless $inner-subject-type;
-                        nqp::deletekey(%subject-type-otherwise, $inner-subject-type.Str);
-                        
-                        typecheck-clause($v, $inner-subject-type);
-
-                        my $subject := lexVar($subject-name);
-                        $outer-subject-type.set($subject);
-                        my $test := QAST::Op.new(:op($k), $subject);
-                        Type.BOOL.set($test);
-                        $out := QAST::Op.new(:op<if>,
-                            $test,
-                            $v,
-                            $out
-                        );
-                    }
-
-                    my @subject-type-otherwise := [];
-                    @subject-type-otherwise.push($_.value) # collect remaining type possibilities in otherwise branch
-                        for %subject-type-otherwise;
-                    
-                    typecheck-clause($otherwise, Type.Sum(|@subject-type-otherwise));
-                    
-                    my $tOut := self.typecheck($out, $currentBlock, |@moreBlocks, :@constraints);
-                    $n.op('if');
-                    $n.name(nqp::null_s);
-                    $n.set_children($out.list);
-                    $tOut.set($n);
-                    say('>>>>>>>>>>', dump($out));
+                    self.typecheck-typecase($n, $currentBlock, |@moreBlocks, :@constraints);
                 } else {
                     my @tArgs := [];
                     @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks, :@constraints))
