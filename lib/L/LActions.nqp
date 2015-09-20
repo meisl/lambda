@@ -756,12 +756,13 @@ class LActions is HLL::Actions {
         );
 
         my $dummy-block := QAST::Block.new;
-        #try {
+        {
             self.typecheck($top-block, $dummy-block);              # <<<<<<<<< TODO
-        #    CATCH {
-        #        say(~$!);
-        #    }
-        #}
+            CATCH {
+                say(~$!);
+                nqp::rethrow($!) unless nqp::index(~$!, 'Type Error: NYI') == 0;
+            }
+        }
 
 
         #my $mainTermType;
@@ -855,7 +856,7 @@ class LActions is HLL::Actions {
         if $tCallee.isFnType {
             my $tIn  := $tCallee.head;
             $tOut := $tCallee.tail;
-            #$c := Type.constrain(:$at, $tArgs, $tIn);
+            #$c := Type.constrain-sub(:$at, $tArgs, $tIn);
             if $tArgs =:= $tIn {
                 $c := TypeConstraint.True;
             } else {
@@ -866,10 +867,10 @@ class LActions is HLL::Actions {
                             -> $acc, $tArg, $tParam {
                                 my $cc;
                                 if $tArg.isSumType && !$tParam.isTypeVar {
-                                    $cc := $tArg.foldl(-> $acc, $s { TypeConstraint.And($acc, Type.constrain(:$at, $s, $tParam)) }, TypeConstraint.True);
+                                    $cc := $tArg.foldl(-> $acc, $s { TypeConstraint.And($acc, Type.constrain-sub(:$at, $s, $tParam)) }, TypeConstraint.True);
                                     say('#--# contravariant sum: ' ~ $tArg.Str ~ ' = ' ~ $tParam.Str ~ '  ~>  ' ~ $cc.Str);
                                 } else {
-                                    $cc := Type.constrain(:$at, $tArg, $tParam);
+                                    $cc := Type.constrain-sub(:$at, $tArg, $tParam);
                                 }
                                 TypeConstraint.And($acc, $cc);
                             },
@@ -878,10 +879,10 @@ class LActions is HLL::Actions {
                     }
                 } elsif !$tArgs.isCrossType && !$tIn.isCrossType {
                     if $tArgs.isSumType && !$tIn.isTypeVar {
-                        $c := $tArgs.foldl(-> $acc, $s { TypeConstraint.And($acc, Type.constrain(:$at, $s, $tIn)) }, TypeConstraint.True);
+                        $c := $tArgs.foldl(-> $acc, $s { TypeConstraint.And($acc, Type.constrain-sub(:$at, $s, $tIn)) }, TypeConstraint.True);
                         say('#### contravariant sum: ' ~ $tArgs.Str ~ ' = ' ~ $tIn.Str ~ '  ~>  ' ~ $c.Str);
                     } else {
-                        $c := Type.constrain(:$at, $tArgs, $tIn);
+                        $c := Type.constrain-sub(:$at, $tArgs, $tIn);
                     }
                 }
             }
@@ -890,7 +891,7 @@ class LActions is HLL::Actions {
             my @tOuts := [];
             $tCallee.foreach(-> $t {
                 if $t.isFnType {
-                    my $c := Type.constrain(:$at, $tArgs, $t.in, :onError(-> *@ps, *%ns {}));
+                    my $c := Type.constrain-sub(:$at, $tArgs, $t.in, :onError(-> *@ps, *%ns {}));
                     unless $c.isFalse {
                         @cs.push($c);
                         @tOuts.push($t.out);
@@ -909,7 +910,7 @@ class LActions is HLL::Actions {
             #}
         } elsif $tCallee.isTypeVar {
             $tOut := Type.Var;
-            $c := Type.constrain(:$at, $tCallee, Type.Fn($tArgs, $tOut));
+            $c := Type.constrain-sub(:$at, $tCallee, Type.Fn($tArgs, $tOut));
         }
         if $c.isFalse {
             Type.error(:$at, 'cannot apply ', $callee, ' ::', $tCallee, '  to  ', $tArgs);
@@ -1164,13 +1165,13 @@ class LActions is HLL::Actions {
                 $n.annotate('constraints', $c.Str)
                     unless $c.isTrue;
                 
-                say('>>unifying: ', $c.Str);
+                say('>>unifying: ', $c.Str, "\n", dump($n));
                 {
                     typesubst($n, $c.unify);
                     CATCH {
                         say(~$_);
                         say(dump($n));
-                        nqp::die(~$_);
+                        nqp::rethrow($_);
                     }
                 }
             } elsif isOp($n) {

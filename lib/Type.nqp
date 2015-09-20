@@ -829,13 +829,13 @@ class Type is export {
 
     # Type constraints
 
-    sub constrain-eq($t1, $t2) {
-        my $tc := TypeConstraint.get($t1, $t2);
-        #say('>>[intermediary Type-constraint: ', $tc.Str, ']');
-        $tc;
+    my sub ignore(*@ps, *%ns) {
     }
 
-    my sub ignore(*@ps, *%ns) {
+    sub constrain-eq($t1, $t2) {
+        my $tc := TypeConstraint.Eq($t1, $t2);
+        #say('>>[intermediary Type-constraint: ', $tc.Str, ']');
+        $tc;
     }
     
     method constrain($t1, $t2, :$at = NO_VALUE, :&onError = NO_VALUE) {
@@ -852,7 +852,7 @@ class Type is export {
             $out := TypeConstraint.True;
         } else {
             if $t1.isSimpleType {
-                if $t2.isTypeVar || $t2.isSumType {
+                if $t2.isTypeVar {
                     $out := self.constrain($t2, $t1, :$at, :&onError);
                 }
             } elsif $t1.isTypeVar {
@@ -897,6 +897,45 @@ class Type is export {
             if $out.isFalse;
         $out;
     }
+    
+    method constrain-sub($t1, $t2, :$at = NO_VALUE, :&onError = NO_VALUE) {
+        insist-isa($at, NQPMatch, QAST::Node)
+            unless $at =:= NO_VALUE;
+        if &onError =:= NO_VALUE {
+            &onError := -> *@ps, *%ns { self.error(|@ps, |%ns) }
+        } elsif !nqp::isinvokable(&onError) {
+            nqp::die('expected an invokable object - got ' ~ describe(&onError));
+        }
+
+        my $out := TypeConstraint.False;
+        if ($t1 =:= $t2) {
+            $out := TypeConstraint.True;
+        } else {
+            if $t1.isSimpleType {
+                if $t2.isSimpleType {
+                    self.error(:$at, "NYI: Simple :< Simple: ", $t1, '  :<  ', $t2);
+                } elsif $t2.isTypeVar {
+                    self.error(:$at, "NYI: Simple :< Var: ", $t1, '  :<  ', $t2);
+                } elsif $t2.isSumType {
+                    $out := $t2.foldl(
+                        -> $acc, $t { TypeConstraint.Or($acc, self.constrain-sub($t1, $t, :onError(&ignore))) },
+                        TypeConstraint.False
+                    );
+                }
+            } elsif $t1.isTypeVar {
+                if $t2.isSimpleType {
+                    $out := TypeConstraint.Sub($t1, $t2);
+                } else {
+                    self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
+                }
+            } else {
+                self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
+            }
+        }
+        &onError(:$at, $t1, ' !:< ', $t2)
+            if $out.isFalse;
+        $out;
+    }
 }
 
 class TypeConstraint is export {
@@ -910,6 +949,7 @@ class TypeConstraint is export {
     
     method isSimple() { self.isAtom || self.isEq }
     method isEq()     { 0 } # overridden in class EqConstraint
+    method isSub()    { 0 } # overridden in class SubConstraint
     method isAnd()    { 0 } # overridden in class AndConstraint
 
     method lhs() { nqp::die('cannot get .lhs of ' ~ self.Str) }
@@ -935,7 +975,12 @@ class TypeConstraint is export {
         if self.isAtom {
             $out := self;   # nothing to substitute
         } elsif self.isEq {
-            $out := TypeConstraint.get(
+            $out := TypeConstraint.Eq(
+                self.lhs.subst(%s),
+                self.rhs.subst(%s)
+            );
+        } elsif self.isSub {
+            $out := TypeConstraint.Sub(
                 self.lhs.subst(%s),
                 self.rhs.subst(%s)
             );
@@ -950,7 +995,7 @@ class TypeConstraint is export {
         if self.isTrue {
             @out := [{}];
         } elsif self.isFalse {
-            
+            # Boom!
         } elsif self.isEq {
             my $lhs := self.lhs;
             my $rhs := self.rhs;
@@ -959,11 +1004,19 @@ class TypeConstraint is export {
                 $rhs := self.lhs;
             }
             if $lhs.isTypeVar {
-                unless nqp::existskey($rhs.vars, $lhs.name) {
+                unless nqp::existskey($rhs.vars, $lhs.name) {   # occur-check, to prevent recursive types
                     @out := [nqp::hash($lhs.name, $rhs)];
                 }
             } else {
                 @out := Type.constrain($lhs, $rhs).unify;
+            }
+        } elsif self.isSub {
+            my $lhs := self.lhs;
+            my $rhs := self.rhs;
+            if $lhs =:= $rhs {
+                @out := [{}];
+            } else {
+                Type.error('NYI: unify ', self.Str);
             }
         } elsif self.isAnd {
             @out := self.head.unify;
@@ -1000,6 +1053,16 @@ class TypeConstraint is export {
             $!lhs.Str(:outer-parens($!lhs.isCompoundType)) ~ ' = ' ~ $!rhs.Str(:outer-parens($!rhs.isCompoundType));
         }
         method isEq() { 1 }
+    }
+
+    my class SubConstraint is SimpleConstraint {
+        has Type $!lhs; method lhs() { $!lhs }
+        has Type $!rhs; method rhs() { $!rhs }
+
+        method Str() {
+            $!lhs.Str(:outer-parens($!lhs.isCompoundType)) ~ ' :< ' ~ $!rhs.Str(:outer-parens($!rhs.isCompoundType));
+        }
+        method isSub() { 1 }
     }
 
     my class AndConstraint is TypeConstraint {
@@ -1081,6 +1144,19 @@ class TypeConstraint is export {
             } else {
                 -1;
             }
+        } elsif $c1.isSub {
+            if $c2.isAtom || $c2.isEq {
+                1;
+            } elsif $c2.isSub {
+                my $lhss := Type.lex-cmp($c1.lhs, $c2.lhs);
+                if $lhss == 0 {
+                    Type.lex-cmp($c1.rhs, $c2.rhs);
+                } else {
+                    $lhss;
+                }
+            } else {
+                -1;
+            }
         } elsif nqp::istype($c1, AndConstraint) {
             if $c2.isSimple {
                 1;
@@ -1133,7 +1209,7 @@ class TypeConstraint is export {
     }
 
 
-    method get(Type $lhs, Type $rhs) {
+    method Eq(Type $lhs, Type $rhs) {
         Type.insist-isValid($lhs);
         Type.insist-isValid($rhs);
         if $lhs =:= $rhs {
@@ -1143,17 +1219,30 @@ class TypeConstraint is export {
             if $lhs.isTypeVar {
                 if $rhs.isTypeVar {
                     if $lhs.id > $rhs.id {
-                        $out := TypeConstraint.get($rhs, $lhs);
+                        $out := TypeConstraint.EQ($rhs, $lhs);
                     }
                 }
             } elsif $rhs.isTypeVar {
-                $out := TypeConstraint.get($rhs, $lhs);
+                $out := TypeConstraint.Eq($rhs, $lhs);
             }
             unless $out {
                 $out := nqp::create(EqConstraint);
                 nqp::bindattr($out, EqConstraint, '$!lhs', $lhs);
                 nqp::bindattr($out, EqConstraint, '$!rhs', $rhs);
             }
+            $out;
+        }
+    }
+
+    method Sub(Type $lhs, Type $rhs) {
+        Type.insist-isValid($lhs);
+        Type.insist-isValid($rhs);
+        if $lhs =:= $rhs {
+            $True;
+        } else {
+            my $out := nqp::create(SubConstraint);
+            nqp::bindattr($out, SubConstraint, '$!lhs', $lhs);
+            nqp::bindattr($out, SubConstraint, '$!rhs', $rhs);
             $out;
         }
     }
@@ -1165,19 +1254,19 @@ sub MAIN(*@ARGS) {
     my $var1 := Type.Var;
     my $var2 := Type.Var;
 
-    my $c1a := TypeConstraint.get($var1, Type.Int);
+    my $c1a := TypeConstraint.Eq($var1, Type.Int);
     say($c1a.Str);
 
-    my $c1b := TypeConstraint.get(Type.Int, $var1);
+    my $c1b := TypeConstraint.Eq(Type.Int, $var1);
     say($c1b.Str);
 
-    my $c2 := TypeConstraint.get(Type.Int, Type.Int);
+    my $c2 := TypeConstraint.Eq(Type.Int, Type.Int);
     say($c2.Str);
 
-    my $c3 := TypeConstraint.get($var1, $var2);
+    my $c3 := TypeConstraint.Eq($var1, $var2);
     say($c3.Str);
 
-    my $c4 := TypeConstraint.get($var2, $var1);
+    my $c4 := TypeConstraint.Eq($var2, $var1);
     say($c4.Str);
 
     say(TypeConstraint.And($c2, $c3).Str);
