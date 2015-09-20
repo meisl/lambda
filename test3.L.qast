@@ -20,10 +20,10 @@
     ║ ├○ &banner :decl(static) ::(Void -> Str)
     ║ └─╥Block "&banner" ::(Void -> Str) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [], "optional" => [], "constraints" => "t9 = (Void -> Str)"})
     ║   ╙◙ SVal "This is L v0.0.1" ::(Str)
-    ╟─bind
-    ║ ├○ &strLit :decl(static) ::(t10)
-    ║ └─╥Block "&strLit" ::(t11 -> Str) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical s :decl(param))], "optional" => [], "constraints" => "t10 = (t11 -> Str)  &  t11 :< Str"})
-    ║   ╟○ s :decl(param) ::(t11) :annotations({"positional_index" => 0})
+    ╟─bind ::(Str -> Str) :annotations({"constraints" => "t10 = (t11 -> Str)  &  t11 :< Str"})
+    ║ ├○ &strLit :decl(static) ::(Str -> Str)
+    ║ └─╥Block "&strLit" ::(Str -> Str) :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical s :decl(param))], "optional" => [], "constraints" => "t10 = (t11 -> Str)  &  t11 :< Str"})
+    ║   ╟○ s :decl(param) ::(Str) :annotations({"positional_index" => 0})
     ║   ╟─bind ::(Str)
     ║   ║ ├○ foo :decl(var) ::(Str)
     ║   ║ └◙ SVal "bar" ::(Str)
@@ -31,35 +31,35 @@
     ║     ├◙ SVal "\"" ::(Str)
     ║     └─concat ::(Str)
     ║       ├─escape ::(Str)
-    ║       │ └○ s ::(t11)
+    ║       │ └○ s ::(Str)
     ║       └◙ SVal "\"" ::(Str)
     ╟─bind
-    ║ ├○ &sublist :decl(static)
-    ║ └─╥Block "&sublist"
-    ║   ╟○ list :decl(param) :annotations({"positional_index" => 0})
-    ║   ╟○ from :decl(param) :annotations({"positional_index" => 1})
-    ║   ╟─bind
-    ║   ║ ├○ out :decl(var)
-    ║   ║ └─list
-    ║   ╟─bind
-    ║   ║ ├○ n :decl(var)
-    ║   ║ └─elems
-    ║   ║   └○ list
-    ║   ╟─bind
-    ║   ║ ├○ count :decl(var)
-    ║   ║ └○ n
-    ║   ╟─bind
-    ║   ║ ├○ to :decl(var)
-    ║   ║ └─add_i
-    ║   ║   ├○ from
-    ║   ║   └○ count
+    ║ ├○ &sublist :decl(static) ::(t13)
+    ║ └─╥Block "&sublist" :annotations({"named" => {}, "constrain-self" => (Var), "slurpy" => [], "positional" => [QAST::Var(lexical list :decl(param)), QAST::Var(lexical from :decl(param))], "optional" => []})
+    ║   ╟○ list :decl(param) ::(t14) :annotations({"positional_index" => 0})
+    ║   ╟○ from :decl(param) ::(t15) :annotations({"positional_index" => 1})
+    ║   ╟─bind ::(Array)
+    ║   ║ ├○ out :decl(var) ::(Array)
+    ║   ║ └─list ::(Array)
+    ║   ╟─bind ::(Int)
+    ║   ║ ├○ n :decl(var) ::(Int)
+    ║   ║ └─elems ::(Int)
+    ║   ║   └○ list ::(t14)
+    ║   ╟─bind ::(Int)
+    ║   ║ ├○ count :decl(var) ::(Int)
+    ║   ║ └○ n ::(Int)
+    ║   ╟─bind ::(Int)
+    ║   ║ ├○ to :decl(var) ::(Int)
+    ║   ║ └─add_i ::(Int)
+    ║   ║   ├○ from ::(t15)
+    ║   ║   └○ count ::(Int)
     ║   ╟─if
-    ║   ║ ├─isgt_i
-    ║   ║ │ ├○ to
-    ║   ║ │ └○ n
-    ║   ║ └─bind
-    ║   ║   ├○ to
-    ║   ║   └○ n
+    ║   ║ ├─isgt_i ::(Bool)
+    ║   ║ │ ├○ to ::(Int)
+    ║   ║ │ └○ n ::(Int)
+    ║   ║ └─bind ::(Int)
+    ║   ║   ├○ to ::(Int)
+    ║   ║   └○ n ::(Int)
     ║   ╟─while
     ║   ║ ├─islt_i
     ║   ║ │ ├○ from

@@ -1015,16 +1015,26 @@ class TypeConstraint is export {
             my $rhs := self.rhs;
             if $lhs =:= $rhs {
                 @out := [{}];
+            } elsif ($lhs.isTypeVar && $rhs.isSimpleType) || ($rhs.isTypeVar && $lhs.isSimpleType) {    # greedy
+                @out := TypeConstraint.Eq($lhs, $rhs).unify;
             } else {
                 Type.error('NYI: unify ', self.Str);
             }
         } elsif self.isAnd {
-            @out := self.head.unify;
+            my $head := self.head;
             my $tail := self.tail;
-            for @out {
-                $tail := $tail.subst($_);
+            if $head.isSub {    # now this And contains only subtype constraints
+                my %bounds := self.vars-to-simple-bounds;
+                if %bounds {
+                    say('>>unifying bounds: ' ~ describe(%bounds));
+                }
+            } else {
+                @out := $head.unify;
+                for @out {
+                    $tail := $tail.subst($_);
+                }
+                @out.push($_) for $tail.unify;
             }
-            @out.push($_) for $tail.unify;
         }
         unless @out {
             nqp::die("not unifiable: " ~ self.Str);
@@ -1087,6 +1097,21 @@ class TypeConstraint is export {
             $instance;
         }
         method isAnd() { 1 }
+
+        method vars-to-simple-bounds() {
+            my %out := {};
+            self.foreach(-> $c {
+                if $c.isSub {
+                    if $c.lhs.isTypeVar && $c.rhs.isSimpleType {
+                        %out{$c.lhs.name} := $c.rhs;
+                    }
+                    if $c.rhs.isTypeVar && $c.lhs.isSimpleType {
+                        %out{$c.rhs.name} := $c.lhs;
+                    }
+                };
+            });
+            %out;
+        }
     }
 
     sub remove-dupes(@constraints, :&lex-cmp!, :$unit!, :$zero!, :$flatten = NO_VALUE) {
