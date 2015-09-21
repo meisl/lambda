@@ -760,7 +760,7 @@ class LActions is HLL::Actions {
             self.typecheck($top-block, $dummy-block);              # <<<<<<<<< TODO
             CATCH {
                 say(~$!);
-                nqp::rethrow($!) unless nqp::index(~$!, 'Type Error: NYI') == 0;
+                nqp::rethrow($!);# unless nqp::index(~$!, 'Type Error: NYI') == 0;
             }
         }
 
@@ -892,6 +892,7 @@ class LActions is HLL::Actions {
                 if $t.isFnType {
                     my $c := Type.constrain-sub(:$at, $tArgs, $t.in, :onError(-> *@ps, *%ns {
                         say('!!!!', join('', @ps, :map(-> $_ { istype($_, Type, TypeConstraint) ?? $_.Str !! $_ } )));
+                        TypeConstraint.False;
                     }));
                     unless $c.isFalse {
                         @cs.push($c);

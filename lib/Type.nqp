@@ -830,6 +830,7 @@ class Type is export {
     # Type constraints
 
     my sub ignore(*@ps, *%ns) {
+        TypeConstraint.False;
     }
 
     sub constrain-eq($t1, $t2) {
@@ -906,9 +907,9 @@ class Type is export {
                 }
             }
         }
-        &onError(:$at, $t1, ' <> ', $t2)
-            if $out.isFalse;
-        $out;
+        $out.isFalse
+            ?? &onError(:$at, $t1, ' != ', $t2)
+            !! $out;
     }
     
     method constrain-sub($t1, $t2, :$at = NO_VALUE, :&onError = NO_VALUE) {
@@ -932,12 +933,35 @@ class Type is export {
                 } elsif $t2.isFnType || $t2.isCrossType {
                     # FALSE!
                 } elsif $t2.isSumType {
-                    $out := TypeConstraint.Or(
-                        self.constrain-sub($t1, $t2.head, :onError(&ignore)),
-                        self.constrain-sub($t1, $t2.tail, :onError(&ignore))
+                    $out := $t2.foldl(
+                        -> $acc, $t {
+                            if $acc.isTrue {
+                                $acc;
+                            } else {
+                                my $c := self.constrain-sub($t1, $t, :onError(&ignore));
+                                if $c.isTrue {
+                                    $c;
+                                } elsif $c.isFalse {
+                                    $acc;
+                                } else {
+                                    if $acc.isAtom {
+                                        $c
+                                    } else {
+                                        TypeConstraint.Sub($t1, Type.Sum($acc.rhs, $t));
+                                    }
+                                }
+                                
+                            }
+                        },
+                        TypeConstraint.False
                     );
+                        
+                    #TypeConstraint.Or(
+                    #    self.constrain-sub($t1, $t2.head, :onError(&ignore)),
+                    #    self.constrain-sub($t1, $t2.tail, :onError(&ignore))
+                    #);
                 } else {
-                    self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
+                    self.error(:$at, "NYI(a): ", $t1, '  :<  ', $t2);
                 }
             } elsif $t1.isTypeVar {
                 if $t2.isSimpleType || $t2.isTypeVar {
@@ -954,7 +978,7 @@ class Type is export {
                         $t2.foldl1(-> $a, $b { $t1 =:= $a ?? $b !! ($t1 =:= $b ?? $a !! Type.Sum($a, $b))})    # kick out t1 from Sum (if any)
                     );
                 } else {
-                    self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
+                    self.error(:$at, "NYI(b): ", $t1, '  :<  ', $t2);
                 }
             } elsif $t1.isFnType {
                 if $t2.isFnType {
@@ -970,13 +994,13 @@ class Type is export {
                         TypeConstraint.False
                     );
                     CATCH {
-                        say('NYI: ' ~ $t1.Str ~ ' :< ' ~ $t2.Str ~ "\n=>");
+                        say('NYI(c): ' ~ $t1.Str ~ ' :< ' ~ $t2.Str ~ "\n=>");
                         nqp::rethrow($_);
                     }
                 } elsif $t2.isTypeVar {
                     $out := TypeConstraint.Eq($t2, Type.Sum($t1, Type.Var));
                 } else {
-                    self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
+                    self.error(:$at, "NYI(d): ", $t1, '  :<  ', $t2);
                 }
             } elsif $t1.isSumType {
                 if $t2.isTypeVar {
@@ -984,13 +1008,13 @@ class Type is export {
                         $t1.foldl1(-> $a, $b { $t2 =:= $a ?? $b !! ($t2 =:= $b ?? $a !! Type.Sum($a, $b))}),    # kick out t2 from Sum (if any)
                         $t2
                     );
-                } elsif $t2.isSumType || $t2.isFnType {
+                } elsif $t2.isSumType || $t2.isFnType || $t2.isSimpleType {
                     $out := TypeConstraint.And(
                         self.constrain-sub($t1.head, $t2, :$at, :&onError),
                         self.constrain-sub($t1.tail, $t2, :$at, :&onError),
                     );
                 } else {
-                    self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
+                    self.error(:$at, "NYI(e): ", $t1, '  :<  ', $t2);
                 }
             } elsif $t1.isCrossType {
                 if $t2.isCrossType && ($t1.elems == $t2.elems) {
@@ -1000,12 +1024,12 @@ class Type is export {
                     );
                 } # else $out := False
             } else {
-                self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
+                self.error(:$at, "NYI(f): ", $t1, '  :<  ', $t2);
             }
         }
-        &onError(:$at, $t1, ' !:< ', $t2)
-            if $out.isFalse;
-        $out;
+        $out.isFalse
+            ?? &onError(:$at, $t1, ' !:< ', $t2)
+            !! $out;
     }
 }
 
@@ -1041,28 +1065,28 @@ class TypeConstraint is export {
         %vs;
     }
 
-    method subst(%s) {
+    method subst(%s, :&onError) {
         my $out;
         if self.isAtom {
             $out := self;   # nothing to substitute
         } elsif self.isEq {
-            $out := TypeConstraint.Eq(
+            $out := Type.constrain(:&onError,
                 self.lhs.subst(%s),
                 self.rhs.subst(%s)
             );
         } elsif self.isSub {
-            $out := Type.constrain-sub(
+            $out := Type.constrain-sub(:&onError,
                 self.lhs.subst(%s),
                 self.rhs.subst(%s)
             );
         } else {
-            $out := self.foldl(-> $acc, $c { TypeConstraint.And($acc, $c.subst(%s)) }, $True);
+            $out := self.foldl(-> $acc, $c { TypeConstraint.And($acc, $c.subst(%s, :&onError)) }, $True);
         }
         $out;
     }
 
     method unify() {
-        my %out;
+        my %out := nqp::null();
         if self.isTrue {
             %out := {};
         } elsif self.isFalse {
@@ -1079,7 +1103,10 @@ class TypeConstraint is export {
                     %out := nqp::hash($lhs.name, $rhs);
                 }
             } else {
-                %out := Type.constrain($lhs, $rhs).unify;
+                my $simplified := Type.constrain($lhs, $rhs, :onError(-> *@as, *%ns { TypeConstraint.False }));
+                unless $simplified.isFalse {
+                    %out := $simplified.unify;
+                }
             }
         } elsif self.isSub {
             my $lhs := self.lhs;
@@ -1150,8 +1177,13 @@ class TypeConstraint is export {
                 }
             } else {
                 %out := $head.unify;
-                my $tail := self.tail.subst(%out);
-                %out := concat-subst(%out, $tail.unify);
+                my $tail := self.tail.subst(%out, :onError(-> *@as, *%ns { TypeConstraint.False }));
+                if $tail.isFalse {
+                    nqp::die("not unifiable: " ~ subst-to-Str(%out) ~ self.tail.Str);
+                } else {
+                    %out := concat-subst(%out, $tail.unify);
+                }
+                
             }
         }
         unless nqp::isconcrete(%out) {
@@ -1460,6 +1492,24 @@ sub MAIN(*@ARGS) {
     my $var4 := Type.Var;
     my $var5 := Type.Var;
     my $var6 := Type.Var;
+
+    my $t69a := Type.Sum($var0, Type.Str, Type.Int);
+    my $t69b := Type.Sum(Type.Str, Type.Num, $var0, $var1);
+    my $c69 := Type.constrain-sub($t69a, $t69b);    #     t2 + Int + Str :< Num + Str + t2 + t3
+    say($t69a ~ ' :< ' ~ $t69b);                    # =>  t2  :< Num + Str + t2 + t3  [~> t2  :< Num + Str + t3]
+    say($c69.Str);                                  #   & Int :< Num + Str + t2 + t3  [~> Int :< t2 + t3]
+    say(subst-to-Str($c69.unify));                  #   & Str :< Num + Str + t2 + t3  [~> True]
+    say('---------');
+
+    my $c74 := TypeConstraint.And(
+        Type.constrain($var0, Type.Num),
+        Type.constrain($var0, $var1),
+        Type.constrain($var1, Type.Int),
+        Type.constrain($var1, Type.Str),
+    );
+    say($c74.Str);
+    say(subst-to-Str($c74.unify));
+    say('---------');
 
     my $t1 := Type.Fn($var0, $var1);
     my $t2 := Type.Fn($var5, $var6);
