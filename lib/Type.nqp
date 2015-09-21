@@ -1062,9 +1062,9 @@ class TypeConstraint is export {
     }
 
     method unify() {
-        my @out;
+        my %out;
         if self.isTrue {
-            @out := [{}];
+            %out := {};
         } elsif self.isFalse {
             # Boom!
         } elsif self.isEq {
@@ -1076,19 +1076,19 @@ class TypeConstraint is export {
             }
             if $lhs.isTypeVar {
                 unless nqp::existskey($rhs.vars, $lhs.name) {   # occur-check, to prevent recursive types
-                    @out := [nqp::hash($lhs.name, $rhs)];
+                    %out := nqp::hash($lhs.name, $rhs);
                 }
             } else {
-                @out := Type.constrain($lhs, $rhs).unify;
+                %out := Type.constrain($lhs, $rhs).unify;
             }
         } elsif self.isSub {
             my $lhs := self.lhs;
             my $rhs := self.rhs;
             if $lhs =:= $rhs {
-                @out := [{}];
+                %out := {};
             } elsif ($lhs.isTypeVar && ($rhs.isSimpleType || $rhs.isTypeVar))    # greedy (but only in isolation, ie if this is the only constraint)
                  || ($rhs.isTypeVar && ($lhs.isSimpleType || $lhs.isTypeVar)) {
-                @out := TypeConstraint.Eq($lhs, $rhs).unify;
+                %out := TypeConstraint.Eq($lhs, $rhs).unify;
             } else {
                 Type.error('NYI: unify ', self.Str);
             }
@@ -1146,21 +1146,18 @@ class TypeConstraint is export {
                         if $cs.isAtom;
                     $cs := TypeConstraint.And($cs, self);
                     say('>>unifying bounds: ' ~ $cs.Str);
-                    @out := $cs.unify;
+                    %out := $cs.unify;
                 }
             } else {
-                @out := $head.unify;
-                my $tail := self.tail;
-                for @out {
-                    $tail := $tail.subst($_);
-                }
-                @out.push($_) for $tail.unify;
+                %out := $head.unify;
+                my $tail := self.tail.subst(%out);
+                %out := concat-subst(%out, $tail.unify);
             }
         }
-        unless @out {
+        unless nqp::isconcrete(%out) {
             nqp::die("not unifiable: " ~ self.Str);
         }
-        @out;
+        %out;
     }
 
     my class SimpleConstraint is TypeConstraint {
@@ -1418,10 +1415,36 @@ class TypeConstraint is export {
 
 }
 
+sub concat-subst(*@ss) {
+    if +@ss == 0 {
+        {};
+    } else {
+        my %s1 := @ss.shift;
+        for @ss {
+            my %s2 := $_;
+            my %out := {};
+            for %s1 {
+                %out{$_.key} := $_.value.subst(%s2);
+            }
+            for %s2 {
+                unless nqp::existskey(%out, $_.key) {
+                    %out{$_.key} := $_.value;
+                }
+            }
+            %s1 := %out;
+        }
+        %s1;
+    }
+}
+
+
 sub subst-to-Str(@ss) {
+    if nqp::ishash(@ss) {
+        @ss := [@ss];
+    }
     join('; ', @ss, :map(-> %subst { 
         if nqp::ishash(%subst) {
-            join(', ', %subst, :map(-> $_ { $_.key ~ ' → ' ~ $_.value.Str }))
+            '[' ~ join(', ', %subst, :map(-> $_ { $_.key ~ ' » ' ~ $_.value.Str(:outer-parens($_.value.isCompoundType)) })) ~ ']'
         } else {
             describe(%subst);
         }
@@ -1438,28 +1461,38 @@ sub MAIN(*@ARGS) {
     my $var5 := Type.Var;
     my $var6 := Type.Var;
 
-    say(Type.Fn($var0, $var1).Str ~ ' :< ' ~ $var2.Str ~ '  &  ' ~ $var2.Str ~ ' :< ' ~ Type.Fn($var5, $var6).Str);
+    my $t1 := Type.Fn($var0, $var1);
+    my $t2 := Type.Fn($var5, $var6);
+    say($t1.Str ~ ' :< ' ~ $var2.Str ~ '  &  ' ~ $var2.Str ~ ' :< ' ~ $t2.Str);
     my $c99 := TypeConstraint.And(
-        Type.constrain-sub(Type.Fn($var0, $var1), $var2),
-        Type.constrain-sub($var2, Type.Fn($var5, $var6))
+        Type.constrain-sub($t1, $var2),
+        Type.constrain-sub($var2, $t2)
     );
     say($c99.Str);
-    say(subst-to-Str($c99.unify));
-    nqp::exit(0);
+    my $u99 := $c99.unify;
+    say(subst-to-Str($u99));
+    say(subst-to-Str(concat-subst($u99)));
+    $t1 := $t1.subst($_);
+    $t2 := $t2.subst($_);
+    say($t1.Str, ', ', $t2.Str);
+    say('---------');
 
     my $c42a := Type.constrain-sub(Type.Sum($var1, $var2), $var1);
     my $c42b := Type.constrain-sub($var1, Type.Sum($var1, $var2));
     my $c42 := TypeConstraint.And($c42a, $c42b);
     say($c42.Str);
     say(subst-to-Str($c42.unify));
-    nqp::exit(0);
+    say('---------');
 
     my $c23 := Type.constrain-sub(                      #     T1 × T1 × T2 × T1 × T3  :<  T1 × T2 × T1 × T3 × Int
         Type.Cross($var1, $var1, $var2, $var1, $var3),         # =>  T1 :< T1  &  T1 :< T2  &  T2 :< T1  &  T1 :< T3  &  T3 :< Int
         Type.Cross($var1, $var2, $var1, $var3, Type.Int)
     );
     say($c23.Str);
-    say(subst-to-Str($c23.unify));
+    my $u23 := $c23.unify;
+    say(subst-to-Str($u23));
+    my $u23a := concat-subst($u23);
+    say(subst-to-Str($u23a));
     nqp::exit(0);
     
 

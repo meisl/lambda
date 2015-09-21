@@ -834,15 +834,14 @@ class LActions is HLL::Actions {
         %out;
     }
 
-    sub typesubst($n, @substitutions) {
+    sub typesubst($n, %substitution) {
         TreeWalk.dfs-up(
             -> $n, @p {
                 my $type := Type.of($n);
                 TreeWalkDo.recurse(:take($type && $type.vars));
             },
             -> $n, @p {
-                Type.of($n).subst($_).set($n)
-                    for @substitutions;
+                Type.of($n).subst(%substitution).set($n);
             },
             $n
         );
