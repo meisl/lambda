@@ -96,21 +96,28 @@ class Util {
         }
     }
 
-    method join(str $sep, @pieces, :$prefix1st = 0, :$filter, :$map) {
-        my $n := nqp::elems(@pieces);
-        return ''
-            unless $n;
-
-        $filter  := -> $x { 1 }  unless $filter;
-        $map     := -> $x { $x } unless $map;
-        my $map1 := -> $x { my $y := $map($x); nqp::isstr($y) ?? $y !! self.describe($y) };
-        my @strs := [];
-        for @pieces {
-            @strs.push($map1($_)) 
-                if $filter($_);
+    method join(str $sep, $pieces, :$prefix1st = 0, :$filter, :$map) {
+        nqp::die("expected a hash or a list - got " ~ describe($pieces))
+            unless nqp::ishash($pieces) || nqp::islist($pieces);
+        my $n := nqp::elems($pieces);
+        if $n > 0 {
+            if nqp::islist($pieces) {
+                $map := -> $x { $x } unless $map;
+            } else { # it's a hash
+                $map := -> $x { '"' ~ nqp::escape($x.key) ~ '" => ' ~ self.describe($x.value) } unless $map;
+            }
+            $filter  := -> $x { 1 }  unless $filter;
+            my $map1 := -> $x { my $y := $map($x); nqp::isstr($y) ?? $y !! self.describe($y) };
+            my @strs := [];
+            for $pieces {
+                @strs.push($map1($_)) 
+                    if $filter($_);
+            }
+            my $out := nqp::join($sep, @strs);
+            $prefix1st ?? $sep ~ $out !! $out;
+        } else {
+            '';
         }
-        my $out := nqp::join($sep, @strs);
-        $prefix1st ?? $sep ~ $out !! $out;
     }
 
     method say(*@pieces) {
