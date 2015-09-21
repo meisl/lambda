@@ -861,17 +861,30 @@ class Type is export {
                 if $t1.isFnType {
                     if $t2.isFnType {
                         $out := TypeConstraint.And(
-                            self.constrain($t1.in,  $t2.in,  :$at, :&onError),   # TODO: variance
-                            self.constrain($t1.out, $t2.out, :$at, :&onError),   # TODO: variance
+                            self.constrain($t1.in,  $t2.in,  :$at, :&onError),
+                            self.constrain($t1.out, $t2.out, :$at, :&onError),
                         );
                     } elsif $t2.isTypeVar || $t2.isSumType {
                         $out := self.constrain($t2, $t1, :$at, :&onError);
                     }
                 } elsif $t1.isSumType {
-                    if $t2.isSimpleType || $t2.isFnType || $t2.isSumType {
-                        $out := $t1.foldl(
-                            -> $acc, $t { TypeConstraint.Or($acc, self.constrain($t2, $t, :onError(&ignore))) },
-                            TypeConstraint.False
+                    if $t2.isSimpleType || $t2.isFnType {
+                        $out := TypeConstraint.And(
+                            self.constrain($t2, $t1.head, :$at, :&onError),
+                            self.constrain($t2, $t1.tail, :$at, :&onError),
+                        );
+                        #    $t1.foldl(
+                        #    -> $acc, $t { TypeConstraint.Or($acc, self.constrain($t2, $t, :onError(&ignore))) },
+                        #    TypeConstraint.False
+                        #);
+                        #CATCH {
+                        #    say('NYI: ' ~ $t1.Str ~ ' = ' ~ $t2.Str ~ "\n=>");
+                        #    nqp::rethrow($_);
+                        #}
+                    } elsif $t2.isSumType {
+                        TypeConstraint.And(
+                            self.constrain-sub($t1, $t2, :$at, :&onError),
+                            self.constrain-sub($t2, $t1, :$at, :&onError),
                         );
                     } elsif $t2.isTypeVar {
                         $out := constrain-eq($t2, $t1);
@@ -884,8 +897,8 @@ class Type is export {
                 } elsif $t1.isCrossType {
                     if $t2.isCrossType && ($t1.elems == $t2.elems) {
                         $out := TypeConstraint.And(
-                            self.constrain($t1.head, $t2.head, :$at, :&onError),   # TODO: variance
-                            self.constrain($t1.tail, $t2.tail, :$at, :&onError),   # TODO: variance
+                            self.constrain($t1.head, $t2.head, :$at, :&onError),
+                            self.constrain($t1.tail, $t2.tail, :$at, :&onError),
                         );
                     }
                 } else {
@@ -913,21 +926,79 @@ class Type is export {
         } else {
             if $t1.isSimpleType {
                 if $t2.isSimpleType {
-                    self.error(:$at, "NYI: Simple :< Simple: ", $t1, '  :<  ', $t2);
+                    #self.error(:$at, "NYI: Simple :< Simple: ", $t1, '  :<  ', $t2);
                 } elsif $t2.isTypeVar {
-                    self.error(:$at, "NYI: Simple :< Var: ", $t1, '  :<  ', $t2);
+                    $out := TypeConstraint.Sub($t1, $t2);
+                } elsif $t2.isFnType || $t2.isCrossType {
+                    # FALSE!
+                } elsif $t2.isSumType {
+                    $out := TypeConstraint.Or(
+                        self.constrain-sub($t1, $t2.head, :onError(&ignore)),
+                        self.constrain-sub($t1, $t2.tail, :onError(&ignore))
+                    );
+                } else {
+                    self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
+                }
+            } elsif $t1.isTypeVar {
+                if $t2.isSimpleType || $t2.isTypeVar {
+                    $out := TypeConstraint.Sub($t1, $t2);
+                } elsif $t2.isFnType {
+                    my $tF := Type.Fn(Type.Var, Type.Var);
+                    $out := TypeConstraint.And(
+                        TypeConstraint.Eq($t1, $tF),
+                        self.constrain-sub($tF, $t2, :$at, :&onError)
+                    );
+                } elsif $t2.isSumType {
+                    $out := TypeConstraint.Sub(
+                        $t1,
+                        $t2.foldl1(-> $a, $b { $t1 =:= $a ?? $b !! ($t1 =:= $b ?? $a !! Type.Sum($a, $b))})    # kick out t1 from Sum (if any)
+                    );
+                } else {
+                    self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
+                }
+            } elsif $t1.isFnType {
+                if $t2.isFnType {
+                    $out := TypeConstraint.And(
+                        self.constrain-sub($t2.head, $t1.head, :$at, :&onError),   # Fn is contravariant in head
+                        self.constrain-sub($t1.tail, $t2.tail, :$at, :&onError),   # Fn is covariant in tail
+                    );
+                } elsif $t2.isCrossType || $t2.isSimpleType {
+                    # FALSE!
                 } elsif $t2.isSumType {
                     $out := $t2.foldl(
                         -> $acc, $t { TypeConstraint.Or($acc, self.constrain-sub($t1, $t, :onError(&ignore))) },
                         TypeConstraint.False
                     );
-                }
-            } elsif $t1.isTypeVar {
-                if $t2.isSimpleType {
-                    $out := TypeConstraint.Sub($t1, $t2);
+                    CATCH {
+                        say('NYI: ' ~ $t1.Str ~ ' :< ' ~ $t2.Str ~ "\n=>");
+                        nqp::rethrow($_);
+                    }
+                } elsif $t2.isTypeVar {
+                    $out := TypeConstraint.Eq($t2, Type.Sum($t1, Type.Var));
                 } else {
                     self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
                 }
+            } elsif $t1.isSumType {
+                if $t2.isTypeVar {
+                    $out := TypeConstraint.Sub(
+                        $t1.foldl1(-> $a, $b { $t2 =:= $a ?? $b !! ($t2 =:= $b ?? $a !! Type.Sum($a, $b))}),    # kick out t2 from Sum (if any)
+                        $t2
+                    );
+                } elsif $t2.isSumType || $t2.isFnType {
+                    $out := TypeConstraint.And(
+                        self.constrain-sub($t1.head, $t2, :$at, :&onError),
+                        self.constrain-sub($t1.tail, $t2, :$at, :&onError),
+                    );
+                } else {
+                    self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
+                }
+            } elsif $t1.isCrossType {
+                if $t2.isCrossType && ($t1.elems == $t2.elems) {
+                    $out := TypeConstraint.And(
+                        self.constrain-sub($t1.head, $t2.head, :$at, :&onError),   # Cross is covariant in head
+                        self.constrain-sub($t1.tail, $t2.tail, :$at, :&onError),   # Cross is covariant in tail
+                    );
+                } # else $out := False
             } else {
                 self.error(:$at, "NYI: ", $t1, '  :<  ', $t2);
             }
@@ -980,7 +1051,7 @@ class TypeConstraint is export {
                 self.rhs.subst(%s)
             );
         } elsif self.isSub {
-            $out := TypeConstraint.Sub(
+            $out := Type.constrain-sub(
                 self.lhs.subst(%s),
                 self.rhs.subst(%s)
             );
@@ -1015,21 +1086,71 @@ class TypeConstraint is export {
             my $rhs := self.rhs;
             if $lhs =:= $rhs {
                 @out := [{}];
-            } elsif ($lhs.isTypeVar && $rhs.isSimpleType) || ($rhs.isTypeVar && $lhs.isSimpleType) {    # greedy
+            } elsif ($lhs.isTypeVar && ($rhs.isSimpleType || $rhs.isTypeVar))    # greedy (but only in isolation, ie if this is the only constraint)
+                 || ($rhs.isTypeVar && ($lhs.isSimpleType || $lhs.isTypeVar)) {
                 @out := TypeConstraint.Eq($lhs, $rhs).unify;
             } else {
                 Type.error('NYI: unify ', self.Str);
             }
         } elsif self.isAnd {
             my $head := self.head;
-            my $tail := self.tail;
             if $head.isSub {    # now this And contains only subtype constraints
-                my %bounds := self.vars-to-simple-bounds;
+                my %bounds := self.vars-to-bounds;
                 if %bounds {
-                    say('>>unifying bounds: ' ~ describe(%bounds));
+                    say('>>unifying bounds in ' ~ self.Str 
+                        #~ ': hash(' ~ join(',  ', %bounds, 
+                        #    :map(-> $x {
+                        #        ':' ~ $x.key ~ '('
+                        #        ~ join(', ', $x.value, :map(-> $y { $y.key ~ ' => ' ~ $y.value.Str }))
+                        #        ~ ')';
+                        #    })
+                        #) ~ ')'
+                        ~ ':  bounds(' ~ join('  &  ', %bounds, 
+                            :map(-> $x {
+                                my $v := $x.key;
+                                my $l := $x.value<lower>;
+                                my $u := $x.value<upper>;
+                                $l ?? $l.Str ~ ' :< ' ~ $v ~ ($u ?? ' :< ' ~ $u.Str !! '') !! $v ~ ' :< ' ~ $u.Str
+                            })
+                        ) ~ ')'
+                    );
+                    my $cs := TypeConstraint.True;
+                    for %bounds {
+                        my $name  := $_.key;
+                        my $var   := $_.value<var>;
+                        my $upper := $_.value<upper>;
+                        my $lower := $_.value<lower>;
+                        if $upper {
+                            if $lower {
+                                if $upper =:= $lower {
+                                    $cs := TypeConstraint.And($cs, TypeConstraint.Eq($var, $upper));
+                                } else {
+                                    #Type.error('NYI: unify ', $lower.Str, ' :< ', $name, ' :< ', $upper.Str);
+                                }
+                            } else { # only upper bound
+                                #if $upper.isSimpleType {
+                                    $cs := TypeConstraint.And($cs, TypeConstraint.Eq($var, $upper));
+                                #} else {
+                                #    #Type.error('NYI: unify ', $name, ' :< ', $upper.Str);
+                                #}
+                            }
+                        } else {    # only lower bound
+                            #if $lower.isSimpleType {
+                                $cs := TypeConstraint.And($cs, TypeConstraint.Eq($lower, $var));
+                            #} else {
+                            #    $cs := TypeConstraint.And($cs, Type.constrain-sub($lower, $var));
+                            #}
+                        }
+                    }
+                    Type.error('unify got stuck: ', $cs.Str, ' <= ', self.Str)
+                        if $cs.isAtom;
+                    $cs := TypeConstraint.And($cs, self);
+                    say('>>unifying bounds: ' ~ $cs.Str);
+                    @out := $cs.unify;
                 }
             } else {
                 @out := $head.unify;
+                my $tail := self.tail;
                 for @out {
                     $tail := $tail.subst($_);
                 }
@@ -1098,18 +1219,41 @@ class TypeConstraint is export {
         }
         method isAnd() { 1 }
 
-        method vars-to-simple-bounds() {
+        method vars-to-bounds() {
             my %out := {};
-            self.foreach(-> $c {
-                if $c.isSub {
-                    if $c.lhs.isTypeVar && $c.rhs.isSimpleType {
-                        %out{$c.lhs.name} := $c.rhs;
+            my $sans := self.foldl(
+                -> $acc, $c {
+                    my $drop := 0;
+                    if $c.isSub {
+                        if $c.lhs.isTypeVar {
+                            my %entry := %out{$c.lhs.name} // (%out{$c.lhs.name} := hash(:var($c.lhs)));
+                            my $upper := %entry<upper>;
+                            if $upper {
+                                %entry<upper> := Type.Sum($upper, $c.rhs);
+                            } else {
+                                %entry<upper> := $c.rhs;
+                            }
+                            $drop := 1;
+                        }
+                        if $c.rhs.isTypeVar {
+                            my %entry := %out{$c.rhs.name} // (%out{$c.rhs.name} := hash(:var($c.rhs)));
+                            my $lower := %entry<lower>;
+                            if $lower {
+                                %entry<lower> := Type.Sum($lower, $c.lhs);
+                            } else {
+                                %entry<lower> := $c.lhs;
+                            }
+                            $drop := 1;
+                        }
                     }
-                    if $c.rhs.isTypeVar && $c.lhs.isSimpleType {
-                        %out{$c.rhs.name} := $c.lhs;
+                    if $drop {
+                        $acc
+                    } else {
+                        TypeConstraint.And($acc, $c);
                     }
-                };
-            });
+                },
+                TypeConstraint.True
+            );
             %out;
         }
     }
@@ -1244,7 +1388,7 @@ class TypeConstraint is export {
             if $lhs.isTypeVar {
                 if $rhs.isTypeVar {
                     if $lhs.id > $rhs.id {
-                        $out := TypeConstraint.EQ($rhs, $lhs);
+                        $out := TypeConstraint.Eq($rhs, $lhs);
                     }
                 }
             } elsif $rhs.isTypeVar {
@@ -1274,10 +1418,50 @@ class TypeConstraint is export {
 
 }
 
+sub subst-to-Str(@ss) {
+    join('; ', @ss, :map(-> %subst { 
+        if nqp::ishash(%subst) {
+            join(', ', %subst, :map(-> $_ { $_.key ~ ' → ' ~ $_.value.Str }))
+        } else {
+            describe(%subst);
+        }
+    }));
+}
+
 
 sub MAIN(*@ARGS) {
+    my $var0 := Type.Var;
     my $var1 := Type.Var;
     my $var2 := Type.Var;
+    my $var3 := Type.Var;
+    my $var4 := Type.Var;
+    my $var5 := Type.Var;
+    my $var6 := Type.Var;
+
+    say(Type.Fn($var0, $var1).Str ~ ' :< ' ~ $var2.Str ~ '  &  ' ~ $var2.Str ~ ' :< ' ~ Type.Fn($var5, $var6).Str);
+    my $c99 := TypeConstraint.And(
+        Type.constrain-sub(Type.Fn($var0, $var1), $var2),
+        Type.constrain-sub($var2, Type.Fn($var5, $var6))
+    );
+    say($c99.Str);
+    say(subst-to-Str($c99.unify));
+    nqp::exit(0);
+
+    my $c42a := Type.constrain-sub(Type.Sum($var1, $var2), $var1);
+    my $c42b := Type.constrain-sub($var1, Type.Sum($var1, $var2));
+    my $c42 := TypeConstraint.And($c42a, $c42b);
+    say($c42.Str);
+    say(subst-to-Str($c42.unify));
+    nqp::exit(0);
+
+    my $c23 := Type.constrain-sub(                      #     T1 × T1 × T2 × T1 × T3  :<  T1 × T2 × T1 × T3 × Int
+        Type.Cross($var1, $var1, $var2, $var1, $var3),         # =>  T1 :< T1  &  T1 :< T2  &  T2 :< T1  &  T1 :< T3  &  T3 :< Int
+        Type.Cross($var1, $var2, $var1, $var3, Type.Int)
+    );
+    say($c23.Str);
+    say(subst-to-Str($c23.unify));
+    nqp::exit(0);
+    
 
     my $c1a := TypeConstraint.Eq($var1, Type.Int);
     say($c1a.Str);
