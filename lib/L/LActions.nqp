@@ -891,7 +891,9 @@ class LActions is HLL::Actions {
             my @tOuts := [];
             $tCallee.foreach(-> $t {
                 if $t.isFnType {
-                    my $c := Type.constrain-sub(:$at, $tArgs, $t.in, :onError(-> *@ps, *%ns {}));
+                    my $c := Type.constrain-sub(:$at, $tArgs, $t.in, :onError(-> *@ps, *%ns {
+                        say('!!!!', join('', @ps, :map(-> $_ { istype($_, Type, TypeConstraint) ?? $_.Str !! $_ } )));
+                    }));
                     unless $c.isFalse {
                         @cs.push($c);
                         @tOuts.push($t.out);
@@ -953,7 +955,7 @@ class LActions is HLL::Actions {
                 if $tDecl {
                     my $tVar := Type.of($n);
                     if $tVar {
-                        my $c := Type.constrain($tVar, $tDecl,
+                        my $c := Type.constrain-sub($tVar, $tDecl,
                             :onError(-> :$at, *@msgPieces {
                                 Type.error(:at($n), 'mismatch of use-type and declaration-type: ', $tVar.Str, ' !:< ', $tDecl.Str, " in \n", dump($currentBlock));
                             })
@@ -1012,7 +1014,7 @@ class LActions is HLL::Actions {
             $inner-subject-type.set($decl);
             my $body := QAST::Block.new($clause-body);
             $body.symbol($subject-name, :declaration($decl));
-            @constraints.push(Type.constrain(:at($clause-body), $inner-subject-type, $outer-subject-type));
+            @constraints.push(Type.constrain-sub(:at($clause-body), $inner-subject-type, $outer-subject-type));
             my $tBody := self.typecheck($clause-body, $body, $currentBlock, |@moreBlocks, :@constraints);
             $tBody.set($clause-body);
         }
