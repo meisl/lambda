@@ -859,26 +859,45 @@ class LActions is HLL::Actions {
         );
     }
 
-    sub typecheck-application($tCallee, @tArgs, :$currentBlock!, :@constraints!, :$at!, :$callee) {
+    sub ignore(*@ps, *%ns) {
+        say('!!!!', join('', @ps, :map(-> $_ { istype($_, Type, TypeConstraint) ?? $_.Str !! $_ } )));
+        TypeConstraint.False;
+    }
+
+    sub typecheck-application($tCallee, @tArgs, :%quantified-vars!, :$currentBlock!, :@constraints!, :$at!, :$callee) {
         Type.insist-isValid($tCallee);
+        for @tArgs {
+            if $_.isVoid || $_.isCrossType {
+                Type.error(
+                    :$at, 
+                    'cannot have Cross/Void in arg position (while applying ', $callee, ' ::', $tCallee, ")\n"
+                    ~ '...got ' ~ $_.Str
+                );
+            }
+        }
         my $tArgs := Type.Cross(|@tArgs);
         my $c := TypeConstraint.False;
         my $tOut;
         if $tCallee.isTypeVar {
-            $tOut := Type.Var;
-            $c := Type.constrain-sub(:$at, $tCallee, Type.Fn($tArgs, $tOut));
+            #$tOut := Type.Var;
+            #$c := Type.constrain-sub(:$at, $tCallee, Type.Fn($tArgs, $tOut));
         } elsif $tCallee.isFnType {
-            $tCallee := $tCallee.with-fresh-vars;
             my $tIn  := $tCallee.head;
             my $n := nqp::elems(@tArgs);
             if $n == 0 {
-                $c := Type.constrain-sub(Type.Void, $tIn);
-            } elsif $n == 1 {
+                @tArgs.push(Type.Void);
+                $n := 1;
+            }
+            my %instantiated := {};
+            if $n == 1 {
                 unless $tIn.isCrossType {
                     my $tArg := @tArgs[0];
-                    $c := $tIn.isTypeVar
-                        ?? Type.constrain($tIn, $tArg)
-                        !! Type.constrain-sub($tArg, $tIn);
+                    if $tIn.isTypeVar && nqp::existskey(%quantified-vars, $tIn.name) {
+                        $c := TypeConstraint.True;  # TODO: bounded quantification
+                        %instantiated{$tIn.name} := $tArg;
+                    } else {
+                        $c := Type.constrain-sub($tArg, $tIn, :$at, :onError(&ignore));
+                    }
                 }
             } elsif $tIn.isCrossType && ($tIn.elems == $n) {
                 my $i := 0;
@@ -886,27 +905,31 @@ class LActions is HLL::Actions {
                     -> $acc, $t {
                         my $tArg := @tArgs[$i];
                         $i++;
-                        TypeConstraint.And(
-                            $acc, 
-                            $t.isTypeVar
-                                ?? Type.constrain($t, $tArg)
-                                !! Type.constrain-sub($tArg, $t)
-                        );
+                        if $t.isTypeVar && nqp::existskey(%quantified-vars, $t.name) {
+                            %instantiated{$t.name} := $tArg;
+                            $acc;
+                        } else {
+                            TypeConstraint.And($acc, Type.constrain-sub($tArg, $t, :$at, :onError(&ignore)));
+                        }
                     }, 
                     TypeConstraint.True
                 );
+            } elsif $tIn.isTypeVar && !nqp::existskey(%quantified-vars, $tIn.name) {
+                $c := Type.constrain-sub($tArgs, $tIn, :$at, :onError(&ignore));
             }
             $tOut := $tCallee.tail;
+            if $tOut.isTypeVar {
+                if nqp::existskey(%quantified-vars, $tOut.name) {
+                    $tOut := %instantiated{$tOut.name} // Type.Var;
+                }
+            }
         } elsif $tCallee.isSumType {
             my @cs    := [];
             my @tOuts := [];
             $tCallee.foreach(-> $t {
                 if $t.isFnType {
                     my $tNew := $t.with-fresh-vars;
-                    my $c := Type.constrain-sub(:$at, $tArgs, $tNew.in, :onError(-> *@ps, *%ns {
-                        say('!!!!', join('', @ps, :map(-> $_ { istype($_, Type, TypeConstraint) ?? $_.Str !! $_ } )));
-                        TypeConstraint.False;
-                    }));
+                    my $c := Type.constrain-sub($tArgs, $tNew.in, :$at, :onError(&ignore));
                     unless $c.isFalse {
                         @cs.push($c);
                         @tOuts.push($tNew.out);
@@ -1249,13 +1272,28 @@ class LActions is HLL::Actions {
                         } else {
                             Type.error(:at($n), 'no callee for ', $n);
                         }
-                        my $tOut := typecheck-application(:at($n), :callee($name), $tCallee, @tArgs, :$currentBlock, :@constraints);
+                        my %quantified-vars := {};
+                        if istype($callee, QAST::Var) {
+                            if $tCallee.isTypeVar {
+                                my $decl := lookup($name, $currentBlock, |@moreBlocks)<declaration>;
+                                my $tF := Type.Fn(Type.Var, Type.Var);
+                                $tF.set($decl);
+                                $tF.set($callee);
+                                my $c := Type.constrain(:at($callee), $tCallee, $tF);
+                                @constraints.push($c);
+                                say('>>Type-constraint: ', $c.Str);
+                                $tCallee := $tF;
+                            }
+                        } else {
+                            nqp::die('NYI: typechecking ', dump($n));
+                        }
+                        my $tOut := typecheck-application(:at($n), :callee($name), $tCallee, :%quantified-vars, @tArgs, :$currentBlock, :@constraints);
                         #say('>>Type-constraint/', $n.op, ': ', $callee.name, ': ', $c.Str) unless $c.isTrue;
                         $tOut.set($n);
                     } else {
                         my $tOp := Type.ofOp($n.op);
                         if $tOp {
-                            my $tOut := typecheck-application(:at($n), :callee('Op ' ~ $n.op), $tOp, @tArgs, :$currentBlock, :@constraints);
+                            my $tOut := typecheck-application(:at($n), :callee('Op ' ~ $n.op), $tOp, @tArgs, :quantified-vars($tOp.vars), :$currentBlock, :@constraints);
                             $tOut.set($n);
                         } else {
                             say("\n", dump($currentBlock));
