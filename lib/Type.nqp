@@ -793,9 +793,6 @@ class Type is export {
             nqp::die('expected a str - got ' ~ describe($op));
         }
         my $out := %op-types{$op};
-        if $out {
-            $out := $out.with-fresh-vars;
-        }
         $out;
     }
     
@@ -1189,16 +1186,8 @@ class TypeConstraint is export {
                         my $lower := $_.value<lower>;
                         if $upper {
                             if $lower {
-                                if $upper =:= $lower {
-                                    $cs := TypeConstraint.And($cs, TypeConstraint.Eq($var, $upper));
-                                } else {
-                                    $rest := TypeConstraint.And(
-                                        $rest,
-                                        TypeConstraint.Sub($lower, $var),
-                                        TypeConstraint.Sub($var, $upper)
-                                    );
-                                    #Type.error('NYI: unify ', $lower.Str, ' :< ', $name, ' :< ', $upper.Str);
-                                }
+                                $cs := TypeConstraint.And($cs, TypeConstraint.Eq($var, $upper));
+                                $rest := TypeConstraint.And($rest, Type.constrain-sub($lower, $upper));
                             } else { # only upper bound
                                 #if $upper.isSimpleType {
                                     $cs := TypeConstraint.And($cs, TypeConstraint.Eq($var, $upper));

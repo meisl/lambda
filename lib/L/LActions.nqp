@@ -624,15 +624,20 @@ my sub make-runtime() {
         #:returns(Type.Fn(Type.Fn($tvIn, $tvOut), $tvIn, $tvOut)),
         :result(NO_VALUE), 
     -> $f, $a1, :$result! {
-        mkBind($f, mkCall('&force-new', $f)),
+        mkBind($f, mkRCall('&force-new', $f)),
         mkBind($result, mkCall(
             QAST::Op.new(:op<defor>,
-                mkLambda2code($f),
-                mkDie('cannot apply ', mkRCall('&strOut', $f, ''), ' to ', mkRCall('&strOut', $a1, ''))
+                mkLambda2code(nqp::clone($f)),
+                mkDie(
+                    QAST::Op.new(:op<concat>,   :returns(str),
+                        QAST::Op.new(:op<concat>, asNode('cannot apply '), mkRCall('&strOut', nqp::clone($f), '')),
+                        QAST::Op.new(:op<concat>, asNode(' to '), mkRCall('&strOut', nqp::clone($a1), ''))
+                    )
+                )
             ),
-            $a1
+            nqp::clone($a1)
         )),
-        mkForce($result),
+        mkRCall('&force-new', nqp::clone($result)),
     });
     
     #$block.push(mkBind(lexVar('&testDelay01', :decl<static>),
@@ -856,6 +861,7 @@ class LActions is HLL::Actions {
             $tOut := Type.Var;
             $c := Type.constrain-sub(:$at, $tCallee, Type.Fn($tArgs, $tOut));
         } elsif $tCallee.isFnType {
+            $tCallee := $tCallee.with-fresh-vars;
             my $tIn  := $tCallee.head;
             $tOut := $tCallee.tail;
             $c := Type.constrain-sub(:$at, $tArgs, $tIn);
@@ -864,13 +870,14 @@ class LActions is HLL::Actions {
             my @tOuts := [];
             $tCallee.foreach(-> $t {
                 if $t.isFnType {
-                    my $c := Type.constrain-sub(:$at, $tArgs, $t.in, :onError(-> *@ps, *%ns {
+                    my $tNew := $t.with-fresh-vars;
+                    my $c := Type.constrain-sub(:$at, $tArgs, $tNew.in, :onError(-> *@ps, *%ns {
                         say('!!!!', join('', @ps, :map(-> $_ { istype($_, Type, TypeConstraint) ?? $_.Str !! $_ } )));
                         TypeConstraint.False;
                     }));
                     unless $c.isFalse {
                         @cs.push($c);
-                        @tOuts.push($t.out);
+                        @tOuts.push($tNew.out);
                     }
                 }
             });
