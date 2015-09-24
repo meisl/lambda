@@ -844,6 +844,7 @@ class Type is export {
         } elsif !nqp::isinvokable(&onError) {
             nqp::die('expected an invokable object - got ' ~ describe(&onError));
         }
+        self.insist-isValid($t1, $t2);
 
         my $out := TypeConstraint.False;
         if ($t1 =:= $t2) || ($t1 =:= Type._) || ($t2 =:= Type._) {
@@ -854,7 +855,14 @@ class Type is export {
                     $out := self.constrain($t2, $t1, :$at, :&onError);
                 }
             } elsif $t1.isTypeVar {
-                $out := constrain-eq($t1, $t2);
+                if $t2.isSumType {
+                    $out := TypeConstraint.Eq(
+                        $t1,
+                        $t2.foldl1(-> $a, $b { $t1 =:= $a ?? $b !! ($t1 =:= $b ?? $a !! Type.Sum($a, $b))})    # kick out t1 from Sum (if any)
+                    );
+                } else {
+                    $out := constrain-eq($t1, $t2);
+                }
             } else {  # $t1 is compound
                 if $t1.isFnType {
                     if $t2.isFnType {
@@ -917,6 +925,7 @@ class Type is export {
         } elsif !nqp::isinvokable(&onError) {
             nqp::die('expected an invokable object - got ' ~ describe(&onError));
         }
+        self.insist-isValid($t1, $t2);
 
         my $out := TypeConstraint.False;
         if ($t1 =:= $t2) {

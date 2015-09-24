@@ -480,10 +480,10 @@ my sub make-runtime() {
                         QAST::Op.new(:op<substr>, nqp::clone($tagAndId), asNode(0), asNode(1)),
                     ),
                     mkCall($then, $extract-id-as-Int),
-                    mkCall($else)  # different tag
+                    QAST::Op.new(:op<call>, nqp::clone($else))  # different tag
                 )
             )),
-            :otherwise(mkCall(nqp::clone($else)))
+            :otherwise(QAST::Op.new(:op<call>, nqp::clone($else)))  # subject not a list
         );
     });
     
@@ -624,20 +624,27 @@ my sub make-runtime() {
         #:returns(Type.Fn(Type.Fn($tvIn, $tvOut), $tvIn, $tvOut)),
         :result(NO_VALUE), 
     -> $f, $a1, :$result! {
-        mkBind($f, mkRCall('&force-new', $f)),
-        mkBind($result, mkCall(
-            QAST::Op.new(:op<defor>,
-                mkLambda2code(nqp::clone($f)),
+        my $g := lexVar('g');
+        mkBind(mkDeclV($g), mkLambda2code(mkRCall('&force-new', $f))),
+        mkTypecase($g,
+            :isinvokable(
+                QAST::Stmts.new(
+                    mkBind($result, QAST::Op.new(:op<call>,
+                        nqp::clone($g),
+                        nqp::clone($a1)
+                    )),
+                    mkRCall('&force-new', nqp::clone($result)),
+                )
+            ),
+            :otherwise(
                 mkDie(
                     QAST::Op.new(:op<concat>,   :returns(str),
-                        QAST::Op.new(:op<concat>, asNode('cannot apply '), mkRCall('&strOut', nqp::clone($f), '')),
+                        QAST::Op.new(:op<concat>, asNode('cannot apply '), mkRCall('&strOut', nqp::clone($g), '')),
                         QAST::Op.new(:op<concat>, asNode(' to '), mkRCall('&strOut', nqp::clone($a1), ''))
                     )
                 )
-            ),
-            nqp::clone($a1)
-        )),
-        mkRCall('&force-new', nqp::clone($result)),
+            )
+        )
     });
     
     #$block.push(mkBind(lexVar('&testDelay01', :decl<static>),
@@ -863,8 +870,33 @@ class LActions is HLL::Actions {
         } elsif $tCallee.isFnType {
             $tCallee := $tCallee.with-fresh-vars;
             my $tIn  := $tCallee.head;
+            my $n := nqp::elems(@tArgs);
+            if $n == 0 {
+                $c := Type.constrain-sub(Type.Void, $tIn);
+            } elsif $n == 1 {
+                unless $tIn.isCrossType {
+                    my $tArg := @tArgs[0];
+                    $c := $tIn.isTypeVar
+                        ?? Type.constrain($tIn, $tArg)
+                        !! Type.constrain-sub($tArg, $tIn);
+                }
+            } elsif $tIn.isCrossType && ($tIn.elems == $n) {
+                my $i := 0;
+                $c := $tIn.foldl(
+                    -> $acc, $t {
+                        my $tArg := @tArgs[$i];
+                        $i++;
+                        TypeConstraint.And(
+                            $acc, 
+                            $t.isTypeVar
+                                ?? Type.constrain($t, $tArg)
+                                !! Type.constrain-sub($tArg, $t)
+                        );
+                    }, 
+                    TypeConstraint.True
+                );
+            }
             $tOut := $tCallee.tail;
-            $c := Type.constrain-sub(:$at, $tArgs, $tIn);
         } elsif $tCallee.isSumType {
             my @cs    := [];
             my @tOuts := [];
@@ -989,10 +1021,24 @@ class LActions is HLL::Actions {
         );
         my sub typecheck-clause($clause-body, $inner-subject-type) {
             my $decl := lexVar($subject-name, :decl<var>);
-            $inner-subject-type.set($decl);
+            my $c := TypeConstraint.True;
+            if $inner-subject-type.isFnType {
+                my $tv := Type.Var;
+                $c := TypeConstraint.And(
+                    Type.constrain(:at($clause-body), $tv, $inner-subject-type),
+                    Type.constrain-sub(:at($clause-body), $inner-subject-type, $outer-subject-type)
+                );
+                $tv.set($decl);
+            } else {
+                $c := Type.constrain-sub(:at($clause-body), $inner-subject-type, $outer-subject-type);
+                $inner-subject-type.set($decl);
+            }
+            unless $c.isTrue {
+                @constraints.push($c);
+                $clause-body.annotate('constraints', $c.Str);
+            }
             my $body := QAST::Block.new($clause-body);
             $body.symbol($subject-name, :declaration($decl));
-            @constraints.push(Type.constrain-sub(:at($clause-body), $inner-subject-type, $outer-subject-type));
             my $tBody := self.typecheck($clause-body, $body, $currentBlock, |@moreBlocks, :@constraints);
             $tBody.set($clause-body);
         }
