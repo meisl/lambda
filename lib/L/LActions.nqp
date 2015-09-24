@@ -492,7 +492,7 @@ my sub make-runtime() {
     -> $subject, $tag, $index {
         my $tagStr := cloneAndSubst($tag);
         $tagStr.returns(str);
-        mkRCall('&ifTag', $subject, $tag,
+        QAST::Op.new(:op<call>, lexVar('&ifTag'), $subject, $tag,
             QAST::Block.new(:arity(1),
                 lexVar('_', :decl<param>),
                 mkListLookup($subject, :index($index))

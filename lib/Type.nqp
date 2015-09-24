@@ -1167,7 +1167,9 @@ class TypeConstraint is export {
         } elsif self.isAnd {
             my $head := self.head;
             if $head.isSub {    # now this And contains only subtype constraints
-                my %bounds := self.vars-to-bounds;
+                my %v2b := self.vars-to-bounds;
+                my %bounds := %v2b<bounds>;
+                my $rest   := %v2b<rest>;
                 if %bounds {
                     say('>>unifying bounds in ' ~ self.Str 
                         #~ ': hash(' ~ join(',  ', %bounds, 
@@ -1187,7 +1189,6 @@ class TypeConstraint is export {
                         ) ~ ')'
                     );
                     my $cs := TypeConstraint.True;
-                    my $rest := TypeConstraint.True;
                     for %bounds {
                         my $name  := $_.key;
                         my $var   := $_.value<var>;
@@ -1296,13 +1297,13 @@ class TypeConstraint is export {
         method isAnd() { 1 }
 
         method vars-to-bounds() {
-            my %out := {};
-            my $sans := self.foldl(
+            my %bounded-vars := {};
+            my $rest := self.foldl(
                 -> $acc, $c {
                     my $drop := 0;
                     if $c.isSub {
                         if $c.lhs.isTypeVar {
-                            my %entry := %out{$c.lhs.name} // (%out{$c.lhs.name} := hash(:var($c.lhs)));
+                            my %entry := %bounded-vars{$c.lhs.name} // (%bounded-vars{$c.lhs.name} := hash(:var($c.lhs)));
                             my $upper := %entry<upper>;
                             if $upper {
                                 %entry<upper> := Type.Sum($upper, $c.rhs);
@@ -1312,7 +1313,7 @@ class TypeConstraint is export {
                             $drop := 1;
                         }
                         if $c.rhs.isTypeVar {
-                            my %entry := %out{$c.rhs.name} // (%out{$c.rhs.name} := hash(:var($c.rhs)));
+                            my %entry := %bounded-vars{$c.rhs.name} // (%bounded-vars{$c.rhs.name} := hash(:var($c.rhs)));
                             my $lower := %entry<lower>;
                             if $lower {
                                 %entry<lower> := Type.Sum($lower, $c.lhs);
@@ -1329,6 +1330,10 @@ class TypeConstraint is export {
                     }
                 },
                 TypeConstraint.True
+            );
+            my %out := nqp::hash(
+                'bounds', %bounded-vars,
+                'rest', $rest,
             );
             %out;
         }
