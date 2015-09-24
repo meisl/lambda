@@ -967,14 +967,14 @@ class Type is export {
                     self.error(:$at, "NYI(a): ", $t1, '  :<  ', $t2);
                 }
             } elsif $t1.isTypeVar {
-                if $t2.isSimpleType || $t2.isTypeVar {
+                if $t2.isSimpleType || $t2.isTypeVar || $t2.isFnType {
                     $out := TypeConstraint.Sub($t1, $t2);
                 } elsif $t2.isFnType {
-                    my $tF := Type.Fn(Type.Var, Type.Var);
-                    $out := TypeConstraint.And(
-                        TypeConstraint.Eq($t1, $tF),
-                        self.constrain-sub($tF, $t2, :$at, :&onError)
-                    );
+                    #my $tF := Type.Fn(Type.Var, Type.Var);          # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                    #$out := TypeConstraint.And(
+                    #    TypeConstraint.Eq($t1, $tF),
+                    #    self.constrain-sub($tF, $t2, :$at, :&onError)
+                    #);
                 } elsif $t2.isSumType {
                     $out := TypeConstraint.Sub(
                         $t1,
@@ -992,13 +992,43 @@ class Type is export {
                 } elsif $t2.isCrossType || $t2.isSimpleType {
                     # FALSE!
                 } elsif $t2.isSumType {
-                    $out := $t2.foldl(
-                        -> $acc, $t { TypeConstraint.Or($acc, self.constrain-sub($t1, $t, :onError(&ignore))) },
-                        TypeConstraint.False
+                    $out := TypeConstraint.False;
+                    my @disjuncts := $t2.foldl(
+                        -> $acc, $t {
+                            unless $out.isTrue {
+                                my $c := self.constrain-sub($t1, $t, :onError(&ignore));
+                                if $c.isTrue {
+                                    $out:= TypeConstraint.True;
+                                } elsif $c.isFalse {
+                                    # omit
+                                } else {
+                                    $acc.push($t);
+                                }
+                            }
+                            $acc;
+                        },
+                        []
                     );
-                    CATCH {
-                        say('NYI(c): ' ~ $t1.Str ~ ' :< ' ~ $t2.Str ~ "\n=>");
-                        nqp::rethrow($_);
+                    unless $out.isTrue {
+                        if +@disjuncts == 0 {
+                            $out := TypeConstraint.False;
+                        } elsif +@disjuncts == 1 {
+                            $out := self.constrain-sub($t1, @disjuncts[0]);
+                        } else {
+                            $out := TypeConstraint.Sub($t1, Type.Sum(|@disjuncts));
+                        }
+                        if $out.isSub {
+                            say('!!!!!!!!!!!!!!!!!!!!!!!!! ' ~ $t1.Str ~ ' :< ' ~ $t2.Str);
+                            say('                       ~> ' ~ $out.Str);
+                        }
+                        #$out := $t2.foldl(
+                        #    -> $acc, $t { TypeConstraint.Or($acc, self.constrain-sub($t1, $t, :onError(&ignore))) },
+                        #    TypeConstraint.False
+                        #);
+                        #CATCH {
+                        #    say('NYI(c): ' ~ $t1.Str ~ ' :< ' ~ $t2.Str ~ "\n=>");
+                        #    nqp::rethrow($_);
+                        #}
                     }
                 } elsif $t2.isTypeVar {
                     $out := TypeConstraint.Eq($t2, Type.Sum($t1, Type.Var));

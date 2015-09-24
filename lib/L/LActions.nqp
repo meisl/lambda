@@ -850,56 +850,50 @@ class LActions is HLL::Actions {
     sub typecheck-application($tCallee, @tArgs, :$currentBlock!, :@constraints!, :$at!, :$callee) {
         Type.insist-isValid($tCallee);
         my $tArgs := Type.Cross(|@tArgs);
+        my $c := TypeConstraint.False;
+        my $tOut;
         if $tCallee.isTypeVar {
-            my $tCalleeNew := Type.Fn(Type.Var, Type.Var);
-            @constraints.push(Type.constrain($tCallee, $tCalleeNew));
-            say('oh fuck!!!! tried to apply ' ~ $callee ~ ': ' ~ $tCallee.Str ~ '  to  ' ~ $tArgs ~ '  -under-  ' ~ TypeConstraint.And(|@constraints));
-            say('~> typecheck-application(' ~ $tCalleeNew ~ ', ' ~ $tArgs ~ ')...');
-            say(dump($currentBlock));
-            typecheck-application($tCalleeNew, @tArgs, :$currentBlock, :@constraints, :$at, :$callee);
-        } else {
-            my $c := TypeConstraint.False;
-            my $tOut;
-            if $tCallee.isFnType {
-                my $tIn  := $tCallee.head;
-                $tOut := $tCallee.tail;
-                $c := Type.constrain-sub(:$at, $tArgs, $tIn);
-            } elsif $tCallee.isSumType {
-                my @cs    := [];
-                my @tOuts := [];
-                $tCallee.foreach(-> $t {
-                    if $t.isFnType {
-                        my $c := Type.constrain-sub(:$at, $tArgs, $t.in, :onError(-> *@ps, *%ns {
-                            say('!!!!', join('', @ps, :map(-> $_ { istype($_, Type, TypeConstraint) ?? $_.Str !! $_ } )));
-                            TypeConstraint.False;
-                        }));
-                        unless $c.isFalse {
-                            @cs.push($c);
-                            @tOuts.push($t.out);
-                        }
+            $tOut := Type.Var;
+            $c := Type.constrain-sub(:$at, $tCallee, Type.Fn($tArgs, $tOut));
+        } elsif $tCallee.isFnType {
+            my $tIn  := $tCallee.head;
+            $tOut := $tCallee.tail;
+            $c := Type.constrain-sub(:$at, $tArgs, $tIn);
+        } elsif $tCallee.isSumType {
+            my @cs    := [];
+            my @tOuts := [];
+            $tCallee.foreach(-> $t {
+                if $t.isFnType {
+                    my $c := Type.constrain-sub(:$at, $tArgs, $t.in, :onError(-> *@ps, *%ns {
+                        say('!!!!', join('', @ps, :map(-> $_ { istype($_, Type, TypeConstraint) ?? $_.Str !! $_ } )));
+                        TypeConstraint.False;
+                    }));
+                    unless $c.isFalse {
+                        @cs.push($c);
+                        @tOuts.push($t.out);
                     }
-                });
-                if @cs {
-                    $tOut := Type.Sum(|@tOuts);
-                    $c := TypeConstraint.Or(|@cs);
                 }
-                #if +@cs == 1 {
-                #    $tOut := @tOuts[0];
-                #    $c := @cs[0];
-                #} elsif +@cs > 1 {
-                #    Type.error(:$at, 'cannot apply ', $callee, ' ::', $tCallee, '  to  ', $tArgs, ' - ambiguous: ' ~ TypeConstraint.Or(|@cs));
-                #}
+            });
+            if @cs {
+                $tOut := Type.Sum(|@tOuts);
+                $c := TypeConstraint.Or(|@cs);
             }
-            if $c.isFalse {
-                Type.error(:$at, 'cannot apply ', $callee, ' ::', $tCallee, '  to  ', $tArgs);
-            } elsif $c.isTrue {
-                # nothing
-            } else {
-                @constraints.push($c);
-                say('>>Type-constraint: ', $c.Str);
-            }
-            $tOut;
+            #if +@cs == 1 {
+            #    $tOut := @tOuts[0];
+            #    $c := @cs[0];
+            #} elsif +@cs > 1 {
+            #    Type.error(:$at, 'cannot apply ', $callee, ' ::', $tCallee, '  to  ', $tArgs, ' - ambiguous: ' ~ TypeConstraint.Or(|@cs));
+            #}
         }
+        if $c.isFalse {
+            Type.error(:$at, 'cannot apply ', $callee, ' ::', $tCallee, '  to  ', $tArgs);
+        } elsif $c.isTrue {
+            # nothing
+        } else {
+            @constraints.push($c);
+            say('>>Type-constraint: ', $c.Str);
+        }
+        $tOut;
     }
 
     sub typecheck-var($n, $currentBlock, *@moreBlocks, :@constraints!) {
