@@ -955,8 +955,11 @@ class Type is export {
                         },
                         TypeConstraint.False
                     );
-                        
-                    #TypeConstraint.Or(
+                    if $out.isSub {
+                        say('!!!!!!!!!!!!!!!!!!!!!!!!!!' ~ $out.Str);
+                    }
+                    
+                    #$out := TypeConstraint.Or(
                     #    self.constrain-sub($t1, $t2.head, :onError(&ignore)),
                     #    self.constrain-sub($t1, $t2.tail, :onError(&ignore))
                     #);
@@ -1022,6 +1025,12 @@ class Type is export {
                         self.constrain-sub($t1.head, $t2.head, :$at, :&onError),   # Cross is covariant in head
                         self.constrain-sub($t1.tail, $t2.tail, :$at, :&onError),   # Cross is covariant in tail
                     );
+                } elsif $t2.isTypeVar {
+                    my $tCross := Type.Cross(|$t1.foldl(-> @acc, $t { @acc.push(Type.Var); @acc; }, []));
+                    $out := TypeConstraint.And(
+                        self.constrain($t2, $tCross),
+                        self.constrain-sub($t1, $tCross)
+                    );
                 } # else $out := False
             } else {
                 self.error(:$at, "NYI(f): ", $t1, '  :<  ', $t2);
@@ -1065,7 +1074,7 @@ class TypeConstraint is export {
         %vs;
     }
 
-    method subst(%s, :&onError) {
+    method subst(%s, :&onError = NO_VALUE) {
         my $out;
         if self.isAtom {
             $out := self;   # nothing to substitute
@@ -1142,6 +1151,7 @@ class TypeConstraint is export {
                         ) ~ ')'
                     );
                     my $cs := TypeConstraint.True;
+                    my $rest := TypeConstraint.True;
                     for %bounds {
                         my $name  := $_.key;
                         my $var   := $_.value<var>;
@@ -1152,6 +1162,11 @@ class TypeConstraint is export {
                                 if $upper =:= $lower {
                                     $cs := TypeConstraint.And($cs, TypeConstraint.Eq($var, $upper));
                                 } else {
+                                    $rest := TypeConstraint.And(
+                                        $rest,
+                                        TypeConstraint.Sub($lower, $var),
+                                        TypeConstraint.Sub($var, $upper)
+                                    );
                                     #Type.error('NYI: unify ', $lower.Str, ' :< ', $name, ' :< ', $upper.Str);
                                 }
                             } else { # only upper bound
@@ -1171,10 +1186,14 @@ class TypeConstraint is export {
                     }
                     Type.error('unify got stuck: ', $cs.Str, ' <= ', self.Str)
                         if $cs.isAtom;
-                    $cs := TypeConstraint.And($cs, self);
                     say('>>unifying bounds: ' ~ $cs.Str);
+                    say('              ...& ' ~ $rest.Str);
+                    $cs := TypeConstraint.And($cs, $rest);
                     %out := $cs.unify;
-                }
+                    say('>>unifying bounds: ' ~ $cs.Str);
+                    say('          yielded: ' ~ subst-to-Str(%out));
+
+                } # else { # %bounds empty, ie no "simple" bounds with either lhs a var or rhs a var or both
             } else {
                 %out := $head.unify;
                 my $tail := self.tail.subst(%out, :onError(-> *@as, *%ns { TypeConstraint.False }));
@@ -1321,6 +1340,8 @@ class TypeConstraint is export {
     }
 
     sub lex-cmp($c1, $c2) {
+        insist-isa($c1, TypeConstraint);
+        insist-isa($c2, TypeConstraint);
         if $c1.Str eq $c2.Str {
             0
         } elsif $c1.isTrue {

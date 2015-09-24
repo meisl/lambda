@@ -23,9 +23,9 @@ plan(111);
         $False,
     ];
 
-    my $eq1 := TypeConstraint.get(Type.Var, Type.Str);
-    my $eq2 := TypeConstraint.get(Type.Var, Type.Sum(Type.Int, Type.Str));
-    my $eq3 := TypeConstraint.get(Type.Var, Type.Cross(Type.Int, Type.Str));
+    my $eq1 := TypeConstraint.Eq(Type.Var, Type.Str);
+    my $eq2 := TypeConstraint.Eq(Type.Var, Type.Sum(Type.Int, Type.Str));
+    my $eq3 := TypeConstraint.Eq(Type.Var, Type.Cross(Type.Int, Type.Str));
 
     test-classification($_, :isAtom(0), :isSimple(1), :isEq(1), :isAnd(0)) for [
         $eq1,
@@ -69,16 +69,16 @@ plan(111);
     my $Array := Type.Array;
 
     my $v1 := Type.Var;
-    my $eq1 := TypeConstraint.get($v1, $Str);
-    my $eq2 := TypeConstraint.get($v1, Type.Sum($Int, $Str));
-    my $eq3 := TypeConstraint.get($v1, Type.Cross($Int, $Str));
+    my $eq1 := TypeConstraint.Eq($v1, $Str);
+    my $eq2 := TypeConstraint.Eq($v1, Type.Sum($Int, $Str));
+    my $eq3 := TypeConstraint.Eq($v1, Type.Cross($Int, $Str));
     my $v2 := Type.Var;
-    my $eq4 := TypeConstraint.get($v1, $v2);
-    my $eq5 := TypeConstraint.get($v1, Type.Sum($v2, $Str, $Int));
-    my $eq6 := TypeConstraint.get($v2, Type.Cross($Str, $v1, $Int));
-    my $eq7 := TypeConstraint.get($v2, Type.Cross($v2, $v1, $Int));
+    my $eq4 := TypeConstraint.Eq($v1, $v2);
+    my $eq5 := TypeConstraint.Eq($v1, Type.Sum($v2, $Str, $Int));
+    my $eq6 := TypeConstraint.Eq($v2, Type.Cross($Str, $v1, $Int));
+    my $eq7 := TypeConstraint.Eq($v2, Type.Cross($v2, $v1, $Int));
     my $v3 := Type.Var;
-    my $eq8 := TypeConstraint.get($v1, Type.Sum($v1, $v2, $v3, $Int));
+    my $eq8 := TypeConstraint.Eq($v1, Type.Sum($v1, $v2, $v3, $Int));
 
     for [$eq1, $eq2, $eq3, $eq4, $eq5, $eq6, $eq7, $eq8] {
         $s := $_.Str;
@@ -135,40 +135,44 @@ plan(111);
         $v3.name, $Int
     );
 
+    my $True  := TypeConstraint.True;
+    my $False := TypeConstraint.False;
+
+    my sub ignore(*@as, *%ns) {
+        $False;
+    }
+
     my sub test_subst($c, %subst, $expected) {
         my $substS := join(', ', %subst, :map(-> $_ { $_.key ~ ' => ' ~ $_.value.Str }));
         my $cS := $c.Str;
         my $expectedS := $expected.Str;
-        is($c.subst(%subst).Str, $expectedS,
+        is($c.subst(%subst, :onError(&ignore)).Str, $expectedS,
             #:describe(-> $_ { $_.Str }), # TODO: make constraints singletons
             ".subst($substS) on ($cS) yields ($expectedS)" ~ ($expected =:= $c ?? ' again' !! ''));
     }
 
-    my $True  := TypeConstraint.True;
-    my $False := TypeConstraint.False;
-
     test_subst($_, %subst, $_)
         for [$True, $False];
 
-    my $eq0 := TypeConstraint.get($v4, $Str);   # $v4 is not mapped
+    my $eq0 := TypeConstraint.Eq($v4, $Str);   # $v4 is not mapped
     test_subst($eq0, %subst, $eq0);
 
-    my $eq1 := TypeConstraint.get($v1, $Str);
-    my $eq2 := TypeConstraint.get($v2, $Str);
+    my $eq1 := TypeConstraint.Eq($v1, $Str);
+    my $eq2 := TypeConstraint.Eq($v2, $Str);
     test_subst($eq1, %subst, $eq2);
 
-    test_subst(TypeConstraint.get($v3, $Int), %subst, $True);   # $v3 is mapped to Int
-    test_subst(TypeConstraint.get($v3, $Str), %subst, $False);  # $v3 is mapped to Int
+    test_subst(TypeConstraint.Eq($v3, $Int), %subst, $True);   # $v3 is mapped to Int
+    test_subst(TypeConstraint.Eq($v3, $Str), %subst, $False);  # $v3 is mapped to Int
 
-    my $eq2x := TypeConstraint.get($v1, Type.Sum($Int, $Str));
-    my $eq3x := TypeConstraint.get($v1, Type.Cross($Int, $Str));
+    my $eq2x := TypeConstraint.Eq($v1, Type.Sum($Int, $Str));
+    my $eq3x := TypeConstraint.Eq($v1, Type.Cross($Int, $Str));
 
-    my $eq4 := TypeConstraint.get($v1, $v2);
-    my $eq5 := TypeConstraint.get($v1, Type.Sum($v2, $Str, $Int));
-    my $eq6 := TypeConstraint.get($v2, Type.Cross($Str, $v1, $Int));
-    my $eq7 := TypeConstraint.get($v2, Type.Cross($v2, $v1, $Int));
+    my $eq4 := TypeConstraint.Eq($v1, $v2);
+    my $eq5 := TypeConstraint.Eq($v1, Type.Sum($v2, $Str, $Int));
+    my $eq6 := TypeConstraint.Eq($v2, Type.Cross($Str, $v1, $Int));
+    my $eq7 := TypeConstraint.Eq($v2, Type.Cross($v2, $v1, $Int));
     
-    my $eq8 := TypeConstraint.get($v1, Type.Sum($v1, $v2, $v3, $Int));
+    my $eq8 := TypeConstraint.Eq($v1, Type.Sum($v1, $v2, $v3, $Int));
 
 }
 
@@ -194,7 +198,8 @@ plan(111);
     my $onErrorCalled;
     my sub onError(*@ps, *%ns) {
         $onErrorCalled := 1;
-        [@ps, %ns];
+        #[@ps, %ns];
+        TypeConstraint.False;
     }
 
     my sub error_ok($t1, $t2) {
@@ -244,14 +249,14 @@ plan(111);
         Type.Cross($fun1, $Num, $fun1),
     ];
 
-    is(Type.constrain($_, $_), TypeConstraint.True, 'constraining (' ~ $_.Str ~ ') to itself')
+    is(Type.constrain($_, $_), TypeConstraint.True, 'constraining (' ~ $_.Str ~ ') = itself ~> True')
         for @types1;
 
     my $sum1 := Type.Sum($Int, $Str);
-    is(Type.constrain($Int, $sum1), TypeConstraint.True, :describe(-> $_ { $_.Str }), 
-        'constraining (' ~ $Int.Str ~ ') to (' ~ $sum1.Str ~ ')');
+    is(Type.constrain-sub($Int, $sum1), TypeConstraint.True, :describe(-> $_ { $_.Str }), 
+        'constraining (' ~ $Int.Str ~ ') :< (' ~ $sum1.Str ~ ') ~> True');
 
-    diag(TypeConstraint.get($Int, $Str).Str);
+    diag(TypeConstraint.Eq($Int, $Str).Str);
 
 }
 
