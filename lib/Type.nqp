@@ -265,6 +265,7 @@ class Type is export {
     }
 
     # will be set below (when subclasses are declared)
+    my $Bot;
     my $Void;
     my $DontCare;
     my $Str;
@@ -282,6 +283,7 @@ class Type is export {
 
     # must put methods before subclasses s.t. they're are inherited
     # however, we need to call the subs defined *after* the subclasses
+    method isBot()          { self =:= $Bot         }
     method isVoid()         { self =:= $Void        }
     method isDontCare()     { self =:= $DontCare    }
 
@@ -345,6 +347,13 @@ class Type is export {
     $Bool := create(Bool);
     method BOOL() { $Bool } # cannot name it Bool for some reason....
 
+
+    # the Bot type, subtype of any other, and empty (ie there is no value of this type)
+
+    my class Bot is Type {
+    }
+    $Bot := create(Bot);
+    method Bot() { $Bot }
 
     # the Void type, only to be used in Fn types
 
@@ -573,6 +582,7 @@ class Type is export {
     
 
     my %type-lexorder := foldl([
+            $Bot,
             $Void,
             $DontCare,
             $Bool,
@@ -630,7 +640,7 @@ class Type is export {
         #'hash' # due to arbitrary nr of args (although some constraints, eg even nr of args)
         
         # die
-        'die',      Type.Fn(Type.Cross($Str            ),               $Void   ),
+        'die',      Type.Fn(Type.Cross($Str            ),               $Bot    ),
         # str
         'isstr',    Type.Fn(Type.Cross($v0             ),               $Bool   ),
         'iseq_s',   Type.Fn(Type.Cross($Str,   $Str    ),               $Bool   ),
@@ -931,7 +941,9 @@ class Type is export {
         if ($t1 =:= $t2) {
             $out := TypeConstraint.True;
         } else {
-            if $t1.isSimpleType {
+            if $t1.isBot {
+                $out := TypeConstraint.True;
+            } elsif $t1.isSimpleType {
                 if $t2.isSimpleType {
                     #self.error(:$at, "NYI: Simple :< Simple: ", $t1, '  :<  ', $t2);
                 } elsif $t2.isTypeVar {
@@ -973,7 +985,9 @@ class Type is export {
                     self.error(:$at, "NYI(a): ", $t1, '  :<  ', $t2);
                 }
             } elsif $t1.isTypeVar {
-                if $t2.isSimpleType || $t2.isTypeVar || $t2.isFnType {
+                if $t2.isBot {
+                    $out := TypeConstraint.Eq($t1, $t2);
+                } elsif $t2.isSimpleType || $t2.isTypeVar || $t2.isFnType {
                     $out := TypeConstraint.Sub($t1, $t2);
                 } elsif $t2.isFnType {
                     #my $tF := Type.Fn(Type.Var, Type.Var);          # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -1047,6 +1061,8 @@ class Type is export {
                         $t1.foldl1(-> $a, $b { $t2 =:= $a ?? $b !! ($t2 =:= $b ?? $a !! Type.Sum($a, $b))}),    # kick out t2 from Sum (if any)
                         $t2
                     );
+                } elsif $t2.isBot {
+                    # FALSE!
                 } elsif $t2.isSumType || $t2.isFnType || $t2.isSimpleType {
                     $out := TypeConstraint.And(
                         self.constrain-sub($t1.head, $t2, :$at, :&onError),
