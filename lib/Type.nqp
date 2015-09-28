@@ -220,18 +220,47 @@ class Type is export {
     }
 
     method vars(%vs = {}) {
-        if self.isTypeVar {
+        if self.isSimpleType {
+            # nothing
+        } elsif self.isTypeVar {
             %vs{self.name} := self;
+        } elsif self.isForallType {
+            my %temp := self.body.vars;
+            for self.bound-vars {
+                nqp::deletekey(%temp, $_.key);
+            }
+            for %temp {
+                %vs{$_.key} := $_.value;
+            }
         } elsif self.isCompoundType {
             self.head.vars(%vs);
             self.tail.vars(%vs);
+        } else {
+            nqp::die('NYI: .vars on ' ~ self.Str);
         }
         %vs;
     }
 
     method subst(%s) {
-        if self.isTypeVar {
+        if self.isSimpleType {
+            self;
+        } elsif self.isTypeVar {
             %s{self.name} // self;
+        } elsif self.isForallType {
+            my %temp := {};
+            for self.bound-vars {
+                my $k := $_.key;
+                my $t := %s{$k};
+                if $t {
+                    %temp{$k} := $t;
+                    nqp::deletekey(%s, $k);
+                }
+            }
+            my $newBody := self.body.subst(%s);
+            for %temp {
+                %s{$_.key} := $_.value;
+            }
+            $newBody.forall(self.bound-vars);
         } elsif self.isCompoundType {
             my @components := self.foldl(
                 -> @acc, $t { @acc.push($t.subst(%s)); @acc; },
@@ -247,7 +276,7 @@ class Type is export {
                 nqp::die('cannot subst in compound type: ' ~ self.Str);
             }
         } else {
-            self;
+            nqp::die('NYI: .subst on ' ~ self.Str);
         }
     }
 
@@ -276,6 +305,7 @@ class Type is export {
 
     # will be filled below (when subclasses are declared)
     my %type-vars;
+    my %forall-types;
     my %fn-types;
     my %sum-types;
     my %cross-types;
@@ -294,13 +324,14 @@ class Type is export {
     method isArray()        { self =:= $Array }
 
     method isTypeVar()      { isTypeVar(self)       }
+    method isForallType()   { isForallType(self)    }
     
     method isFnType()       { isFnType(self)        }
     method isSumType()      { isSumType(self)       }
     method isCrossType()    { isCrossType(self)     }
 
 
-    method isSimpleType()   { !self.isTypeVar && !self.isCompoundType }
+    method isSimpleType()   { !self.isTypeVar && !self.isForallType && !self.isCompoundType }
     method isCompoundType() { self.isFnType || self.isSumType || self.isCrossType  }
 
 
@@ -317,6 +348,28 @@ class Type is export {
             $Str;
         }
     }
+
+    method forall(*@vars, *%vars) {
+        my %vs := nqp::clone(%vars);
+        for @vars {
+            my $v := $_;
+            if nqp::istype($v, Type) && $v.isTypeVar {
+                %vs{$_.name} := $v;
+            } elsif nqp::ishash($v) {
+                for $v {
+                    %vs{$_.key} := $_.value;
+                }
+            } elsif nqp::islist($v) {
+                for $v {
+                    %vs{$_.name} := $_;
+                }
+            } else {
+                nqp::die("invalid var spec: " ~ describe($v));
+            }
+        }
+        forall(self, %vs);
+    }
+    
 
     # subclasses of Type ------------------------------------------------------
 
@@ -382,6 +435,26 @@ class Type is export {
             my str $str := "t$id";
             my $instance := create(Var, :$str, :$id);
             %type-vars{$str} := $instance;
+            $instance;
+        }
+    }
+
+    # universal types
+
+    my class Forall is Type {
+        has %!bound-vars;   method bound-vars() { %!bound-vars }
+        has $!body;         method body()       { $!body       }
+        method new(@bound-vars, :$body) {
+            my $str := '\forall ' ~ join(' ', @bound-vars, :map(-> $v { $v.name })) ~ '.' ~ $body.Str;
+            my $instance := %forall-types{$str};
+            unless $instance {
+                my %bound-vars := {};
+                for @bound-vars {
+                    %bound-vars{$_.name} := $_;
+                }
+                $instance := create(self, :$str, :$body, :%bound-vars);
+                %forall-types{$str} := $instance;
+            }
             $instance;
         }
     }
@@ -480,9 +553,60 @@ class Type is export {
     }
 
     # - factory methods -------------------------------------------------------
-    # Note: don't move around stuff lightly - decl order is of importance!
+    # Note: don't move around stuff carelessly - decl order is of importance!
 
     method Var() { Var.new }
+
+    my $X := create(Var, :str<X>, :id(-9));
+    my $Y := create(Var, :str<Y>, :id(-8));
+    my $Z := create(Var, :str<Z>, :id(-7));
+    my $U := create(Var, :str<U>, :id(-6));
+    my $V := create(Var, :str<V>, :id(-5));
+    my $W := create(Var, :str<W>, :id(-4));
+    my $S := create(Var, :str<S>, :id(-3));
+    my $T := create(Var, :str<T>, :id(-2));
+    my $R := create(Var, :str<R>, :id(-1));
+
+    my @nice-vars := [
+        $X,
+        $Y,
+        $Z,
+        $U,
+        $V,
+        $W,
+        $S,
+        $T,
+        $R,
+    ];
+
+    my sub forall($t, %vars) {
+        if $t.isForallType {
+            $t.body.forall($t.bound-vars, %vars);
+        } else {
+            my %fvs := $t.vars;
+            my @bound-names := [];
+            for %vars {
+                if nqp::existskey(%fvs, $_.key) {
+                    @bound-names.push($_.key);
+                }
+            }
+            if nqp::elems(@bound-names) > 0 {
+                insertion-sort(-> $a, $b { nqp::cmp_s($a, $b) }, @bound-names);
+                my %s := {};
+                my $i := 0;
+                my @bound-vars := [];
+                for @bound-names {
+                    my $v := @nice-vars[$i++];
+                    %s{$_} := $v;
+                    @bound-vars.push($v);
+                }
+                my $body := $t.subst(%s);
+                Forall.new(@bound-vars, :$body);
+            } else {
+                $t;
+            }
+        }
+    }
 
     method Fn($a, $b, *@more) {
         @more.unshift($b);
@@ -548,11 +672,12 @@ class Type is export {
 
     # - plumbing --------------------------------------------------------------
     
-    my sub isTypeVar($t)   { nqp::istype($t, Var)   }
+    my sub isTypeVar($t)    { nqp::istype($t, Var)      }
+    my sub isForallType($t) { nqp::istype($t, Forall)   }
 
-    my sub isFnType($t)    { nqp::istype($t, Fn)    }
-    my sub isSumType($t)   { nqp::istype($t, Sum)   }
-    my sub isCrossType($t) { nqp::istype($t, Cross) }
+    my sub isFnType($t)     { nqp::istype($t, Fn)       }
+    my sub isSumType($t)    { nqp::istype($t, Sum)      }
+    my sub isCrossType($t)  { nqp::istype($t, Cross)    }
 
 
 
@@ -592,6 +717,7 @@ class Type is export {
             $Array,
             Var,
             Fn,
+            Forall,
             Sum,
             Cross,
         ],
@@ -608,11 +734,9 @@ class Type is export {
                 $out;
             } elsif $t1.isTypeVar {
                 $t1.id - $t2.id;
-            } elsif $t1.isFnType {
-                lex-cmp($t1.in, $t2.in) || lex-cmp($t1.out, $t2.out);
-            } elsif $t1.isSumType {
-                lex-cmp($t1.head, $t2.head) || lex-cmp($t1.tail, $t2.tail);
-            } elsif $t1.isCrossType {
+            } elsif $t1.isForallType {
+                lex-cmp($t1.body, $t2.body);
+            } elsif $t1.isCompoundType {
                 lex-cmp($t1.head, $t2.head) || lex-cmp($t1.tail, $t2.tail);
             } else {
                 nqp::die("NYI: lex-cmp(" ~ $t1.Str ~ ', ' ~ $t2.Str ~ ')');
@@ -630,8 +754,6 @@ class Type is export {
         insertion-sort(&lex-cmp, @types);
     }
 
-    my $v0 := Type.Var;
-    my $v1 := Type.Var;
     my %op-types := nqp::hash(
         # special (not listed here, but explicitly handled by typecheck)
         #'bind' # how to type the var argument?
@@ -642,7 +764,7 @@ class Type is export {
         # die
         'die',      Type.Fn(Type.Cross($Str            ),               $Bot    ),
         # str
-        'isstr',    Type.Fn(Type.Cross($v0             ),               $Bool   ),
+        'isstr',    Type.Fn(Type.Cross($X              ),               $Bool   ).forall($X),
         'iseq_s',   Type.Fn(Type.Cross($Str,   $Str    ),               $Bool   ),
         'chars',    Type.Fn(Type.Cross($Str            ),               $Int    ),
         'chr',      Type.Fn(Type.Cross($Int            ),               $Str    ),
@@ -681,121 +803,36 @@ class Type is export {
         'postinc',  Type.Fn(Type.Cross($Int            ),               $Int    ),
         # list/hash
         'elems',    Type.Fn(Type.Cross($Array          ),               $Int    ),
-        'atpos',    Type.Fn(Type.Cross($Array, $Int    ),               $v0     ),
-        'push',     Type.Fn(Type.Cross($Array, $v0     ),               $Void   ),
+        'atpos',    Type.Fn(Type.Cross($Array, $Int    ),               $X      ).forall($X),
+        'push',     Type.Fn(Type.Cross($Array, $X      ),               $Void   ).forall($X),
+        
+        'reprname', Type.Fn($X, $Str).forall($X),
         'say',      Type.Fn(
                         Type.Sum(
                             $Str,
                             $Int,
                             $Num,
                             $Bool,
-                            $Array,
-                            Type.Fn($Void, $v1),
                         ),
                         $Void
                     ),
         # if:
         'if',       Type.Sum(
-                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $v0  ),               Type.Sum($v0, $Bool)),
-                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $v0, $v1),            Type.Sum($v0, $v1  )),
+                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $X  ),                Type.Sum($X, $Bool)).forall($X),
+                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $X, $Y),              Type.Sum($X, $Y   )).forall($X, $Y),
                     ),
         'while',    Type.Sum(
-                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $v0),                 $Bool),
-                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $v0, $v1),            $v1),   # the variant with a post block
+                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $X),                 $Bool).forall($X),
+                        Type.Fn(Type.Cross(Type.Sum($Bool, $Int), $X, $Y),             $Y   ).forall($X, $Y),   # the variant with a post block
                     ),
                   # 
         'for',      Type.Sum(
-                        Type.Fn(Type.Cross($Array, Type.Fn($v0, $v1)),                  $Bool),
-                        Type.Fn(Type.Cross($Array, Type.Fn($v0, $v1), $Int),            $Bool),
+                        Type.Fn(Type.Cross($Array, Type.Fn($X, $Y)),                  $Bool).forall($X, $Y),
+                        Type.Fn(Type.Cross($Array, Type.Fn($X, $Y), $Int),            $Bool).forall($X, $Y),
                     ),
-        'isint',    Type.Sum(
-                        Type.Fn(
-                            Type.Sum(
-                                $Str,
-                                $Int,     # <<<< True
-                                $Num,
-                                $Bool,
-                                $Array,
-                                Type.Fn($v0, $v1),
-                            ),
-                            $Bool
-                        ),
-                    ),
-        'islist',   Type.Sum(
-                        #Type.Fn($Str,               $Bool),
-                        #Type.Fn($Int,               $Bool),
-                        #Type.Fn($Num,               $Bool),
-                        #Type.Fn($Bool,              $Bool),
-                        #Type.Fn($Array,             $Bool), # <<<< True
-                        #Type.Fn(Type.Fn($v0, $v1),  $Bool),
-                        
-                        #Type.Fn(
-                        #    Type.Sum(
-                        #        $Str,
-                        #        $Int,
-                        #        $Num,
-                        #        $Bool,
-                        #        Type.Fn($v0, $v1),
-                        #    ),
-                        #    $Bool
-                        #),
-                        #Type.Fn($Array, $Bool), # <<<< True
-
-                        Type.Fn(
-                            Type.Sum(
-                                $Str,
-                                $Int,
-                                $Num,
-                                $Bool,
-                                $Array,     # <<<< True
-                                Type.Fn($v0, $v1),
-                            ),
-                            $Bool
-                        ),
-                    ),
-        'isinvokable',  Type.Sum(
-                        #Type.Fn($Str,               $Bool),
-                        #Type.Fn($Int,               $Bool),
-                        #Type.Fn($Num,               $Bool),
-                        #Type.Fn($Bool,              $Bool),
-                        #Type.Fn($Array,             $Bool),
-                        #Type.Fn(Type.Fn($v0, $v1),  $Bool), # <<<< True
-                        
-                        #Type.Fn(
-                        #    Type.Sum(
-                        #        $Str,
-                        #        $Int,
-                        #        $Num,
-                        #        $Bool,
-                        #        $Array,
-                        #    ),
-                        #    $Bool
-                        #),
-                        #Type.Fn(Type.Fn($v0, $v1), $Bool), # <<<< True
-
-                        Type.Fn(
-                            Type.Sum(
-                                $Str,
-                                $Int,
-                                $Num,
-                                $Bool,
-                                $Array,
-                                Type.Fn($v0, $v1),     # <<<< True
-                            ),
-                            $Bool
-                        ),
-                    ),
-        'reprname', Type.Fn(
-                        Type.Sum(
-                            $Str,
-                            $Int,
-                            $Num,
-                            $Bool,
-                            $Array,
-                            Type.Fn($v0, $v1),
-                        ),
-                        $Str
-                    ),
+        'isint',        Type.Fn($X, $Bool).forall($X),
+        'islist',       Type.Fn($X, $Bool).forall($X),
+        'isinvokable',  Type.Fn($X, $Bool).forall($X),
     );
     
     method ofOp($op) {
@@ -989,12 +1026,12 @@ class Type is export {
                     $out := TypeConstraint.Eq($t1, $t2);
                 } elsif $t2.isSimpleType || $t2.isTypeVar || $t2.isFnType {
                     $out := TypeConstraint.Sub($t1, $t2);
-                } elsif $t2.isFnType {
-                    #my $tF := Type.Fn(Type.Var, Type.Var);          # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                    #$out := TypeConstraint.And(
-                    #    TypeConstraint.Eq($t1, $tF),
-                    #    self.constrain-sub($tF, $t2, :$at, :&onError)
-                    #);
+                #} elsif $t2.isFnType {
+                #    my $tF := Type.Fn(Type.Var, Type.Var);          # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< intro 2 TypeVars
+                #    $out := TypeConstraint.And(
+                #        TypeConstraint.Eq($t1, $tF),
+                #        self.constrain-sub($tF, $t2, :$at, :&onError)
+                #    );
                 } elsif $t2.isSumType {
                     $out := TypeConstraint.Sub(
                         $t1,
@@ -1051,7 +1088,8 @@ class Type is export {
                         #}
                     }
                 } elsif $t2.isTypeVar {
-                    $out := TypeConstraint.Eq($t2, Type.Sum($t1, Type.Var));
+                    #$out := TypeConstraint.Eq($t2, Type.Sum($t1, Type.Var));# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< intro 2 TypeVars
+                    $out := TypeConstraint.Sub($t1, $t2);
                 } else {
                     self.error(:$at, "NYI(d): ", $t1, '  :<  ', $t2);
                 }
@@ -1078,11 +1116,13 @@ class Type is export {
                         self.constrain-sub($t1.tail, $t2.tail, :$at, :&onError),   # Cross is covariant in tail
                     );
                 } elsif $t2.isTypeVar {
-                    my $tCross := Type.Cross(|$t1.foldl(-> @acc, $t { @acc.push(Type.Var); @acc; }, []));
-                    $out := TypeConstraint.And(
-                        self.constrain($t2, $tCross),
-                        self.constrain-sub($t1, $tCross)
-                    );
+                    $out := TypeConstraint.Sub($t1, $t2);
+                    ##the following is only admissible if Cross must not appear inside a Sum
+                    #my $tCross := Type.Cross(|$t1.foldl(-> @acc, $t { @acc.push(Type.Var); @acc; }, []));          # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< intro n TypeVars
+                    #$out := TypeConstraint.And(
+                    #    self.constrain($t2, $tCross),
+                    #    self.constrain-sub($t1, $tCross)
+                    #);
                 } # else $out := False
             } else {
                 self.error(:$at, "NYI(f): ", $t1, '  :<  ', $t2);
@@ -1114,7 +1154,7 @@ class TypeConstraint is export {
     method vars(%vs = {}) {
         if self.isAtom {
             # nothing
-        } elsif self.isEq {
+        } elsif self.isEq || self.isSub {
             self.lhs.vars(%vs);
             self.rhs.vars(%vs);
         } elsif self.isAnd {
@@ -1146,7 +1186,21 @@ class TypeConstraint is export {
         $out;
     }
 
-    method unify() {
+    method unify(:$for = NO_VALUE) {
+        if $for =:= NO_VALUE {
+            $for := -> $_ { 1 };
+        } elsif nqp::ishash($for) {
+            my %for := $for;
+            $for := -> $t { $t.isTypeVar && nqp::existskey(%for, $t.name) }
+        } elsif nqp::islist($for) {
+            my %for := {};
+            for $for {
+                %for{$_} := 1;
+            }
+            $for := -> $t { $t.isTypeVar && %for{$t.name} }
+        } elsif !nqp::isinvokable($for) {
+            nqp::die("expected a hash or a list or a fn - got " ~ describe($for));
+        }
         my %out := nqp::null();
         if self.isTrue {
             %out := {};
@@ -1160,13 +1214,22 @@ class TypeConstraint is export {
                 $rhs := self.lhs;
             }
             if $lhs.isTypeVar {
-                unless nqp::existskey($rhs.vars, $lhs.name) {   # occur-check, to prevent recursive types
-                    %out := nqp::hash($lhs.name, $rhs);
+                if $for($lhs) {
+                    unless nqp::existskey($rhs.vars, $lhs.name) {   # occur-check, to prevent recursive types
+                        %out := nqp::hash($lhs.name, $rhs);
+                    }
+                } elsif $for($rhs) {
+                    unless nqp::existskey($lhs.vars, $rhs.name) {   # occur-check, to prevent recursive types
+                        %out := nqp::hash($rhs.name, $lhs);
+                    }
+                } else {
+                    %out := {};
                 }
-            } else {
+            } else { # neither lhs nor rhs a TypeVar
                 my $simplified := Type.constrain($lhs, $rhs, :onError(-> *@as, *%ns { TypeConstraint.False }));
+                # TODO: check if simplified is really different from self!
                 unless $simplified.isFalse {
-                    %out := $simplified.unify;
+                    %out := $simplified.unify(:$for);
                 }
             }
         } elsif self.isSub {
@@ -1174,9 +1237,10 @@ class TypeConstraint is export {
             my $rhs := self.rhs;
             if $lhs =:= $rhs {
                 %out := {};
-            } elsif ($lhs.isTypeVar && ($rhs.isSimpleType || $rhs.isTypeVar))    # greedy (but only in isolation, ie if this is the only constraint)
-                 || ($rhs.isTypeVar && ($lhs.isSimpleType || $lhs.isTypeVar)) {
-                %out := TypeConstraint.Eq($lhs, $rhs).unify;
+            } elsif $for($lhs) || $for($rhs) {   # greedy (but only in isolation, ie if this is the only constraint)
+                %out := TypeConstraint.Eq($lhs, $rhs).unify(:$for);
+            } elsif $lhs.isTypeVar || $rhs.isTypeVar {
+                %out := {};
             } else {
                 Type.error('NYI: unify ', self.Str);
             }
@@ -1212,40 +1276,48 @@ class TypeConstraint is export {
                         my $lower := $_.value<lower>;
                         if $upper {
                             if $lower {
-                                $cs := TypeConstraint.And($cs, TypeConstraint.Eq($var, $upper));
+                                # TODO: *why* should this be put into rest (and not cs)?
                                 $rest := TypeConstraint.And($rest, Type.constrain-sub($lower, $upper));
-                            } else { # only upper bound
-                                #if $upper.isSimpleType {
+                                if $for($var) {
                                     $cs := TypeConstraint.And($cs, TypeConstraint.Eq($var, $upper));
-                                #} else {
-                                #    #Type.error('NYI: unify ', $name, ' :< ', $upper.Str);
-                                #}
+                                } else {
+                                    $rest := TypeConstraint.And($rest, Type.constrain-sub($var, $upper));
+                                    $rest := TypeConstraint.And($rest, Type.constrain-sub($lower, $var));
+                                }
+                            } else { # only upper bound
+                                if $for($var) {
+                                    $cs := TypeConstraint.And($cs, TypeConstraint.Eq($var, $upper));
+                                } else {
+                                    $rest := TypeConstraint.And($rest, Type.constrain-sub($var, $upper));
+                                }
                             }
                         } else {    # only lower bound
-                            #if $lower.isSimpleType {
+                            if $for($var) {
                                 $cs := TypeConstraint.And($cs, TypeConstraint.Eq($lower, $var));
-                            #} else {
-                            #    $cs := TypeConstraint.And($cs, Type.constrain-sub($lower, $var));
-                            #}
+                            } else {
+                                $rest := TypeConstraint.And($rest, Type.constrain-sub($lower, $var));
+                            }
                         }
                     }
-                    Type.error('unify got stuck: ', $cs.Str, ' <= ', self.Str)
-                        if $cs.isAtom;
+                    #Type.error('unify got stuck: ', $cs.Str, ' <= ', self.Str)
+                    #    if $cs.isAtom;
                     say('>>unifying bounds: ' ~ $cs.Str);
                     say('              ...& ' ~ $rest.Str);
-                    $cs := TypeConstraint.And($cs, $rest);
-                    %out := $cs.unify;
+                    %out := $cs.unify(:$for);
+                    $rest := $rest.subst(%out);
                     say('>>unifying bounds: ' ~ $cs.Str);
+                    say('              ...& ' ~ $rest.Str);
                     say('          yielded: ' ~ subst-to-Str(%out));
+                    $cs := TypeConstraint.And($cs, $rest);
 
                 } # else { # %bounds empty, ie no "simple" bounds with either lhs a var or rhs a var or both
             } else {
-                %out := $head.unify;
+                %out := $head.unify(:$for);
                 my $tail := self.tail.subst(%out, :onError(-> *@as, *%ns { TypeConstraint.False }));
                 if $tail.isFalse {
                     nqp::die("not unifiable: " ~ subst-to-Str(%out) ~ self.tail.Str);
                 } else {
-                    %out := concat-subst(%out, $tail.unify);
+                    %out := concat-subst(%out, $tail.unify(:$for));
                 }
                 
             }
@@ -1517,7 +1589,7 @@ class TypeConstraint is export {
 
 }
 
-sub concat-subst(*@ss) {
+sub concat-subst(*@ss) is export {
     if +@ss == 0 {
         {};
     } else {
@@ -1563,12 +1635,57 @@ sub MAIN(*@ARGS) {
     my $var5 := Type.Var;
     my $var6 := Type.Var;
 
+    my $tB := Type.Fn(Type.Fn($var3, $var4), Type.Fn($var2, $var3), $var2, $var4);
+    say($tB.Str);
+    say($tB.forall($var2, $var3, $var4).Str);
+    say('---------');
+
+    my $tB2 := Type.Fn(Type.Fn($var2, $var3), Type.Fn($var4, $var2), $var4, $var3);
+    say($tB2.Str);
+    say($tB2.forall($var2, $var3, $var4).Str);
+    say('---------');
+
+    my $tK := Type.Fn($var0, $var1, $var0);
+    say($tK.Str);
+    say($tK.forall($var0).Str);
+    say('---------');
+
+    my $c96 := TypeConstraint.And(
+        Type.constrain-sub($var0, Type.Int),
+        Type.constrain-sub($var1, Type.Str),
+        Type.constrain-sub($var1, Type.Num),
+        Type.constrain-sub($var1, $var0),
+        Type.constrain-sub(Type.Str, $var1),
+    );
+    say(subst-to-Str($c96.unify(:for([$var0]))));
+    say('---------');
+
+    nqp::exit(0);
+    
+
+
     my $t69a := Type.Sum($var0, Type.Str, Type.Int);
     my $t69b := Type.Sum(Type.Str, Type.Num, $var0, $var1);
     my $c69 := Type.constrain-sub($t69a, $t69b);    #     t2 + Int + Str :< Num + Str + t2 + t3
     say($t69a ~ ' :< ' ~ $t69b);                    # =>  t2  :< Num + Str + t2 + t3  [~> t2  :< Num + Str + t3]
     say($c69.Str);                                  #   & Int :< Num + Str + t2 + t3  [~> Int :< t2 + t3]
     say(subst-to-Str($c69.unify));                  #   & Str :< Num + Str + t2 + t3  [~> True]
+    say('---------');
+
+    my $t1 := Type.Fn($var0, $var1);
+    my $t2 := Type.Fn($var5, $var6);
+    say($t1.Str ~ ' :< ' ~ $var2.Str ~ '  &  ' ~ $var2.Str ~ ' :< ' ~ $t2.Str);
+    my $c99 := TypeConstraint.And(
+        Type.constrain-sub($t1, $var2),
+        Type.constrain-sub($var2, $t2),
+    );
+    say($c99.Str);
+    my $u99 := $c99.unify;
+    say(subst-to-Str($u99));
+    say(subst-to-Str(concat-subst($u99)));
+    $t1 := $t1.subst($_);
+    $t2 := $t2.subst($_);
+    say($t1.Str, ', ', $t2.Str);
     say('---------');
 
     my $c74 := TypeConstraint.And(
@@ -1579,22 +1696,6 @@ sub MAIN(*@ARGS) {
     );
     say($c74.Str);
     say(subst-to-Str($c74.unify));
-    say('---------');
-
-    my $t1 := Type.Fn($var0, $var1);
-    my $t2 := Type.Fn($var5, $var6);
-    say($t1.Str ~ ' :< ' ~ $var2.Str ~ '  &  ' ~ $var2.Str ~ ' :< ' ~ $t2.Str);
-    my $c99 := TypeConstraint.And(
-        Type.constrain-sub($t1, $var2),
-        Type.constrain-sub($var2, $t2)
-    );
-    say($c99.Str);
-    my $u99 := $c99.unify;
-    say(subst-to-Str($u99));
-    say(subst-to-Str(concat-subst($u99)));
-    $t1 := $t1.subst($_);
-    $t2 := $t2.subst($_);
-    say($t1.Str, ', ', $t2.Str);
     say('---------');
 
     my $c42a := Type.constrain-sub(Type.Sum($var1, $var2), $var1);
