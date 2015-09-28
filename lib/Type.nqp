@@ -364,7 +364,7 @@ class Type is export {
                     %vs{$_.name} := $_;
                 }
             } else {
-                nqp::die("invalid var spec: " ~ describe($v));
+                nqp::die("invalid var spec: " ~ (nqp::istype($v, Type) ?? $v.Str !! describe($v)));
             }
         }
         forall(self, %vs);
@@ -579,13 +579,13 @@ class Type is export {
         $R,
     ];
 
-    my sub forall($t, %vars) {
+    my sub forall($t, %vars-to-bind) {
         if $t.isForallType {
-            $t.body.forall($t.bound-vars, %vars);
+            $t.body.forall($t.bound-vars, %vars-to-bind);
         } else {
             my %fvs := $t.vars;
             my @bound-names := [];
-            for %vars {
+            for %vars-to-bind {
                 if nqp::existskey(%fvs, $_.key) {
                     @bound-names.push($_.key);
                 }
@@ -597,6 +597,10 @@ class Type is export {
                 my @bound-vars := [];
                 for @bound-names {
                     my $v := @nice-vars[$i++];
+                    # avoid accidental capture: don't use nice name that is free in $t and not to bound anyway
+                    while nqp::existskey(%fvs, $v.name) && !nqp::existskey(%vars-to-bind, $v.name) {
+                        $v := @nice-vars[$i++];
+                    }
                     %s{$_} := $v;
                     @bound-vars.push($v);
                 }
@@ -1612,7 +1616,7 @@ sub concat-subst(*@ss) is export {
 }
 
 
-sub subst-to-Str(@ss) {
+sub subst-to-Str(@ss) is export {
     if nqp::ishash(@ss) {
         @ss := [@ss];
     }
