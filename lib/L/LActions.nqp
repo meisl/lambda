@@ -436,11 +436,15 @@ my sub make-runtime() {
         :wasRun(0), :result(NO_VALUE), 
     -> $x, :$wasRun!, :$result! {
         QAST::Block.new(:arity(0),
+            mkDeclV(lexVar('foo')),
+            mkBind(mkDeclV(lexVar('bar')), nqp::clone($x)),
             QAST::Op.new(:op<if>, $wasRun,
                 $result,
                 QAST::Stmts.new(
                     mkBind(nqp::clone($wasRun), 1),
-                    mkBind(nqp::clone($result), mkCall($x))
+                    mkBind(nqp::clone($result), 
+                        QAST::Op.new(:op<call>, nqp::clone($x))
+                    )
                 )
             )
         )
@@ -735,7 +739,14 @@ sub ignore(*@ps, *%ns) {
     TypeConstraint.False;
 }
 
-sub typecheck-application($tCallee, @tArgs, :$currentBlock!, :@constraints!, :$at!, :$callee) {
+
+sub fresh-var(:%new-vars!) {
+    my $v := Type.Var;
+    %new-vars{$v.name} := $v;
+    $v;
+}
+
+sub typecheck-application($tCallee, @tArgs, :$currentBlock!, :%new-vars!, :@constraints!, :$at!, :$callee) {
     Type.insist-isValid($tCallee);
     for @tArgs {
         if $_.isVoid || $_.isCrossType {
@@ -746,38 +757,44 @@ sub typecheck-application($tCallee, @tArgs, :$currentBlock!, :@constraints!, :$a
             );
         }
     }
-    my $tArgs := Type.Cross(|@tArgs);
+    my $tArgs := Type.Cross(|@tArgs);   # << TODO: only if necessary
     my $c := TypeConstraint.False;
     my $tOut;
     if $tCallee.isTypeVar {
-        nqp::die("NYI: typecheck-application(" ~ $tCallee.Str ~ ', [' ~ join(', ', @tArgs, :map(-> $t { $t.Str })) ~ '], ..., :callee(' ~ describe($callee) ~ '))');
+        $tOut := fresh-var(:%new-vars);
+        $c := Type.constrain-sub($tCallee, Type.Fn(Type.Cross(|@tArgs), $tOut));
         
-        #$tOut := Type.Var;
-        #$c := Type.constrain-sub(:$at, $tCallee, Type.Fn($tArgs, $tOut));
+        #nqp::die("NYI: typecheck-application(" ~ $tCallee.Str ~ ', [' ~ join(', ', @tArgs, :map(-> $t { $t.Str })) ~ ']'
+        #    ~ ', ..., :callee(' ~ describe($callee) ~ '))'
+        #    ~ "\nunder constraints " ~ TypeConstraint.And(|@constraints).Str
+        #    ~ "\n" ~ dump($currentBlock)
+        #);
     } elsif $tCallee.isFnType || $tCallee.isForallType {
+        my $n := nqp::elems(@tArgs);
+        if $n == 0 {
+            @tArgs.push(Type.Void);
+            $n := 1;
+        }
+        $c := TypeConstraint.True;
         my $tF;
+        my $tIn;
         my %quantified-vars := {};
         if $tCallee.isForallType {
             $tF := $tCallee.body;
             for $tCallee.bound-vars {
                 %quantified-vars{$_.key} := $_.value;
             }
-        } else {
+        } else {    # $tCallee.isFnType
             $tF := $tCallee;
         }
+        $tIn  := $tF.in;
+        $tOut := $tF.out;
         
-        my $tIn  := $tF.head;
-        my $n := nqp::elems(@tArgs);
-        if $n == 0 {
-            @tArgs.push(Type.Void);
-            $n := 1;
-        }
         my @tIn := $tIn.isCrossType
             ?? $tIn.foldl(-> $acc, $t { $acc.push($t); $acc; }, [])
             !! [$tIn];
         my @abstraction-vars := [];
         if $n == nqp::elems(@tIn) {
-            $c := TypeConstraint.True;
             my $i := 0;
             for @tIn {
                 my $t := $_;
@@ -785,7 +802,7 @@ sub typecheck-application($tCallee, @tArgs, :$currentBlock!, :@constraints!, :$a
                 if $tArg.isForallType { # instantiate with all bound vars fresh
                     my %s := {};
                     for $tArg.bound-vars {
-                        my $v := Type.Var;
+                        my $v := fresh-var(:%new-vars);
                         @abstraction-vars.push($v);
                         %s{$_.key} := $v;
                     }
@@ -800,14 +817,14 @@ sub typecheck-application($tCallee, @tArgs, :$currentBlock!, :@constraints!, :$a
             my %additional := {};
             for %quantified-vars {
                 if nqp::existskey(%fv-in-c, $_.key) {
-                    %additional{$_.key} := Type.Var;    # ??????? add to @abstraction-vars?
+                    %additional{$_.key} := fresh-var(:%new-vars);    # ??????? add to @abstraction-vars?
                 }
             }
             if %additional {
                 $c := $c.subst(%additional);
                 $s := concat-subst($s, %additional);
             }
-            $tOut := $tF.tail.subst($s).forall(|@abstraction-vars, |%quantified-vars);
+            $tOut := $tOut.subst($s).forall(|@abstraction-vars, |%quantified-vars);
         } else {
             Type.error(:$at, 'wrong arity: cannot apply ', $callee, ' ::', $tCallee, '  to  ', $tArgs);
         }
@@ -818,7 +835,7 @@ sub typecheck-application($tCallee, @tArgs, :$currentBlock!, :@constraints!, :$a
             my $tOut;
             my @constraints := [];
             try {
-                $tOut := typecheck-application($t, @tArgs, :$currentBlock, :@constraints, :$at, :$callee);
+                $tOut := typecheck-application($t, @tArgs, :$currentBlock, :@constraints, :%new-vars, :$at, :$callee);
                 my $c := nqp::elems(@constraints) == 0 ?? TypeConstraint.True !! @constraints[0];
                 unless $c.isFalse {
                     @cs.push($c);
@@ -900,8 +917,9 @@ class LActions is HLL::Actions {
         );
 
         my $dummy-block := QAST::Block.new;
+        my %new-vars := {};
         {
-            self.typecheck($top-block, $dummy-block);              # <<<<<<<<< TODO
+            self.typecheck($top-block, $dummy-block, :%new-vars);              # <<<<<<<<< TODO
             CATCH {
                 say(~$!);
                 nqp::rethrow($!);# unless nqp::index(~$!, 'Type Error: NYI') == 0;
@@ -966,7 +984,7 @@ class LActions is HLL::Actions {
         make $out;
     }
 
-    sub typecheck-var($n, $currentBlock, *@moreBlocks, :@constraints!) {
+    sub typecheck-var($n, $currentBlock, *@moreBlocks, :%new-vars!, :@constraints!) {
         insist-isa($n, QAST::Var);
         if $n.decl {
             my $decl := lookup($n.name, $currentBlock)<declaration>;
@@ -975,7 +993,7 @@ class LActions is HLL::Actions {
             } else {
                 $currentBlock.symbol($n.name, :declaration($n));
                 unless Type.of($n) {
-                    Type.Var.set($n);
+                    fresh-var(:%new-vars).set($n);
                 };
                 if $n.decl eq 'param' {
                     $currentBlock.ann('slurpy').push($n) if $n.slurpy;
@@ -1015,7 +1033,7 @@ class LActions is HLL::Actions {
         Type.of($n);
     }
 
-    method typecheck-typecase($n, $currentBlock, *@moreBlocks, :@constraints = []) {
+    method typecheck-typecase($n, $currentBlock, *@moreBlocks, :%new-vars!, :@constraints = []) {
         nqp::die("expected an Op(typecase) - got " ~ describe($n))
             unless isOp($n, 'typecase');
         my $subject-name := $n.name;
@@ -1032,8 +1050,8 @@ class LActions is HLL::Actions {
             %clauses{$arg-name} := $_;
             $_.named(nqp::null_s);
         }
-        my $outer-subject-type := self.typecheck(lexVar($subject-name), $currentBlock, |@moreBlocks, :@constraints);
-        my $tFn := Type.Fn(Type.Var, Type.Var);
+        my $outer-subject-type := self.typecheck(lexVar($subject-name), $currentBlock, |@moreBlocks, :%new-vars, :@constraints);
+        my $tFn := Type.Fn(fresh-var(:%new-vars), fresh-var(:%new-vars));
         
         my %subject-type-otherwise := nqp::hash(
             Type.Int.Str,   Type.Int,
@@ -1061,7 +1079,7 @@ class LActions is HLL::Actions {
             }
             my $body := QAST::Block.new($clause-body);
             $body.symbol($subject-name, :declaration($decl));
-            my $tBody := self.typecheck($clause-body, $body, $currentBlock, |@moreBlocks, :@constraints);
+            my $tBody := self.typecheck($clause-body, $body, $currentBlock, |@moreBlocks, :%new-vars, :@constraints);
             $tBody.set($clause-body);
         }
         my $otherwise := %clauses<otherwise>;
@@ -1099,13 +1117,13 @@ class LActions is HLL::Actions {
         $n.name(nqp::null_s);
         $n.set_children($out.list);
         say('>>>>>>>>>> final typecheck of $n: ', TypeConstraint.And(|@constraints).Str, "\n", dump($n));
-        self.typecheck($n, $currentBlock, |@moreBlocks, :@constraints);
+        self.typecheck($n, $currentBlock, |@moreBlocks, :%new-vars, :@constraints);
         say('>>>>>>>>>>', dump($n));
     }
 
-    method typecheck($n, $currentBlock, *@moreBlocks, :@constraints = []) {
+    method typecheck($n, $currentBlock, *@moreBlocks, :%new-vars!, :@constraints = []) {
         if isVar($n) {
-            typecheck-var($n, $currentBlock, |@moreBlocks, :@constraints);
+            typecheck-var($n, $currentBlock, |@moreBlocks, :%new-vars, :@constraints);
         } elsif !Type.of($n) {  # otherwise do typecheck only if $n doesn't already have a type
             if isSVal($n) {
                 Type.Str.set($n);
@@ -1129,15 +1147,15 @@ class LActions is HLL::Actions {
                 } else {    # binder is ignored
                     $tBinder := Type._;
                 }
-                $tBody := self.typecheck($body, $block, $currentBlock, |@moreBlocks);
+                $tBody := self.typecheck($body, $block, $currentBlock, :%new-vars, |@moreBlocks);
 
                 $tBinder.set($binder);
                 Type.Fn($tBinder, $tBody).set($n);
             } elsif isApp($n) {
                 my $fun := $n[0];
                 my $arg := $n[1];
-                my $tFun := self.typecheck($fun, $currentBlock, |@moreBlocks);
-                my $tArg := self.typecheck($arg, $currentBlock, |@moreBlocks);
+                my $tFun := self.typecheck($fun, $currentBlock, |@moreBlocks, :%new-vars);
+                my $tArg := self.typecheck($arg, $currentBlock, |@moreBlocks, :%new-vars);
                 if $tFun.isFnType {
                     my $c := Type.constrain(:at($n), $tFun.in, $tArg);
                     say('>>Type-constraint: ', $c.Str) unless $c.isTrue;
@@ -1154,7 +1172,7 @@ class LActions is HLL::Actions {
             #} elsif isRCall($n) {
             #    my $tRuntimeFn := %runtime-fns-types{$n.name};
             #    my @tArgs := [];
-            #    @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks))
+            #    @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks, :%new-vars))
             #        for $n.list;
             #
             #    my $temp := $tRuntimeFn;
@@ -1178,7 +1196,7 @@ class LActions is HLL::Actions {
             #    $temp.set($n);
             } elsif istype($n, QAST::Stmts, QAST::Stmt) {
                 my $tLast := Type.Void;
-                $tLast := self.typecheck($_, $currentBlock, |@moreBlocks, :@constraints)
+                $tLast := self.typecheck($_, $currentBlock, |@moreBlocks, :%new-vars, :@constraints)
                     for $n.list;
                 $tLast.set($n);
             } elsif istype($n, QAST::Block) {
@@ -1189,9 +1207,10 @@ class LActions is HLL::Actions {
                 $n.annotate('slurpy',     []);
                 $n.annotate('optional',   []);
                 my $tOut;
+                my %child-new-vars := {};
                 my @child-constraints := [];
                 for $n.list {
-                    $tOut := self.typecheck($_, $n, $currentBlock, |@moreBlocks, :constraints(@child-constraints));
+                    $tOut := self.typecheck($_, $n, $currentBlock, |@moreBlocks, :new-vars(%child-new-vars), :constraints(@child-constraints));
                 }
                 if $n.ann('named') || $n.ann('slurpy') || $n.ann('optional') {
                     Type.error(:at($n), 'NYI: typechecking named/slurpy/optional params', ":\n", dump($n, :indent("    ")));
@@ -1209,13 +1228,23 @@ class LActions is HLL::Actions {
                     say('>>Type-constraint(recursion): ', $cSelf.Str);
                 }
                 my $c := TypeConstraint.And(|@child-constraints);
-                $c.foreach(-> $_ { @constraints.push($_) });
-                $n.annotate('constraints', $c.Str)
-                    unless $c.isTrue;
-                
-                say('>>unifying: ', $c.Str, "\n", dump($n));
+                say('>>unifying ', $n.name, ': ', $c.Str);
                 {
-                    typesubst($n, $c.unify);
+                    my %s := $c.unify(:for(%child-new-vars));
+                    $c := $c.subst(%s);
+                    say('   yielded ', subst-to-Str(%s), '; ', $c.Str);
+                    @constraints.push($c);
+                    for %child-new-vars {
+                        unless nqp::existskey(%s, $_.key) {
+                            %new-vars{$_.key} := $_.value;
+                        }
+                    }
+                    $n.annotate('constraints', $c.Str)
+                        unless $c.isTrue;
+                    typesubst($n, %s);
+                    # finally abstract over all remaining type vars
+                    Type.of($n).forall(%child-new-vars).set($n);
+                    say(dump($n));
                     CATCH {
                         say(~$_);
                         say(dump($n));
@@ -1227,13 +1256,13 @@ class LActions is HLL::Actions {
                     my $var := $n[0];
                     my $val := $n[1];
 
-                    my $tVar := self.typecheck($var, $currentBlock, |@moreBlocks, :@constraints);
+                    my $tVar := self.typecheck($var, $currentBlock, |@moreBlocks, :%new-vars, :@constraints);
                     if istype($val, QAST::Block) {
                         panic($n.node, 'NYI: bind Block ' ~ dump($n))
                             unless ($val.blocktype eq '') || ($val.blocktype eq 'declaration');
                         $val.annotate('constrain-self', $tVar);
                     }
-                    my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks, :@constraints);
+                    my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks, :%new-vars, :@constraints);
                     if $var.decl {
                         $tVal.set($var);
                     } else {
@@ -1249,21 +1278,21 @@ class LActions is HLL::Actions {
                         $n.annotate('constraints', $c);
                     }
                 } elsif $n.op eq 'typecase' {
-                    self.typecheck-typecase($n, $currentBlock, |@moreBlocks, :@constraints);
+                    self.typecheck-typecase($n, $currentBlock, |@moreBlocks, :%new-vars, :@constraints);
                 } else {
                     my @tArgs := [];
-                    @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks, :@constraints))
+                    @tArgs.push(self.typecheck($_, $currentBlock, |@moreBlocks, :%new-vars, :@constraints))
                         for $n.list;
                     
                     if $n.op eq 'list' {
                         Type.Array.set($n);
-                    } elsif $n.op eq 'call' {
+                    } elsif ($n.op eq 'call') || ($n.op eq 'callstatic') {
                         my $callee;
                         my $tCallee;
                         my $name := $n.name;
                         if $name {
                             $callee := lexVar($name);
-                            $tCallee := self.typecheck($callee, $currentBlock, |@moreBlocks);
+                            $tCallee := self.typecheck($callee, $currentBlock, |@moreBlocks, :%new-vars);
                         } elsif +$n.list >= 1 {
                             $callee := $n.list[0];
                             $tCallee := @tArgs.shift;
@@ -1271,27 +1300,13 @@ class LActions is HLL::Actions {
                         } else {
                             Type.error(:at($n), 'no callee for ', $n);
                         }
-                        if istype($callee, QAST::Var) {
-                            if $tCallee.isTypeVar {
-                                my $decl := lookup($name, $currentBlock, |@moreBlocks)<declaration>;
-                                my $tF := Type.Fn(Type.Var, Type.Var);
-                                $tF.set($decl);
-                                $tF.set($callee);
-                                my $c := Type.constrain(:at($callee), $tCallee, $tF);
-                                @constraints.push($c);
-                                say('>>Type-constraint: ', $c.Str);
-                                $tCallee := $tF;
-                            }
-                        } else {
-                            nqp::die('NYI: typechecking ', dump($n));
-                        }
-                        my $tOut := typecheck-application(:at($n), :callee($name), $tCallee, @tArgs, :$currentBlock, :@constraints);
+                        my $tOut := typecheck-application(:at($n), :callee($name), $tCallee, @tArgs, :$currentBlock, :%new-vars, :@constraints);
                         #say('>>Type-constraint/', $n.op, ': ', $callee.name, ': ', $c.Str) unless $c.isTrue;
                         $tOut.set($n);
                     } else {
                         my $tOp := Type.ofOp($n.op);
                         if $tOp {
-                            my $tOut := typecheck-application(:at($n), :callee('Op ' ~ $n.op), $tOp, @tArgs, :$currentBlock, :@constraints);
+                            my $tOut := typecheck-application(:at($n), :callee('Op ' ~ $n.op), $tOp, @tArgs, :$currentBlock, :%new-vars, :@constraints);
                             $tOut.set($n);
                         } else {
                             say("\n", dump($currentBlock));
@@ -1582,6 +1597,7 @@ sub MAIN(*@ARGS) {
     my $tCallee;
     my @tArgs;
     my %quantified-vars;
+    my %new-vars;
     my @cs;
     my $t;
 
@@ -1598,6 +1614,7 @@ sub MAIN(*@ARGS) {
         $tCallee,
         @tArgs,
         :currentBlock(), :at(QAST::Block.new), :callee<&curry>,
+        :%new-vars,
         :constraints(@cs)
     );
     say($t.Str);
@@ -1618,6 +1635,7 @@ sub MAIN(*@ARGS) {
         $tCallee,
         @tArgs,
         :currentBlock(), :at(QAST::Block.new), :callee<&apply1>,
+        :%new-vars,
         :constraints(@cs)
     );
     say($t.Str);
@@ -1637,10 +1655,19 @@ sub MAIN(*@ARGS) {
         $tCallee,
         @tArgs,
         :currentBlock(), :at(QAST::Block.new), :callee<&B>,
+        :%new-vars,
         :constraints(@cs)
     );
     say($t.Str);
     say(TypeConstraint.And(|@cs).Str);
     say('---------------------');
-    say($t.with-fresh-vars.Str);
+
+    $tCallee := Type.Fn(Type.Fn(Type.Void, $v2), Type.Fn($v3, $v2)).forall(
+        $v2, $v3
+    );
+    say($tCallee.Str);
+    my $vY := $tCallee.bound-vars<Y>;
+    say($tCallee.body.out.forall($vY).Str);
+    say('---------------------');
+
 }
