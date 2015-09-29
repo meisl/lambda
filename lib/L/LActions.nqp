@@ -367,13 +367,32 @@ my sub make-runtime() {
     }
 
     mkRFn('&banner', [], 
-        #:returns(Type.Fn(Type.Void, Type.Str)),
     -> {
         asNode("This is L v0.0.1"),
     });
 
+    mkRFn('&factorial', <n>, 
+    -> $n {
+        QAST::Op.new(:op<if>,
+            QAST::Op.new(:op<isle_i>,
+                nqp::clone($n),
+                asNode(1)
+            ),
+            asNode(1),
+            QAST::Op.new(:op<mul_i>,
+                nqp::clone($n),
+                QAST::Op.new(:op<call>,
+                    lexVar('&factorial'),
+                    QAST::Op.new(:op<sub_i>,
+                        nqp::clone($n),
+                        asNode(1)
+                    )
+                )
+            )
+        );
+    });
+
     mkRFn('&strLit', <s>, 
-        #:returns(Type.Fn(Type.Str, Type.Str)), 
         :foo<bar>,  # prevent it from being inlined
     -> $s {
         #mkConcat('"', QAST::Op.new(:op<escape>, $s), '"'); # mkConcat inserts mkForce, which ain't working on Op escape
@@ -1132,6 +1151,11 @@ class LActions is HLL::Actions {
                 Type.Int.set($n);
             } elsif isNVal($n) {
                 Type.Num.set($n);
+            } elsif istype($n, QAST::Stmts, QAST::Stmt) {
+                my $tLast := Type.Void;
+                $tLast := self.typecheck($_, $currentBlock, |@moreBlocks, :%new-type-vars, :@constraints)
+                    for $n.list;
+                $tLast.set($n);
             } elsif isLambda($n) {
                 my $block   := $n[1];
                 my $binder  := $block[0];
@@ -1195,11 +1219,6 @@ class LActions is HLL::Actions {
             #        }
             #    }
             #    $temp.set($n);
-            } elsif istype($n, QAST::Stmts, QAST::Stmt) {
-                my $tLast := Type.Void;
-                $tLast := self.typecheck($_, $currentBlock, |@moreBlocks, :%new-type-vars, :@constraints)
-                    for $n.list;
-                $tLast.set($n);
             } elsif istype($n, QAST::Block) {
                 #say('>>>>typechecking Block');
                 #say(dump($n));
@@ -1264,19 +1283,23 @@ class LActions is HLL::Actions {
                         $val.annotate('constrain-self', $tVar);
                     }
                     my $tVal := self.typecheck($val, $currentBlock, |@moreBlocks, :%new-type-vars, :@constraints);
-                    if $var.decl {
-                        $tVal.set($var);
+                    my $c := TypeConstraint.True;
+                    #$c := TypeConstraint.And($c, $val.ann('constraints') // TypeConstraint.True);
+                    # TODO: add (remaining) constraints from Block - if any; Problem: annotation "constraints" contains a str, not a TypeConstraint...
+                    if $var.decl { # so we just introduced a fresh type var for it
+                        $c := TypeConstraint.And($c, Type.constrain(:at($n), $tVar, $tVal));
                     } else {
-                        my $c := Type.constrain(:at($n), $tVar, $tVal);
-                        @constraints.push($c);
-                        say('>>Type-constraint(bind "' ~ $var.name ~ '"): ', $c.Str) unless $c.isTrue;
+                        $c := TypeConstraint.And($c, Type.constrain-sub(:at($n), $tVar, $tVal));
                     }
+                    say('>>Type-constraint(bind "' ~ $var.name ~ '"): ', $c.Str) unless $c.isTrue;
                     
-                    $tVal.set($n);
+                    $tVar.set($n);
+                    unless $c.isTrue {
+                        $n.annotate('constraints', $c.Str);
+                        @constraints.push($c);
+                    }
                     if istype($val, QAST::Block) {
-                        my $c := $val.ann('constraints');
-                        say('>>typed Block ' ~ $var.name ~ ':: ' ~ $tVal ~ '; ' ~ $c);
-                        $n.annotate('constraints', $c);
+                        say('>>typed Block ' ~ $var.name ~ ':: ' ~ $tVal ~ '; ' ~ $c ~ "\n" ~ dump($n));
                     }
                 } elsif $n.op eq 'typecase' {
                     self.typecheck-typecase($n, $currentBlock, |@moreBlocks, :%new-type-vars, :@constraints);
